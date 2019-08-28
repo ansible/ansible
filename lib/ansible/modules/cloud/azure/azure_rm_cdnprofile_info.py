@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_cdnprofile_facts
+module: azure_rm_cdnprofile_info
 
-version_added: "2.8"
+version_added: "2.9"
 
 short_description: Get Azure CDN profile facts
 
@@ -44,15 +44,15 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one CDN profile
-      azure_rm_cdnprofile_facts:
+      azure_rm_cdnprofile_info:
         name: Testing
         resource_group: myResourceGroup
 
     - name: Get facts for all CDN profiles
-      azure_rm_cdnprofile_facts:
+      azure_rm_cdnprofile_info:
 
     - name: Get facts by tags
-      azure_rm_cdnprofile_facts:
+      azure_rm_cdnprofile_info:
         tags:
           - Environment:Test
 '''
@@ -129,7 +129,7 @@ import re
 AZURE_OBJECT_CLASS = 'profiles'
 
 
-class AzureRMCdnprofileFacts(AzureRMModuleBase):
+class AzureRMCdnprofileInfo(AzureRMModuleBase):
     """Utility class to get Azure CDN profile facts"""
 
     def __init__(self):
@@ -150,13 +150,17 @@ class AzureRMCdnprofileFacts(AzureRMModuleBase):
         self.tags = None
         self.cdn_client = None
 
-        super(AzureRMCdnprofileFacts, self).__init__(
+        super(AzureRMCdnprofileInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
             facts_module=True
         )
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_cdnprofile_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_cdnprofile_facts' module has been renamed to 'azure_rm_cdnprofile_info'", version='2.13')
 
         for key in self.module_args:
             setattr(self, key, kwargs[key])
@@ -257,7 +261,7 @@ class AzureRMCdnprofileFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMCdnprofileFacts()
+    AzureRMCdnprofileInfo()
 
 
 if __name__ == '__main__':

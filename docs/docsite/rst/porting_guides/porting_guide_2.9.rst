@@ -554,7 +554,13 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
 * The ``azure_rm_appserviceplan_facts`` module was renamed to :ref:`azure_rm_appserviceplan_info <azure_rm_appserviceplan_info_module>`.
 * The ``azure_rm_autoscale_facts`` module was renamed to :ref:`azure_rm_autoscale_info <azure_rm_autoscale_info_module>`.
 * The ``azure_rm_availabilityset_facts`` module was renamed to :ref:`azure_rm_availabilityset <azure_rm_availabilityset_info_module>`.
-
+* The ``azure_rm_automationaccount_facts`` module was renamed to :ref:`azure_rm_automationaccount_info <azure_rm_automationaccount_info_module>`.
+* The ``azure_rm_cdnprofile_facts`` module was renamed to :ref:`azure_rm_cdnprofile_info <azure_rm_cdnprofile_info_module>`.
+* The ``azure_rm_cdnendpoint_facts`` module was renamed to :ref:`azure_rm_cdnendpoint_info <azure_rm_cdnendpoint_info_module>`.
+* The ``azure_rm_containerinstance_facts`` module was renamed to :ref:`azure_rm_containerinstance_info <azure_rm_containerinstance_info_module>`.
+* The ``azure_rm_containerregistry_facts`` module was renamed to :ref:`azure_rm_containerregistry_info <azure_rm_containerregistry_info_module>`.
+* The ``azure_rm_cosmosdbaccount_facts`` module was renamed to :ref:`azure_rm_cosmosdbaccount_info <azure_rm_cosmosdbaccount_info_module>`.
+* The ``azure_rm_deployment_facts`` module was renamed to :ref:`azure_rm_deployment_info <azure_rm_deployment_info_module>`.
 
 Noteworthy module changes
 -------------------------

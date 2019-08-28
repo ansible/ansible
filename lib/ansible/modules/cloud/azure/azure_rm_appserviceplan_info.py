@@ -126,7 +126,6 @@ except Exception:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 AZURE_OBJECT_CLASS = 'AppServicePlan'
@@ -149,16 +148,15 @@ class AzureRMAppServicePlanInfo(AzureRMModuleBase):
         self.tags = None
         self.info_level = None
 
-        module = AnsibleModule(self.module_arg_spec)
-        is_old_facts = module._name == 'azure_rm_appserviceplan_facts'
-        if is_old_facts:
-            module.deprecate("The 'azure_rm_appserviceplan_facts' module has been renamed to 'azure_rm_appserviceplan_info'", version='2.13')
-
         super(AzureRMAppServicePlanInfo, self).__init__(self.module_arg_spec,
                                                         supports_tags=False,
                                                         facts_module=True)
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_appserviceplan_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_appserviceplan_facts' module has been renamed to 'azure_rm_appserviceplan_info'", version='2.13')
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
