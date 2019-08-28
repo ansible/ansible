@@ -22,12 +22,6 @@
         state: overridden
       register: result
 
-    - debug:
-        msg:
-        - "{{ overridden['commands'] | symmetric_difference(result['commands']) }}"
-        - "{{ overridden['before'] | symmetric_difference(result['before']) }}"
-        - "{{ overridden['after'] | symmetric_difference(result['after']) }}"
-
     - name: Assert that correct set of commands were generated
       assert:
         that:

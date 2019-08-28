@@ -124,8 +124,7 @@ class L2_Interfaces(ConfigBase):
                 commands.extend(self._set_config(interface, {}, module))
                 continue
             have_dict = filter_dict_having_none_value(interface, each)
-            new_want = dict()
-            commands.extend(self._clear_config(new_want, have_dict))
+            commands.extend(self._clear_config(dict(), have_dict))
             commands.extend(self._set_config(interface, each, module))
         # Remove the duplicate interface call
         commands = remove_duplicate_interface(commands)
@@ -156,8 +155,7 @@ class L2_Interfaces(ConfigBase):
                 commands.extend(self._clear_config(interface, each))
                 continue
             have_dict = filter_dict_having_none_value(interface, each)
-            new_want = dict()
-            commands.extend(self._clear_config(new_want, have_dict))
+            commands.extend(self._clear_config(dict(), have_dict))
             commands.extend(self._set_config(interface, each, module))
         # Add the want interface that's not already configured in have interface
         for each in (not_in_have - in_have):
@@ -262,7 +260,7 @@ class L2_Interfaces(ConfigBase):
                 for each in l2protocol:
                     each = dict(each)
                     if isinstance(each, dict):
-                        cmd = 'l2transport l2protocol {0} {1}'.format(each.keys()[0], each.values()[0])
+                        cmd = 'l2transport l2protocol {0} {1}'.format(list(each.keys())[0], list(each.values())[0])
                     add_command_to_config_list(interface, cmd, commands)
                 if propagate and not have.get('propagate'):
                     cmd = 'l2transport propagate remote-status'

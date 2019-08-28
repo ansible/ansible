@@ -1,7 +1,8 @@
 ---
 merged:
   before:
-    - name: GigabitEthernet0/0/0/0
+    - name: Loopback888
+    - name: Loopback999
 
   commands:
     - "interface GigabitEthernet0/0/0/1"
@@ -14,11 +15,12 @@ merged:
     - "ipv4 address 203.0.110.1 255.255.255.0"
     - "ipv4 address 203.0.110.5 255.255.255.0 secondary"
     - "interface GigabitEthernet0/0/0/3.100"
-    - "ip address 198.51.100.14 255.255.255.0"
+    - "ipv4 address 198.51.100.14 255.255.255.0"
     - "ipv6 address 2001:db8:0000:4::/64"
 
   after:
-    - name: GigabitEthernet0/0/0/0
+    - name: Loopback888
+    - name: Loopback999
     - ipv4:
       - address: 198.51.100.1 255.255.255.0
       name: GigabitEthernet0/0/0/1
@@ -72,7 +74,8 @@ replaced:
     - "ipv4 address 192.0.2.10 255.255.255.0"
 
   after:
-    - name: GigabitEthernet0/0/0/0
+    - name: Loopback888
+    - name: Loopback999
     - ipv4:
       - address: 203.0.113.27 255.255.255.0
       name: GigabitEthernet0/0/0/1
@@ -118,7 +121,7 @@ overridden:
     - "no ipv4 address"
     - "interface GigabitEthernet0/0/0/3"
     - "no ipv6 address"
-    - "ipv4 203.0.112.24 255.255.255.0"
+    - "ipv4 address 203.0.112.24 255.255.255.0"
     - "interface GigabitEthernet0/0/0/3.100"
     - "ipv4 address 198.51.102.1 255.255.255.0"
     - "ipv6 address 2001:db8:0000:1::/64"
@@ -126,7 +129,6 @@ overridden:
   after:
     - name: Loopback888
     - name: Loopback999
-    - name: GigabitEthernet0/0/0/1
     - ipv4:
       - address: 203.0.112.24 255.255.255.0
       name: GigabitEthernet0/0/0/3
@@ -171,5 +173,4 @@ deleted:
   after:
     - name: Loopback888
     - name: Loopback999
-    - name: GigabitEthernet0/0/0/1
     - name: GigabitEthernet0/0/0/3.100

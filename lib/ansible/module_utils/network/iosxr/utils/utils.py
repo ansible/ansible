@@ -74,7 +74,7 @@ def filter_dict_having_none_value(want, have):
                     dict_val = have.get(k).get(key)
                     test_key_dict.update({key: dict_val})
                 test_dict.update({k: test_key_dict})
-        if isinstance(v, list):
+        if isinstance(v, list) and isinstance(v[0], dict):
             for key, value in iteritems(v[0]):
                 if value is None:
                     dict_val = have.get(k).get(key)
@@ -96,6 +96,9 @@ def filter_dict_having_none_value(want, have):
                     if each.get('secondary') and diff_ip is True:
                         test_key_dict.update({'secondary': True})
                     test_dict.update({'ipv4': test_key_dict})
+        if k == 'l2protocol':
+            if want[k] != have.get('l2protocol') and have.get('l2protocol'):
+                test_dict.update({k: v})
         if v is None:
             val = have.get(k)
             test_dict.update({k: val})
