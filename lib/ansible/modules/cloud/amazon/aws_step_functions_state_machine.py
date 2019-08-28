@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: aws_stepfunctions_state_machine
+module: aws_step_functions_state_machine
 
 short_description: Manage AWS Step Functions state machines
 
@@ -64,7 +64,7 @@ author:
 EXAMPLES = '''
 # Create a new AWS Step Functions state machine
 - name: Setup HelloWorld state machine
-  aws_stepfunctions_state_machine:
+  aws_step_functions_state_machine:
     name: "HelloWorldStateMachine"
     definition: "{{ lookup('file','state_machine.json') }}"
     role_arn: arn:aws:iam::987654321012:role/service-role/invokeLambdaStepFunctionsRole
@@ -73,7 +73,7 @@ EXAMPLES = '''
 
 # Update an existing state machine
 - name: Change IAM Role and tags of HelloWorld state machine
-  aws_stepfunctions_state_machine:
+  aws_step_functions_state_machine:
     name: HelloWorldStateMachine
     definition: "{{ lookup('file','state_machine.json') }}"
     role_arn: arn:aws:iam::987654321012:role/service-role/anotherStepFunctionsRole
@@ -82,7 +82,7 @@ EXAMPLES = '''
 
 # Remove the AWS Step Functions state machine
 - name: Delete HelloWorld state machine
-  aws_stepfunctions_state_machine:
+  aws_step_functions_state_machine:
     name: HelloWorldStateMachine
     state: absent
 '''

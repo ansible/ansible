@@ -16,12 +16,12 @@
 
     - name: Create IAM service role needed for Step Functions
       iam_role:
-        name: "{{ stepfunctions_role_name }}"
+        name: "{{ step_functions_role_name }}"
         description: Role with permissions for AWS Step Functions actions.
         assume_role_policy_document: "{{ lookup('file', 'state_machines_iam_trust_policy.json') }}"
         state: present
         <<: *aws_connection_info
-      register: stepfunctions_role
+      register: step_functions_role
 
     - name: Pause a few seconds to ensure IAM role is available to next task
       pause:
@@ -30,10 +30,10 @@
     # ==== Tests ===================================================
 
     - name: Create a new state machine -- check_mode
-      aws_stepfunctions_state_machine:
+      aws_step_functions_state_machine:
         name: "{{ state_machine_name }}"
         definition: "{{ lookup('file','state_machine.json') }}"
-        role_arn: "{{ stepfunctions_role.iam_role.arn }}"
+        role_arn: "{{ step_functions_role.iam_role.arn }}"
         tags:
           project: helloWorld
         state: present
@@ -47,10 +47,10 @@
           - creation_check.output == 'State machine would be created.'
 
     - name: Create a new state machine
-      aws_stepfunctions_state_machine:
+      aws_step_functions_state_machine:
         name: "{{ state_machine_name }}"
         definition: "{{ lookup('file','state_machine.json') }}"
-        role_arn: "{{ stepfunctions_role.iam_role.arn }}"
+        role_arn: "{{ step_functions_role.iam_role.arn }}"
         tags:
           project: helloWorld
         state: present
@@ -66,10 +66,10 @@
         seconds: 5
 
     - name: Idempotent rerun of same state function -- check_mode
-      aws_stepfunctions_state_machine:
+      aws_step_functions_state_machine:
         name: "{{ state_machine_name }}"
         definition: "{{ lookup('file','state_machine.json') }}"
-        role_arn: "{{ stepfunctions_role.iam_role.arn }}"
+        role_arn: "{{ step_functions_role.iam_role.arn }}"
         tags:
           project: helloWorld
         state: present
@@ -83,10 +83,10 @@
           - result.output == 'State is up-to-date.'
 
     - name: Idempotent rerun of same state function
-      aws_stepfunctions_state_machine:
+      aws_step_functions_state_machine:
         name: "{{ state_machine_name }}"
         definition: "{{ lookup('file','state_machine.json') }}"
-        role_arn: "{{ stepfunctions_role.iam_role.arn }}"
+        role_arn: "{{ step_functions_role.iam_role.arn }}"
         tags:
           project: helloWorld
         state: present
@@ -98,10 +98,10 @@
           - result.changed == False
 
     - name: Update an existing state machine -- check_mode
-      aws_stepfunctions_state_machine:
+      aws_step_functions_state_machine:
         name: "{{ state_machine_name }}"
         definition: "{{ lookup('file','alternative_state_machine.json') }}"
-        role_arn: "{{ stepfunctions_role.iam_role.arn }}"
+        role_arn: "{{ step_functions_role.iam_role.arn }}"
         tags:
           differentTag: different_tag
         state: present
@@ -115,10 +115,10 @@
           - "update_check.output == 'State machine would be updated: {{ creation_output.state_machine_arn }}'"
 
     - name: Update an existing state machine
-      aws_stepfunctions_state_machine:
+      aws_step_functions_state_machine:
         name: "{{ state_machine_name }}"
         definition: "{{ lookup('file','alternative_state_machine.json') }}"
-        role_arn: "{{ stepfunctions_role.iam_role.arn }}"
+        role_arn: "{{ step_functions_role.iam_role.arn }}"
         tags:
           differentTag: different_tag
         state: present
@@ -131,7 +131,7 @@
           - update_output.state_machine_arn == creation_output.state_machine_arn
 
     - name: Remove state machine -- check_mode
-      aws_stepfunctions_state_machine:
+      aws_step_functions_state_machine:
         name: "{{ state_machine_name }}"
         state: absent
         <<: *aws_connection_info
@@ -144,7 +144,7 @@
           - "deletion_check.output == 'State machine would be deleted: {{ creation_output.state_machine_arn }}'"
 
     - name: Remove state machine
-      aws_stepfunctions_state_machine:
+      aws_step_functions_state_machine:
         name: "{{ state_machine_name }}"
         state: absent
         <<: *aws_connection_info
@@ -156,7 +156,7 @@
           - deletion_output.state_machine_arn == creation_output.state_machine_arn
 
     - name: Non-existent state machine is absent
-      aws_stepfunctions_state_machine:
+      aws_step_functions_state_machine:
         name: "non_existing_state_machine"
         state: absent
         <<: *aws_connection_info
@@ -171,7 +171,7 @@
   always:
 
     - name: Cleanup - delete state machine
-      aws_stepfunctions_state_machine:
+      aws_step_functions_state_machine:
         name: "{{ state_machine_name }}"
         state: absent
         <<: *aws_connection_info
@@ -179,7 +179,7 @@
 
     - name: Cleanup - delete IAM role needed for Step Functions test
       iam_role:
-        name: "{{ stepfunctions_role_name }}"
+        name: "{{ step_functions_role_name }}"
         state: absent
         <<: *aws_connection_info
       ignore_errors: true
