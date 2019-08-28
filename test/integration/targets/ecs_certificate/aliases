@@ -1,8 +1,8 @@
 # Not enabled due to lack of access to test environments. May be enabled using custom integration_config.yml
 # Example integation_config.yml
 # ---
-# entrust_api_user: apiuser-99543
-# entrust_api_key: apipassword
+# entrust_api_user:
+# entrust_api_key:
 # entrust_api_client_cert_path: /var/integration-testing/publicCert.pem
 # entrust_api_client_cert_key_path: /var/integration-testing/privateKey.pem
 # entrust_api_ip_address: 127.0.0.1
