@@ -392,7 +392,7 @@ class ModuleValidator(Validator):
                 # TODO: add column
                 self.reporter.error(
                     path=self.object_path,
-                    code='sys-exit-call-found',
+                    code='use-fail-json-not-sys-exit',
                     msg='sys.exit() call found. Should be exit_json/fail_json',
                     line=line_no + 1
                 )
@@ -666,7 +666,7 @@ class ModuleValidator(Validator):
                 if child.lineno < min_doc_line:
                     self.reporter.error(
                         path=self.object_path,
-                        code='imports-below-documentation',  # This is descriptive of the check, not the error. This name may be confusing.
+                        code='import-before-documentation',
                         msg=('Import found before documentation variables. '
                              'All imports must appear below '
                              'DOCUMENTATION/EXAMPLES/RETURN/ANSIBLE_METADATA.'),
@@ -683,7 +683,7 @@ class ModuleValidator(Validator):
                         if grandchild.lineno < min_doc_line:
                             self.reporter.error(
                                 path=self.object_path,
-                                code='imports-below-documentation',  # This is descriptive of the check, not the error. This name may be confusing.
+                                code='import-before-documentation',
                                 msg=('Import found before documentation '
                                      'variables. All imports must appear below '
                                      'DOCUMENTATION/EXAMPLES/RETURN/'
@@ -695,7 +695,7 @@ class ModuleValidator(Validator):
         for import_line in import_lines:
             if not (max_doc_line < import_line < first_callable):
                 msg = (
-                    'imports-directly-below-documentation',
+                    'import-placement',
                     ('Imports should be directly below DOCUMENTATION/EXAMPLES/'
                      'RETURN/ANSIBLE_METADATA.')
                 )
@@ -730,7 +730,7 @@ class ModuleValidator(Validator):
             if len(module_list) > 1:
                 self.reporter.error(
                     path=self.object_path,
-                    code='module-utils-multiple-modules-per-statement',
+                    code='multiple-utils-per-requires',
                     msg='Ansible.ModuleUtils requirements do not support multiple modules per statement: "%s"' % req_stmt.group(0)
                 )
                 continue
@@ -740,7 +740,7 @@ class ModuleValidator(Validator):
             if module_name.lower().endswith('.psm1'):
                 self.reporter.error(
                     path=self.object_path,
-                    code='module-ends-in-psm1',
+                    code='invalid-requires-extension',
                     msg='Module #Requires should not end in .psm1: "%s"' % module_name
                 )
 
@@ -751,7 +751,7 @@ class ModuleValidator(Validator):
             if len(module_list) > 1:
                 self.reporter.error(
                     path=self.object_path,
-                    code='c#-util-requirements-multiple-modules-per-statement',
+                    code='multiple-utils-per-requires',
                     msg='Ansible C# util requirements do not support multiple utils per statement: "%s"' % req_stmt.group(0)
                 )
                 continue
@@ -914,7 +914,7 @@ class ModuleValidator(Validator):
 
             if metadata:
                 self._validate_docs_schema(metadata, metadata_1_1_schema(),
-                                           'ANSIBLE_METADATA', 'valid-ansible-metadata')
+                                           'ANSIBLE_METADATA', 'invalid-metadata-type')
                 # We could validate these via the schema if we knew what the values are ahead of
                 # time.  We can figure that out for deprecated but we can't for removed.  Only the
                 # metadata has that information.
@@ -946,7 +946,7 @@ class ModuleValidator(Validator):
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
-                        code='documentation-valid',
+                        code='documentation-syntax-error',
                         **error
                     )
                 for trace in traces:
@@ -1060,12 +1060,12 @@ class ModuleValidator(Validator):
                 data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
                                                   doc_info['RETURN']['lineno'],
                                                   self.name, 'RETURN')
-                self._validate_docs_schema(data, return_schema, 'RETURN', 'valid-return-documentation')
+                self._validate_docs_schema(data, return_schema, 'RETURN', 'return-syntax-error')
 
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
-                        code='return-valid',
+                        code='return-syntax-error',
                         **error
                     )
                 for trace in traces:
@@ -1137,7 +1137,7 @@ class ModuleValidator(Validator):
         except AnsibleModuleImportError as e:
             self.reporter.error(
                 path=self.object_path,
-                code='exception-importing-module',
+                code='import-error',
                 msg="Exception attempting to import module for argument_spec introspection, '%s'" % e
             )
             self.reporter.trace(

@@ -62,38 +62,39 @@ Errors
 ------
 
 ============================================================   ===================
-  Code                                                         Sample Message
+  **Error Code**                                               **Sample Message**
 ------------------------------------------------------------   -------------------
-  missing-powershell-interpreter                               Interpreter line is not ``#!/usr/bin/python``
-  missing-python-interpreter                                   Interpreter line is not ``#!powershell``
+  missing-python-interpreter                                   Interpreter line is not ``#!/usr/bin/python``
+  missing-powershell-interpreter                               Interpreter line is not ``#!powershell``
   missing-main-call                                            Did not find a call to ``main()`` (or ``removed_module()`` in the case of deprecated & docs only modules)
   last-line-main-call                                          Call to ``main()`` not the last line (or ``removed_module()`` in the case of deprecated & docs only modules)
   missing-gplv3-license                                        GPLv3 license header not found
-  import-before-documentation-vars                             Import found before documentation variables. All imports must appear below
+  import-before-documentation                                  Import found before documentation variables. All imports must appear below
                                                                ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
   imports-improper-location                                    Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
   use-short-gplv3-license                                      GPLv3 license header should be the :ref:`short form <copyright>` for new modules
   missing-if-name-main                                         Next to last line is not ``if __name__ == "__main__":``
   ..
 ------------------------------------------------------------   -------------------
-  **Imports**                                                  Sample Message
+  **Imports**
   missing-module-utils-import                                  Did not find a ``module_utils`` import
   use-module-utils-urls                                        ``requests`` import found, should use ``ansible.module_utils.urls`` instead
   use-boto3                                                    ``boto`` import found, new modules should use ``boto3``
-  use-exit-fail-json                                           ``sys.exit()`` call found. Should be ``exit_json``/``fail_json``
+  use-fail-json-not-sys-exit                                   ``sys.exit()`` call found. Should be ``exit_json``/``fail_json``
   missing-module-utils-import-c#                               No ``Ansible.ModuleUtils`` or C# Ansible util requirements/imports found
   module-utils-specific-import                                 ``module_utils`` imports should import specific components, not ``*``
   illegal-future-imports                                       Only the following ``from __future__`` imports are allowed:
                                                                ``absolute_import``, ``division``, and ``print_function``.
-  illegal-module-utils-multiple-imports                        ``Ansible.ModuleUtils`` requirements do not support multiple modules per statement
-  illegal-c#-multiple-imports                                  Ansible C# util requirements do not support multiple utils per statement
+  multiple-utils-per-requires                                  ``Ansible.ModuleUtils`` requirements do not support multiple modules per statement
+  multiple-utils-per-requires                                  Ansible C# util requirements do not support multiple utils per statement
   use-run-command-not-popen                                    ``subprocess.Popen`` used instead of ``module.run_command``
   use-run-command-not-os-call                                  ``os.call`` used instead of ``module.run_command``
   ..
 ------------------------------------------------------------   -------------------
-  **Documentation**                                            Sample Message
+  **Documentation**
   missing-documentation                                        No ``DOCUMENTATION`` provided
-  invalid-documentation                                        ``DOCUMENTATION`` is not valid YAML, Invalid ``DOCUMENTATION`` schema
+  invalid-documentation                                        ``DOCUMENTATION`` is not valid YAML
+  documentation-syntax-error                                   Invalid ``DOCUMENTATION`` schema
   missing-doc-fragment                                         ``DOCUMENTATION`` fragment missing
   documentation-error                                          Unknown ``DOCUMENTATION`` error
   module-invalid-version-added                                 Module level ``version_added`` is not a valid version number
@@ -103,16 +104,16 @@ Errors
   missing-examples                                             No ``EXAMPLES`` provided
   invalid-examples                                             ``EXAMPLES`` is not valid YAML
   missing-return                                               No ``RETURN`` documentation provided
-  invalid-return                                               ``RETURN`` is not valid YAML, ``RETURN`` fragments missing  or invalid
+  return-syntax-error                                          ``RETURN`` is not valid YAML, ``RETURN`` fragments missing  or invalid
   missing-metadata                                             No ``ANSIBLE_METADATA`` provided
-  invalid-metadata                                             ``ANSIBLE_METADATA`` was not provided as a dict, YAML not supported, Invalid ``ANSIBLE_METADATA`` schema
+  invalid-metadata-type                                        ``ANSIBLE_METADATA`` was not provided as a dict, YAML not supported, Invalid ``ANSIBLE_METADATA`` schema
   no-default-for-required-parameter                            Option is marked as required but specifies a default.
                                                                Arguments with a default should not be marked as required
   deprecation-mismatch                                         Module marked as deprecated or removed in at least one of the filename, its metadata, or
                                                                In DOCUMENTATION (setting DOCUMENTATION.deprecated for deprecation or removing all
                                                                Documentation for removed) but not in all three places.
   invalid-documentation-options                                ``DOCUMENTATION.options`` must be a dictionary/hash when used
-  exception-durning-import                                     ``Exception`` attempting to import module for ``argument_spec`` introspection
+  import-error                                                 ``Exception`` attempting to import module for ``argument_spec`` introspection
   undocumented-parameter                                       Argument is listed in the argument_spec, but not documented in the module
   nonexistent-parameter-documented                             Argument is listed in DOCUMENTATION.options, but not accepted by the module
   doc-default-does-not-match-spec                              Value for "default" from the argument_spec does not match the documentation
@@ -123,7 +124,7 @@ Errors
   incompatible-default-type                                    Default value from the argument_spec is not compatible with type defined in the argument_spec
   incompatible-choices                                         Choices value from the argument_spec is not compatible with type defined in the argument_spec
   invalid-argument-spec                                        Argument in argument_spec must be a dictionary/hash when used
-  invalid-ansiblemodule-schema                                 ``AnsibleModule`` schema validation error
+  invalid-module-schema                                        ``AnsibleModule`` schema validation error
   invalid-metadata-status                                      ``ANSIBLE_METADATA.status`` of deprecated or removed can't include other statuses
   metadata-changed                                             ``ANSIBLE_METADATA`` cannot be changed in a point release for a stable branch
   parameter-type-does-not-match-doc                            Argument_spec implies type="str" but documentation defines it as different data type
@@ -135,16 +136,16 @@ Errors
   invalid-argument-spec-options                                Suboptions in argument_spec are invalid
   ..
 ------------------------------------------------------------   -------------------
-  **Syntax**                                                   Sample Message
+  **Syntax**
   python-syntax-error                                          Python ``SyntaxError`` while parsing module
   unidiomatic-typecheck                                        Type comparison using ``type()`` found. Use ``isinstance()`` instead
   ..
 ------------------------------------------------------------   -------------------
-  **Naming**                                                   Sample Message
+  **Naming**
   invalid-extension                                            Official Ansible modules must have a ``.py`` extension for python
                                                                Modules or a ``.ps1`` for powershell modules
-  illegal-extension-psm1                                       Module ``#Requires`` should not end in .psm1
-  illegal-extension-cs                                         Module ``#AnsibleRequires -CSharpUtil`` should not end in .cs
+  invalid-requires-extension                                   Module ``#Requires`` should not end in .psm1
+  invalid-requires-extension                                   Module ``#AnsibleRequires -CSharpUtil`` should not end in .cs
   subdirectory-missing-init                                    Ansible module subdirectories must contain an ``__init__.py``
   missing-python-doc                                           Missing python documentation file
 ============================================================   ===================
@@ -153,10 +154,10 @@ Warnings
 --------
 
 ============================================================   ===================
-  Code                                                         Sample Message
+  Code
 ------------------------------------------------------------   -------------------
   **Locations**
-  imports-improper-location                                    Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA`` for legacy modules
+  import-placement                                             Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA`` for legacy modules
   ..
 ------------------------------------------------------------   -------------------
   **Imports**
