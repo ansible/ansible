@@ -147,7 +147,7 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['interface Ethernet1/1', 'bfd', 'no bfd echo']
+  sample: ['interface Ethernet1/1', 'no bfd', 'no bfd echo']
 """
 
 
