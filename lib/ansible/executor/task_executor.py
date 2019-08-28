@@ -1020,10 +1020,9 @@ class TaskExecutor:
         """
         action_loader = self._shared_loader_obj.action_loader
         collections = self._task.collections
-        # namespace.name.xxx_yyyy = xxx
-        module_prefix = self._task.action.split(".")[-1].split("_")[0]
-        # namespace.name.xxx_yyyy = namespace.name
-        collection_from_task = ".".join(self._task.action.split(".")[:-1])
+
+        collection_from_task, _, module_name = self._task.action.rpartition(".")
+        module_prefix = module_name.split("_")[0]
         if collection_from_task:
             derived_collections = [collection_from_task]
         else:
