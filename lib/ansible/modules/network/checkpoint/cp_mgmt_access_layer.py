@@ -116,7 +116,6 @@ EXAMPLES = """
     applications_and_url_filtering: false
     data_awareness: true
     name: New Layer 1
-    new_name: New Layer 2
     state: present
 
 - name: delete-access-layer
