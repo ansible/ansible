@@ -120,8 +120,8 @@ function cleanup
         fi
     fi
 
-    if [ -d test/results/junit/ ]; then
-      cp -a test/results/junit/ shippable/testresults/
+    if [ -d  test/results/junit/ ]; then
+      cp -aT test/results/junit/ shippable/testresults/
     fi
 
     if [ -d test/results/data/ ]; then
