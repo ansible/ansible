@@ -273,7 +273,7 @@ def main():
         tags=dict(type='dict'),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
-    acm_facts = ACMServiceManager(module)
+    acm_info = ACMServiceManager(module)
 
     if module._name == 'aws_acm_facts':
         module.deprecate("The 'aws_acm_facts' module has been renamed to 'aws_acm_info'", version='2.13')
@@ -282,7 +282,7 @@ def main():
     client = boto3_conn(module, conn_type='client', resource='acm',
                         region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
-    certificates = acm_facts.get_certificates(client, module,
+    certificates = acm_info.get_certificates(client, module,
                                               domain_name=module.params['domain_name'],
                                               statuses=module.params['statuses'],
                                               arn=module.params['certificate_arn'],
