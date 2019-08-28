@@ -19,6 +19,8 @@ CHOICES = [
     '!l3_interfaces',
     'lacp',
     '!lacp',
+    'lacp_interfaces',
+    '!lacp_interfaces',
     'lag_interfaces',
     '!lag_interfaces',
     'lldp_global',
