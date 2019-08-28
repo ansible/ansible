@@ -47,7 +47,7 @@ options:
   aggressive_aging:
     description:
       - Sets short (aggressive) timeouts for idle connections.
-    type: list
+    type: dict
     suboptions:
       default_timeout:
         description:
@@ -171,7 +171,6 @@ EXAMPLES = """
       default_timeout: 3600
     color: green
     name: New_UDP_Service_1
-    new_name: New_UDP_Service_4
     port: 5656
     state: present
 
@@ -196,7 +195,7 @@ def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
         accept_replies=dict(type='bool'),
-        aggressive_aging=dict(type='list', options=dict(
+        aggressive_aging=dict(type='dict', options=dict(
             default_timeout=dict(type='int'),
             enable=dict(type='bool'),
             timeout=dict(type='int'),
