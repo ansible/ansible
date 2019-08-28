@@ -57,7 +57,7 @@ options:
   ike_phase_1:
     description:
       - Ike Phase 1 settings. Only applicable when the encryption-suite is set to [custom].
-    type: list
+    type: dict
     suboptions:
       data_integrity:
         description:
@@ -77,7 +77,7 @@ options:
   ike_phase_2:
     description:
       - Ike Phase 2 settings. Only applicable when the encryption-suite is set to [custom].
-    type: list
+    type: dict
     suboptions:
       data_integrity:
         description:
@@ -93,6 +93,15 @@ options:
     description:
       - Shared secrets for external gateways.
     type: list
+    suboptions:
+      external_gateway:
+        description:
+          - External gateway identified by the name or UID.
+        type: str
+      shared_secret:
+        description:
+          - Shared secret.
+        type: str
   tags:
     description:
       - Collection of tag identifiers.
@@ -181,17 +190,20 @@ def main():
         encryption_method=dict(type='str', choices=['prefer ikev2 but support ikev1', 'ikev2 only', 'ikev1 for ipv4 and ikev2 for ipv6 only']),
         encryption_suite=dict(type='str', choices=['suite-b-gcm-256', 'custom', 'vpn b', 'vpn a', 'suite-b-gcm-128']),
         gateways=dict(type='list'),
-        ike_phase_1=dict(type='list', options=dict(
+        ike_phase_1=dict(type='dict', options=dict(
             data_integrity=dict(type='str', choices=['aes-xcbc', 'sha1', 'sha256', 'sha384', 'md5']),
             diffie_hellman_group=dict(type='str', choices=['group-1', 'group-2', 'group-5', 'group-14', 'group-19', 'group-20']),
             encryption_algorithm=dict(type='str', choices=['cast', 'aes-256', 'des', 'aes-128', '3des'])
         )),
-        ike_phase_2=dict(type='list', options=dict(
+        ike_phase_2=dict(type='dict', options=dict(
             data_integrity=dict(type='str', choices=['aes-xcbc', 'sha1', 'sha256', 'sha384', 'md5']),
             encryption_algorithm=dict(type='str', choices=['cast', 'aes-gcm-256', 'cast-40',
                                                            'aes-256', 'des', 'aes-128', '3des', 'des-40cp', 'aes-gcm-128', 'none'])
         )),
-        shared_secrets=dict(type='list'),
+        shared_secrets=dict(type='list', options=dict(
+            external_gateway=dict(type='str'),
+            shared_secret=dict(type='str')
+        )),
         tags=dict(type='list'),
         use_shared_secret=dict(type='bool'),
         color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
