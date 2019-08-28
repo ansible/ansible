@@ -23,6 +23,8 @@ CHOICES = [
     '!lag_interfaces',
     'lldp_global',
     '!lldp_global',
+    'lldp_interfaces',
+    '!lldp_interfaces',
     'vlans',
     '!vlans',
 ]
