@@ -452,12 +452,6 @@ class PathMapper:
         if result:
             return result
 
-        dirname = os.path.dirname(path)
-        filename = os.path.basename(path)
-        name, ext = os.path.splitext(filename)
-
-        minimal = {}
-
         return None
 
     def _classify_ansible(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
