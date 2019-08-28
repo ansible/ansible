@@ -27,12 +27,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: cp_network_facts
+module: cp_mgmt_network_facts
 short_description: Get network objects facts on Checkpoint over Web Services API
 description:
   - Get network objects facts on Checkpoint devices.
-    All operations are performed over Web Services API.
-    This module handles both operations, get a specific object and get several objects.
+  - All operations are performed over Web Services API.
+  - This module handles both operations, get a specific object and get several objects,
     For getting a specific object use the parameter 'name'.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
@@ -40,25 +40,40 @@ options:
   name:
     description:
       - Object name.
+        This parameter is relevant only for getting a specific object.
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   limit:
     description:
       - No more than that many results will be returned.
+        This parameter is relevant only for getting few objects.
     type: int
   offset:
     description:
       - Skip that many results before beginning to return them.
+        This parameter is relevant only for getting few objects.
     type: int
   order:
     description:
       - Sorts results by the given field. By default the results are sorted in the ascending order by name.
+        This parameter is relevant only for getting few objects.
     type: list
+    suboptions:
+      ASC:
+        description:
+          - Sorts results by the given field in ascending order.
+        type: str
+        choices: ['name']
+      DESC:
+        description:
+          - Sorts results by the given field in descending order.
+        type: str
+        choices: ['name']
   show_membership:
     description:
       - Indicates whether to calculate and show "groups" field for every object in reply.
@@ -68,11 +83,11 @@ extends_documentation_fragment: checkpoint_facts
 
 EXAMPLES = """
 - name: show-network
-  cp_network_facts:
+  cp_mgmt_network_facts:
     name: New Network 1
 
 - name: show-networks
-  cp_network_facts:
+  cp_mgmt_network_facts:
     details_level: standard
     limit: 50
     offset: 0
@@ -95,7 +110,10 @@ def main():
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         limit=dict(type='int'),
         offset=dict(type='int'),
-        order=dict(type='list'),
+        order=dict(type='list', options=dict(
+            ASC=dict(type='str', choices=['name']),
+            DESC=dict(type='str', choices=['name'])
+        )),
         show_membership=dict(type='bool')
     )
     argument_spec.update(checkpoint_argument_spec_for_facts)
