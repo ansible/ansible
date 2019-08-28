@@ -249,7 +249,11 @@ class HashiVault:
         if secret_id is None:
             raise AnsibleError("Authentication method app role requires a secret_id")
 
-        self.client.auth_approle(role_id, secret_id)
+        mount_point = kwargs.get('mount_point')
+        if mount_point is None:
+            mount_point = 'approle'
+
+        self.client.auth_approle(role_id, secret_id, mount_point)
 
 
 class LookupModule(LookupBase):
