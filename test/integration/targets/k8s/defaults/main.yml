@@ -29,4 +29,4 @@ k8s_pod_template:
   metadata: "{{ k8s_pod_metadata }}"
   spec: "{{ k8s_pod_spec }}"
 
-k8s_openshift: yes
+k8s_openshift: no

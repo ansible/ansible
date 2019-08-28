@@ -39,6 +39,24 @@
         that:
           - wait_pod is successful
 
+    - name: remove Pod with very short timeout
+      k8s:
+        api_version: v1
+        kind: Pod
+        name: wait-pod
+        namespace: "{{ wait_namespace }}"
+        state: absent
+        wait: yes
+        wait_sleep: 2
+        wait_timeout: 5
+      ignore_errors: yes
+      register: short_wait_remove_pod
+
+    - name: check that task failed
+      assert:
+        that:
+          - short_wait_remove_pod is failed
+
     - name: add a daemonset
       k8s:
         definition:
@@ -248,31 +266,6 @@
           - deploy.result.status.availableReplicas == deploy.result.status.replicas
           - updated_deploy_pods.resources[0].spec.containers[0].image.endswith(":2")
 
-    - name: pause a deployment
-      k8s:
-        definition:
-          apiVersion: extensions/v1beta1
-          kind: Deployment
-          metadata:
-            name: wait-deploy
-            namespace: "{{ wait_namespace }}"
-          spec:
-            paused: True
-        apply: no
-        wait: yes
-        wait_condition:
-          type: Progressing
-          status: Unknown
-          reason: DeploymentPaused
-      register: pause_deploy
-
-    - name: check that paused deployment wait worked
-      assert:
-        that:
-          - condition.reason == "DeploymentPaused"
-          - condition.status == "Unknown"
-      vars:
-        condition: '{{ pause_deploy.result.status.conditions | json_query("[?type==`Progressing`]") | first }}'
 
     - name: add a service based on the deployment
       k8s:
@@ -314,6 +307,7 @@
                 app: "{{ k8s_pod_name }}"
             template: "{{ k8s_pod_template }}"
         wait: yes
+        wait_timeout: 10
       vars:
         k8s_pod_name: wait-crash-deploy
         k8s_pod_image: alpine:3.8
@@ -327,23 +321,36 @@
         that:
           - wait_crash_deploy is failed
 
-    - name: remove Pod with very short timeout
+    - name: Create a Job
       k8s:
-        api_version: v1
-        kind: Pod
-        name: wait-pod
-        namespace: "{{ wait_namespace }}"
-        state: absent
+        definition:
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: sleep
+            namespace: '{{ wait_namespace }}'
+          spec:
+            template:
+              spec:
+                containers:
+                - name: sleeper
+                  image: busybox
+                  command: ["sleep", "5"]
+                restartPolicy: Never
+            backoffLimit: 4
         wait: yes
-        wait_sleep: 2
-        wait_timeout: 5
-      ignore_errors: yes
-      register: short_wait_remove_pod
+        wait_condition:
+          type: Complete
+          status: "True"
+      register: wait_condition_job
 
-    - name: check that task failed
+    - name: check that Job succeeded
       assert:
         that:
-          - short_wait_remove_pod is failed
+          - condition.status == "True"
+          - wait_condition_job.result.status.succeeded == 1
+      vars:
+        condition: '{{ wait_condition_job.result.status.conditions | json_query("[?type==`Complete`]") | first }}'
 
   always:
     - name: remove namespace
@@ -353,3 +360,6 @@
         state: absent
 
   when: (nodes.resources | length) > 0
+  module_defaults:
+    k8s:
+      wait_timeout: 300
