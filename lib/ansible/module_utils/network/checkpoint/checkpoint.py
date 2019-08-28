@@ -272,6 +272,12 @@ def is_equals_with_position_param(payload, connection, version, api_call_object)
 
     payload_for_show_access_rulebase = {'name': payload['layer'], 'offset': position_number - 1, 'limit': 1}
     rulebase_command = 'show-' + api_call_object.split('-')[0] + '-rulebase'
+
+    # if it's threat-exception, we change a little the payload and the command
+    if api_call_object == 'threat-exception':
+        payload_for_show_access_rulebase['rule-name'] = payload['rule-name']
+        rulebase_command = 'show-threat-rule-exception-rulebase'
+
     code, response = send_request(connection, version, rulebase_command, payload_for_show_access_rulebase)
 
     # if true, it means there is no rule in the position that the user inserted, so I return false, and when we will try to set
