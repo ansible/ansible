@@ -357,7 +357,6 @@ def main():
                     snat = snats[0]
         except (IndexError, AttributeError, NTTMCPAPIException) as e:
             module.fail_json(msg='Failed to get a list of existing SNAT exclusions - {0}'.format(e))
-
     try:
         if state == 'present':
             if not snat:

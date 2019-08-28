@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2019 NTT Communications Cloud Infrastructure Services
@@ -18,6 +17,7 @@
 # Author: Ken Sinfield (@kensinfield)
 
 from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 """
 Module configuration parameters

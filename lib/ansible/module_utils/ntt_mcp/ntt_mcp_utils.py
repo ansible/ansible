@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2019 NTT Communictions Cloud Infrastructure Services
@@ -23,6 +22,7 @@
 # Common methods to be used by versious module components
 
 from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 try:
     import configparser
@@ -42,9 +42,20 @@ except ImportError:
     HAS_IPADDRESS = False
 from ansible.module_utils.ntt_mcp.ntt_mcp_config import API_ENDPOINTS
 
+# Python3 workaround for unicode function so the same code can be used with ipaddress later
+try:
+    unicode('')
+except NameError:
+    unicode = str
 
-IP_TO_INT = lambda ip_address: struct.unpack('!I', socket.inet_aton(ip_address))[0]
-INT_TO_IP = lambda i: socket.inet_ntoa(struct.pack('!I', i))
+
+def IP_TO_INT(ip):
+    return struct.unpack('!I', socket.inet_aton(ip))[0]
+
+
+def INT_TO_IP(i):
+    return socket.inet_ntoa(struct.pack('!I', i))
+
 
 def utils_check_imports():
     """
@@ -109,12 +120,12 @@ def get_credentials(module):
     # Both found, return data
     return (user_id, password)
 
+
 def generate_password():
     """
     Generate a random password
     """
     length = random.randint(12, 19)
-    #special_characters = str(string.punctuation).translate(None, '<>\'\\%|')
     pwd = []
     count = 0
     while count != length:
@@ -125,8 +136,6 @@ def generate_password():
             pwd.append(random.choice(string.ascii_uppercase))
         elif select == 2:
             pwd.append(str(random.randint(0, 9)))
-        #else:
-        #    pwd.append(random.choice(special_characters))
         count = count + 1
 
     random.shuffle(pwd)
@@ -157,7 +166,7 @@ def get_ip_version(ip_address):
         try:
             addr = IP(unicode(ip_address))
             version = addr.version
-        except:
+        except ValueError:
             raise Exception('Invalid IP address: {0}'.format(ip_address))
         if version not in [4, 6]:
             raise Exception('Could not determine the IP version from the provided IP address {0}'.format(ip_address))
@@ -176,7 +185,7 @@ def is_ip_private(ip_address):
         try:
             addr = IP(unicode(ip_address))
             return addr.is_private
-        except:
+        except ValueError:
             raise Exception('Invalid IP address: {0}'.format(ip_address))
     else:
         raise Exception('A valid IP address is required')
@@ -213,7 +222,7 @@ def compare_json(a, b, parent):
                         modified['changes'] = r_modified['changes']
                 else:
                     modified['added'][str(tag)] = str(a[tag])
-            if not tag in b:
+            if tag not in b:
                 modified['added'][str(tag)] = str(a[tag])
                 modified['changes'] = True
             else:
@@ -234,9 +243,9 @@ def compare_json(a, b, parent):
                             'newval': str(a[tag])
                         }
         for tag in b:
-            if not tag in a:
+            if tag not in a:
                 modified['changes'] = True
                 modified['removed'][str(tag)] = str(b[str(tag)])
-    except Exception as e:
+    except (KeyError, IndexError, AttributeError, TypeError):
         return False
     return modified

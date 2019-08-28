@@ -715,7 +715,7 @@ data:
             returned: when state == present and wait is True
             contains:
                 coresPerSocket:
-                    description: # of cores per CPU socket
+                    description: The number of cores per CPU socket
                     type: int
                     sample: 1
                 count:

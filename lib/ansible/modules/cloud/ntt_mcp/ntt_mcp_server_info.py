@@ -134,7 +134,7 @@ data:
                                     type: str
                                     sample: NEED_UPGRADE
                         operatingSystem:
-                            description:
+                            description: Operating System information
                             type: complex
                             contains:
                                 displayName:
@@ -416,7 +416,7 @@ data:
                     type: complex
                     contains:
                         coresPerSocket:
-                            description: # of cores per CPU socket
+                            description: The number of cores per CPU socket
                             type: int
                             sample: 1
                         count:

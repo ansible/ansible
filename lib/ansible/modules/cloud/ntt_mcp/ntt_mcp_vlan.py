@@ -128,8 +128,8 @@ options:
         default: true
         type: bool
     wait_time:
-        description: The maximum time the Ansible should wait for the task
-                     to complete in seconds
+        description:
+            - The maximum time the Ansible should wait for the task to complete in seconds
         required: false
         default: 600
         type: int

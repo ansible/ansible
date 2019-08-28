@@ -36,7 +36,7 @@
       region: na
       datacenter: NA12
       network_domain: myCND
-      id: 35f5dd13-ea13-4a6c-bb2d-d243e6fc1303
+      id: 10eb9e90-a685-4532-b705-cbd396496288
     register: vip
     tags:
       - get_by_id

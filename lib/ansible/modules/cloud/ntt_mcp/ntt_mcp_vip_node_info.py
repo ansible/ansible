@@ -144,7 +144,7 @@ data:
                     returned: When the node has been created as an IPv6 node
                     sample: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:0001"
                 id:
-                    description:  The UUID of the node
+                    description: The UUID of the node
                     type: str
                     sample: "b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae"
                 connectionRateLimit:
@@ -160,9 +160,9 @@ data:
                     type: complex
                     contains:
                         id:
-                            description:
+                            description: The UUID of the Health Monitor
                             type: str
-                            sample: The UUID of the Health Monitor
+                            sample: "b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae"
                         name:
                             description: The Health Monitor display name
                             type: str

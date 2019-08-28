@@ -98,7 +98,7 @@
       region: na
       datacenter: NA12
       network_domain: myCND
-      id: d0e2e8db-9c55-4797-bcf8-d652b343f934
+      id: 9b7ad217-adc0-440f-8dc3-aa796edb9969
     register: ssl
     tags:
       - get_cert_by_id
@@ -113,7 +113,7 @@
       region: na
       datacenter: NA12
       network_domain: myCND
-      id: dfe87fc5-6048-41aa-b611-3536bfd17af0
+      id: 7973b0f1-c84d-45da-87ce-a0dcfa86ed4f
       type: chain
     register: ssl
     tags:
@@ -129,7 +129,7 @@
       region: na
       datacenter: NA12
       network_domain: myCND
-      id: eea2211f-24cf-49a2-ab04-02ef8f907bdb
+      id: e978b764-f061-4951-ae46-51063490d6a4
       type: profile
     register: ssl
     tags:
