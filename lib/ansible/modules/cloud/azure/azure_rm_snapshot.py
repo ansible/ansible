@@ -311,16 +311,15 @@ class AzureRMSnapshots(AzureRMModuleBaseExt):
 
     def create_update_resource(self):
         # self.log('Creating / Updating the Snapshot instance {0}'.format(self.))
-
         try:
-            response = self.mgmt_client.query(self.url,
-                                              'PUT',
-                                              self.query_parameters,
-                                              self.header_parameters,
-                                              self.body,
-                                              self.status_code,
-                                              600,
-                                              30)
+            response = self.mgmt_client.query(url=self.url,
+                                              method='PUT',
+                                              query_parameters=self.query_parameters,
+                                              header_parameters=self.header_parameters,
+                                              body=self.body,
+                                              expected_status_codes=self.status_code,
+                                              polling_timeout=600,
+                                              polling_interval=30)
         except CloudError as exc:
             self.log('Error attempting to create the Snapshot instance.')
             self.fail('Error creating the Snapshot instance: {0}'.format(str(exc)))
@@ -336,14 +335,14 @@ class AzureRMSnapshots(AzureRMModuleBaseExt):
     def delete_resource(self):
         # self.log('Deleting the Snapshot instance {0}'.format(self.))
         try:
-            response = self.mgmt_client.query(self.url,
-                                              'DELETE',
-                                              self.query_parameters,
-                                              self.header_parameters,
-                                              None,
-                                              self.status_code,
-                                              600,
-                                              30)
+            response = self.mgmt_client.query(url=self.url,
+                                              method='DELETE',
+                                              query_parameters=self.query_parameters,
+                                              header_parameters=self.header_parameters,
+                                              body=None,
+                                              expected_status_codes=self.status_code,
+                                              polling_timeout=600,
+                                              polling_interval=30)
         except CloudError as e:
             self.log('Error attempting to delete the Snapshot instance.')
             self.fail('Error deleting the Snapshot instance: {0}'.format(str(e)))
@@ -354,14 +353,14 @@ class AzureRMSnapshots(AzureRMModuleBaseExt):
         # self.log('Checking if the Snapshot instance {0} is present'.format(self.))
         found = False
         try:
-            response = self.mgmt_client.query(self.url,
-                                              'GET',
-                                              self.query_parameters,
-                                              self.header_parameters,
-                                              None,
-                                              self.status_code,
-                                              600,
-                                              30)
+            response = self.mgmt_client.query(url=self.url,
+                                              method='GET',
+                                              query_parameters=self.query_parameters,
+                                              header_parameters=self.header_parameters,
+                                              body=None,
+                                              expected_status_codes=self.status_code,
+                                              polling_timeout=600,
+                                              polling_interval=30)
             found = True
             self.log("Response : {0}".format(response))
             # self.log("Snapshot instance : {0} found".format(response.name))
