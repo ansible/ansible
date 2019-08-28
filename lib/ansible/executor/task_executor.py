@@ -1015,24 +1015,98 @@ class TaskExecutor:
             self._play_context.prompt = self._connection.become.prompt
 
     def _get_action_handler(self, connection, templar):
-        '''
+        """
         Returns the correct action plugin to handle the requestion task action
-        '''
-
-        module_prefix = self._task.action.split('_')[0]
-
+        """
+        action_loader = self._shared_loader_obj.action_loader
         collections = self._task.collections
-
-        # let action plugin override module, fallback to 'normal' action plugin otherwise
-        if self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
-            handler_name = self._task.action
-        # FIXME: is this code path even live anymore? check w/ networking folks; it trips sometimes when it shouldn't
-        elif all((module_prefix in C.NETWORK_GROUP_MODULES, module_prefix in self._shared_loader_obj.action_loader)):
-            handler_name = module_prefix
+        # namespace.name.xxx_yyyy = xxx
+        module_prefix = self._task.action.split(".")[-1].split("_")[0]
+        # namespace.name.xxx_yyyy = namespace.name
+        collection_from_task = ".".join(self._task.action.split(".")[:-1])
+        if collection_from_task:
+            derived_collections = [collection_from_task]
         else:
-            # FUTURE: once we're comfortable with collections impl, preface this action with ansible.builtin so it can't be hijacked
-            handler_name = 'normal'
-            collections = None  # until then, we don't want the task's collection list to be consulted; use the builtin
+            derived_collections = None
+
+        # let action plugin override module, fallback to 'normal'
+        # action plugin otherwise
+        if action_loader.has_plugin(
+            self._task.action, collection_list=collections
+        ):
+            handler_name = self._task.action
+
+        # user has specified a network_os and a list of collections
+        elif all(
+            (
+                collections,
+                action_loader.has_plugin(
+                    self._play_context.network_os, collection_list=collections
+                ),
+            )
+        ):
+
+            handler_name = self._play_context.network_os
+            display.vvv(
+                "Found network platform handler using network_os and provided"
+                " collection list: %s"
+                % action_loader.find_plugin(
+                    self._play_context.network_os, collection_list=collections
+                ),
+                host=self._play_context.remote_addr,
+            )
+
+        # user has specified network_os, not specified collections
+        # default to using the module's local collection
+        # set the tasks collection to the module's collection name
+        elif all(
+            (
+                collections is None,
+                action_loader.has_plugin(
+                    self._play_context.network_os,
+                    collection_list=derived_collections,
+                ),
+            )
+        ):
+            handler_name = self._play_context.network_os
+            collections = derived_collections
+            display.vvv(
+                "Found network platform handler using network_os and"
+                " collection derived from task action: %s"
+                % action_loader.find_plugin(
+                    self._play_context.network_os,
+                    collection_list=derived_collections,
+                ),
+                host=self._play_context.remote_addr,
+            )
+
+        # user has not specified a network_os
+        # constrain this to NETWORK_GROUP_MODULES
+        # connection is local, no collection support here
+        # this stops working when the platform plugins are
+        # no longer in core and can be removed
+        elif all(
+            (
+                self._play_context.connection == "local",
+                module_prefix in C.NETWORK_GROUP_MODULES,
+                action_loader.has_plugin(module_prefix),
+            )
+        ):
+            handler_name = module_prefix
+            display.vvv(
+                "Found network platform handler module_prefix and"
+                " NETWORK_GROUP_MODULES lookup: %s"
+                % action_loader.find_plugin(module_prefix),
+                host=self._play_context.remote_addr,
+            )
+
+        else:
+            # FUTURE: once we're comfortable with collections impl, preface
+            # this action with ansible.builtin so it can't be hijacked
+            handler_name = "normal"
+            # # until then, we don't want the task's collection list
+            # to be consulted; use the builtin
+            collections = None
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,
@@ -1049,6 +1123,7 @@ class TaskExecutor:
             raise AnsibleError("the handler '%s' was not found" % handler_name)
 
         return handler
+
 
 
 def start_connection(play_context, variables):
