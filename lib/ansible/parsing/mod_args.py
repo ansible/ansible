@@ -121,8 +121,8 @@ class ModuleArgsParser:
         # store the valid Task/Handler attrs for quick access
         self._task_attrs = set(Task._valid_attrs.keys())
         self._task_attrs.update(set(Handler._valid_attrs.keys()))
-        # HACK: why is static not a FieldAttribute on task with a post-validate to bomb if not include/import?
-        self._task_attrs.add('static')
+        # HACK: why are these not FieldAttributes on task with a post-validate to check usage?
+        self._task_attrs.update(['local_action', 'static'])
         self._task_attrs = frozenset(self._task_attrs)
 
     def _split_module_string(self, module_string):
