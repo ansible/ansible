@@ -11,6 +11,7 @@ DOCUMENTATION = '''
     author:
       - Matthew Jones (@matburt)
       - Yunfan Zhang (@YunfanZhang42)
+      - Will Tome (@willtome)
     short_description: Ansible dynamic inventory plugin for Ansible Tower.
     version_added: "2.7"
     description:
@@ -72,6 +73,8 @@ DOCUMENTATION = '''
             env:
                 - name: TOWER_PARENT_GROUP
             required: False
+    requirements:
+        - networkx >= 2.3
 '''
 
 EXAMPLES = '''
@@ -163,7 +166,7 @@ class InventoryModule(BaseInventoryPlugin):
                 elif inv_graph.node[start]['type'] == 'group':
                     self.inventory.add_child(parent, start)
 
-            self.populate_inventory(inv_graph, parent)
+                self.populate_inventory(inv_graph, parent)
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
