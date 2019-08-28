@@ -288,9 +288,6 @@ class AnsibleCloudStackInstanceInfo(AnsibleCloudStack):
             'keypair': 'ssh_key',
             'hostname': 'host',
         }
-        self.info = {
-            'cloudstack_instance': None,
-        }
 
     def get_instance(self):
         instance = self.instance
