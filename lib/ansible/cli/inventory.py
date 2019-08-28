@@ -73,6 +73,7 @@ class InventoryCLI(CLI):
         action_group = self.parser.add_argument_group("Actions", "One of following must be used on invocation, ONLY ONE!")
         action_group.add_argument("--list", action="store_true", default=False, dest='list', help='Output all hosts info, works as inventory script')
         action_group.add_argument("--host", action="store", default=None, dest='host', help='Output specific host info, works as inventory script')
+        action_group.add_argument("--group", action="store", default=None, dest='group', help='Output specific group info, works as inventory script')
         action_group.add_argument("--graph", action="store_true", default=False, dest='graph',
                                   help='create inventory graph, if supplying pattern it must be a valid group name')
         self.parser.add_argument_group(action_group)
@@ -102,13 +103,13 @@ class InventoryCLI(CLI):
 
         # there can be only one! and, at least, one!
         used = 0
-        for opt in (options.list, options.host, options.graph):
+        for opt in (options.list, options.host, options.group, options.graph):
             if opt:
                 used += 1
         if used == 0:
-            raise AnsibleOptionsError("No action selected, at least one of --host, --graph or --list needs to be specified.")
+            raise AnsibleOptionsError("No action selected, at least one of --host, --group, --graph or --list needs to be specified.")
         elif used > 1:
-            raise AnsibleOptionsError("Conflicting options used, only one of --host, --graph or --list can be used at the same time.")
+            raise AnsibleOptionsError("Conflicting options used, only one of --host, --group, --graph or --list can be used at the same time.")
 
         # set host pattern to default if not supplied
         if options.args:
@@ -140,6 +141,8 @@ class InventoryCLI(CLI):
             results = self.inventory_graph()
         elif context.CLIARGS['list']:
             top = self._get_group('all')
+        elif context.CLIARGS['group']:
+            top = self._get_group(context.CLIARGS['group'])
             if context.CLIARGS['yaml']:
                 results = self.yaml_inventory(top)
             elif context.CLIARGS['toml']:
