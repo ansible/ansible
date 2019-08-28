@@ -203,7 +203,7 @@ options:
                 type: str
             query_v1_port:
                 description:
-                    - SNMP v1 query port (default = 161).
+                    - SNMP v1 query port .
                 type: int
             query_v1_status:
                 description:
@@ -214,7 +214,7 @@ options:
                     - disable
             query_v2c_port:
                 description:
-                    - SNMP v2c query port (default = 161).
+                    - SNMP v2c query port .
                 type: int
             query_v2c_status:
                 description:
@@ -232,11 +232,11 @@ options:
                     - disable
             trap_v1_lport:
                 description:
-                    - SNMP v1 trap local port (default = 162).
+                    - SNMP v1 trap local port .
                 type: int
             trap_v1_rport:
                 description:
-                    - SNMP v1 trap remote port (default = 162).
+                    - SNMP v1 trap remote port .
                 type: int
             trap_v1_status:
                 description:
@@ -247,11 +247,11 @@ options:
                     - disable
             trap_v2c_lport:
                 description:
-                    - SNMP v2c trap local port (default = 162).
+                    - SNMP v2c trap local port .
                 type: int
             trap_v2c_rport:
                 description:
-                    - SNMP v2c trap remote port (default = 162).
+                    - SNMP v2c trap remote port .
                 type: int
             trap_v2c_status:
                 description:
