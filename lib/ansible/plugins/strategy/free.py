@@ -47,6 +47,9 @@ display = Display()
 
 class StrategyModule(StrategyBase):
 
+    # This strategy manages throttling on its own, so we don't want it done in queue_task
+    ALLOW_BASE_THROTTLING = False
+
     def _filter_notified_hosts(self, notified_hosts):
         '''
         Filter notified hosts accordingly to strategy
@@ -118,7 +121,31 @@ class StrategyModule(StrategyBase):
                     display.debug("this host has work to do", host=host_name)
 
                     # check to see if this host is blocked (still executing a previous task)
-                    if host_name not in self._blocked_hosts or not self._blocked_hosts[host_name]:
+                    if (host_name not in self._blocked_hosts or not self._blocked_hosts[host_name]):
+
+                        display.debug("getting variables", host=host_name)
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task,
+                                                                    _hosts=self._hosts_cache,
+                                                                    _hosts_all=self._hosts_cache_all)
+                        self.add_tqm_variables(task_vars, play=iterator._play)
+                        templar = Templar(loader=self._loader, variables=task_vars)
+                        display.debug("done getting variables", host=host_name)
+
+                        try:
+                            throttle = int(templar.template(task.throttle))
+                        except Exception as e:
+                            raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
+
+                        if throttle > 0:
+                            same_tasks = 0
+                            for worker in self._workers:
+                                if worker and worker.is_alive() and worker._task._uuid == task._uuid:
+                                    same_tasks += 1
+
+                            display.debug("task: %s, same_tasks: %d" % (task.get_name(), same_tasks))
+                            if same_tasks >= throttle:
+                                break
+
                         # pop the task, mark the host blocked, and queue it
                         self._blocked_hosts[host_name] = True
                         (state, task) = iterator.get_next_task_for_host(host)
@@ -129,14 +156,6 @@ class StrategyModule(StrategyBase):
                             # we don't care here, because the action may simply not have a
                             # corresponding action plugin
                             action = None
-
-                        display.debug("getting variables", host=host_name)
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task,
-                                                                    _hosts=self._hosts_cache,
-                                                                    _hosts_all=self._hosts_cache_all)
-                        self.add_tqm_variables(task_vars, play=iterator._play)
-                        templar = Templar(loader=self._loader, variables=task_vars)
-                        display.debug("done getting variables", host=host_name)
 
                         try:
                             task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
