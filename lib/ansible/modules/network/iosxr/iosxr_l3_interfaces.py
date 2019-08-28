@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat Inc.
 # GNU General Public License v3.0+
@@ -44,6 +45,7 @@ author: Sumit Jaiswal (@justjais)
 notes:
   - Tested against Cisco IOS-XRv Version 6.1.3 on VIRL.
   - This module works with connection C(network_cli).
+    See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
 options:
   config:
     description: A dictionary of Layer-3 interface options
@@ -60,6 +62,7 @@ options:
         - IPv4 address to be set for the Layer-3 interface mentioned in I(name) option.
         - The address format is <ipv4 address>/<mask>, the mask is number in range 0-32
           eg. 192.168.0.1/24
+        type: list
         suboptions:
           address:
             description:
@@ -74,6 +77,7 @@ options:
         - IPv6 address to be set for the Layer-3 interface mentioned in I(name) option.
         - The address format is <ipv6 address>/<mask>, the mask is number in range 0-128
           eg. fd5d:12c9:2201:1::1/64
+        type: list
         suboptions:
           address:
             description:

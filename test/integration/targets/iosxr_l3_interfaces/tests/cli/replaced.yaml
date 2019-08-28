@@ -10,17 +10,15 @@
     - name: Replaces device configuration of listed interfaces with provided configuration
       iosxr_l3_interfaces: &replaced
         config:
+          - name: GigabitEthernet0/0/0/1
+            ipv4:
+            - address: 203.0.113.27/24
           - name: GigabitEthernet0/0/0/2
             ipv4:
-            - address: 192.168.2.2/24
-          - name: GigabitEthernet0/0/0/3
-            ipv4:
-            - address: 192.168.3.1/24
-              secondary: True
-            - address: 192.168.4.1/24
+            - address: 192.10.1.14/24
           - name: preconfigure GigabitEthernet0/0/0/3.100
             ipv4:
-            - address: 192.168.7.2/24
+            - address: 192.10.7.2/24
         state: replaced
       register: result
 

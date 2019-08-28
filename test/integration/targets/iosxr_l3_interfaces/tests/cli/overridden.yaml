@@ -12,14 +12,12 @@
         config:
           - name: GigabitEthernet0/0/0/3
             ipv4:
-            - address: 192.168.1.1/24
-            - address: 192.168.2.2/24
-              secondary: True
-          - name: preconfigure GigabitEthernet0/0/0/3.100
+            - address: 203.0.112.24/24
+          - name: GigabitEthernet0/0/0/3.100
             ipv4:
             - address: 192.168.5.1/24
             ipv6:
-            - address: fd5d:12c9:2201:1::1/64
+            - address: FD05::/64
         state: overridden
       register: result
 

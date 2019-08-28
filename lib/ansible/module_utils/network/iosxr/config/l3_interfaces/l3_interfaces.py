@@ -273,7 +273,7 @@ class L3_Interfaces(ConfigBase):
         if have.get('ipv4') and want.get('ipv4'):
             for each in have.get('ipv4'):
                 if each.get('secondary') and not (want.get('ipv4')[count].get('secondary')):
-                    cmd = 'ipv4 address {} secondary'.format(each.get('address'))
+                    cmd = 'ipv4 address {0} secondary'.format(each.get('address'))
                     remove_command_from_config_list(interface, cmd, commands)
                 count += 1
         if have.get('ipv4') and not (want.get('ipv4')):

@@ -5,17 +5,17 @@ merged:
 
   commands:
     - "interface GigabitEthernet0/0/0/2"
-    - "ip address 192.168.0.2 255.255.255.0"
+    - "ip address 192.0.1.1 255.255.255.0"
     - "interface GigabitEthernet0/0/0/3"
-    - "ip address 192.168.1.1 255.255.255.0"
-    - "ip address 192.168.2.1 255.255.255.0 secondary"
-    - "ipv6 address fd5d:12c9:2001:1::1/64"
+    - "ip address 192.0.2.1 255.255.255.0"
+    - "ip address 192.0.3.2 255.255.255.0 secondary"
+    - "ipv6 address 2001:DB8:ACAD:1::/64"
     - "interface GigabitEthernet0/0/0/4"
-    - "ip address 192.168.7.1 255.255.255.0"
-    - "ip address 192.168.8.1 255.255.255.0 secondary"
+    - "ip address 192.0.2.12 255.255.255.0"
+    - "ip address 192.100.10.2 255.255.255.0 secondary"
     - "interface preconfigure GigabitEthernet0/0/0/3.100"
-    - "ip address 192.168.4.1 255.255.255.0"
-    - "ipv6 address fd5d:12c9:2201:1::1/64"
+    - "ip address 198.51.100.14 255.255.255.0"
+    - "ipv6 address FD05::/64"
 
   after:
     - name: GigabitEthernet0/0/0/0
@@ -44,77 +44,84 @@ replaced:
   before:
     - name: GigabitEthernet0/0/0/0
     - ipv4:
-      - address: 192.168.1.1 255.255.255.0
+      - address: 192.0.1.1 255.255.255.0
+      name: GigabitEthernet0/0/0/1
+    - ipv4:
+      - address: 192.0.2.1 255.255.255.0
+      - address: 192.0.3.2 255.255.255.0
+        secondary: true
       name: GigabitEthernet0/0/0/2
     - ipv4:
-      - address: 192.168.2.1 255.255.255.0
-      - address: 192.168.2.2 255.255.255.0
-        secondary: true
+      - address: 192.0.2.12 255.255.255.0
+      ipv6:
+      - address: 2001:db8:acad:1::/64
       name: GigabitEthernet0/0/0/3
     - ipv4:
-      - address: 192.168.4.1 255.255.255.0
-      ipv6:
-      - address: fd5d:12c9:2201:1::1/64
-      name: GigabitEthernet0/0/0/4
+      - address: 198.51.100.14 255.255.255.0
+      name: GigabitEthernet0/0/0/3.100
     - ipv4:
-      - address: 192.168.3.1 255.255.255.0
-      name: preconfigure GigabitEthernet0/0/0/3.100
+      - address: 192.10.7.2 255.255.255.0
+      ipv6:
+      - address: fd05::/64
+      name: GigabitEthernet0/0/0/3.100
 
   commands:
+    - "interface GigabitEthernet0/0/0/1"
+    - "ip address 203.0.113.27 255.255.255.0"
     - "interface GigabitEthernet0/0/0/2"
-    - "ip address 192.168.2.2 255.255.255.0"
-    - "interface GigabitEthernet0/0/0/3"
-    - "ip address 192.168.3.1 255.255.255.0 secondary"
-    - "ip address 192.168.4.1 255.255.255.0"
+    - "ip address 192.10.1.14 255.255.255.0"
     - "interface preconfigure GigabitEthernet0/0/0/3.100"
-    - "ip address 192.168.7.2 255.255.255.0"
+    - "ip address 192.10.7.2 255.255.255.0"
 
   after:
     - name: GigabitEthernet0/0/0/0
     - ipv4:
-      - address: 192.168.2.2 255.255.255.0
+      - address: 203.0.113.27 255.255.255.0
+      name: GigabitEthernet0/0/0/1
+    - ipv4:
+      - address: 192.10.1.14 255.255.255.0
+      - address: 192.0.3.2 255.255.255.0
+        secondary: true
       name: GigabitEthernet0/0/0/2
     - ipv4:
-      - address: 192.168.4.1 255.255.255.0
-      - address: 192.168.2.2 255.255.255.0
-        secondary: true
-      - address: 192.168.3.1 255.255.255.0
-        secondary: true
+      - address: 192.0.2.12 255.255.255.0
+      ipv6:
+      - address: 2001:db8:acad:1::/64
       name: GigabitEthernet0/0/0/3
     - ipv4:
-      - address: 192.168.4.1 255.255.255.0
-      ipv6:
-      - address: fd5d:12c9:2201:1::1/64
-      name: GigabitEthernet0/0/0/4
+      - address: 198.51.100.14 255.255.255.0
+      name: GigabitEthernet0/0/0/3.100
     - ipv4:
-      - address: 192.168.7.2 255.255.255.0
-      name: preconfigure GigabitEthernet0/0/0/3.100
+      - address: 192.10.7.2 255.255.255.0
+      ipv6:
+      - address: fd05::/64
+      name: GigabitEthernet0/0/0/3.100
 
 overridden:
   before:
     - name: GigabitEthernet0/0/0/0
     - ipv4:
-      - address: 192.168.1.1 255.255.255.0
+      - address: 192.0.1.1 255.255.255.0
       name: GigabitEthernet0/0/0/2
     - ipv4:
-      - address: 192.168.2.1 255.255.255.0
-      - address: 192.168.2.2 255.255.255.0
+      - address: 192.0.2.1 255.255.255.0
+      - address: 192.0.3.2 255.255.255.0
         secondary: true
       name: GigabitEthernet0/0/0/3
     - ipv4:
-      - address: 192.168.4.1 255.255.255.0
+      - address: 192.0.2.12 255.255.255.0
       ipv6:
-      - address: fd5d:12c9:2201:1::1/64
+      - address: 2001:DB8:ACAD:1::/64
       name: GigabitEthernet0/0/0/4
     - ipv4:
-      - address: 192.168.3.1 255.255.255.0
+      - address: 198.51.100.14 255.255.255.0
       name: preconfigure GigabitEthernet0/0/0/3.100
 
   commands:
     - "interface GigabitEthernet0/0/0/2"
     - "no ipv4 address"
     - "interface GigabitEthernet0/0/0/3"
-    - "ip address 192.168.1.1 255.255.255.0"
+    - "ip address 203.0.112.24 255.255.255.0"
     - "interface GigabitEthernet0/0/0/4"
     - "no ipv4 address"
     - "no ipv6 address"
@@ -125,47 +132,53 @@ overridden:
   after:
     - name: GigabitEthernet0/0/0/0
     - ipv4:
-      - address: 192.168.1.1 255.255.255.0
-      - address: 192.168.2.1 255.255.255.0
-        secondary: true
+      - address: 203.0.112.24 255.255.255.0
       name: GigabitEthernet0/0/0/3
     - ipv4:
       - address: 192.168.5.1 255.255.255.0
       ipv6:
-      - address: fd5d:12c9:2201:1::1/64
+      - address: FD05::/64
       name: preconfigure GigabitEthernet0/0/0/3.100
 
 deleted:
   before:
     - name: GigabitEthernet0/0/0/0
     - ipv4:
-      - address: 192.168.1.1 255.255.255.0
+      - address: 192.0.1.1 255.255.255.0
+      name: GigabitEthernet0/0/0/1
+    - ipv4:
+      - address: 192.0.2.1 255.255.255.0
+      - address: 192.0.3.2 255.255.255.0
+        secondary: true
       name: GigabitEthernet0/0/0/2
     - ipv4:
-      - address: 192.168.2.1 255.255.255.0
-      - address: 192.168.2.2 255.255.255.0
-        secondary: true
+      - address: 192.0.2.12 255.255.255.0
+      ipv6:
+      - address: 2001:db8:acad:1::/64
       name: GigabitEthernet0/0/0/3
     - ipv4:
-      - address: 192.168.4.1 255.255.255.0
-      ipv6:
-      - address: fd5d:12c9:2201:1::1/64
-      name: GigabitEthernet0/0/0/4
+      - address: 198.51.100.14 255.255.255.0
+      name: GigabitEthernet0/0/0/3.100
     - ipv4:
-      - address: 192.168.3.1 255.255.255.0
-      name: preconfigure GigabitEthernet0/0/0/3.100
+      - address: 192.10.7.2 255.255.255.0
+      ipv6:
+      - address: fd05::/64
+      name: GigabitEthernet0/0/0/3.100
 
   commands:
+    - "interface GigabitEthernet0/0/0/1"
+    - "no ipv4 address"
     - "interface GigabitEthernet0/0/0/2"
     - "no ipv4 address"
     - "interface GigabitEthernet0/0/0/3"
     - "no ipv4 address"
-    - "interface GigabitEthernet0/0/0/4"
+    - "no ipv6 address"
+    - "interface GigabitEthernet0/0/0/3.100"
     - "no ipv4 address"
     - "no ipv6 address"
-    - "interface preconfigure GigabitEthernet0/0/0/3.100"
-    - "no ipv4 address"
 
   after:
-    - name: GigabitEthernet0/0/0/0
-    - name: preconfigure GigabitEthernet0/0/0/3.100
+    - name: GigabitEthernet0/0/0/2
+    - name: GigabitEthernet0/0/0/3
+    - name: GigabitEthernet0/0/0/3.100
+    - name: GigabitEthernet0/0/0/4

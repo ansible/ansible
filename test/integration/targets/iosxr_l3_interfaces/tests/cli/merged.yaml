@@ -10,24 +10,24 @@
         config:
           - name: GigabitEthernet0/0/0/2
             ipv4:
-            - address: 192.168.0.2/24
+            - address: 192.0.1.1/24
           - name: GigabitEthernet0/0/0/3
             ipv6:
-            - address: fd5d:12c9:2001:1::1/64
+            - address: 2001:DB8:ACAD:1::/64
             ipv4:
-            - address: 192.168.1.1/24
-            - address: 192.168.2.1/24
+            - address: 192.0.2.1/24
+            - address: 192.0.3.2/24
               secondary: True
           - name: GigabitEthernet0/0/0/4
             ipv4:
-            - address: 192.168.7.1/24
-            - address: 192.168.8.1/24
+            - address: 192.0.2.12/24
+            - address: 192.100.10.2/24
               secondary: True
           - name: preconfigure GigabitEthernet0/0/0/3.100
             ipv4:
-            - address: 192.168.4.1/24
+            - address: 198.51.100.14/24
             ipv6:
-            - address: fd5d:12c9:2201:1::1/64
+            - address: FD05::/64
         state: merged
       register: result
 

@@ -13,7 +13,7 @@
           - name: GigabitEthernet0/0/0/2
           - name: GigabitEthernet0/0/0/3
           - name: GigabitEthernet0/0/0/4
-          - name: preconfigure GigabitEthernet0/0/0/3.100
+          - name: GigabitEthernet0/0/0/3.100
         state: deleted
       register: result
 

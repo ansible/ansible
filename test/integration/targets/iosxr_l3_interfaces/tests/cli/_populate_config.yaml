@@ -4,13 +4,13 @@
     config: "{{ lines }}"
   vars:
     lines: |
+      interface GigabitEthernet 0/0/0/1
+      ipv4 address 192.0.1.1 255.255.255.0
       interface GigabitEthernet 0/0/0/2
-      ip address 192.168.1.1 255.255.255.0
+      ipv4 address 192.0.2.1 255.255.255.0
+      ipv4 address 192.0.3.2 255.255.255.0 secondary
       interface GigabitEthernet 0/0/0/3
-      ip address 192.168.2.1 255.255.255.0
-      ip address 192.168.2.2 255.255.255.0 secondary
-      interface GigabitEthernet 0/0/0/4
-      ip address 192.168.4.1 255.255.255.0
-      ipv6 address fd5d:12c9:2201:1::1/64
-      interface preconfigure GigabitEthernet 0/0/0/3.100
-      ip address 192.168.3.1 255.255.255.0
+      ipv4 address 192.0.2.12 255.255.255.0
+      ipv6 address 2001:DB8:ACAD:1::/64
+      interface GigabitEthernet 0/0/0/3.100
+      ipv4 address 198.51.100.14 255.255.255.0
