@@ -164,7 +164,7 @@ To double-interpolate variable values, use curly braces:
 Nested variables
 ^^^^^^^^^^^^^^^^
 
-The ``conditional_bare_variables`` setting does not affect nested variables. Any string value assigned to a subkey is already respected and not treated as a boolean: ``when: complex_variable['any string']`` is always ``True`` and ``when: not complex_variable['any string']`` is always ``False``. If you want a string subkey like ``complex_variable['false']`` to be evaluated as a boolean you must use the ``bool`` filter.
+The ``conditional_bare_variables`` setting does not affect nested variables. Any string value assigned to a subkey is already respected and not treated as a boolean: ``when: complex_variable['any non-empty string']`` is always ``True`` and ``when: not complex_variable['any non-empty string']`` is always ``False``. If you want a string subkey like ``complex_variable['false']`` to be evaluated as a boolean you must use the ``bool`` filter.
 
 Python Interpreter Discovery
 ============================
