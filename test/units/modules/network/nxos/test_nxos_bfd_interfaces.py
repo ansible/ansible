@@ -86,7 +86,7 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
           interface Ethernet1/2
           interface Ethernet1/3
         ''')
-        self.get_resource_connection_facts.return_value = { self.SHOW_CMD: existing }
+        self.get_resource_connection_facts.return_value = { self.SHOW_CMD : existing }
         playbook = dict(config=[
             dict(
                 name='Ethernet1/1',
@@ -97,8 +97,8 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
                 bfd='disable'),
         ])
         # Expected result commands for each 'state'
-        merged = [ 'interface Ethernet1/1', 'no bfd', 'no bfd echo',
-                   'interface Ethernet1/2', 'no bfd']
+        merged = ['interface Ethernet1/1', 'no bfd', 'no bfd echo',
+                  'interface Ethernet1/2', 'no bfd']
         deleted = []
         overridden = merged
         replaced = merged
@@ -131,7 +131,7 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
             no bfd
             no bfd echo
         ''')
-        self.get_resource_connection_facts.return_value = { self.SHOW_CMD: existing }
+        self.get_resource_connection_facts.return_value = {self.SHOW_CMD: existing}
         playbook = dict(config=[
             dict(
                 name='Ethernet1/1',
@@ -143,7 +143,7 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
             # replaced should ignore Eth1/3.
         ])
         # Expected result commands for each 'state'
-        merged = [ 'interface Ethernet1/1', 'bfd', 'no bfd echo' ]
+        merged = ['interface Ethernet1/1', 'bfd', 'no bfd echo']
         deleted = [ 'interface Ethernet1/1', 'bfd',
                     'interface Ethernet1/2', 'bfd echo' ]
         overridden = [ 'interface Ethernet1/1', 'bfd',
