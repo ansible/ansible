@@ -27,7 +27,7 @@ module: fortios_system_email_server
 short_description: Configure the email server used by the FortiGate various things. For example, for sending email messages to users to support user
    authentication features in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify system feature and email_server category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.5
@@ -121,7 +121,7 @@ options:
                 type: str
             ssl_min_proto_version:
                 description:
-                    - Minimum supported protocol version for SSL/TLS connections (default is to follow system global setting).
+                    - Minimum supported protocol version for SSL/TLS connections .
                 type: str
                 choices:
                     - default
@@ -317,7 +317,7 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
@@ -350,6 +350,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None
