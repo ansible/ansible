@@ -523,15 +523,12 @@ class IntegrationTarget(CompletionTarget):
         contents = [os.path.basename(p) for p in data_context().content.get_files(path)]
 
         runme_files = tuple(c for c in contents if os.path.splitext(c)[0] == 'runme')
-        test_files = tuple(c for c in contents if os.path.splitext(c)[0] == 'test')
 
         self.script_path = None
 
         if runme_files:
             self.type = 'script'
             self.script_path = os.path.join(path, runme_files[0])
-        elif test_files:
-            self.type = 'special'
         elif os.path.isdir(os.path.join(path, 'tasks')) or os.path.isdir(os.path.join(path, 'defaults')):
             self.type = 'role'
         else:
