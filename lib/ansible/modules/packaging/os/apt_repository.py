@@ -45,14 +45,13 @@ options:
         default: "yes"
     update_cache_retries:
         description:
-            - Amount of update cache retries in case of failed fetches.
-            - Each retry count is used as potency for 2 to calculate the delay between the next retry (1, 2, 4, 8, ...), also see C(update_cache_retry_max_delay).
+        - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
         type: int
         default: 5
         version_added: '2.9'
     update_cache_retry_max_delay:
         description:
-            - The max. delay between cache update reries, also see the C(update_cache_retries) option.
+        - Use an exponential backoff delay for each retry (see I(update_cache_retries)) up to this max. delay in seconds.
         type: int
         default: 12
         version_added: '2.9'
@@ -573,11 +572,11 @@ def main():
             sourceslist.save()
             if update_cache:
                 err = ''
-                retries = module.params.get('update_cache_retries')
-                max_delay = module.params.get('update_cache_retry_max_delay')
-                randint = random.randint(0, 1000) / 1000
+                update_cache_retries = module.params.get('update_cache_retries')
+                update_cache_retry_max_delay = module.params.get('update_cache_retry_max_delay')
+                randomize = random.randint(0, 1000) / 1000.0
 
-                for retry in range(retries):
+                for retry in range(update_cache_retries):
                     try:
                         cache = apt.Cache()
                         cache.update()
@@ -586,13 +585,13 @@ def main():
                         err = to_native(e)
 
                     # Use exponential backoff with a max fail count, plus a little bit of randomness
-                    delay = 2 ** retry + randint
-                    if delay > max_delay:
-                        delay = max_delay + randint
+                    delay = 2 ** retry + randomize
+                    if delay > update_cache_retry_max_delay:
+                        delay = update_cache_retry_max_delay + randomize
                     time.sleep(delay)
                 else:
                     revert_sources_list(sources_before, sources_after, sourceslist_before)
-                    module.fail_json(msg='Failed to update apt cache: %s' % err)
+                    module.fail_json(msg='Failed to update apt cache: %s' % (err if err else 'unknown reason'))
 
         except (OSError, IOError) as err:
             revert_sources_list(sources_before, sources_after, sourceslist_before)
