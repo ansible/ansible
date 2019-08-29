@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_roledefinition_info
-version_added: "2.8"
+version_added: "2.9"
 short_description: Get Azure Role Definition facts
 description:
     - Get facts of Azure Role Definition.
@@ -178,14 +178,13 @@ class AzureRMRoleDefinitionInfo(AzureRMModuleBase):
         self._client = None
 
         super(AzureRMRoleDefinitionInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                         supports_tags=False)
+                                                        supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
         is_old_facts = self.module._name == 'azure_rm_roledefinition_facts'
         if is_old_facts:
             self.module.deprecate("The 'azure_rm_roledefinition_facts' module has been renamed to 'azure_rm_roledefinition_info'", version='2.13')
-
 
         for key in list(self.module_arg_spec.keys()):
             if hasattr(self, key):

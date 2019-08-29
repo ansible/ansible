@@ -259,14 +259,13 @@ class AzureRMWebAppInfo(AzureRMModuleBase):
         self.framework_names = ['net_framework', 'java', 'php', 'node', 'python', 'dotnetcore', 'ruby']
 
         super(AzureRMWebAppInfo, self).__init__(self.module_arg_spec,
-                                                 supports_tags=False,
-                                                 facts_module=True)
+                                                supports_tags=False,
+                                                facts_module=True)
 
     def exec_module(self, **kwargs):
         is_old_facts = self.module._name == 'azure_rm_webapp_facts'
         if is_old_facts:
             self.module.deprecate("The 'azure_rm_webapp_facts' module has been renamed to 'azure_rm_webapp_info'", version='2.13')
-
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])

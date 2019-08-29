@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_trafficmanagerprofile_info
 
-version_added: "2.7"
+version_added: "2.9"
 
 short_description: Get Azure Traffic Manager profile facts
 
@@ -310,7 +310,6 @@ class AzureRMTrafficManagerProfileInfo(AzureRMModuleBase):
         is_old_facts = self.module._name == 'azure_rm_trafficmanagerprofile_facts'
         if is_old_facts:
             self.module.deprecate("The 'azure_rm_trafficmanagerprofile_facts' module has been renamed to 'azure_rm_trafficmanagerprofile_info'", version='2.13')
-
 
         for key in self.module_args:
             setattr(self, key, kwargs[key])

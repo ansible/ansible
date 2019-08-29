@@ -159,15 +159,14 @@ class AzureRMRoleAssignmentInfo(AzureRMModuleBase):
         mutually_exclusive = [['name', 'assignee']]
 
         super(AzureRMRoleAssignmentInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                         supports_tags=False,
-                                                         mutually_exclusive=mutually_exclusive)
+                                                        supports_tags=False,
+                                                        mutually_exclusive=mutually_exclusive)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
         is_old_facts = self.module._name == 'azure_rm_roleassignment_facts'
         if is_old_facts:
             self.module.deprecate("The 'azure_rm_roleassignment_facts' module has been renamed to 'azure_rm_roleassignment_info'", version='2.13')
-
 
         for key in list(self.module_arg_spec.keys()):
             if hasattr(self, key):

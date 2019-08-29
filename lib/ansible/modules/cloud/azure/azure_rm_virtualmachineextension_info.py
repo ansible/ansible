@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_virtualmachineextension_info
-version_added: "2.8"
+version_added: "2.9"
 short_description: Get Azure Virtual Machine Extension facts
 description:
     - Get facts of Azure Virtual Machine Extension.
@@ -176,7 +176,8 @@ class AzureRMVirtualMachineExtensionInfo(AzureRMModuleBase):
     def exec_module(self, **kwargs):
         is_old_facts = self.module._name == 'azure_rm_virtualmachineextension_facts'
         if is_old_facts:
-            self.module.deprecate("The 'azure_rm_virtualmachineextension_facts' module has been renamed to 'azure_rm_virtualmachineextension_info'", version='2.13')
+            self.module.deprecate("The 'azure_rm_virtualmachineextension_facts' module has been renamed to 'azure_rm_virtualmachineextension_info'",
+                                  version='2.13')
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
