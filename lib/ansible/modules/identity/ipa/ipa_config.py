@@ -29,7 +29,7 @@ options:
     description: list of ipa group object classes
     aliases: ["groupobjectclasses"]
     type: list
-    version_added: "2.8"
+    version_added: "2.9"
 extends_documentation_fragment: ipa.documentation
 version_added: "2.7"
 '''
