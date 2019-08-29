@@ -117,6 +117,10 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.13. Please update update your playbooks accordingly.
 
+* cs_instance_facts use :ref:`cs_instance_info <cs_instance_info_module>` instead.
+
+* cs_zone_facts use :ref:`cs_zone_info <cs_zone_info_module>` instead.
+
 * digital_ocean_sshkey_facts use :ref:`digital_ocean_sshkey_info <digital_ocean_sshkey_info_module>` instead.
 
 * junos_interface use :ref:`junos_interfaces <junos_interfaces_module>` instead.

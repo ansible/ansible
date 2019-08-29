@@ -52,11 +52,11 @@
     - instance is successful
     - instance.state == 'Stopped'
 
-- name: setup get instance facts
-  cs_instance_facts:
+- name: setup get instance info
+  cs_instance_info:
     name: "{{ test_cs_instance_3 }}"
   register: instance
-- name: verify setup get instance facts
+- name: verify setup get instance info
   assert:
     that:
     - instance is successful
@@ -65,7 +65,7 @@
   cs_volume:
     zone: "{{ cs_common_zone_adv }}"
     state: extracted
-    name: "{{ instance.volumes[0].name }}"
+    name: "{{ instance.instances[0].volumes[0].name }}"
   check_mode: yes
   register: extracted_vol
 - name: verify test extract volume in check mode
@@ -74,14 +74,14 @@
     - extracted_vol is successful
     - extracted_vol is changed
     - extracted_vol.state == "Ready"
-    - extracted_vol.name == "{{ instance.volumes[0].name }}"
+    - extracted_vol.name == "{{ instance.instances[0].volumes[0].name }}"
     - extracted_vol.url is not defined
 
 - name: test extract volume
   cs_volume:
     zone: "{{ cs_common_zone_adv }}"
     state: extracted
-    name: "{{ instance.volumes[0].name }}"
+    name: "{{ instance.instances[0].volumes[0].name }}"
   register: extracted_vol
 - name: verify test extract volume
   assert:
@@ -89,7 +89,7 @@
     - extracted_vol is successful
     - extracted_vol is changed
     - extracted_vol.state == "DOWNLOAD_URL_CREATED"
-    - extracted_vol.name == "{{ instance.volumes[0].name }}"
+    - extracted_vol.name == "{{ instance.instances[0].volumes[0].name }}"
     - extracted_vol.url is defined
 
 - name: test upload volume with missing param
