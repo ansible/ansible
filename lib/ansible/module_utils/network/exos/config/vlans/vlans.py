@@ -17,6 +17,7 @@ from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, dict_diff
 from ansible.module_utils.network.exos.facts.facts import Facts
 from ansible.module_utils.network.exos.exos import send_requests
+from ansible.module_utils.network.exos.utils.utils import search_obj_in_list
 
 class Vlans(ConfigBase):
     """
@@ -33,7 +34,7 @@ class Vlans(ConfigBase):
     ]
 
     VLAN_POST = {
-        "data": {"openconfig-vlan:vlan": []},
+        "data": {"openconfig-vlan:vlans": []},
         "method": "POST",
         "path": "/rest/restconf/data/openconfig-vlan:vlans/"
     }
@@ -45,14 +46,14 @@ class Vlans(ConfigBase):
     } 
 
     VLAN_DELETE = {
-        "method": "DELETE"
+        "method": "DELETE",
         "path": None
     }
 
     DEL_PATH = "/rest/restconf/data/openconfig-vlan:vlans/vlan="
 
     REQUEST_BODY = {
-        "config": {"name": None , "status": None , "tpid": "oc-vlan-types:TPID_0x8100", "vlan-id": None }
+        "config": {"name": None , "status": "ACTIVE" , "tpid": "oc-vlan-types:TPID_0x8100", "vlan-id": None }
         }
 
     def __init__(self, module):
@@ -131,7 +132,6 @@ class Vlans(ConfigBase):
             requests = self._state_replaced(want, have)
         return requests
         
-    @staticmethod
     def _state_replaced(self, want, have):
         """ The command generator when state is replaced
 
@@ -141,32 +141,30 @@ class Vlans(ConfigBase):
         """
         requests = []
 
-        request_post = deepcopy(self.VLAN_POST)
         request_patch = deepcopy(self.VLAN_PATCH)
         request_body = deepcopy(self.REQUEST_BODY)
 
         for w in want:
             if w.get('vlan_id'):
-                h = self._search_vlan_in_list(w['vlan_id'], have)
+                h = search_obj_in_list(w['vlan_id'], have, 'vlan_id')
                 if h:
                     if dict_diff(w, h):
+                        request_body = deepcopy(self.REQUEST_BODY)
                         request_body = self._update_vlan_config_body(w, request_body)
                         request_patch["data"]["openconfig-vlan:vlans"]["vlan"].append(request_body)
                 else:
+                    request_post = deepcopy(self.VLAN_POST)
                     request_body = self._update_vlan_config_body(w, request_body)
                     request_post["data"]["openconfig-vlan:vlans"].append(request_body)            
+                    request_post["data"] = json.dumps(request_post["data"])
+                    requests.append(request_post)
 
         if len(request_patch["data"]["openconfig-vlan:vlans"]["vlan"]):
             request_patch["data"] = json.dumps(request_patch["data"])
             requests.append(request_patch)
         
-        if len(request_post["data"]["openconfig-vlan:vlans"]):
-            request_post["data"] = json.dumps(request_post["data"])
-            requests.append(request_post)              
-                            
         return requests
 
-    @staticmethod
     def _state_overridden(self, want, have):
         """ The command generator when state is overridden
 
@@ -176,26 +174,28 @@ class Vlans(ConfigBase):
         """
         requests = []
 
-        request_post = deepcopy(self.VLAN_POST)
         request_patch = deepcopy(self.VLAN_PATCH)
         request_body = deepcopy(self.REQUEST_BODY)
-        request_delete = deepcopy(self.VLAN_DELETE)
         have_copy = []
         for w in want:
             if w.get('vlan_id'):
-                h = self._search_vlan_in_list(w['vlan_id'], have)
+                h = search_obj_in_list(w['vlan_id'], have, 'vlan_id')
                 if h:
                     if dict_diff(w, h):
+                        request_body = deepcopy(self.REQUEST_BODY)
                         request_body = self._update_vlan_config_body(w, request_body)
                         request_patch["data"]["openconfig-vlan:vlans"]["vlan"].append(request_body)
                     have_copy.append(h)
                 else:
+                    request_post = deepcopy(self.VLAN_POST)
                     request_body = self._update_vlan_config_body(w, request_body)
                     request_post["data"]["openconfig-vlan:vlans"].append(request_body)            
+                    request_post["data"] = json.dumps(request_post["data"])
+                    requests.append(request_post)
         
-        have_del = list(set(have)-set(have_copy))
-        if have_del:
-            for h in have_del:
+        for h in have:
+            request_delete = deepcopy(self.VLAN_DELETE)
+            if h not in have_copy and h['vlan_id'] != 1:
                 request_delete["path"] = self.DEL_PATH + str(h['vlan_id'])
                 requests.append(request_delete)
 
@@ -203,13 +203,8 @@ class Vlans(ConfigBase):
             request_patch["data"] = json.dumps(request_patch["data"])
             requests.append(request_patch)
         
-        if len(request_post["data"]["openconfig-vlan:vlans"]):
-            request_post["data"] = json.dumps(request_post["data"])
-            requests.append(request_post)
-        
         return requests
 
-    @staticmethod
     def _state_merged(self, want, have):
         """ The command generator when state is merged
 
@@ -219,21 +214,22 @@ class Vlans(ConfigBase):
         """
         requests = []
 
-        request_post = deepcopy(self.VLAN_POST)
         request_body = deepcopy(self.REQUEST_BODY)
 
-        for w in want: 
+        for w in want:
             if w.get('vlan_id'):
-                request_body = self._update_vlan_config_body(w, request_body)
-                request_post["data"]["openconfig-vlan:vlans"].append(request_body)
-
-        if len(request_post["data"]["openconfig-vlan:vlans"]):
-            request_post["data"] = json.dumps(request_post["data"])
-            requests.append(request_post)  
+                h = search_obj_in_list(w['vlan_id'], have, 'vlan_id')
+                if h:
+                    continue
+                else:
+                    request_post = deepcopy(self.VLAN_POST)
+                    request_body = self._update_vlan_config_body(w, request_body)
+                    request_post["data"]["openconfig-vlan:vlans"].append(request_body)
+                    request_post["data"] = json.dumps(request_post["data"])
+                    requests.append(request_post)  
 
         return requests
 
-    @staticmethod
     def _state_deleted(self, want, have):
         """ The command generator when state is deleted
 
@@ -243,11 +239,11 @@ class Vlans(ConfigBase):
         """
         requests = []
 
-        request_delete = deepcopy(self.VLAN_DELETE)
         if want:
             for w in want:
+                request_delete = deepcopy(self.VLAN_DELETE)
                 if w.get('vlan_id'):
-                    h = self._search_vlan_in_list(w['vlan_id'], have)
+                    h = search_obj_in_list(w['vlan_id'], have, 'vlan_id')
                     if h:
                         request_delete["path"] = self.DEL_PATH + str(h['vlan_id'])
                         requests.append(request_delete)
@@ -256,19 +252,18 @@ class Vlans(ConfigBase):
             if not have:
                 return requests
             for h in have:
-                request_delete["path"] = self.DEL_PATH + str(h['vlan_id'])
-                requests.append(request_delete)
+                request_delete = deepcopy(self.VLAN_DELETE)
+                if h['vlan_id'] == 1:
+                    continue
+                else:
+                    request_delete["path"] = self.DEL_PATH + str(h['vlan_id'])
+                    requests.append(request_delete)
 
         return requests
 
     def _update_vlan_config_body(self, want, request):
         request["config"]["name"] = want["name"]
-        request["config"]["status"] = want["state"]
+        request["config"]["status"] = want["state"].upper()
         request["config"]["vlan-id"] = want["vlan_id"]
         return request
 
-    def _search_vlan_in_list(vlan_id, lst):
-        for o in lst:
-            if o['vlan_id'] == vlan_id:
-                return o
-        return None
