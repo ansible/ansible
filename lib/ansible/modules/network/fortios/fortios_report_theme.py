@@ -76,8 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
-        required: true
+        required: false
         choices:
             - present
             - absent
@@ -88,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             bullet_list_style:
                 description:
                     - Bullet list style.
@@ -383,7 +396,12 @@ def underscore_to_hyphen(data):
 
 def report_theme(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['report_theme'] and data['report_theme']:
+        state = data['report_theme']['state']
+    else:
+        state = True
     report_theme_data = data['report_theme']
     filtered_data = underscore_to_hyphen(filter_report_theme_data(report_theme_data))
 
@@ -423,11 +441,13 @@ def main():
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "report_theme": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "bullet_list_style": {"required": False, "type": "str"},
                 "column_count": {"required": False, "type": "str",
                                  "choices": ["1", "2", "3"]},
