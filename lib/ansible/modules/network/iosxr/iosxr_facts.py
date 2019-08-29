@@ -56,7 +56,7 @@ options:
     required: false
     choices: ['all', 'lacp', '!lacp', 'lacp_interfaces', '!lacp_interfaces', 'lldp_global', '!lldp_global',
     'lldp_interfaces', '!lldp_interfaces', 'interfaces', '!interfaces', 'l2_interfaces', '!l2_interfaces',
-    'lag_interfaces', '!lag_interfaces']
+    'lag_interfaces', '!lag_interfaces', 'l3_interfaces', '!l3_interfaces']
     version_added: "2.9"
 """
 
