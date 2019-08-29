@@ -8,9 +8,9 @@ set -euo pipefail
 PYTHON=${ANSIBLE_TEST_PYTHON_INTERPRETER:-python}
 
 export ANSIBLE_CONFIG=ansible.cfg
-export VMWARE_SERVER="${VCENTER_HOST}"
-export VMWARE_USERNAME="${VMWARE_USERNAME:-user}"
-export VMWARE_PASSWORD="${VMWARE_PASSWORD:-pass}"
+export VMWARE_SERVER="${VCENTER_HOSTNAME}"
+export VMWARE_USERNAME="${VCENTER_USERNAME}"
+export VMWARE_PASSWORD="${VCENTER_PASSWORD}"
 port=5000
 VMWARE_CONFIG=test-config.vmware.yaml
 inventory_cache="$(pwd)/inventory_cache"
@@ -37,16 +37,16 @@ cleanup() {
 
 trap cleanup INT TERM EXIT
 
-echo "DEBUG: Using ${VCENTER_HOST} with username ${VMWARE_USERNAME} and password ${VMWARE_PASSWORD}"
+echo "DEBUG: Using ${VCENTER_HOSTNAME} with username ${VCENTER_USERNAME} and password ${VCENTER_PASSWORD}"
 
 echo "Kill all previous instances"
-curl "http://${VCENTER_HOST}:${port}/killall" > /dev/null 2>&1
+curl "http://${VCENTER_HOSTNAME}:${port}/killall" > /dev/null 2>&1
 
 echo "Start new VCSIM server"
-curl "http://${VCENTER_HOST}:${port}/spawn?datacenter=1&cluster=1&folder=0" > /dev/null 2>&1
+curl "http://${VCENTER_HOSTNAME}:${port}/spawn?datacenter=1&cluster=1&folder=0" > /dev/null 2>&1
 
 echo "Debugging new instances"
-curl "http://${VCENTER_HOST}:${port}/govc_find"
+curl "http://${VCENTER_HOSTNAME}:${port}/govc_find"
 
 # Get inventory
 ansible-inventory -i ${VMWARE_CONFIG} --list

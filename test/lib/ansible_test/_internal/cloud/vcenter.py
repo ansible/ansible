@@ -51,10 +51,11 @@ class VcenterProvider(CloudProvider):
         # file or hosted in worldstream.  Using an env var value of 'worldstream' with appropriate
         # CI credentials will deploy a dynamic baremetal environment. The simulator is the default
         # if no other config if provided.
-        self.vmware_test_platform = os.environ.get('VMWARE_TEST_PLATFORM', '')
+        self.vmware_test_platform = os.environ.get('VMWARE_TEST_PLATFORM', 'govcsim')
         self.aci = None
         self.insecure = False
         self.proxy = None
+        self.platform = 'vcenter'
 
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.
@@ -74,10 +75,12 @@ class VcenterProvider(CloudProvider):
                 exclude.append(skip)
                 display.warning('Excluding tests marked "%s" which require the "docker" command or config (see "%s"): %s'
                                 % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
-        else:
+        elif self.vmware_test_platform == 'static':
             if os.path.isfile(self.config_static_path):
                 return
 
+            super(VcenterProvider, self).filter(targets, exclude)
+        elif self.vmware_test_platform == 'worldstream':
             aci = self._create_ansible_core_ci()
 
             if os.path.isfile(aci.ci_key):
@@ -95,13 +98,16 @@ class VcenterProvider(CloudProvider):
         self._set_cloud_config('vmware_test_platform', self.vmware_test_platform)
         if self.vmware_test_platform == 'govcsim':
             self._setup_dynamic_simulator()
+            self.managed = True
         elif self.vmware_test_platform == 'worldstream':
             self._setup_dynamic_baremetal()
-        elif self._use_static_config():
-            self._set_cloud_config('vmware_test_platform', 'static')
+            self.managed = True
+        elif self.vmware_test_platform == 'static':
+            self._use_static_config()
             self._setup_static()
         else:
-            self._setup_dynamic_simulator()
+            display.error('Unknown vmware_test_platform: %s' % self.vmware_test_platform)
+            exit(1)
 
     def get_docker_run_options(self):
         """Get any additional options needed when delegating tests to a docker container.
@@ -166,14 +172,14 @@ class VcenterProvider(CloudProvider):
             )
 
         if self.args.docker:
-            vcenter_host = self.DOCKER_SIMULATOR_NAME
+            vcenter_hostname = self.DOCKER_SIMULATOR_NAME
         elif container_id:
-            vcenter_host = self._get_simulator_address()
-            display.info('Found vCenter simulator container address: %s' % vcenter_host, verbosity=1)
+            vcenter_hostname = self._get_simulator_address()
+            display.info('Found vCenter simulator container address: %s' % vcenter_hostname, verbosity=1)
         else:
-            vcenter_host = 'localhost'
+            vcenter_hostname = 'localhost'
 
-        self._set_cloud_config('vcenter_host', vcenter_host)
+        self._set_cloud_config('vcenter_hostname', vcenter_hostname)
 
     def _get_simulator_address(self):
         results = docker_inspect(self.args, self.container_name)
@@ -210,6 +216,9 @@ class VcenterProvider(CloudProvider):
                              provider='vmware')
 
     def _setup_static(self):
+        if not os.path.exists(self.config_static_path):
+            display.error('Configuration file does not exist: %s' % self.config_static_path)
+            exit(1)
         parser = ConfigParser({
             'vcenter_port': '443',
             'vmware_proxy_host': '',
@@ -230,13 +239,11 @@ class VcenterEnvironment(CloudEnvironment):
         """
         :rtype: CloudEnvironmentConfig
         """
-        vmware_test_platform = os.environ.get('VMWARE_TEST_PLATFORM')
-        if not vmware_test_platform:
-            vmware_test_platform = self._get_cloud_config('vmware_test_platform')
-
-        if vmware_test_platform in ('worldstream', 'static'):
+        try:
+            # We may be in a container, so we cannot just reach VMWARE_TEST_PLATFORM,
+            # We do a try/except instead
             parser = ConfigParser()
-            parser.read(self.config_path)
+            parser.read(self.config_path)  # Worldstream and static
 
             # Most of the test cases use ansible_vars, but we plan to refactor these
             # to use env_vars, output both for now
@@ -247,14 +254,15 @@ class VcenterEnvironment(CloudEnvironment):
                 resource_prefix=self.resource_prefix,
             )
             ansible_vars.update(dict(parser.items('DEFAULT', raw=True)))
-
-        else:
+        except KeyError:  # govcsim
             env_vars = dict(
-                VCENTER_HOST=self._get_cloud_config('vcenter_host'),
+                VCENTER_HOSTNAME=self._get_cloud_config('vcenter_hostname'),
+                VCENTER_USERNAME='user',
+                VCENTER_PASSWORD='pass',
             )
 
             ansible_vars = dict(
-                vcsim=self._get_cloud_config('vcenter_host'),
+                vcsim=self._get_cloud_config('vcenter_hostname'),
             )
 
         for key, value in ansible_vars.items():
