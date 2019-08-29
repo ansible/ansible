@@ -17,7 +17,7 @@ description:
   - Gathering facts from the API of a zone.
   - Sets Ansible facts accessable by the key C(cloudstack_zone) and since version 2.6 also returns results.
 deprecated:
-  removed_in: "2.12"
+  removed_in: "2.13"
   why: Transformed into an info module.
   alternative: Use M(cs_zone_info) instead.
 version_added: '2.1'
