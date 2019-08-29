@@ -532,12 +532,11 @@ class IntegrationTarget(CompletionTarget):
 
         # static_aliases
 
-        try:
-            aliases_path = os.path.join(path, 'aliases')
+        aliases_path = os.path.join(path, 'aliases')
+
+        if aliases_path in file_paths:
             static_aliases = tuple(read_lines_without_comments(aliases_path, remove_blank_lines=True))
-        except IOError as ex:
-            if ex.errno != errno.ENOENT:
-                raise
+        else:
             static_aliases = tuple()
 
         # modules
