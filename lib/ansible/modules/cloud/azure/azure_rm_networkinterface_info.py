@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_networkinterface_facts
+module: azure_rm_networkinterface_info
 
-version_added: "2.1"
+version_added: "2.9"
 
 short_description: Get network interface facts
 
@@ -47,16 +47,16 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one network interface
-      azure_rm_networkinterface_facts:
+      azure_rm_networkinterface_info:
         resource_group: myResourceGroup
         name: nic001
 
     - name: Get network interfaces within a resource group
-      azure_rm_networkinterface_facts:
+      azure_rm_networkinterface_info:
         resource_group: myResourceGroup
 
     - name: Get network interfaces by tag
-      azure_rm_networkinterface_facts:
+      azure_rm_networkinterface_info:
         resource_group: myResourceGroup
         tags:
           - testing
@@ -261,7 +261,7 @@ def nic_to_dict(nic):
     )
 
 
-class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
+class AzureRMNetworkInterfaceInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -273,19 +273,24 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_networkinterfaces=[])
+            ansible_info=dict(azure_networkinterfaces=[])
         )
 
         self.name = None
         self.resource_group = None
         self.tags = None
 
-        super(AzureRMNetworkInterfaceFacts, self).__init__(self.module_arg_spec,
-                                                           supports_tags=False,
-                                                           facts_module=True
-                                                           )
+        super(AzureRMNetworkInterfaceInfo, self).__init__(self.module_arg_spec,
+                                                          supports_tags=False,
+                                                          facts_module=True
+                                                          )
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_networkinterface_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_networkinterface_facts' module has been renamed to 'azure_rm_networkinterface_info'",
+                                  version='2.13')
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
@@ -302,7 +307,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
         else:
             results = self.list_all()
 
-        self.results['ansible_facts']['azure_networkinterfaces'] = self.serialize_nics(results)
+        self.results['ansible_info']['azure_networkinterfaces'] = self.serialize_nics(results)
         self.results['networkinterfaces'] = self.to_dict_list(results)
         return self.results
 
@@ -340,7 +345,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMNetworkInterfaceFacts()
+    AzureRMNetworkInterfaceInfo()
 
 
 if __name__ == '__main__':

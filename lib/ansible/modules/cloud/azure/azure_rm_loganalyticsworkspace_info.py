@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_loganalyticsworkspace_facts
-version_added: "2.8"
+module: azure_rm_loganalyticsworkspace_info
+version_added: "2.9"
 short_description: Get facts of Azure Log Analytics workspaces
 description:
     - Get, query Azure Log Analytics workspaces.
@@ -57,7 +57,7 @@ author:
 
 EXAMPLES = '''
 - name: Query a workspace
-  azure_rm_loganalyticsworkspace_facts:
+  azure_rm_loganalyticsworkspace_info:
       resource_group: myResourceGroup
       name: myLogAnalyticsWorkspace
       show_intelligence_packs: true
@@ -148,7 +148,7 @@ except ImportError:
     pass
 
 
-class AzureRMLogAnalyticsWorkspaceFact(AzureRMModuleBase):
+class AzureRMLogAnalyticsWorkspaceInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -175,9 +175,14 @@ class AzureRMLogAnalyticsWorkspaceFact(AzureRMModuleBase):
         self.show_usages = None
         self.show_management_groups = None
 
-        super(AzureRMLogAnalyticsWorkspaceFact, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
+        super(AzureRMLogAnalyticsWorkspaceInfo, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_loganalyticsworkspace_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_loganalyticsworkspace_facts' module has been renamed to 'azure_rm_loganalyticsworkspace_info'",
+                                  version='2.13')
 
         for key in list(self.module_arg_spec.keys()):
             setattr(self, key, kwargs[key])
@@ -257,7 +262,7 @@ class AzureRMLogAnalyticsWorkspaceFact(AzureRMModuleBase):
 
 
 def main():
-    AzureRMLogAnalyticsWorkspaceFact()
+    AzureRMLogAnalyticsWorkspaceInfo()
 
 
 if __name__ == '__main__':

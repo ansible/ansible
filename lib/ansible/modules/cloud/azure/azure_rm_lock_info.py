@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_lock_facts
+module: azure_rm_lock_info
 version_added: "2.9"
 short_description: Manage Azure locks
 description:
@@ -56,27 +56,27 @@ author:
 
 EXAMPLES = '''
 - name: Get myLock details of myVM
-  azure_rm_lock_facts:
+  azure_rm_lock_info:
     name: myLock
     managed_resource_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM
 
 - name: List locks of myVM
-  azure_rm_lock_facts:
+  azure_rm_lock_info:
     managed_resource_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM
 
 - name: List locks of myResourceGroup
-  azure_rm_lock_facts:
+  azure_rm_lock_info:
     resource_group: myResourceGroup
 
 - name: List locks of myResourceGroup
-  azure_rm_lock_facts:
+  azure_rm_lock_info:
     managed_resource_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup
 
 - name: List locks of mySubscription
-  azure_rm_lock_facts:
+  azure_rm_lock_info:
 
 - name: List locks of mySubscription
-  azure_rm_lock_facts:
+  azure_rm_lock_info:
     managed_resource_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 '''
 
@@ -126,7 +126,7 @@ except ImportError:
     pass
 
 
-class AzureRMLockFacts(AzureRMModuleBase):
+class AzureRMLockInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -150,9 +150,13 @@ class AzureRMLockFacts(AzureRMModuleBase):
         self._query_parameters = {'api-version': '2016-09-01'}
         self._header_parameters = {'Content-Type': 'application/json; charset=utf-8'}
 
-        super(AzureRMLockFacts, self).__init__(self.module_arg_spec, facts_module=True, mutually_exclusive=mutually_exclusive, supports_tags=False)
+        super(AzureRMLockInfo, self).__init__(self.module_arg_spec, facts_module=True, mutually_exclusive=mutually_exclusive, supports_tags=False)
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_lock_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_lock_facts' module has been renamed to 'azure_rm_lock_info'", version='2.13')
 
         for key in self.module_arg_spec.keys():
             setattr(self, key, kwargs[key])
@@ -212,7 +216,7 @@ class AzureRMLockFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMLockFacts()
+    AzureRMLockInfo()
 
 
 if __name__ == '__main__':

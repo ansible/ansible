@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: azure_rm_manageddisk_facts
+module: azure_rm_manageddisk_info
 
-version_added: "2.4"
+version_added: "2.9"
 
 short_description: Get managed disk facts
 
@@ -51,15 +51,15 @@ author:
 
 EXAMPLES = r'''
 - name: Get facts for one managed disk
-  azure_rm_manageddisk_facts:
+  azure_rm_manageddisk_info:
     name: Testing
     resource_group: myResourceGroup
 
 - name: Get facts for all managed disks
-  azure_rm_manageddisk_facts:
+  azure_rm_manageddisk_info:
 
 - name: Get facts by tags
-  azure_rm_manageddisk_facts:
+  azure_rm_manageddisk_info:
     tags:
     - testing
 '''
@@ -147,7 +147,7 @@ def managed_disk_to_dict(managed_disk):
     )
 
 
-class AzureRMManagedDiskFacts(AzureRMModuleBase):
+class AzureRMManagedDiskInfo(AzureRMModuleBase):
     """Utility class to get managed disk facts"""
 
     def __init__(self):
@@ -163,7 +163,7 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
             ),
         )
         self.results = dict(
-            ansible_facts=dict(
+            ansible_info=dict(
                 azure_managed_disk=[]
             )
         )
@@ -173,7 +173,7 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
         self.source_uri = None
         self.source_resource_uri = None
         self.tags = None
-        super(AzureRMManagedDiskFacts, self).__init__(
+        super(AzureRMManagedDiskInfo, self).__init__(
             derived_arg_spec=self.module_arg_spec,
             supports_check_mode=True,
             supports_tags=True)
@@ -182,7 +182,7 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        self.results['ansible_facts']['azure_managed_disk'] = (
+        self.results['ansible_info']['azure_managed_disk'] = (
             self.get_item() if self.name
             else (self.list_items_by_resource_group() if self.resource_group else self.list_items())
         )
@@ -236,7 +236,7 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMManagedDiskFacts()
+    AzureRMManagedDiskInfo()
 
 
 if __name__ == '__main__':
