@@ -1316,7 +1316,7 @@ def command_integration_script(args, target, test_dir, inventory_path, temp_path
             cmd.append('-' + ('v' * args.verbosity))
 
         env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
-        cwd = os.path.join(test_env.integration_dir, 'targets', target.name)
+        cwd = os.path.join(test_env.targets_dir, target.relative_path)
 
         if env_config and env_config.env_vars:
             env.update(env_config.env_vars)
@@ -1421,7 +1421,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
             env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
             cwd = test_env.integration_dir
 
-            env['ANSIBLE_ROLES_PATH'] = os.path.abspath(os.path.join(test_env.integration_dir, 'targets'))
+            env['ANSIBLE_ROLES_PATH'] = test_env.targets_dir
 
             module_coverage = 'non_local/' not in target.aliases
             intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path,

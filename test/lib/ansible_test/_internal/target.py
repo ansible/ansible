@@ -543,7 +543,8 @@ class IntegrationTarget(CompletionTarget):
         """
         super(IntegrationTarget, self).__init__()
 
-        self.name = os.path.relpath(path, data_context().content.integration_targets_path).replace(os.path.sep, '.')
+        self.relative_path = os.path.relpath(path, data_context().content.integration_targets_path)
+        self.name = self.relative_path.replace(os.path.sep, '.')
         self.path = path
 
         # script_path and type
