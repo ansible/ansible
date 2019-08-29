@@ -18,8 +18,7 @@ DOCUMENTATION = r'''
 module: postgresql_table
 short_description: Create, drop, or modify a PostgreSQL table
 description:
-- Allows to create, drop, rename, truncate a table, or change some table attributes
-  U(https://www.postgresql.org/docs/current/sql-createtable.html).
+- Allows to create, drop, rename, truncate a table, or change some table attributes.
 version_added: '2.8'
 options:
   table:
@@ -95,8 +94,7 @@ options:
     type: str
   cascade:
     description:
-    - Automatically drop objects that depend on the table (such as views)
-      U(https://www.postgresql.org/docs/current/sql-droptable.html).
+    - Automatically drop objects that depend on the table (such as views).
       Used with I(state=absent) only.
     type: bool
     default: no
@@ -105,8 +103,26 @@ notes:
 - If you do not pass db parameter, tables will be created in the database
   named postgres.
 - PostgreSQL allows to create columnless table, so columns param is optional.
-- Unlogged tables are available from PostgreSQL server version 9.1
-  U(https://www.postgresql.org/docs/9.1/sql-createtable.html).
+- Unlogged tables are available from PostgreSQL server version 9.1.
+seealso:
+- module: postgresql_sequence
+- module: postgresql_index
+- module: postgresql_tablespace
+- module: postgresql_owner
+- module: postgresql_privs
+- module: postgresql_copy
+- name: CREATE TABLE reference
+  description: Complete reference of the CREATE TABLE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createtable.html
+- name: ALTER TABLE reference
+  description: Complete reference of the ALTER TABLE  command documentation.
+  link: https://www.postgresql.org/docs/current/sql-altertable.html
+- name: DROP TABLE reference
+  description: Complete reference of the DROP TABLE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-droptable.html
+- name: PostgreSQL data types
+  description: Complete reference of the PostgreSQL data types documentation.
+  link: postgresql.org/docs/current/datatype.html
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres

@@ -21,8 +21,7 @@ description:
 - Adds or removes a user (role) from a PostgreSQL server instance
   ("cluster" in PostgreSQL terminology) and, optionally,
   grants the user access to an existing database or tables.
-  A user is a role with login privilege
-  (see U(https://www.postgresql.org/docs/11/role-attributes.html) for more information).
+- A user is a role with login privilege.
 - The fundamental function of the module is to create, or delete, users from
   a PostgreSQL instances. Privilege assignment, or removal, is an optional
   step, which works on one database at a time. This allows for the module to
@@ -157,6 +156,13 @@ notes:
   Use NOLOGIN role_attr_flags to change this behaviour.
 - If you specify PUBLIC as the user (role), then the privilege changes will apply to all users (roles).
   You may not specify password or role_attr_flags when the PUBLIC user is specified.
+seealso:
+- module: postgresql_privs
+- module: postgresql_membership
+- module: postgresql_owner
+- name: PostgreSQL database roles
+  description: Complete reference of the PostgreSQL database roles documentation.
+  link: https://www.postgresql.org/docs/current/user-manag.html
 author:
 - Ansible Core Team
 extends_documentation_fragment: postgres
