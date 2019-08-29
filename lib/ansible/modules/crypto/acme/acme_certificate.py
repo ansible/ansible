@@ -1004,7 +1004,7 @@ class ACMEClient(object):
             chain = chain[-1:]
         for cert in chain:
             try:
-                x509 = cryptography.x509.load_pem_x509_certificate(cert, cryptography.hazmat.backends.cryptography_backend())
+                x509 = cryptography.x509.load_pem_x509_certificate(to_bytes(cert), cryptography.hazmat.backends.default_backend())
                 matches = True
                 if criterium['subject']:
                     for k, v in crypto_utils.parse_name_field(criterium['subject']):
@@ -1023,7 +1023,7 @@ class ACMEClient(object):
                         oid = crypto_utils.cryptography_name_to_oid(k)
                         value = to_native(v)
                         found = False
-                        for attribute in x509.subject:
+                        for attribute in x509.issuer:
                             if attribute.oid == oid and value == to_native(attribute.value):
                                 found = True
                                 break
@@ -1033,14 +1033,14 @@ class ACMEClient(object):
                 if criterium['subject_key_identifier']:
                     try:
                         ext = x509.extensions.get_extension_for_class(cryptography.x509.SubjectKeyIdentifier)
-                        if criterium['subject_key_identifier'] != ext.digest:
+                        if criterium['subject_key_identifier'] != ext.value.digest:
                             matches = False
                     except cryptography.x509.ExtensionNotFound:
                         matches = False
                 if criterium['authority_key_identifier']:
                     try:
                         ext = x509.extensions.get_extension_for_class(cryptography.x509.AuthorityKeyIdentifier)
-                        if criterium['authority_key_identifier'] != ext.key_identifier:
+                        if criterium['authority_key_identifier'] != ext.value.key_identifier:
                             matches = False
                     except cryptography.x509.ExtensionNotFound:
                         matches = False
