@@ -9,6 +9,7 @@ The arg spec for the nxos facts module.
 
 CHOICES = [
     'all',
+    'bfd_interfaces',
     'lag_interfaces',
     'lldp_global',
     'telemetry',
