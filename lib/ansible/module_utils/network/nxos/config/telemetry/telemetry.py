@@ -324,8 +324,6 @@ class Telemetry(ConfigBase):
         add['TMS_DESTGROUP'] = remove_duplicate_context(add['TMS_DESTGROUP'])
         delete['TMS_DESTGROUP'] = remove_duplicate_context(delete['TMS_DESTGROUP'])
 
-        import pdb ; pdb.set_trace()
-
         # Process Telemetry Sensor Group Want and Have Values
         # Possible states:
         # - want and have are (set) (equal: no action, not equal: replace with want)
@@ -343,43 +341,53 @@ class Telemetry(ConfigBase):
                     delete['TMS_SENSORGROUP'].extend(global_ctx)
                     if remove_context[0] not in delete['TMS_SENSORGROUP']:
                         delete['TMS_SENSORGROUP'].extend(remove_context)
-
-        for want_sg in want.get('sensor_groups'):
-            if want_sg not in have.get('sensor_groups'):
-                property_ctx = ['sensor-group {0}'.format(want_sg['id'])]
-                cmd = {}
-                if want_sg.get('data_source'):
-                    cmd['data_source'] = [setval['data_source'].format(want_sg['data_source'])]
-                if want_sg.get('path'):
-                    setval['path'] = get_setval_path(want_sg.get('path'))
-                    cmd['path'] = [setval['path'].format(**want_sg['path'])]
-                add['TMS_SENSORGROUP'].extend(global_ctx)
-                if property_ctx[0] not in add['TMS_SENSORGROUP']:
-                    add['TMS_SENSORGROUP'].extend(property_ctx)
-                if cmd.get('data_source'):
-                    add['TMS_SENSORGROUP'].extend(cmd['data_source'])
-                if cmd.get('path'):
-                    add['TMS_SENSORGROUP'].extend(cmd['path'])
-        for have_sg in have.get('sensor_groups'):
-            if have_sg not in want.get('sensor_groups'):
-                property_ctx = ['sensor-group {0}'.format(have_sg['id'])]
-                cmd = {}
-                if have_sg.get('data_source'):
-                    cmd['data_source'] = ['no ' + setval['data_source'].format(have_sg['data_source'])]
-                if have_sg.get('path'):
-                    setval['path'] = get_setval_path(have_sg.get('path'))
-                    cmd['path'] = ['no ' + setval['path'].format(**have_sg['path'])]
-                delete['TMS_SENSORGROUP'].extend(global_ctx)
-                if property_ctx[0] not in delete['TMS_SENSORGROUP']:
-                    delete['TMS_SENSORGROUP'].extend(property_ctx)
-                if cmd.get('data_source'):
-                    delete['TMS_SENSORGROUP'].extend(cmd['data_source'])
-                if cmd.get('path'):
-                    delete['TMS_SENSORGROUP'].extend(cmd['path'])
+        else:
+            for want_sg in want.get('sensor_groups'):
+                if want_sg not in have.get('sensor_groups'):
+                    property_ctx = ['sensor-group {0}'.format(want_sg['id'])]
+                    cmd = {}
+                    if want_sg.get('data_source'):
+                        cmd['data_source'] = [setval['data_source'].format(want_sg['data_source'])]
+                    if want_sg.get('path'):
+                        setval['path'] = get_setval_path(want_sg.get('path'))
+                        cmd['path'] = [setval['path'].format(**want_sg['path'])]
+                    add['TMS_SENSORGROUP'].extend(global_ctx)
+                    if property_ctx[0] not in add['TMS_SENSORGROUP']:
+                        add['TMS_SENSORGROUP'].extend(property_ctx)
+                    if cmd.get('data_source'):
+                        add['TMS_SENSORGROUP'].extend(cmd['data_source'])
+                    if cmd.get('path'):
+                        add['TMS_SENSORGROUP'].extend(cmd['path'])
+            for have_sg in have.get('sensor_groups'):
+                if have_sg not in want.get('sensor_groups'):
+                    have_id_in_want_ids = False
+                    for item in want.get('sensor_groups'):
+                        if have_sg['id'] == item['id']:
+                            have_id_in_want_ids = True
+                    property_ctx = ['sensor-group {0}'.format(have_sg['id'])]
+                    delete['TMS_SENSORGROUP'].extend(global_ctx)
+                    if have_id_in_want_ids:
+                        cmd = {}
+                        if have_sg.get('data_source'):
+                            cmd['data_source'] = ['no ' + setval['data_source'].format(have_sg['data_source'])]
+                        if have_sg.get('path'):
+                            setval['path'] = get_setval_path(have_sg.get('path'))
+                            cmd['path'] = ['no ' + setval['path'].format(**have_sg['path'])]
+                        if property_ctx[0] not in delete['TMS_SENSORGROUP']:
+                            delete['TMS_SENSORGROUP'].extend(property_ctx)
+                        if cmd.get('data_source'):
+                            delete['TMS_SENSORGROUP'].extend(cmd['data_source'])
+                        if cmd.get('path'):
+                            delete['TMS_SENSORGROUP'].extend(cmd['path'])
+                    else:
+                        remove_context = ['no ' + property_ctx[0]]
+                        if remove_context[0] not in delete['TMS_SENSORGROUP']:
+                            delete['TMS_SENSORGROUP'].extend(remove_context)
 
         add['TMS_SENSORGROUP'] = remove_duplicate_context(add['TMS_SENSORGROUP'])
         delete['TMS_SENSORGROUP'] = remove_duplicate_context(delete['TMS_SENSORGROUP'])
 
+        import pdb ; pdb.set_trace()
         # Process Telemetry Subscription Want and Have Values
         # Possible states:
         # - want and have are (set) (equal: no action, not equal: replace with want)
