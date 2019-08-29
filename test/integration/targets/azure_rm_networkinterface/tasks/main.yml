@@ -87,7 +87,7 @@
       - output.state.id
 
 - name: Get fact of the new created NIC
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}"
   register: facts
@@ -277,7 +277,7 @@
       - not output.changed
 
 - name: Get fact of the new created NIC
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}"
   register:  facts
@@ -351,7 +351,7 @@
       - output.id != ''
 
 - name: Get Application security group
-  azure_rm_applicationsecuritygroup_facts:
+  azure_rm_applicationsecuritygroup_info:
     resource_group: "{{ resource_group }}"
     name: "{{ applicationsecuritygroup_name1 }}"
   register: facts
@@ -460,7 +460,7 @@
       - output.changed
 
 - name: Get fact of the new created NIC
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
     resource_group: "{{ resource_group }}"
     name: "{{ nic_name1 }}"
   register: facts

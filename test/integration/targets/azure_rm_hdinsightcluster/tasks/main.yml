@@ -200,7 +200,7 @@
       - output.changed
 
 - name: Get facts of Cluster
-  azure_rm_hdinsightcluster_facts:
+  azure_rm_hdinsightcluster_info:
     resource_group: "{{ resource_group }}"
     name: "cluster{{ rpfx }}"
   register: output

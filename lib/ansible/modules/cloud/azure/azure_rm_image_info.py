@@ -12,9 +12,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_image_facts
+module: azure_rm_image_info
 
-version_added: "2.8"
+version_added: "2.9"
 
 short_description: Get facts about azure custom images
 
@@ -42,19 +42,19 @@ author:
 
 EXAMPLES = '''
 - name: List images with name
-  azure_rm_image_facts:
+  azure_rm_image_info:
     name: test-image
     resource_group: myResourceGroup
 
 - name: List images by resource group
-  azure_rm_image_facts:
+  azure_rm_image_info:
     resource_group: myResourceGroup
     tags:
       - testing
       - foo:bar
 
 - name: List all available images under current subscription
-  azure_rm_image_facts:
+  azure_rm_image_info:
 '''
 
 
@@ -179,7 +179,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
 
 
-class AzureRMImageFacts(AzureRMModuleBase):
+class AzureRMImageInfo(AzureRMModuleBase):
 
     def __init__(self, **kwargs):
 
@@ -198,13 +198,17 @@ class AzureRMImageFacts(AzureRMModuleBase):
         self.format = None
         self.tags = None
 
-        super(AzureRMImageFacts, self).__init__(
+        super(AzureRMImageInfo, self).__init__(
             derived_arg_spec=self.module_arg_spec,
             supports_tags=False,
             facts_module=True
         )
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_image_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_image_facts' module has been renamed to 'azure_rm_image_info'", version='2.13')
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
@@ -296,7 +300,7 @@ class AzureRMImageFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMImageFacts()
+    AzureRMImageInfo()
 
 
 if __name__ == '__main__':
