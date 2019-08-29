@@ -38,6 +38,18 @@ options:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step.
     type: bool
     default: 'no'
+  update_cache_retries:
+    description:
+      - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
+    type: int
+    default: 5
+    version_added: '2.9'
+  update_cache_retry_max_delay:
+    description:
+      - Use an exponential backoff delay for each retry (See I(update_cache_retries)) up to this max. delay in seconds.
+    type: int
+    default: 12
+    version_added: '2.9'
   cache_valid_time:
     description:
       - Update the apt cache if its older than the I(cache_valid_time). This option is set in seconds.
@@ -1088,13 +1100,13 @@ def main():
             now = datetime.datetime.now()
             tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
             if not mtimestamp + tdelta >= now:
-                # Retry to update the cache up to 5 times with exponential backoff
+                # Retry to update the cache with exponential backoff
                 err = ''
-                max_fail_count = 5
-                max_fail_sleep = 12
-                randint = random.randint(0, 1000) / 1000
+                update_cache_retries = module.params.get('update_cache_retries')
+                update_cache_retry_max_delay = module.params.get('update_cache_retry_max_delay')
+                randomize = random.randint(0, 1000) / 1000.0
 
-                for retry in range(max_fail_count):
+                for retry in range(update_cache_retries):
                     try:
                         cache.update()
                         break
@@ -1102,12 +1114,12 @@ def main():
                         err = to_native(e)
 
                     # Use exponential backoff plus a little bit of randomness
-                    fail_sleep = 2 ** retry + randint
-                    if fail_sleep > max_fail_sleep:
-                        fail_sleep = max_fail_sleep + randint
-                    time.sleep(fail_sleep)
+                    delay = 2 ** retry + randomize
+                    if delay > update_cache_retry_max_delay:
+                        delay = update_cache_retry_max_delay + randomize
+                    time.sleep(delay)
                 else:
-                    module.fail_json(msg='Failed to update apt cache: %s' % err)
+                    module.fail_json(msg='Failed to update apt cache: %s' % err if err else 'unknown reason')
 
                 cache.open(progress=None)
                 mtimestamp, post_cache_update_time = get_updated_cache_time()
