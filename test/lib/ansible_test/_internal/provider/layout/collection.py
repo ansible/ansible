@@ -48,7 +48,7 @@ class CollectionLayout(LayoutProvider):
                              results_path='tests/output',
                              sanity_path='tests/sanity',
                              integration_path='tests/integration',
-                             integration_targets_path='tests/integration/targets',
+                             integration_targets_path='roles/test',
                              integration_vars_path='tests/integration/integration_config.yml',
                              unit_path='tests/unit',
                              unit_module_path='tests/unit/plugins/modules',

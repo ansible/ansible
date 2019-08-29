@@ -5,7 +5,6 @@ __metaclass__ = type
 import collections
 import os
 import re
-import errno
 import itertools
 import abc
 
@@ -230,8 +229,37 @@ def walk_integration_targets():
     """
     path = data_context().content.integration_targets_path
     modules = frozenset(target.module for target in walk_module_targets())
-    paths = data_context().content.get_dirs(path)
+    paths = data_context().content.walk_files(path)
     prefixes = load_integration_prefixes()
+    targets_path_tuple = tuple(path.split(os.path.sep))
+
+    entry_points = (
+        os.path.sep + os.path.join('tasks', 'main.yml'),
+        os.path.sep + os.path.join('tasks', 'main.yaml'),
+    )
+
+    # any directory with at least one file is a target
+    path_tuples = set(tuple(os.path.dirname(p).split(os.path.sep))
+                      for p in paths)
+
+    # also detect targets which are ansible roles, looking for standard entry points
+    path_tuples.update(tuple(os.path.dirname(os.path.dirname(p)).split(os.path.sep))
+                       for p in paths if any(p.endswith(entry_point) for entry_point in entry_points))
+
+    # remove the top-level directory if it was included
+    if targets_path_tuple in path_tuples:
+        path_tuples.remove(targets_path_tuple)
+
+    previous_path_tuple = None
+    paths = []
+
+    for path_tuple in sorted(path_tuples):
+        if previous_path_tuple and previous_path_tuple == path_tuple[:len(previous_path_tuple)]:
+            # ignore nested directories
+            continue
+
+        previous_path_tuple = path_tuple
+        paths.append(os.path.sep.join(path_tuple))
 
     for path in paths:
         yield IntegrationTarget(path, modules, prefixes)
@@ -515,7 +543,7 @@ class IntegrationTarget(CompletionTarget):
         """
         super(IntegrationTarget, self).__init__()
 
-        self.name = os.path.basename(path)
+        self.name = os.path.relpath(path, data_context().content.integration_targets_path).replace(os.path.sep, '.')
         self.path = path
 
         # script_path and type
