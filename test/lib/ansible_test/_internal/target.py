@@ -520,31 +520,23 @@ class IntegrationTarget(CompletionTarget):
 
         # script_path and type
 
-        contents = [os.path.basename(p) for p in data_context().content.get_files(path)]
+        file_paths = data_context().content.get_files(path)
+        runme_path = os.path.join(path, 'runme.sh')
 
-        runme_files = tuple(c for c in contents if os.path.splitext(c)[0] == 'runme')
-        test_files = tuple(c for c in contents if os.path.splitext(c)[0] == 'test')
-
-        self.script_path = None
-
-        if runme_files:
+        if runme_path in file_paths:
             self.type = 'script'
-            self.script_path = os.path.join(path, runme_files[0])
-        elif test_files:
-            self.type = 'special'
-        elif os.path.isdir(os.path.join(path, 'tasks')) or os.path.isdir(os.path.join(path, 'defaults')):
-            self.type = 'role'
+            self.script_path = runme_path
         else:
             self.type = 'role'  # ansible will consider these empty roles, so ansible-test should as well
+            self.script_path = None
 
         # static_aliases
 
-        try:
-            aliases_path = os.path.join(path, 'aliases')
+        aliases_path = os.path.join(path, 'aliases')
+
+        if aliases_path in file_paths:
             static_aliases = tuple(read_lines_without_comments(aliases_path, remove_blank_lines=True))
-        except IOError as ex:
-            if ex.errno != errno.ENOENT:
-                raise
+        else:
             static_aliases = tuple()
 
         # modules
