@@ -278,15 +278,15 @@
   azure_rm_dnsrecordset_info:
     resource_group: "{{ resource_group }}"
     zone_name: "{{ domain_name }}.com"
-  register: info
+  register: facts
 
 - name: Assert that facts module returned result for all Record Sets
   assert:
     that: 
-      - not info.changed
-      - info.ansible_info.azure_dnsrecordset[0].name == '@'
-      - info.ansible_info.azure_dnsrecordset[1].name == '@'
-      - info.ansible_info.azure_dnsrecordset[4].name == 'www'
+      - not facts.changed
+      - facts.ansible_info.azure_dnsrecordset[0].name == '@'
+      - facts.ansible_info.azure_dnsrecordset[1].name == '@'
+      - facts.ansible_info.azure_dnsrecordset[4].name == 'www'
 
 #
 # azure_rm_dnsrecordset cleanup
@@ -311,7 +311,7 @@
   azure_rm_dnsrecordset_info:
     resource_group: "{{ resource_group }}"
     zone_name: "{{ domain_name }}.com"
-  register: info
+  register: facts
 
 - name: Assert all record set deleted
   assert:

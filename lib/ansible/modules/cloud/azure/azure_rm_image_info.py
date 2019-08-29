@@ -205,7 +205,7 @@ class AzureRMImageInfo(AzureRMModuleBase):
         )
 
     def exec_module(self, **kwargs):
-        
+
         is_old_facts = self.module._name == 'azure_rm_image_facts'
         if is_old_facts:
             self.module.deprecate("The 'azure_rm_image_facts' module has been renamed to 'azure_rm_image_info'", version='2.13')
