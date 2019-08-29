@@ -5,7 +5,7 @@
         "plugins/modules/",
         "plugins/module_utils/",
         "test/units/",
-        "test/unit/"
+        "tests/unit/"
     ],
     "files": [
         "__init__.py"
