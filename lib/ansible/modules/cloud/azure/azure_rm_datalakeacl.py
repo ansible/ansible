@@ -1,8 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
+#
+# Copyright (c) 2019 Jose Angel Munoz, (@imjoseangel)
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (absolute_import, print_function, division)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -13,7 +17,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: azure_rm_dataleakacl
-version_added: 2.8
+version_added: "2.9"
 short_description: Setup Azure Datalake ACLs
 description:
     - Create or delete an ACL within a given directory in a Datalake.
@@ -27,7 +31,7 @@ options:
         description:
             - Name of the Datalake directory.
         required: true
-        type: str
+        type: path
     sp_name:
         description: Name or object id of the application for the acl.
         required: true
@@ -51,6 +55,7 @@ options:
     state:
         description:
             - Assert the state of the acl. Use C(present) to create an acl and C(absent) to delete an acl.
+        type: str
         default: present
         choices:
             - absent
@@ -65,21 +70,21 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Create acl for raw dir
-      azure_rm_datalakeacl:
-        dir_name: /raw
-        store_name: mydatalake
-        sp_name: myserviceprincipalid
-        permissions: 'r-x'
-        acl_spec: "default:user"
+  - name: Create acl for raw dir
+    azure_rm_datalakeacl:
+      dir_name: /raw
+      store_name: mydatalake
+      sp_name: myserviceprincipalid
+      permissions: 'r-x'
+      acl_spec: "default:user"
 
-    - name: Delete acl for raw dir
-      azure_rm_datalakeacl:
-        dir_name: /raw
-        store_name: mydatalake
-        sp_name: myserviceprincipalid
-        acl_spec: "default:user"
-        state:absent
+  - name: Delete acl for raw dir
+    azure_rm_datalakeacl:
+      dir_name: /raw
+      store_name: mydatalake
+      sp_name: myserviceprincipalid
+      acl_spec: "default:user"
+      state:absent
 '''
 
 RETURN = '''
@@ -95,10 +100,10 @@ object_id:
   sample: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx
 '''
 
-import re
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
+    import re
     from azure.datalake.store import core, lib
     from azure.common.credentials import ServicePrincipalCredentials
     from azure.graphrbac import GraphRbacManagementClient
