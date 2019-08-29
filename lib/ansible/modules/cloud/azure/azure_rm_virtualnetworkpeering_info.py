@@ -13,8 +13,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_virtualnetworkpeering_facts
-version_added: "2.8"
+module: azure_rm_virtualnetworkpeering_info
+version_added: "2.9"
 short_description: Get facts of Azure Virtual Network Peering
 description:
     - Get facts of Azure Virtual Network Peering.
@@ -41,7 +41,7 @@ author:
 
 EXAMPLES = '''
     - name: Get virtual network peering by name
-      azure_rm_virtualnetworkpeering_facts:
+      azure_rm_virtualnetworkpeering_info:
         resource_group: myResourceGroup
         virtual_network: myVnet1
         name: myVnetPeer
@@ -158,7 +158,7 @@ def vnetpeering_to_dict(vnetpeering):
     return results
 
 
-class AzureRMVirtualNetworkPeeringFacts(AzureRMModuleBase):
+class AzureRMVirtualNetworkPeeringInfo(AzureRMModuleBase):
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -181,11 +181,15 @@ class AzureRMVirtualNetworkPeeringFacts(AzureRMModuleBase):
 
         self.results = dict(changed=False)
 
-        super(AzureRMVirtualNetworkPeeringFacts, self).__init__(derived_arg_spec=self.module_arg_spec,
+        super(AzureRMVirtualNetworkPeeringInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                                 supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
+        is_old_facts = self.module._name == 'azure_rm_virtualnetworkpeering_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_virtualnetworkpeering_facts' module has been renamed to 'azure_rm_virtualnetworkpeering_info'", version='2.13')
+
 
         for key in list(self.module_arg_spec.keys()):
             setattr(self, key, kwargs[key])
@@ -246,7 +250,7 @@ class AzureRMVirtualNetworkPeeringFacts(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMVirtualNetworkPeeringFacts()
+    AzureRMVirtualNetworkPeeringInfo()
 
 
 if __name__ == '__main__':

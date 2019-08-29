@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_routetable_facts
+module: azure_rm_routetable_info
 
 version_added: "2.7"
 
@@ -45,16 +45,16 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one route table
-      azure_rm_routetable_facts:
+      azure_rm_routetable_info:
         name: Testing
         resource_group: myResourceGroup
 
     - name: Get facts for all route tables
-      azure_rm_routetable_facts:
+      azure_rm_routetable_info:
         resource_group: myResourceGroup
 
     - name: Get facts by tags
-      azure_rm_routetable_facts:
+      azure_rm_routetable_info:
         tags:
           - testing
           - foo:bar
@@ -143,7 +143,7 @@ def instance_to_dict(table):
     )
 
 
-class AzureRMRouteTableFacts(AzureRMModuleBase):
+class AzureRMRouteTableInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -162,11 +162,15 @@ class AzureRMRouteTableFacts(AzureRMModuleBase):
         self.resource_group = None
         self.tags = None
 
-        super(AzureRMRouteTableFacts, self).__init__(self.module_arg_spec,
+        super(AzureRMRouteTableInfo, self).__init__(self.module_arg_spec,
                                                      supports_tags=False,
                                                      facts_module=True)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_routetable_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_routetable_facts' module has been renamed to 'azure_rm_routetable_info'", version='2.13')
+
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
@@ -209,7 +213,7 @@ class AzureRMRouteTableFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMRouteTableFacts()
+    AzureRMRouteTableInfo()
 
 
 if __name__ == '__main__':

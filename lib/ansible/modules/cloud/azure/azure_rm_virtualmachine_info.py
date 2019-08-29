@@ -17,7 +17,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_virtualmachine_facts
+module: azure_rm_virtualmachine_info
 
 version_added: "2.7"
 
@@ -48,16 +48,16 @@ author:
 
 EXAMPLES = '''
   - name: Get facts for all virtual machines of a resource group
-    azure_rm_virtualmachine_facts:
+    azure_rm_virtualmachine_info:
       resource_group: myResourceGroup
 
   - name: Get facts by name
-    azure_rm_virtualmachine_facts:
+    azure_rm_virtualmachine_info:
       resource_group: myResourceGroup
       name: myVm
 
   - name: Get facts by tags
-    azure_rm_virtualmachine_facts:
+    azure_rm_virtualmachine_info:
       resource_group: myResourceGroup
       tags:
         - testing
@@ -264,7 +264,7 @@ AZURE_OBJECT_CLASS = 'VirtualMachine'
 AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
 
 
-class AzureRMVirtualMachineFacts(AzureRMModuleBase):
+class AzureRMVirtualMachineInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -283,11 +283,15 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         self.name = None
         self.tags = None
 
-        super(AzureRMVirtualMachineFacts, self).__init__(self.module_arg_spec,
+        super(AzureRMVirtualMachineInfo, self).__init__(self.module_arg_spec,
                                                          supports_tags=False,
                                                          facts_module=True)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_virtualmachine_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_virtualmachine_facts' module has been renamed to 'azure_rm_virtualmachine_info'", version='2.13')
+
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
@@ -446,7 +450,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMVirtualMachineFacts()
+    AzureRMVirtualMachineInfo()
 
 
 if __name__ == '__main__':

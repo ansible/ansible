@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_publicipaddress_facts
+module: azure_rm_publicipaddress_info
 
-version_added: "2.1"
+version_added: "2.9"
 
 short_description: Get public IP facts
 
@@ -46,12 +46,12 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one Public IP
-      azure_rm_publicipaddress_facts:
+      azure_rm_publicipaddress_info:
         resource_group: myResourceGroup
         name: publicip001
 
     - name: Get facts for all Public IPs within a resource groups
-      azure_rm_publicipaddress_facts:
+      azure_rm_publicipaddress_info:
         resource_group: myResourceGroup
 '''
 
@@ -195,7 +195,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 AZURE_OBJECT_CLASS = 'PublicIp'
 
 
-class AzureRMPublicIPFacts(AzureRMModuleBase):
+class AzureRMPublicIPInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -214,11 +214,15 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
         self.resource_group = None
         self.tags = None
 
-        super(AzureRMPublicIPFacts, self).__init__(self.module_arg_spec,
-                                                   supports_tags=False,
-                                                   facts_module=True)
+        super(AzureRMPublicIPInfo, self).__init__(self.module_arg_spec,
+                                                  supports_tags=False,
+                                                  facts_module=True)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_publicipaddress_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_publicipaddress_facts' module has been renamed to 'azure_rm_publicipaddress_info'", version='2.13')
+
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
@@ -236,7 +240,8 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
 
         raw = self.filter(result)
 
-        self.results['ansible_facts']['azure_publicipaddresses'] = self.serialize(raw)
+        if is_old_facts:
+            self.results['ansible_facts']['azure_publicipaddresses'] = self.serialize(raw)
         self.results['publicipaddresses'] = self.format(raw)
 
         return self.results
@@ -309,7 +314,7 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMPublicIPFacts()
+    AzureRMPublicIPInfo()
 
 
 if __name__ == '__main__':

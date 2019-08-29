@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_roleassignment_facts
-version_added: "2.8"
+module: azure_rm_roleassignment_info
+version_added: "2.9"
 short_description: Gets Azure Role Assignment facts
 description:
     - Gets facts of Azure Role Assignment.
@@ -50,11 +50,11 @@ author:
 
 EXAMPLES = '''
     - name: Get role assignments for specific service principal
-      azure_rm_roleassignment_facts:
+      azure_rm_roleassignment_info:
         assignee: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
     - name: Get role assignments for specific scope
-      azure_rm_roleassignment_facts:
+      azure_rm_roleassignment_info:
         scope: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 '''
 
@@ -127,7 +127,7 @@ def roleassignment_to_dict(assignment):
     )
 
 
-class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
+class AzureRMRoleAssignmentInfo(AzureRMModuleBase):
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -158,12 +158,16 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
 
         mutually_exclusive = [['name', 'assignee']]
 
-        super(AzureRMRoleAssignmentFacts, self).__init__(derived_arg_spec=self.module_arg_spec,
+        super(AzureRMRoleAssignmentInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                          supports_tags=False,
                                                          mutually_exclusive=mutually_exclusive)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
+        is_old_facts = self.module._name == 'azure_rm_roleassignment_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_roleassignment_facts' module has been renamed to 'azure_rm_roleassignment_info'", version='2.13')
+
 
         for key in list(self.module_arg_spec.keys()):
             if hasattr(self, key):
@@ -270,7 +274,7 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMRoleAssignmentFacts()
+    AzureRMRoleAssignmentInfo()
 
 
 if __name__ == '__main__':

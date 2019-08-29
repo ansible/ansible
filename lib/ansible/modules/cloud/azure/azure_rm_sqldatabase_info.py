@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_sqldatabase_facts
+module: azure_rm_sqldatabase_info
 version_added: "2.8"
 short_description: Get Azure SQL Database facts
 description:
@@ -50,19 +50,19 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of SQL Database
-    azure_rm_sqldatabase_facts:
+    azure_rm_sqldatabase_info:
       resource_group: testrg
       server_name: testserver
       name: testdb
 
   - name: List instances of SQL Database
-    azure_rm_sqldatabase_facts:
+    azure_rm_sqldatabase_info:
       resource_group: testrg
       server_name: testserver
       elastic_pool_name: testep
 
   - name: List instances of SQL Database
-    azure_rm_sqldatabase_facts:
+    azure_rm_sqldatabase_info:
       resource_group: testrg
       server_name: testserver
 '''
@@ -159,7 +159,7 @@ except ImportError:
     pass
 
 
-class AzureRMSqlDatabaseFacts(AzureRMModuleBase):
+class AzureRMSqlDatabaseInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -190,9 +190,13 @@ class AzureRMSqlDatabaseFacts(AzureRMModuleBase):
         self.name = None
         self.elastic_pool_name = None
         self.tags = None
-        super(AzureRMSqlDatabaseFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMSqlDatabaseInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_sqldatabase_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_sqldatabase_facts' module has been renamed to 'azure_rm_sqldatabase_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
@@ -277,7 +281,7 @@ class AzureRMSqlDatabaseFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMSqlDatabaseFacts()
+    AzureRMSqlDatabaseInfo()
 
 
 if __name__ == '__main__':

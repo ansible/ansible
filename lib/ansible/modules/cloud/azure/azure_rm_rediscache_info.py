@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_rediscache_facts
+module: azure_rm_rediscache_info
 
-version_added: "2.8"
+version_added: "2.9"
 
 short_description: Get Azure Cache for Redis instance facts
 
@@ -49,18 +49,18 @@ author:
 
 EXAMPLES = '''
     - name: Get Azure Cache for Redis by name
-      azure_rm_rediscache_facts:
+      azure_rm_rediscache_info:
         resource_group: myResourceGroup
         name: myRedis
 
     - name: Get Azure Cache for Redis with access keys by name
-      azure_rm_rediscache_facts:
+      azure_rm_rediscache_info:
         resource_group: myResourceGroup
         name: myRedis
         return_access_keys: true
 
     - name: Get Azure Cache for Redis in specific resource group
-      azure_rm_rediscache_facts:
+      azure_rm_rediscache_info:
         resource_group: myResourceGroup
 '''
 
@@ -202,7 +202,7 @@ except ImportError:
 import re
 
 
-class AzureRMRedisCacheFacts(AzureRMModuleBase):
+class AzureRMRedisCacheInfo(AzureRMModuleBase):
     """Utility class to get Azure Cache for Redis facts"""
 
     def __init__(self):
@@ -232,13 +232,16 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
 
         self._client = None
 
-        super(AzureRMRedisCacheFacts, self).__init__(
+        super(AzureRMRedisCacheInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
             facts_module=True
         )
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_rediscache_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_rediscache_facts' module has been renamed to 'azure_rm_rediscache_info'", version='2.13')
 
         for key in self.module_args:
             setattr(self, key, kwargs[key])
@@ -344,7 +347,7 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMRedisCacheFacts()
+    AzureRMRedisCacheInfo()
 
 
 if __name__ == '__main__':

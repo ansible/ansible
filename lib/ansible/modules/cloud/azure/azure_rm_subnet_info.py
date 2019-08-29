@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_subnet_facts
+module: azure_rm_subnet_info
 version_added: "2.8"
 short_description: Get Azure Subnet facts
 description:
@@ -44,13 +44,13 @@ author:
 
 EXAMPLES = '''
   - name: Get facts of specific subnet
-    azure_rm_subnet_facts:
+    azure_rm_subnet_info:
       resource_group: myResourceGroup
       virtual_network_name: myVirtualNetwork
       name: mySubnet
 
   - name: List facts for all subnets in virtual network
-    azure_rm_subnet_facts:
+    azure_rm_subnet_info:
       resource_group: myResourceGroup
       virtual_network_name: myVirtualNetwork
       name: mySubnet
@@ -151,7 +151,7 @@ except ImportError:
     pass
 
 
-class AzureRMSubnetFacts(AzureRMModuleBase):
+class AzureRMSubnetInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -174,9 +174,13 @@ class AzureRMSubnetFacts(AzureRMModuleBase):
         self.resource_group = None
         self.virtual_network_name = None
         self.name = None
-        super(AzureRMSubnetFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMSubnetInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_subnet_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_subnet_facts' module has been renamed to 'azure_rm_subnet_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
@@ -236,7 +240,7 @@ class AzureRMSubnetFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMSubnetFacts()
+    AzureRMSubnetInfo()
 
 
 if __name__ == '__main__':

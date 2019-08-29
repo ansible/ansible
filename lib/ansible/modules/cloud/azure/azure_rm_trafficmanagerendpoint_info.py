@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_trafficmanagerendpoint_facts
+module: azure_rm_trafficmanagerendpoint_info
 
 version_added: "2.7"
 
@@ -53,12 +53,12 @@ author:
 
 EXAMPLES = '''
     - name: Get endpoints facts of a Traffic Manager profile
-      azure_rm_trafficmanagerendpoint_facts:
+      azure_rm_trafficmanagerendpoint_info:
         resource_group: myResourceGroup
         profile_name: Testing
 
     - name: Get specific endpoint of a Traffic Manager profile
-      azure_rm_trafficmanager_facts:
+      azure_rm_trafficmanager_info:
         resource_group: myResourceGroup
         profile_name: Testing
         name: test_external_endpoint
@@ -185,7 +185,7 @@ def serialize_endpoint(endpoint, resource_group):
     return result
 
 
-class AzureRMTrafficManagerEndpointFacts(AzureRMModuleBase):
+class AzureRMTrafficManagerEndpointInfo(AzureRMModuleBase):
     """Utility class to get Azure Traffic Manager Endpoint facts"""
 
     def __init__(self):
@@ -217,13 +217,17 @@ class AzureRMTrafficManagerEndpointFacts(AzureRMModuleBase):
         self.resource_group = None
         self.type = None
 
-        super(AzureRMTrafficManagerEndpointFacts, self).__init__(
+        super(AzureRMTrafficManagerEndpointInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
             facts_module=True
         )
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_trafficmanagerendpoint_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_trafficmanagerendpoint_facts' module has been renamed to 'azure_rm_trafficmanagerendpoint_info'", version='2.13')
+
 
         for key in self.module_args:
             setattr(self, key, kwargs[key])
@@ -300,7 +304,7 @@ class AzureRMTrafficManagerEndpointFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMTrafficManagerEndpointFacts()
+    AzureRMTrafficManagerEndpointInfo()
 
 
 if __name__ == '__main__':

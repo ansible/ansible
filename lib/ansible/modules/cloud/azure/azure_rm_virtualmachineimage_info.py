@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_virtualmachineimage_facts
+module: azure_rm_virtualmachineimage_info
 
-version_added: "2.1"
+version_added: "2.9"
 
 short_description: Get virtual machine image facts
 
@@ -55,7 +55,7 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for a specific image
-      azure_rm_virtualmachineimage_facts:
+      azure_rm_virtualmachineimage_info:
         location: eastus
         publisher: OpenLogic
         offer: CentOS
@@ -63,19 +63,19 @@ EXAMPLES = '''
         version: '7.1.20160308'
 
     - name: List available versions
-      azure_rm_virtualmachineimage_facts:
+      azure_rm_virtualmachineimage_info:
         location: eastus
         publisher: OpenLogic
         offer: CentOS
         sku: '7.1'
 
     - name: List available offers
-      azure_rm_virtualmachineimage_facts:
+      azure_rm_virtualmachineimage_info:
         location: eastus
         publisher: OpenLogic
 
     - name: List available publishers
-      azure_rm_virtualmachineimage_facts:
+      azure_rm_virtualmachineimage_info:
         location: eastus
 
 '''
@@ -125,7 +125,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
 
 
-class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
+class AzureRMVirtualMachineImageInfo(AzureRMModuleBase):
 
     def __init__(self, **kwargs):
 
@@ -148,21 +148,35 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
         self.sku = None
         self.version = None
 
-        super(AzureRMVirtualMachineImageFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMVirtualMachineImageInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_virtualmachineimage_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_virtualmachineimage_facts' module has been renamed to 'azure_rm_virtualmachineimage_info'", version='2.13')
+
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        if self.location and self.publisher and self.offer and self.sku and self.version:
-            self.results['ansible_facts']['azure_vmimages'] = self.get_item()
-        elif self.location and self.publisher and self.offer and self.sku:
-            self.results['ansible_facts']['azure_vmimages'] = self.list_images()
-        elif self.location and self.publisher:
-            self.results['ansible_facts']['azure_vmimages'] = self.list_offers()
-        elif self.location:
-            self.results['ansible_facts']['azure_vmimages'] = self.list_publishers()
+        if is_old_facts:
+            if self.location and self.publisher and self.offer and self.sku and self.version:
+                self.results['ansible_facts']['azure_vmimages'] = self.get_item()
+            elif self.location and self.publisher and self.offer and self.sku:
+                self.results['ansible_facts']['azure_vmimages'] = self.list_images()
+            elif self.location and self.publisher:
+                self.results['ansible_facts']['azure_vmimages'] = self.list_offers()
+            elif self.location:
+                self.results['ansible_facts']['azure_vmimages'] = self.list_publishers()
+        else:
+            if self.location and self.publisher and self.offer and self.sku and self.version:
+                self.results['vmimages'] = self.get_item()
+            elif self.location and self.publisher and self.offer and self.sku:
+                self.results['vmimages'] = self.list_images()
+            elif self.location and self.publisher:
+                self.results['vmimages'] = self.list_offers()
+            elif self.location:
+                self.results['vmimages'] = self.list_publishers()
 
         return self.results
 
@@ -238,7 +252,7 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMVirtualMachineImageFacts()
+    AzureRMVirtualMachineImageInfo()
 
 
 if __name__ == '__main__':

@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_trafficmanagerprofile_facts
+module: azure_rm_trafficmanagerprofile_info
 
 version_added: "2.7"
 
@@ -44,15 +44,15 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one Traffic Manager profile
-      azure_rm_trafficmanager_facts:
+      azure_rm_trafficmanager_info:
         name: Testing
         resource_group: myResourceGroup
 
     - name: Get facts for all Traffic Manager profiles
-      azure_rm_trafficmanager_facts:
+      azure_rm_trafficmanager_info:
 
     - name: Get facts by tags
-      azure_rm_trafficmanager_facts:
+      azure_rm_trafficmanager_info:
         tags:
           - Environment:Test
 '''
@@ -280,7 +280,7 @@ def serialize_endpoint(endpoint):
     return result
 
 
-class AzureRMTrafficManagerProfileFacts(AzureRMModuleBase):
+class AzureRMTrafficManagerProfileInfo(AzureRMModuleBase):
     """Utility class to get Azure Traffic Manager profile facts"""
 
     def __init__(self):
@@ -300,13 +300,17 @@ class AzureRMTrafficManagerProfileFacts(AzureRMModuleBase):
         self.resource_group = None
         self.tags = None
 
-        super(AzureRMTrafficManagerProfileFacts, self).__init__(
+        super(AzureRMTrafficManagerProfileInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
             facts_module=True
         )
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_trafficmanagerprofile_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_trafficmanagerprofile_facts' module has been renamed to 'azure_rm_trafficmanagerprofile_info'", version='2.13')
+
 
         for key in self.module_args:
             setattr(self, key, kwargs[key])
@@ -412,7 +416,7 @@ class AzureRMTrafficManagerProfileFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMTrafficManagerProfileFacts()
+    AzureRMTrafficManagerProfileInfo()
 
 
 if __name__ == '__main__':

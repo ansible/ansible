@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_resource_facts
-version_added: "2.6"
+module: azure_rm_resource_info
+version_added: "2.9"
 short_description: Generic facts of Azure resources
 description:
     - Obtain facts of any resource using Azure REST API.
@@ -67,7 +67,7 @@ author:
 
 EXAMPLES = '''
   - name: Get scaleset info
-    azure_rm_resource_facts:
+    azure_rm_resource_info:
       resource_group: myResourceGroup
       provider: compute
       resource_type: virtualmachinescalesets
@@ -75,7 +75,7 @@ EXAMPLES = '''
       api_version: "2017-12-01"
 
   - name: Query all the resources in the resource group
-    azure_rm_resource_facts:
+    azure_rm_resource_info:
       resource_group: "{{ resource_group }}"
       resource_type: resources
 '''
@@ -292,7 +292,7 @@ except ImportError:
     pass
 
 
-class AzureRMResourceFacts(AzureRMModuleBase):
+class AzureRMResourceInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -331,9 +331,13 @@ class AzureRMResourceFacts(AzureRMModuleBase):
         self.resource_type = None
         self.resource_name = None
         self.subresource = []
-        super(AzureRMResourceFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMResourceInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_resource_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_resource_facts' module has been renamed to 'azure_rm_resource_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(GenericRestClient,
@@ -420,7 +424,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMResourceFacts()
+    AzureRMResourceInfo()
 
 
 if __name__ == '__main__':

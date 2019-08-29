@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_virtualmachinescaleset_facts
+module: azure_rm_virtualmachinescaleset_info
 
-version_added: "2.4"
+version_added: "2.9"
 
 short_description: Get Virtual Machine Scale Set facts
 
@@ -55,17 +55,17 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for a virtual machine scale set
-      azure_rm_virtualmachinescaleset_facts:
+      azure_rm_virtualmachinescaleset_info:
         resource_group: myResourceGroup
         name: testvmss001
         format: curated
 
     - name: Get facts for all virtual networks
-      azure_rm_virtualmachinescaleset_facts:
+      azure_rm_virtualmachinescaleset_info:
         resource_group: myResourceGroup
 
     - name: Get facts by tags
-      azure_rm_virtualmachinescaleset_facts:
+      azure_rm_virtualmachinescaleset_info:
         resource_group: myResourceGroup
         tags:
           - testing
@@ -261,7 +261,7 @@ AZURE_OBJECT_CLASS = 'VirtualMachineScaleSet'
 AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
 
 
-class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
+class AzureRMVirtualMachineScaleSetInfo(AzureRMModuleBase):
     """Utility class to get virtual machine scale set facts"""
 
     def __init__(self):
@@ -290,27 +290,38 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
         self.format = None
         self.tags = None
 
-        super(AzureRMVirtualMachineScaleSetFacts, self).__init__(
+        super(AzureRMVirtualMachineScaleSetInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
             facts_module=True
         )
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_virtualmachinescaleset_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_virtualmachinescaleset_facts' module has been renamed to 'azure_rm_virtualmachinescaleset_info'", version='2.13')
+
 
         for key in self.module_args:
             setattr(self, key, kwargs[key])
 
-        if self.module._name == 'azure_rm_virtualmachine_scaleset_facts':
-            self.module.deprecate("The 'azure_rm_virtualmachine_scaleset_facts' module has been renamed to 'azure_rm_virtualmachinescaleset_facts'",
+        if self.module._name == 'azure_rm_virtualmachine_scaleset_info':
+            self.module.deprecate("The 'azure_rm_virtualmachine_scaleset_info' module has been renamed to 'azure_rm_virtualmachinescaleset_info'",
                                   version='2.12')
 
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
-        if self.name:
-            self.results['ansible_facts']['azure_vmss'] = self.get_item()
+
+        if is_old_facts:
+            if self.name:
+                self.results['ansible_facts']['azure_vmss'] = self.get_item()
+            else:
+                self.results['ansible_facts']['azure_vmss'] = self.list_items()
         else:
-            self.results['ansible_facts']['azure_vmss'] = self.list_items()
+            if self.name:
+                self.results['vmss'] = self.get_item()
+            else:
+                self.results['vmss'] = self.list_items()
 
         if self.format == 'curated':
             for index in range(len(self.results['ansible_facts']['azure_vmss'])):
@@ -383,6 +394,8 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
             # proper result format we want to support in the future
             # dropping 'ansible_facts' and shorter name 'vmss'
             self.results['vmss'] = self.results['ansible_facts']['azure_vmss']
+            if not is_old_facts:
+                self.results.pop('ansible_facts', None)
 
         return self.results
 
@@ -425,7 +438,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMVirtualMachineScaleSetFacts()
+    AzureRMVirtualMachineScaleSetInfo()
 
 
 if __name__ == '__main__':

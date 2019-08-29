@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_sqlserver_facts
-version_added: "2.5"
+module: azure_rm_sqlserver_info
+version_added: "2.9"
 short_description: Get SQL Server facts
 description:
     - Get facts of SQL Server.
@@ -41,12 +41,12 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of SQL Server
-    azure_rm_sqlserver_facts:
+    azure_rm_sqlserver_info:
       resource_group: myResourceGroup
       server_name: server_name
 
   - name: List instances of SQL Server
-    azure_rm_sqlserver_facts:
+    azure_rm_sqlserver_info:
       resource_group: myResourceGroup
 '''
 
@@ -123,7 +123,7 @@ except ImportError:
     pass
 
 
-class AzureRMSqlServerFacts(AzureRMModuleBase):
+class AzureRMSqlServerInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -142,9 +142,13 @@ class AzureRMSqlServerFacts(AzureRMModuleBase):
         )
         self.resource_group = None
         self.server_name = None
-        super(AzureRMSqlServerFacts, self).__init__(self.module_arg_spec)
+        super(AzureRMSqlServerInfo, self).__init__(self.module_arg_spec)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_sqlserver_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_sqlserver_facts' module has been renamed to 'azure_rm_sqlserver_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
@@ -197,7 +201,7 @@ class AzureRMSqlServerFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMSqlServerFacts()
+    AzureRMSqlServerInfo()
 
 
 if __name__ == '__main__':

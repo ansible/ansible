@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_servicebus_facts
+module: azure_rm_servicebus_info
 
 version_added: "2.8"
 
@@ -68,18 +68,18 @@ author:
 
 EXAMPLES = '''
 - name: Get all namespaces under a resource group
-  azure_rm_servicebus_facts:
+  azure_rm_servicebus_info:
     resource_group: myResourceGroup
     type: namespace
 
 - name: Get all topics under a namespace
-  azure_rm_servicebus_facts:
+  azure_rm_servicebus_info:
     resource_group: myResourceGroup
     namespace: bar
     type: topic
 
 - name: Get a single queue with SAS policies
-  azure_rm_servicebus_facts:
+  azure_rm_servicebus_info:
     resource_group: myResourceGroup
     namespace: bar
     type: queue
@@ -87,7 +87,7 @@ EXAMPLES = '''
     show_sas_policies: true
 
 - name: Get all subscriptions under a resource group
-  azure_rm_servicebus_facts:
+  azure_rm_servicebus_info:
     resource_group: myResourceGroup
     type: subscription
     namespace: bar
@@ -402,7 +402,7 @@ def is_valid_timedelta(value):
     return value
 
 
-class AzureRMServiceBusFacts(AzureRMModuleBase):
+class AzureRMServiceBusInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -435,12 +435,16 @@ class AzureRMServiceBusFacts(AzureRMModuleBase):
         self.topic = None
         self.show_sas_policies = None
 
-        super(AzureRMServiceBusFacts, self).__init__(self.module_arg_spec,
+        super(AzureRMServiceBusInfo, self).__init__(self.module_arg_spec,
                                                      supports_tags=False,
                                                      required_if=required_if,
                                                      facts_module=True)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_servicebus_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_servicebus_facts' module has been renamed to 'azure_rm_servicebus_info'", version='2.13')
+
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
@@ -574,7 +578,7 @@ class AzureRMServiceBusFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMServiceBusFacts()
+    AzureRMServiceBusInfo()
 
 
 if __name__ == '__main__':

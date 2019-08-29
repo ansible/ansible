@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_virtualnetwork_facts
+module: azure_rm_virtualnetwork_info
 
-version_added: "2.1"
+version_added: "2.9"
 
 short_description: Get virtual network facts
 
@@ -47,16 +47,16 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one virtual network
-      azure_rm_virtualnetwork_facts:
+      azure_rm_virtualnetwork_info:
         resource_group: myResourceGroup
         name: secgroup001
 
     - name: Get facts for all virtual networks
-      azure_rm_virtualnetwork_facts:
+      azure_rm_virtualnetwork_info:
         resource_group: myResourceGroup
 
     - name: Get facts by tags
-      azure_rm_virtualnetwork_facts:
+      azure_rm_virtualnetwork_info:
         tags:
           - testing
 '''
@@ -202,7 +202,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 AZURE_OBJECT_CLASS = 'VirtualNetwork'
 
 
-class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
+class AzureRMNetworkInterfaceInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -222,11 +222,15 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
         self.resource_group = None
         self.tags = None
 
-        super(AzureRMNetworkInterfaceFacts, self).__init__(self.module_arg_spec,
+        super(AzureRMNetworkInterfaceInfo, self).__init__(self.module_arg_spec,
                                                            supports_tags=False,
                                                            facts_module=True)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_virtualnetwork_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_virtualnetwork_facts' module has been renamed to 'azure_rm_virtualnetwork_info'", version='2.13')
+
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
@@ -238,7 +242,8 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
         else:
             results = self.list_items()
 
-        self.results['ansible_facts']['azure_virtualnetworks'] = self.serialize(results)
+        if is_old_facts:
+            self.results['ansible_facts']['azure_virtualnetworks'] = self.serialize(results)
         self.results['virtualnetworks'] = self.curated(results)
 
         return self.results
@@ -326,7 +331,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMNetworkInterfaceFacts()
+    AzureRMNetworkInterfaceInfo()
 
 
 if __name__ == '__main__':
