@@ -30,6 +30,19 @@ class GitSource(SourceProvider):
         """Return the list of available content paths under the given path."""
         git = Git(path)
 
+        paths = self.__get_paths(path)
+
+        submodule_paths = git.get_submodule_paths()
+
+        for submodule_path in submodule_paths:
+            paths.extend(os.path.join(submodule_path, p) for p in self.__get_paths(os.path.join(path, submodule_path)))
+
+        return paths
+
+    @staticmethod
+    def __get_paths(path):  # type: (str) -> t.List[str]
+        """Return the list of available content paths under the given path."""
+        git = Git(path)
         paths = git.get_file_names(['--cached', '--others', '--exclude-standard'])
         deleted_paths = git.get_file_names(['--deleted'])
         paths = sorted(set(paths) - set(deleted_paths))
