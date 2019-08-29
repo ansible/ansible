@@ -195,6 +195,9 @@ class VcenterProvider(CloudProvider):
             aci.wait(iterations=160)
 
             data = aci.get().response_json.get('data')
+            for key, value in data.items():
+                if key.endswith('PASSWORD'):
+                    display.sensitive.add(value)
             config = self._populate_config_template(config, data)
             self._write_config(config)
 
