@@ -263,7 +263,6 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_one_of=(('name', 'uuid'),),
-        mutually_exclusive=(('name', 'uuid'),),
         supports_check_mode=True,
     )
 
