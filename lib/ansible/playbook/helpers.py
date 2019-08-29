@@ -368,12 +368,17 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     return task_list
 
 
-def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, loader=None):
-    '''
-    Loads and returns a list of RoleInclude objects from the datastructure
-    list of role definitions
-    '''
-
+def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, loader=None, collection_search_list=None):
+    """
+    Loads and returns a list of RoleInclude objects from the ds list of role definitions
+    :param ds: list of roles to load
+    :param play: calling Play object
+    :param current_role_path: path of the owning role, if any
+    :param variable_manager: varmgr to use for templating
+    :param loader: loader to use for DS parsing/services
+    :param collection_search_list: list of collections to search for unqualified role names
+    :return:
+    """
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.role.include import RoleInclude
 
@@ -383,7 +388,7 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
     roles = []
     for role_def in ds:
         i = RoleInclude.load(role_def, play=play, current_role_path=current_role_path, variable_manager=variable_manager,
-                             loader=loader, collection_list=play.collections)
+                             loader=loader, collection_list=collection_search_list)
         roles.append(i)
 
     return roles

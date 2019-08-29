@@ -173,7 +173,7 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
             is_package = True
             location = None
             # check for implicit sub-package first
-            if os.path.isdir(candidate_child_path):
+            if os.path.isdir(to_bytes(candidate_child_path)):
                 # Py3.x implicit namespace packages don't have a file location, so they don't support get_data
                 # (which assumes the parent dir or that the loader has an internal mapping); so we have to provide
                 # a bogus leaf file on the __file__ attribute for pkgutil.get_data to strip off
@@ -181,10 +181,10 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
             else:
                 for source_path in [os.path.join(candidate_child_path, '__init__.py'),
                                     candidate_child_path + '.py']:
-                    if not os.path.isfile(source_path):
+                    if not os.path.isfile(to_bytes(source_path)):
                         continue
 
-                    with open(source_path, 'rb') as fd:
+                    with open(to_bytes(source_path), 'rb') as fd:
                         source = fd.read()
 
                     code_object = compile(source=source, filename=source_path, mode='exec', flags=0, dont_inherit=True)

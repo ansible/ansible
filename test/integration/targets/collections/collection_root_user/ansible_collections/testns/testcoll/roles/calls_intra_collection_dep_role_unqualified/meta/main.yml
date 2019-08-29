@@ -1,0 +1,2 @@
+dependencies:
+  - testrole  # since testrole lives in this collection, we'll check there first

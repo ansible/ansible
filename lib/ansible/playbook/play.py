@@ -192,7 +192,8 @@ class Play(Base, Taggable, CollectionSearch):
             ds = []
 
         try:
-            role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+            role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager,
+                                               loader=self._loader, collection_search_list=self.collections)
         except AssertionError as e:
             raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds, orig_exc=e)
 

@@ -162,6 +162,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                             role_obj.add_parent(parent_role)
                         return role_obj
 
+            # TODO: need to fix cycle detection in role load (maybe use an empty dict
+            #  for the in-flight in role cache as a sentinel that we're already trying to load
+            #  that role?)
+            # see https://github.com/ansible/ansible/issues/61527
             r = Role(play=play, from_files=from_files, from_include=from_include)
             r._load_role_data(role_include, parent_role=parent_role)
 
