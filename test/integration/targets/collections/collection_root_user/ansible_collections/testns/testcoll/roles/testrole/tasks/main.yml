@@ -19,6 +19,9 @@
     msg: '{{ test_role_input | default("(undefined)") }}'
   register: test_role_output
 
+- set_fact:
+    testrole_source: collection
+
 # FIXME: add tests to ensure that block/task level stuff in a collection-hosted role properly inherit role default/meta values
 
 - assert:

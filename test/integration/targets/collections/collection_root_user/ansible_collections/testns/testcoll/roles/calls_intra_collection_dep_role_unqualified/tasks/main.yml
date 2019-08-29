@@ -1,0 +1,7 @@
+- debug:
+    msg: '{{ outer_role_input | default("(undefined)") }}'
+  register: outer_role_output
+
+- assert:
+    that:
+    - outer_role_input is not defined or outer_role_input == outer_role_output.msg
