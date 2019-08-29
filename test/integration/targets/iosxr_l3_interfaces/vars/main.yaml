@@ -174,6 +174,5 @@ deleted:
   after:
     - name: Loopback888
     - name: Loopback999
-    - name: GigabitEthernet0/0/0/2
     - name: GigabitEthernet0/0/0/3
     - name: GigabitEthernet0/0/0/3.100
