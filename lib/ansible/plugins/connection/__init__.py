@@ -354,8 +354,8 @@ class NetworkConnectionBase(ConnectionBase):
                 finally:
                     if os.path.exists(self._socket_path):
                         os.remove(self._socket_path)
-                        setattr(self.connection, '_socket_path', None)
-                        setattr(self.connection, '_connected', False)
+                        self._socket_path = None
+                        self._connected = False
 
             if os.path.exists(lock_path):
                 os.remove(lock_path)
