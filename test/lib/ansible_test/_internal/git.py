@@ -39,7 +39,7 @@ class Git:
 
     def get_submodule_paths(self):  # type: () -> t.List[str]
         """Return a list of submodule paths recursively."""
-        cmd = ['submodule', 'status', '--recursive']
+        cmd = ['submodule', 'status', '--recursive', '.']
         output = self.run_git_split(cmd, '\n')
         submodule_paths = [re.search(r'^.[0-9a-f]+ (?P<path>[^ ]+)', line).group('path') for line in output]
         return submodule_paths
