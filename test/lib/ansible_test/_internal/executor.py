@@ -74,6 +74,7 @@ from .util_common import (
     write_text_file,
     write_json_test_results,
     ResultType,
+    handle_layout_messages,
 )
 
 from .docker_util import (
@@ -363,6 +364,8 @@ def command_posix_integration(args):
     """
     :type args: PosixIntegrationConfig
     """
+    handle_layout_messages(data_context().content.integration_messages)
+
     inventory_relative_path = get_inventory_relative_path(args)
     inventory_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, os.path.basename(inventory_relative_path))
 
@@ -375,6 +378,8 @@ def command_network_integration(args):
     """
     :type args: NetworkIntegrationConfig
     """
+    handle_layout_messages(data_context().content.integration_messages)
+
     inventory_relative_path = get_inventory_relative_path(args)
     template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(inventory_relative_path)) + '.template'
 
@@ -556,6 +561,8 @@ def command_windows_integration(args):
     """
     :type args: WindowsIntegrationConfig
     """
+    handle_layout_messages(data_context().content.integration_messages)
+
     inventory_relative_path = get_inventory_relative_path(args)
     template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(inventory_relative_path)) + '.template'
 
