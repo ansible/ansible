@@ -4,6 +4,9 @@
 # Copyright (c) 2016, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
@@ -23,7 +26,6 @@ options:
       - Name of the zone.
       - If not specified, all zones are returned
     type: str
-    required: false
     aliases: [ zone ]
 extends_documentation_fragment: cloudstack
 '''
@@ -184,7 +186,7 @@ class AnsibleCloudStackZoneInfo(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        zone=dict(required=False, aliases=['name']),
+        zone=dict(type='str', aliases=['name']),
     ))
 
     module = AnsibleModule(
