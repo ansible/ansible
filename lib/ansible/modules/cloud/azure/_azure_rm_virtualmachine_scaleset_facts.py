@@ -1,1 +1,1 @@
-azure_rm_virtualmachinescaleset_facts.py
+azure_rm_virtualmachinescaleset_info.py
