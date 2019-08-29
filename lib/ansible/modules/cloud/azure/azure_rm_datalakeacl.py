@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_dataleakacl
+module: azure_rm_datalakeacl
 version_added: "2.9"
 short_description: Setup Azure Datalake ACLs
 description:
@@ -70,21 +70,22 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Create acl for raw dir
-    azure_rm_datalakeacl:
-      dir_name: /raw
-      store_name: mydatalake
-      sp_name: myserviceprincipalid
-      permissions: 'r-x'
-      acl_spec: "default:user"
+    - name: Create acl for raw dir recursively
+      azure_rm_datalakeacl:
+        dir_name: /raw
+        store_name: mydatalake
+        sp_name: myserviceprincipalid
+        permissions: r-x
+        acl_spec: user
+        recursive: true
 
-  - name: Delete acl for raw dir
-    azure_rm_datalakeacl:
-      dir_name: /raw
-      store_name: mydatalake
-      sp_name: myserviceprincipalid
-      acl_spec: "default:user"
-      state:absent
+    - name: Delete a key
+      azure_rm_datalakeacl:
+        dir_name: /raw
+        store_name: mydatalake
+        sp_name: myserviceprincipalid
+        acl_spec: user
+        state:absent
 '''
 
 RETURN = '''
@@ -175,8 +176,8 @@ class AzureRMDataLakes(AzureRMModuleBase):
         try:
 
             pattern = re.compile(
-                "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[34][0-9a-fA-F]{3}-[89ab]\
-                    [0-9a-fA-F]{3}-[0-9a-fA-F]{12}")
+                "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[34][0-9a-fA-F]{3}-[89ab][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"
+            )
 
             if pattern.match(self.sp_name):
                 results['object_id'] = sp_id = self.sp_name
@@ -201,7 +202,7 @@ class AzureRMDataLakes(AzureRMModuleBase):
 
             # Create ACL
             if self.state == 'present' and changed:
-                self.create_acl(adl_creds)
+                # self.create_acl(adl_creds)
                 self.results['state'] = results
                 self.results["permissions"] = "{0}:{1}:{2}".format(
                     self.acl_spec, self.sp_name, self.permissions)
@@ -223,12 +224,11 @@ class AzureRMDataLakes(AzureRMModuleBase):
 
     def get_adlcreds(self):
 
-        if 'client_id' not in self.credentials or 'secret' not \
-            in self.credentials or self.credentials[
+        if 'client_id' not in self.credentials or 'secret' not in self.credentials or self.credentials[
                 'client_id'] is None or self.credentials['secret'] is None:
             self.fail(
-                'Please specify client_id, secret and tenant to access azure \
-                    datalake.')
+                'Please specify client_id, secret and tenant to access azure datalake.'
+            )
 
         tenant = self.credentials.get('tenant')
         if not self.credentials['tenant']:
@@ -287,26 +287,27 @@ class AzureRMDataLakes(AzureRMModuleBase):
         try:
 
             app_filter = creds.applications.list(
-                filter="displayName eq '{}'".format(self.sp_name))
+                filter="displayName eq '{0}'".format(self.sp_name))
 
-            if any(True for _ in app_filter):
+            if any(True for item in app_filter):
 
                 application = next(
                     creds.applications.list(
-                        filter="displayName eq '{}'".format(self.sp_name)))
+                        filter="displayName eq '{0}'".format(self.sp_name)))
 
                 appid_filter = creds.service_principals.list(
-                    filter="appId eq '{}'".format(application.app_id))
+                    filter="appId eq '{0}'".format(application.app_id))
 
-                if any(True for _ in appid_filter):
+                if any(True for item in appid_filter):
                     service_principal = next(
                         creds.service_principals.list(
-                            filter="appId eq '{}'".format(application.app_id)))
+                            filter="appId eq '{0}'".format(
+                                application.app_id)))
 
                 else:
                     self.fail(
-                        "Could not find service principal to update DataLake \
-                            ACLs")
+                        "Could not find service principal to update DataLake ACLs"
+                    )
 
             else:
                 self.fail(
