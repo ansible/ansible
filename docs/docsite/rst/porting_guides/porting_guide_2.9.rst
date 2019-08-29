@@ -61,7 +61,7 @@ Modules
 =======
 
 * The ``win_get_url`` and ``win_uri`` module now sends requests with a default ``User-Agent`` of ``ansible-httpget``. This can be changed by using the ``http_agent`` key.
-
+* The ``apt`` module now honors ``update_cache=false`` while installing its own dependency and skips the cache update. Explicitly set ``update_cache=true` or omitting the param ``update_cache`` will result in a cache update while installing its own dependency.
 
 Writing modules
 ---------------
