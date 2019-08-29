@@ -511,7 +511,7 @@ def main():
             mode=dict(type='raw'),
             update_cache=dict(type='bool', default=True, aliases=['update-cache']),
             update_cache_retries=dict(type='int', default=5),
-            update_cache_max_retry_delay=dict(type='int', default=12),
+            update_cache_retry_max_delay=dict(type='int', default=12),
             filename=dict(type='str'),
             # This should not be needed, but exists as a failsafe
             install_python_apt=dict(type='bool', default=True),
