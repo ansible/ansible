@@ -47,6 +47,10 @@ notes:
   - The module can wait until I(deployment) file is deployed/undeployed by deployment-scanner.
     Duration of waiting time depends on scan-interval parameter from standalone.xml.
   - Ensure no identically named application is deployed through the JBoss CLI
+seealso:
+- name: WildFly reference
+  description: Complete reference of the WildFly documentation.
+  link: https://docs.wildfly.org
 author:
   - Jeroen Hoekx (@jhoekx)
 """
