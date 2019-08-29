@@ -17,56 +17,76 @@
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-from ansible.modules.cloud.amazon.aws_acm import cert_compare
-from ansible.module_utils.crypto import get_fingerprint_from_pem_cert as get_fingerprint
+from ansible.modules.cloud.amazon.aws_acm import pem_chain_split, chain_compare
 from ansible.module_utils._text import to_bytes, to_text
-from binascii import hexlify as to_hex
+from pprint import pprint
 
-# You can manually check the fingerprints with
-# openssl x509 -in a.pem -noout -sha256 -fingerprint
-test_certs = [
-    { # docs.ansible.com 28/8/19
-        'expected_fingerprint':'3D:F4:22:86:43:80:51:0F:0D:F9:E0:60:79:33:18:D4:F5:8E:6D:5F:94:0A:08:D8:56:DF:2F:22:B6:D4:74:06',
-        'path': 'test/units/modules/cloud/amazon/fixtures/certs/a.pem'        
-    },
-    { # cryptography.io 28/8/19
-        'expected_fingerprint':'E0:BA:7D:45:F1:95:67:2C:DE:6D:EC:4E:18:9B:5C:94:C4:5D:F4:16:CA:16:0C:06:C5:0B:8A:8A:6C:5E:6D:DE',
-        'path': 'test/units/modules/cloud/amazon/fixtures/certs/b.pem'        
-    }
-]
-
-
-
-def test_fingerprinting():
-    for cert in test_certs:
-        with open(cert['path'],'r') as f:
-            cert['pem_bytes'] = to_bytes(f.read())
-        cert['pem_text'] = to_text(cert['pem_bytes'])
-        cert['fingerprint_bytes'] = get_fingerprint(cert['pem_bytes'])
-        
-        # convert to the format of test_cert['expected_fingerprint']
-        # Which is what you can copy and paste from a browser
-        cert['fingerprint_text'] = to_text(to_hex(cert['fingerprint_bytes'])).upper()
-        cert['expected_fingerprint'] = cert['expected_fingerprint'].replace(':','').upper()
-        if cert['fingerprint_text'] != cert['expected_fingerprint']:
-            print("Expected fingerprint: %s" % cert['expected_fingerprint'])
-            print("Actual fingerprint:   %s" % cert['fingerprint_text'])
-        assert(cert['fingerprint_text'] == cert['expected_fingerprint'])
-        
-    # Both bytes
-    assert(cert_compare(test_certs[0]['pem_bytes'], test_certs[0]['pem_bytes']))
-    assert(cert_compare(test_certs[1]['pem_bytes'], test_certs[1]['pem_bytes']))
-    assert(not cert_compare(test_certs[0]['pem_bytes'], test_certs[1]['pem_bytes']))
-        
-    # both text
-    assert(cert_compare(test_certs[0]['pem_text'], test_certs[0]['pem_text']))
-    assert(cert_compare(test_certs[1]['pem_text'], test_certs[1]['pem_text']))
-    assert(not cert_compare(test_certs[0]['pem_text'], test_certs[1]['pem_text']))
+def test_chain_compare():
     
-    # mixed
-    assert(cert_compare(test_certs[0]['pem_bytes'], test_certs[0]['pem_text']))
-    assert(cert_compare(test_certs[1]['pem_bytes'], test_certs[1]['pem_text']))
-    assert(not cert_compare(test_certs[0]['pem_bytes'], test_certs[1]['pem_text']))
-    assert(not cert_compare(test_certs[0]['pem_text'], test_certs[1]['pem_bytes']))
-        
     
+    # chains with same same_as should be considered equal
+    test_chains = [
+        { # Original Cert chain
+            'path': 'test/units/modules/cloud/amazon/fixtures/certs/chain-1.0.cert',
+            'same_as': 1,
+            'length': 3
+        },
+        { # Same as 1.0, but longer PEM lines
+            'path': 'test/units/modules/cloud/amazon/fixtures/certs/chain-1.1.cert',
+            'same_as': 1,
+            'length': 3
+        },
+        { # Same as 1.0, but without the stuff before each --------
+            'path': 'test/units/modules/cloud/amazon/fixtures/certs/chain-1.2.cert',
+            'same_as': 1,
+            'length': 3
+        },
+        { # Same as 1.0, but in a different order, so should be considered different
+            'path': 'test/units/modules/cloud/amazon/fixtures/certs/chain-1.3.cert',
+            'same_as': 2,
+            'length': 3
+        },
+        { # Same as 1.0, but with last link missing
+            'path': 'test/units/modules/cloud/amazon/fixtures/certs/chain-1.4.cert',
+            'same_as': 3,
+            'length': 2
+        },
+        { # Completely different cert chain to all the others
+            'path': 'test/units/modules/cloud/amazon/fixtures/certs/chain-4.cert',
+            'same_as': 4,
+            'length': 3
+        },
+        { # Single cert
+            'path': 'test/units/modules/cloud/amazon/fixtures/certs/a.pem',
+            'same_as': 5,
+            'length': 1
+        },
+        { # a different, single cert
+            'path': 'test/units/modules/cloud/amazon/fixtures/certs/b.pem',
+            'same_as': 6,
+            'length': 1
+        }
+    ]
+    
+    for chain in test_chains:
+        with open(chain['path'],'r') as f:
+            chain['pem_text'] = to_text(f.read())
+            
+        # Test to make sure our regex isn't too greedy
+        chain['split'] = pem_chain_split(chain['pem_text'])
+        if len(chain['split']) != chain['length']:
+            print("path: %s" % chain['path'])
+            pprint(chain['split'])
+            print("Chain length: %d" % len(chain['split']))
+            raise AssertionError("Chain %s was not split properly" % chain['path'])
+    
+    for chain_a in test_chains:
+        for chain_b in test_chains:
+            expected = (chain_a['same_as'] == chain_b['same_as'])
+            
+            # Now test the comparison function
+            actual = chain_compare(chain_a['pem_text'], chain_b['pem_text'])
+            if expected != actual:
+                print("Error, unexpected comparison result between \n%s\nand\n%s" % (chain_a['path'], chain_b['path']))
+                print("Expected %s got %s" % (str(expected),str(actual)))
+            assert(expected == actual)
