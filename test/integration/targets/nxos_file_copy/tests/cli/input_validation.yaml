@@ -54,7 +54,7 @@
 
 - name: "Input Validation - remote_scp_server params together"
   nxos_file_copy:
-      remote_scp_server: "{{ inventory_hostname_short }}"
+    remote_scp_server: "{{ inventory_hostname_short }}"
   register: result
   ignore_errors: true
 
