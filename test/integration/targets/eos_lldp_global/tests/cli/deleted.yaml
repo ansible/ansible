@@ -1,0 +1,28 @@
+---
+- include_tasks: reset_config.yml
+
+- eos_facts:
+    gather_network_resources: lldp_global
+  become: yes
+
+- name: Returns LLDP configuration to default parameters
+  eos_lldp_global:
+    state: deleted
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lldp_global == result.before"
+
+- eos_facts:
+    gather_network_resources: lldp_global
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lldp_global == result.after"
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lldp_global == {}"

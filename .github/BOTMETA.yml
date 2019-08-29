@@ -218,6 +218,7 @@ files:
     supershipit: felixfontein
   $modules/crypto/openssl_certificate.py:
     maintainers: ctrufan
+  $modules/crypto/entrust/: ctrufan tylert
   $modules/database/influxdb/: kamsz
   $modules/database/mssql/mssql_db.py: Jmainguy kenichi-ogawa-1988
   $modules/database/mysql/: &mysql
@@ -315,7 +316,7 @@ files:
   $modules/network/enos/: amuraleedhar
   $modules/network/eos/: trishnaguha
   $modules/network/eric_eccli/: itercheng
-  $modules/network/exos/: rdvencioneck
+  $modules/network/exos/: rdvencioneck $team_extreme
   $modules/network/f5/:
     ignored: Etienne-Carriere mhite mryanlam perzizzle srvg JoeReifel $team_networking
     maintainers: caphrim007 wojtek0806
@@ -361,7 +362,6 @@ files:
   $modules/network/ordnance/: alexanderturner djh00t
   $modules/network/ovs/:
     ignored: stygstra
-    maintainers: rcarrillocruz
   $modules/network/panos/: ivanbojer jtschichold shinmog
   $modules/network/protocol/: $team_networking
   $modules/network/routeros/: heuels
@@ -460,7 +460,7 @@ files:
     notified: jlozadad
   $modules/storage/hpe3par/: farhan7500 gautamphegde
   $modules/storage/infinidat/: GR360RY vmalloc
-  $modules/storage/netapp/: 
+  $modules/storage/netapp/:
     maintainers: $team_netapp
     support: community
   $modules/storage/purestorage/:
@@ -518,6 +518,7 @@ files:
   $modules/web_infrastructure/ansible_tower/: &tower
     labels: [ tower ]
     maintainers: $team_tower
+    ignored: wwitzel3
   $modules/web_infrastructure/sophos_utm/:
     maintainers: $team_e_spirit
     keywords:
@@ -671,7 +672,7 @@ files:
       - aws
       - cloud
   $module_utils/ecs/:
-    maintainers: ctrufan $team_crypto
+    maintainers: ctrufan tylert $team_crypto
   $module_utils/facts:
     support: core
   $module_utils/facts/hardware/aix.py: *aix
@@ -714,8 +715,9 @@ files:
     labels:
       - clustering
       - k8s
-  $module_utils/keycloak.py:
-    maintainers: eikef
+  $module_utils/identity/keycloak/:
+     maintainers: eikef
+     support: community
   $module_utils/kubevirt.py: *kubevirt
   $module_utils/manageiq.py:
     maintainers: $team_manageiq
@@ -772,7 +774,7 @@ files:
     maintainers: $team_networking
                  itercheng
   $module_utils/network/exos:
-    maintainers: rdvencioneck
+    maintainers: rdvencioneck $team_extreme
   $module_utils/network/f5:
     maintainers: caphrim007 wojtek0806
   $module_utils/f5_utils.py:
@@ -1067,7 +1069,7 @@ files:
     maintainers: $team_networking
                  itercheng
   $plugins/cliconf/exos.py:
-    maintainers: rdvencioneck
+    maintainers: rdvencioneck $team_extreme
   $plugins/cliconf/ios.py:
     <<: *ios
     maintainers: $team_networking $team_ios
@@ -1173,7 +1175,7 @@ files:
   $plugins/doc_fragments/ucs.py: *ucs
   $plugins/doc_fragments/vultr.py: *vultr
   $plugins/doc_fragments/ovirt.py: *ovirt
-  $plugins/doc_fragments/ovirt_facts.py: *ovirt
+  $plugins/doc_fragments/ovirt_info.py: *ovirt
   $plugins/doc_fragments/xenserver.py:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par
@@ -1201,6 +1203,8 @@ files:
     maintainers: $team_networking
     labels: networking
   $plugins/httpapi/ftd.py: *ftd
+  $plugins/httpapi/exos.py:
+    maintainers: $team_extreme
 ###############################
 # plugins/inventory
   $plugins/inventory/__init__.py:
@@ -1375,7 +1379,7 @@ files:
     support: community
     maintainers: itercheng
   $plugins/terminal/exos.py:
-    maintainers: rdvencioneck
+    maintainers: rdvencioneck $team_extreme
   $plugins/terminal/ios.py:
     <<: *ios
     maintainers: $team_networking $team_ios
@@ -1503,6 +1507,7 @@ files:
     <<: *docker
     maintainers: $team_docker morph027
   test/integration/targets/intersight: *intersight
+  test/integration/targets/exos_: $team_extreme
   test/integration/targets/ios_: *ios
   test/integration/targets/iosxr_: *ios
   test/integration/targets/meraki_: *meraki
@@ -1550,6 +1555,7 @@ files:
     maintainers: $team_networking
     labels: networking
   test/units/modules/network/aireos: *aireos
+  test/units/modules/network/exos: $team_extreme
   test/units/modules/network/ftd: *ftd
   test/units/modules/network/ios: *ios
   test/units/modules/network/iosxr: *iosxr
@@ -1585,7 +1591,7 @@ macros:
   team_digital_ocean: aluvenko, BondAnthony, mgregson
   team_docker: akshay196 danihodovic dariko DBendit felixfontein jwitko kassiansun tbouvet WojciechowskiPiotr
   team_e_spirit: MatrixCrawler getjack
-  team_extreme: bigmstone LindsayHill
+  team_extreme: bigmstone LindsayHill ujwalkomarla
   team_foreman: ehelms ares xprazak2 ekohl
   team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
   team_ftd: annikulin
@@ -1610,9 +1616,9 @@ macros:
   team_netbox: sieben anthony25 FragmentedPacket nikkytub pilou-
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi pdam preetiparasar csharpe-pn
-  team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha justjais NilashishC danielmellado
+  team_networking: Qalthos ganeshrn trishnaguha justjais NilashishC danielmellado
   team_nso: cmoberg cnasten tbjurman
-  team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha chrisvanheuveln
+  team_nxos: mikewiebe rahushen trishnaguha chrisvanheuveln
   team_onyx: anasbadaha samerd
   team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me cloudnull gtema
   team_openswitch: Qalthos danielmellado

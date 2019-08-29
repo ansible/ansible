@@ -643,6 +643,10 @@ def add_environments(parser, tox_version=False, tox_only=False):
                               action='store_true',
                               help='run from the local environment')
 
+    environments.add_argument('--venv',
+                              action='store_true',
+                              help='run from ansible-test managed virtual environments')
+
     if data_context().content.is_ansible:
         if tox_version:
             environments.add_argument('--tox',
@@ -732,11 +736,11 @@ def add_extra_coverage_options(parser):
 
     parser.add_argument('--all',
                         action='store_true',
-                        help='include all python source files')
+                        help='include all python/powershell source files')
 
     parser.add_argument('--stub',
                         action='store_true',
-                        help='generate empty report of all python source files')
+                        help='generate empty report of all python/powershell source files')
 
 
 def add_httptester_options(parser, argparse):
@@ -888,7 +892,7 @@ def complete_network_testcase(prefix, parsed_args, **_):
     if len(parsed_args.include) != 1:
         return []
 
-    test_dir = 'test/integration/targets/%s/tests' % parsed_args.include[0]
+    test_dir = os.path.join(data_context().content.integration_targets_path, parsed_args.include[0], 'tests')
     connection_dirs = data_context().content.get_dirs(test_dir)
 
     for connection_dir in connection_dirs:

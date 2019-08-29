@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from __future__ import (absolute_import, division, print_function)
-# Copyright 2018 Fortinet, Inc.
+# Copyright 2019 Fortinet, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -27,12 +24,12 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: fortios_ips_sensor
-short_description: Configure IPS sensor.
+short_description: Configure IPS sensor in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure ips feature and sensor category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify ips feature and sensor category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,56 +41,86 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
-        default: false
+        default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     ips_sensor:
         description:
             - Configure IPS sensor.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            block-malicious-url:
+            block_malicious_url:
                 description:
                     - Enable/disable malicious URL blocking.
+                type: str
                 choices:
                     - disable
                     - enable
             comment:
                 description:
                     - Comment.
+                type: str
             entries:
                 description:
                     - IPS sensor filter.
+                type: list
                 suboptions:
                     action:
                         description:
                             - Action taken with traffic in which signatures are detected.
+                        type: str
                         choices:
                             - pass
                             - block
@@ -103,83 +130,102 @@ options:
                         description:
                             - Applications to be protected. set application ? lists available applications. all includes all applications. other includes all
                                unlisted applications.
-                    exempt-ip:
+                        type: str
+                    exempt_ip:
                         description:
                             - Traffic from selected source or destination IP addresses is exempt from this signature.
+                        type: list
                         suboptions:
-                            dst-ip:
+                            dst_ip:
                                 description:
                                     - Destination IP address and netmask.
+                                type: str
                             id:
                                 description:
                                     - Exempt IP ID.
                                 required: true
-                            src-ip:
+                                type: int
+                            src_ip:
                                 description:
                                     - Source IP address and netmask.
+                                type: str
                     id:
                         description:
                             - Rule ID in IPS database (0 - 4294967295).
                         required: true
+                        type: int
                     location:
                         description:
                             - Protect client or server traffic.
+                        type: str
                     log:
                         description:
                             - Enable/disable logging of signatures included in filter.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    log-attack-context:
+                    log_attack_context:
                         description:
                             - "Enable/disable logging of attack context: URL buffer, header buffer, body buffer, packet buffer."
+                        type: str
                         choices:
                             - disable
                             - enable
-                    log-packet:
+                    log_packet:
                         description:
                             - Enable/disable packet logging. Enable to save the packet that triggers the filter. You can download the packets in pcap format
                                for diagnostic use.
+                        type: str
                         choices:
                             - disable
                             - enable
                     os:
                         description:
                             - Operating systems to be protected.  all includes all operating systems. other includes all unlisted operating systems.
+                        type: str
                     protocol:
                         description:
                             - Protocols to be examined. set protocol ? lists available protocols. all includes all protocols. other includes all unlisted
                                protocols.
+                        type: str
                     quarantine:
                         description:
                             - Quarantine method.
+                        type: str
                         choices:
                             - none
                             - attacker
-                    quarantine-expiry:
+                    quarantine_expiry:
                         description:
-                            - Duration of quarantine. (Format ###d##h##m, minimum 1m, maximum 364d23h59m, default = 5m). Requires quarantine set to attacker.
-                    quarantine-log:
+                            - Duration of quarantine. (Format ###d##h##m, minimum 1m, maximum 364d23h59m). Requires quarantine set to attacker.
+                        type: str
+                    quarantine_log:
                         description:
                             - Enable/disable quarantine logging.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    rate-count:
+                    rate_count:
                         description:
                             - Count of the rate.
-                    rate-duration:
+                        type: int
+                    rate_duration:
                         description:
                             - Duration (sec) of the rate.
-                    rate-mode:
+                        type: int
+                    rate_mode:
                         description:
                             - Rate limit mode.
+                        type: str
                         choices:
                             - periodical
                             - continuous
-                    rate-track:
+                    rate_track:
                         description:
                             - Track the packet protocol field.
+                        type: str
                         choices:
                             - none
                             - src-ip
@@ -189,35 +235,42 @@ options:
                     rule:
                         description:
                             - Identifies the predefined or custom IPS signatures to add to the sensor.
+                        type: list
                         suboptions:
                             id:
                                 description:
                                     - Rule IPS.
                                 required: true
+                                type: int
                     severity:
                         description:
                             - Relative severity of the signature, from info to critical. Log messages generated by the signature include the severity.
+                        type: str
                     status:
                         description:
                             - Status of the signatures included in filter. default enables the filter and only use filters with default status of enable.
                                Filters with default status of disable will not be used.
+                        type: str
                         choices:
                             - disable
                             - enable
                             - default
-            extended-log:
+            extended_log:
                 description:
                     - Enable/disable extended logging.
+                type: str
                 choices:
                     - enable
                     - disable
             filter:
                 description:
                     - IPS sensor filter.
+                type: list
                 suboptions:
                     action:
                         description:
                             - Action of selected rules.
+                        type: str
                         choices:
                             - pass
                             - block
@@ -226,18 +279,22 @@ options:
                     application:
                         description:
                             - Vulnerable application filter.
+                        type: str
                     location:
                         description:
                             - Vulnerability location filter.
+                        type: str
                     log:
                         description:
                             - Enable/disable logging of selected rules.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    log-packet:
+                    log_packet:
                         description:
                             - Enable/disable packet logging of selected rules.
+                        type: str
                         choices:
                             - disable
                             - enable
@@ -245,33 +302,41 @@ options:
                         description:
                             - Filter name.
                         required: true
+                        type: str
                     os:
                         description:
                             - Vulnerable OS filter.
+                        type: str
                     protocol:
                         description:
                             - Vulnerable protocol filter.
+                        type: str
                     quarantine:
                         description:
                             - Quarantine IP or interface.
+                        type: str
                         choices:
                             - none
                             - attacker
-                    quarantine-expiry:
+                    quarantine_expiry:
                         description:
                             - Duration of quarantine in minute.
-                    quarantine-log:
+                        type: int
+                    quarantine_log:
                         description:
                             - Enable/disable logging of selected quarantine.
+                        type: str
                         choices:
                             - disable
                             - enable
                     severity:
                         description:
                             - Vulnerability severity filter.
+                        type: str
                     status:
                         description:
                             - Selected rules status.
+                        type: str
                         choices:
                             - disable
                             - enable
@@ -280,71 +345,85 @@ options:
                 description:
                     - Sensor name.
                 required: true
+                type: str
             override:
                 description:
                     - IPS override rule.
+                type: list
                 suboptions:
                     action:
                         description:
                             - Action of override rule.
+                        type: str
                         choices:
                             - pass
                             - block
                             - reset
-                    exempt-ip:
+                    exempt_ip:
                         description:
                             - Exempted IP.
+                        type: list
                         suboptions:
-                            dst-ip:
+                            dst_ip:
                                 description:
                                     - Destination IP address and netmask.
+                                type: str
                             id:
                                 description:
                                     - Exempt IP ID.
                                 required: true
-                            src-ip:
+                                type: int
+                            src_ip:
                                 description:
                                     - Source IP address and netmask.
+                                type: str
                     log:
                         description:
                             - Enable/disable logging.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    log-packet:
+                    log_packet:
                         description:
                             - Enable/disable packet logging.
+                        type: str
                         choices:
                             - disable
                             - enable
                     quarantine:
                         description:
                             - Quarantine IP or interface.
+                        type: str
                         choices:
                             - none
                             - attacker
-                    quarantine-expiry:
+                    quarantine_expiry:
                         description:
                             - Duration of quarantine in minute.
-                    quarantine-log:
+                        type: int
+                    quarantine_log:
                         description:
                             - Enable/disable logging of selected quarantine.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    rule-id:
+                    rule_id:
                         description:
                             - Override rule ID.
-                        required: true
+                        type: int
                     status:
                         description:
                             - Enable/disable status of override rule.
+                        type: str
                         choices:
                             - disable
                             - enable
-            replacemsg-group:
+            replacemsg_group:
                 description:
                     - Replacement message group. Source system.replacemsg-group.name.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -354,78 +433,80 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure IPS sensor.
     fortios_ips_sensor:
-      host:  "{{  host }}"
+      host:  "{{ host }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      vdom:  "{{  vdom }}"
+      vdom:  "{{ vdom }}"
+      https: "False"
+      state: "present"
       ips_sensor:
-        state: "present"
-        block-malicious-url: "disable"
+        block_malicious_url: "disable"
         comment: "Comment."
         entries:
          -
             action: "pass"
             application: "<your_own_value>"
-            exempt-ip:
+            exempt_ip:
              -
-                dst-ip: "<your_own_value>"
+                dst_ip: "<your_own_value>"
                 id:  "10"
-                src-ip: "<your_own_value>"
+                src_ip: "<your_own_value>"
             id:  "12"
             location: "<your_own_value>"
             log: "disable"
-            log-attack-context: "disable"
-            log-packet: "disable"
+            log_attack_context: "disable"
+            log_packet: "disable"
             os: "<your_own_value>"
             protocol: "<your_own_value>"
             quarantine: "none"
-            quarantine-expiry: "<your_own_value>"
-            quarantine-log: "disable"
-            rate-count: "22"
-            rate-duration: "23"
-            rate-mode: "periodical"
-            rate-track: "none"
+            quarantine_expiry: "<your_own_value>"
+            quarantine_log: "disable"
+            rate_count: "22"
+            rate_duration: "23"
+            rate_mode: "periodical"
+            rate_track: "none"
             rule:
              -
                 id:  "27"
             severity: "<your_own_value>"
             status: "disable"
-        extended-log: "enable"
+        extended_log: "enable"
         filter:
          -
             action: "pass"
             application: "<your_own_value>"
             location: "<your_own_value>"
             log: "disable"
-            log-packet: "disable"
+            log_packet: "disable"
             name: "default_name_37"
             os: "<your_own_value>"
             protocol: "<your_own_value>"
             quarantine: "none"
-            quarantine-expiry: "41"
-            quarantine-log: "disable"
+            quarantine_expiry: "41"
+            quarantine_log: "disable"
             severity: "<your_own_value>"
             status: "disable"
         name: "default_name_45"
         override:
          -
             action: "pass"
-            exempt-ip:
+            exempt_ip:
              -
-                dst-ip: "<your_own_value>"
+                dst_ip: "<your_own_value>"
                 id:  "50"
-                src-ip: "<your_own_value>"
+                src_ip: "<your_own_value>"
             log: "disable"
-            log-packet: "disable"
+            log_packet: "disable"
             quarantine: "none"
-            quarantine-expiry: "55"
-            quarantine-log: "disable"
-            rule-id: "57"
+            quarantine_expiry: "55"
+            quarantine_log: "disable"
+            rule_id: "57"
             status: "disable"
-        replacemsg-group: "<your_own_value> (source system.replacemsg-group.name)"
+        replacemsg_group: "<your_own_value> (source system.replacemsg-group.name)"
 '''
 
 RETURN = '''
@@ -448,7 +529,7 @@ mkey:
   description: Master key (id) used in the last call to FortiGate
   returned: success
   type: str
-  sample: "key1"
+  sample: "id"
 name:
   description: Name of the table used to fulfill the request
   returned: always
@@ -488,14 +569,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -503,65 +586,90 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_ips_sensor_data(json):
-    option_list = ['block-malicious-url', 'comment', 'entries',
-                   'extended-log', 'filter', 'name',
-                   'override', 'replacemsg-group']
+    option_list = ['block_malicious_url', 'comment', 'entries',
+                   'extended_log', 'filter', 'name',
+                   'override', 'replacemsg_group']
     dictionary = {}
 
     for attribute in option_list:
-        if attribute in json:
+        if attribute in json and json[attribute] is not None:
             dictionary[attribute] = json[attribute]
 
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def ips_sensor(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['ips_sensor'] and data['ips_sensor']:
+        state = data['ips_sensor']['state']
+    else:
+        state = True
     ips_sensor_data = data['ips_sensor']
-    filtered_data = filter_ips_sensor_data(ips_sensor_data)
-    if ips_sensor_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_ips_sensor_data(ips_sensor_data))
+
+    if state == "present":
         return fos.set('ips',
                        'sensor',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif ips_sensor_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('ips',
                           'sensor',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_ips(data, fos):
-    login(data)
 
-    methodlist = ['ips_sensor']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['ips_sensor']:
+        resp = ips_sensor(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
-        "https": {"required": False, "type": "bool", "default": "False"},
+        "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "ips_sensor": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "block-malicious-url": {"required": False, "type": "str",
+                "block_malicious_url": {"required": False, "type": "str",
                                         "choices": ["disable", "enable"]},
                 "comment": {"required": False, "type": "str"},
                 "entries": {"required": False, "type": "list",
@@ -570,32 +678,32 @@ def main():
                                            "choices": ["pass", "block", "reset",
                                                        "default"]},
                                 "application": {"required": False, "type": "str"},
-                                "exempt-ip": {"required": False, "type": "list",
+                                "exempt_ip": {"required": False, "type": "list",
                                               "options": {
-                                                  "dst-ip": {"required": False, "type": "str"},
+                                                  "dst_ip": {"required": False, "type": "str"},
                                                   "id": {"required": True, "type": "int"},
-                                                  "src-ip": {"required": False, "type": "str"}
+                                                  "src_ip": {"required": False, "type": "str"}
                                               }},
                                 "id": {"required": True, "type": "int"},
                                 "location": {"required": False, "type": "str"},
                                 "log": {"required": False, "type": "str",
                                         "choices": ["disable", "enable"]},
-                                "log-attack-context": {"required": False, "type": "str",
+                                "log_attack_context": {"required": False, "type": "str",
                                                        "choices": ["disable", "enable"]},
-                                "log-packet": {"required": False, "type": "str",
+                                "log_packet": {"required": False, "type": "str",
                                                "choices": ["disable", "enable"]},
                                 "os": {"required": False, "type": "str"},
                                 "protocol": {"required": False, "type": "str"},
                                 "quarantine": {"required": False, "type": "str",
                                                "choices": ["none", "attacker"]},
-                                "quarantine-expiry": {"required": False, "type": "str"},
-                                "quarantine-log": {"required": False, "type": "str",
+                                "quarantine_expiry": {"required": False, "type": "str"},
+                                "quarantine_log": {"required": False, "type": "str",
                                                    "choices": ["disable", "enable"]},
-                                "rate-count": {"required": False, "type": "int"},
-                                "rate-duration": {"required": False, "type": "int"},
-                                "rate-mode": {"required": False, "type": "str",
+                                "rate_count": {"required": False, "type": "int"},
+                                "rate_duration": {"required": False, "type": "int"},
+                                "rate_mode": {"required": False, "type": "str",
                                               "choices": ["periodical", "continuous"]},
-                                "rate-track": {"required": False, "type": "str",
+                                "rate_track": {"required": False, "type": "str",
                                                "choices": ["none", "src-ip", "dest-ip",
                                                            "dhcp-client-mac", "dns-domain"]},
                                 "rule": {"required": False, "type": "list",
@@ -606,7 +714,7 @@ def main():
                                 "status": {"required": False, "type": "str",
                                            "choices": ["disable", "enable", "default"]}
                             }},
-                "extended-log": {"required": False, "type": "str",
+                "extended_log": {"required": False, "type": "str",
                                  "choices": ["enable", "disable"]},
                 "filter": {"required": False, "type": "list",
                            "options": {
@@ -617,15 +725,15 @@ def main():
                                "location": {"required": False, "type": "str"},
                                "log": {"required": False, "type": "str",
                                        "choices": ["disable", "enable"]},
-                               "log-packet": {"required": False, "type": "str",
+                               "log_packet": {"required": False, "type": "str",
                                               "choices": ["disable", "enable"]},
                                "name": {"required": True, "type": "str"},
                                "os": {"required": False, "type": "str"},
                                "protocol": {"required": False, "type": "str"},
                                "quarantine": {"required": False, "type": "str",
                                               "choices": ["none", "attacker"]},
-                               "quarantine-expiry": {"required": False, "type": "int"},
-                               "quarantine-log": {"required": False, "type": "str",
+                               "quarantine_expiry": {"required": False, "type": "int"},
+                               "quarantine_log": {"required": False, "type": "str",
                                                   "choices": ["disable", "enable"]},
                                "severity": {"required": False, "type": "str"},
                                "status": {"required": False, "type": "str",
@@ -636,26 +744,26 @@ def main():
                              "options": {
                                  "action": {"required": False, "type": "str",
                                             "choices": ["pass", "block", "reset"]},
-                                 "exempt-ip": {"required": False, "type": "list",
+                                 "exempt_ip": {"required": False, "type": "list",
                                                "options": {
-                                                   "dst-ip": {"required": False, "type": "str"},
+                                                   "dst_ip": {"required": False, "type": "str"},
                                                    "id": {"required": True, "type": "int"},
-                                                   "src-ip": {"required": False, "type": "str"}
+                                                   "src_ip": {"required": False, "type": "str"}
                                                }},
                                  "log": {"required": False, "type": "str",
                                          "choices": ["disable", "enable"]},
-                                 "log-packet": {"required": False, "type": "str",
+                                 "log_packet": {"required": False, "type": "str",
                                                 "choices": ["disable", "enable"]},
                                  "quarantine": {"required": False, "type": "str",
                                                 "choices": ["none", "attacker"]},
-                                 "quarantine-expiry": {"required": False, "type": "int"},
-                                 "quarantine-log": {"required": False, "type": "str",
+                                 "quarantine_expiry": {"required": False, "type": "int"},
+                                 "quarantine_log": {"required": False, "type": "str",
                                                     "choices": ["disable", "enable"]},
-                                 "rule-id": {"required": True, "type": "int"},
+                                 "rule_id": {"required": False, "type": "int"},
                                  "status": {"required": False, "type": "str",
                                             "choices": ["disable", "enable"]}
                              }},
-                "replacemsg-group": {"required": False, "type": "str"}
+                "replacemsg_group": {"required": False, "type": "str"}
 
             }
         }
@@ -663,15 +771,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_ips(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_ips(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_ips(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

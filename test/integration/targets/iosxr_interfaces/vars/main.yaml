@@ -2,9 +2,9 @@
 merged:
   before:
     - enabled: true
-      name: loopback888
+      name: Loopback888
     - enabled: true
-      name: loopback999
+      name: Loopback999
     - description: this is interface0
       enabled: true
       mtu: 65
@@ -30,9 +30,9 @@ merged:
 
   after:
     - enabled: true
-      name: loopback888
+      name: Loopback888
     - enabled: true
-      name: loopback999
+      name: Loopback999
     - description: Configured and Merged by Ansible-Network
       duplex: half
       enabled: true
@@ -49,9 +49,9 @@ merged:
 replaced:
   before:
     - enabled: true
-      name: loopback888
+      name: Loopback888
     - enabled: true
-      name: loopback999
+      name: Loopback999
     - description: this is interface0
       enabled: true
       mtu: 65
@@ -75,9 +75,9 @@ replaced:
 
   after:
     - enabled: true
-      name: loopback888
+      name: Loopback888
     - enabled: true
-      name: loopback999
+      name: Loopback999
     - description: Configured and Replaced by Ansible-Network
       enabled: true
       mtu: 110
@@ -90,9 +90,9 @@ replaced:
 overridden:
   before:
     - enabled: true
-      name: loopback888
+      name: Loopback888
     - enabled: true
-      name: loopback999
+      name: Loopback999
     - description: this is interface0
       enabled: true
       mtu: 65
@@ -118,9 +118,9 @@ overridden:
 
   after:
     - enabled: true
-      name: loopback888
+      name: Loopback888
     - enabled: true
-      name: loopback999
+      name: Loopback999
     - description: Configured and Overridden by Ansible-Network
       duplex: full
       enabled: false
@@ -131,9 +131,9 @@ overridden:
 deleted:
   before:
     - enabled: true
-      name: loopback888
+      name: Loopback888
     - enabled: true
-      name: loopback999
+      name: Loopback999
     - description: this is interface0
       enabled: true
       mtu: 65
@@ -157,6 +157,6 @@ deleted:
 
   after:
     - enabled: true
-      name: loopback888
+      name: Loopback888
     - enabled: true
-      name: loopback999
+      name: Loopback999

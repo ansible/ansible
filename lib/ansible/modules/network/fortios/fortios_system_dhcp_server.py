@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_system_dhcp_server
 short_description: Configure DHCP servers in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify system_dhcp feature and server category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,97 +41,138 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     system_dhcp_server:
         description:
             - Configure DHCP servers.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            auto-configuration:
+            auto_configuration:
                 description:
                     - Enable/disable auto configuration.
+                type: str
                 choices:
                     - disable
                     - enable
-            conflicted-ip-timeout:
+            conflicted_ip_timeout:
                 description:
                     - Time in seconds to wait after a conflicted IP address is removed from the DHCP range before it can be reused.
-            ddns-auth:
+                type: int
+            ddns_auth:
                 description:
                     - DDNS authentication mode.
+                type: str
                 choices:
                     - disable
                     - tsig
-            ddns-key:
+            ddns_key:
                 description:
                     - DDNS update key (base 64 encoding).
-            ddns-keyname:
+                type: str
+            ddns_keyname:
                 description:
                     - DDNS update key name.
-            ddns-server-ip:
+                type: str
+            ddns_server_ip:
                 description:
                     - DDNS server IP.
-            ddns-ttl:
+                type: str
+            ddns_ttl:
                 description:
                     - TTL.
-            ddns-update:
+                type: int
+            ddns_update:
                 description:
                     - Enable/disable DDNS update for DHCP.
+                type: str
                 choices:
                     - disable
                     - enable
-            ddns-update-override:
+            ddns_update_override:
                 description:
                     - Enable/disable DDNS update override for DHCP.
+                type: str
                 choices:
                     - disable
                     - enable
-            ddns-zone:
+            ddns_zone:
                 description:
                     - Zone of your domain name (ex. DDNS.com).
-            default-gateway:
+                type: str
+            default_gateway:
                 description:
                     - Default gateway IP address assigned by the DHCP server.
-            dns-server1:
+                type: str
+            dns_server1:
                 description:
                     - DNS server 1.
-            dns-server2:
+                type: str
+            dns_server2:
                 description:
                     - DNS server 2.
-            dns-server3:
+                type: str
+            dns_server3:
                 description:
                     - DNS server 3.
-            dns-service:
+                type: str
+            dns_service:
                 description:
                     - Options for assigning DNS servers to DHCP clients.
+                type: str
                 choices:
                     - local
                     - default
@@ -142,26 +180,33 @@ options:
             domain:
                 description:
                     - Domain name suffix for the IP addresses that the DHCP server assigns to clients.
-            exclude-range:
+                type: str
+            exclude_range:
                 description:
                     - Exclude one or more ranges of IP addresses from being assigned to clients.
+                type: list
                 suboptions:
-                    end-ip:
+                    end_ip:
                         description:
                             - End of IP range.
+                        type: str
                     id:
                         description:
                             - ID.
                         required: true
-                    start-ip:
+                        type: int
+                    start_ip:
                         description:
                             - Start of IP range.
+                        type: str
             filename:
                 description:
                     - Name of the boot file on the TFTP server.
-            forticlient-on-net-status:
+                type: str
+            forticlient_on_net_status:
                 description:
                     - Enable/disable FortiClient-On-Net service for this DHCP server.
+                type: str
                 choices:
                     - disable
                     - enable
@@ -169,59 +214,75 @@ options:
                 description:
                     - ID.
                 required: true
+                type: int
             interface:
                 description:
                     - DHCP server can assign IP configurations to clients connected to this interface. Source system.interface.name.
-            ip-mode:
+                type: str
+            ip_mode:
                 description:
                     - Method used to assign client IP.
+                type: str
                 choices:
                     - range
                     - usrgrp
-            ip-range:
+            ip_range:
                 description:
                     - DHCP IP range configuration.
+                type: list
                 suboptions:
-                    end-ip:
+                    end_ip:
                         description:
                             - End of IP range.
+                        type: str
                     id:
                         description:
                             - ID.
                         required: true
-                    start-ip:
+                        type: int
+                    start_ip:
                         description:
                             - Start of IP range.
-            ipsec-lease-hold:
+                        type: str
+            ipsec_lease_hold:
                 description:
                     - DHCP over IPsec leases expire this many seconds after tunnel down (0 to disable forced-expiry).
-            lease-time:
+                type: int
+            lease_time:
                 description:
                     - Lease time in seconds, 0 means unlimited.
-            mac-acl-default-action:
+                type: int
+            mac_acl_default_action:
                 description:
                     - MAC access control default action (allow or block assigning IP settings).
+                type: str
                 choices:
                     - assign
                     - block
             netmask:
                 description:
                     - Netmask assigned by the DHCP server.
-            next-server:
+                type: str
+            next_server:
                 description:
                     - IP address of a server (for example, a TFTP sever) that DHCP clients can download a boot file from.
-            ntp-server1:
+                type: str
+            ntp_server1:
                 description:
                     - NTP server 1.
-            ntp-server2:
+                type: str
+            ntp_server2:
                 description:
                     - NTP server 2.
-            ntp-server3:
+                type: str
+            ntp_server3:
                 description:
                     - NTP server 3.
-            ntp-service:
+                type: str
+            ntp_service:
                 description:
                     - Options for assigning Network Time Protocol (NTP) servers to DHCP clients.
+                type: str
                 choices:
                     - local
                     - default
@@ -229,34 +290,43 @@ options:
             options:
                 description:
                     - DHCP options.
+                type: list
                 suboptions:
                     code:
                         description:
                             - DHCP option code.
+                        type: int
                     id:
                         description:
                             - ID.
                         required: true
+                        type: int
                     ip:
                         description:
                             - DHCP option IPs.
+                        type: str
                     type:
                         description:
                             - DHCP option type.
+                        type: str
                         choices:
                             - hex
                             - string
                             - ip
+                            - fqdn
                     value:
                         description:
                             - DHCP option value.
-            reserved-address:
+                        type: str
+            reserved_address:
                 description:
                     - Options for the DHCP server to assign IP settings to specific MAC addresses.
+                type: list
                 suboptions:
                     action:
                         description:
                             - Options for the DHCP server to configure the client with the reserved MAC address.
+                        type: str
                         choices:
                             - assign
                             - block
@@ -264,39 +334,47 @@ options:
                     description:
                         description:
                             - Description.
+                        type: str
                     id:
                         description:
                             - ID.
                         required: true
+                        type: int
                     ip:
                         description:
                             - IP address to be reserved for the MAC address.
+                        type: str
                     mac:
                         description:
                             - MAC address of the client that will get the reserved IP address.
-            server-type:
+                        type: str
+            server_type:
                 description:
                     - DHCP server can be a normal DHCP server or an IPsec DHCP server.
+                type: str
                 choices:
                     - regular
                     - ipsec
             status:
                 description:
                     - Enable/disable this DHCP configuration.
+                type: str
                 choices:
                     - disable
                     - enable
-            tftp-server:
+            tftp_server:
                 description:
                     - One or more hostnames or IP addresses of the TFTP servers in quotes separated by spaces.
+                type: list
                 suboptions:
-                    tftp-server:
+                    tftp_server:
                         description:
                             - TFTP server.
-                        required: true
+                        type: str
             timezone:
                 description:
                     - Select the time zone to be assigned to DHCP clients.
+                type: str
                 choices:
                     - 01
                     - 02
@@ -386,42 +464,50 @@ options:
                     - 73
                     - 86
                     - 76
-            timezone-option:
+            timezone_option:
                 description:
                     - Options for the DHCP server to set the client's time zone.
+                type: str
                 choices:
                     - disable
                     - default
                     - specify
-            vci-match:
+            vci_match:
                 description:
                     - Enable/disable vendor class identifier (VCI) matching. When enabled only DHCP requests with a matching VCI are served.
+                type: str
                 choices:
                     - disable
                     - enable
-            vci-string:
+            vci_string:
                 description:
                     - One or more VCI strings in quotes separated by spaces.
+                type: list
                 suboptions:
-                    vci-string:
+                    vci_string:
                         description:
                             - VCI strings.
-                        required: true
-            wifi-ac1:
+                        type: str
+            wifi_ac1:
                 description:
                     - WiFi Access Controller 1 IP address (DHCP option 138, RFC 5417).
-            wifi-ac2:
+                type: str
+            wifi_ac2:
                 description:
                     - WiFi Access Controller 2 IP address (DHCP option 138, RFC 5417).
-            wifi-ac3:
+                type: str
+            wifi_ac3:
                 description:
                     - WiFi Access Controller 3 IP address (DHCP option 138, RFC 5417).
-            wins-server1:
+                type: str
+            wins_server1:
                 description:
                     - WINS server 1.
-            wins-server2:
+                type: str
+            wins_server2:
                 description:
                     - WINS server 2.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -431,6 +517,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure DHCP servers.
     fortios_system_dhcp_server:
@@ -439,48 +526,48 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       system_dhcp_server:
-        state: "present"
-        auto-configuration: "disable"
-        conflicted-ip-timeout: "4"
-        ddns-auth: "disable"
-        ddns-key: "<your_own_value>"
-        ddns-keyname: "<your_own_value>"
-        ddns-server-ip: "<your_own_value>"
-        ddns-ttl: "9"
-        ddns-update: "disable"
-        ddns-update-override: "disable"
-        ddns-zone: "<your_own_value>"
-        default-gateway: "<your_own_value>"
-        dns-server1: "<your_own_value>"
-        dns-server2: "<your_own_value>"
-        dns-server3: "<your_own_value>"
-        dns-service: "local"
+        auto_configuration: "disable"
+        conflicted_ip_timeout: "4"
+        ddns_auth: "disable"
+        ddns_key: "<your_own_value>"
+        ddns_keyname: "<your_own_value>"
+        ddns_server_ip: "<your_own_value>"
+        ddns_ttl: "9"
+        ddns_update: "disable"
+        ddns_update_override: "disable"
+        ddns_zone: "<your_own_value>"
+        default_gateway: "<your_own_value>"
+        dns_server1: "<your_own_value>"
+        dns_server2: "<your_own_value>"
+        dns_server3: "<your_own_value>"
+        dns_service: "local"
         domain: "<your_own_value>"
-        exclude-range:
+        exclude_range:
          -
-            end-ip: "<your_own_value>"
+            end_ip: "<your_own_value>"
             id:  "21"
-            start-ip: "<your_own_value>"
+            start_ip: "<your_own_value>"
         filename: "<your_own_value>"
-        forticlient-on-net-status: "disable"
+        forticlient_on_net_status: "disable"
         id:  "25"
         interface: "<your_own_value> (source system.interface.name)"
-        ip-mode: "range"
-        ip-range:
+        ip_mode: "range"
+        ip_range:
          -
-            end-ip: "<your_own_value>"
+            end_ip: "<your_own_value>"
             id:  "30"
-            start-ip: "<your_own_value>"
-        ipsec-lease-hold: "32"
-        lease-time: "33"
-        mac-acl-default-action: "assign"
+            start_ip: "<your_own_value>"
+        ipsec_lease_hold: "32"
+        lease_time: "33"
+        mac_acl_default_action: "assign"
         netmask: "<your_own_value>"
-        next-server: "<your_own_value>"
-        ntp-server1: "<your_own_value>"
-        ntp-server2: "<your_own_value>"
-        ntp-server3: "<your_own_value>"
-        ntp-service: "local"
+        next_server: "<your_own_value>"
+        ntp_server1: "<your_own_value>"
+        ntp_server2: "<your_own_value>"
+        ntp_server3: "<your_own_value>"
+        ntp_service: "local"
         options:
          -
             code: "42"
@@ -488,29 +575,29 @@ EXAMPLES = '''
             ip: "<your_own_value>"
             type: "hex"
             value: "<your_own_value>"
-        reserved-address:
+        reserved_address:
          -
             action: "assign"
             description: "<your_own_value>"
             id:  "50"
             ip: "<your_own_value>"
             mac: "<your_own_value>"
-        server-type: "regular"
+        server_type: "regular"
         status: "disable"
-        tftp-server:
+        tftp_server:
          -
-            tftp-server: "<your_own_value>"
+            tftp_server: "<your_own_value>"
         timezone: "01"
-        timezone-option: "disable"
-        vci-match: "disable"
-        vci-string:
+        timezone_option: "disable"
+        vci_match: "disable"
+        vci_string:
          -
-            vci-string: "<your_own_value>"
-        wifi-ac1: "<your_own_value>"
-        wifi-ac2: "<your_own_value>"
-        wifi-ac3: "<your_own_value>"
-        wins-server1: "<your_own_value>"
-        wins-server2: "<your_own_value>"
+            vci_string: "<your_own_value>"
+        wifi_ac1: "<your_own_value>"
+        wifi_ac2: "<your_own_value>"
+        wifi_ac3: "<your_own_value>"
+        wins_server1: "<your_own_value>"
+        wins_server2: "<your_own_value>"
 '''
 
 RETURN = '''
@@ -573,14 +660,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -588,26 +677,26 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_system_dhcp_server_data(json):
-    option_list = ['auto-configuration', 'conflicted-ip-timeout', 'ddns-auth',
-                   'ddns-key', 'ddns-keyname', 'ddns-server-ip',
-                   'ddns-ttl', 'ddns-update', 'ddns-update-override',
-                   'ddns-zone', 'default-gateway', 'dns-server1',
-                   'dns-server2', 'dns-server3', 'dns-service',
-                   'domain', 'exclude-range', 'filename',
-                   'forticlient-on-net-status', 'id', 'interface',
-                   'ip-mode', 'ip-range', 'ipsec-lease-hold',
-                   'lease-time', 'mac-acl-default-action', 'netmask',
-                   'next-server', 'ntp-server1', 'ntp-server2',
-                   'ntp-server3', 'ntp-service', 'options',
-                   'reserved-address', 'server-type', 'status',
-                   'tftp-server', 'timezone', 'timezone-option',
-                   'vci-match', 'vci-string', 'wifi-ac1',
-                   'wifi-ac2', 'wifi-ac3', 'wins-server1',
-                   'wins-server2']
+    option_list = ['auto_configuration', 'conflicted_ip_timeout', 'ddns_auth',
+                   'ddns_key', 'ddns_keyname', 'ddns_server_ip',
+                   'ddns_ttl', 'ddns_update', 'ddns_update_override',
+                   'ddns_zone', 'default_gateway', 'dns_server1',
+                   'dns_server2', 'dns_server3', 'dns_service',
+                   'domain', 'exclude_range', 'filename',
+                   'forticlient_on_net_status', 'id', 'interface',
+                   'ip_mode', 'ip_range', 'ipsec_lease_hold',
+                   'lease_time', 'mac_acl_default_action', 'netmask',
+                   'next_server', 'ntp_server1', 'ntp_server2',
+                   'ntp_server3', 'ntp_service', 'options',
+                   'reserved_address', 'server_type', 'status',
+                   'tftp_server', 'timezone', 'timezone_option',
+                   'vci_match', 'vci_string', 'wifi_ac1',
+                   'wifi_ac2', 'wifi_ac3', 'wins_server1',
+                   'wins_server2']
     dictionary = {}
 
     for attribute in option_list:
@@ -617,111 +706,123 @@ def filter_system_dhcp_server_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
 
 def system_dhcp_server(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['system_dhcp_server'] and data['system_dhcp_server']:
+        state = data['system_dhcp_server']['state']
+    else:
+        state = True
     system_dhcp_server_data = data['system_dhcp_server']
-    flattened_data = flatten_multilists_attributes(system_dhcp_server_data)
-    filtered_data = filter_system_dhcp_server_data(flattened_data)
-    if system_dhcp_server_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_system_dhcp_server_data(system_dhcp_server_data))
+
+    if state == "present":
         return fos.set('system.dhcp',
                        'server',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif system_dhcp_server_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('system.dhcp',
                           'server',
                           mkey=filtered_data['id'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_system_dhcp(data, fos):
-    login(data)
 
     if data['system_dhcp_server']:
         resp = system_dhcp_server(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "system_dhcp_server": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "auto-configuration": {"required": False, "type": "str",
+                "auto_configuration": {"required": False, "type": "str",
                                        "choices": ["disable", "enable"]},
-                "conflicted-ip-timeout": {"required": False, "type": "int"},
-                "ddns-auth": {"required": False, "type": "str",
+                "conflicted_ip_timeout": {"required": False, "type": "int"},
+                "ddns_auth": {"required": False, "type": "str",
                               "choices": ["disable", "tsig"]},
-                "ddns-key": {"required": False, "type": "str"},
-                "ddns-keyname": {"required": False, "type": "str"},
-                "ddns-server-ip": {"required": False, "type": "str"},
-                "ddns-ttl": {"required": False, "type": "int"},
-                "ddns-update": {"required": False, "type": "str",
+                "ddns_key": {"required": False, "type": "str"},
+                "ddns_keyname": {"required": False, "type": "str"},
+                "ddns_server_ip": {"required": False, "type": "str"},
+                "ddns_ttl": {"required": False, "type": "int"},
+                "ddns_update": {"required": False, "type": "str",
                                 "choices": ["disable", "enable"]},
-                "ddns-update-override": {"required": False, "type": "str",
+                "ddns_update_override": {"required": False, "type": "str",
                                          "choices": ["disable", "enable"]},
-                "ddns-zone": {"required": False, "type": "str"},
-                "default-gateway": {"required": False, "type": "str"},
-                "dns-server1": {"required": False, "type": "str"},
-                "dns-server2": {"required": False, "type": "str"},
-                "dns-server3": {"required": False, "type": "str"},
-                "dns-service": {"required": False, "type": "str",
+                "ddns_zone": {"required": False, "type": "str"},
+                "default_gateway": {"required": False, "type": "str"},
+                "dns_server1": {"required": False, "type": "str"},
+                "dns_server2": {"required": False, "type": "str"},
+                "dns_server3": {"required": False, "type": "str"},
+                "dns_service": {"required": False, "type": "str",
                                 "choices": ["local", "default", "specify"]},
                 "domain": {"required": False, "type": "str"},
-                "exclude-range": {"required": False, "type": "list",
+                "exclude_range": {"required": False, "type": "list",
                                   "options": {
-                                      "end-ip": {"required": False, "type": "str"},
+                                      "end_ip": {"required": False, "type": "str"},
                                       "id": {"required": True, "type": "int"},
-                                      "start-ip": {"required": False, "type": "str"}
+                                      "start_ip": {"required": False, "type": "str"}
                                   }},
                 "filename": {"required": False, "type": "str"},
-                "forticlient-on-net-status": {"required": False, "type": "str",
+                "forticlient_on_net_status": {"required": False, "type": "str",
                                               "choices": ["disable", "enable"]},
                 "id": {"required": True, "type": "int"},
                 "interface": {"required": False, "type": "str"},
-                "ip-mode": {"required": False, "type": "str",
+                "ip_mode": {"required": False, "type": "str",
                             "choices": ["range", "usrgrp"]},
-                "ip-range": {"required": False, "type": "list",
+                "ip_range": {"required": False, "type": "list",
                              "options": {
-                                 "end-ip": {"required": False, "type": "str"},
+                                 "end_ip": {"required": False, "type": "str"},
                                  "id": {"required": True, "type": "int"},
-                                 "start-ip": {"required": False, "type": "str"}
+                                 "start_ip": {"required": False, "type": "str"}
                              }},
-                "ipsec-lease-hold": {"required": False, "type": "int"},
-                "lease-time": {"required": False, "type": "int"},
-                "mac-acl-default-action": {"required": False, "type": "str",
+                "ipsec_lease_hold": {"required": False, "type": "int"},
+                "lease_time": {"required": False, "type": "int"},
+                "mac_acl_default_action": {"required": False, "type": "str",
                                            "choices": ["assign", "block"]},
                 "netmask": {"required": False, "type": "str"},
-                "next-server": {"required": False, "type": "str"},
-                "ntp-server1": {"required": False, "type": "str"},
-                "ntp-server2": {"required": False, "type": "str"},
-                "ntp-server3": {"required": False, "type": "str"},
-                "ntp-service": {"required": False, "type": "str",
+                "next_server": {"required": False, "type": "str"},
+                "ntp_server1": {"required": False, "type": "str"},
+                "ntp_server2": {"required": False, "type": "str"},
+                "ntp_server3": {"required": False, "type": "str"},
+                "ntp_service": {"required": False, "type": "str",
                                 "choices": ["local", "default", "specify"]},
                 "options": {"required": False, "type": "list",
                             "options": {
@@ -729,10 +830,11 @@ def main():
                                 "id": {"required": True, "type": "int"},
                                 "ip": {"required": False, "type": "str"},
                                 "type": {"required": False, "type": "str",
-                                         "choices": ["hex", "string", "ip"]},
+                                         "choices": ["hex", "string", "ip",
+                                                     "fqdn"]},
                                 "value": {"required": False, "type": "str"}
                             }},
-                "reserved-address": {"required": False, "type": "list",
+                "reserved_address": {"required": False, "type": "list",
                                      "options": {
                                          "action": {"required": False, "type": "str",
                                                     "choices": ["assign", "block", "reserved"]},
@@ -741,13 +843,13 @@ def main():
                                          "ip": {"required": False, "type": "str"},
                                          "mac": {"required": False, "type": "str"}
                                      }},
-                "server-type": {"required": False, "type": "str",
+                "server_type": {"required": False, "type": "str",
                                 "choices": ["regular", "ipsec"]},
                 "status": {"required": False, "type": "str",
                            "choices": ["disable", "enable"]},
-                "tftp-server": {"required": False, "type": "list",
+                "tftp_server": {"required": False, "type": "list",
                                 "options": {
-                                    "tftp-server": {"required": True, "type": "str"}
+                                    "tftp_server": {"required": False, "type": "str"}
                                 }},
                 "timezone": {"required": False, "type": "str",
                              "choices": ["01", "02", "03",
@@ -780,19 +882,19 @@ def main():
                                          "71", "72", "00",
                                          "82", "73", "86",
                                          "76"]},
-                "timezone-option": {"required": False, "type": "str",
+                "timezone_option": {"required": False, "type": "str",
                                     "choices": ["disable", "default", "specify"]},
-                "vci-match": {"required": False, "type": "str",
+                "vci_match": {"required": False, "type": "str",
                               "choices": ["disable", "enable"]},
-                "vci-string": {"required": False, "type": "list",
+                "vci_string": {"required": False, "type": "list",
                                "options": {
-                                   "vci-string": {"required": True, "type": "str"}
+                                   "vci_string": {"required": False, "type": "str"}
                                }},
-                "wifi-ac1": {"required": False, "type": "str"},
-                "wifi-ac2": {"required": False, "type": "str"},
-                "wifi-ac3": {"required": False, "type": "str"},
-                "wins-server1": {"required": False, "type": "str"},
-                "wins-server2": {"required": False, "type": "str"}
+                "wifi_ac1": {"required": False, "type": "str"},
+                "wifi_ac2": {"required": False, "type": "str"},
+                "wifi_ac3": {"required": False, "type": "str"},
+                "wins_server1": {"required": False, "type": "str"},
+                "wins_server2": {"required": False, "type": "str"}
 
             }
         }
@@ -800,15 +902,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_system_dhcp(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_system_dhcp(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_system_dhcp(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

@@ -48,9 +48,9 @@ options:
     description: The list of link layer discovery protocol attribute configurations
     type: dict
     suboptions:
-      enable:
+      enabled:
         description:
-          - This argument is a boolean value to enable or disable LLDP.
+          - This argument is a boolean value to enabled or disable LLDP.
         type: bool
       interval:
         description:
@@ -126,7 +126,7 @@ EXAMPLES = """
     config:
       address: 20.2.2.2
       hold_multiplier: 30
-      enable: False
+      enabled: False
     state: replaced
 
 # After state:
@@ -185,7 +185,11 @@ def main():
     Main entry point for module execution
     :returns: the result form module invocation
     """
+    required_if = [('state', 'merged', ('config',)),
+                   ('state', 'replaced', ('config',))]
+
     module = AnsibleModule(argument_spec=Lldp_globalArgs.argument_spec,
+                           required_if=required_if,
                            supports_check_mode=True)
 
     result = Lldp_global(module).execute_module()

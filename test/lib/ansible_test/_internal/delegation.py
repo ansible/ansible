@@ -7,6 +7,8 @@ import re
 import sys
 import tempfile
 
+from . import types as t
+
 from .executor import (
     SUPPORTED_PYTHON_VERSIONS,
     HTTPTESTER_HOSTS,
@@ -46,10 +48,12 @@ from .util import (
     display,
     ANSIBLE_BIN_PATH,
     ANSIBLE_TEST_DATA_ROOT,
+    tempdir,
 )
 
 from .util_common import (
     run_command,
+    ResultType,
 )
 
 from .docker_util import (
@@ -78,6 +82,10 @@ from .data import (
 
 from .payload import (
     create_payload,
+)
+
+from .venv import (
+    create_virtual_environment,
 )
 
 
@@ -123,6 +131,10 @@ def delegate_command(args, exclude, require, integration_targets):
     :type integration_targets: tuple[IntegrationTarget]
     :rtype: bool
     """
+    if args.venv:
+        delegate_venv(args, exclude, require, integration_targets)
+        return True
+
     if args.tox:
         delegate_tox(args, exclude, require, integration_targets)
         return True
@@ -203,6 +215,53 @@ def delegate_tox(args, exclude, require, integration_targets):
         run_command(args, tox + cmd, env=env)
 
 
+def delegate_venv(args,  # type: EnvironmentConfig
+                  exclude,  # type: t.List[str]
+                  require,  # type: t.List[str]
+                  integration_targets,  # type: t.Tuple[IntegrationTarget, ...]
+                  ):  # type: (...) -> None
+    """Delegate ansible-test execution to a virtual environment using venv or virtualenv."""
+    if args.python:
+        versions = (args.python_version,)
+    else:
+        versions = SUPPORTED_PYTHON_VERSIONS
+
+    if args.httptester:
+        needs_httptester = sorted(target.name for target in integration_targets if 'needs/httptester/' in target.aliases)
+
+        if needs_httptester:
+            display.warning('Use --docker or --remote to enable httptester for tests marked "needs/httptester": %s' % ', '.join(needs_httptester))
+
+    venvs = dict((version, os.path.join(ResultType.TMP.path, 'delegation', 'python%s' % version)) for version in versions)
+    venvs = dict((version, path) for version, path in venvs.items() if create_virtual_environment(args, version, path))
+
+    if not venvs:
+        raise ApplicationError('No usable virtual environment support found.')
+
+    options = {
+        '--venv': 0,
+    }
+
+    with tempdir() as inject_path:
+        for version, path in venvs.items():
+            os.symlink(os.path.join(path, 'bin', 'python'), os.path.join(inject_path, 'python%s' % version))
+
+        python_interpreter = os.path.join(inject_path, 'python%s' % args.python_version)
+
+        cmd = generate_command(args, python_interpreter, ANSIBLE_BIN_PATH, data_context().content.root, options, exclude, require)
+
+        if isinstance(args, TestConfig):
+            if args.coverage and not args.coverage_label:
+                cmd += ['--coverage-label', 'venv']
+
+        env = common_environment()
+        env.update(
+            PATH=inject_path + os.pathsep + env['PATH'],
+        )
+
+        run_command(args, cmd, env=env)
+
+
 def delegate_docker(args, exclude, require, integration_targets):
     """
     :type args: EnvironmentConfig
@@ -240,6 +299,8 @@ def delegate_docker(args, exclude, require, integration_targets):
         content_root = os.path.join(install_root, data_context().content.collection.directory)
     else:
         content_root = install_root
+
+    remote_results_root = os.path.join(content_root, data_context().content.results_path)
 
     cmd = generate_command(args, python_interpreter, os.path.join(install_root, 'bin'), content_root, options, exclude, require)
 
@@ -321,19 +382,12 @@ def delegate_docker(args, exclude, require, integration_targets):
             # also disconnect from the network once requirements have been installed
             if isinstance(args, UnitsConfig):
                 writable_dirs = [
-                    os.path.join(install_root, '.pytest_cache'),
+                    os.path.join(content_root, ResultType.JUNIT.relative_path),
+                    os.path.join(content_root, ResultType.COVERAGE.relative_path),
                 ]
-
-                if content_root != install_root:
-                    writable_dirs.append(os.path.join(content_root, 'test/results/junit'))
-                    writable_dirs.append(os.path.join(content_root, 'test/results/coverage'))
 
                 docker_exec(args, test_id, ['mkdir', '-p'] + writable_dirs)
                 docker_exec(args, test_id, ['chmod', '777'] + writable_dirs)
-
-                if content_root == install_root:
-                    docker_exec(args, test_id, ['find', os.path.join(content_root, 'test/results/'), '-type', 'd', '-exec', 'chmod', '777', '{}', '+'])
-
                 docker_exec(args, test_id, ['chmod', '755', '/root'])
                 docker_exec(args, test_id, ['chmod', '644', os.path.join(content_root, args.metadata_path)])
 
@@ -353,10 +407,16 @@ def delegate_docker(args, exclude, require, integration_targets):
             try:
                 docker_exec(args, test_id, cmd, options=cmd_options)
             finally:
+                local_test_root = os.path.dirname(os.path.join(data_context().content.root, data_context().content.results_path))
+
+                remote_test_root = os.path.dirname(remote_results_root)
+                remote_results_name = os.path.basename(remote_results_root)
+                remote_temp_file = os.path.join('/root', remote_results_name + '.tgz')
+
                 with tempfile.NamedTemporaryFile(prefix='ansible-result-', suffix='.tgz') as local_result_fd:
-                    docker_exec(args, test_id, ['tar', 'czf', '/root/results.tgz', '-C', os.path.join(content_root, 'test'), 'results'])
-                    docker_get(args, test_id, '/root/results.tgz', local_result_fd.name)
-                    run_command(args, ['tar', 'oxzf', local_result_fd.name, '-C', 'test'])
+                    docker_exec(args, test_id, ['tar', 'czf', remote_temp_file, '-C', remote_test_root, remote_results_name])
+                    docker_get(args, test_id, remote_temp_file, local_result_fd.name)
+                    run_command(args, ['tar', 'oxzf', local_result_fd.name, '-C', local_test_root])
         finally:
             if httptester_id:
                 docker_rm(args, httptester_id)
@@ -470,8 +530,14 @@ def delegate_remote(args, exclude, require, integration_targets):
                     download = False
 
             if download and content_root:
-                manage.ssh('rm -rf /tmp/results && cp -a %s/test/results /tmp/results && chmod -R a+r /tmp/results' % content_root)
-                manage.download('/tmp/results', 'test')
+                local_test_root = os.path.dirname(os.path.join(data_context().content.root, data_context().content.results_path))
+
+                remote_results_root = os.path.join(content_root, data_context().content.results_path)
+                remote_results_name = os.path.basename(remote_results_root)
+                remote_temp_path = os.path.join('/tmp', remote_results_name)
+
+                manage.ssh('rm -rf {0} && cp -a {1} {0} && chmod -R a+r {0}'.format(remote_temp_path, remote_results_root))
+                manage.download(remote_temp_path, local_test_root)
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
             core_ci.stop()

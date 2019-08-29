@@ -43,7 +43,7 @@ short_description: Manages attributes of link aggregation groups on VyOS network
 description: This module manages attributes of link aggregation groups on VyOS network devices.
 notes:
   - Tested against VyOS 1.1.8 (helium).
-  - This module works with connection C(network_cli).
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 author: Rohit Thakur (@rohitthakur2590)
 options:
   config:

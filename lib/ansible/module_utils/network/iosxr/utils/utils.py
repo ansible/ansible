@@ -9,13 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils.six import iteritems
-
-
-def search_obj_in_list(name, lst, key='name'):
-    for item in lst:
-        if item[key] == name:
-            return item
-    return None
+from ansible.module_utils.network.common.utils import is_masklen, to_netmask
 
 
 def remove_command_from_config_list(interface, cmd, commands):
@@ -33,21 +27,78 @@ def add_command_to_config_list(interface, cmd, commands):
     commands.append(cmd)
 
 
-def dict_diff(sample_dict):
+def dict_to_set(sample_dict):
     # Generate a set with passed dictionary for comparison
     test_dict = {}
-    for k, v in iteritems(sample_dict):
-        if v is not None:
-            test_dict.update({k: v})
-    return_set = set(tuple(test_dict.items()))
+    if isinstance(sample_dict, dict):
+        for k, v in iteritems(sample_dict):
+            if v is not None:
+                if isinstance(v, list):
+                    if isinstance(v[0], dict):
+                        li = []
+                        for each in v:
+                            for key, value in iteritems(each):
+                                if isinstance(value, list):
+                                    each[key] = tuple(value)
+                            li.append(tuple(iteritems(each)))
+                        v = tuple(li)
+                    else:
+                        v = tuple(v)
+                elif isinstance(v, dict):
+                    li = []
+                    for key, value in iteritems(v):
+                        if isinstance(value, list):
+                            v[key] = tuple(value)
+                    li.extend(tuple(iteritems(v)))
+                    v = tuple(li)
+                test_dict.update({k: v})
+        return_set = set(tuple(iteritems(test_dict)))
+    else:
+        return_set = set(sample_dict)
     return return_set
 
 
 def filter_dict_having_none_value(want, have):
     # Generate dict with have dict value which is None in want dict
     test_dict = dict()
-    test_dict['name'] = want.get('name')
+    test_key_dict = dict()
+    name = want.get('name')
+    if name:
+        test_dict['name'] = name
+    diff_ip = False
+    want_ip = ''
     for k, v in iteritems(want):
+        if isinstance(v, dict):
+            for key, value in iteritems(v):
+                if value is None:
+                    dict_val = have.get(k).get(key)
+                    test_key_dict.update({key: dict_val})
+                test_dict.update({k: test_key_dict})
+        if isinstance(v, list) and isinstance(v[0], dict):
+            for key, value in iteritems(v[0]):
+                if value is None:
+                    dict_val = have.get(k).get(key)
+                    test_key_dict.update({key: dict_val})
+                test_dict.update({k: test_key_dict})
+            # below conditions checks are added to check if
+            # secondary IP is configured, if yes then delete
+            # the already configured IP if want and have IP
+            # is different else if it's same no need to delete
+            for each in v:
+                if each.get('secondary'):
+                    want_ip = each.get('address').split('/')
+                    have_ip = have.get('ipv4')
+                    for each in have_ip:
+                        if len(want_ip) > 1 and each.get('secondary'):
+                            have_ip = each.get('address').split(' ')[0]
+                            if have_ip != want_ip[0]:
+                                diff_ip = True
+                    if each.get('secondary') and diff_ip is True:
+                        test_key_dict.update({'secondary': True})
+                    test_dict.update({'ipv4': test_key_dict})
+        if k == 'l2protocol':
+            if want[k] != have.get('l2protocol') and have.get('l2protocol'):
+                test_dict.update({k: v})
         if v is None:
             val = have.get(k)
             test_dict.update({k: val})
@@ -112,6 +163,60 @@ def pad_commands(commands, interface):
     commands.insert(0, 'interface {0}'.format(interface))
 
 
+def diff_list_of_dicts(w, h):
+    """
+    Returns a list containing diff between
+    two list of dictionaries
+    """
+    if not w:
+        w = []
+    if not h:
+        h = []
+
+    diff = []
+    set_w = set(tuple(d.items()) for d in w)
+    set_h = set(tuple(d.items()) for d in h)
+    difference = set_w.difference(set_h)
+
+    for element in difference:
+        diff.append(dict((x, y) for x, y in element))
+
+    return diff
+
+
+def validate_ipv4(value, module):
+    if value:
+        address = value.split('/')
+        if len(address) != 2:
+            module.fail_json(msg='address format is <ipv4 address>/<mask>, got invalid format {0}'.format(value))
+
+        if not is_masklen(address[1]):
+            module.fail_json(msg='invalid value for mask: {0}, mask should be in range 0-32'.format(address[1]))
+
+
+def validate_ipv6(value, module):
+    if value:
+        address = value.split('/')
+        if len(address) != 2:
+            module.fail_json(msg='address format is <ipv6 address>/<mask>, got invalid format {0}'.format(value))
+        else:
+            if not 0 <= int(address[1]) <= 128:
+                module.fail_json(msg='invalid value for mask: {0}, mask should be in range 0-128'.format(address[1]))
+
+
+def validate_n_expand_ipv4(module, want):
+    # Check if input IPV4 is valid IP and expand IPV4 with its subnet mask
+    ip_addr_want = want.get('address')
+    if len(ip_addr_want.split(' ')) > 1:
+        return ip_addr_want
+    validate_ipv4(ip_addr_want, module)
+    ip = ip_addr_want.split('/')
+    if len(ip) == 2:
+        ip_addr_want = '{0} {1}'.format(ip[0], to_netmask(ip[1]))
+
+    return ip_addr_want
+
+
 def normalize_interface(name):
     """Return the normalized interface name
     """
@@ -131,20 +236,20 @@ def normalize_interface(name):
         if_type = 'FastEthernet'
     elif name.lower().startswith('fo'):
         if_type = 'FortyGigE'
-    elif name.lower().startswith('et'):
-        if_type = 'Ethernet'
-    elif name.lower().startswith('vl'):
-        if_type = 'Vlan'
-    elif name.lower().startswith('lo'):
-        if_type = 'loopback'
-    elif name.lower().startswith('po'):
-        if_type = 'port-channel'
-    elif name.lower().startswith('nv'):
-        if_type = 'nve'
+    elif name.lower().startswith('te'):
+        if_type = 'TenGigE'
     elif name.lower().startswith('twe'):
         if_type = 'TwentyFiveGigE'
     elif name.lower().startswith('hu'):
         if_type = 'HundredGigE'
+    elif name.lower().startswith('vl'):
+        if_type = 'Vlan'
+    elif name.lower().startswith('lo'):
+        if_type = 'Loopback'
+    elif name.lower().startswith('be'):
+        if_type = 'Bundle-Ether'
+    elif name.lower().startswith('bp'):
+        if_type = 'Bundle-POS'
     else:
         if_type = None
 
@@ -174,12 +279,10 @@ def get_interface_type(interface):
         return 'FortyGigE'
     elif interface.upper().startswith('ET'):
         return 'Ethernet'
-    elif interface.upper().startswith('VL'):
-        return 'Vlan'
     elif interface.upper().startswith('LO'):
-        return 'loopback'
-    elif interface.upper().startswith('PO'):
-        return 'port-channel'
+        return 'Loopback'
+    elif interface.upper().startswith('BE'):
+        return 'Bundle-Ether'
     elif interface.upper().startswith('NV'):
         return 'nve'
     elif interface.upper().startswith('TWE'):

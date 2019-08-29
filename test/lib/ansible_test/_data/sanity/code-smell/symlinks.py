@@ -3,34 +3,29 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import sys
 
 
 def main():
-    skip_dirs = set([
-        '.tox',
-    ])
+    root_dir = os.getcwd() + os.path.sep
 
-    for root, dirs, files in os.walk('.'):
-        for skip_dir in skip_dirs:
-            if skip_dir in dirs:
-                dirs.remove(skip_dir)
+    for path in sys.argv[1:] or sys.stdin.read().splitlines():
+        if not os.path.islink(path.rstrip(os.path.sep)):
+            continue
 
-        if root == '.':
-            root = ''
-        elif root.startswith('./'):
-            root = root[2:]
+        if not os.path.exists(path):
+            print('%s: broken symlinks are not allowed' % path)
+            continue
 
-        for file in files:
-            path = os.path.join(root, file)
+        if path.endswith(os.path.sep):
+            print('%s: symlinks to directories are not allowed' % path)
+            continue
 
-            if not os.path.exists(path):
-                print('%s: broken symlinks are not allowed' % path)
+        real_path = os.path.realpath(path)
 
-        for directory in dirs:
-            path = os.path.join(root, directory)
-
-            if os.path.islink(path):
-                print('%s: symlinks to directories are not allowed' % path)
+        if not real_path.startswith(root_dir):
+            print('%s: symlinks outside content tree are not allowed: %s' % (path, os.path.relpath(real_path, os.path.dirname(path))))
+            continue
 
 
 if __name__ == '__main__':

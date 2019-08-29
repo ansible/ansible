@@ -1,4 +1,4 @@
 cloud/azure
 shippable/azure/group3
 destructive
-azure_rm_manageddisk_facts
+azure_rm_manageddisk_info

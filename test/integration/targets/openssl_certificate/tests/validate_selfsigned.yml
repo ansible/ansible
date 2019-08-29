@@ -126,3 +126,13 @@
       - selfsigned_backup_4.backup_file is string
       - selfsigned_backup_5 is not changed
       - selfsigned_backup_5.backup_file is undefined
+
+- name: Check create subject key identifier
+  assert:
+    that:
+      - selfsigned_subject_key_identifier_1 is changed
+      - selfsigned_subject_key_identifier_2 is not changed
+      - selfsigned_subject_key_identifier_3 is changed
+      - selfsigned_subject_key_identifier_4 is not changed
+      - selfsigned_subject_key_identifier_5 is changed
+  when: select_crypto_backend != 'pyopenssl'

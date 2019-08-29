@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_user_radius
 short_description: Configure RADIUS server entries in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify user feature and radius category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,84 +41,121 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     user_radius:
         description:
             - Configure RADIUS server entries.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            accounting-server:
+            accounting_server:
                 description:
                     - Additional accounting servers.
+                type: list
                 suboptions:
                     id:
                         description:
                             - ID (0 - 4294967295).
                         required: true
+                        type: int
                     port:
                         description:
                             - RADIUS accounting port number.
+                        type: int
                     secret:
                         description:
                             - Secret key.
+                        type: str
                     server:
                         description:
-                            - Server CN domain name or IP.
-                    source-ip:
+                            - name_str or ip_str Server CN domain name or IP.
+                        type: str
+                    source_ip:
                         description:
                             - Source IP address for communications to the RADIUS server.
+                        type: str
                     status:
                         description:
                             - Status.
+                        type: str
                         choices:
                             - enable
                             - disable
-            acct-all-servers:
+            acct_all_servers:
                 description:
-                    - Enable/disable sending of accounting messages to all configured servers (default = disable).
+                    - Enable/disable sending of accounting messages to all configured servers.
+                type: str
                 choices:
                     - enable
                     - disable
-            acct-interim-interval:
+            acct_interim_interval:
                 description:
                     - Time in seconds between each accounting interim update message.
-            all-usergroup:
+                type: int
+            all_usergroup:
                 description:
                     - Enable/disable automatically including this RADIUS server in all user groups.
+                type: str
                 choices:
                     - disable
                     - enable
-            auth-type:
+            auth_type:
                 description:
                     - Authentication methods/protocols permitted for this RADIUS server.
+                type: str
                 choices:
                     - auto
                     - ms_chap_v2
@@ -131,14 +165,17 @@ options:
             class:
                 description:
                     - Class attribute name(s).
+                type: list
                 suboptions:
                     name:
                         description:
                             - Class name.
                         required: true
-            h3c-compatibility:
+                        type: str
+            h3c_compatibility:
                 description:
                     - Enable/disable compatibility with the H3C, a mechanism that performs security checking for authentication.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -146,43 +183,52 @@ options:
                 description:
                     - RADIUS server entry name.
                 required: true
-            nas-ip:
+                type: str
+            nas_ip:
                 description:
                     - IP address used to communicate with the RADIUS server and used as NAS-IP-Address and Called-Station-ID attributes.
-            password-encoding:
+                type: str
+            password_encoding:
                 description:
                     - Password encoding.
+                type: str
                 choices:
                     - auto
                     - ISO-8859-1
-            password-renewal:
+            password_renewal:
                 description:
                     - Enable/disable password renewal.
+                type: str
                 choices:
                     - enable
                     - disable
-            radius-coa:
+            radius_coa:
                 description:
                     - Enable to allow a mechanism to change the attributes of an authentication, authorization, and accounting session after it is
                        authenticated.
+                type: str
                 choices:
                     - enable
                     - disable
-            radius-port:
+            radius_port:
                 description:
                     - RADIUS service port number.
+                type: int
             rsso:
                 description:
                     - Enable/disable RADIUS based single sign on feature.
+                type: str
                 choices:
                     - enable
                     - disable
-            rsso-context-timeout:
+            rsso_context_timeout:
                 description:
                     - Time in seconds before the logged out user is removed from the "user context list" of logged on users.
-            rsso-endpoint-attribute:
+                type: int
+            rsso_endpoint_attribute:
                 description:
                     - RADIUS attributes used to extract the user end point identifer from the RADIUS Start record.
+                type: str
                 choices:
                     - User-Name
                     - NAS-IP-Address
@@ -206,9 +252,10 @@ options:
                     - Framed-AppleTalk-Zone
                     - Acct-Session-Id
                     - Acct-Multi-Session-Id
-            rsso-endpoint-block-attribute:
+            rsso_endpoint_block_attribute:
                 description:
                     - RADIUS attributes used to block a user.
+                type: str
                 choices:
                     - User-Name
                     - NAS-IP-Address
@@ -232,21 +279,24 @@ options:
                     - Framed-AppleTalk-Zone
                     - Acct-Session-Id
                     - Acct-Multi-Session-Id
-            rsso-ep-one-ip-only:
+            rsso_ep_one_ip_only:
                 description:
                     - Enable/disable the replacement of old IP addresses with new ones for the same endpoint on RADIUS accounting Start messages.
+                type: str
                 choices:
                     - enable
                     - disable
-            rsso-flush-ip-session:
+            rsso_flush_ip_session:
                 description:
                     - Enable/disable flushing user IP sessions on RADIUS accounting Stop messages.
+                type: str
                 choices:
                     - enable
                     - disable
-            rsso-log-flags:
+            rsso_log_flags:
                 description:
                     - Events to log.
+                type: str
                 choices:
                     - protocol-error
                     - profile-missing
@@ -255,45 +305,56 @@ options:
                     - endpoint-block
                     - radiusd-other
                     - none
-            rsso-log-period:
+            rsso_log_period:
                 description:
                     - Time interval in seconds that group event log messages will be generated for dynamic profile events.
-            rsso-radius-response:
+                type: int
+            rsso_radius_response:
                 description:
                     - Enable/disable sending RADIUS response packets after receiving Start and Stop records.
+                type: str
                 choices:
                     - enable
                     - disable
-            rsso-radius-server-port:
+            rsso_radius_server_port:
                 description:
                     - UDP port to listen on for RADIUS Start and Stop records.
-            rsso-secret:
+                type: int
+            rsso_secret:
                 description:
                     - RADIUS secret used by the RADIUS accounting server.
-            rsso-validate-request-secret:
+                type: str
+            rsso_validate_request_secret:
                 description:
                     - Enable/disable validating the RADIUS request shared secret in the Start or End record.
+                type: str
                 choices:
                     - enable
                     - disable
-            secondary-secret:
+            secondary_secret:
                 description:
                     - Secret key to access the secondary server.
-            secondary-server:
+                type: str
+            secondary_server:
                 description:
-                    - Secondary RADIUS CN domain name or IP.
+                    - name_str or ip_str secondary RADIUS CN domain name or IP.
+                type: str
             secret:
                 description:
                     - Pre-shared secret key used to access the primary RADIUS server.
+                type: str
             server:
                 description:
                     - Primary RADIUS server CN domain name or IP address.
-            source-ip:
+                type: str
+            source_ip:
                 description:
                     - Source IP address for communications to the RADIUS server.
-            sso-attribute:
+                type: str
+            sso_attribute:
                 description:
                     - RADIUS attribute that contains the profile group name to be extracted from the RADIUS Start record.
+                type: str
                 choices:
                     - User-Name
                     - NAS-IP-Address
@@ -317,33 +378,40 @@ options:
                     - Framed-AppleTalk-Zone
                     - Acct-Session-Id
                     - Acct-Multi-Session-Id
-            sso-attribute-key:
+            sso_attribute_key:
                 description:
                     - Key prefix for SSO group value in the SSO attribute.
-            sso-attribute-value-override:
+                type: str
+            sso_attribute_value_override:
                 description:
                     - Enable/disable override old attribute value with new value for the same endpoint.
+                type: str
                 choices:
                     - enable
                     - disable
-            tertiary-secret:
+            tertiary_secret:
                 description:
                     - Secret key to access the tertiary server.
-            tertiary-server:
+                type: str
+            tertiary_server:
                 description:
-                    - Tertiary RADIUS CN domain name or IP.
+                    - name_str or ip_str tertiary RADIUS CN domain name or IP.
+                type: str
             timeout:
                 description:
                     - Time in seconds between re-sending authentication requests.
-            use-management-vdom:
+                type: int
+            use_management_vdom:
                 description:
                     - Enable/disable using management VDOM to send requests.
+                type: str
                 choices:
                     - enable
                     - disable
-            username-case-sensitive:
+            username_case_sensitive:
                 description:
                     - Enable/disable case sensitive user names.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -356,6 +424,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure RADIUS server entries.
     fortios_user_radius:
@@ -364,55 +433,55 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       user_radius:
-        state: "present"
-        accounting-server:
+        accounting_server:
          -
             id:  "4"
             port: "5"
             secret: "<your_own_value>"
             server: "192.168.100.40"
-            source-ip: "84.230.14.43"
+            source_ip: "84.230.14.43"
             status: "enable"
-        acct-all-servers: "enable"
-        acct-interim-interval: "11"
-        all-usergroup: "disable"
-        auth-type: "auto"
+        acct_all_servers: "enable"
+        acct_interim_interval: "11"
+        all_usergroup: "disable"
+        auth_type: "auto"
         class:
          -
             name: "default_name_15"
-        h3c-compatibility: "enable"
+        h3c_compatibility: "enable"
         name: "default_name_17"
-        nas-ip: "<your_own_value>"
-        password-encoding: "auto"
-        password-renewal: "enable"
-        radius-coa: "enable"
-        radius-port: "22"
+        nas_ip: "<your_own_value>"
+        password_encoding: "auto"
+        password_renewal: "enable"
+        radius_coa: "enable"
+        radius_port: "22"
         rsso: "enable"
-        rsso-context-timeout: "24"
-        rsso-endpoint-attribute: "User-Name"
-        rsso-endpoint-block-attribute: "User-Name"
-        rsso-ep-one-ip-only: "enable"
-        rsso-flush-ip-session: "enable"
-        rsso-log-flags: "protocol-error"
-        rsso-log-period: "30"
-        rsso-radius-response: "enable"
-        rsso-radius-server-port: "32"
-        rsso-secret: "<your_own_value>"
-        rsso-validate-request-secret: "enable"
-        secondary-secret: "<your_own_value>"
-        secondary-server: "<your_own_value>"
+        rsso_context_timeout: "24"
+        rsso_endpoint_attribute: "User-Name"
+        rsso_endpoint_block_attribute: "User-Name"
+        rsso_ep_one_ip_only: "enable"
+        rsso_flush_ip_session: "enable"
+        rsso_log_flags: "protocol-error"
+        rsso_log_period: "30"
+        rsso_radius_response: "enable"
+        rsso_radius_server_port: "32"
+        rsso_secret: "<your_own_value>"
+        rsso_validate_request_secret: "enable"
+        secondary_secret: "<your_own_value>"
+        secondary_server: "<your_own_value>"
         secret: "<your_own_value>"
         server: "192.168.100.40"
-        source-ip: "84.230.14.43"
-        sso-attribute: "User-Name"
-        sso-attribute-key: "<your_own_value>"
-        sso-attribute-value-override: "enable"
-        tertiary-secret: "<your_own_value>"
-        tertiary-server: "<your_own_value>"
+        source_ip: "84.230.14.43"
+        sso_attribute: "User-Name"
+        sso_attribute_key: "<your_own_value>"
+        sso_attribute_value_override: "enable"
+        tertiary_secret: "<your_own_value>"
+        tertiary_server: "<your_own_value>"
         timeout: "45"
-        use-management-vdom: "enable"
-        username-case-sensitive: "enable"
+        use_management_vdom: "enable"
+        username_case_sensitive: "enable"
 '''
 
 RETURN = '''
@@ -475,14 +544,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -490,23 +561,23 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_user_radius_data(json):
-    option_list = ['accounting-server', 'acct-all-servers', 'acct-interim-interval',
-                   'all-usergroup', 'auth-type', 'class',
-                   'h3c-compatibility', 'name', 'nas-ip',
-                   'password-encoding', 'password-renewal', 'radius-coa',
-                   'radius-port', 'rsso', 'rsso-context-timeout',
-                   'rsso-endpoint-attribute', 'rsso-endpoint-block-attribute', 'rsso-ep-one-ip-only',
-                   'rsso-flush-ip-session', 'rsso-log-flags', 'rsso-log-period',
-                   'rsso-radius-response', 'rsso-radius-server-port', 'rsso-secret',
-                   'rsso-validate-request-secret', 'secondary-secret', 'secondary-server',
-                   'secret', 'server', 'source-ip',
-                   'sso-attribute', 'sso-attribute-key', 'sso-attribute-value-override',
-                   'tertiary-secret', 'tertiary-server', 'timeout',
-                   'use-management-vdom', 'username-case-sensitive']
+    option_list = ['accounting_server', 'acct_all_servers', 'acct_interim_interval',
+                   'all_usergroup', 'auth_type', 'class',
+                   'h3c_compatibility', 'name', 'nas_ip',
+                   'password_encoding', 'password_renewal', 'radius_coa',
+                   'radius_port', 'rsso', 'rsso_context_timeout',
+                   'rsso_endpoint_attribute', 'rsso_endpoint_block_attribute', 'rsso_ep_one_ip_only',
+                   'rsso_flush_ip_session', 'rsso_log_flags', 'rsso_log_period',
+                   'rsso_radius_response', 'rsso_radius_server_port', 'rsso_secret',
+                   'rsso_validate_request_secret', 'secondary_secret', 'secondary_server',
+                   'secret', 'server', 'source_ip',
+                   'sso_attribute', 'sso_attribute_key', 'sso_attribute_value_override',
+                   'tertiary_secret', 'tertiary_server', 'timeout',
+                   'use_management_vdom', 'username_case_sensitive']
     dictionary = {}
 
     for attribute in option_list:
@@ -516,98 +587,110 @@ def filter_user_radius_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
 
 def user_radius(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['user_radius'] and data['user_radius']:
+        state = data['user_radius']['state']
+    else:
+        state = True
     user_radius_data = data['user_radius']
-    flattened_data = flatten_multilists_attributes(user_radius_data)
-    filtered_data = filter_user_radius_data(flattened_data)
-    if user_radius_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_user_radius_data(user_radius_data))
+
+    if state == "present":
         return fos.set('user',
                        'radius',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif user_radius_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('user',
                           'radius',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_user(data, fos):
-    login(data)
 
     if data['user_radius']:
         resp = user_radius(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "user_radius": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "accounting-server": {"required": False, "type": "list",
+                "accounting_server": {"required": False, "type": "list",
                                       "options": {
                                           "id": {"required": True, "type": "int"},
                                           "port": {"required": False, "type": "int"},
                                           "secret": {"required": False, "type": "str"},
                                           "server": {"required": False, "type": "str"},
-                                          "source-ip": {"required": False, "type": "str"},
+                                          "source_ip": {"required": False, "type": "str"},
                                           "status": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]}
                                       }},
-                "acct-all-servers": {"required": False, "type": "str",
+                "acct_all_servers": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "acct-interim-interval": {"required": False, "type": "int"},
-                "all-usergroup": {"required": False, "type": "str",
+                "acct_interim_interval": {"required": False, "type": "int"},
+                "all_usergroup": {"required": False, "type": "str",
                                   "choices": ["disable", "enable"]},
-                "auth-type": {"required": False, "type": "str",
+                "auth_type": {"required": False, "type": "str",
                               "choices": ["auto", "ms_chap_v2", "ms_chap",
                                           "chap", "pap"]},
                 "class": {"required": False, "type": "list",
                           "options": {
                               "name": {"required": True, "type": "str"}
                           }},
-                "h3c-compatibility": {"required": False, "type": "str",
+                "h3c_compatibility": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
                 "name": {"required": True, "type": "str"},
-                "nas-ip": {"required": False, "type": "str"},
-                "password-encoding": {"required": False, "type": "str",
+                "nas_ip": {"required": False, "type": "str"},
+                "password_encoding": {"required": False, "type": "str",
                                       "choices": ["auto", "ISO-8859-1"]},
-                "password-renewal": {"required": False, "type": "str",
+                "password_renewal": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "radius-coa": {"required": False, "type": "str",
+                "radius_coa": {"required": False, "type": "str",
                                "choices": ["enable", "disable"]},
-                "radius-port": {"required": False, "type": "int"},
+                "radius_port": {"required": False, "type": "int"},
                 "rsso": {"required": False, "type": "str",
                          "choices": ["enable", "disable"]},
-                "rsso-context-timeout": {"required": False, "type": "int"},
-                "rsso-endpoint-attribute": {"required": False, "type": "str",
+                "rsso_context_timeout": {"required": False, "type": "int"},
+                "rsso_endpoint_attribute": {"required": False, "type": "str",
                                             "choices": ["User-Name", "NAS-IP-Address", "Framed-IP-Address",
                                                         "Framed-IP-Netmask", "Filter-Id", "Login-IP-Host",
                                                         "Reply-Message", "Callback-Number", "Callback-Id",
@@ -616,7 +699,7 @@ def main():
                                                         "Proxy-State", "Login-LAT-Service", "Login-LAT-Node",
                                                         "Login-LAT-Group", "Framed-AppleTalk-Zone", "Acct-Session-Id",
                                                         "Acct-Multi-Session-Id"]},
-                "rsso-endpoint-block-attribute": {"required": False, "type": "str",
+                "rsso_endpoint_block_attribute": {"required": False, "type": "str",
                                                   "choices": ["User-Name", "NAS-IP-Address", "Framed-IP-Address",
                                                               "Framed-IP-Netmask", "Filter-Id", "Login-IP-Host",
                                                               "Reply-Message", "Callback-Number", "Callback-Id",
@@ -625,27 +708,27 @@ def main():
                                                               "Proxy-State", "Login-LAT-Service", "Login-LAT-Node",
                                                               "Login-LAT-Group", "Framed-AppleTalk-Zone", "Acct-Session-Id",
                                                               "Acct-Multi-Session-Id"]},
-                "rsso-ep-one-ip-only": {"required": False, "type": "str",
+                "rsso_ep_one_ip_only": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                "rsso-flush-ip-session": {"required": False, "type": "str",
+                "rsso_flush_ip_session": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                "rsso-log-flags": {"required": False, "type": "str",
+                "rsso_log_flags": {"required": False, "type": "str",
                                    "choices": ["protocol-error", "profile-missing", "accounting-stop-missed",
                                                "accounting-event", "endpoint-block", "radiusd-other",
                                                "none"]},
-                "rsso-log-period": {"required": False, "type": "int"},
-                "rsso-radius-response": {"required": False, "type": "str",
+                "rsso_log_period": {"required": False, "type": "int"},
+                "rsso_radius_response": {"required": False, "type": "str",
                                          "choices": ["enable", "disable"]},
-                "rsso-radius-server-port": {"required": False, "type": "int"},
-                "rsso-secret": {"required": False, "type": "str"},
-                "rsso-validate-request-secret": {"required": False, "type": "str",
+                "rsso_radius_server_port": {"required": False, "type": "int"},
+                "rsso_secret": {"required": False, "type": "str"},
+                "rsso_validate_request_secret": {"required": False, "type": "str",
                                                  "choices": ["enable", "disable"]},
-                "secondary-secret": {"required": False, "type": "str"},
-                "secondary-server": {"required": False, "type": "str"},
+                "secondary_secret": {"required": False, "type": "str"},
+                "secondary_server": {"required": False, "type": "str"},
                 "secret": {"required": False, "type": "str"},
                 "server": {"required": False, "type": "str"},
-                "source-ip": {"required": False, "type": "str"},
-                "sso-attribute": {"required": False, "type": "str",
+                "source_ip": {"required": False, "type": "str"},
+                "sso_attribute": {"required": False, "type": "str",
                                   "choices": ["User-Name", "NAS-IP-Address", "Framed-IP-Address",
                                               "Framed-IP-Netmask", "Filter-Id", "Login-IP-Host",
                                               "Reply-Message", "Callback-Number", "Callback-Id",
@@ -654,15 +737,15 @@ def main():
                                               "Proxy-State", "Login-LAT-Service", "Login-LAT-Node",
                                               "Login-LAT-Group", "Framed-AppleTalk-Zone", "Acct-Session-Id",
                                               "Acct-Multi-Session-Id"]},
-                "sso-attribute-key": {"required": False, "type": "str"},
-                "sso-attribute-value-override": {"required": False, "type": "str",
+                "sso_attribute_key": {"required": False, "type": "str"},
+                "sso_attribute_value_override": {"required": False, "type": "str",
                                                  "choices": ["enable", "disable"]},
-                "tertiary-secret": {"required": False, "type": "str"},
-                "tertiary-server": {"required": False, "type": "str"},
+                "tertiary_secret": {"required": False, "type": "str"},
+                "tertiary_server": {"required": False, "type": "str"},
                 "timeout": {"required": False, "type": "int"},
-                "use-management-vdom": {"required": False, "type": "str",
+                "use_management_vdom": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                "username-case-sensitive": {"required": False, "type": "str",
+                "username_case_sensitive": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]}
 
             }
@@ -671,15 +754,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_user(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_user(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_user(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

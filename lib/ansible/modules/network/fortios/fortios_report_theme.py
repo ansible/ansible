@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_report_theme
 short_description: Report themes configuratio in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify report feature and theme category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,138 +41,194 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     report_theme:
         description:
             - Report themes configuration
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            bullet-list-style:
+            bullet_list_style:
                 description:
                     - Bullet list style.
-            column-count:
+                type: str
+            column_count:
                 description:
                     - Report page column count.
+                type: str
                 choices:
                     - 1
                     - 2
                     - 3
-            default-html-style:
+            default_html_style:
                 description:
                     - Default HTML report style.
-            default-pdf-style:
+                type: str
+            default_pdf_style:
                 description:
                     - Default PDF report style.
-            graph-chart-style:
+                type: str
+            graph_chart_style:
                 description:
                     - Graph chart style.
-            heading1-style:
+                type: str
+            heading1_style:
                 description:
                     - Report heading style.
-            heading2-style:
+                type: str
+            heading2_style:
                 description:
                     - Report heading style.
-            heading3-style:
+                type: str
+            heading3_style:
                 description:
                     - Report heading style.
-            heading4-style:
+                type: str
+            heading4_style:
                 description:
                     - Report heading style.
-            hline-style:
+                type: str
+            hline_style:
                 description:
                     - Horizontal line style.
-            image-style:
+                type: str
+            image_style:
                 description:
                     - Image style.
+                type: str
             name:
                 description:
                     - Report theme name.
                 required: true
-            normal-text-style:
+                type: str
+            normal_text_style:
                 description:
                     - Normal text style.
-            numbered-list-style:
+                type: str
+            numbered_list_style:
                 description:
                     - Numbered list style.
-            page-footer-style:
+                type: str
+            page_footer_style:
                 description:
                     - Report page footer style.
-            page-header-style:
+                type: str
+            page_header_style:
                 description:
                     - Report page header style.
-            page-orient:
+                type: str
+            page_orient:
                 description:
                     - Report page orientation.
+                type: str
                 choices:
                     - portrait
                     - landscape
-            page-style:
+            page_style:
                 description:
                     - Report page style.
-            report-subtitle-style:
+                type: str
+            report_subtitle_style:
                 description:
                     - Report subtitle style.
-            report-title-style:
+                type: str
+            report_title_style:
                 description:
                     - Report title style.
-            table-chart-caption-style:
+                type: str
+            table_chart_caption_style:
                 description:
                     - Table chart caption style.
-            table-chart-even-row-style:
+                type: str
+            table_chart_even_row_style:
                 description:
                     - Table chart even row style.
-            table-chart-head-style:
+                type: str
+            table_chart_head_style:
                 description:
                     - Table chart head row style.
-            table-chart-odd-row-style:
+                type: str
+            table_chart_odd_row_style:
                 description:
                     - Table chart odd row style.
-            table-chart-style:
+                type: str
+            table_chart_style:
                 description:
                     - Table chart style.
-            toc-heading1-style:
+                type: str
+            toc_heading1_style:
                 description:
                     - Table of contents heading style.
-            toc-heading2-style:
+                type: str
+            toc_heading2_style:
                 description:
                     - Table of contents heading style.
-            toc-heading3-style:
+                type: str
+            toc_heading3_style:
                 description:
                     - Table of contents heading style.
-            toc-heading4-style:
+                type: str
+            toc_heading4_style:
                 description:
                     - Table of contents heading style.
-            toc-title-style:
+                type: str
+            toc_title_style:
                 description:
                     - Table of contents title style.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -185,6 +238,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Report themes configuration
     fortios_report_theme:
@@ -193,38 +247,38 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       report_theme:
-        state: "present"
-        bullet-list-style: "<your_own_value>"
-        column-count: "1"
-        default-html-style: "<your_own_value>"
-        default-pdf-style: "<your_own_value>"
-        graph-chart-style: "<your_own_value>"
-        heading1-style: "<your_own_value>"
-        heading2-style: "<your_own_value>"
-        heading3-style: "<your_own_value>"
-        heading4-style: "<your_own_value>"
-        hline-style: "<your_own_value>"
-        image-style: "<your_own_value>"
+        bullet_list_style: "<your_own_value>"
+        column_count: "1"
+        default_html_style: "<your_own_value>"
+        default_pdf_style: "<your_own_value>"
+        graph_chart_style: "<your_own_value>"
+        heading1_style: "<your_own_value>"
+        heading2_style: "<your_own_value>"
+        heading3_style: "<your_own_value>"
+        heading4_style: "<your_own_value>"
+        hline_style: "<your_own_value>"
+        image_style: "<your_own_value>"
         name: "default_name_14"
-        normal-text-style: "<your_own_value>"
-        numbered-list-style: "<your_own_value>"
-        page-footer-style: "<your_own_value>"
-        page-header-style: "<your_own_value>"
-        page-orient: "portrait"
-        page-style: "<your_own_value>"
-        report-subtitle-style: "<your_own_value>"
-        report-title-style: "<your_own_value>"
-        table-chart-caption-style: "<your_own_value>"
-        table-chart-even-row-style: "<your_own_value>"
-        table-chart-head-style: "<your_own_value>"
-        table-chart-odd-row-style: "<your_own_value>"
-        table-chart-style: "<your_own_value>"
-        toc-heading1-style: "<your_own_value>"
-        toc-heading2-style: "<your_own_value>"
-        toc-heading3-style: "<your_own_value>"
-        toc-heading4-style: "<your_own_value>"
-        toc-title-style: "<your_own_value>"
+        normal_text_style: "<your_own_value>"
+        numbered_list_style: "<your_own_value>"
+        page_footer_style: "<your_own_value>"
+        page_header_style: "<your_own_value>"
+        page_orient: "portrait"
+        page_style: "<your_own_value>"
+        report_subtitle_style: "<your_own_value>"
+        report_title_style: "<your_own_value>"
+        table_chart_caption_style: "<your_own_value>"
+        table_chart_even_row_style: "<your_own_value>"
+        table_chart_head_style: "<your_own_value>"
+        table_chart_odd_row_style: "<your_own_value>"
+        table_chart_style: "<your_own_value>"
+        toc_heading1_style: "<your_own_value>"
+        toc_heading2_style: "<your_own_value>"
+        toc_heading3_style: "<your_own_value>"
+        toc_heading4_style: "<your_own_value>"
+        toc_title_style: "<your_own_value>"
 '''
 
 RETURN = '''
@@ -287,14 +341,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -302,20 +358,20 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_report_theme_data(json):
-    option_list = ['bullet-list-style', 'column-count', 'default-html-style',
-                   'default-pdf-style', 'graph-chart-style', 'heading1-style',
-                   'heading2-style', 'heading3-style', 'heading4-style',
-                   'hline-style', 'image-style', 'name',
-                   'normal-text-style', 'numbered-list-style', 'page-footer-style',
-                   'page-header-style', 'page-orient', 'page-style',
-                   'report-subtitle-style', 'report-title-style', 'table-chart-caption-style',
-                   'table-chart-even-row-style', 'table-chart-head-style', 'table-chart-odd-row-style',
-                   'table-chart-style', 'toc-heading1-style', 'toc-heading2-style',
-                   'toc-heading3-style', 'toc-heading4-style', 'toc-title-style']
+    option_list = ['bullet_list_style', 'column_count', 'default_html_style',
+                   'default_pdf_style', 'graph_chart_style', 'heading1_style',
+                   'heading2_style', 'heading3_style', 'heading4_style',
+                   'hline_style', 'image_style', 'name',
+                   'normal_text_style', 'numbered_list_style', 'page_footer_style',
+                   'page_header_style', 'page_orient', 'page_style',
+                   'report_subtitle_style', 'report_title_style', 'table_chart_caption_style',
+                   'table_chart_even_row_style', 'table_chart_head_style', 'table_chart_odd_row_style',
+                   'table_chart_style', 'toc_heading1_style', 'toc_heading2_style',
+                   'toc_heading3_style', 'toc_heading4_style', 'toc_title_style']
     dictionary = {}
 
     for attribute in option_list:
@@ -325,93 +381,105 @@ def filter_report_theme_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
 
 def report_theme(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['report_theme'] and data['report_theme']:
+        state = data['report_theme']['state']
+    else:
+        state = True
     report_theme_data = data['report_theme']
-    flattened_data = flatten_multilists_attributes(report_theme_data)
-    filtered_data = filter_report_theme_data(flattened_data)
-    if report_theme_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_report_theme_data(report_theme_data))
+
+    if state == "present":
         return fos.set('report',
                        'theme',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif report_theme_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('report',
                           'theme',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_report(data, fos):
-    login(data)
 
     if data['report_theme']:
         resp = report_theme(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "report_theme": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "bullet-list-style": {"required": False, "type": "str"},
-                "column-count": {"required": False, "type": "str",
+                "bullet_list_style": {"required": False, "type": "str"},
+                "column_count": {"required": False, "type": "str",
                                  "choices": ["1", "2", "3"]},
-                "default-html-style": {"required": False, "type": "str"},
-                "default-pdf-style": {"required": False, "type": "str"},
-                "graph-chart-style": {"required": False, "type": "str"},
-                "heading1-style": {"required": False, "type": "str"},
-                "heading2-style": {"required": False, "type": "str"},
-                "heading3-style": {"required": False, "type": "str"},
-                "heading4-style": {"required": False, "type": "str"},
-                "hline-style": {"required": False, "type": "str"},
-                "image-style": {"required": False, "type": "str"},
+                "default_html_style": {"required": False, "type": "str"},
+                "default_pdf_style": {"required": False, "type": "str"},
+                "graph_chart_style": {"required": False, "type": "str"},
+                "heading1_style": {"required": False, "type": "str"},
+                "heading2_style": {"required": False, "type": "str"},
+                "heading3_style": {"required": False, "type": "str"},
+                "heading4_style": {"required": False, "type": "str"},
+                "hline_style": {"required": False, "type": "str"},
+                "image_style": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"},
-                "normal-text-style": {"required": False, "type": "str"},
-                "numbered-list-style": {"required": False, "type": "str"},
-                "page-footer-style": {"required": False, "type": "str"},
-                "page-header-style": {"required": False, "type": "str"},
-                "page-orient": {"required": False, "type": "str",
+                "normal_text_style": {"required": False, "type": "str"},
+                "numbered_list_style": {"required": False, "type": "str"},
+                "page_footer_style": {"required": False, "type": "str"},
+                "page_header_style": {"required": False, "type": "str"},
+                "page_orient": {"required": False, "type": "str",
                                 "choices": ["portrait", "landscape"]},
-                "page-style": {"required": False, "type": "str"},
-                "report-subtitle-style": {"required": False, "type": "str"},
-                "report-title-style": {"required": False, "type": "str"},
-                "table-chart-caption-style": {"required": False, "type": "str"},
-                "table-chart-even-row-style": {"required": False, "type": "str"},
-                "table-chart-head-style": {"required": False, "type": "str"},
-                "table-chart-odd-row-style": {"required": False, "type": "str"},
-                "table-chart-style": {"required": False, "type": "str"},
-                "toc-heading1-style": {"required": False, "type": "str"},
-                "toc-heading2-style": {"required": False, "type": "str"},
-                "toc-heading3-style": {"required": False, "type": "str"},
-                "toc-heading4-style": {"required": False, "type": "str"},
-                "toc-title-style": {"required": False, "type": "str"}
+                "page_style": {"required": False, "type": "str"},
+                "report_subtitle_style": {"required": False, "type": "str"},
+                "report_title_style": {"required": False, "type": "str"},
+                "table_chart_caption_style": {"required": False, "type": "str"},
+                "table_chart_even_row_style": {"required": False, "type": "str"},
+                "table_chart_head_style": {"required": False, "type": "str"},
+                "table_chart_odd_row_style": {"required": False, "type": "str"},
+                "table_chart_style": {"required": False, "type": "str"},
+                "toc_heading1_style": {"required": False, "type": "str"},
+                "toc_heading2_style": {"required": False, "type": "str"},
+                "toc_heading3_style": {"required": False, "type": "str"},
+                "toc_heading4_style": {"required": False, "type": "str"},
+                "toc_title_style": {"required": False, "type": "str"}
 
             }
         }
@@ -419,15 +487,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_report(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_report(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_report(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

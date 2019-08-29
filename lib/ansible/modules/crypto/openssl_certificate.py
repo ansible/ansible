@@ -37,7 +37,8 @@ description:
       your existing certificate, consider using the I(backup) option."
     - It uses the pyOpenSSL or cryptography python library to interact with OpenSSL.
     - If both the cryptography and PyOpenSSL libraries are available (and meet the minimum version requirements)
-      cryptography will be preferred as a backend over PyOpenSSL (unless the backend is forced with C(select_crypto_backend))
+      cryptography will be preferred as a backend over PyOpenSSL (unless the backend is forced with C(select_crypto_backend)).
+      Please note that the PyOpenSSL backend was deprecated in Ansible 2.9 and will be removed in Ansible 2.13.
 requirements:
     - PyOpenSSL >= 0.15 or cryptography >= 1.6 (if using C(selfsigned) or C(assertonly) provider)
     - acme-tiny (if using the C(acme) provider)
@@ -138,6 +139,21 @@ options:
         default: +3650d
         aliases: [ selfsigned_notAfter ]
 
+    selfsigned_create_subject_key_identifier:
+        description:
+            - Whether to create the Subject Key Identifier (SKI) from the public key.
+            - A value of C(create_if_not_provided) (default) only creates a SKI when the CSR does not
+              provide one.
+            - A value of C(always_create) always creates a SKI. If the CSR provides one, that one is
+              ignored.
+            - A value of C(never_create) never creates a SKI. If the CSR provides one, that one is used.
+            - This is only used by the C(selfsigned) provider.
+            - Note that this is only supported if the C(cryptography) backend is used!
+        type: str
+        choices: [create_if_not_provided, always_create, never_create]
+        default: create_if_not_provided
+        version_added: "2.9"
+
     ownca_path:
         description:
             - Remote absolute path of the CA (Certificate Authority) certificate.
@@ -203,6 +219,33 @@ options:
         type: str
         default: +3650d
         version_added: "2.7"
+
+    ownca_create_subject_key_identifier:
+        description:
+            - Whether to create the Subject Key Identifier (SKI) from the public key.
+            - A value of C(create_if_not_provided) (default) only creates a SKI when the CSR does not
+              provide one.
+            - A value of C(always_create) always creates a SKI. If the CSR provides one, that one is
+              ignored.
+            - A value of C(never_create) never creates a SKI. If the CSR provides one, that one is used.
+            - This is only used by the C(ownca) provider.
+            - Note that this is only supported if the C(cryptography) backend is used!
+        type: str
+        choices: [create_if_not_provided, always_create, never_create]
+        default: create_if_not_provided
+        version_added: "2.9"
+
+    ownca_create_authority_key_identifier:
+        description:
+            - Create a Authority Key Identifier from the CA's certificate. If the CSR provided
+              a authority key identifier, it is ignored.
+            - The Authority Key Identifier is generated from the CA certificate's Subject Key Identifier,
+              if available. If it is not available, the CA certificate's public key will be used.
+            - This is only used by the C(ownca) provider.
+            - Note that this is only supported if the C(cryptography) backend is used!
+        type: bool
+        default: yes
+        version_added: "2.9"
 
     acme_accountkey_path:
         description:
@@ -403,6 +446,8 @@ options:
             - The default choice is C(auto), which tries to use C(cryptography) if available, and falls back to C(pyopenssl).
             - If set to C(pyopenssl), will try to use the L(pyOpenSSL,https://pypi.org/project/pyOpenSSL/) library.
             - If set to C(cryptography), will try to use the L(cryptography,https://cryptography.io/) library.
+            - Please note that the C(pyopenssl) backend has been deprecated in Ansible 2.9, and will be removed in Ansible 2.13.
+              From that point on, only the C(cryptography) backend will be available.
         type: str
         default: auto
         choices: [ auto, cryptography, pyopenssl ]
@@ -843,6 +888,11 @@ class Certificate(crypto_utils.OpenSSLObject):
         self.backend = backend
         self.module = module
 
+        # The following are default values which make sure check() works as
+        # before if providers do not explicitly change these properties.
+        self.create_subject_key_identifier = 'never_create'
+        self.create_authority_key_identifier = False
+
         self.backup = module.params['backup']
         self.backup_file = None
 
@@ -918,13 +968,21 @@ class Certificate(crypto_utils.OpenSSLObject):
             if self.csr.subject != self.cert.subject:
                 return False
             # Check extensions
-            cert_exts = self.cert.extensions
-            csr_exts = self.csr.extensions
+            cert_exts = list(self.cert.extensions)
+            csr_exts = list(self.csr.extensions)
+            if self.create_subject_key_identifier != 'never_create':
+                # Filter out SubjectKeyIdentifier extension before comparison
+                cert_exts = list(filter(lambda x: not isinstance(x.value, x509.SubjectKeyIdentifier), cert_exts))
+                csr_exts = list(filter(lambda x: not isinstance(x.value, x509.SubjectKeyIdentifier), csr_exts))
+            if self.create_authority_key_identifier:
+                # Filter out AuthorityKeyIdentifier extension before comparison
+                cert_exts = list(filter(lambda x: not isinstance(x.value, x509.AuthorityKeyIdentifier), cert_exts))
+                csr_exts = list(filter(lambda x: not isinstance(x.value, x509.AuthorityKeyIdentifier), csr_exts))
             if len(cert_exts) != len(csr_exts):
                 return False
             for cert_ext in cert_exts:
                 try:
-                    csr_ext = csr_exts.get_extension_for_oid(cert_ext.oid)
+                    csr_ext = self.csr.extensions.get_extension_for_oid(cert_ext.oid)
                     if cert_ext != csr_ext:
                         return False
                 except cryptography.x509.ExtensionNotFound as dummy:
@@ -966,6 +1024,29 @@ class Certificate(crypto_utils.OpenSSLObject):
             if not self._validate_csr():
                 return False
 
+        # Check SubjectKeyIdentifier
+        if self.backend == 'cryptography' and self.create_subject_key_identifier != 'never_create':
+            # Get hold of certificate's SKI
+            try:
+                ext = self.cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+            except cryptography.x509.ExtensionNotFound as dummy:
+                return False
+            # Get hold of CSR's SKI for 'create_if_not_provided'
+            csr_ext = None
+            if self.create_subject_key_identifier == 'create_if_not_provided':
+                try:
+                    csr_ext = self.csr.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+                except cryptography.x509.ExtensionNotFound as dummy:
+                    pass
+            if csr_ext is None:
+                # If CSR had no SKI, or we chose to ignore it ('always_create'), compare with created SKI
+                if ext.value.digest != x509.SubjectKeyIdentifier.from_public_key(self.cert.public_key()).digest:
+                    return False
+            else:
+                # If CSR had SKI and we didn't ignore it ('create_if_not_provided'), compare SKIs
+                if ext.value.digest != csr_ext.value.digest:
+                    return False
+
         return True
 
 
@@ -995,6 +1076,7 @@ class SelfSignedCertificateCryptography(Certificate):
     """Generate the self-signed certificate, using the cryptography backend"""
     def __init__(self, module):
         super(SelfSignedCertificateCryptography, self).__init__(module, 'cryptography')
+        self.create_subject_key_identifier = module.params['selfsigned_create_subject_key_identifier']
         self.notBefore = self.get_relative_time_option(module.params['selfsigned_not_before'], 'selfsigned_not_before')
         self.notAfter = self.get_relative_time_option(module.params['selfsigned_not_after'], 'selfsigned_not_after')
         self.digest = crypto_utils.select_message_digest(module.params['selfsigned_digest'])
@@ -1043,8 +1125,18 @@ class SelfSignedCertificateCryptography(Certificate):
                 cert_builder = cert_builder.not_valid_before(self.notBefore)
                 cert_builder = cert_builder.not_valid_after(self.notAfter)
                 cert_builder = cert_builder.public_key(self.privatekey.public_key())
+                has_ski = False
                 for extension in self.csr.extensions:
+                    if isinstance(extension.value, x509.SubjectKeyIdentifier):
+                        if self.create_subject_key_identifier == 'always_create':
+                            continue
+                        has_ski = True
                     cert_builder = cert_builder.add_extension(extension.value, critical=extension.critical)
+                if not has_ski and self.create_subject_key_identifier != 'never_create':
+                    cert_builder = cert_builder.add_extension(
+                        x509.SubjectKeyIdentifier.from_public_key(self.privatekey.public_key()),
+                        critical=False
+                    )
             except ValueError as e:
                 raise CertificateError(str(e))
 
@@ -1098,6 +1190,8 @@ class SelfSignedCertificate(Certificate):
 
     def __init__(self, module):
         super(SelfSignedCertificate, self).__init__(module, 'pyopenssl')
+        if module.params['selfsigned_create_subject_key_identifier'] != 'create_if_not_provided':
+            module.fail_json(msg='selfsigned_create_subject_key_identifier cannot be used with the pyOpenSSL backend!')
         self.notBefore = self.get_relative_time_option(module.params['selfsigned_not_before'], 'selfsigned_not_before')
         self.notAfter = self.get_relative_time_option(module.params['selfsigned_not_after'], 'selfsigned_not_after')
         self.digest = module.params['selfsigned_digest']
@@ -1187,6 +1281,8 @@ class OwnCACertificateCryptography(Certificate):
     """Generate the own CA certificate. Using the cryptography backend"""
     def __init__(self, module):
         super(OwnCACertificateCryptography, self).__init__(module, 'cryptography')
+        self.create_subject_key_identifier = module.params['ownca_create_subject_key_identifier']
+        self.create_authority_key_identifier = module.params['ownca_create_authority_key_identifier']
         self.notBefore = self.get_relative_time_option(module.params['ownca_not_before'], 'ownca_not_before')
         self.notAfter = self.get_relative_time_option(module.params['ownca_not_after'], 'ownca_not_after')
         self.digest = crypto_utils.select_message_digest(module.params['ownca_digest'])
@@ -1243,8 +1339,34 @@ class OwnCACertificateCryptography(Certificate):
             cert_builder = cert_builder.not_valid_before(self.notBefore)
             cert_builder = cert_builder.not_valid_after(self.notAfter)
             cert_builder = cert_builder.public_key(self.csr.public_key())
+            has_ski = False
             for extension in self.csr.extensions:
+                if isinstance(extension.value, x509.SubjectKeyIdentifier):
+                    if self.create_subject_key_identifier == 'always_create':
+                        continue
+                    has_ski = True
+                if self.create_authority_key_identifier and isinstance(extension.value, x509.AuthorityKeyIdentifier):
+                    continue
                 cert_builder = cert_builder.add_extension(extension.value, critical=extension.critical)
+            if not has_ski and self.create_subject_key_identifier != 'never_create':
+                cert_builder = cert_builder.add_extension(
+                    x509.SubjectKeyIdentifier.from_public_key(self.csr.public_key()),
+                    critical=False
+                )
+            if self.create_authority_key_identifier:
+                try:
+                    ext = self.ca_cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+                    cert_builder = cert_builder.add_extension(
+                        x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext.value)
+                        if CRYPTOGRAPHY_VERSION >= LooseVersion('2.7') else
+                        x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext),
+                        critical=False
+                    )
+                except cryptography.x509.ExtensionNotFound:
+                    cert_builder = cert_builder.add_extension(
+                        x509.AuthorityKeyIdentifier.from_issuer_public_key(self.ca_cert.public_key()),
+                        critical=False
+                    )
 
             certificate = cert_builder.sign(
                 private_key=self.ca_private_key, algorithm=self.digest,
@@ -1263,6 +1385,32 @@ class OwnCACertificateCryptography(Certificate):
         file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
+
+    def check(self, module, perms_required=True):
+        """Ensure the resource is in its desired state."""
+
+        if not super(OwnCACertificateCryptography, self).check(module, perms_required):
+            return False
+
+        # Check AuthorityKeyIdentifier
+        if self.create_authority_key_identifier:
+            try:
+                ext = self.ca_cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+                expected_ext = (
+                    x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext.value)
+                    if CRYPTOGRAPHY_VERSION >= LooseVersion('2.7') else
+                    x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext)
+                )
+            except cryptography.x509.ExtensionNotFound:
+                expected_ext = x509.AuthorityKeyIdentifier.from_issuer_public_key(self.ca_cert.public_key())
+            try:
+                ext = self.cert.extensions.get_extension_for_class(x509.AuthorityKeyIdentifier)
+                if ext.value != expected_ext:
+                    return False
+            except cryptography.x509.ExtensionNotFound as dummy:
+                return False
+
+        return True
 
     def dump(self, check_mode=False):
 
@@ -1303,6 +1451,10 @@ class OwnCACertificate(Certificate):
         self.digest = module.params['ownca_digest']
         self.version = module.params['ownca_version']
         self.serial_number = randint(1000, 99999)
+        if module.params['ownca_create_subject_key_identifier'] != 'create_if_not_provided':
+            module.fail_json(msg='ownca_create_subject_key_identifier cannot be used with the pyOpenSSL backend!')
+        if module.params['ownca_create_authority_key_identifier']:
+            module.warn('ownca_create_authority_key_identifier is ignored by the pyOpenSSL backend!')
         self.ca_cert_path = module.params['ownca_path']
         self.ca_privatekey_path = module.params['ownca_privatekey_path']
         self.ca_privatekey_passphrase = module.params['ownca_privatekey_passphrase']
@@ -2268,6 +2420,11 @@ def main():
             selfsigned_digest=dict(type='str', default='sha256'),
             selfsigned_not_before=dict(type='str', default='+0s', aliases=['selfsigned_notBefore']),
             selfsigned_not_after=dict(type='str', default='+3650d', aliases=['selfsigned_notAfter']),
+            selfsigned_create_subject_key_identifier=dict(
+                type='str',
+                default='create_if_not_provided',
+                choices=['create_if_not_provided', 'always_create', 'never_create']
+            ),
 
             # provider: ownca
             ownca_path=dict(type='path'),
@@ -2277,6 +2434,12 @@ def main():
             ownca_version=dict(type='int', default=3),
             ownca_not_before=dict(type='str', default='+0s'),
             ownca_not_after=dict(type='str', default='+3650d'),
+            ownca_create_subject_key_identifier=dict(
+                type='str',
+                default='create_if_not_provided',
+                choices=['create_if_not_provided', 'always_create', 'never_create']
+            ),
+            ownca_create_authority_key_identifier=dict(type='bool', default=True),
 
             # provider: acme
             acme_accountkey_path=dict(type='path'),
@@ -2360,6 +2523,7 @@ def main():
                     except AttributeError:
                         module.fail_json(msg='You need to have PyOpenSSL>=0.15')
 
+                module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated', version='2.13')
                 if provider == 'selfsigned':
                     certificate = SelfSignedCertificate(module)
                 elif provider == 'acme':

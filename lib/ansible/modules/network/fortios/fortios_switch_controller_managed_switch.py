@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_switch_controller_managed_switch
 short_description: Configure FortiSwitch devices that are managed by this FortiGate in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify switch_controller feature and managed_switch category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,401 +41,506 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     switch_controller_managed_switch:
         description:
             - Configure FortiSwitch devices that are managed by this FortiGate.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            802-1X-settings:
+            802_1X_settings:
                 description:
                     - Configuration method to edit FortiSwitch 802.1X global settings.
+                type: dict
                 suboptions:
-                    link-down-auth:
+                    link_down_auth:
                         description:
                             - Authentication state to set if a link is down.
+                        type: str
                         choices:
                             - set-unauth
                             - no-action
-                    local-override:
+                    local_override:
                         description:
                             - Enable to override global 802.1X settings on individual FortiSwitches.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    max-reauth-attempt:
+                    max_reauth_attempt:
                         description:
-                            - Maximum number of authentication attempts (0 - 15, default = 3).
-                    reauth-period:
+                            - Maximum number of authentication attempts (0 - 15).
+                        type: int
+                    reauth_period:
                         description:
-                            - Reauthentication time interval (1 - 1440 min, default = 60, 0 = disable).
-            connected:
-                description:
-                    - CAPWAP connection.
-            custom-command:
+                            - Reauthentication time interval (1 - 1440 min).
+                        type: int
+            custom_command:
                 description:
                     - Configuration method to edit FortiSwitch commands to be pushed to this FortiSwitch device upon rebooting the FortiGate switch controller
                        or the FortiSwitch.
+                type: list
                 suboptions:
-                    command-entry:
+                    command_entry:
                         description:
                             - List of FortiSwitch commands.
-                        required: true
-                    command-name:
+                        type: str
+                    command_name:
                         description:
                             - Names of commands to be pushed to this FortiSwitch device, as configured under config switch-controller custom-command. Source
                                switch-controller.custom-command.command-name.
-            delayed-restart-trigger:
+                        type: str
+            delayed_restart_trigger:
                 description:
                     - Delayed restart triggered for this FortiSwitch.
+                type: int
             description:
                 description:
                     - Description.
-            directly-connected:
+                type: str
+            directly_connected:
                 description:
                     - Directly connected FortiSwitch.
-            dynamic-capability:
+                type: int
+            dynamic_capability:
                 description:
                     - List of features this FortiSwitch supports (not configurable) that is sent to the FortiGate device for subsequent configuration
                        initiated by the FortiGate device.
-            dynamically-discovered:
+                type: int
+            dynamically_discovered:
                 description:
                     - Dynamically discovered FortiSwitch.
-            fsw-wan1-admin:
+                type: int
+            fsw_wan1_admin:
                 description:
                     - FortiSwitch WAN1 admin status; enable to authorize the FortiSwitch as a managed switch.
+                type: str
                 choices:
                     - discovered
                     - disable
                     - enable
-            fsw-wan1-peer:
+            fsw_wan1_peer:
                 description:
                     - Fortiswitch WAN1 peer port.
-            fsw-wan2-admin:
+                type: str
+            fsw_wan2_admin:
                 description:
                     - FortiSwitch WAN2 admin status; enable to authorize the FortiSwitch as a managed switch.
+                type: str
                 choices:
                     - discovered
                     - disable
                     - enable
-            fsw-wan2-peer:
+            fsw_wan2_peer:
                 description:
                     - FortiSwitch WAN2 peer port.
-            igmp-snooping:
+                type: str
+            igmp_snooping:
                 description:
                     - Configure FortiSwitch IGMP snooping global settings.
+                type: dict
                 suboptions:
-                    aging-time:
+                    aging_time:
                         description:
-                            - Maximum time to retain a multicast snooping entry for which no packets have been seen (15 - 3600 sec, default = 300).
-                    flood-unknown-multicast:
+                            - Maximum time to retain a multicast snooping entry for which no packets have been seen (15 - 3600 sec).
+                        type: int
+                    flood_unknown_multicast:
                         description:
                             - Enable/disable unknown multicast flooding.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    local-override:
+                    local_override:
                         description:
                             - Enable/disable overriding the global IGMP snooping configuration.
+                        type: str
                         choices:
                             - enable
                             - disable
-            max-allowed-trunk-members:
+            max_allowed_trunk_members:
                 description:
                     - FortiSwitch maximum allowed trunk members.
+                type: int
             mirror:
                 description:
                     - Configuration method to edit FortiSwitch packet mirror.
+                type: list
                 suboptions:
                     dst:
                         description:
                             - Destination port.
+                        type: str
                     name:
                         description:
                             - Mirror name.
                         required: true
-                    src-egress:
+                        type: str
+                    src_egress:
                         description:
                             - Source egress interfaces.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Interface name.
                                 required: true
-                    src-ingress:
+                                type: str
+                    src_ingress:
                         description:
                             - Source ingress interfaces.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Interface name.
                                 required: true
+                                type: str
                     status:
                         description:
                             - Active/inactive mirror configuration.
+                        type: str
                         choices:
                             - active
                             - inactive
-                    switching-packet:
+                    switching_packet:
                         description:
                             - Enable/disable switching functionality when mirroring.
+                        type: str
                         choices:
                             - enable
                             - disable
             name:
                 description:
                     - Managed-switch name.
-            owner-vdom:
+                type: str
+            owner_vdom:
                 description:
                     - VDOM which owner of port belongs to.
-            poe-pre-standard-detection:
+                type: str
+            poe_detection_type:
+                description:
+                    - PoE detection type for FortiSwitch.
+                type: int
+            poe_pre_standard_detection:
                 description:
                     - Enable/disable PoE pre-standard detection.
+                type: str
                 choices:
                     - enable
                     - disable
             ports:
                 description:
                     - Managed-switch port list.
+                type: list
                 suboptions:
-                    allowed-vlans:
+                    allowed_vlans:
                         description:
                             - Configure switch port tagged vlans
+                        type: list
                         suboptions:
-                            vlan-name:
+                            vlan_name:
                                 description:
                                     - VLAN name. Source system.interface.name.
-                                required: true
-                    allowed-vlans-all:
+                                type: str
+                    allowed_vlans_all:
                         description:
                             - Enable/disable all defined vlans on this port.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    arp-inspection-trust:
+                    arp_inspection_trust:
                         description:
                             - Trusted or untrusted dynamic ARP inspection.
+                        type: str
                         choices:
                             - untrusted
                             - trusted
                     bundle:
                         description:
                             - Enable/disable Link Aggregation Group (LAG) bundling for non-FortiLink interfaces.
+                        type: str
                         choices:
                             - enable
                             - disable
                     description:
                         description:
                             - Description for port.
-                    dhcp-snoop-option82-trust:
+                        type: str
+                    dhcp_snoop_option82_trust:
                         description:
                             - Enable/disable allowance of DHCP with option-82 on untrusted interface.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    dhcp-snooping:
+                    dhcp_snooping:
                         description:
                             - Trusted or untrusted DHCP-snooping interface.
+                        type: str
                         choices:
                             - untrusted
                             - trusted
-                    discard-mode:
+                    discard_mode:
                         description:
                             - Configure discard mode for port.
+                        type: str
                         choices:
                             - none
                             - all-untagged
                             - all-tagged
-                    edge-port:
+                    edge_port:
                         description:
                             - Enable/disable this interface as an edge port, bridging connections between workstations and/or computers.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    export-tags:
+                    export_tags:
                         description:
                             - Switch controller export tag name.
+                        type: list
                         suboptions:
-                            tag-name:
+                            tag_name:
                                 description:
                                     - Switch tag name. Source switch-controller.switch-interface-tag.name.
-                                required: true
-                    export-to:
+                                type: str
+                    export_to:
                         description:
                             - Export managed-switch port to a tenant VDOM. Source system.vdom.name.
-                    export-to-pool:
+                        type: str
+                    export_to_pool:
                         description:
                             - Switch controller export port to pool-list. Source switch-controller.virtual-port-pool.name.
-                    export-to-pool_flag:
+                        type: str
+                    export_to_pool_flag:
                         description:
                             - Switch controller export port to pool-list.
-                    fgt-peer-device-name:
+                        type: int
+                    fgt_peer_device_name:
                         description:
                             - FGT peer device name.
-                    fgt-peer-port-name:
+                        type: str
+                    fgt_peer_port_name:
                         description:
                             - FGT peer port name.
-                    fiber-port:
+                        type: str
+                    fiber_port:
                         description:
                             - Fiber-port.
+                        type: int
                     flags:
                         description:
                             - Port properties flags.
-                    fortilink-port:
+                        type: int
+                    fortilink_port:
                         description:
                             - FortiLink uplink port.
-                    igmp-snooping:
+                        type: int
+                    igmp_snooping:
                         description:
                             - Set IGMP snooping mode for the physical port interface.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    igmps-flood-reports:
+                    igmps_flood_reports:
                         description:
                             - Enable/disable flooding of IGMP reports to this interface when igmp-snooping enabled.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    igmps-flood-traffic:
+                    igmps_flood_traffic:
                         description:
                             - Enable/disable flooding of IGMP snooping traffic to this interface.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    isl-local-trunk-name:
+                    isl_local_trunk_name:
                         description:
                             - ISL local trunk name.
-                    isl-peer-device-name:
+                        type: str
+                    isl_peer_device_name:
                         description:
                             - ISL peer device name.
-                    isl-peer-port-name:
+                        type: str
+                    isl_peer_port_name:
                         description:
                             - ISL peer port name.
-                    lacp-speed:
+                        type: str
+                    lacp_speed:
                         description:
                             - end Link Aggregation Control Protocol (LACP) messages every 30 seconds (slow) or every second (fast).
+                        type: str
                         choices:
                             - slow
                             - fast
-                    learning-limit:
+                    learning_limit:
                         description:
                             - Limit the number of dynamic MAC addresses on this Port (1 - 128, 0 = no limit, default).
-                    lldp-profile:
+                        type: int
+                    lldp_profile:
                         description:
                             - LLDP port TLV profile. Source switch-controller.lldp-profile.name.
-                    lldp-status:
+                        type: str
+                    lldp_status:
                         description:
                             - LLDP transmit and receive status.
+                        type: str
                         choices:
                             - disable
                             - rx-only
                             - tx-only
                             - tx-rx
-                    loop-guard:
+                    loop_guard:
                         description:
                             - Enable/disable loop-guard on this interface, an STP optimization used to prevent network loops.
+                        type: str
                         choices:
                             - enabled
                             - disabled
-                    loop-guard-timeout:
+                    loop_guard_timeout:
                         description:
-                            - Loop-guard timeout (0 - 120 min, default = 45).
-                    max-bundle:
+                            - Loop-guard timeout (0 - 120 min).
+                        type: int
+                    max_bundle:
                         description:
-                            - Maximum size of LAG bundle (1 - 24, default = 24)
+                            - Maximum size of LAG bundle (1 - 24)
+                        type: int
                     mclag:
                         description:
                             - Enable/disable multi-chassis link aggregation (MCLAG).
+                        type: str
                         choices:
                             - enable
                             - disable
-                    member-withdrawal-behavior:
+                    member_withdrawal_behavior:
                         description:
                             - Port behavior after it withdraws because of loss of control packets.
+                        type: str
                         choices:
                             - forward
                             - block
                     members:
                         description:
                             - Aggregated LAG bundle interfaces.
+                        type: list
                         suboptions:
-                            member-name:
+                            member_name:
                                 description:
                                     - Interface name from available options.
-                                required: true
-                    min-bundle:
+                                type: str
+                    min_bundle:
                         description:
-                            - Minimum size of LAG bundle (1 - 24, default = 1)
+                            - Minimum size of LAG bundle (1 - 24)
+                        type: int
                     mode:
                         description:
                             - "LACP mode: ignore and do not send control messages, or negotiate 802.3ad aggregation passively or actively."
+                        type: str
                         choices:
                             - static
                             - lacp-passive
                             - lacp-active
-                    poe-capable:
+                    poe_capable:
                         description:
                             - PoE capable.
-                    poe-pre-standard-detection:
+                        type: int
+                    poe_pre_standard_detection:
                         description:
                             - Enable/disable PoE pre-standard detection.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    poe-status:
+                    poe_status:
                         description:
                             - Enable/disable PoE status.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    port-name:
+                    port_name:
                         description:
                             - Switch port name.
-                        required: true
-                    port-number:
+                        type: str
+                    port_number:
                         description:
                             - Port number.
-                    port-owner:
+                        type: int
+                    port_owner:
                         description:
                             - Switch port name.
-                    port-prefix-type:
+                        type: str
+                    port_prefix_type:
                         description:
                             - Port prefix type.
-                    port-security-policy:
+                        type: int
+                    port_security_policy:
                         description:
                             - Switch controller authentication policy to apply to this managed switch from available options. Source switch-controller
                               .security-policy.802-1X.name switch-controller.security-policy.captive-portal.name.
-                    port-selection-criteria:
+                        type: str
+                    port_selection_criteria:
                         description:
                             - Algorithm for aggregate port selection.
+                        type: str
                         choices:
                             - src-mac
                             - dst-mac
@@ -446,31 +548,37 @@ options:
                             - src-ip
                             - dst-ip
                             - src-dst-ip
-                    qos-policy:
+                    qos_policy:
                         description:
                             - Switch controller QoS policy from available options. Source switch-controller.qos.qos-policy.name.
-                    sample-direction:
+                        type: str
+                    sample_direction:
                         description:
                             - sFlow sample direction.
+                        type: str
                         choices:
                             - tx
                             - rx
                             - both
-                    sflow-counter-interval:
+                    sflow_counter_interval:
                         description:
                             - sFlow sampler counter polling interval (1 - 255 sec).
-                    sflow-sample-rate:
+                        type: int
+                    sflow_sample_rate:
                         description:
                             - sFlow sampler sample rate (0 - 99999 p/sec).
-                    sflow-sampler:
+                        type: int
+                    sflow_sampler:
                         description:
                             - Enable/disable sFlow protocol on this interface.
+                        type: str
                         choices:
                             - enabled
                             - disabled
                     speed:
                         description:
                             - Switch port speed; default and available settings depend on hardware.
+                        type: str
                         choices:
                             - 10half
                             - 10full
@@ -489,157 +597,191 @@ options:
                             - 2500full
                             - 25000full
                             - 50000full
-                    speed-mask:
+                    speed_mask:
                         description:
                             - Switch port speed mask.
-                    stacking-port:
+                        type: int
+                    stacking_port:
                         description:
                             - Stacking port.
+                        type: int
                     status:
                         description:
                             - "Switch port admin status: up or down."
+                        type: str
                         choices:
                             - up
                             - down
-                    stp-bpdu-guard:
+                    stp_bpdu_guard:
                         description:
                             - Enable/disable STP BPDU guard on this interface.
+                        type: str
                         choices:
                             - enabled
                             - disabled
-                    stp-bpdu-guard-timeout:
+                    stp_bpdu_guard_timeout:
                         description:
                             - BPDU Guard disabling protection (0 - 120 min).
-                    stp-root-guard:
+                        type: int
+                    stp_root_guard:
                         description:
                             - Enable/disable STP root guard on this interface.
+                        type: str
                         choices:
                             - enabled
                             - disabled
-                    stp-state:
+                    stp_state:
                         description:
                             - Enable/disable Spanning Tree Protocol (STP) on this interface.
+                        type: str
                         choices:
                             - enabled
                             - disabled
-                    switch-id:
+                    switch_id:
                         description:
                             - Switch id.
+                        type: str
                     type:
                         description:
                             - "Interface type: physical or trunk port."
+                        type: str
                         choices:
                             - physical
                             - trunk
-                    untagged-vlans:
+                    untagged_vlans:
                         description:
                             - Configure switch port untagged vlans
+                        type: list
                         suboptions:
-                            vlan-name:
+                            vlan_name:
                                 description:
                                     - VLAN name. Source system.interface.name.
-                                required: true
-                    virtual-port:
+                                type: str
+                    virtual_port:
                         description:
                             - Virtualized switch port.
+                        type: int
                     vlan:
                         description:
                             - Assign switch ports to a VLAN. Source system.interface.name.
-            pre-provisioned:
+                        type: str
+            pre_provisioned:
                 description:
                     - Pre-provisioned managed switch.
-            staged-image-version:
+                type: int
+            staged_image_version:
                 description:
                     - Staged image version for FortiSwitch.
-            storm-control:
+                type: str
+            storm_control:
                 description:
                     - Configuration method to edit FortiSwitch storm control for measuring traffic activity using data rates to prevent traffic disruption.
+                type: dict
                 suboptions:
                     broadcast:
                         description:
                             - Enable/disable storm control to drop broadcast traffic.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    local-override:
+                    local_override:
                         description:
                             - Enable to override global FortiSwitch storm control settings for this FortiSwitch.
+                        type: str
                         choices:
                             - enable
                             - disable
                     rate:
                         description:
-                            - Rate in packets per second at which storm traffic is controlled (1 - 10000000, default = 500). Storm control drops excess
-                               traffic data rates beyond this threshold.
-                    unknown-multicast:
+                            - Rate in packets per second at which storm traffic is controlled (1 - 10000000). Storm control drops excess traffic data rates
+                               beyond this threshold.
+                        type: int
+                    unknown_multicast:
                         description:
                             - Enable/disable storm control to drop unknown multicast traffic.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    unknown-unicast:
+                    unknown_unicast:
                         description:
                             - Enable/disable storm control to drop unknown unicast traffic.
+                        type: str
                         choices:
                             - enable
                             - disable
-            stp-settings:
+            stp_settings:
                 description:
                     - Configuration method to edit Spanning Tree Protocol (STP) settings used to prevent bridge loops.
+                type: dict
                 suboptions:
-                    forward-time:
+                    forward_time:
                         description:
-                            - Period of time a port is in listening and learning state (4 - 30 sec, default = 15).
-                    hello-time:
+                            - Period of time a port is in listening and learning state (4 - 30 sec).
+                        type: int
+                    hello_time:
                         description:
-                            - Period of time between successive STP frame Bridge Protocol Data Units (BPDUs) sent on a port (1 - 10 sec, default = 2).
-                    local-override:
+                            - Period of time between successive STP frame Bridge Protocol Data Units (BPDUs) sent on a port (1 - 10 sec).
+                        type: int
+                    local_override:
                         description:
                             - Enable to configure local STP settings that override global STP settings.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    max-age:
+                    max_age:
                         description:
-                            - Maximum time before a bridge port saves its configuration BPDU information (6 - 40 sec, default = 20).
-                    max-hops:
+                            - Maximum time before a bridge port saves its configuration BPDU information (6 - 40 sec).
+                        type: int
+                    max_hops:
                         description:
-                            - Maximum number of hops between the root bridge and the furthest bridge (1- 40, default = 20).
+                            - Maximum number of hops between the root bridge and the furthest bridge (1- 40).
+                        type: int
                     name:
                         description:
                             - Name of local STP settings configuration.
-                    pending-timer:
+                        type: str
+                    pending_timer:
                         description:
-                            - Pending time (1 - 15 sec, default = 4).
+                            - Pending time (1 - 15 sec).
+                        type: int
                     revision:
                         description:
                             - STP revision number (0 - 65535).
+                        type: int
                     status:
                         description:
                             - Enable/disable STP.
+                        type: str
                         choices:
                             - enable
                             - disable
-            switch-device-tag:
+            switch_device_tag:
                 description:
                     - User definable label/tag.
-            switch-id:
+                type: str
+            switch_id:
                 description:
                     - Managed-switch id.
-                required: true
-            switch-log:
+                type: str
+            switch_log:
                 description:
                     - Configuration method to edit FortiSwitch logging settings (logs are transferred to and inserted into the FortiGate event log).
+                type: dict
                 suboptions:
-                    local-override:
+                    local_override:
                         description:
                             - Enable to configure local logging settings that override global logging settings.
+                        type: str
                         choices:
                             - enable
                             - disable
                     severity:
                         description:
                             - Severity of FortiSwitch logs that are added to the FortiGate event log.
+                        type: str
                         choices:
                             - emergency
                             - alert
@@ -652,31 +794,37 @@ options:
                     status:
                         description:
                             - Enable/disable adding FortiSwitch logs to the FortiGate event log.
+                        type: str
                         choices:
                             - enable
                             - disable
-            switch-profile:
+            switch_profile:
                 description:
                     - FortiSwitch profile. Source switch-controller.switch-profile.name.
-            switch-stp-settings:
+                type: str
+            switch_stp_settings:
                 description:
                     - Configure spanning tree protocol (STP).
+                type: dict
                 suboptions:
                     status:
                         description:
                             - Enable/disable STP.
+                        type: str
                         choices:
                             - enable
                             - disable
             type:
                 description:
                     - Indication of switch type, physical or virtual.
+                type: str
                 choices:
                     - virtual
                     - physical
             version:
                 description:
                     - FortiSwitch version.
+                type: int
 '''
 
 EXAMPLES = '''
@@ -686,6 +834,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure FortiSwitch devices that are managed by this FortiGate.
     fortios_switch_controller_managed_switch:
@@ -694,147 +843,147 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       switch_controller_managed_switch:
-        state: "present"
-        802-1X-settings:
-            link-down-auth: "set-unauth"
-            local-override: "enable"
-            max-reauth-attempt: "6"
-            reauth-period: "7"
-        connected: "8"
-        custom-command:
+        802_1X_settings:
+            link_down_auth: "set-unauth"
+            local_override: "enable"
+            max_reauth_attempt: "6"
+            reauth_period: "7"
+        custom_command:
          -
-            command-entry: "<your_own_value>"
-            command-name: "<your_own_value> (source switch-controller.custom-command.command-name)"
-        delayed-restart-trigger: "12"
+            command_entry: "<your_own_value>"
+            command_name: "<your_own_value> (source switch-controller.custom-command.command-name)"
+        delayed_restart_trigger: "11"
         description: "<your_own_value>"
-        directly-connected: "14"
-        dynamic-capability: "15"
-        dynamically-discovered: "16"
-        fsw-wan1-admin: "discovered"
-        fsw-wan1-peer: "<your_own_value>"
-        fsw-wan2-admin: "discovered"
-        fsw-wan2-peer: "<your_own_value>"
-        igmp-snooping:
-            aging-time: "22"
-            flood-unknown-multicast: "enable"
-            local-override: "enable"
-        max-allowed-trunk-members: "25"
+        directly_connected: "13"
+        dynamic_capability: "14"
+        dynamically_discovered: "15"
+        fsw_wan1_admin: "discovered"
+        fsw_wan1_peer: "<your_own_value>"
+        fsw_wan2_admin: "discovered"
+        fsw_wan2_peer: "<your_own_value>"
+        igmp_snooping:
+            aging_time: "21"
+            flood_unknown_multicast: "enable"
+            local_override: "enable"
+        max_allowed_trunk_members: "24"
         mirror:
          -
             dst: "<your_own_value>"
-            name: "default_name_28"
-            src-egress:
+            name: "default_name_27"
+            src_egress:
              -
-                name: "default_name_30"
-            src-ingress:
+                name: "default_name_29"
+            src_ingress:
              -
-                name: "default_name_32"
+                name: "default_name_31"
             status: "active"
-            switching-packet: "enable"
-        name: "default_name_35"
-        owner-vdom: "<your_own_value>"
-        poe-pre-standard-detection: "enable"
+            switching_packet: "enable"
+        name: "default_name_34"
+        owner_vdom: "<your_own_value>"
+        poe_detection_type: "36"
+        poe_pre_standard_detection: "enable"
         ports:
          -
-            allowed-vlans:
+            allowed_vlans:
              -
-                vlan-name: "<your_own_value> (source system.interface.name)"
-            allowed-vlans-all: "enable"
-            arp-inspection-trust: "untrusted"
+                vlan_name: "<your_own_value> (source system.interface.name)"
+            allowed_vlans_all: "enable"
+            arp_inspection_trust: "untrusted"
             bundle: "enable"
             description: "<your_own_value>"
-            dhcp-snoop-option82-trust: "enable"
-            dhcp-snooping: "untrusted"
-            discard-mode: "none"
-            edge-port: "enable"
-            export-tags:
+            dhcp_snoop_option82_trust: "enable"
+            dhcp_snooping: "untrusted"
+            discard_mode: "none"
+            edge_port: "enable"
+            export_tags:
              -
-                tag-name: "<your_own_value> (source switch-controller.switch-interface-tag.name)"
-            export-to: "<your_own_value> (source system.vdom.name)"
-            export-to-pool: "<your_own_value> (source switch-controller.virtual-port-pool.name)"
-            export-to-pool_flag: "53"
-            fgt-peer-device-name: "<your_own_value>"
-            fgt-peer-port-name: "<your_own_value>"
-            fiber-port: "56"
+                tag_name: "<your_own_value> (source switch-controller.switch-interface-tag.name)"
+            export_to: "<your_own_value> (source system.vdom.name)"
+            export_to_pool: "<your_own_value> (source switch-controller.virtual-port-pool.name)"
+            export_to_pool_flag: "53"
+            fgt_peer_device_name: "<your_own_value>"
+            fgt_peer_port_name: "<your_own_value>"
+            fiber_port: "56"
             flags: "57"
-            fortilink-port: "58"
-            igmp-snooping: "enable"
-            igmps-flood-reports: "enable"
-            igmps-flood-traffic: "enable"
-            isl-local-trunk-name: "<your_own_value>"
-            isl-peer-device-name: "<your_own_value>"
-            isl-peer-port-name: "<your_own_value>"
-            lacp-speed: "slow"
-            learning-limit: "66"
-            lldp-profile: "<your_own_value> (source switch-controller.lldp-profile.name)"
-            lldp-status: "disable"
-            loop-guard: "enabled"
-            loop-guard-timeout: "70"
-            max-bundle: "71"
+            fortilink_port: "58"
+            igmp_snooping: "enable"
+            igmps_flood_reports: "enable"
+            igmps_flood_traffic: "enable"
+            isl_local_trunk_name: "<your_own_value>"
+            isl_peer_device_name: "<your_own_value>"
+            isl_peer_port_name: "<your_own_value>"
+            lacp_speed: "slow"
+            learning_limit: "66"
+            lldp_profile: "<your_own_value> (source switch-controller.lldp-profile.name)"
+            lldp_status: "disable"
+            loop_guard: "enabled"
+            loop_guard_timeout: "70"
+            max_bundle: "71"
             mclag: "enable"
-            member-withdrawal-behavior: "forward"
+            member_withdrawal_behavior: "forward"
             members:
              -
-                member-name: "<your_own_value>"
-            min-bundle: "76"
+                member_name: "<your_own_value>"
+            min_bundle: "76"
             mode: "static"
-            poe-capable: "78"
-            poe-pre-standard-detection: "enable"
-            poe-status: "enable"
-            port-name: "<your_own_value>"
-            port-number: "82"
-            port-owner: "<your_own_value>"
-            port-prefix-type: "84"
-            port-security-policy: "<your_own_value> (source switch-controller.security-policy.802-1X.name switch-controller.security-policy.captive-portal
+            poe_capable: "78"
+            poe_pre_standard_detection: "enable"
+            poe_status: "enable"
+            port_name: "<your_own_value>"
+            port_number: "82"
+            port_owner: "<your_own_value>"
+            port_prefix_type: "84"
+            port_security_policy: "<your_own_value> (source switch-controller.security-policy.802-1X.name switch-controller.security-policy.captive-portal
               .name)"
-            port-selection-criteria: "src-mac"
-            qos-policy: "<your_own_value> (source switch-controller.qos.qos-policy.name)"
-            sample-direction: "tx"
-            sflow-counter-interval: "89"
-            sflow-sample-rate: "90"
-            sflow-sampler: "enabled"
+            port_selection_criteria: "src-mac"
+            qos_policy: "<your_own_value> (source switch-controller.qos.qos-policy.name)"
+            sample_direction: "tx"
+            sflow_counter_interval: "89"
+            sflow_sample_rate: "90"
+            sflow_sampler: "enabled"
             speed: "10half"
-            speed-mask: "93"
-            stacking-port: "94"
+            speed_mask: "93"
+            stacking_port: "94"
             status: "up"
-            stp-bpdu-guard: "enabled"
-            stp-bpdu-guard-timeout: "97"
-            stp-root-guard: "enabled"
-            stp-state: "enabled"
-            switch-id: "<your_own_value>"
+            stp_bpdu_guard: "enabled"
+            stp_bpdu_guard_timeout: "97"
+            stp_root_guard: "enabled"
+            stp_state: "enabled"
+            switch_id: "<your_own_value>"
             type: "physical"
-            untagged-vlans:
+            untagged_vlans:
              -
-                vlan-name: "<your_own_value> (source system.interface.name)"
-            virtual-port: "104"
+                vlan_name: "<your_own_value> (source system.interface.name)"
+            virtual_port: "104"
             vlan: "<your_own_value> (source system.interface.name)"
-        pre-provisioned: "106"
-        staged-image-version: "<your_own_value>"
-        storm-control:
+        pre_provisioned: "106"
+        staged_image_version: "<your_own_value>"
+        storm_control:
             broadcast: "enable"
-            local-override: "enable"
+            local_override: "enable"
             rate: "111"
-            unknown-multicast: "enable"
-            unknown-unicast: "enable"
-        stp-settings:
-            forward-time: "115"
-            hello-time: "116"
-            local-override: "enable"
-            max-age: "118"
-            max-hops: "119"
+            unknown_multicast: "enable"
+            unknown_unicast: "enable"
+        stp_settings:
+            forward_time: "115"
+            hello_time: "116"
+            local_override: "enable"
+            max_age: "118"
+            max_hops: "119"
             name: "default_name_120"
-            pending-timer: "121"
+            pending_timer: "121"
             revision: "122"
             status: "enable"
-        switch-device-tag: "<your_own_value>"
-        switch-id: "<your_own_value>"
-        switch-log:
-            local-override: "enable"
+        switch_device_tag: "<your_own_value>"
+        switch_id: "<your_own_value>"
+        switch_log:
+            local_override: "enable"
             severity: "emergency"
             status: "enable"
-        switch-profile: "<your_own_value> (source switch-controller.switch-profile.name)"
-        switch-stp-settings:
+        switch_profile: "<your_own_value> (source switch-controller.switch-profile.name)"
+        switch_stp_settings:
             status: "enable"
         type: "virtual"
         version: "134"
@@ -900,14 +1049,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -915,20 +1066,20 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_switch_controller_managed_switch_data(json):
-    option_list = ['802-1X-settings', 'connected', 'custom-command',
-                   'delayed-restart-trigger', 'description', 'directly-connected',
-                   'dynamic-capability', 'dynamically-discovered', 'fsw-wan1-admin',
-                   'fsw-wan1-peer', 'fsw-wan2-admin', 'fsw-wan2-peer',
-                   'igmp-snooping', 'max-allowed-trunk-members', 'mirror',
-                   'name', 'owner-vdom', 'poe-pre-standard-detection',
-                   'ports', 'pre-provisioned', 'staged-image-version',
-                   'storm-control', 'stp-settings', 'switch-device-tag',
-                   'switch-id', 'switch-log', 'switch-profile',
-                   'switch-stp-settings', 'type', 'version']
+    option_list = ['802_1X_settings', 'custom_command', 'delayed_restart_trigger',
+                   'description', 'directly_connected', 'dynamic_capability',
+                   'dynamically_discovered', 'fsw_wan1_admin', 'fsw_wan1_peer',
+                   'fsw_wan2_admin', 'fsw_wan2_peer', 'igmp_snooping',
+                   'max_allowed_trunk_members', 'mirror', 'name',
+                   'owner_vdom', 'poe_detection_type', 'poe_pre_standard_detection',
+                   'ports', 'pre_provisioned', 'staged_image_version',
+                   'storm_control', 'stp_settings', 'switch_device_tag',
+                   'switch_id', 'switch_log', 'switch_profile',
+                   'switch_stp_settings', 'type', 'version']
     dictionary = {}
 
     for attribute in option_list:
@@ -938,200 +1089,212 @@ def filter_switch_controller_managed_switch_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
 
 def switch_controller_managed_switch(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['switch_controller_managed_switch'] and data['switch_controller_managed_switch']:
+        state = data['switch_controller_managed_switch']['state']
+    else:
+        state = True
     switch_controller_managed_switch_data = data['switch_controller_managed_switch']
-    flattened_data = flatten_multilists_attributes(switch_controller_managed_switch_data)
-    filtered_data = filter_switch_controller_managed_switch_data(flattened_data)
-    if switch_controller_managed_switch_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_switch_controller_managed_switch_data(switch_controller_managed_switch_data))
+
+    if state == "present":
         return fos.set('switch-controller',
                        'managed-switch',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif switch_controller_managed_switch_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('switch-controller',
                           'managed-switch',
                           mkey=filtered_data['switch-id'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_switch_controller(data, fos):
-    login(data)
 
     if data['switch_controller_managed_switch']:
         resp = switch_controller_managed_switch(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "switch_controller_managed_switch": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "802-1X-settings": {"required": False, "type": "dict",
+                "802_1X_settings": {"required": False, "type": "dict",
                                     "options": {
-                                        "link-down-auth": {"required": False, "type": "str",
+                                        "link_down_auth": {"required": False, "type": "str",
                                                            "choices": ["set-unauth", "no-action"]},
-                                        "local-override": {"required": False, "type": "str",
+                                        "local_override": {"required": False, "type": "str",
                                                            "choices": ["enable", "disable"]},
-                                        "max-reauth-attempt": {"required": False, "type": "int"},
-                                        "reauth-period": {"required": False, "type": "int"}
+                                        "max_reauth_attempt": {"required": False, "type": "int"},
+                                        "reauth_period": {"required": False, "type": "int"}
                                     }},
-                "connected": {"required": False, "type": "int"},
-                "custom-command": {"required": False, "type": "list",
+                "custom_command": {"required": False, "type": "list",
                                    "options": {
-                                       "command-entry": {"required": True, "type": "str"},
-                                       "command-name": {"required": False, "type": "str"}
+                                       "command_entry": {"required": False, "type": "str"},
+                                       "command_name": {"required": False, "type": "str"}
                                    }},
-                "delayed-restart-trigger": {"required": False, "type": "int"},
+                "delayed_restart_trigger": {"required": False, "type": "int"},
                 "description": {"required": False, "type": "str"},
-                "directly-connected": {"required": False, "type": "int"},
-                "dynamic-capability": {"required": False, "type": "int"},
-                "dynamically-discovered": {"required": False, "type": "int"},
-                "fsw-wan1-admin": {"required": False, "type": "str",
+                "directly_connected": {"required": False, "type": "int"},
+                "dynamic_capability": {"required": False, "type": "int"},
+                "dynamically_discovered": {"required": False, "type": "int"},
+                "fsw_wan1_admin": {"required": False, "type": "str",
                                    "choices": ["discovered", "disable", "enable"]},
-                "fsw-wan1-peer": {"required": False, "type": "str"},
-                "fsw-wan2-admin": {"required": False, "type": "str",
+                "fsw_wan1_peer": {"required": False, "type": "str"},
+                "fsw_wan2_admin": {"required": False, "type": "str",
                                    "choices": ["discovered", "disable", "enable"]},
-                "fsw-wan2-peer": {"required": False, "type": "str"},
-                "igmp-snooping": {"required": False, "type": "dict",
+                "fsw_wan2_peer": {"required": False, "type": "str"},
+                "igmp_snooping": {"required": False, "type": "dict",
                                   "options": {
-                                      "aging-time": {"required": False, "type": "int"},
-                                      "flood-unknown-multicast": {"required": False, "type": "str",
+                                      "aging_time": {"required": False, "type": "int"},
+                                      "flood_unknown_multicast": {"required": False, "type": "str",
                                                                   "choices": ["enable", "disable"]},
-                                      "local-override": {"required": False, "type": "str",
+                                      "local_override": {"required": False, "type": "str",
                                                          "choices": ["enable", "disable"]}
                                   }},
-                "max-allowed-trunk-members": {"required": False, "type": "int"},
+                "max_allowed_trunk_members": {"required": False, "type": "int"},
                 "mirror": {"required": False, "type": "list",
                            "options": {
                                "dst": {"required": False, "type": "str"},
                                "name": {"required": True, "type": "str"},
-                               "src-egress": {"required": False, "type": "list",
+                               "src_egress": {"required": False, "type": "list",
                                               "options": {
                                                   "name": {"required": True, "type": "str"}
                                               }},
-                               "src-ingress": {"required": False, "type": "list",
+                               "src_ingress": {"required": False, "type": "list",
                                                "options": {
                                                    "name": {"required": True, "type": "str"}
                                                }},
                                "status": {"required": False, "type": "str",
                                           "choices": ["active", "inactive"]},
-                               "switching-packet": {"required": False, "type": "str",
+                               "switching_packet": {"required": False, "type": "str",
                                                     "choices": ["enable", "disable"]}
                            }},
                 "name": {"required": False, "type": "str"},
-                "owner-vdom": {"required": False, "type": "str"},
-                "poe-pre-standard-detection": {"required": False, "type": "str",
+                "owner_vdom": {"required": False, "type": "str"},
+                "poe_detection_type": {"required": False, "type": "int"},
+                "poe_pre_standard_detection": {"required": False, "type": "str",
                                                "choices": ["enable", "disable"]},
                 "ports": {"required": False, "type": "list",
                           "options": {
-                              "allowed-vlans": {"required": False, "type": "list",
+                              "allowed_vlans": {"required": False, "type": "list",
                                                 "options": {
-                                                    "vlan-name": {"required": True, "type": "str"}
+                                                    "vlan_name": {"required": False, "type": "str"}
                                                 }},
-                              "allowed-vlans-all": {"required": False, "type": "str",
+                              "allowed_vlans_all": {"required": False, "type": "str",
                                                     "choices": ["enable", "disable"]},
-                              "arp-inspection-trust": {"required": False, "type": "str",
+                              "arp_inspection_trust": {"required": False, "type": "str",
                                                        "choices": ["untrusted", "trusted"]},
                               "bundle": {"required": False, "type": "str",
                                          "choices": ["enable", "disable"]},
                               "description": {"required": False, "type": "str"},
-                              "dhcp-snoop-option82-trust": {"required": False, "type": "str",
+                              "dhcp_snoop_option82_trust": {"required": False, "type": "str",
                                                             "choices": ["enable", "disable"]},
-                              "dhcp-snooping": {"required": False, "type": "str",
+                              "dhcp_snooping": {"required": False, "type": "str",
                                                 "choices": ["untrusted", "trusted"]},
-                              "discard-mode": {"required": False, "type": "str",
+                              "discard_mode": {"required": False, "type": "str",
                                                "choices": ["none", "all-untagged", "all-tagged"]},
-                              "edge-port": {"required": False, "type": "str",
+                              "edge_port": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
-                              "export-tags": {"required": False, "type": "list",
+                              "export_tags": {"required": False, "type": "list",
                                               "options": {
-                                                  "tag-name": {"required": True, "type": "str"}
+                                                  "tag_name": {"required": False, "type": "str"}
                                               }},
-                              "export-to": {"required": False, "type": "str"},
-                              "export-to-pool": {"required": False, "type": "str"},
-                              "export-to-pool_flag": {"required": False, "type": "int"},
-                              "fgt-peer-device-name": {"required": False, "type": "str"},
-                              "fgt-peer-port-name": {"required": False, "type": "str"},
-                              "fiber-port": {"required": False, "type": "int"},
+                              "export_to": {"required": False, "type": "str"},
+                              "export_to_pool": {"required": False, "type": "str"},
+                              "export_to_pool_flag": {"required": False, "type": "int"},
+                              "fgt_peer_device_name": {"required": False, "type": "str"},
+                              "fgt_peer_port_name": {"required": False, "type": "str"},
+                              "fiber_port": {"required": False, "type": "int"},
                               "flags": {"required": False, "type": "int"},
-                              "fortilink-port": {"required": False, "type": "int"},
-                              "igmp-snooping": {"required": False, "type": "str",
+                              "fortilink_port": {"required": False, "type": "int"},
+                              "igmp_snooping": {"required": False, "type": "str",
                                                 "choices": ["enable", "disable"]},
-                              "igmps-flood-reports": {"required": False, "type": "str",
+                              "igmps_flood_reports": {"required": False, "type": "str",
                                                       "choices": ["enable", "disable"]},
-                              "igmps-flood-traffic": {"required": False, "type": "str",
+                              "igmps_flood_traffic": {"required": False, "type": "str",
                                                       "choices": ["enable", "disable"]},
-                              "isl-local-trunk-name": {"required": False, "type": "str"},
-                              "isl-peer-device-name": {"required": False, "type": "str"},
-                              "isl-peer-port-name": {"required": False, "type": "str"},
-                              "lacp-speed": {"required": False, "type": "str",
+                              "isl_local_trunk_name": {"required": False, "type": "str"},
+                              "isl_peer_device_name": {"required": False, "type": "str"},
+                              "isl_peer_port_name": {"required": False, "type": "str"},
+                              "lacp_speed": {"required": False, "type": "str",
                                              "choices": ["slow", "fast"]},
-                              "learning-limit": {"required": False, "type": "int"},
-                              "lldp-profile": {"required": False, "type": "str"},
-                              "lldp-status": {"required": False, "type": "str",
+                              "learning_limit": {"required": False, "type": "int"},
+                              "lldp_profile": {"required": False, "type": "str"},
+                              "lldp_status": {"required": False, "type": "str",
                                               "choices": ["disable", "rx-only", "tx-only",
                                                           "tx-rx"]},
-                              "loop-guard": {"required": False, "type": "str",
+                              "loop_guard": {"required": False, "type": "str",
                                              "choices": ["enabled", "disabled"]},
-                              "loop-guard-timeout": {"required": False, "type": "int"},
-                              "max-bundle": {"required": False, "type": "int"},
+                              "loop_guard_timeout": {"required": False, "type": "int"},
+                              "max_bundle": {"required": False, "type": "int"},
                               "mclag": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                              "member-withdrawal-behavior": {"required": False, "type": "str",
+                              "member_withdrawal_behavior": {"required": False, "type": "str",
                                                              "choices": ["forward", "block"]},
                               "members": {"required": False, "type": "list",
                                           "options": {
-                                              "member-name": {"required": True, "type": "str"}
+                                              "member_name": {"required": False, "type": "str"}
                                           }},
-                              "min-bundle": {"required": False, "type": "int"},
+                              "min_bundle": {"required": False, "type": "int"},
                               "mode": {"required": False, "type": "str",
                                        "choices": ["static", "lacp-passive", "lacp-active"]},
-                              "poe-capable": {"required": False, "type": "int"},
-                              "poe-pre-standard-detection": {"required": False, "type": "str",
+                              "poe_capable": {"required": False, "type": "int"},
+                              "poe_pre_standard_detection": {"required": False, "type": "str",
                                                              "choices": ["enable", "disable"]},
-                              "poe-status": {"required": False, "type": "str",
+                              "poe_status": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
-                              "port-name": {"required": True, "type": "str"},
-                              "port-number": {"required": False, "type": "int"},
-                              "port-owner": {"required": False, "type": "str"},
-                              "port-prefix-type": {"required": False, "type": "int"},
-                              "port-security-policy": {"required": False, "type": "str"},
-                              "port-selection-criteria": {"required": False, "type": "str",
+                              "port_name": {"required": False, "type": "str"},
+                              "port_number": {"required": False, "type": "int"},
+                              "port_owner": {"required": False, "type": "str"},
+                              "port_prefix_type": {"required": False, "type": "int"},
+                              "port_security_policy": {"required": False, "type": "str"},
+                              "port_selection_criteria": {"required": False, "type": "str",
                                                           "choices": ["src-mac", "dst-mac", "src-dst-mac",
                                                                       "src-ip", "dst-ip", "src-dst-ip"]},
-                              "qos-policy": {"required": False, "type": "str"},
-                              "sample-direction": {"required": False, "type": "str",
+                              "qos_policy": {"required": False, "type": "str"},
+                              "sample_direction": {"required": False, "type": "str",
                                                    "choices": ["tx", "rx", "both"]},
-                              "sflow-counter-interval": {"required": False, "type": "int"},
-                              "sflow-sample-rate": {"required": False, "type": "int"},
-                              "sflow-sampler": {"required": False, "type": "str",
+                              "sflow_counter_interval": {"required": False, "type": "int"},
+                              "sflow_sample_rate": {"required": False, "type": "int"},
+                              "sflow_sampler": {"required": False, "type": "str",
                                                 "choices": ["enabled", "disabled"]},
                               "speed": {"required": False, "type": "str",
                                         "choices": ["10half", "10full", "100half",
@@ -1140,60 +1303,60 @@ def main():
                                                     "auto", "auto-module", "100FX-half",
                                                     "100FX-full", "100000full", "2500full",
                                                     "25000full", "50000full"]},
-                              "speed-mask": {"required": False, "type": "int"},
-                              "stacking-port": {"required": False, "type": "int"},
+                              "speed_mask": {"required": False, "type": "int"},
+                              "stacking_port": {"required": False, "type": "int"},
                               "status": {"required": False, "type": "str",
                                          "choices": ["up", "down"]},
-                              "stp-bpdu-guard": {"required": False, "type": "str",
+                              "stp_bpdu_guard": {"required": False, "type": "str",
                                                  "choices": ["enabled", "disabled"]},
-                              "stp-bpdu-guard-timeout": {"required": False, "type": "int"},
-                              "stp-root-guard": {"required": False, "type": "str",
+                              "stp_bpdu_guard_timeout": {"required": False, "type": "int"},
+                              "stp_root_guard": {"required": False, "type": "str",
                                                  "choices": ["enabled", "disabled"]},
-                              "stp-state": {"required": False, "type": "str",
+                              "stp_state": {"required": False, "type": "str",
                                             "choices": ["enabled", "disabled"]},
-                              "switch-id": {"required": False, "type": "str"},
+                              "switch_id": {"required": False, "type": "str"},
                               "type": {"required": False, "type": "str",
                                        "choices": ["physical", "trunk"]},
-                              "untagged-vlans": {"required": False, "type": "list",
+                              "untagged_vlans": {"required": False, "type": "list",
                                                  "options": {
-                                                     "vlan-name": {"required": True, "type": "str"}
+                                                     "vlan_name": {"required": False, "type": "str"}
                                                  }},
-                              "virtual-port": {"required": False, "type": "int"},
+                              "virtual_port": {"required": False, "type": "int"},
                               "vlan": {"required": False, "type": "str"}
                           }},
-                "pre-provisioned": {"required": False, "type": "int"},
-                "staged-image-version": {"required": False, "type": "str"},
-                "storm-control": {"required": False, "type": "dict",
+                "pre_provisioned": {"required": False, "type": "int"},
+                "staged_image_version": {"required": False, "type": "str"},
+                "storm_control": {"required": False, "type": "dict",
                                   "options": {
                                       "broadcast": {"required": False, "type": "str",
                                                     "choices": ["enable", "disable"]},
-                                      "local-override": {"required": False, "type": "str",
+                                      "local_override": {"required": False, "type": "str",
                                                          "choices": ["enable", "disable"]},
                                       "rate": {"required": False, "type": "int"},
-                                      "unknown-multicast": {"required": False, "type": "str",
+                                      "unknown_multicast": {"required": False, "type": "str",
                                                             "choices": ["enable", "disable"]},
-                                      "unknown-unicast": {"required": False, "type": "str",
+                                      "unknown_unicast": {"required": False, "type": "str",
                                                           "choices": ["enable", "disable"]}
                                   }},
-                "stp-settings": {"required": False, "type": "dict",
+                "stp_settings": {"required": False, "type": "dict",
                                  "options": {
-                                     "forward-time": {"required": False, "type": "int"},
-                                     "hello-time": {"required": False, "type": "int"},
-                                     "local-override": {"required": False, "type": "str",
+                                     "forward_time": {"required": False, "type": "int"},
+                                     "hello_time": {"required": False, "type": "int"},
+                                     "local_override": {"required": False, "type": "str",
                                                         "choices": ["enable", "disable"]},
-                                     "max-age": {"required": False, "type": "int"},
-                                     "max-hops": {"required": False, "type": "int"},
+                                     "max_age": {"required": False, "type": "int"},
+                                     "max_hops": {"required": False, "type": "int"},
                                      "name": {"required": False, "type": "str"},
-                                     "pending-timer": {"required": False, "type": "int"},
+                                     "pending_timer": {"required": False, "type": "int"},
                                      "revision": {"required": False, "type": "int"},
                                      "status": {"required": False, "type": "str",
                                                 "choices": ["enable", "disable"]}
                                  }},
-                "switch-device-tag": {"required": False, "type": "str"},
-                "switch-id": {"required": True, "type": "str"},
-                "switch-log": {"required": False, "type": "dict",
+                "switch_device_tag": {"required": False, "type": "str"},
+                "switch_id": {"required": False, "type": "str"},
+                "switch_log": {"required": False, "type": "dict",
                                "options": {
-                                   "local-override": {"required": False, "type": "str",
+                                   "local_override": {"required": False, "type": "str",
                                                       "choices": ["enable", "disable"]},
                                    "severity": {"required": False, "type": "str",
                                                 "choices": ["emergency", "alert", "critical",
@@ -1202,8 +1365,8 @@ def main():
                                    "status": {"required": False, "type": "str",
                                               "choices": ["enable", "disable"]}
                                }},
-                "switch-profile": {"required": False, "type": "str"},
-                "switch-stp-settings": {"required": False, "type": "dict",
+                "switch_profile": {"required": False, "type": "str"},
+                "switch_stp_settings": {"required": False, "type": "dict",
                                         "options": {
                                             "status": {"required": False, "type": "str",
                                                        "choices": ["enable", "disable"]}
@@ -1218,15 +1381,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_switch_controller(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_switch_controller(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_switch_controller(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

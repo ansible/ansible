@@ -41,6 +41,9 @@ module: vyos_l3_interfaces
 version_added: 2.9
 short_description: Manages L3 interface attributes of VyOS network devices.
 description: This module manages the L3 interface attributes on VyOS network devices.
+notes:
+  - Tested against VyOS 1.1.8 (helium).
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 author: Nilashish Chakraborty (@NilashishC)
 options:
   config:

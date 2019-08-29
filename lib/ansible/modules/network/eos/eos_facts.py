@@ -50,7 +50,8 @@ options:
     type: list
     choices: [
         'all', '!all', 'interfaces', '!interfaces', 'l2_interfaces', '!l2_interfaces',
-        'l3_interfaces', '!l3_interfaces', 'lacp', '!lacp', 'lag_interfaces', '!lag_interfaces',
+        'l3_interfaces', '!l3_interfaces', 'lacp', '!lacp', 'lacp_interfaces', '!lacp_interfaces',
+        'lag_interfaces', '!lag_interfaces', 'lldp_global', '!lldp_global', 'lldp_interfaces', '!lldp_interfaces',
         'vlans', '!vlans',
     ]
     version_added: "2.9"

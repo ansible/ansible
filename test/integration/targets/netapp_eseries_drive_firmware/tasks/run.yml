@@ -1,0 +1,209 @@
+# Test code for the netapp_e_iscsi_interface module
+# (c) 2018, NetApp, Inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Existing symbol issue: occasionally symbol will return 422 which causes Ansible to fail; however the drive firmware download will complete.
+#     Work-around: Remove all storage provisioning before commencing test.
+
+- name: NetApp Test ASUP module
+  fail:
+    msg: 'Please define netapp_e_api_username, netapp_e_api_password, netapp_e_api_host, and netapp_e_ssid.'
+  when:  netapp_e_api_username is undefined or netapp_e_api_password is undefined
+          or netapp_e_api_host is undefined or netapp_e_ssid is undefined
+
+- set_fact:
+    firmware:
+      downgrade:
+        list:
+          - "/home/swartzn/Downloads/drive firmware/D_PX04SVQ160_DOWNGRADE_MS00toMSB6_801.dlp"
+          - "/home/swartzn/Downloads/drive firmware/D_ST1200MM0017_DNGRADE_MS02toMS00_6600_802.dlp"
+        check:
+          - firmware: "D_PX04SVQ160_DOWNGRADE_MS00toMSB6_801.dlp"
+            drive: "PX04SVQ160"
+            version: "MSB6"
+          - firmware: "D_ST1200MM0017_DNGRADE_MS02toMS00_6600_802.dlp"
+            drive: "ST1200MM0017"
+            version: "MS00"
+      upgrade:
+        list:
+          - "/home/swartzn/Downloads/drive firmware/D_PX04SVQ160_30603183_MS00_6600_001.dlp"
+          - "/home/swartzn/Downloads/drive firmware/D_ST1200MM0017_30602214_MS02_5600_002.dlp"
+        check:
+          - firmware: "D_PX04SVQ160_30603183_MS00_6600_001.dlp"
+            drive: "PX04SVQ160"
+            version: "MS00"
+          - firmware: "D_ST1200MM0017_30602214_MS02_5600_002.dlp"
+            drive: "ST1200MM0017"
+            version: "MS02"
+
+- name: Set drive firmware (baseline, maybe change)
+  netapp_e_drive_firmware:
+    api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_api_username }}"
+    api_password: "{{ netapp_e_api_password }}"
+    ssid: "{{ netapp_e_ssid }}"
+    validate_certs: false
+    firmware: "{{ firmware['downgrade']['list'] }}"
+    wait_for_completion: true
+    ignore_inaccessible_drives: true
+    upgrade_drives_online: false
+  register: drive_firmware
+- pause:
+    seconds: 60
+- name: Retrieve current firmware version
+  uri:
+    url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_ssid }}/drives"
+    user: "{{ netapp_e_api_username }}"
+    password: "{{ netapp_e_api_password }}"
+    validate_certs: no
+  register: current_drive_firmware
+- name: Check if drive firmware is the expected versions
+  assert:
+    that: "{{ (item['productID'].strip() not in [firmware['downgrade']['check'][0]['drive'], firmware['downgrade']['check'][1]['drive']]) or
+              (firmware['downgrade']['check'][0]['drive'] == item['productID'].strip() and
+               firmware['downgrade']['check'][0]['version'] == item['softwareVersion']) or
+              (firmware['downgrade']['check'][1]['drive'] == item['productID'].strip() and
+               firmware['downgrade']['check'][1]['version'] == item['softwareVersion']) }}"
+    msg: "Drive firmware failed to update all drives"
+  loop: "{{ lookup('list', current_drive_firmware['json']) }}"
+
+- name: Set drive firmware (upgrade, change-checkmode)
+  netapp_e_drive_firmware:
+    api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_api_username }}"
+    api_password: "{{ netapp_e_api_password }}"
+    ssid: "{{ netapp_e_ssid }}"
+    validate_certs: false
+    firmware: "{{ firmware['upgrade']['list'] }}"
+    wait_for_completion: true
+    ignore_inaccessible_drives: true
+    upgrade_drives_online: false
+  register: drive_firmware
+  check_mode: true
+- pause:
+    seconds: 60
+- name: Retrieve current firmware version
+  uri:
+    url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_ssid }}/drives"
+    user: "{{ netapp_e_api_username }}"
+    password: "{{ netapp_e_api_password }}"
+    validate_certs: no
+  register: current_drive_firmware
+- name: Validate change status
+  assert:
+    that: "{{ drive_firmware.changed }}"
+    msg: "Change status is incorrect."
+- name: Check if drive firmware is the expected versions
+  assert:
+    that: "{{ (item['productID'].strip() not in [firmware['downgrade']['check'][0]['drive'], firmware['downgrade']['check'][1]['drive']]) or
+              (firmware['downgrade']['check'][0]['drive'] == item['productID'].strip() and
+               firmware['downgrade']['check'][0]['version'] == item['softwareVersion']) or
+              (firmware['downgrade']['check'][1]['drive'] == item['productID'].strip() and
+               firmware['downgrade']['check'][1]['version'] == item['softwareVersion']) }}"
+    msg: "Drive firmware failed to update all drives"
+  loop: "{{ lookup('list', current_drive_firmware['json']) }}"
+
+- name: Set drive firmware (upgrade, change)
+  netapp_e_drive_firmware:
+    api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_api_username }}"
+    api_password: "{{ netapp_e_api_password }}"
+    ssid: "{{ netapp_e_ssid }}"
+    validate_certs: false
+    firmware: "{{ firmware['upgrade']['list'] }}"
+    wait_for_completion: true
+    ignore_inaccessible_drives: true
+    upgrade_drives_online: false
+  register: drive_firmware
+- pause:
+    seconds: 60
+- name: Retrieve current firmware version
+  uri:
+    url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_ssid }}/drives"
+    user: "{{ netapp_e_api_username }}"
+    password: "{{ netapp_e_api_password }}"
+    validate_certs: no
+  register: current_drive_firmware
+- name: Validate change status
+  assert:
+    that: "{{ drive_firmware.changed }}"
+    msg: "Change status is incorrect."
+- name: Check if drive firmware is the expected versions
+  assert:
+    that: "{{ (item['productID'].strip() not in [firmware['downgrade']['check'][0]['drive'], firmware['downgrade']['check'][1]['drive']]) or
+              (firmware['upgrade']['check'][0]['drive'] == item['productID'].strip() and
+               firmware['upgrade']['check'][0]['version'] == item['softwareVersion']) or
+              (firmware['upgrade']['check'][1]['drive'] == item['productID'].strip() and
+               firmware['upgrade']['check'][1]['version'] == item['softwareVersion']) }}"
+    msg: "Drive firmware failed to update all drives"
+  loop: "{{ lookup('list', current_drive_firmware['json']) }}"
+
+- name: Set drive firmware (upgrade, no change)
+  netapp_e_drive_firmware:
+    api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_api_username }}"
+    api_password: "{{ netapp_e_api_password }}"
+    ssid: "{{ netapp_e_ssid }}"
+    validate_certs: false
+    firmware: "{{ firmware['upgrade']['list'] }}"
+    wait_for_completion: true
+    ignore_inaccessible_drives: true
+    upgrade_drives_online: false
+  register: drive_firmware
+- pause:
+    seconds: 60
+- name: Retrieve current firmware version
+  uri:
+    url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_ssid }}/drives"
+    user: "{{ netapp_e_api_username }}"
+    password: "{{ netapp_e_api_password }}"
+    validate_certs: no
+  register: current_drive_firmware
+- name: Validate change status
+  assert:
+    that: "{{ not drive_firmware.changed }}"
+    msg: "Change status is incorrect."
+- name: Check if drive firmware is the expected versions
+  assert:
+    that: "{{ (item['productID'].strip() not in [firmware['downgrade']['check'][0]['drive'], firmware['downgrade']['check'][1]['drive']]) or
+              (firmware['upgrade']['check'][0]['drive'] == item['productID'].strip() and
+               firmware['upgrade']['check'][0]['version'] == item['softwareVersion']) or
+              (firmware['upgrade']['check'][1]['drive'] == item['productID'].strip() and
+               firmware['upgrade']['check'][1]['version'] == item['softwareVersion']) }}"
+    msg: "Drive firmware failed to update all drives"
+  loop: "{{ lookup('list', current_drive_firmware['json']) }}"
+
+- name: Set drive firmware (downgrade, change)
+  netapp_e_drive_firmware:
+    api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_api_username }}"
+    api_password: "{{ netapp_e_api_password }}"
+    ssid: "{{ netapp_e_ssid }}"
+    validate_certs: false
+    firmware: "{{ firmware['downgrade']['list'] }}"
+    wait_for_completion: true
+    ignore_inaccessible_drives: true
+    upgrade_drives_online: false
+  register: drive_firmware
+- pause:
+    seconds: 60
+- name: Retrieve current firmware version
+  uri:
+    url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_ssid }}/drives"
+    user: "{{ netapp_e_api_username }}"
+    password: "{{ netapp_e_api_password }}"
+    validate_certs: no
+  register: current_drive_firmware
+- name: Validate change status
+  assert:
+    that: "{{ drive_firmware.changed }}"
+    msg: "Change status is incorrect."
+- name: Check if drive firmware is the expected versions
+  assert:
+    that: "{{ (item['productID'].strip() not in [firmware['downgrade']['check'][0]['drive'], firmware['downgrade']['check'][1]['drive']]) or
+              (firmware['downgrade']['check'][0]['drive'] == item['productID'].strip() and
+               firmware['downgrade']['check'][0]['version'] == item['softwareVersion']) or
+              (firmware['downgrade']['check'][1]['drive'] == item['productID'].strip() and
+               firmware['downgrade']['check'][1]['version'] == item['softwareVersion']) }}"
+    msg: "Drive firmware failed to update all drives"
+  loop: "{{ lookup('list', current_drive_firmware['json']) }}"

@@ -112,6 +112,11 @@ notes:
    - With the 'order' parameter you can control which field is used to sort first, next and last.
    - The module supports a check mode and a diff mode.
 
+seealso:
+- name: PostgreSQL pg_hba.conf file reference
+  description: Complete reference of the PostgreSQL pg_hba.conf file documentation.
+  link: https://www.postgresql.org/docs/current/auth-pg-hba-conf.html
+
 requirements:
     - ipaddress
 

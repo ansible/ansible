@@ -63,9 +63,10 @@ EXAMPLES = r'''
     api: true
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+  register: result
 
   debug:
-    msg: "API Token: {{ ansible_facts['api_token'] }}"
+    msg: "API Token: {{ result['user_info']['user_api'] }}"
 
 - name: Change role type for existing user
   purefa_user:
@@ -90,9 +91,10 @@ EXAMPLES = r'''
     state: update
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+  register: result
 
   debug:
-    msg: "API Token: {{ ansible_facts['user_api'] }}"
+    msg: "API Token: {{ result['user_info']['user_api'] }}"
 '''
 
 RETURN = r'''
@@ -171,7 +173,7 @@ def create_user(module, array):
                 module.fail_json(msg='Local User {0}: Role changed failed'.format(module.params['name']))
         if passwd_changed or role_changed or api_changed:
             changed = True
-    module.exit_json(changed=changed, ansible_facts=user_token)
+    module.exit_json(changed=changed, user_info=user_token)
 
 
 def delete_user(module, array):

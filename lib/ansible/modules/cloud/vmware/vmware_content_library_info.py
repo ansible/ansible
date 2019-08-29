@@ -95,12 +95,12 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
 
 
-class VmwareContentLibFacts(VmwareRestClient):
+class VmwareContentLibInfo(VmwareRestClient):
     def __init__(self, module):
         """Constructor."""
-        super(VmwareContentLibFacts, self).__init__(module)
+        super(VmwareContentLibInfo, self).__init__(module)
         self.content_service = self.api_client
-        self.library_facts = []
+        self.library_info = []
 
     def get_all_content_libs(self):
         """Method to retrieve List of content libraries."""
@@ -119,7 +119,7 @@ class VmwareContentLibFacts(VmwareRestClient):
             published=lib_details.publish_info.published,
             user_name=lib_details.publish_info.user_name
         )
-        self.library_facts.append(
+        self.library_info.append(
             dict(
                 library_name=lib_details.name,
                 library_description=lib_details.description,
@@ -132,7 +132,7 @@ class VmwareContentLibFacts(VmwareRestClient):
             )
         )
 
-        self.module.exit_json(exists=False, changed=False, content_lib_details=self.library_facts)
+        self.module.exit_json(exists=False, changed=False, content_lib_details=self.library_info)
 
 
 def main():
@@ -143,11 +143,11 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    vmware_contentlib_facts = VmwareContentLibFacts(module)
+    vmware_contentlib_info = VmwareContentLibInfo(module)
     if module.params.get('library_id'):
-        vmware_contentlib_facts.get_content_lib_details(module.params['library_id'])
+        vmware_contentlib_info.get_content_lib_details(module.params['library_id'])
     else:
-        vmware_contentlib_facts.get_all_content_libs()
+        vmware_contentlib_info.get_all_content_libs()
 
 
 if __name__ == '__main__':

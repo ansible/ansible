@@ -5,7 +5,6 @@ __metaclass__ = type
 import collections
 import os
 import re
-import errno
 import itertools
 import abc
 
@@ -87,17 +86,17 @@ def walk_internal_targets(targets, includes=None, excludes=None, requires=None):
     """
     targets = tuple(targets)
 
-    include_targets = sorted(filter_targets(targets, includes, errors=True, directories=False), key=lambda target: target.name)
+    include_targets = sorted(filter_targets(targets, includes, errors=True, directories=False), key=lambda include_target: include_target.name)
 
     if requires:
         require_targets = set(filter_targets(targets, requires, errors=True, directories=False))
-        include_targets = [target for target in include_targets if target in require_targets]
+        include_targets = [require_target for require_target in include_targets if require_target in require_targets]
 
     if excludes:
         list(filter_targets(targets, excludes, errors=True, include=False, directories=False))
 
     internal_targets = set(filter_targets(include_targets, excludes, errors=False, include=False, directories=False))
-    return tuple(sorted(internal_targets, key=lambda target: target.name))
+    return tuple(sorted(internal_targets, key=lambda sort_target: sort_target.name))
 
 
 def filter_targets(targets,  # type: t.Iterable[TCompletionTarget]
@@ -172,18 +171,26 @@ def walk_units_targets():
     return walk_test_targets(path=data_context().content.unit_path, module_path=data_context().content.unit_module_path, extensions=('.py',), prefix='test_')
 
 
-def walk_compile_targets():
+def walk_compile_targets(include_symlinks=True):
+    """
+    :type include_symlinks: bool
+    :rtype: collections.Iterable[TestTarget]
+    """
+    return walk_test_targets(module_path=data_context().content.module_path, extensions=('.py',), extra_dirs=('bin',), include_symlinks=include_symlinks)
+
+
+def walk_powershell_targets(include_symlinks=True):
     """
     :rtype: collections.Iterable[TestTarget]
     """
-    return walk_test_targets(module_path=data_context().content.module_path, extensions=('.py',), extra_dirs=('bin',))
+    return walk_test_targets(module_path=data_context().content.module_path, extensions=('.ps1', '.psm1'), include_symlinks=include_symlinks)
 
 
 def walk_sanity_targets():
     """
     :rtype: collections.Iterable[TestTarget]
     """
-    return walk_test_targets(module_path=data_context().content.module_path)
+    return walk_test_targets(module_path=data_context().content.module_path, include_symlinks=True, include_symlinked_directories=True)
 
 
 def walk_posix_integration_targets(include_hidden=False):
@@ -220,10 +227,55 @@ def walk_integration_targets():
     """
     :rtype: collections.Iterable[IntegrationTarget]
     """
-    path = 'test/integration/targets'
+    path = data_context().content.integration_targets_path
     modules = frozenset(target.module for target in walk_module_targets())
-    paths = data_context().content.get_dirs(path)
+    paths = data_context().content.walk_files(path)
     prefixes = load_integration_prefixes()
+    targets_path_tuple = tuple(path.split(os.path.sep))
+
+    entry_dirs = (
+        'defaults',
+        'files',
+        'handlers',
+        'meta',
+        'tasks',
+        'templates',
+        'vars',
+    )
+
+    entry_files = (
+        'main.yml',
+        'main.yaml',
+    )
+
+    entry_points = []
+
+    for entry_dir in entry_dirs:
+        for entry_file in entry_files:
+            entry_points.append(os.path.join(os.path.sep, entry_dir, entry_file))
+
+    # any directory with at least one file is a target
+    path_tuples = set(tuple(os.path.dirname(p).split(os.path.sep))
+                      for p in paths)
+
+    # also detect targets which are ansible roles, looking for standard entry points
+    path_tuples.update(tuple(os.path.dirname(os.path.dirname(p)).split(os.path.sep))
+                       for p in paths if any(p.endswith(entry_point) for entry_point in entry_points))
+
+    # remove the top-level directory if it was included
+    if targets_path_tuple in path_tuples:
+        path_tuples.remove(targets_path_tuple)
+
+    previous_path_tuple = None
+    paths = []
+
+    for path_tuple in sorted(path_tuples):
+        if previous_path_tuple and previous_path_tuple == path_tuple[:len(previous_path_tuple)]:
+            # ignore nested directories
+            continue
+
+        previous_path_tuple = path_tuple
+        paths.append(os.path.sep.join(path_tuple))
 
     for path in paths:
         yield IntegrationTarget(path, modules, prefixes)
@@ -233,7 +285,7 @@ def load_integration_prefixes():
     """
     :rtype: dict[str, str]
     """
-    path = 'test/integration'
+    path = data_context().content.integration_path
     file_paths = sorted(f for f in data_context().content.get_files(path) if os.path.splitext(os.path.basename(f))[0] == 'target-prefixes')
     prefixes = {}
 
@@ -245,19 +297,21 @@ def load_integration_prefixes():
     return prefixes
 
 
-def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None, extra_dirs=None):
+def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None, extra_dirs=None, include_symlinks=False, include_symlinked_directories=False):
     """
     :type path: str | None
     :type module_path: str | None
     :type extensions: tuple[str] | None
     :type prefix: str | None
     :type extra_dirs: tuple[str] | None
+    :type include_symlinks: bool
+    :type include_symlinked_directories: bool
     :rtype: collections.Iterable[TestTarget]
     """
     if path:
-        file_paths = data_context().content.walk_files(path)
+        file_paths = data_context().content.walk_files(path, include_symlinked_directories=include_symlinked_directories)
     else:
-        file_paths = data_context().content.all_files()
+        file_paths = data_context().content.all_files(include_symlinked_directories=include_symlinked_directories)
 
     for file_path in file_paths:
         name, ext = os.path.splitext(os.path.basename(file_path))
@@ -268,12 +322,12 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
         if prefix and not name.startswith(prefix):
             continue
 
-        if os.path.islink(to_bytes(file_path)):
-            # special case to allow a symlink of ansible_release.py -> ../release.py
-            if file_path != 'lib/ansible/module_utils/ansible_release.py':
-                continue
+        symlink = os.path.islink(to_bytes(file_path.rstrip(os.path.sep)))
 
-        yield TestTarget(file_path, module_path, prefix, path)
+        if symlink and not include_symlinks:
+            continue
+
+        yield TestTarget(file_path, module_path, prefix, path, symlink)
 
     file_paths = []
 
@@ -283,10 +337,12 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
                 file_paths.append(file_path)
 
     for file_path in file_paths:
-        if os.path.islink(to_bytes(file_path)):
+        symlink = os.path.islink(to_bytes(file_path.rstrip(os.path.sep)))
+
+        if symlink and not include_symlinks:
             continue
 
-        yield TestTarget(file_path, module_path, prefix, path)
+        yield TestTarget(file_path, module_path, prefix, path, symlink)
 
 
 def analyze_integration_target_dependencies(integration_targets):
@@ -294,7 +350,7 @@ def analyze_integration_target_dependencies(integration_targets):
     :type integration_targets: list[IntegrationTarget]
     :rtype: dict[str,set[str]]
     """
-    real_target_root = os.path.realpath('test/integration/targets') + '/'
+    real_target_root = os.path.realpath(data_context().content.integration_targets_path) + '/'
 
     role_targets = [target for target in integration_targets if target.type == 'role']
     hidden_role_target_names = set(target.name for target in role_targets if 'hidden/' in target.aliases)
@@ -315,7 +371,7 @@ def analyze_integration_target_dependencies(integration_targets):
     # this use case is supported, but discouraged
     for target in integration_targets:
         for path in data_context().content.walk_files(target.path):
-            if not os.path.islink(path):
+            if not os.path.islink(to_bytes(path.rstrip(os.path.sep))):
                 continue
 
             real_link_path = os.path.realpath(path)
@@ -442,18 +498,23 @@ class DirectoryTarget(CompletionTarget):
 
 class TestTarget(CompletionTarget):
     """Generic test target."""
-    def __init__(self, path, module_path, module_prefix, base_path):
+    def __init__(self, path, module_path, module_prefix, base_path, symlink=None):
         """
         :type path: str
         :type module_path: str | None
         :type module_prefix: str | None
         :type base_path: str
+        :type symlink: bool | None
         """
         super(TestTarget, self).__init__()
+
+        if symlink is None:
+            symlink = os.path.islink(to_bytes(path.rstrip(os.path.sep)))
 
         self.name = path
         self.path = path
         self.base_path = base_path + '/' if base_path else None
+        self.symlink = symlink
 
         name, ext = os.path.splitext(os.path.basename(self.path))
 
@@ -498,36 +559,29 @@ class IntegrationTarget(CompletionTarget):
         """
         super(IntegrationTarget, self).__init__()
 
-        self.name = os.path.basename(path)
+        self.relative_path = os.path.relpath(path, data_context().content.integration_targets_path)
+        self.name = self.relative_path.replace(os.path.sep, '.')
         self.path = path
 
         # script_path and type
 
-        contents = [os.path.basename(p) for p in data_context().content.get_files(path)]
+        file_paths = data_context().content.get_files(path)
+        runme_path = os.path.join(path, 'runme.sh')
 
-        runme_files = tuple(c for c in contents if os.path.splitext(c)[0] == 'runme')
-        test_files = tuple(c for c in contents if os.path.splitext(c)[0] == 'test')
-
-        self.script_path = None
-
-        if runme_files:
+        if runme_path in file_paths:
             self.type = 'script'
-            self.script_path = os.path.join(path, runme_files[0])
-        elif test_files:
-            self.type = 'special'
-        elif os.path.isdir(os.path.join(path, 'tasks')) or os.path.isdir(os.path.join(path, 'defaults')):
-            self.type = 'role'
+            self.script_path = runme_path
         else:
             self.type = 'role'  # ansible will consider these empty roles, so ansible-test should as well
+            self.script_path = None
 
         # static_aliases
 
-        try:
-            aliases_path = os.path.join(path, 'aliases')
+        aliases_path = os.path.join(path, 'aliases')
+
+        if aliases_path in file_paths:
             static_aliases = tuple(read_lines_without_comments(aliases_path, remove_blank_lines=True))
-        except IOError as ex:
-            if ex.errno != errno.ENOENT:
-                raise
+        else:
             static_aliases = tuple()
 
         # modules
@@ -578,10 +632,12 @@ class IntegrationTarget(CompletionTarget):
         if self.type not in ('script', 'role'):
             groups.append('hidden')
 
+        targets_relative_path = data_context().content.integration_targets_path
+
         # Collect file paths before group expansion to avoid including the directories.
         # Ignore references to test targets, as those must be defined using `needs/target/*` or other target references.
         self.needs_file = tuple(sorted(set('/'.join(g.split('/')[2:]) for g in groups if
-                                           g.startswith('needs/file/') and not g.startswith('needs/file/test/integration/targets/'))))
+                                           g.startswith('needs/file/') and not g.startswith('needs/file/%s/' % targets_relative_path))))
 
         for group in itertools.islice(groups, 0, len(groups)):
             if '/' in group:

@@ -201,7 +201,7 @@ class NetAppOntapSnapshot(object):
         snapshot_obj.add_new_child("volume", self.parameters['volume'])
         # Set up optional variables to create a snapshot
         if self.parameters.get('async_bool'):
-            snapshot_obj.add_new_child("async", self.parameters['async_bool'])
+            snapshot_obj.add_new_child("async", str(self.parameters['async_bool']))
         if self.parameters.get('comment'):
             snapshot_obj.add_new_child("comment", self.parameters['comment'])
         if self.parameters.get('snapmirror_label'):
@@ -225,7 +225,7 @@ class NetAppOntapSnapshot(object):
         snapshot_obj.add_new_child("volume", self.parameters['volume'])
         # set up optional variables to delete a snapshot
         if self.parameters.get('ignore_owners'):
-            snapshot_obj.add_new_child("ignore-owners", self.parameters['ignore_owners'])
+            snapshot_obj.add_new_child("ignore-owners", str(self.parameters['ignore_owners']))
         if self.parameters.get('snapshot_instance_uuid'):
             snapshot_obj.add_new_child("snapshot-instance-uuid", self.parameters['snapshot_instance_uuid'])
         try:

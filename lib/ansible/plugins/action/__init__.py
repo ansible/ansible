@@ -169,20 +169,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if module_path:
                 break
         else:  # This is a for-else: http://bit.ly/1ElPkyg
-            # Use Windows version of ping module to check module paths when
-            # using a connection that supports .ps1 suffixes. We check specifically
-            # for win_ping here, otherwise the code would look for ping.ps1
-            if '.ps1' in self._connection.module_implementation_preferences:
-                ping_module = 'win_ping'
-            else:
-                ping_module = 'ping'
-            module_path2 = self._shared_loader_obj.module_loader.find_plugin(ping_module, self._connection.module_implementation_preferences)
-            if module_path2 is not None:
-                raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
-            else:
-                raise AnsibleError("The module %s was not found in configured module paths. "
-                                   "Additionally, core modules are missing. If this is a checkout, "
-                                   "run 'git pull --rebase' to correct this problem." % (module_name))
+            raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
 
         # insert shared code and arguments into the module
         final_environment = dict()

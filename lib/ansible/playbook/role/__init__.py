@@ -32,6 +32,7 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
+from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.vars import combine_vars
 
 
@@ -161,6 +162,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                             role_obj.add_parent(parent_role)
                         return role_obj
 
+            # TODO: need to fix cycle detection in role load (maybe use an empty dict
+            #  for the in-flight in role cache as a sentinel that we're already trying to load
+            #  that role?)
+            # see https://github.com/ansible/ansible/issues/61527
             r = Role(play=play, from_files=from_files, from_include=from_include)
             r._load_role_data(role_include, parent_role=parent_role)
 
@@ -224,20 +229,23 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         # configure plugin/collection loading; either prepend the current role's collection or configure legacy plugin loading
         # FIXME: need exception for explicit ansible.legacy?
-        if self._role_collection:
+        if self._role_collection:  # this is a collection-hosted role
             self.collections.insert(0, self._role_collection)
-        else:
+        else:  # this is a legacy role, but set the default collection if there is one
+            default_collection = AnsibleCollectionLoader().default_collection
+            if default_collection:
+                self.collections.insert(0, default_collection)
             # legacy role, ensure all plugin dirs under the role are added to plugin search path
             add_all_plugin_dirs(self._role_path)
 
         # collections can be specified in metadata for legacy or collection-hosted roles
         if self._metadata.collections:
-            self.collections.extend(self._metadata.collections)
+            self.collections.extend((c for c in self._metadata.collections if c not in self.collections))
 
         # if any collections were specified, ensure that core or legacy synthetic collections are always included
         if self.collections:
             # default append collection is core for collection-hosted roles, legacy for others
-            default_append_collection = 'ansible.builtin' if self.collections else 'ansible.legacy'
+            default_append_collection = 'ansible.builtin' if self._role_collection else 'ansible.legacy'
             if 'ansible.builtin' not in self.collections and 'ansible.legacy' not in self.collections:
                 self.collections.append(default_append_collection)
 

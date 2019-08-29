@@ -1,0 +1,4 @@
+shippable/posix/group3
+destructive
+skip/osx
+skip/freebsd

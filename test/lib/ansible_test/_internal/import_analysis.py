@@ -5,9 +5,12 @@ __metaclass__ = type
 import ast
 import os
 
+from . import types as t
+
 from .util import (
     display,
     ApplicationError,
+    is_subdir,
 )
 
 from .data import (
@@ -35,13 +38,8 @@ def get_python_module_utils_imports(compile_targets):
     for target in compile_targets:
         imports_by_target_path[target.path] = extract_python_module_utils_imports(target.path, module_utils)
 
-    def recurse_import(import_name, depth=0, seen=None):
-        """Recursively expand module_utils imports from module_utils files.
-        :type import_name: str
-        :type depth: int
-        :type seen: set[str] | None
-        :rtype set[str]
-        """
+    def recurse_import(import_name, depth=0, seen=None):  # type: (str, int, t.Optional[t.Set[str]]) -> t.Set[str]
+        """Recursively expand module_utils imports from module_utils files."""
         display.info('module_utils import: %s%s' % ('  ' * depth, import_name), verbosity=4)
 
         if seen is None:
@@ -248,7 +246,7 @@ class ModuleUtilFinder(ast.NodeVisitor):
 
             name = '.'.join(name.split('.')[:-1])
 
-        if self.path.startswith('test/'):
+        if is_subdir(self.path, data_context().content.test_path):
             return  # invalid imports in tests are ignored
 
         # Treat this error as a warning so tests can be executed as best as possible.

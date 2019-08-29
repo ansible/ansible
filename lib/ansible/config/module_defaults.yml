@@ -1,10 +1,14 @@
 version: '1.0'
 groupings:
+  aws_acm_facts:
+  - aws
   aws_acm_info:
   - aws
   aws_api_gateway:
   - aws
   aws_application_scaling_policy:
+  - aws
+  aws_az_facts:
   - aws
   aws_az_info:
   - aws
@@ -13,6 +17,8 @@ groupings:
   aws_batch_job_definition:
   - aws
   aws_batch_job_queue:
+  - aws
+  aws_caller_facts:
   - aws
   aws_caller_info:
   - aws
@@ -52,11 +58,17 @@ groupings:
   - aws
   aws_kms:
   - aws
+  aws_kms_facts:
+  - aws
   aws_kms_info:
+  - aws
+  aws_region_facts:
   - aws
   aws_region_info:
   - aws
   aws_s3:
+  - aws
+  aws_s3_bucket_facts:
   - aws
   aws_s3_bucket_info:
   - aws
@@ -70,11 +82,15 @@ groupings:
   - aws
   aws_ses_rule_set:
   - aws
+  aws_sgw_facts:
+  - aws
   aws_sgw_info:
   - aws
   aws_ssm_parameter_store:
   - aws
   aws_waf_condition:
+  - aws
+  aws_waf_facts:
   - aws
   aws_waf_info:
   - aws
@@ -84,11 +100,15 @@ groupings:
   - aws
   cloudformation:
   - aws
+  cloudformation_facts:
+  - aws
   cloudformation_info:
   - aws
   cloudformation_stack_set:
   - aws
   cloudfront_distribution:
+  - aws
+  cloudfront_facts:
   - aws
   cloudfront_info:
   - aws
@@ -101,6 +121,8 @@ groupings:
   cloudwatchevent_rule:
   - aws
   cloudwatchlogs_log_group:
+  - aws
+  cloudwatchlogs_log_group_facts:
   - aws
   cloudwatchlogs_log_group_info:
   - aws
@@ -130,9 +152,13 @@ groupings:
   - aws
   ec2_ami_copy:
   - aws
+  ec2_ami_facts:
+  - aws
   ec2_ami_info:
   - aws
   ec2_asg:
+  - aws
+  ec2_asg_facts:
   - aws
   ec2_asg_info:
   - aws
@@ -140,13 +166,19 @@ groupings:
   - aws
   ec2_customer_gateway:
   - aws
+  ec2_customer_gateway_facts:
+  - aws
   ec2_customer_gateway_info:
   - aws
   ec2_eip:
   - aws
+  ec2_eip_facts:
+  - aws
   ec2_eip_info:
   - aws
   ec2_elb:
+  - aws
+  ec2_elb_facts:
   - aws
   ec2_elb_info:
   - aws
@@ -154,13 +186,19 @@ groupings:
   - aws
   ec2_eni:
   - aws
+  ec2_eni_facts:
+  - aws
   ec2_eni_info:
   - aws
   ec2_group:
   - aws
+  ec2_group_facts:
+  - aws
   ec2_group_info:
   - aws
   ec2_instance:
+  - aws
+  ec2_instance_facts:
   - aws
   ec2_instance_info:
   - aws
@@ -170,6 +208,8 @@ groupings:
   - aws
   ec2_lc:
   - aws
+  ec2_lc_facts:
+  - aws
   ec2_lc_info:
   - aws
   ec2_lc_find:
@@ -178,6 +218,8 @@ groupings:
   - aws
   ec2_placement_group:
   - aws
+  ec2_placement_group_facts:
+  - aws
   ec2_placement_group_info:
   - aws
   ec2_scaling_policy:
@@ -185,6 +227,8 @@ groupings:
   ec2_snapshot:
   - aws
   ec2_snapshot_copy:
+  - aws
+  ec2_snapshot_facts:
   - aws
   ec2_snapshot_info:
   - aws
@@ -196,9 +240,13 @@ groupings:
   - aws
   ec2_vol:
   - aws
+  ec2_vol_facts:
+  - aws
   ec2_vol_info:
   - aws
   ec2_vpc_dhcp_option:
+  - aws
+  ec2_vpc_dhcp_option_facts:
   - aws
   ec2_vpc_dhcp_option_info:
   - aws
@@ -206,41 +254,61 @@ groupings:
   - aws
   ec2_vpc_endpoint:
   - aws
+  ec2_vpc_endpoint_facts:
+  - aws
   ec2_vpc_endpoint_info:
   - aws
   ec2_vpc_igw:
+  - aws
+  ec2_vpc_igw_facts:
   - aws
   ec2_vpc_igw_info:
   - aws
   ec2_vpc_nacl:
   - aws
+  ec2_vpc_nacl_facts:
+  - aws
   ec2_vpc_nacl_info:
   - aws
   ec2_vpc_nat_gateway:
+  - aws
+  ec2_vpc_nat_gateway_facts:
   - aws
   ec2_vpc_nat_gateway_info:
   - aws
   ec2_vpc_net:
   - aws
+  ec2_vpc_net_facts:
+  - aws
   ec2_vpc_net_info:
   - aws
   ec2_vpc_peer:
+  - aws
+  ec2_vpc_peering_facts:
   - aws
   ec2_vpc_peering_info:
   - aws
   ec2_vpc_route_table:
   - aws
+  ec2_vpc_route_table_facts:
+  - aws
   ec2_vpc_route_table_info:
   - aws
   ec2_vpc_subnet:
+  - aws
+  ec2_vpc_subnet_facts:
   - aws
   ec2_vpc_subnet_info:
   - aws
   ec2_vpc_vgw:
   - aws
+  ec2_vpc_vgw_facts:
+  - aws
   ec2_vpc_vgw_info:
   - aws
   ec2_vpc_vpn:
+  - aws
+  ec2_vpc_vpn_facts:
   - aws
   ec2_vpc_vpn_info:
   - aws
@@ -254,19 +322,27 @@ groupings:
   - aws
   ecs_service:
   - aws
+  ecs_service_facts:
+  - aws
   ecs_service_info:
   - aws
   ecs_task:
   - aws
   ecs_taskdefinition:
   - aws
+  ecs_taskdefinition_facts:
+  - aws
   ecs_taskdefinition_info:
   - aws
   efs:
   - aws
+  efs_facts:
+  - aws
   efs_info:
   - aws
   elasticache:
+  - aws
+  elasticache_facts:
   - aws
   elasticache_info:
   - aws
@@ -278,9 +354,13 @@ groupings:
   - aws
   elb_application_lb:
   - aws
+  elb_application_lb_facts:
+  - aws
   elb_application_lb_info:
   - aws
   elb_classic_lb:
+  - aws
+  elb_classic_lb_facts:
   - aws
   elb_classic_lb_info:
   - aws
@@ -290,7 +370,11 @@ groupings:
   - aws
   elb_target:
   - aws
+  elb_target_facts:
+  - aws
   elb_target_group:
+  - aws
+  elb_target_group_facts:
   - aws
   elb_target_group_info:
   - aws
@@ -306,6 +390,8 @@ groupings:
   - aws
   iam_managed_policy:
   - aws
+  iam_mfa_device_facts:
+  - aws
   iam_mfa_device_info:
   - aws
   iam_password_policy:
@@ -314,7 +400,11 @@ groupings:
   - aws
   iam_role:
   - aws
+  iam_role_facts:
+  - aws
   iam_role_info:
+  - aws
+  iam_server_certificate_facts:
   - aws
   iam_server_certificate_info:
   - aws
@@ -328,6 +418,8 @@ groupings:
   - aws
   lambda_event:
   - aws
+  lambda_facts:
+  - aws
   lambda_info:
   - aws
   lambda_policy:
@@ -338,9 +430,13 @@ groupings:
   - aws
   rds_instance:
   - aws
+  rds_instance_facts:
+  - aws
   rds_instance_info:
   - aws
   rds_param_group:
+  - aws
+  rds_snapshot_facts:
   - aws
   rds_snapshot_info:
   - aws
@@ -350,11 +446,15 @@ groupings:
   - aws
   redshift_cross_region_snapshots:
   - aws
+  redshift_facts:
+  - aws
   redshift_info:
   - aws
   redshift_subnet_group:
   - aws
   route53:
+  - aws
+  route53_facts:
   - aws
   route53_info:
   - aws
@@ -562,7 +662,11 @@ groupings:
   - azure
   azure_rm_loadbalancer_facts:
   - azure
+  azure_rm_managed_disk:
+  - azure
   azure_rm_manageddisk:
+  - azure
+  azure_rm_managed_disk_facts:
   - azure
   azure_rm_manageddisk_facts:
   - azure
@@ -593,6 +697,8 @@ groupings:
   azure_rm_resource_facts:
   - azure
   azure_rm_resourcegroup:
+  - azure
+  azure_rm_resourcegroup_facts:
   - azure
   azure_rm_resourcegroup_info:
   - azure
@@ -666,6 +772,8 @@ groupings:
   - os
   os_flavor_facts:
   - os
+  os_flavor_info:
+  - os
   os_floating_ip:
   - os
   os_group:
@@ -673,6 +781,8 @@ groupings:
   os_image:
   - os
   os_image_facts:
+  - os
+  os_image_info:
   - os
   os_ironic:
   - os
@@ -685,6 +795,8 @@ groupings:
   os_keystone_domain:
   - os
   os_keystone_domain_facts:
+  - os
+  os_keystone_domain_info:
   - os
   os_keystone_endpoint:
   - os
@@ -702,6 +814,8 @@ groupings:
   - os
   os_networks_facts:
   - os
+  os_networks_info:
+  - os
   os_nova_flavor:
   - os
   os_nova_host_aggregate:
@@ -714,11 +828,15 @@ groupings:
   - os
   os_port_facts:
   - os
+  os_port_info:
+  - os
   os_project:
   - os
   os_project_access:
   - os
   os_project_facts:
+  - os
+  os_project_info:
   - os
   os_quota:
   - os
@@ -736,6 +854,8 @@ groupings:
   - os
   os_server_facts:
   - os
+  os_server_info:
+  - os
   os_server_group:
   - os
   os_server_metadata:
@@ -748,9 +868,13 @@ groupings:
   - os
   os_subnets_facts:
   - os
+  os_subnets_info:
+  - os
   os_user:
   - os
   os_user_facts:
+  - os
+  os_user_info:
   - os
   os_user_group:
   - os

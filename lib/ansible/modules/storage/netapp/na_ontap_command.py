@@ -1,7 +1,8 @@
 #!/usr/bin/python
-
+'''
 # (c) 2018, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+'''
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -30,6 +31,12 @@ options:
         choices: ['admin', 'advanced']
         default: admin
         version_added: "2.8"
+    return_dict:
+        description:
+        - returns a parsesable dictonary instead of raw XML output
+        type: bool
+        default: false
+        version_added: "2.9"
 '''
 
 EXAMPLES = """
@@ -47,6 +54,7 @@ EXAMPLES = """
         password: "{{ admin password }}"
         command: ['network', 'interface', 'show']
         privilege: 'admin'
+        return_dict: true
 """
 
 RETURN = """
@@ -67,8 +75,8 @@ class NetAppONTAPCommand(object):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             command=dict(required=True, type='list'),
-            privilege=dict(required=False, type='str', choices=['admin', 'advanced'],
-                           default='admin')
+            privilege=dict(required=False, type='str', choices=['admin', 'advanced'], default='admin'),
+            return_dict=dict(required=False, type='bool', default=False)
         ))
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -78,6 +86,15 @@ class NetAppONTAPCommand(object):
         # set up state variables
         self.command = parameters['command']
         self.privilege = parameters['privilege']
+        self.return_dict = parameters['return_dict']
+
+        self.result_dict = dict()
+        self.result_dict['status'] = ""
+        self.result_dict['result_value'] = 0
+        self.result_dict['invoked_command'] = " ".join(self.command)
+        self.result_dict['stdout'] = ""
+        self.result_dict['stdout_lines'] = []
+        self.result_dict['xml_dict'] = dict()
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -99,7 +116,13 @@ class NetAppONTAPCommand(object):
         ''' calls the ZAPI '''
         self.asup_log_for_cserver("na_ontap_command: " + str(self.command))
         command_obj = netapp_utils.zapi.NaElement("system-cli")
+
         args_obj = netapp_utils.zapi.NaElement("args")
+        if self.return_dict:
+            args_obj.add_new_child('arg', 'set')
+            args_obj.add_new_child('arg', '-showseparator')
+            args_obj.add_new_child('arg', '"###"')
+            args_obj.add_new_child('arg', ';')
         for arg in self.command:
             args_obj.add_new_child('arg', arg)
         command_obj.add_child_elem(args_obj)
@@ -107,7 +130,14 @@ class NetAppONTAPCommand(object):
 
         try:
             output = self.server.invoke_successfully(command_obj, True)
-            return output.to_string()
+            if self.return_dict:
+                # Parseable dict output
+                retval = self.parse_xml_to_dict(output.to_string())
+            else:
+                # Raw XML output
+                retval = output.to_string()
+
+            return retval
         except netapp_utils.zapi.NaApiError as error:
             self.module.fail_json(msg='Error running command %s: %s' %
                                   (self.command, to_native(error)),
@@ -118,6 +148,72 @@ class NetAppONTAPCommand(object):
         changed = True
         output = self.run_command()
         self.module.exit_json(changed=changed, msg=output)
+
+    def parse_xml_to_dict(self, xmldata):
+        '''Parse raw XML from system-cli and create an Ansible parseable dictonary'''
+        xml_import_ok = True
+        xml_parse_ok = True
+
+        try:
+            import xml.parsers.expat
+        except ImportError:
+            self.result_dict['status'] = "XML parsing failed. Cannot import xml.parsers.expat!"
+            self.result_dict['stdout'] = str(xmldata)
+            xml_import_ok = False
+
+        if xml_import_ok:
+            xml_str = xmldata.decode('utf-8').replace('\n', '---')
+            xml_parser = xml.parsers.expat.ParserCreate()
+            xml_parser.StartElementHandler = self._start_element
+            xml_parser.CharacterDataHandler = self._char_data
+            xml_parser.EndElementHandler = self._end_element
+
+            try:
+                xml_parser.Parse(xml_str)
+            except xml.parsers.expat.ExpatError as errcode:
+                self.result_dict['status'] = "XML parsing failed: " + str(errcode)
+                self.result_dict['stdout'] = str(xmldata)
+                xml_parse_ok = False
+
+            if xml_parse_ok:
+                self.result_dict['status'] = self.result_dict['xml_dict']['results']['attrs']['status']
+                stdout_string = self._format_escaped_data(self.result_dict['xml_dict']['cli-output']['data'])
+                self.result_dict['stdout'] = stdout_string
+                for line in stdout_string.split('\n'):
+                    stripped_line = line.strip()
+                    if len(stripped_line) > 1:
+                        self.result_dict['stdout_lines'].append(stripped_line)
+                self.result_dict['xml_dict']['cli-output']['data'] = stdout_string
+                self.result_dict['result_value'] = int(str(self.result_dict['xml_dict']['cli-result-value']['data']).replace("'", ""))
+
+        return self.result_dict
+
+    def _start_element(self, name, attrs):
+        ''' Start XML element '''
+        self.result_dict['xml_dict'][name] = dict()
+        self.result_dict['xml_dict'][name]['attrs'] = attrs
+        self.result_dict['xml_dict'][name]['data'] = ""
+        self.result_dict['xml_dict']['active_element'] = name
+        self.result_dict['xml_dict']['last_element'] = ""
+
+    def _char_data(self, data):
+        ''' Dump XML elemet data '''
+        self.result_dict['xml_dict'][str(self.result_dict['xml_dict']['active_element'])]['data'] = repr(data)
+
+    def _end_element(self, name):
+        self.result_dict['xml_dict']['last_element'] = name
+        self.result_dict['xml_dict']['active_element'] = ""
+
+    @classmethod
+    def _format_escaped_data(cls, datastring):
+        ''' replace helper escape sequences '''
+        formatted_string = datastring.replace('------', '---').replace('---', '\n').replace("###", "    ").strip()
+        retval_string = ""
+        for line in formatted_string.split('\n'):
+            stripped_line = line.strip()
+            if len(stripped_line) > 1:
+                retval_string += stripped_line + "\n"
+        return retval_string
 
 
 def main():

@@ -3,23 +3,24 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import datetime
-import json
 import os
+import re
 
 from . import types as t
 
 from .util import (
     display,
-    make_dirs,
-    to_bytes,
+    get_ansible_version,
+)
+
+from .util_common import (
+    write_text_test_results,
+    write_json_test_results,
+    ResultType,
 )
 
 from .config import (
     TestConfig,
-)
-
-from .data import (
-    data_context,
 )
 
 
@@ -118,23 +119,22 @@ class TestResult:
         :type args: TestConfig
         """
 
-    def create_path(self, directory, extension):
+    def create_result_name(self, extension):
         """
-        :type directory: str
         :type extension: str
         :rtype: str
         """
-        path = os.path.join(data_context().results, directory, 'ansible-test-%s' % self.command)
+        name = 'ansible-test-%s' % self.command
 
         if self.test:
-            path += '-%s' % self.test
+            name += '-%s' % self.test
 
         if self.python_version:
-            path += '-python-%s' % self.python_version
+            name += '-python-%s' % self.python_version
 
-        path += extension
+        name += extension
 
-        return path
+        return name
 
     def save_junit(self, args, test_case, properties=None):
         """
@@ -143,8 +143,6 @@ class TestResult:
         :type properties: dict[str, str] | None
         :rtype: str | None
         """
-        path = self.create_path('junit', '.xml')
-
         test_suites = [
             self.junit.TestSuite(
                 name='ansible-test',
@@ -159,8 +157,7 @@ class TestResult:
         if args.explain:
             return
 
-        with open(path, 'wb') as xml:
-            xml.write(to_bytes(report))
+        write_text_test_results(ResultType.JUNIT, self.create_result_name('.xml'), report)
 
 
 class TestTimeout(TestResult):
@@ -207,10 +204,7 @@ One or more of the following situations may be responsible:
 </testsuites>
 ''' % (timestamp, message, output)
 
-        path = self.create_path('junit', '.xml')
-
-        with open(path, 'w') as junit_fd:
-            junit_fd.write(xml.lstrip())
+        write_text_test_results(ResultType.JUNIT, self.create_result_name('.xml'), xml.lstrip())
 
 
 class TestSuccess(TestResult):
@@ -284,6 +278,10 @@ class TestFailure(TestResult):
             for message in self.messages:
                 display.error(message.format(show_confidence=True))
 
+            doc_url = self.find_docs()
+            if doc_url:
+                display.info('See documentation for help: %s' % doc_url)
+
     def write_lint(self):
         """Write lint results to stdout."""
         if self.summary:
@@ -335,16 +333,10 @@ class TestFailure(TestResult):
             ],
         )
 
-        path = self.create_path('bot', '.json')
-
         if args.explain:
             return
 
-        make_dirs(os.path.dirname(path))
-
-        with open(path, 'w') as bot_fd:
-            json.dump(bot_data, bot_fd, indent=4, sort_keys=True)
-            bot_fd.write('\n')
+        write_json_test_results(ResultType.BOT, self.create_result_name('.json'), bot_data)
 
     def populate_confidence(self, metadata):
         """
@@ -372,7 +364,15 @@ class TestFailure(TestResult):
         """
         :rtype: str
         """
-        testing_docs_url = 'https://docs.ansible.com/ansible/devel/dev_guide/testing'
+
+        # Use the major.minor version for the URL only if this a release that
+        # matches the pattern 2.4.0, otherwise, use 'devel'
+        ansible_version = get_ansible_version()
+        url_version = 'devel'
+        if re.search(r'^[0-9.]+$', ansible_version):
+            url_version = '.'.join(ansible_version.split('.')[:2])
+
+        testing_docs_url = 'https://docs.ansible.com/ansible/%s/dev_guide/testing' % url_version
         testing_docs_dir = 'docs/docsite/rst/dev_guide/testing'
 
         url = '%s/%s/' % (testing_docs_url, self.command)
@@ -511,7 +511,7 @@ class TestMessage:
         :rtype: str
         """
         if self.__code:
-            msg = '%s %s' % (self.__code, self.__message)
+            msg = '%s: %s' % (self.__code, self.__message)
         else:
             msg = self.__message
 

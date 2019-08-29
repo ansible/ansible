@@ -10,6 +10,10 @@ from ...constants import (
     TIMEOUT_PATH,
 )
 
+from ...util import (
+    to_bytes,
+)
+
 from . import (
     SourceProvider,
 )
@@ -42,6 +46,7 @@ class UnversionedSource(SourceProvider):
             'test': (
                 'results',
                 'cache',
+                'output',
             ),
             'docs/docsite': (
                 '_build',
@@ -74,5 +79,8 @@ class UnversionedSource(SourceProvider):
 
             paths.extend([os.path.join(rel_root, file_name) for file_name in file_names
                           if not os.path.splitext(file_name)[1] in kill_extensions and file_name not in kill_files])
+
+            # include directory symlinks since they will not be traversed and would otherwise go undetected
+            paths.extend([os.path.join(rel_root, dir_name) + os.path.sep for dir_name in dir_names if os.path.islink(to_bytes(dir_name))])
 
         return paths

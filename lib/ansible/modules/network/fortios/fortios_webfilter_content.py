@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from __future__ import (absolute_import, division, print_function)
-# Copyright 2018 Fortinet, Inc.
+# Copyright 2019 Fortinet, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_webfilter_content
 short_description: Configure Web filter banned word table in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure webfilter feature and content category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify webfilter feature and content category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,56 +41,86 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
-        default: false
+        default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     webfilter_content:
         description:
             - Configure Web filter banned word table.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
             comment:
                 description:
                     - Optional comments.
+                type: str
             entries:
                 description:
                     - Configure banned word entries.
+                type: list
                 suboptions:
                     action:
                         description:
                             - Block or exempt word when a match is found.
+                        type: str
                         choices:
                             - block
                             - exempt
                     lang:
                         description:
                             - Language of banned word.
+                        type: str
                         choices:
                             - western
                             - simch
@@ -108,18 +135,22 @@ options:
                         description:
                             - Banned word.
                         required: true
-                    pattern-type:
+                        type: str
+                    pattern_type:
                         description:
                             - "Banned word pattern type: wildcard pattern or Perl regular expression."
+                        type: str
                         choices:
                             - wildcard
                             - regexp
                     score:
                         description:
-                            - Score, to be applied every time the word appears on a web page (0 - 4294967295, default = 10).
+                            - Score, to be applied every time the word appears on a web page (0 - 4294967295).
+                        type: int
                     status:
                         description:
                             - Enable/disable banned word.
+                        type: str
                         choices:
                             - enable
                             - disable
@@ -127,9 +158,11 @@ options:
                 description:
                     - ID.
                 required: true
+                type: int
             name:
                 description:
                     - Name of table.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -139,6 +172,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure Web filter banned word table.
     fortios_webfilter_content:
@@ -146,15 +180,16 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
+      https: "False"
+      state: "present"
       webfilter_content:
-        state: "present"
         comment: "Optional comments."
         entries:
          -
             action: "block"
             lang: "western"
             name: "default_name_7"
-            pattern-type: "wildcard"
+            pattern_type: "wildcard"
             score: "9"
             status: "enable"
         id:  "11"
@@ -221,14 +256,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -236,7 +273,7 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_webfilter_content_data(json):
@@ -251,47 +288,72 @@ def filter_webfilter_content_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def webfilter_content(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['webfilter_content'] and data['webfilter_content']:
+        state = data['webfilter_content']['state']
+    else:
+        state = True
     webfilter_content_data = data['webfilter_content']
-    filtered_data = filter_webfilter_content_data(webfilter_content_data)
-    if webfilter_content_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_webfilter_content_data(webfilter_content_data))
+
+    if state == "present":
         return fos.set('webfilter',
                        'content',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif webfilter_content_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('webfilter',
                           'content',
                           mkey=filtered_data['id'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_webfilter(data, fos):
-    login(data)
 
-    methodlist = ['webfilter_content']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['webfilter_content']:
+        resp = webfilter_content(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
-        "https": {"required": False, "type": "bool", "default": "False"},
+        "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "webfilter_content": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "comment": {"required": False, "type": "str"},
                 "entries": {"required": False, "type": "list",
@@ -303,7 +365,7 @@ def main():
                                                      "japanese", "korean", "french",
                                                      "thai", "spanish", "cyrillic"]},
                                 "name": {"required": True, "type": "str"},
-                                "pattern-type": {"required": False, "type": "str",
+                                "pattern_type": {"required": False, "type": "str",
                                                  "choices": ["wildcard", "regexp"]},
                                 "score": {"required": False, "type": "int"},
                                 "status": {"required": False, "type": "str",
@@ -318,15 +380,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_webfilter(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_webfilter(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_webfilter(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

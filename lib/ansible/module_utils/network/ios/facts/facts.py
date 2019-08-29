@@ -23,6 +23,7 @@ from ansible.module_utils.network.ios.facts.lacp.lacp import LacpFacts
 from ansible.module_utils.network.ios.facts.lacp_interfaces.lacp_interfaces import Lacp_InterfacesFacts
 from ansible.module_utils.network.ios.facts.lldp_global.lldp_global import Lldp_globalFacts
 from ansible.module_utils.network.ios.facts.lldp_interfaces.lldp_interfaces import Lldp_InterfacesFacts
+from ansible.module_utils.network.ios.facts.l3_interfaces.l3_interfaces import L3_InterfacesFacts
 from ansible.module_utils.network.ios.facts.legacy.base import Default, Hardware, Interfaces, Config
 
 
@@ -42,6 +43,7 @@ FACT_RESOURCE_SUBSETS = dict(
     lacp_interfaces=Lacp_InterfacesFacts,
     lldp_global=Lldp_globalFacts,
     lldp_interfaces=Lldp_InterfacesFacts,
+    l3_interfaces=L3_InterfacesFacts,
 )
 
 

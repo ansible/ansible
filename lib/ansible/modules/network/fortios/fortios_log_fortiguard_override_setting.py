@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_log_fortiguard_override_setting
 short_description: Override global FortiCloud logging settings for this VDOM in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify log_fortiguard feature and override_setting category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,67 +41,83 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     log_fortiguard_override_setting:
         description:
             - Override global FortiCloud logging settings for this VDOM.
         default: null
+        type: dict
         suboptions:
             override:
                 description:
                     - Overriding FortiCloud settings for this VDOM or use global settings.
+                type: str
                 choices:
                     - enable
                     - disable
             status:
                 description:
                     - Enable/disable logging to FortiCloud.
+                type: str
                 choices:
                     - enable
                     - disable
-            upload-day:
+            upload_day:
                 description:
                     - Day of week to roll logs.
-            upload-interval:
+                type: str
+            upload_interval:
                 description:
                     - Frequency of uploading log files to FortiCloud.
+                type: str
                 choices:
                     - daily
                     - weekly
                     - monthly
-            upload-option:
+            upload_option:
                 description:
                     - Configure how log messages are sent to FortiCloud.
+                type: str
                 choices:
                     - store-and-upload
                     - realtime
                     - 1-minute
                     - 5-minute
-            upload-time:
+            upload_time:
                 description:
                     - "Time of day to roll logs (hh:mm)."
+                type: str
 '''
 
 EXAMPLES = '''
@@ -114,6 +127,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Override global FortiCloud logging settings for this VDOM.
     fortios_log_fortiguard_override_setting:
@@ -125,10 +139,10 @@ EXAMPLES = '''
       log_fortiguard_override_setting:
         override: "enable"
         status: "enable"
-        upload-day: "<your_own_value>"
-        upload-interval: "daily"
-        upload-option: "store-and-upload"
-        upload-time: "<your_own_value>"
+        upload_day: "<your_own_value>"
+        upload_interval: "daily"
+        upload_option: "store-and-upload"
+        upload_time: "<your_own_value>"
 '''
 
 RETURN = '''
@@ -191,14 +205,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -206,12 +222,12 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_log_fortiguard_override_setting_data(json):
-    option_list = ['override', 'status', 'upload-day',
-                   'upload-interval', 'upload-option', 'upload-time']
+    option_list = ['override', 'status', 'upload_day',
+                   'upload_interval', 'upload_option', 'upload_time']
     dictionary = {}
 
     for attribute in option_list:
@@ -221,50 +237,67 @@ def filter_log_fortiguard_override_setting_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def log_fortiguard_override_setting(data, fos):
     vdom = data['vdom']
     log_fortiguard_override_setting_data = data['log_fortiguard_override_setting']
-    filtered_data = filter_log_fortiguard_override_setting_data(log_fortiguard_override_setting_data)
+    filtered_data = underscore_to_hyphen(filter_log_fortiguard_override_setting_data(log_fortiguard_override_setting_data))
+
     return fos.set('log.fortiguard',
                    'override-setting',
                    data=filtered_data,
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_log_fortiguard(data, fos):
-    login(data)
 
-    methodlist = ['log_fortiguard_override_setting']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['log_fortiguard_override_setting']:
+        resp = log_fortiguard_override_setting(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "log_fortiguard_override_setting": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
                 "override": {"required": False, "type": "str",
                              "choices": ["enable", "disable"]},
                 "status": {"required": False, "type": "str",
                            "choices": ["enable", "disable"]},
-                "upload-day": {"required": False, "type": "str"},
-                "upload-interval": {"required": False, "type": "str",
+                "upload_day": {"required": False, "type": "str"},
+                "upload_interval": {"required": False, "type": "str",
                                     "choices": ["daily", "weekly", "monthly"]},
-                "upload-option": {"required": False, "type": "str",
+                "upload_option": {"required": False, "type": "str",
                                   "choices": ["store-and-upload", "realtime", "1-minute",
                                               "5-minute"]},
-                "upload-time": {"required": False, "type": "str"}
+                "upload_time": {"required": False, "type": "str"}
 
             }
         }
@@ -272,15 +305,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_log_fortiguard(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_log_fortiguard(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_log_fortiguard(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

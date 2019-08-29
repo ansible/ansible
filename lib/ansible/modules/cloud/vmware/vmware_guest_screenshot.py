@@ -84,7 +84,7 @@ options:
        downloaded from ESXi host to the local directory.'
      - 'If not download screenshot file to local machine, you can open it through the returned file URL in screenshot
        facts manually.'
-     type: str
+     type: path
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -142,7 +142,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode, quote
 from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import open_url
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task, get_parent_datacenter
 import os
 
 
@@ -163,11 +163,7 @@ class PyVmomiHelper(PyVmomi):
         if not self.is_vcenter():
             datacenter = 'ha-datacenter'
         else:
-            if self.params.get('datacenter'):
-                datacenter = self.params['datacenter']
-            else:
-                datacenter = self.get_parent_datacenter(self.current_vm_obj).name
-            datacenter = datacenter.replace('&', '%26')
+            datacenter = get_parent_datacenter(self.current_vm_obj).name.replace('&', '%26')
         params['dcPath'] = datacenter
         url_path = "https://%s%s?%s" % (self.params['hostname'], path, urlencode(params))
 
@@ -177,8 +173,6 @@ class PyVmomiHelper(PyVmomi):
         response = None
         download_size = 0
         # file is downloaded as local_file_name when specified, or use original file name
-        if not local_file_path.startswith("/"):
-            local_file_path = "/" + local_file_path
         if local_file_path.endswith('.png'):
             local_file_name = local_file_path.split('/')[-1]
             local_file_path = local_file_path.rsplit('/', 1)[0]
@@ -268,7 +262,7 @@ def main():
         datacenter=dict(type='str'),
         esxi_hostname=dict(type='str'),
         cluster=dict(type='str'),
-        local_path=dict(type='str'),
+        local_path=dict(type='path'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,

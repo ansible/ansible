@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_report_style
 short_description: Report style configuration in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify report feature and style category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,124 +41,171 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     report_style:
         description:
             - Report style configuration.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
             align:
                 description:
                     - Alignment.
+                type: str
                 choices:
                     - left
                     - center
                     - right
                     - justify
-            bg-color:
+            bg_color:
                 description:
                     - Background color.
-            border-bottom:
+                type: str
+            border_bottom:
                 description:
                     - Border bottom.
-            border-left:
+                type: str
+            border_left:
                 description:
                     - Border left.
-            border-right:
+                type: str
+            border_right:
                 description:
                     - Border right.
-            border-top:
+                type: str
+            border_top:
                 description:
                     - Border top.
-            column-gap:
+                type: str
+            column_gap:
                 description:
                     - Column gap.
-            column-span:
+                type: str
+            column_span:
                 description:
                     - Column span.
+                type: str
                 choices:
                     - none
                     - all
-            fg-color:
+            fg_color:
                 description:
                     - Foreground color.
-            font-family:
+                type: str
+            font_family:
                 description:
                     - Font family.
+                type: str
                 choices:
                     - Verdana
                     - Arial
                     - Helvetica
                     - Courier
                     - Times
-            font-size:
+            font_size:
                 description:
                     - Font size.
-            font-style:
+                type: str
+            font_style:
                 description:
                     - Font style.
+                type: str
                 choices:
                     - normal
                     - italic
-            font-weight:
+            font_weight:
                 description:
                     - Font weight.
+                type: str
                 choices:
                     - normal
                     - bold
             height:
                 description:
                     - Height.
-            line-height:
+                type: str
+            line_height:
                 description:
                     - Text line height.
-            margin-bottom:
+                type: str
+            margin_bottom:
                 description:
                     - Margin bottom.
-            margin-left:
+                type: str
+            margin_left:
                 description:
                     - Margin left.
-            margin-right:
+                type: str
+            margin_right:
                 description:
                     - Margin right.
-            margin-top:
+                type: str
+            margin_top:
                 description:
                     - Margin top.
+                type: str
             name:
                 description:
                     - Report style name.
                 required: true
+                type: str
             options:
                 description:
                     - Report style options.
+                type: str
                 choices:
                     - font
                     - text
@@ -172,21 +216,26 @@ options:
                     - border
                     - padding
                     - column
-            padding-bottom:
+            padding_bottom:
                 description:
                     - Padding bottom.
-            padding-left:
+                type: str
+            padding_left:
                 description:
                     - Padding left.
-            padding-right:
+                type: str
+            padding_right:
                 description:
                     - Padding right.
-            padding-top:
+                type: str
+            padding_top:
                 description:
                     - Padding top.
+                type: str
             width:
                 description:
                     - Width.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -196,6 +245,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Report style configuration.
     fortios_report_style:
@@ -204,33 +254,33 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       report_style:
-        state: "present"
         align: "left"
-        bg-color: "<your_own_value>"
-        border-bottom: "<your_own_value>"
-        border-left: "<your_own_value>"
-        border-right: "<your_own_value>"
-        border-top: "<your_own_value>"
-        column-gap: "<your_own_value>"
-        column-span: "none"
-        fg-color: "<your_own_value>"
-        font-family: "Verdana"
-        font-size: "<your_own_value>"
-        font-style: "normal"
-        font-weight: "normal"
+        bg_color: "<your_own_value>"
+        border_bottom: "<your_own_value>"
+        border_left: "<your_own_value>"
+        border_right: "<your_own_value>"
+        border_top: "<your_own_value>"
+        column_gap: "<your_own_value>"
+        column_span: "none"
+        fg_color: "<your_own_value>"
+        font_family: "Verdana"
+        font_size: "<your_own_value>"
+        font_style: "normal"
+        font_weight: "normal"
         height: "<your_own_value>"
-        line-height: "<your_own_value>"
-        margin-bottom: "<your_own_value>"
-        margin-left: "<your_own_value>"
-        margin-right: "<your_own_value>"
-        margin-top: "<your_own_value>"
+        line_height: "<your_own_value>"
+        margin_bottom: "<your_own_value>"
+        margin_left: "<your_own_value>"
+        margin_right: "<your_own_value>"
+        margin_top: "<your_own_value>"
         name: "default_name_22"
         options: "font"
-        padding-bottom: "<your_own_value>"
-        padding-left: "<your_own_value>"
-        padding-right: "<your_own_value>"
-        padding-top: "<your_own_value>"
+        padding_bottom: "<your_own_value>"
+        padding_left: "<your_own_value>"
+        padding_right: "<your_own_value>"
+        padding_top: "<your_own_value>"
         width: "<your_own_value>"
 '''
 
@@ -294,14 +344,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -309,19 +361,19 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_report_style_data(json):
-    option_list = ['align', 'bg-color', 'border-bottom',
-                   'border-left', 'border-right', 'border-top',
-                   'column-gap', 'column-span', 'fg-color',
-                   'font-family', 'font-size', 'font-style',
-                   'font-weight', 'height', 'line-height',
-                   'margin-bottom', 'margin-left', 'margin-right',
-                   'margin-top', 'name', 'options',
-                   'padding-bottom', 'padding-left', 'padding-right',
-                   'padding-top', 'width']
+    option_list = ['align', 'bg_color', 'border_bottom',
+                   'border_left', 'border_right', 'border_top',
+                   'column_gap', 'column_span', 'fg_color',
+                   'font_family', 'font_size', 'font_style',
+                   'font_weight', 'height', 'line_height',
+                   'margin_bottom', 'margin_left', 'margin_right',
+                   'margin_top', 'name', 'options',
+                   'padding_bottom', 'padding_left', 'padding_right',
+                   'padding_top', 'width']
     dictionary = {}
 
     for attribute in option_list:
@@ -331,96 +383,108 @@ def filter_report_style_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
 
 def report_style(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['report_style'] and data['report_style']:
+        state = data['report_style']['state']
+    else:
+        state = True
     report_style_data = data['report_style']
-    flattened_data = flatten_multilists_attributes(report_style_data)
-    filtered_data = filter_report_style_data(flattened_data)
-    if report_style_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_report_style_data(report_style_data))
+
+    if state == "present":
         return fos.set('report',
                        'style',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif report_style_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('report',
                           'style',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_report(data, fos):
-    login(data)
 
     if data['report_style']:
         resp = report_style(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "report_style": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "align": {"required": False, "type": "str",
                           "choices": ["left", "center", "right",
                                       "justify"]},
-                "bg-color": {"required": False, "type": "str"},
-                "border-bottom": {"required": False, "type": "str"},
-                "border-left": {"required": False, "type": "str"},
-                "border-right": {"required": False, "type": "str"},
-                "border-top": {"required": False, "type": "str"},
-                "column-gap": {"required": False, "type": "str"},
-                "column-span": {"required": False, "type": "str",
+                "bg_color": {"required": False, "type": "str"},
+                "border_bottom": {"required": False, "type": "str"},
+                "border_left": {"required": False, "type": "str"},
+                "border_right": {"required": False, "type": "str"},
+                "border_top": {"required": False, "type": "str"},
+                "column_gap": {"required": False, "type": "str"},
+                "column_span": {"required": False, "type": "str",
                                 "choices": ["none", "all"]},
-                "fg-color": {"required": False, "type": "str"},
-                "font-family": {"required": False, "type": "str",
+                "fg_color": {"required": False, "type": "str"},
+                "font_family": {"required": False, "type": "str",
                                 "choices": ["Verdana", "Arial", "Helvetica",
                                             "Courier", "Times"]},
-                "font-size": {"required": False, "type": "str"},
-                "font-style": {"required": False, "type": "str",
+                "font_size": {"required": False, "type": "str"},
+                "font_style": {"required": False, "type": "str",
                                "choices": ["normal", "italic"]},
-                "font-weight": {"required": False, "type": "str",
+                "font_weight": {"required": False, "type": "str",
                                 "choices": ["normal", "bold"]},
                 "height": {"required": False, "type": "str"},
-                "line-height": {"required": False, "type": "str"},
-                "margin-bottom": {"required": False, "type": "str"},
-                "margin-left": {"required": False, "type": "str"},
-                "margin-right": {"required": False, "type": "str"},
-                "margin-top": {"required": False, "type": "str"},
+                "line_height": {"required": False, "type": "str"},
+                "margin_bottom": {"required": False, "type": "str"},
+                "margin_left": {"required": False, "type": "str"},
+                "margin_right": {"required": False, "type": "str"},
+                "margin_top": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"},
                 "options": {"required": False, "type": "str",
                             "choices": ["font", "text", "color",
                                         "align", "size", "margin",
                                         "border", "padding", "column"]},
-                "padding-bottom": {"required": False, "type": "str"},
-                "padding-left": {"required": False, "type": "str"},
-                "padding-right": {"required": False, "type": "str"},
-                "padding-top": {"required": False, "type": "str"},
+                "padding_bottom": {"required": False, "type": "str"},
+                "padding_left": {"required": False, "type": "str"},
+                "padding_right": {"required": False, "type": "str"},
+                "padding_top": {"required": False, "type": "str"},
                 "width": {"required": False, "type": "str"}
 
             }
@@ -429,15 +493,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_report(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_report(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_report(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

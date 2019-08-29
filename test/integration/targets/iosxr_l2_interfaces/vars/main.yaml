@@ -1,0 +1,142 @@
+---
+merged:
+  before: []
+
+  commands:
+    - interface GigabitEthernet0/0/0/1
+    - dot1q native vlan 10
+    - l2transport l2protocol pvst tunnel
+    - l2transport l2protocol cdp forward
+    - l2transport propagate remote-status
+    - interface GigabitEthernet0/0/0/3.900
+    - dot1q vlan 20 40
+    - interface GigabitEthernet0/0/0/4
+    - dot1q native vlan 40
+
+  after:
+    - l2protocol:
+      - cdp: forward
+      - pvst: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/1
+      native_vlan: 10
+      propagate: true
+    - name: GigabitEthernet0/0/0/3.900
+      q_vlan:
+      - 20
+      - 40
+    - name: GigabitEthernet0/0/0/4
+      native_vlan: 40
+
+
+replaced:
+  before:
+    - l2protocol:
+      - cdp: forward
+      l2transport: true
+      name: GigabitEthernet0/0/0/1
+      native_vlan: 10
+      propagate: true
+    - name: GigabitEthernet0/0/0/3.900
+      q_vlan:
+      - 40
+      - 60
+    - l2protocol:
+      - vtp: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/4
+      native_vlan: 20
+
+  commands:
+    - interface GigabitEthernet0/0/0/1
+    - no l2transport
+    - dot1q native vlan 40
+    - l2transport l2protocol vtp tunnel
+
+  after:
+    - l2protocol:
+      - vtp: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/1
+      native_vlan: 40
+    - name: GigabitEthernet0/0/0/3.900
+      q_vlan:
+      - 40
+      - 60
+    - l2protocol:
+      - vtp: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/4
+      native_vlan: 20
+
+overridden:
+  before:
+    - l2protocol:
+      - cdp: forward
+      l2transport: true
+      name: GigabitEthernet0/0/0/1
+      native_vlan: 10
+      propagate: true
+    - name: GigabitEthernet0/0/0/3.900
+      q_vlan:
+      - 40
+      - 60
+    - l2protocol:
+      - vtp: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/4
+      native_vlan: 20
+
+  commands:
+    - interface GigabitEthernet0/0/0/1
+    - no dot1q native vlan
+    - no l2transport
+    - interface GigabitEthernet0/0/0/3.900
+    - dot1q vlan 20 40
+    - interface GigabitEthernet0/0/0/4
+    - no l2transport
+    - dot1q native vlan 40
+    - l2transport l2protocol stp forward
+
+  after:
+    - name: GigabitEthernet0/0/0/3.900
+      q_vlan:
+      - 20
+      - 40
+    - l2protocol:
+      - stp: forward
+      l2transport: true
+      name: GigabitEthernet0/0/0/4
+      native_vlan: 40
+
+deleted:
+  before:
+    - l2protocol:
+      - cdp: forward
+      l2transport: true
+      name: GigabitEthernet0/0/0/1
+      native_vlan: 10
+      propagate: true
+    - name: GigabitEthernet0/0/0/3.900
+      q_vlan:
+      - 40
+      - 60
+    - l2protocol:
+      - vtp: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/4
+      native_vlan: 20
+
+  commands:
+    - interface GigabitEthernet0/0/0/1
+    - no dot1q native vlan
+    - no l2transport
+    - interface GigabitEthernet0/0/0/3.900
+    - no encapsulation dot1q
+    - interface GigabitEthernet0/0/0/4
+    - no dot1q native vlan
+    - no l2transport
+
+  after:
+    - name: GigabitEthernet0/0/0/4
+    - name: GigabitEthernet0/0/0/3.900

@@ -194,7 +194,7 @@ class TestStrategyBase(unittest.TestCase):
             variable_manager=mock_var_manager,
             loader=fake_loader,
             passwords=None,
-            forks=5,
+            forks=3,
         )
         tqm._initialize_processes(3)
         tqm.hostvars = dict()

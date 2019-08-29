@@ -49,7 +49,7 @@ def get_csharp_module_utils_name(path):  # type: (str) -> str
     base_path = data_context().content.module_utils_csharp_path
 
     if data_context().content.collection:
-        prefix = 'AnsibleCollections.' + data_context().content.collection.prefix
+        prefix = 'ansible_collections.' + data_context().content.collection.prefix + 'plugins.module_utils.'
     else:
         prefix = ''
 
@@ -78,7 +78,7 @@ def extract_csharp_module_utils_imports(path, module_utils, is_pure_csharp):
     if is_pure_csharp:
         pattern = re.compile(r'(?i)^using\s((?:Ansible|AnsibleCollections)\..+);$')
     else:
-        pattern = re.compile(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+((?:Ansible|AnsibleCollections)\..+)')
+        pattern = re.compile(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+((?:Ansible|ansible.collections)\..+)')
 
     with open(path, 'r') as module_file:
         for line_number, line in enumerate(module_file, 1):

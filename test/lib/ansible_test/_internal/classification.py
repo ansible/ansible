@@ -7,6 +7,8 @@ import os
 import re
 import time
 
+from . import types as t
+
 from .target import (
     walk_module_targets,
     walk_integration_targets,
@@ -157,7 +159,7 @@ def categorize_changes(args, paths, verbose_command=None):
     for command in commands:
         commands[command].discard('none')
 
-        if any(t == 'all' for t in commands[command]):
+        if any(target == 'all' for target in commands[command]):
             commands[command] = set(['all'])
 
     commands = dict((c, sorted(commands[c])) for c in commands if commands[c])
@@ -192,23 +194,23 @@ class PathMapper:
         self.compile_targets = list(walk_compile_targets())
         self.units_targets = list(walk_units_targets())
         self.sanity_targets = list(walk_sanity_targets())
-        self.powershell_targets = [t for t in self.sanity_targets if os.path.splitext(t.path)[1] in ('.ps1', '.psm1')]
-        self.csharp_targets = [t for t in self.sanity_targets if os.path.splitext(t.path)[1] == '.cs']
+        self.powershell_targets = [target for target in self.sanity_targets if os.path.splitext(target.path)[1] in ('.ps1', '.psm1')]
+        self.csharp_targets = [target for target in self.sanity_targets if os.path.splitext(target.path)[1] == '.cs']
 
-        self.units_modules = set(t.module for t in self.units_targets if t.module)
-        self.units_paths = set(a for t in self.units_targets for a in t.aliases)
-        self.sanity_paths = set(t.path for t in self.sanity_targets)
+        self.units_modules = set(target.module for target in self.units_targets if target.module)
+        self.units_paths = set(a for target in self.units_targets for a in target.aliases)
+        self.sanity_paths = set(target.path for target in self.sanity_targets)
 
-        self.module_names_by_path = dict((t.path, t.module) for t in self.module_targets)
-        self.integration_targets_by_name = dict((t.name, t) for t in self.integration_targets)
-        self.integration_targets_by_alias = dict((a, t) for t in self.integration_targets for a in t.aliases)
+        self.module_names_by_path = dict((target.path, target.module) for target in self.module_targets)
+        self.integration_targets_by_name = dict((target.name, target) for target in self.integration_targets)
+        self.integration_targets_by_alias = dict((a, target) for target in self.integration_targets for a in target.aliases)
 
-        self.posix_integration_by_module = dict((m, t.name) for t in self.integration_targets
-                                                if 'posix/' in t.aliases for m in t.modules)
-        self.windows_integration_by_module = dict((m, t.name) for t in self.integration_targets
-                                                  if 'windows/' in t.aliases for m in t.modules)
-        self.network_integration_by_module = dict((m, t.name) for t in self.integration_targets
-                                                  if 'network/' in t.aliases for m in t.modules)
+        self.posix_integration_by_module = dict((m, target.name) for target in self.integration_targets
+                                                if 'posix/' in target.aliases for m in target.modules)
+        self.windows_integration_by_module = dict((m, target.name) for target in self.integration_targets
+                                                  if 'windows/' in target.aliases for m in target.modules)
+        self.network_integration_by_module = dict((m, target.name) for target in self.integration_targets
+                                                  if 'network/' in target.aliases for m in target.modules)
 
         self.prefixes = load_integration_prefixes()
         self.integration_dependencies = analyze_integration_target_dependencies(self.integration_targets)
@@ -254,7 +256,7 @@ class PathMapper:
         :rtype: list[str]
         """
         paths = self.get_dependent_paths_internal(path)
-        paths += [t.path + '/' for t in self.paths_to_dependent_targets.get(path, set())]
+        paths += [target.path + '/' for target in self.paths_to_dependent_targets.get(path, set())]
         paths = sorted(set(paths))
 
         return paths
@@ -276,7 +278,7 @@ class PathMapper:
             if ext == '.cs':
                 return self.get_csharp_module_utils_usage(path)
 
-        if path.startswith('test/integration/targets/'):
+        if is_subdir(path, data_context().content.integration_targets_path):
             return self.get_integration_target_usage(path)
 
         return []
@@ -338,7 +340,8 @@ class PathMapper:
         :rtype: list[str]
         """
         target_name = path.split('/')[3]
-        dependents = [os.path.join('test/integration/targets/%s/' % target) for target in sorted(self.integration_dependencies.get(target_name, set()))]
+        dependents = [os.path.join(data_context().content.integration_targets_path, target) + os.path.sep
+                      for target in sorted(self.integration_dependencies.get(target_name, set()))]
 
         return dependents
 
@@ -359,57 +362,89 @@ class PathMapper:
 
         return result
 
-    def _classify(self, path):
-        """
-        :type path: str
-        :rtype: dict[str, str] | None
-        """
+    def _classify(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+        """Return the classification for the given path."""
+        if data_context().content.is_ansible:
+            return self._classify_ansible(path)
+
+        if data_context().content.collection:
+            return self._classify_collection(path)
+
+        return None
+
+    def _classify_common(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+        """Return the classification for the given path using rules common to all layouts."""
         dirname = os.path.dirname(path)
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
         minimal = {}
 
-        if path.startswith('.github/'):
+        if is_subdir(path, '.github'):
             return minimal
 
-        if path.startswith('bin/'):
-            return all_tests(self.args)  # broad impact, run all tests
+        if is_subdir(path, data_context().content.integration_targets_path):
+            if not os.path.exists(path):
+                return minimal
 
-        if path.startswith('contrib/'):
+            target = self.integration_targets_by_name.get(path.split('/')[3])
+
+            if not target:
+                display.warning('Unexpected non-target found: %s' % path)
+                return minimal
+
+            if 'hidden/' in target.aliases:
+                return minimal  # already expanded using get_dependent_paths
+
             return {
-                'units': 'test/units/contrib/'
+                'integration': target.name if 'posix/' in target.aliases else None,
+                'windows-integration': target.name if 'windows/' in target.aliases else None,
+                'network-integration': target.name if 'network/' in target.aliases else None,
+                FOCUSED_TARGET: True,
             }
 
-        if path.startswith('changelogs/'):
-            return minimal
+        if is_subdir(path, data_context().content.integration_path):
+            if dirname == data_context().content.integration_path:
+                for command in (
+                        'integration',
+                        'windows-integration',
+                        'network-integration',
+                ):
+                    if name == command and ext == '.cfg':
+                        return {
+                            command: self.integration_all_target,
+                        }
 
-        if path.startswith('docs/'):
-            return minimal
+            return {
+                'integration': self.integration_all_target,
+                'windows-integration': self.integration_all_target,
+                'network-integration': self.integration_all_target,
+            }
 
-        if path.startswith('examples/'):
-            if path == 'examples/scripts/ConfigureRemotingForAnsible.ps1':
+        if is_subdir(path, data_context().content.sanity_path):
+            return {
+                'sanity': 'all',  # test infrastructure, run all sanity checks
+            }
+
+        if is_subdir(path, data_context().content.unit_path):
+            if path in self.units_paths:
                 return {
-                    'windows-integration': 'connection_winrm',
+                    'units': path,
                 }
 
-            return minimal
+            # changes to files which are not unit tests should trigger tests from the nearest parent directory
 
-        if path.startswith('hacking/'):
-            return minimal
+            test_path = os.path.dirname(path)
 
-        if path.startswith('lib/ansible/executor/powershell/'):
-            units_path = 'test/units/executor/powershell/'
+            while test_path:
+                if test_path + '/' in self.units_paths:
+                    return {
+                        'units': test_path + '/',
+                    }
 
-            if units_path not in self.units_paths:
-                units_path = None
+                test_path = os.path.dirname(test_path)
 
-            return {
-                'windows-integration': self.integration_all_target,
-                'units': units_path,
-            }
-
-        if path.startswith('lib/ansible/modules/'):
+        if is_subdir(path, data_context().content.module_path):
             module_name = self.module_names_by_path.get(path)
 
             if module_name:
@@ -423,7 +458,7 @@ class PathMapper:
 
             return minimal
 
-        if path.startswith('lib/ansible/module_utils/'):
+        if is_subdir(path, data_context().content.module_utils_path):
             if ext == '.cs':
                 return minimal  # already expanded using get_dependent_paths
 
@@ -433,7 +468,7 @@ class PathMapper:
             if ext == '.py':
                 return minimal  # already expanded using get_dependent_paths
 
-        if path.startswith('lib/ansible/plugins/action/'):
+        if is_subdir(path, data_context().content.plugin_paths['action']):
             if ext == '.py':
                 if name.startswith('net_'):
                     network_target = 'network/.*_%s' % name[4:]
@@ -473,7 +508,7 @@ class PathMapper:
                         'units': 'all',
                     }
 
-        if path.startswith('lib/ansible/plugins/connection/'):
+        if is_subdir(path, data_context().content.plugin_paths['connection']):
             if name == '__init__':
                 return {
                     'integration': self.integration_all_target,
@@ -533,7 +568,12 @@ class PathMapper:
                 'units': units_path,
             }
 
-        if path.startswith('lib/ansible/plugins/inventory/'):
+        if is_subdir(path, data_context().content.plugin_paths['doc_fragments']):
+            return {
+                'sanity': 'all',
+            }
+
+        if is_subdir(path, data_context().content.plugin_paths['inventory']):
             if name == '__init__':
                 return all_tests(self.args)  # broad impact, run all tests
 
@@ -566,9 +606,9 @@ class PathMapper:
                 FOCUSED_TARGET: target is not None,
             }
 
-        if (path.startswith('lib/ansible/plugins/terminal/') or
-                path.startswith('lib/ansible/plugins/cliconf/') or
-                path.startswith('lib/ansible/plugins/netconf/')):
+        if (is_subdir(path, data_context().content.plugin_paths['terminal']) or
+                is_subdir(path, data_context().content.plugin_paths['cliconf']) or
+                is_subdir(path, data_context().content.plugin_paths['netconf'])):
             if ext == '.py':
                 if name in self.prefixes and self.prefixes[name] == 'network':
                     network_target = 'network/%s/' % name
@@ -590,13 +630,76 @@ class PathMapper:
                     'units': 'all',
                 }
 
-        if path.startswith('lib/ansible/plugins/doc_fragments/'):
+        return None
+
+    def _classify_collection(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+        """Return the classification for the given path using rules specific to collections."""
+        result = self._classify_common(path)
+
+        if result is not None:
+            return result
+
+        return None
+
+    def _classify_ansible(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+        """Return the classification for the given path using rules specific to Ansible."""
+        if path.startswith('test/units/compat/'):
             return {
-                'sanity': 'all',
+                'units': 'test/units/',
+            }
+
+        result = self._classify_common(path)
+
+        if result is not None:
+            return result
+
+        dirname = os.path.dirname(path)
+        filename = os.path.basename(path)
+        name, ext = os.path.splitext(filename)
+
+        minimal = {}
+
+        if path.startswith('bin/'):
+            return all_tests(self.args)  # broad impact, run all tests
+
+        if path.startswith('changelogs/'):
+            return minimal
+
+        if path.startswith('contrib/'):
+            return {
+                'units': 'test/units/contrib/'
+            }
+
+        if path.startswith('docs/'):
+            return minimal
+
+        if path.startswith('examples/'):
+            if path == 'examples/scripts/ConfigureRemotingForAnsible.ps1':
+                return {
+                    'windows-integration': 'connection_winrm',
+                }
+
+            return minimal
+
+        if path.startswith('hacking/'):
+            return minimal
+
+        if path.startswith('lib/ansible/executor/powershell/'):
+            units_path = 'test/units/executor/powershell/'
+
+            if units_path not in self.units_paths:
+                units_path = None
+
+            return {
+                'windows-integration': self.integration_all_target,
+                'units': units_path,
             }
 
         if path.startswith('lib/ansible/'):
             return all_tests(self.args)  # broad impact, run all tests
+
+        if path.startswith('licenses/'):
+            return minimal
 
         if path.startswith('packaging/'):
             if path.startswith('packaging/requirements/'):
@@ -617,103 +720,11 @@ class PathMapper:
 
             return minimal
 
-        if path.startswith('test/cache/'):
-            return minimal
-
-        if path.startswith('test/results/'):
-            return minimal
+        if path.startswith('test/ansible_test/'):
+            return minimal  # these tests are not invoked from ansible-test
 
         if path.startswith('test/legacy/'):
             return minimal
-
-        if path.startswith('test/env/'):
-            return minimal
-
-        if path.startswith('test/integration/roles/'):
-            return minimal
-
-        if path.startswith('test/integration/targets/'):
-            if not os.path.exists(path):
-                return minimal
-
-            target = self.integration_targets_by_name.get(path.split('/')[3])
-
-            if not target:
-                display.warning('Unexpected non-target found: %s' % path)
-                return minimal
-
-            if 'hidden/' in target.aliases:
-                return minimal  # already expanded using get_dependent_paths
-
-            return {
-                'integration': target.name if 'posix/' in target.aliases else None,
-                'windows-integration': target.name if 'windows/' in target.aliases else None,
-                'network-integration': target.name if 'network/' in target.aliases else None,
-                FOCUSED_TARGET: True,
-            }
-
-        if path.startswith('test/integration/'):
-            if dirname == 'test/integration':
-                if self.prefixes.get(name) == 'network' and ext == '.yaml':
-                    return minimal  # network integration test playbooks are not used by ansible-test
-
-                if filename == 'network-all.yaml':
-                    return minimal  # network integration test playbook not used by ansible-test
-
-                if filename == 'platform_agnostic.yaml':
-                    return minimal  # network integration test playbook not used by ansible-test
-
-                if filename.startswith('inventory.') and filename.endswith('.template'):
-                    return minimal  # ansible-test does not use these inventory templates
-
-                if filename == 'inventory':
-                    return {
-                        'integration': self.integration_all_target,
-                    }
-
-                for command in (
-                        'integration',
-                        'windows-integration',
-                        'network-integration',
-                ):
-                    if name == command and ext == '.cfg':
-                        return {
-                            command: self.integration_all_target,
-                        }
-
-            return {
-                'integration': self.integration_all_target,
-                'windows-integration': self.integration_all_target,
-                'network-integration': self.integration_all_target,
-            }
-
-        if path.startswith('test/sanity/'):
-            return {
-                'sanity': 'all',  # test infrastructure, run all sanity checks
-            }
-
-        if path.startswith('test/units/'):
-            if path in self.units_paths:
-                return {
-                    'units': path,
-                }
-
-            if path.startswith('test/units/compat/'):
-                return {
-                    'units': 'test/units/',
-                }
-
-            # changes to files which are not unit tests should trigger tests from the nearest parent directory
-
-            test_path = os.path.dirname(path)
-
-            while test_path:
-                if test_path + '/' in self.units_paths:
-                    return {
-                        'units': test_path + '/',
-                    }
-
-                test_path = os.path.dirname(test_path)
 
         if path.startswith('test/lib/ansible_test/config/'):
             if name.startswith('cloud-config-'):
@@ -830,39 +841,29 @@ class PathMapper:
         if path.startswith('test/utils/'):
             return minimal
 
-        if path == 'test/README.md':
-            return minimal
-
-        if path.startswith('ticket_stubs/'):
-            return minimal
-
         if '/' not in path:
             if path in (
                     '.gitattributes',
                     '.gitignore',
-                    '.gitmodules',
                     '.mailmap',
-                    'tox.ini',  # obsolete
                     'COPYING',
-                    'VERSION',
                     'Makefile',
             ):
                 return minimal
 
             if path in (
+                    'setup.py',
                     'shippable.yml',
             ):
-                return all_tests(self.args)  # test infrastructure, run all tests
-
-            if path == 'setup.py':
                 return all_tests(self.args)  # broad impact, run all tests
 
-            if path == '.yamllint':
-                return {
-                    'sanity': 'all',
-                }
-
-            if ext in ('.md', '.rst', '.txt', '.xml', '.in'):
+            if ext in (
+                    '.in',
+                    '.md',
+                    '.rst',
+                    '.toml',
+                    '.txt',
+            ):
                 return minimal
 
         return None  # unknown, will result in fall-back to run all tests
