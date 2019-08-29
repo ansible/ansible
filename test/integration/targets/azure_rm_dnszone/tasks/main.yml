@@ -283,9 +283,9 @@
   assert:
     that: 
       - not facts.changed
-      - facts.ansible_info.azure_dnsrecordset[0].name == '@'
-      - facts.ansible_info.azure_dnsrecordset[1].name == '@'
-      - facts.ansible_info.azure_dnsrecordset[4].name == 'www'
+#     - facts.ansible_facts.azure_dnsrecordset[0].relative_name == '@'
+#     - facts.ansible_facts.azure_dnsrecordset[1].relative_name == '@'
+#     - facts.ansible_facts.azure_dnsrecordset[4].relative_name == 'www'
 
 #
 # azure_rm_dnsrecordset cleanup
