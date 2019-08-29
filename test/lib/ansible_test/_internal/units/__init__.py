@@ -17,6 +17,7 @@ from ..util import (
 from ..util_common import (
     intercept_command,
     ResultType,
+    handle_layout_messages,
 )
 
 from ..ansible_util import (
@@ -54,6 +55,8 @@ def command_units(args):
     """
     :type args: UnitsConfig
     """
+    handle_layout_messages(data_context().content.unit_messages)
+
     changes = get_changes_filter(args)
     require = args.require + changes
     include = walk_internal_targets(walk_units_targets(), args.include, args.exclude, require)

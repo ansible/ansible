@@ -31,6 +31,7 @@ from ..util import (
 
 from ..util_common import (
     run_command,
+    handle_layout_messages,
 )
 
 from ..ansible_util import (
@@ -76,6 +77,8 @@ def command_sanity(args):
     """
     :type args: SanityConfig
     """
+    handle_layout_messages(data_context().content.sanity_messages)
+
     changes = get_changes_filter(args)
     require = args.require + changes
     targets = SanityTargets.create(args.include, args.exclude, require)
