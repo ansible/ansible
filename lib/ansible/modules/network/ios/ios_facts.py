@@ -43,7 +43,7 @@ options:
       - When supplied, this argument restricts the facts collected
          to a given subset.
       - Possible values for this argument include
-         C(all), C(hardware), C(config), and C(interfaces).
+         C(all), C(min), C(hardware), C(config), and C(interfaces).
       - Specify a list of values to include a larger subset.
       - Use a value with an initial C(!) to collect all facts except that subset.
     required: false
