@@ -257,7 +257,7 @@ files:
   $modules/identity/cyberark/:
     notified: cyberark-bizdev
   $modules/identity/ipa/: $team_ipa
-  $modules/identity/keycloak/: eikef
+  $modules/identity/keycloak/: eikef ndclt
   $modules/inventory/add_host.py:
     ignored: skvidal
     maintainers: $team_ansible
@@ -717,7 +717,7 @@ files:
       - clustering
       - k8s
   $module_utils/identity/keycloak/:
-     maintainers: eikef
+     maintainers: eikef, ndclt
      support: community
   $module_utils/kubevirt.py: *kubevirt
   $module_utils/manageiq.py:
