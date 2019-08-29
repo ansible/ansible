@@ -5,7 +5,7 @@
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, print_function, division)
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -70,22 +70,22 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Create acl for raw dir recursively
-      azure_rm_datalakeacl:
-        dir_name: /raw
-        store_name: mydatalake
-        sp_name: myserviceprincipalid
-        permissions: r-x
-        acl_spec: user
-        recursive: true
+  - name: Create acl for raw dir recursively
+    azure_rm_datalakeacl:
+      dir_name: /raw
+      store_name: mydatalake
+      sp_name: myserviceprincipalid
+      permissions: r-x
+      acl_spec: user
+      recursive: true
 
-    - name: Delete a key
-      azure_rm_datalakeacl:
-        dir_name: /raw
-        store_name: mydatalake
-        sp_name: myserviceprincipalid
-        acl_spec: user
-        state:absent
+  - name: Delete a key
+    azure_rm_datalakeacl:
+      dir_name: /raw
+      store_name: mydatalake
+      sp_name: myserviceprincipalid
+      acl_spec: user
+      state: absent
 '''
 
 RETURN = '''
