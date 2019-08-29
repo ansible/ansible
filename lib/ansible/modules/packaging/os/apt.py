@@ -1119,7 +1119,7 @@ def main():
                         delay = update_cache_retry_max_delay + randomize
                     time.sleep(delay)
                 else:
-                    module.fail_json(msg='Failed to update apt cache: %s' % err if err else 'unknown reason')
+                    module.fail_json(msg='Failed to update apt cache: %s' % (err if err else 'unknown reason'))
 
                 cache.open(progress=None)
                 mtimestamp, post_cache_update_time = get_updated_cache_time()
