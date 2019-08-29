@@ -21,19 +21,19 @@ description:
 version_added: '2.9'
 author: René Moser (@resmo)
 options:
-  name:
+  zone:
     description:
       - Name of the zone.
       - If not specified, all zones are returned
     type: str
-    aliases: [ zone ]
+    aliases: [ name ]
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: Gather information from a zone
   cs_zone_info:
-    name: ch-gva-1
+    zone: ch-gva-1
   register: zone
   delegate_to: localhost
 
