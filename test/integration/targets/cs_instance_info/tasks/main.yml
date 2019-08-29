@@ -82,3 +82,10 @@
     - instance_info is successful
     - instance_info is not changed
     - instance_info.instances | length > 0
+    - '"id" in instance_info.instances[0]'
+    - '"domain" in instance_info.instances[0]'
+    - '"account" in instance_info.instances[0]'
+    - '"zone" in instance_info.instances[0]'
+    - '"name" in instance_info.instances[0]'
+    - '"service_offering" in instance_info.instances[0]'
+    - '"host" in instance_info.instances[0]'

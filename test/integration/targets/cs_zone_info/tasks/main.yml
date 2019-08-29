@@ -61,3 +61,13 @@
       - zones is successful
       - zones is not changed
       - zones.zones | length > 0
+      - '"dns1" in zone.zones[0]'
+      - '"dns2" in zone.zones[0]'
+      - '"internal_dns1" in zone.zones[0]'
+      - '"internal_dns2" in zone.zones[0]'
+      - '"local_storage_enabled" in zone.zones[0]'
+      - '"network_type" in zone.zones[0]'
+      - '"zone_token" in zone.zones[0]'
+      - '"securitygroups_enabled" in zone.zones[0]'
+      - '"dhcp_provider" in zone.zones[0]'
+      - '"local_storage_enabled" in zone.zones[0]'
