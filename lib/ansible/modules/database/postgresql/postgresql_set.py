@@ -19,12 +19,11 @@ module: postgresql_set
 short_description: Change a PostgreSQL server configuration parameter
 description:
    - Allows to change a PostgreSQL server configuration parameter.
-   - The module uses ALTER SYSTEM command U(https://www.postgresql.org/docs/current/sql-altersystem.html)
-     and applies changes by reload server configuration.
+   - The module uses ALTER SYSTEM command and applies changes by reload server configuration.
    - ALTER SYSTEM is used for changing server configuration parameters across the entire database cluster.
    - It can be more convenient and safe than the traditional method of manually editing the postgresql.conf file.
    - ALTER SYSTEM writes the given parameter setting to the $PGDATA/postgresql.auto.conf file,
-     which is read in addition to postgresql.conf U(https://www.postgresql.org/docs/current/sql-altersystem.html).
+     which is read in addition to postgresql.conf.
    - The module allows to reset parameter to boot_val (cluster initial value) by I(reset=yes) or remove parameter
      string from postgresql.auto.conf and reload I(value=default) (for settings with postmaster context restart is required).
    - After change you can see in the ansible output the previous and
@@ -72,6 +71,17 @@ notes:
   not restarted and the value in pg_settings is not updated yet.
 - For some parameters restart of PostgreSQL server is required.
   See official documentation U(https://www.postgresql.org/docs/current/view-pg-settings.html).
+seealso:
+- module: postgresql_info
+- name: PostgreSQL server configuration
+  description: General information about PostgreSQL server configuration.
+  link: https://www.postgresql.org/docs/current/runtime-config.html
+- name: PostgreSQL view pg_settings reference
+  description: Complete reference of the pg_settings view documentation.
+  link: https://www.postgresql.org/docs/current/view-pg-settings.html
+- name: PostgreSQL ALTER SYSTEM command reference
+  description: Complete reference of the ALTER SYSTEM command documentation.
+  link: https://www.postgresql.org/docs/current/sql-altersystem.html
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
