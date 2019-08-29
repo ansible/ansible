@@ -853,8 +853,8 @@ Intermittent failure while using ``network_cli`` connection type due to slower n
 
 In Ansible 2.9 and later, the ``network_cli`` connection plugin configuration option is added to control
 the number of attempts to connect to a remote host. The default number of attempts is three.
-every attempt by power of 2 in seconds until either the maximum attempts are exhausted or either of the
-the maximum attempts are exhausted or either the ``persistent_command_timeout`` or ``persistent_connect_timeout``
+After every retry attempt the delay between retries is increased by power of 2 in seconds until either the
+maximum attempts are exhausted or either the ``persistent_command_timeout`` or ``persistent_connect_timeout``
 timers are triggered.
 
 To make this a global setting, add the following to your ``ansible.cfg`` file:
