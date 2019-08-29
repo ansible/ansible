@@ -94,6 +94,10 @@ EXAMPLES = """
 - name: set-service-group
   cp_mgmt_service_group:
     name: New Service Group 1
+    members:
+    - https
+    - bootp
+    - nisplus
     state: present
 
 - name: delete-service-group
