@@ -148,6 +148,13 @@ options:
       - Poll async jobs until job has finished.
     default: yes
     type: bool
+  tags:
+    description:
+      - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
+      - "To delete all tags, set a empty list e.g. I(tags: [])."
+    type: list
+    aliases: [ tag ]
+    version_added: '2.9'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -462,6 +469,10 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
             network = self.create_network(network)
         else:
             network = self.update_network(network)
+
+        if network:
+            network = self.ensure_tags(resource=network, resource_type='Network')
+
         return network
 
     def update_network(self, network):
@@ -597,6 +608,7 @@ def main():
         domain=dict(),
         account=dict(),
         poll_async=dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag']),
     ))
     required_together = cs_required_together()
     required_together.extend([
