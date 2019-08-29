@@ -49,9 +49,9 @@ def g_connect(versions):
 
                 # Default to only supporting v1, if only v1 is returned we also assume that v2 is available even though
                 # it isn't returned in the available_versions dict.
-                available_versions = data.get('available_versions', {'v1': '/api/v1'})
-                if list(available_versions.keys()) == ['v1']:
-                    available_versions['v2'] = '/api/v2'
+                available_versions = data.get('available_versions', {u'v1': u'/api/v1'})
+                if list(available_versions.keys()) == [u'v1']:
+                    available_versions[u'v2'] = u'/api/v2'
 
                 self.available_api_versions = available_versions
                 display.vvvv("Found API version '%s' with Galaxy server %s (%s)"
@@ -94,7 +94,7 @@ class GalaxyError(AnsibleError):
         if 'v2' in url_split:
             galaxy_msg = err_info.get('message', 'Unknown error returned by Galaxy server.')
             code = err_info.get('code', 'Unknown')
-            full_error_msg = "%s (HTTP Code: %d, Message: %s Code: %s)" % (message, self.http_code, galaxy_msg, code)
+            full_error_msg = u"%s (HTTP Code: %d, Message: %s Code: %s)" % (message, self.http_code, galaxy_msg, code)
         elif 'v3' in url_split:
             errors = err_info.get('errors', [])
             if not errors:
@@ -104,14 +104,14 @@ class GalaxyError(AnsibleError):
             for error in errors:
                 error_msg = error.get('detail') or error.get('title') or 'Unknown error returned by Galaxy server.'
                 error_code = error.get('code') or 'Unknown'
-                message_line = "(HTTP Code: %d, Message: %s Code: %s)" % (self.http_code, error_msg, error_code)
+                message_line = u"(HTTP Code: %d, Message: %s Code: %s)" % (self.http_code, error_msg, error_code)
                 message_lines.append(message_line)
 
             full_error_msg = "%s %s" % (message, ', '.join(message_lines))
         else:
             # v1 and unknown API endpoints
             galaxy_msg = err_info.get('default', 'Unknown error returned by Galaxy server.')
-            full_error_msg = "%s (HTTP Code: %d, Message: %s)" % (message, self.http_code, galaxy_msg)
+            full_error_msg = u"%s (HTTP Code: %d, Message: %s)" % (message, self.http_code, galaxy_msg)
 
         self.message = to_native(full_error_msg)
 
@@ -418,7 +418,7 @@ class GalaxyAPI(object):
         :param version: Optional version of the collection to get the information for.
         :return: A dict containing information about the collection specified.
         """
-        api_path = self.available_api_versions.get('v3', self.available_api_versions['v2'])
+        api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
         url_paths = [self.api_server, api_path, 'collections', namespace, name]
         if version is not None:
             url_paths += ['versions', version]
