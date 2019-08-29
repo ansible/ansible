@@ -413,7 +413,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if not items:
             return
 
-        hostname_ordering = ['public_ip', 'private_ip', 'name', 'hostname']
+        hostname_ordering = ["public_ip", "private_ip", "name", "hostname"]
         if self.get_option("hostnames"):
             hostname_ordering = self.get_option("hostnames")
 
