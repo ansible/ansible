@@ -1,4 +1,4 @@
 ---
 bugfixes:
 - apt - Fixed the issue the cache being updated while auto-installing its
-  dependencies even ``update_cache`` is set to false.
+  dependencies even when ``update_cache`` is set to false.
