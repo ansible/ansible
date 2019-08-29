@@ -175,7 +175,9 @@ In Ansible 2.8 the implicit "Gathering Facts" task in a play was changed to
 obey play tags. Previous to 2.8, the "Gathering Facts" task would ignore play
 tags and tags supplied from the command line and always run in a task.
 
-The behavior change affects the following example play::
+The behavior change affects the following example play.
+
+.. code-block:: yaml
 
     - name: Configure Webservers
       hosts: webserver
@@ -197,7 +199,9 @@ be given a tag of ``always`` and will effectively match prior
 behavior.
 
 You can achieve similar results to the pre-2.8 behavior, by
-using an explicit ``gather_facts`` task in your ``tasks`` list::
+using an explicit ``gather_facts`` task in your ``tasks`` list.
+
+.. code-block:: yaml
 
     - name: Configure Webservers
       hosts: webserver
