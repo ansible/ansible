@@ -4217,10 +4217,10 @@ lib/ansible/modules/network/nxos/nxos_facts.py validate-modules:doc-default-inco
 lib/ansible/modules/network/nxos/nxos_facts.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/nxos/nxos_feature.py future-import-boilerplate
 lib/ansible/modules/network/nxos/nxos_feature.py metaclass-boilerplate
-lib/ansible/modules/network/nxos/nxos_feature.py validate-modules:E324
-lib/ansible/modules/network/nxos/nxos_feature.py validate-modules:E327
-lib/ansible/modules/network/nxos/nxos_feature.py validate-modules:E337
-lib/ansible/modules/network/nxos/nxos_feature.py validate-modules:E338
+lib/ansible/modules/network/nxos/nxos_feature.py validate-modules:doc-default-does-not-match-spec
+lib/ansible/modules/network/nxos/nxos_feature.py validate-modules:doc-default-incompatible-type
+lib/ansible/modules/network/nxos/nxos_feature.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/network/nxos/nxos_feature.py validate-modules:doc-missing-type
 lib/ansible/modules/network/nxos/nxos_gir.py future-import-boilerplate
 lib/ansible/modules/network/nxos/nxos_gir.py metaclass-boilerplate
 lib/ansible/modules/network/nxos/nxos_gir.py validate-modules:doc-default-does-not-match-spec
