@@ -237,37 +237,37 @@ import re  # regex library
 # May include some lines between each chain in the cert, e.g. "Subject: ..."
 # Returns True iff the chains/certs are functionally identical (including chain order)
 def chain_compare(a, b):
-    
+
     # Use regex to split up a chain or single cert into an array of base64 encoded data
     # Using "-----BEGIN CERTIFICATE-----" and "----END CERTIFICATE----"
     # Noting that some chains have non-pem data in between each cert
     expr = re.compile(r"-+BEGIN\s+CERTIFICATE-+([a-zA-Z0-9\+\/=\s]+)-+END\s+CERTIFICATE-+")
     chain_a_pem = pem_chain_split(a)
     chain_b_pem = pem_chain_split(b)
-    
+
     if len(chain_a_pem) != len(chain_b_pem):
         return(False)
-        
+
     # Chain length is the same
     for (ca, cb) in zip(chain_a_pem, chain_b_pem):
         der_a = PEM_cert_to_DER_cert(ca)
         der_b = PEM_cert_to_DER_cert(cb)
         if der_a != der_b:
             return(False)
-            
+
     return(True)
-    
+
 # Use regex to split up a chain or single cert into an array of base64 encoded data
 # Using "-----BEGIN CERTIFICATE-----" and "----END CERTIFICATE----"
 # Noting that some chains have non-pem data in between each cert
 def pem_chain_split(pem):
     expr = re.compile(r"-+BEGIN\s+CERTIFICATE-+([a-zA-Z0-9\+\/=\s]+)-+END\s+CERTIFICATE-+")
-    pem_arr = re.findall(expr,to_text(pem.replace('\n','')))
+    pem_arr = re.findall(expr,to_text(pem.replace('\n', '')))
     prefix = "-----BEGIN CERTIFICATE-----"
     suffix = "-----END CERTIFICATE-----"
     pem_arr = [(prefix + p + suffix) for p in pem_arr]
     return(pem_arr)
-    
+
 
 def main():
     argument_spec = dict(
