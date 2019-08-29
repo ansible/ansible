@@ -202,7 +202,7 @@ class AzureRMDataLakes(AzureRMModuleBase):
 
             # Create ACL
             if self.state == 'present' and changed:
-                # self.create_acl(adl_creds)
+                self.create_acl(adl_creds)
                 self.results['state'] = results
                 self.results["permissions"] = "{0}:{1}:{2}".format(
                     self.acl_spec, self.sp_name, self.permissions)
