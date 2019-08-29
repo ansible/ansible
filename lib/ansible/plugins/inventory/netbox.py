@@ -43,10 +43,12 @@ DOCUMENTATION = '''
             description: Get vlans in site group vars
             type: boolean
             default: False
+            version_added: "2.10"
         interfaces:
             description: Get interfaces of the device in host vars
             type: boolean
             default: False
+            version_added: "2.10"
         token:
             required: True
             description: NetBox token.
@@ -84,10 +86,12 @@ DOCUMENTATION = '''
             description: Length of group name prefix
             type: int
             default: 15
+            version_added: "2.10"
         use_slugs:
             description: Use slug instead of name for group name suffix
             type: boolean
             default: False
+            version_added: "2.10"
 '''
 
 EXAMPLES = '''
