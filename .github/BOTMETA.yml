@@ -362,7 +362,6 @@ files:
   $modules/network/ordnance/: alexanderturner djh00t
   $modules/network/ovs/:
     ignored: stygstra
-    maintainers: rcarrillocruz
   $modules/network/panos/: ivanbojer jtschichold shinmog
   $modules/network/protocol/: $team_networking
   $modules/network/routeros/: heuels
@@ -1613,9 +1612,9 @@ macros:
   team_netbox: sieben anthony25 FragmentedPacket nikkytub pilou-
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi pdam preetiparasar csharpe-pn
-  team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha justjais NilashishC danielmellado
+  team_networking: Qalthos ganeshrn trishnaguha justjais NilashishC danielmellado
   team_nso: cmoberg cnasten tbjurman
-  team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha chrisvanheuveln
+  team_nxos: mikewiebe rahushen trishnaguha chrisvanheuveln
   team_onyx: anasbadaha samerd
   team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me cloudnull gtema
   team_openswitch: Qalthos danielmellado
