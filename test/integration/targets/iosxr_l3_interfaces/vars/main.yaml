@@ -10,13 +10,13 @@ merged:
     - "interface GigabitEthernet0/0/0/2"
     - "ipv4 address 192.0.2.2 255.255.255.0 secondary"
     - "ipv4 address 192.0.2.1 255.255.255.0"
-    - "ipv6 address 2001:db8:0000:3::/64"
+    - "ipv6 address 2001:db8:0:3::/64"
     - "interface GigabitEthernet0/0/0/3"
     - "ipv4 address 203.0.110.1 255.255.255.0"
     - "ipv4 address 203.0.110.5 255.255.255.0 secondary"
     - "interface GigabitEthernet0/0/0/3.100"
     - "ipv4 address 198.51.100.14 255.255.255.0"
-    - "ipv6 address 2001:db8:0000:4::/64"
+    - "ipv6 address 2001:db8:0:4::/64"
 
   after:
     - name: Loopback888

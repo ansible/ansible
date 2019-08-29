@@ -13,7 +13,7 @@
             - address: 198.51.100.1/24
           - name: GigabitEthernet0/0/0/2
             ipv6:
-            - address: 2001:db8:0000:3::/64
+            - address: 2001:db8:0:3::/64
             ipv4:
             - address: 192.0.2.1/24
             - address: 192.0.2.2/24
@@ -27,7 +27,7 @@
             ipv4:
             - address: 198.51.100.14/24
             ipv6:
-            - address: 2001:db8:0000:4::/64
+            - address: 2001:db8:0:4::/64
         state: merged
       register: result
 
