@@ -251,11 +251,17 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * vmware_vswitch_facts use :ref:`vmware_vswitch_info <vmware_vswitch_info_module>` instead.
 
+* vultr_account_facts use :ref:`vultr_account_info <vultr_account_info_module>` instead.
+
+* vultr_block_storage_facts use :ref:`vultr_block_storage_info <vultr_block_storage_info_module>` instead.
+
 * vultr_dns_domain_facts use :ref:`vultr_dns_domain_info <vultr_dns_domain_info_module>` instead.
 
 * vultr_firewall_group_facts use :ref:`vultr_firewall_group_info <vultr_firewall_group_info_module>` instead.
 
 * vultr_network_facts use :ref:`vultr_network_info <vultr_network_info_module>` instead.
+
+* vultr_os_facts use :ref:`vultr_os_info <vultr_os_info_module>` instead.
 
 * vultr_plan_facts use :ref:`vultr_plan_info <vultr_plan_info_module>` instead.
 
@@ -263,7 +269,11 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * vultr_server_facts use :ref:`vultr_server_info <vultr_server_info_module>` instead.
 
+* vultr_ssh_key_facts use :ref:`vultr_ssh_key_info <vultr_ssh_key_info_module>` instead.
+
 * vultr_startup_script_facts use :ref:`vultr_startup_script_info <vultr_startup_script_info_module>` instead.
+
+* vultr_user_facts use :ref:`vultr_user_info <vultr_user_info_module>` instead.
 
 * vyos_interface use :ref:`vyos_interfaces <vyos_interfaces_module>` instead.
 
