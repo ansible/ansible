@@ -191,14 +191,14 @@ class AnsibleCloudscaleVolume(AnsibleCloudscaleBase):
 
     def _update(self, volume):
         update_params = (
-          'name',
-          'size_gb',
-          'server_uuids',
-          'tags',
+            'name',
+            'size_gb',
+            'server_uuids',
+            'tags',
         )
         updated = False
         for param in update_params:
-          updated = self._param_updated(param, volume) or updated
+            updated = self._param_updated(param, volume) or updated
 
         # Refresh if resource was updated in live mode
         if updated and not self._module.check_mode:
