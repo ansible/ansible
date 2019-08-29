@@ -44,7 +44,7 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-- name: gather instance information
+- name: Gather instance information
   cs_instance_info:
     name: web-vm-1
   delegate_to: localhost
@@ -53,6 +53,15 @@ EXAMPLES = '''
 - name: Show the returned results of the registered variable
   debug:
     msg: "{{ vm }}"
+
+- name: Gather information from all instances
+  cs_instance_info:
+  delegate_to: localhost
+  register: vms
+
+- name: Show information on all instances
+  debug:
+    msg: "{{ vms }}"
 '''
 
 RETURN = '''

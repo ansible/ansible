@@ -40,6 +40,15 @@ EXAMPLES = '''
 - name: Show the returned results of the registered variable
   debug:
     msg: "{{ zone }}"
+
+- name: Gather information from all zones
+  cs_zone_info:
+  register: zones
+  delegate_to: localhost
+
+- name: Show information on all zones
+  debug:
+    msg: "{{ zones }}"
 '''
 
 RETURN = '''
