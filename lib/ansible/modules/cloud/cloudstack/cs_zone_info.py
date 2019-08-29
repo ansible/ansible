@@ -172,6 +172,10 @@ class AnsibleCloudStackZoneInfo(AnsibleCloudStack):
             zones = [super(AnsibleCloudStackZoneInfo, self).get_zone()]
         else:
             zones = self.query_api('listZones')
+            if zones:
+                zones = zones['zone']
+            else:
+                zones = []
         return {
             'zones': [self.update_result(resource) for resource in zones]
         }
