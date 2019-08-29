@@ -45,7 +45,8 @@ RETURN = '''
 zones:
   description: A list of matching zones.
   type: list
-  suboptions:
+  returned: success
+  contains:
     id:
       description: UUID of the zone.
       returned: success

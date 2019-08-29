@@ -60,7 +60,8 @@ RETURN = '''
 instances:
   description: A list of matching instances.
   type: list
-  suboptions:
+  returned: success
+  contains:
     id:
       description: UUID of the instance.
       returned: success
