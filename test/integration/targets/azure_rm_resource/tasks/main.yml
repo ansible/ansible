@@ -147,12 +147,39 @@
   assert:
     that: keys['response']['keys'][0]['value'] | length > 0
 
-- name: Delete storage - without API version
+- name: Delete unexisting storage account - without API version
   azure_rm_resource:
     polling_timeout: 600
     polling_interval: 60
-    method: DELETE
+    resource_group: "{{ resource_group }}"
+    provider: Storage
+    resource_type: storageAccounts
+    resource_name: justunexisitingname
+    state: absent
+  register: output
+
+- debug:
+    var: output
+
+- name: Assert that no change was detected
+  assert:
+    that:
+      - not output.changed
+
+
+- name: Delete existing account
+  azure_rm_resource:
+    polling_timeout: 600
+    polling_interval: 60
+    api_version: '2018-07-01'
     resource_group: "{{ resource_group }}"
     provider: Storage
     resource_type: storageAccounts
     resource_name: "{{ storageaccountname }}"
+    state: absent
+  register: output
+
+- name: Assert that change was repoted
+  assert:
+    that:
+      - output.changed
