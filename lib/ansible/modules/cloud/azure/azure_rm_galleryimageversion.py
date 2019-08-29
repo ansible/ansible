@@ -84,7 +84,10 @@ options:
       managed_image:
         description:
           - Managed image reference, could be resource id, or dictionary containing C(resource_group) and C(name)
-        required: true
+        type: raw
+      snapshot:
+        description:
+          - Source snapshot to be used.
         type: raw
       replica_count:
         description:
@@ -241,6 +244,13 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                         pattern=('/subscriptions/{subscription_id}/resourceGroups'
                                  '/{resource_group}/providers/Microsoft.Compute'
                                  '/images/{name}'),
+                        disposition='source/managedImage/id'
+                    ),
+                    snapshot=dict(
+                        type='raw',
+                        pattern=('/subscriptions/{subscription_id}/resourceGroups'
+                                 '/{resource_group}/providers/Microsoft.Compute'
+                                 '/snapshots/{name}'),
                         disposition='source/managedImage/id'
                     ),
                     replica_count=dict(
