@@ -195,9 +195,12 @@ def api_call(module, api_call_object):
 
     payload_for_equals = {'type': api_call_object, 'params': payload}
     equals_code, equals_response = send_request(connection, version, 'equals', payload_for_equals)
+
     # if code is 400 (bad request) or 500 (internal error) - fail
     if equals_code == 400 or equals_code == 500:
         module.fail_json(msg=equals_response)
+    if equals_code == 404 and equals_response['code'] == 'generic_err_command_not_found':
+        module.fail_json(msg='Relevant hotfix is not installed on Check Point server. See sk114661 on Check Point Support Center.')
 
     if module.params['state'] == 'present':
         if equals_code == 200:
