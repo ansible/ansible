@@ -34,7 +34,7 @@ class ActionModule(ActionNetworkModule):
         del tmp  # tmp no longer has any effect
 
         module_name = self._task.action.split('.')[-1]
-        self._config_module = True if module_name == 'eos_config' else False
+        self._config_module = True if module_name == 'netconf_config' else False
 
         if self._play_context.connection not in ['netconf', 'local'] and module_name == 'netconf_config':
             return {'failed': True, 'msg': 'Connection type %s is not valid for netconf_config module. '
