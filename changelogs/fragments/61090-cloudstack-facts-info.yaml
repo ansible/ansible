@@ -1,5 +1,3 @@
 minor_changes:
-- The ``cs_instance_facts`` module has been renamed to ``cs_instance_info``.
-  When called with the new name, the module no longer returns ``ansible_facts``.
-- The ``cs_zone_facts`` module has been renamed to ``cs_zone_info``.
-  When called with the new name, the module no longer returns ``ansible_facts``.
+- The ``cs_instance_facts`` module has been deprecated. Use ``cs_instance_info`` instead.
+- The ``cs_zone_facts`` module has been deprecated. Use ``cs_zone_info`` instead.

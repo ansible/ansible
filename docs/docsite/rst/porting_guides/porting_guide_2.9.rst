@@ -117,6 +117,10 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.13. Please update update your playbooks accordingly.
 
+* cs_instance_facts use :ref:`cs_instance_info <cs_instance_info_module>` instead.
+
+* cs_zone_facts use :ref:`cs_zone_info <cs_zone_info_module>` instead.
+
 * digital_ocean_sshkey_facts use :ref:`digital_ocean_sshkey_info <digital_ocean_sshkey_info_module>` instead.
 
 * junos_interface use :ref:`junos_interfaces <junos_interfaces_module>` instead.
@@ -353,12 +357,6 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
   When called with the new name, the module no longer returns ``ansible_facts``.
   To access return values, :ref:`register a variable <registered_variables>`.
 * The ``cloudwatchlogs_log_group_facts`` module was renamed to :ref:`cloudwatchlogs_log_group_info <cloudwatchlogs_log_group_info_module>`.
-* The ``cs_instance_facts`` module was renamed to :ref:`cs_instance_info <cs_instance_info_module>`.
-  When called with the new name, the module no longer returns ``ansible_facts``.
-  To access return values, :ref:`register a variable <registered_variables>`.
-* The ``cs_zone_facts`` module was renamed to :ref:`cs_zone_info <cs_zone_info_module>`.
-  When called with the new name, the module no longer returns ``ansible_facts``.
-  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``digital_ocean_account_facts`` module was renamed to :ref:`digital_ocean_account_info <digital_ocean_account_info_module>`.
 * The ``digital_ocean_certificate_facts`` module was renamed to :ref:`digital_ocean_certificate_info <digital_ocean_certificate_info_module>`.
 * The ``digital_ocean_domain_facts`` module was renamed to :ref:`digital_ocean_domain_info <digital_ocean_domain_info_module>`.

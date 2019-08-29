@@ -19,10 +19,7 @@ module: cs_instance_info
 short_description: Gathering information from the API of instances from Apache CloudStack based clouds.
 description:
     - Gathering information from the API of an instance.
-    - This module was called C(cs_instance_facts) before Ansible 2.9, returning C(ansible_facts) with key C(cloudstack_instance).
-      Since Ansible 2.6, the module also returned registerable results.
-      Note that the M(cs_instance_info) module no longer returns C(ansible_facts)!
-version_added: '2.1'
+version_added: '2.9'
 author: René Moser (@resmo)
 options:
   name:
@@ -55,19 +52,6 @@ EXAMPLES = '''
 - name: Show the returned results of the registered variable
   debug:
     msg: "{{ vm }}"
-
-# When the module is called as cs_instance_facts, return values are also
-# published in ansible_facts['cloudstack_instance'] and can be used as
-# follows. Note that this is deprecated and will stop working in
-# Ansible 2.13.
-- name: gather instance information
-  cs_instance_facts:
-    name: web-vm-1
-  delegate_to: localhost
-
-- name: Show the facts by the ansible_facts key cloudstack_instance
-  debug:
-    msg: "{{ cloudstack_instance }}"
 '''
 
 RETURN = '''
@@ -369,21 +353,10 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-    is_old_facts = module._name == 'cs_instance_facts'
-    if is_old_facts:
-        module.deprecate("The 'cs_instance_facts' module has been renamed to 'cs_instance_info', "
-                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     acs_instance_info = AnsibleCloudStackInstanceInfo(module=module)
-    if is_old_facts:
-        cs_instance_info = acs_instance_info.get_result_and_facts(
-            facts_name='cloudstack_instance',
-            resource=acs_instance_info.run()
-        )
-        module.exit_json(**cs_instance_info)
-    else:
-        cs_instance_info = acs_instance_info.get_result(acs_instance_info.run())
-        module.exit_json(**cs_instance_info)
+    cs_instance_info = acs_instance_info.get_result(acs_instance_info.run())
+    module.exit_json(**cs_instance_info)
 
 
 if __name__ == '__main__':
