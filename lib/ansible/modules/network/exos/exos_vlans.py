@@ -139,40 +139,55 @@ EXAMPLES = """
 # Module Execution Results:
 # -------------------------
 #
+# "after": [
+#     {
+#         "name": "Default",
+#         "state": "active",
+#         "vlan_id": 1
+#     }
+# ],
+#
 # "before": [
-#    "config": {
-#       "name": "vlan_10",
-#       "state": "ACTIVE",
-#       "vlan-id": 10
-#     } 
-#    "config": {
-#       "name": "vlan_20",
-#       "state": "ACTIVE",
-#       "vlan-id": 20
+#     {
+#         "name": "Default",
+#         "state": "active",
+#         "vlan_id": 1
+#     },
+#     {
+#         "name": "vlan_10",
+#         "state": "active",
+#         "vlan_id": 10
+#     },
+#     {
+#         "name": "vlan_20",
+#         "state": "active",
+#         "vlan_id": 20
 #     }
-#    "config": {
-#       "name": "vlan_30",
-#       "state": "ACTIVE",
-#       "vlan-id": 30
+#     {
+#         "name": "vlan_30",
+#         "state": "active",
+#         "vlan_id": 30
 #     }
-# ]
+# ],
 #
 # "requests": [
 #     {
+#        "data": null,
 #        "method": "DELETE",
 #        "path": "/rest/restconf/data/openconfig-vlan:vlans/vlan=10"
 #     },
 #     {
+#	 "data": null,
 #        "method": "DELETE",
 #        "path": "/rest/restconf/data/openconfig-vlan:vlans/vlan=20"
 #     },
-#     {
+#     {  
+#	 "data": null,
 #        "method": "DELETE",
 #        "path": "/rest/restconf/data/openconfig-vlan:vlans/vlan=30"
 #     }
 # ]
 #
-# "After": []
 #
 #  After state:
 # -------------
@@ -235,7 +250,36 @@ EXAMPLES = """
 # Module Execution Results:
 # -------------------------
 #
-# "before": []
+# "after": [
+#     {
+#         "name": "Default",
+#         "state": "active",
+#         "vlan_id": 1
+#     },
+#     {
+#         "name": "vlan_10",
+#         "state": "active",
+#         "vlan_id": 10
+#     },
+#     {
+#         "name": "vlan_20",
+#         "state": "active",
+#         "vlan_id": 20
+#     },
+#     {
+#         "name": "vlan_30",
+#         "state": "active",
+#         "vlan_id": 30
+#     }
+# ],
+#
+# "before": [
+#     {
+#         "name": "Default",
+#         "state": "active",
+#         "vlan_id": 1
+#     }
+# ],
 #
 # "requests": [
 #     {
@@ -286,24 +330,6 @@ EXAMPLES = """
 #        "path": "/rest/restconf/data/openconfig-vlan:vlans/"
 #      }
 #    ]
-#
-# "After": [
-#    "config": {
-#       "name": "vlan_10",
-#       "state": "ACTIVE",
-#       "vlan-id": 10
-#     }
-#    "config": {
-#       "name": "vlan_20",
-#       "state": "ACTIVE",
-#       "vlan-id": 20
-#     }
-#    "config": {
-#       "name": "vlan_30",
-#       "state": "ACTIVE",
-#       "vlan-id": 30
-#     }
-#  ]
 #
 # 
 # After state:
@@ -409,56 +435,71 @@ EXAMPLES = """
 # Module Execution Results:
 # -------------------------
 #
+# "after": [
+#     {
+#         "name": "Default",
+#         "state": "active",
+#         "vlan_id": 1
+#     },
+#     {
+#         "name": "TEST_VLAN10",
+#         "state": "active",
+#         "vlan_id": 10
+#     },
+# ],
+#
 # "before": [
-#     "config": {
-#        "name": "vlan_10",
-#        "state": "ACTIVE",
-#        "vlan-id": 10
+#     {
+#         "name": "Default",
+#         "state": "active",
+#         "vlan_id": 1
+#     },
+#     {
+#         "name": "vlan_10",
+#         "state": "active",
+#         "vlan_id": 10
+#     },
+#     {
+#         "name": "vlan_20",
+#         "state": "active",
+#         "vlan_id": 20
+#     },
+#     {
+#         "name": "vlan_30",
+#         "state": "active",
+#         "vlan_id": 30
 #     }
-#     "config": {
-#        "name": "vlan_20",
-#        "state": "ACTIVE",
-#        "vlan-id": 20
-#     }
-#     "config": {
-#        "name": "vlan_30",
-#        "state": "ACTIVE",
-#        "vlan-id": 30
-#     }
-#  ]
+# ],
 #
 # "requests": [
 #     {
 #        "data": {
-#          "openconfig-vlan:vlan": [
-#            {
-#              "config": {
-#                "name": "TEST_VLAN10",
-#                "status": "ACTIVE",
-#                "tpid": "oc-vlan-types:TPID_0x8100",
-#                "vlan-id": 10
-#             }
-#            }
-#          ]
-#        },
+#          "openconfig-vlan:vlan": {
+#	     "vlan": [
+#              {
+#                "config": {
+#                  "name": "TEST_VLAN10",
+#                  "status": "ACTIVE",
+#                  "tpid": "oc-vlan-types:TPID_0x8100",
+#                  "vlan-id": 10
+#                }
+#              }
+#            ]
+#          }
+#        }
+#     },
 #        "method": "PATCH",
-#        "path": "/rest/restconf/data/openconfig-vlan:vlans/vlan=10"
+#        "path": "/rest/restconf/data/openconfig-vlan:vlans/"
 #     },
 #     {
+#	 "data": null,
 #        "method": "DELETE",
 #        "path": "/rest/restconf/data/openconfig-vlan:vlans/vlan=20"
 #     },
 #     {
+#	 "data": null,
 #        "method": "DELETE",
 #        "path": "/rest/restconf/data/openconfig-vlan:vlans/vlan=30"
-#     }
-#  ]
-#
-# "After": [
-#    "config": {
-#       "name": "TEST_VLAN10",
-#       "state": "ACTIVE",
-#       "vlan-id": 10
 #     }
 #  ]
 #
@@ -552,66 +593,77 @@ EXAMPLES = """
 # Module Execution Results:
 # -------------------------
 #
-# "before": [
-#     "config": {
-#        "name": "vlan_20",
-#        "state": "ACTIVE",
-#        "vlan-id": 20
+# "after": [
+#     {
+#         "name": "Default",
+#         "state": "active",
+#         "vlan_id": 1
 #     },
-#     "config": {
-#        "name": "vlan_30",
-#        "state": "ACTIVE",
-#        "vlan-id": 30
+#     {
+#         "name": "vlan_10",
+#         "state": "active",
+#         "vlan_id": 10
+#     },
+#     {
+#         "name": "TEST_VLAN20",
+#         "state": "active",
+#         "vlan_id": 20
+#     },
+#     {
+#         "name": "TEST_VLAN30",
+#         "state": "active",
+#         "vlan_id": 30
 #     }
-#  ]
+# ],
+#
+# "before": [
+#     {
+#         "name": "Default",
+#         "state": "active",
+#         "vlan_id": 1
+#     },
+#     {
+#         "name": "vlan_10",
+#         "state": "active",
+#         "vlan_id": 10
+#     },
+#     {
+#         "name": "vlan_20",
+#         "state": "active",
+#         "vlan_id": 20
+#     },
+#     {
+#         "name": "vlan_30",
+#         "state": "active",
+#         "vlan_id": 30
+#     }
+# ],
 #
 # "requests": [
-#     {
-#        "data": {
-#          "openconfig-vlan:vlan": [
-#            {
-#              "config": {
-#                "name": "TEST_VLAN20",
-#                "status": "ACTIVE",
-#                "tpid": "oc-vlan-types:TPID_0x8100",
-#                "vlan-id": 20
-#             }
-#            }
-#          ]
-#        },
-#        "method": "PATCH",
-#        "path": "/rest/restconf/data/openconfig-vlan:vlans/vlan=20"
-#      },
-#      {
-#        "data": {
-#          "openconfig-vlan:vlan": [
-#            {
-#              "config": {
-#                "name": "TEST_VLAN30",
-#                "status": "ACTIVE",
-#                "tpid": "oc-vlan-types:TPID_0x8100",
-#                "vlan-id": 30
-#              }
-#            }
-#          ]
-#        },
-#        "method": "PATCH",
-#        "path": "/rest/restconf/data/openconfig-vlan:vlans/vlan=30"
-#      }
-#   ]
-#
-# "After": [
-#    "config": {
-#       "name": "TEST_VLAN20",
-#       "state": "ACTIVE",
-#       "vlan-id": 20
-#     }
-#    "config": {
-#       "name": "TEST_VLAN30",
-#       "state": "ACTIVE",
-#       "vlan-id": 30
-#     }
-#  ]
+#    {
+#       "data": {
+#          "openconfig-vlan:vlan": {
+#             "vlan": [
+#                 {
+#                   "config": {
+#                      "name": "TEST_VLAN20",
+#                      "status": "ACTIVE",
+#                      "tpid": "oc-vlan-types:TPID_0x8100",
+#                      "vlan-id": 20
+#                   }
+#                   "config": {
+#                      "name": "TEST_VLAN30",
+#                      "status": "ACTIVE",
+#                      "tpid": "oc-vlan-types:TPID_0x8100",
+#                      "vlan-id": 30
+#                   }
+#                }
+#             ]
+#          },
+#       "method": "PATCH",
+#       "path": "/rest/restconf/data/openconfig-vlan:vlans/"
+#    }
+# ]
 #
 # After state:
 # -------------
@@ -685,7 +737,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.exos.argspec.vlans.vlans import VlansArgs
 from ansible.module_utils.network.exos.config.vlans.vlans import Vlans
 
-
 def main():
     """
     Main entry point for module execution
@@ -703,3 +754,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
