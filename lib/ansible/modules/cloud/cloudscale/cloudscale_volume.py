@@ -176,7 +176,15 @@ class AnsibleCloudscaleVolume(AnsibleCloudscaleBase):
         }
 
     def _create(self, volume):
+        # Fail when missing params for creation
         self._module.fail_on_missing_params(['name', 'size_gb'])
+
+        # Fail if a user uses a UUID and state=present but the volume was not found.
+        if self._module.params.get('uuid'):
+            self._module.fail_json(msg="The volume with UUID '%s' was not found "
+                                   "and we would create a new one with different UUID, "
+                                   "this is probaly not want you have asked for." % self._module.params.get('uuid'))
+
         self._result['changed'] = True
         data = {
             'name': self._module.params.get('name'),
