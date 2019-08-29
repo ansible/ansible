@@ -154,7 +154,7 @@ options:
       - "To delete all tags, set a empty list e.g. I(tags: [])."
     type: list
     aliases: [ tag ]
-    version_added: '2.8'
+    version_added: '2.9'
 extends_documentation_fragment: cloudstack
 '''
 
