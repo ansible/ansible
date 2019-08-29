@@ -269,7 +269,6 @@
   assert:
     that: 
       - not results.changed
-      - results.dnsrecordsets[0].name == 'www'
       - results.dnsrecordsets[0].relative_name == 'www'
       - 'results.dnsrecordsets[0].records | length == 3'
       - results.dnsrecordsets[0].record_type == 'A'
