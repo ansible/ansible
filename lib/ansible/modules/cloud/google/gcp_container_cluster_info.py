@@ -632,6 +632,34 @@ resources:
           - Human-friendly representation of the condition.
           returned: success
           type: str
+    masterAuthorizedNetworksConfig:
+      description:
+      - Configuration for controlling how IPs are allocated in the cluster.
+      returned: success
+      type: complex
+      contains:
+        enabled:
+          description:
+          - Whether or not master authorized networks is enabled.
+          returned: success
+          type: bool
+        cidrBlocks:
+          description:
+          - Define up to 50 external networks that could access Kubernetes master
+            through HTTPS.
+          returned: success
+          type: complex
+          contains:
+            displayName:
+              description:
+              - Optional field used to identify cidr blocks.
+              returned: success
+              type: str
+            cidrBlock:
+              description:
+              - Block specified in CIDR notation.
+              returned: success
+              type: str
     location:
       description:
       - The location where the cluster is deployed.
