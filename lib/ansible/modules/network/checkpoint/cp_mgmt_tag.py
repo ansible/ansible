@@ -81,11 +81,6 @@ EXAMPLES = """
     - tag1
     - tag2
 
-- name: set-tag
-  cp_mgmt_tag:
-    name: My New Tag1
-    state: present
-
 - name: delete-tag
   cp_mgmt_tag:
     name: dda885bb-0d5b-4529-96eb-55b757847092
