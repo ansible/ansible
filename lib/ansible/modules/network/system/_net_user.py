@@ -119,7 +119,7 @@ EXAMPLES = """
 - name: Change Password for User netop
   net_user:
     name: netop
-    password: "{{ new_password }}"
+    configured_password: "{{ new_password }}"
     update_password: always
     state: present
 """
