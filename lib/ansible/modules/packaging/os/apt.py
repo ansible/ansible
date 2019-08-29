@@ -46,7 +46,7 @@ options:
     version_added: '2.9'
   update_cache_retry_max_delay:
     description:
-      - Use an exponential backoff delay for each retry (See I(update_cache_retries)) up to this max. delay in seconds.
+      - Use an exponential backoff delay for each retry (see I(update_cache_retries)) up to this max. delay in seconds.
     type: int
     default: 12
     version_added: '2.9'
