@@ -529,8 +529,6 @@ class IntegrationTarget(CompletionTarget):
         if runme_files:
             self.type = 'script'
             self.script_path = os.path.join(path, runme_files[0])
-        elif os.path.isdir(os.path.join(path, 'tasks')) or os.path.isdir(os.path.join(path, 'defaults')):
-            self.type = 'role'
         else:
             self.type = 'role'  # ansible will consider these empty roles, so ansible-test should as well
 
