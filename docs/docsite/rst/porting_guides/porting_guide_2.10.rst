@@ -1,9 +1,9 @@
 
 .. _porting_2.10_guide:
 
-*************************
+**************************
 Ansible 2.10 Porting Guide
-*************************
+**************************
 
 This section discusses the behavioral changes between Ansible 2.9 and Ansible 2.10.
 
