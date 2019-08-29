@@ -48,13 +48,13 @@
     that:
     - instance_info is successful
     - instance_info is not changed
-    - instance_info.id == instance.id
-    - instance_info.domain == instance.domain
-    - instance_info.account == instance.account
-    - instance_info.zone == instance.zone
-    - instance_info.name == instance.name
-    - instance_info.service_offering == instance.service_offering
-    - instance_info.host != ""
+    - instance_info.instances[0].id == instance.id
+    - instance_info.instances[0].domain == instance.domain
+    - instance_info.instances[0].account == instance.account
+    - instance_info.instances[0].zone == instance.zone
+    - instance_info.instances[0].name == instance.name
+    - instance_info.instances[0].service_offering == instance.service_offering
+    - instance_info.instances[0].host != ""
 
 - name: test instance info
   cs_instance_info:
@@ -65,10 +65,20 @@
     that:
     - instance_info is successful
     - instance_info is not changed
-    - instance_info.id == instance.id
-    - instance_info.domain == instance.domain
-    - instance_info.account == instance.account
-    - instance_info.zone == instance.zone
-    - instance_info.name == instance.name
-    - instance_info.service_offering == instance.service_offering
-    - instance_info.host != ""
+    - instance_info.instances[0].id == instance.id
+    - instance_info.instances[0].domain == instance.domain
+    - instance_info.instances[0].account == instance.account
+    - instance_info.instances[0].zone == instance.zone
+    - instance_info.instances[0].name == instance.name
+    - instance_info.instances[0].service_offering == instance.service_offering
+    - instance_info.instances[0].host != ""
+
+- name: test instance info for all instances
+  cs_instance_info:
+  register: instance_info
+- name: verify test instance info
+  assert:
+    that:
+    - instance_info is successful
+    - instance_info is not changed
+    - instance_info.instances | length > 0

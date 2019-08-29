@@ -85,7 +85,7 @@
     - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey"
     - not instance.tags
 
-- name: gather host facts of running instance
+- name: gather host infos of running instance
   cs_instance_info:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
 
