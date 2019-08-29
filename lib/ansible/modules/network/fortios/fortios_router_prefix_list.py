@@ -76,8 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
-        required: true
+        required: false
         choices:
             - present
             - absent
@@ -88,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             comments:
                 description:
                     - Comment.
@@ -268,7 +281,12 @@ def underscore_to_hyphen(data):
 
 def router_prefix_list(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['router_prefix_list'] and data['router_prefix_list']:
+        state = data['router_prefix_list']['state']
+    else:
+        state = True
     router_prefix_list_data = data['router_prefix_list']
     filtered_data = underscore_to_hyphen(filter_router_prefix_list_data(router_prefix_list_data))
 
@@ -308,11 +326,13 @@ def main():
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "router_prefix_list": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "comments": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"},
                 "rule": {"required": False, "type": "list",
