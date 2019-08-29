@@ -36,6 +36,8 @@ class AnsibleLayout(LayoutProvider):
                              results_path='test/results',
                              sanity_path='test/sanity',
                              integration_path='test/integration',
+                             integration_targets_path='test/integration/targets',
+                             integration_vars_path='test/integration/integration_config.yml',
                              unit_path='test/units',
                              unit_module_path='test/units/modules',
                              unit_module_utils_path='test/units/module_utils',
