@@ -14,8 +14,15 @@ __metaclass__ = type
 
 from copy import deepcopy
 
+from ansible.module_utils._text import to_bytes
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.junos.argspec.l3_interfaces.l3_interfaces import L3_interfacesArgs
+from ansible.module_utils.six import string_types
+try:
+    from lxml import etree
+    HAS_LXML = True
+except ImportError:
+    HAS_LXML = False
 
 
 class L3_interfacesFacts(object):
@@ -44,9 +51,21 @@ class L3_interfacesFacts(object):
         :rtype: dictionary
         :returns: facts
         """
+        if not HAS_LXML:
+            self._module.fail_json(msg='lxml is not installed.')
+
         if not data:
-            data = connection.get_configuration()
-        resources = data.xpath('//configuration/interfaces/node()')
+            config_filter = """
+                <configuration>
+                    <interfaces/>
+                </configuration>
+                """
+            data = connection.get_configuration(filter=config_filter)
+
+        if isinstance(data, string_types):
+            data = etree.fromstring(to_bytes(data, errors='surrogate_then_replace'))
+
+        resources = data.xpath('configuration/interfaces/interface')
 
         objs = []
         if resources:
