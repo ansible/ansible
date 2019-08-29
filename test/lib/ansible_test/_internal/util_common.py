@@ -25,10 +25,15 @@ from .util import (
     to_bytes,
     ANSIBLE_TEST_DATA_ROOT,
     make_dirs,
+    ApplicationError,
 )
 
 from .data import (
     data_context,
+)
+
+from .provider.layout import (
+    LayoutMessages,
 )
 
 
@@ -97,6 +102,21 @@ class CommonConfig:
     def get_ansible_config(self):  # type: () -> str
         """Return the path to the Ansible config for the given config."""
         return os.path.join(ANSIBLE_TEST_DATA_ROOT, 'ansible.cfg')
+
+
+def handle_layout_messages(messages):  # type: (t.Optional[LayoutMessages]) -> None
+    """Display the given layout messages."""
+    if not messages:
+        return
+
+    for message in messages.info:
+        display.info(message, verbosity=1)
+
+    for message in messages.warning:
+        display.warning(message)
+
+    if messages.error:
+        raise ApplicationError('\n'.join(messages.error))
 
 
 @contextlib.contextmanager

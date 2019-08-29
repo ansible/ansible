@@ -84,12 +84,15 @@ class ContentLayout(Layout):
                  test_path,  # type: str
                  results_path,  # type: str
                  sanity_path,  # type: str
+                 sanity_messages,  # type: t.Optional[LayoutMessages]
                  integration_path,  # type: str
                  integration_targets_path,  # type: str
                  integration_vars_path,  # type: str
+                 integration_messages,  # type: t.Optional[LayoutMessages]
                  unit_path,  # type: str
                  unit_module_path,  # type: str
                  unit_module_utils_path,  # type: str
+                 unit_messages,  # type: t.Optional[LayoutMessages]
                  ):  # type: (...) -> None
         super(ContentLayout, self).__init__(root, paths)
 
@@ -98,12 +101,15 @@ class ContentLayout(Layout):
         self.test_path = test_path
         self.results_path = results_path
         self.sanity_path = sanity_path
+        self.sanity_messages = sanity_messages
         self.integration_path = integration_path
         self.integration_targets_path = integration_targets_path
         self.integration_vars_path = integration_vars_path
+        self.integration_messages = integration_messages
         self.unit_path = unit_path
         self.unit_module_path = unit_module_path
         self.unit_module_utils_path = unit_module_utils_path
+        self.unit_messages = unit_messages
 
         self.is_ansible = root == ANSIBLE_SOURCE_ROOT
 
@@ -140,6 +146,14 @@ class ContentLayout(Layout):
             return os.path.join(self.plugin_paths['module_utils'], 'csharp')
 
         return self.plugin_paths.get('module_utils')
+
+
+class LayoutMessages:
+    """Messages generated during layout creation that should be deferred for later display."""
+    def __init__(self):
+        self.info = []  # type: t.List[str]
+        self.warning = []  # type: t.List[str]
+        self.error = []  # type: t.List[str]
 
 
 class CollectionDetail:
