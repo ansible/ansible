@@ -94,7 +94,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: vm
-    name: test_vm1
+    name: test_vm2
     datacenter: "{{ dc1 }}"
     cdrom:
       type: none
@@ -153,7 +153,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: vm
-    name: CDROM-multi
+    name: test_vm1
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
     resource_pool: Resources
@@ -165,25 +165,23 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: LocalDS_0
+      datastore: "{{ ds2 }}"
     cdrom:
     - controller_type: ide
       controller_number: 0
       unit_number: 0
       type: iso
-      iso_path: "[LocalDS_0] base.iso"
+      iso_path: "[{{ ds1 }}] centos.iso"
     - controller_type: ide
       controller_number: 0
       unit_number: 1
       type: client
-    - controller_type: ide
-      controller_number: 1
+    - controller_number: 1
       unit_number: 0
       type: none
-    - controller_type: ide
-      controller_number: 1
+    - controller_number: 1
       unit_number: 1
-      type: none
+      type: client
   register: cdrom_vm
 
 - debug: var=cdrom_vm
@@ -200,7 +198,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: vm
-    name: CDROM-multi
+    name: test_vm1
     datacenter: "{{ dc1 }}"
     cdrom:
     - controller_type: ide
@@ -211,16 +209,14 @@
       controller_number: 0
       unit_number: 1
       type: iso
-      iso_path: "[LocalDS_0] base.iso"
+      iso_path: "[{{ ds1 }}] fedora.iso"
     - controller_type: ide
       controller_number: 1
       unit_number: 0
-      type: none
       state: absent
     - controller_type: ide
       controller_number: 1
       unit_number: 1
-      type: none
       state: absent
     state: present
   register: cdrom_vm

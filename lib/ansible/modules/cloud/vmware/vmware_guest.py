@@ -206,12 +206,13 @@ options:
           will be disconnected but present.'
     - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso).
           Required if type is set C(iso).'
-    - ' - C(controller_type) (string): C(controller_type), C(controller_number) and C(unit_number) are mandatory attributes.
-          Only C(ide) controller type for CD-ROM is supported for now.'
+    - ' - C(controller_type) (string): Default value is C(ide). Only C(ide) controller type for CD-ROM is supported for
+          now, will add SATA controller type in the future.'
     - ' - C(controller_number) (int): For C(ide) controller, valid value is 0 or 1.'
-    - ' - C(unit_number) (int): For CD-ROM device attach to C(ide) controller, valid value is 0 or 1.'
-    - ' - C(state) (string): If set to C(absent) and CD-ROM exists, then the specified CD-ROM removed. For IDE controller,
-          CD-ROM hot-add and hot-remove operations are not supported.'
+    - ' - C(unit_number) (int): For CD-ROM device attach to C(ide) controller, valid value is 0 or 1.
+          C(controller_number) and C(unit_number) are mandatory attributes.'
+    - ' - C(state) (string): Valid value is C(present) or C(absent). Default is C(present). If set to C(absent), then
+          the specified CD-ROM will be removed. For C(ide) controller, hot-add or hot-remove CD-ROM is not supported.'
     version_added: '2.5'
   resource_pool:
     description:
@@ -1072,29 +1073,46 @@ class PyVmomiHelper(PyVmomi):
     def sanitize_cdrom_params(self):
         # cdroms {'ide': [{num: 0, cdrom: []}, {}], 'sata': [{num: 0, cdrom: []}, {}, ...]}
         cdroms = {'ide': [], 'sata': []}
-        for cdrom_spec in self.params.get('cdrom'):
-            cdrom_ctl = cdrom_spec.get('controller_type', 'ide').lower()
-            cdrom_ctl_num = cdrom_spec.get('controller_number')
-            if cdrom_spec.get('type') not in ['none', 'client', 'iso']:
-                self.module.fail_json(msg="cdrom.type is mandatory. Options are 'none', 'client', and 'iso'.")
-            if cdrom_spec['type'] == 'iso' and not cdrom_spec.get('iso_path'):
-                self.module.fail_json(msg="cdrom.iso_path is mandatory when cdrom.type is set to iso.")
-            if cdrom_ctl != 'ide':
-                self.module.fail_json(msg="cdrom.controller_type value %s is invalid, valid is 'ide'." % cdrom_ctl)
-            # sata cdrom_ctl_num in [0, 1, 2, 3]
-            if cdrom_ctl_num not in [0, 1]:
-                self.module.fail_json(msg="cdrom.controller_number is mandatory. Valid value is 0 or 1.")
-            if cdrom_spec.get('unit_number') not in [0, 1]:
-                self.module.fail_json(msg="cdrom.unit_number is mandatory. Valid value is 0 or 1 for "
-                                          "CD-ROM attached to IDE controller.")
-            ctl_exist = False
-            for exist_spec in cdroms[cdrom_ctl]:
-                if exist_spec['num'] == cdrom_ctl_num:
-                    ctl_exist = True
-                    exist_spec['cdrom'].append(cdrom_spec)
-                    break
-            if not ctl_exist:
-                cdroms[cdrom_ctl].append({'num': cdrom_ctl_num, 'cdrom': [cdrom_spec]})
+        expected_cdrom_spec = self.params.get('cdrom')
+        if expected_cdrom_spec:
+            for cdrom_spec in expected_cdrom_spec:
+                cdrom_spec['controller_type'] = cdrom_spec.get('controller_type', 'ide').lower()
+                if cdrom_spec['controller_type'] not in ['ide', 'sata']:
+                    self.module.fail_json(msg="Invalid cdrom.controller_type: %s, valid value is 'ide' or 'sata'."
+                                              % cdrom_spec['controller_type'])
+
+                cdrom_spec['state'] = cdrom_spec.get('state', 'present').lower()
+                if cdrom_spec['state'] not in ['present', 'absent']:
+                    self.module.fail_json(msg="Invalid cdrom.state: %s, valid value is 'present', 'absent'."
+                                              % cdrom_spec['state'])
+
+                if cdrom_spec['state'] == 'present':
+                    if 'type' in cdrom_spec and cdrom_spec.get('type') not in ['none', 'client', 'iso']:
+                        self.module.fail_json(msg="Invalid cdrom.type: %s, valid value is 'none', 'client' or 'iso'."
+                                                  % cdrom_spec.get('type'))
+                    if cdrom_spec.get('type') == 'iso' and not cdrom_spec.get('iso_path'):
+                        self.module.fail_json(msg="cdrom.iso_path is mandatory when cdrom.type is set to iso.")
+
+                if cdrom_spec['controller_type'] == 'ide' and \
+                        (cdrom_spec.get('controller_number') not in [0, 1] or cdrom_spec.get('unit_number') not in [0, 1]):
+                    self.module.fail_json(msg="Invalid cdrom.controller_number: %s or cdrom.unit_number: %s, valid"
+                                              " values are 0 or 1 for IDE controller." % (cdrom_spec.get('controller_number'), cdrom_spec.get('unit_number')))
+
+                if cdrom_spec['controller_type'] == 'sata' and \
+                        (cdrom_spec.get('controller_number') not in range(0, 4) or cdrom_spec.get('unit_number') not in range(0, 30)):
+                    self.module.fail_json(msg="Invalid cdrom.controller_number: %s or cdrom.unit_number: %s,"
+                                              " valid controller_number value is 0-3, valid unit_number is 0-29"
+                                              " for SATA controller." % (cdrom_spec.get('controller_number'), cdrom_spec.get('unit_number')))
+
+                ctl_exist = False
+                for exist_spec in cdroms.get(cdrom_spec['controller_type']):
+                    if exist_spec['num'] == cdrom_spec['controller_number']:
+                        ctl_exist = True
+                        exist_spec['cdrom'].append(cdrom_spec)
+                        break
+                if not ctl_exist:
+                    cdroms.get(cdrom_spec['controller_type']).append({'num': cdrom_spec['controller_number'], 'cdrom': [cdrom_spec]})
+
         return cdroms
 
     def configure_cdrom(self, vm_obj):
