@@ -315,7 +315,7 @@ class AnsibleCloudStackInstanceInfo(AnsibleCloudStack):
         return volume_details
 
     def run(self):
-        instances = self.get_instance()
+        instances = self.get_instances()
         if self.module.params.get('name') and not instances:
             self.module.fail_json(msg="Instance not found: %s" % self.module.params.get('name'))
         return {
