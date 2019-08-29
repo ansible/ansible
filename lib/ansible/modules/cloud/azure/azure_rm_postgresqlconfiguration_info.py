@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_postgresqlconfiguration_facts
-version_added: "2.8"
+module: azure_rm_postgresqlconfiguration_info
+version_added: "2.9"
 short_description: Get Azure PostgreSQL Configuration facts
 description:
     - Get facts of Azure PostgreSQL Configuration.
@@ -26,13 +26,16 @@ options:
         description:
             - The name of the resource group that contains the resource.
         required: True
+        type: str
     server_name:
         description:
             - The name of the server.
         required: True
+        type: str
     name:
         description:
             - Setting name.
+        type: str
 
 extends_documentation_fragment:
     - azure
@@ -44,13 +47,13 @@ author:
 
 EXAMPLES = '''
   - name: Get specific setting of PostgreSQL configuration
-    azure_rm_postgresqlconfiguration_facts:
+    azure_rm_postgresqlconfiguration_info:
       resource_group: myResourceGroup
       server_name: testpostgresqlserver
       name: deadlock_timeout
 
   - name: Get all settings of PostgreSQL Configuration
-    azure_rm_postgresqlconfiguration_facts:
+    azure_rm_postgresqlconfiguration_info:
       resource_group: myResourceGroup
       server_name: testpostgresqlserver
 '''
@@ -107,7 +110,7 @@ except ImportError:
     pass
 
 
-class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
+class AzureRMPostgreSQLConfigurationInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -131,9 +134,14 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMPostgreSQLConfigurationFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMPostgreSQLConfigurationInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_postgresqlconfiguration_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_postgresqlconfiguration_facts' module has been renamed to 'azure_rm_postgresqlconfiguration_info'",
+                                  version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
@@ -202,7 +210,7 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMPostgreSQLConfigurationFacts()
+    AzureRMPostgreSQLConfigurationInfo()
 
 
 if __name__ == '__main__':

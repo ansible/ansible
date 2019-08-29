@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright (c) 2017 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2019 Matti Ranta, (@techknowlogick)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -15,47 +16,51 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_mysqlserver_facts
-version_added: "2.7"
-short_description: Get Azure MySQL Server facts
+module: azure_rm_mariadbserver_info
+version_added: "2.9"
+short_description: Get Azure MariaDB Server facts
 description:
-    - Get facts of MySQL Server.
+    - Get facts of MariaDB Server.
 
 options:
     resource_group:
         description:
             - The name of the resource group that contains the resource. You can obtain this value from the Azure Resource Manager API or the portal.
         required: True
+        type: str
     name:
         description:
             - The name of the server.
+        type: str
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+        type: list
 
 extends_documentation_fragment:
     - azure
 
 author:
     - Zim Kalinowski (@zikalino)
+    - Matti Ranta (@techknowlogick)
 
 '''
 
 EXAMPLES = '''
-  - name: Get instance of MySQL Server
-    azure_rm_mysqlserver_facts:
+  - name: Get instance of MariaDB Server
+    azure_rm_mariadbserver_info:
       resource_group: myResourceGroup
       name: server_name
 
-  - name: List instances of MySQL Server
-    azure_rm_mysqlserver_facts:
+  - name: List instances of MariaDB Server
+    azure_rm_mariadbserver_info:
       resource_group: myResourceGroup
 '''
 
 RETURN = '''
 servers:
     description:
-        - A list of dictionaries containing facts for MySQL servers.
+        - A list of dictionaries containing facts for MariaDB servers.
     returned: always
     type: complex
     contains:
@@ -64,7 +69,7 @@ servers:
                 - Resource ID.
             returned: always
             type: str
-            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/myabdud1223
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMariaDB/servers/myabdud1223
         resource_group:
             description:
                 - Resource group name.
@@ -154,14 +159,14 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.rdbms.mysql import MySQLManagementClient
+    from azure.mgmt.rdbms.mariadb import MariaDBManagementClient
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
 
-class AzureRMMySqlServerFacts(AzureRMModuleBase):
+class AzureRMMariaDbServerInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -183,9 +188,13 @@ class AzureRMMySqlServerFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.tags = None
-        super(AzureRMMySqlServerFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMMariaDbServerInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_mariadbserver_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_mariadbserver_facts' module has been renamed to 'azure_rm_mariadbserver_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
@@ -200,11 +209,11 @@ class AzureRMMySqlServerFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mysql_client.servers.get(resource_group_name=self.resource_group,
-                                                     server_name=self.name)
+            response = self.mariadb_client.servers.get(resource_group_name=self.resource_group,
+                                                       server_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for MySQL Server.')
+            self.log('Could not get facts for MariaDB Server.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_item(response))
@@ -215,10 +224,10 @@ class AzureRMMySqlServerFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mysql_client.servers.list_by_resource_group(resource_group_name=self.resource_group)
+            response = self.mariadb_client.servers.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for MySQL Servers.')
+            self.log('Could not get facts for MariaDB Servers.')
 
         if response is not None:
             for item in response:
@@ -248,7 +257,7 @@ class AzureRMMySqlServerFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMMySqlServerFacts()
+    AzureRMMariaDbServerInfo()
 
 
 if __name__ == '__main__':

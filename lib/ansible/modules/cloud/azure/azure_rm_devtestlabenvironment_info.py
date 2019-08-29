@@ -15,31 +15,36 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabpolicy_facts
-version_added: "2.8"
-short_description: Get Azure DTL Policy facts
+module: azure_rm_devtestlabenvironment_info
+version_added: "2.9"
+short_description: Get Azure Environment facts
 description:
-    - Get facts of Azure DTL Policy.
+    - Get facts of Azure Environment.
 
 options:
     resource_group:
         description:
             - The name of the resource group.
         required: True
+        type: str
     lab_name:
         description:
             - The name of the lab.
         required: True
-    policy_set_name:
+        type: str
+    user_name:
         description:
-            - The name of the policy set.
+            - The name of the user profile.
         required: True
+        type: str
     name:
         description:
-            - The name of the policy.
+            - The name of the environment.
+        type: str
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+        type: list
 
 extends_documentation_fragment:
     - azure
@@ -50,18 +55,18 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of Policy
-    azure_rm_devtestlabpolicy_facts:
+  - name: Get instance of Environment
+    azure_rm_devtestlabenvironment_info:
       resource_group: myResourceGroup
       lab_name: myLab
-      policy_set_name: myPolicySet
-      name: myPolicy
+      user_name: myUser
+      name: myEnvironment
 '''
 
 RETURN = '''
-policies:
+environments:
     description:
-        - A list of dictionaries containing facts for Policy.
+        - A list of dictionaries containing facts for Environment.
     returned: always
     type: complex
     contains:
@@ -70,8 +75,8 @@ policies:
                 - The identifier of the artifact source.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/po
-                     licysets/myPolicySet/policies/myPolicy"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/sc
+                     hedules/xxxxxxxx-xxxx-xxxx-xxxxx-xxxxxxxxxxxxx/environments/myEnvironment"
         resource_group:
             description:
                 - Name of the resource group.
@@ -86,28 +91,29 @@ policies:
             sample: myLab
         name:
             description:
-                - The name of the artifact source.
+                - The name of the environment.
             returned: always
             type: str
-            sample: myArtifactSource
-        fact_name:
+            sample: myEnvironment
+        deployment_template:
             description:
-                - The name of the policy fact.
+                - The identifier of the artifact source.
             returned: always
             type: str
-            sample: UserOwnedLabVmCount
-        evaluator_type:
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/mylab/art
+                     ifactSources/public environment repo/armTemplates/WebApp"
+        resource_group_id:
             description:
-                - Evaluator type for policy fact.
+                - Target resource group id.
             returned: always
             type: str
-            sample: MaxValuePolicy
-        threshold:
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myLab-myEnvironment-982571"
+        state:
             description:
-                - Fact's threshold.
+                - Deployment state.
             returned: always
             type: str
-            sample: 5
+            sample: Succeeded
         tags:
             description:
                 - The tags of the resource.
@@ -127,7 +133,7 @@ except ImportError:
     pass
 
 
-class AzureRMDtlPolicyFacts(AzureRMModuleBase):
+class AzureRMDtlEnvironmentInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -139,7 +145,7 @@ class AzureRMDtlPolicyFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            policy_set_name=dict(
+            user_name=dict(
                 type='str',
                 required=True
             ),
@@ -157,21 +163,25 @@ class AzureRMDtlPolicyFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.resource_group = None
         self.lab_name = None
-        self.policy_set_name = None
+        self.user_name = None
         self.name = None
         self.tags = None
-        super(AzureRMDtlPolicyFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDtlEnvironmentInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_devtestlabenvironment_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_devtestlabenvironment_facts' module has been renamed to 'azure_rm_devtestlabenvironment_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if self.name:
-            self.results['policies'] = self.get()
+            self.results['environments'] = self.get()
         else:
-            self.results['policies'] = self.list()
+            self.results['environments'] = self.list()
 
         return self.results
 
@@ -179,13 +189,13 @@ class AzureRMDtlPolicyFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.policies.get(resource_group_name=self.resource_group,
-                                                     lab_name=self.lab_name,
-                                                     policy_set_name=self.policy_set_name,
-                                                     name=self.name)
+            response = self.mgmt_client.environments.get(resource_group_name=self.resource_group,
+                                                         lab_name=self.lab_name,
+                                                         user_name=self.user_name,
+                                                         name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Policy.')
+            self.log('Could not get facts for Environment.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
@@ -196,12 +206,12 @@ class AzureRMDtlPolicyFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.policies.list(resource_group_name=self.resource_group,
-                                                      lab_name=self.lab_name,
-                                                      policy_set_name=self.policy_set_name)
+            response = self.mgmt_client.environments.list(resource_group_name=self.resource_group,
+                                                          lab_name=self.lab_name,
+                                                          user_name=self.user_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Policy.')
+            self.log('Could not get facts for Environment.')
 
         if response is not None:
             for item in response:
@@ -214,20 +224,21 @@ class AzureRMDtlPolicyFacts(AzureRMModuleBase):
         d = item.as_dict()
         d = {
             'resource_group': self.resource_group,
-            'policy_set_name': self.policy_set_name,
+            'lab_name': self.lab_name,
             'name': d.get('name'),
-            'id': d.get('id'),
-            'tags': d.get('tags'),
-            'status': d.get('status'),
-            'threshold': d.get('threshold'),
-            'fact_name': d.get('fact_name'),
-            'evaluator_type': d.get('evaluator_type')
+            'user_name': self.user_name,
+            'id': d.get('id', None),
+            'deployment_template': d.get('deployment_properties', {}).get('arm_template_id'),
+            'location': d.get('location'),
+            'provisioning_state': d.get('provisioning_state'),
+            'resource_group_id': d.get('resource_group_id'),
+            'tags': d.get('tags', None)
         }
         return d
 
 
 def main():
-    AzureRMDtlPolicyFacts()
+    AzureRMDtlEnvironmentInfo()
 
 
 if __name__ == '__main__':
