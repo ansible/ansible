@@ -157,7 +157,7 @@ class AzureRMVirtualMachineScaleSetExtensionInfo(AzureRMModuleBase):
     def exec_module(self, **kwargs):
         is_old_facts = self.module._name == 'azure_rm_virtualmachinescalesetextension_facts'
         if is_old_facts:
-            self.module.deprecate("The 'azure_rm_virtualmachinescalesetextension_facts' module has been renamed to" + 
+            self.module.deprecate("The 'azure_rm_virtualmachinescalesetextension_facts' module has been renamed to" +
                                   " 'azure_rm_virtualmachinescalesetextension_info'",
                                   version='2.13')
 
