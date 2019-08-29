@@ -80,11 +80,6 @@ EXAMPLES = """
     name: Dynamic_Object_1
     state: present
 
-- name: set-dynamic-object
-  cp_mgmt_dynamic_object:
-    name: Dynamic_Object_1
-    state: present
-
 - name: delete-dynamic-object
   cp_mgmt_dynamic_object:
     name: Dynamic_Object_2
