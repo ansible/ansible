@@ -3,6 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -52,6 +53,12 @@ options:
         description:
             - A hash/dictionary of tags to add to the new state machine or to add/remove from an existing one.
         type: dict
+    purge_tags:
+        description:
+            - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter.
+              If the I(tags) parameter is not set then tags will not be modified.
+        default: yes
+        type: bool
 
 extends_documentation_fragment:
     - aws
@@ -167,7 +174,7 @@ def update(state_machine_arn, sfn_client, module):
 def compare_tags(state_machine_arn, sfn_client, module):
     new_tags = module.params.get('tags')
     current_tags = sfn_client.list_tags_for_resource(resourceArn=state_machine_arn).get('tags')
-    return compare_aws_tags(boto3_tag_list_to_ansible_dict(current_tags), new_tags if new_tags else {})
+    return compare_aws_tags(boto3_tag_list_to_ansible_dict(current_tags), new_tags if new_tags else {}, module.params.get('purge_tags'))
 
 
 def params_changed(state_machine_arn, sfn_client, module):
@@ -204,6 +211,7 @@ def main():
         role_arn=dict(type='str'),
         state=dict(choices=['present', 'absent'], default='present'),
         tags=dict(default=None, type='dict'),
+        purge_tags=dict(default=True, type='bool'),
     )
     module = AnsibleAWSModule(
         argument_spec=module_args,
