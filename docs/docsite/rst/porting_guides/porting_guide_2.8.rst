@@ -168,6 +168,58 @@ Nested variables
 
 The ``conditional_bare_variables`` setting does not affect nested variables. Any string value assigned to a subkey is already respected and not treated as a boolean. If ``complex_variable['subkey']`` is a non-empty string, then ``when: complex_variable['subkey']`` is always ``True`` and ``when: not complex_variable['subkey']`` is always ``False``. If you want a string subkey like ``complex_variable['subkey']`` to be evaluated as a boolean, you must use the ``bool`` filter.
 
+Gathering Facts
+---------------
+
+In Ansible 2.8 the implicit "Gathering Facts" task in a play was changed to
+obey play tags. Previous to 2.8, the "Gathering Facts" task would ignore play
+tags and tags supplied from the command line and always run in a task.
+
+The behavior change affects the following example play.
+
+.. code-block:: yaml
+
+    - name: Configure Webservers
+      hosts: webserver
+      tags:
+        - webserver
+      tasks:
+        - name: Install nginx
+          package:
+            name: nginx
+          tags:
+            - nginx
+
+In Ansible 2.8, if you supply ``--tags nginx``, the implicit
+"Gathering Facts" task will be skipped, as the task now inherits
+the tag of ``webserver`` instead of ``always``.
+
+If no play level tags are set, the "Gathering Facts" task will
+be given a tag of ``always`` and will effectively match prior
+behavior.
+
+You can achieve similar results to the pre-2.8 behavior, by
+using an explicit ``gather_facts`` task in your ``tasks`` list.
+
+.. code-block:: yaml
+
+    - name: Configure Webservers
+      hosts: webserver
+      gather_facts: false
+      tags:
+        - webserver
+      tasks:
+        - name: Gathering Facts
+          gather_facts:
+          tags:
+            - always
+
+        - name: Install nginx
+          package:
+            name: nginx
+          tags:
+            - nginx
+
 Python Interpreter Discovery
 ============================
 
