@@ -619,7 +619,8 @@ class VmwareRestModule(AnsibleModule):
                         # Escape characters
                         if '/' in filter[key]:
                             filter[key].replace('/', '%2F')
-                        self.request['filter'] += ('filter.%s=%s' % (FILTER[filter_key]['name'], filter[key]))
+                        self.request['filter'] += ('filter.%s=%s'
+                                                   % (FILTER[filter_key]['name'], filter[key]))
             except KeyError:
                 self.handle_object_key_error()
         else:
