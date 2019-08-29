@@ -220,7 +220,8 @@ class AzureRMRecordSetInfo(AzureRMModuleBase):
             # if there is a zone name listed, then they want all the record sets in a zone
             results = self.list_zone()
 
-        self.results['ansible_info']['azure_dnsrecordset'] = self.serialize_list(results)
+        if is_old_facts:
+            self.results['ansible_facts']['azure_dnsrecordset'] = self.serialize_list(results)
         self.results['dnsrecordsets'] = self.curated_list(results)
         return self.results
 
