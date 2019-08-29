@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2017 Zim Kalinowski, <zikalino@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -15,24 +15,27 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_postgresqlfirewallrule_facts
-version_added: "2.8"
-short_description: Get Azure PostgreSQL Firewall Rule facts
+module: azure_rm_postgresqldatabase_info
+version_added: "2.9"
+short_description: Get Azure PostgreSQL Database facts
 description:
-    - Get facts of Azure PostgreSQL Firewall Rule.
+    - Get facts of PostgreSQL Database.
 
 options:
     resource_group:
         description:
-            - The name of the resource group.
+            - The name of the resource group that contains the resource. You can obtain this value from the Azure Resource Manager API or the portal.
         required: True
+        type: str
     server_name:
         description:
             - The name of the server.
         required: True
+        type: str
     name:
         description:
-            - The name of the server firewall rule.
+            - The name of the database.
+        type: str
 
 extends_documentation_fragment:
     - azure
@@ -43,22 +46,22 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of PostgreSQL Firewall Rule
-    azure_rm_postgresqlfirewallrule_facts:
+  - name: Get instance of PostgreSQL Database
+    azure_rm_postgresqldatabase_info:
       resource_group: myResourceGroup
       server_name: server_name
-      name: firewall_rule_name
+      name: database_name
 
-  - name: List instances of PostgreSQL Firewall Rule
-    azure_rm_postgresqlfirewallrule_facts:
+  - name: List instances of PostgreSQL Database
+    azure_rm_postgresqldatabase_info:
       resource_group: myResourceGroup
       server_name: server_name
 '''
 
 RETURN = '''
-rules:
+databases:
     description:
-        - A list of dictionaries containing facts for PostgreSQL Firewall Rule.
+        - A list of dict results where the key is the name of the PostgreSQL Database and the values are the facts for that PostgreSQL Database.
     returned: always
     type: complex
     contains:
@@ -67,11 +70,17 @@ rules:
                 - Resource ID.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/fire
-                    wallRules/rule1"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforPostgreSQL/servers/testser
+                    ver/databases/db1"
+        resource_group:
+            description:
+                - Resource group name.
+            returned: always
+            type: str
+            sample: testrg
         server_name:
             description:
-                - The name of the server.
+                - Server name.
             returned: always
             type: str
             sample: testserver
@@ -80,19 +89,19 @@ rules:
                 - Resource name.
             returned: always
             type: str
-            sample: rule1
-        start_ip_address:
+            sample: db1
+        charset:
             description:
-                - The start IP address of the PostgreSQL firewall rule.
+                - The charset of the database.
             returned: always
             type: str
-            sample: 10.0.0.16
-        end_ip_address:
+            sample: UTF8
+        collation:
             description:
-                - The end IP address of the PostgreSQL firewall rule.
+                - The collation of the database.
             returned: always
             type: str
-            sample: 10.0.0.18
+            sample: English_United States.1252
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -106,7 +115,7 @@ except ImportError:
     pass
 
 
-class AzureRMPostgreSQLFirewallRulesFacts(AzureRMModuleBase):
+class AzureRMPostgreSqlDatabasesInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -126,34 +135,38 @@ class AzureRMPostgreSQLFirewallRulesFacts(AzureRMModuleBase):
         self.results = dict(
             changed=False
         )
-        self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMPostgreSQLFirewallRulesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMPostgreSqlDatabasesInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_postgresqldatabase_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_postgresqldatabase_facts' module has been renamed to 'azure_rm_postgresqldatabase_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
-        if (self.name is not None):
-            self.results['rules'] = self.get()
-        else:
-            self.results['rules'] = self.list_by_server()
+        if (self.resource_group is not None and
+                self.server_name is not None and
+                self.name is not None):
+            self.results['databases'] = self.get()
+        elif (self.resource_group is not None and
+              self.server_name is not None):
+            self.results['databases'] = self.list_by_server()
         return self.results
 
     def get(self):
         response = None
         results = []
         try:
-            response = self.mgmt_client.firewall_rules.get(resource_group_name=self.resource_group,
-                                                           server_name=self.server_name,
-                                                           firewall_rule_name=self.name)
+            response = self.postgresql_client.databases.get(resource_group_name=self.resource_group,
+                                                            server_name=self.server_name,
+                                                            database_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for FirewallRules.')
+            self.log('Could not get facts for Databases.')
 
         if response is not None:
             results.append(self.format_item(response))
@@ -164,11 +177,11 @@ class AzureRMPostgreSQLFirewallRulesFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.firewall_rules.list_by_server(resource_group_name=self.resource_group,
-                                                                      server_name=self.server_name)
+            response = self.postgresql_client.databases.list_by_server(resource_group_name=self.resource_group,
+                                                                       server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for FirewallRules.')
+            self.fail("Error listing for server {0} - {1}".format(self.server_name, str(e)))
 
         if response is not None:
             for item in response:
@@ -180,17 +193,16 @@ class AzureRMPostgreSQLFirewallRulesFacts(AzureRMModuleBase):
         d = item.as_dict()
         d = {
             'resource_group': self.resource_group,
-            'id': d['id'],
             'server_name': self.server_name,
             'name': d['name'],
-            'start_ip_address': d['start_ip_address'],
-            'end_ip_address': d['end_ip_address']
+            'charset': d['charset'],
+            'collation': d['collation']
         }
         return d
 
 
 def main():
-    AzureRMPostgreSQLFirewallRulesFacts()
+    AzureRMPostgreSqlDatabasesInfo()
 
 
 if __name__ == '__main__':

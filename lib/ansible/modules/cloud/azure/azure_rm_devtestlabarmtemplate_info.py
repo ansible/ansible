@@ -15,28 +15,32 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabartifact_facts
-version_added: "2.8"
-short_description: Get Azure DevTest Lab Artifact facts
+module: azure_rm_devtestlabarmtemplate_info
+version_added: "2.9"
+short_description: Get Azure DevTest Lab ARM Template facts
 description:
-    - Get facts of Azure DevTest Lab Artifact.
+    - Get facts of Azure DevTest Lab ARM Template.
 
 options:
     resource_group:
         description:
             - The name of the resource group.
         required: True
+        type: str
     lab_name:
         description:
             - The name of the lab.
         required: True
+        type: str
     artifact_source_name:
         description:
             - The name of the artifact source.
         required: True
+        type: str
     name:
         description:
-            - The name of the artifact.
+            - The name of the ARM template.
+        type: str
 
 extends_documentation_fragment:
     - azure
@@ -47,88 +51,63 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of DevTest Lab Artifact
-    azure_rm_devtestlabartifact_facts:
+  - name: Get information on DevTest Lab ARM Template
+    azure_rm_devtestlabarmtemplate_info:
       resource_group: myResourceGroup
       lab_name: myLab
-      artifact_source_name: myArtifactSource
-      name: myArtifact
+      artifact_source_name: public environment repo
+      name: WebApp
 '''
 
 RETURN = '''
-artifacts:
+arm_templates:
     description:
-        - A list of dictionaries containing facts for DevTest Lab Artifact.
+        - A list of dictionaries containing facts for DevTest Lab ARM Template.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - The identifier of the artifact.
+                - The identifier of the resource.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/ar
-                     tifactSources/myArtifactSource/artifacts/myArtifact"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/art
+                     ifactSources/public environment repo/armTemplates/WebApp"
         resource_group:
             description:
-                - Name of the resource group.
+                - Resource group name.
             returned: always
-            type: str
             sample: myResourceGroup
         lab_name:
             description:
-                - Name of the lab.
+                - DevTest Lab name.
             returned: always
-            type: str
             sample: myLab
         artifact_source_name:
             description:
-                - The name of the artifact source.
+                - Artifact source name.
             returned: always
-            type: str
-            sample: myArtifactSource
+            sample: public environment repo
         name:
             description:
-                - The name of the artifact.
+                - ARM Template name.
             returned: always
-            type: str
-            sample: myArtifact
+            sample: WebApp
+        display_name:
+            description:
+                - The tags of the resource.
+            returned: always
+            sample: Web App
         description:
             description:
-                - Description of the artifact.
+                - The tags of the resource.
             returned: always
-            type: str
-            sample: Installs My Software
-        file_path:
-            description:
-                - Artifact's path in the repo.
-            returned: always
-            type: str
-            sample: Artifacts/myArtifact
+            sample: This template creates an Azure Web App without a data store.
         publisher:
             description:
-                - Publisher name.
+                - The tags of the resource.
             returned: always
-            type: str
-            sample: MyPublisher
-        target_os_type:
-            description:
-                - Target OS type.
-            returned: always
-            type: str
-            sample: Linux
-        title:
-            description:
-                - Title of the artifact.
-            returned: always
-            type: str
-            sample: My Software
-        parameters:
-            description:
-                - A dictionary containing parameters definition of the artifact.
-            returned: always
-            type: complex
-            sample: {}
+            sample: Microsoft
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -142,7 +121,7 @@ except ImportError:
     pass
 
 
-class AzureRMArtifactFacts(AzureRMModuleBase):
+class AzureRMDtlArmTemplateInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -171,52 +150,56 @@ class AzureRMArtifactFacts(AzureRMModuleBase):
         self.lab_name = None
         self.artifact_source_name = None
         self.name = None
-        super(AzureRMArtifactFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDtlArmTemplateInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_devtestlabarmtemplate_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_devtestlabarmtemplate_facts' module has been renamed to 'azure_rm_devtestlabarmtemplate_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if self.name:
-            self.results['artifacts'] = self.get()
+            self.results['armtemplates'] = self.get()
         else:
-            self.results['artifacts'] = self.list()
+            self.results['armtemplates'] = self.list()
 
         return self.results
-
-    def get(self):
-        response = None
-        results = []
-        try:
-            response = self.mgmt_client.artifacts.get(resource_group_name=self.resource_group,
-                                                      lab_name=self.lab_name,
-                                                      artifact_source_name=self.artifact_source_name,
-                                                      name=self.name)
-            self.log("Response : {0}".format(response))
-        except CloudError as e:
-            self.log('Could not get facts for Artifact.')
-
-        if response:
-            results.append(self.format_response(response))
-
-        return results
 
     def list(self):
         response = None
         results = []
         try:
-            response = self.mgmt_client.artifacts.list(resource_group_name=self.resource_group,
-                                                       lab_name=self.lab_name,
-                                                       artifact_source_name=self.artifact_source_name)
+            response = self.mgmt_client.arm_templates.list(resource_group_name=self.resource_group,
+                                                           lab_name=self.lab_name,
+                                                           artifact_source_name=self.artifact_source_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Artifact.')
+            self.fail('Could not get facts for DTL ARM Template.')
 
         if response is not None:
             for item in response:
                 results.append(self.format_response(item))
+
+        return results
+
+    def get(self):
+        response = None
+        results = []
+        try:
+            response = self.mgmt_client.arm_templates.get(resource_group_name=self.resource_group,
+                                                          lab_name=self.lab_name,
+                                                          artifact_source_name=self.artifact_source_name,
+                                                          name=self.name)
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.fail('Could not get facts for DTL ARM Template.')
+
+        if response:
+            results.append(self.format_response(response))
 
         return results
 
@@ -226,20 +209,17 @@ class AzureRMArtifactFacts(AzureRMModuleBase):
             'resource_group': self.parse_resource_to_dict(d.get('id')).get('resource_group'),
             'lab_name': self.parse_resource_to_dict(d.get('id')).get('name'),
             'artifact_source_name': self.parse_resource_to_dict(d.get('id')).get('child_name_1'),
-            'id': d.get('id'),
-            'description': d.get('description'),
-            'file_path': d.get('file_path'),
+            'id': d.get('id', None),
             'name': d.get('name'),
-            'parameters': d.get('parameters'),
-            'publisher': d.get('publisher'),
-            'target_os_type': d.get('target_os_type'),
-            'title': d.get('title')
+            'display_name': d.get('display_name'),
+            'description': d.get('description'),
+            'publisher': d.get('publisher')
         }
         return d
 
 
 def main():
-    AzureRMArtifactFacts()
+    AzureRMDtlArmTemplateInfo()
 
 
 if __name__ == '__main__':
