@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_dnsrecordset_facts
+module: azure_rm_dnsrecordset_info
 
-version_added: "2.4"
+version_added: "2.9"
 
 short_description: Get DNS Record Set facts
 
@@ -51,18 +51,18 @@ author:
 
 EXAMPLES = '''
 - name: Get facts for one Record Set
-  azure_rm_dnsrecordset_facts:
+  azure_rm_dnsrecordset_info:
     resource_group: myResourceGroup
     zone_name: example.com
     relative_name: server10
     record_type: A
 - name: Get facts for all Type A Record Sets in a Zone
-  azure_rm_dnsrecordset_facts:
+  azure_rm_dnsrecordset_info:
     resource_group: myResourceGroup
     zone_name: example.com
     record_type: A
 - name: Get all record sets in one zone
-  azure_rm_dnsrecordset_facts:
+  azure_rm_dnsrecordset_info:
     resource_group: myResourceGroup
     zone_name: example.com
 '''
@@ -163,7 +163,7 @@ RECORDSET_VALUE_MAP = dict(
 )
 
 
-class AzureRMRecordSetFacts(AzureRMModuleBase):
+class AzureRMRecordSetInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -179,7 +179,7 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
         # store the results of the module operation
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_dnsrecordset=[])
+            ansible_info=dict(azure_dnsrecordset=[])
         )
 
         self.relative_name = None
@@ -188,9 +188,13 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
         self.record_type = None
         self.top = None
 
-        super(AzureRMRecordSetFacts, self).__init__(self.module_arg_spec)
+        super(AzureRMRecordSetInfo, self).__init__(self.module_arg_spec)
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_dnsrecordset_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_dnsrecordset_facts' module has been renamed to 'azure_rm_dnsrecordset_info'", version='2.13')
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
@@ -216,7 +220,7 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
             # if there is a zone name listed, then they want all the record sets in a zone
             results = self.list_zone()
 
-        self.results['ansible_facts']['azure_dnsrecordset'] = self.serialize_list(results)
+        self.results['ansible_info']['azure_dnsrecordset'] = self.serialize_list(results)
         self.results['dnsrecordsets'] = self.curated_list(results)
         return self.results
 
@@ -281,7 +285,7 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMRecordSetFacts()
+    AzureRMRecordSetInfo()
 
 
 if __name__ == '__main__':

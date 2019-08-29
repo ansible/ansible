@@ -87,20 +87,20 @@
       - output.state.id
 
 - name: Get fact of the new created NIC
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}"
-  register: facts
+  register: info
 
 - assert:
     that:
-      - "facts.networkinterfaces | length == 1"
-      - facts.networkinterfaces[0].id == output.state.id
-      - "facts.networkinterfaces[0].ip_configurations | length == 1"
-      - not facts.networkinterfaces[0].security_group
-      - not facts.networkinterfaces[0].ip_configurations[0].public_ip_address
-      - not facts.networkinterfaces[0].enable_ip_forwarding
-      - not facts.networkinterfaces[0].enable_accelerated_networking
+      - "info.networkinterfaces | length == 1"
+      - info.networkinterfaces[0].id == output.state.id
+      - "info.networkinterfaces[0].ip_configurations | length == 1"
+      - not info.networkinterfaces[0].security_group
+      - not info.networkinterfaces[0].ip_configurations[0].public_ip_address
+      - not info.networkinterfaces[0].enable_ip_forwarding
+      - not info.networkinterfaces[0].enable_accelerated_networking
 
 - name: Create most simple NIC with ip configurations (idempotent)
   azure_rm_networkinterface:
@@ -277,19 +277,19 @@
       - not output.changed
 
 - name: Get fact of the new created NIC
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}"
-  register:  facts
+  register:  info
 
 - assert:
     that:
-      - "facts.networkinterfaces | length == 1"
-      - facts.networkinterfaces[0].id == output.state.id
-      - "facts.networkinterfaces[0].ip_configurations | length == 2"
-      - 'facts.networkinterfaces[0].security_group.endswith("tn{{ rpfx }}sg")'
-      - facts.networkinterfaces[0].enable_accelerated_networking
-      - facts.networkinterfaces[0].enable_ip_forwarding
+      - "info.networkinterfaces | length == 1"
+      - info.networkinterfaces[0].id == output.state.id
+      - "info.networkinterfaces[0].ip_configurations | length == 2"
+      - 'info.networkinterfaces[0].security_group.endswith("tn{{ rpfx }}sg")'
+      - info.networkinterfaces[0].enable_accelerated_networking
+      - info.networkinterfaces[0].enable_ip_forwarding
 
 - name: Remove one dns server and ip configuration
   azure_rm_networkinterface:
@@ -351,18 +351,18 @@
       - output.id != ''
 
 - name: Get Application security group
-  azure_rm_applicationsecuritygroup_facts:
+  azure_rm_applicationsecuritygroup_info:
     resource_group: "{{ resource_group }}"
     name: "{{ applicationsecuritygroup_name1 }}"
-  register: facts
+  register: info
 
 - name: Assert facts
   assert:
     that:
-      - facts['applicationsecuritygroups'] | length == 1
-      - facts['applicationsecuritygroups'][0]['name'] != None
-      - facts['applicationsecuritygroups'][0]['location'] != None
-      - facts['applicationsecuritygroups'][0]['provisioning_state'] != None
+      - info['applicationsecuritygroups'] | length == 1
+      - info['applicationsecuritygroups'][0]['name'] != None
+      - info['applicationsecuritygroups'][0]['location'] != None
+      - info['applicationsecuritygroups'][0]['provisioning_state'] != None
 
 - name: Create application security group (idempotent)
   azure_rm_applicationsecuritygroup:
@@ -460,14 +460,14 @@
       - output.changed
 
 - name: Get fact of the new created NIC
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
     resource_group: "{{ resource_group }}"
     name: "{{ nic_name1 }}"
-  register: facts
+  register: info
 
 - assert:
     that:
-      - "facts.networkinterfaces[0].ip_configurations[0].application_security_groups | length == 1"
+      - "info.networkinterfaces[0].ip_configurations[0].application_security_groups | length == 1"
 
 - name: Delete the NIC (check mode)
   azure_rm_networkinterface:

@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_hdinsightcluster_facts
-version_added: "2.8"
+module: azure_rm_hdinsightcluster_info
+version_added: "2.9"
 short_description: Get Azure HDInsight Cluster facts
 description:
     - Get facts of Azure HDInsight Cluster.
@@ -42,12 +42,12 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of HDInsight Cluster
-    azure_rm_hdinsightcluster_facts:
+    azure_rm_hdinsightcluster_info:
       resource_group: myResourceGroup
       name: myCluster
 
   - name: List instances of HDInsight Cluster
-    azure_rm_hdinsightcluster_facts:
+    azure_rm_hdinsightcluster_info:
       resource_group: myResourceGroup
 '''
 
@@ -192,7 +192,7 @@ except ImportError:
     pass
 
 
-class AzureRMHDInsightclusterFacts(AzureRMModuleBase):
+class AzureRMHDInsightclusterInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -215,9 +215,15 @@ class AzureRMHDInsightclusterFacts(AzureRMModuleBase):
         self.name = None
         self.tags = None
 
-        super(AzureRMHDInsightclusterFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMHDInsightclusterInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_hdinsightcluster_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_hdinsightcluster_facts' module has been renamed to 'azure_rm_hdinsightcluster_info'",
+                                  version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(HDInsightManagementClient,
@@ -308,7 +314,7 @@ class AzureRMHDInsightclusterFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMHDInsightclusterFacts()
+    AzureRMHDInsightclusterInfo()
 
 
 if __name__ == '__main__':

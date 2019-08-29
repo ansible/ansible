@@ -132,7 +132,7 @@
        - output.state.os_type == 'linux'
 
  - name: Gather facts to one specific disk
-   azure_rm_manageddisk_facts:
+   azure_rm_manageddisk_info:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
 

@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_functionapp_facts
-version_added: "2.4"
+module: azure_rm_functionapp_info
+version_added: "2.9"
 short_description: Get Azure Function App facts
 description:
     - Get facts for one Azure Function App or all Function Apps within a resource group.
@@ -42,16 +42,16 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one Function App
-      azure_rm_functionapp_facts:
+      azure_rm_functionapp_info:
         resource_group: myResourceGroup
         name: myfunctionapp
 
     - name: Get facts for all Function Apps in a resource group
-      azure_rm_functionapp_facts:
+      azure_rm_functionapp_info:
         resource_group: myResourceGroup
 
     - name: Get facts for all Function Apps by tags
-      azure_rm_functionapp_facts:
+      azure_rm_functionapp_info:
         tags:
           - testing
 '''
@@ -108,7 +108,7 @@ except Exception:
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 
-class AzureRMFunctionAppFacts(AzureRMModuleBase):
+class AzureRMFunctionAppInfo(AzureRMModuleBase):
     def __init__(self):
 
         self.module_arg_spec = dict(
@@ -119,20 +119,24 @@ class AzureRMFunctionAppFacts(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_functionapps=[])
+            ansible_info=dict(azure_functionapps=[])
         )
 
         self.name = None
         self.resource_group = None
         self.tags = None
 
-        super(AzureRMFunctionAppFacts, self).__init__(
+        super(AzureRMFunctionAppInfo, self).__init__(
             self.module_arg_spec,
             supports_tags=False,
             facts_module=True
         )
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_functionapp_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_functionapp_facts' module has been renamed to 'azure_rm_functionapp_info'", version='2.13')
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
@@ -141,11 +145,11 @@ class AzureRMFunctionAppFacts(AzureRMModuleBase):
             self.fail("Parameter error: resource group required when filtering by name.")
 
         if self.name:
-            self.results['ansible_facts']['azure_functionapps'] = self.get_functionapp()
+            self.results['ansible_info']['azure_functionapps'] = self.get_functionapp()
         elif self.resource_group:
-            self.results['ansible_facts']['azure_functionapps'] = self.list_resource_group()
+            self.results['ansible_info']['azure_functionapps'] = self.list_resource_group()
         else:
-            self.results['ansible_facts']['azure_functionapps'] = self.list_all()
+            self.results['ansible_info']['azure_functionapps'] = self.list_all()
 
         return self.results
 
@@ -195,7 +199,7 @@ class AzureRMFunctionAppFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMFunctionAppFacts()
+    AzureRMFunctionAppInfo()
 
 
 if __name__ == '__main__':

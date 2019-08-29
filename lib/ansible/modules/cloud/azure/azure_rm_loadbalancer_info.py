@@ -15,9 +15,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_loadbalancer_facts
+module: azure_rm_loadbalancer_info
 
-version_added: "2.4"
+version_added: "2.9"
 
 short_description: Get load balancer facts
 
@@ -44,19 +44,19 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one load balancer
-      azure_rm_loadbalancer_facts:
+      azure_rm_loadbalancer_info:
         name: Testing
         resource_group: myResourceGroup
 
     - name: Get facts for all load balancers
-      azure_rm_loadbalancer_facts:
+      azure_rm_loadbalancer_info:
 
     - name: Get facts for all load balancers in a specific resource group
-      azure_rm_loadbalancer_facts:
+      azure_rm_loadbalancer_info:
         resource_group: myResourceGroup
 
     - name: Get facts by tags
-      azure_rm_loadbalancer_facts:
+      azure_rm_loadbalancer_info:
         tags:
           - testing
 '''
@@ -81,7 +81,7 @@ except Exception:
 AZURE_OBJECT_CLASS = 'LoadBalancer'
 
 
-class AzureRMLoadBalancerFacts(AzureRMModuleBase):
+class AzureRMLoadBalancerInfo(AzureRMModuleBase):
     """Utility class to get load balancer facts"""
 
     def __init__(self):
@@ -94,7 +94,7 @@ class AzureRMLoadBalancerFacts(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(
+            ansible_info=dict(
                 azure_loadbalancers=[]
             )
         )
@@ -103,7 +103,7 @@ class AzureRMLoadBalancerFacts(AzureRMModuleBase):
         self.resource_group = None
         self.tags = None
 
-        super(AzureRMLoadBalancerFacts, self).__init__(
+        super(AzureRMLoadBalancerInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
             facts_module=True
@@ -111,10 +111,14 @@ class AzureRMLoadBalancerFacts(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
+        is_old_facts = self.module._name == 'azure_rm_loadbalancer_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_loadbalancer_facts' module has been renamed to 'azure_rm_loadbalancer_info'", version='2.13')
+
         for key in self.module_args:
             setattr(self, key, kwargs[key])
 
-        self.results['ansible_facts']['azure_loadbalancers'] = (
+        self.results['ansible_info']['azure_loadbalancers'] = (
             self.get_item() if self.name
             else self.list_items()
         )
@@ -166,7 +170,7 @@ class AzureRMLoadBalancerFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMLoadBalancerFacts()
+    AzureRMLoadBalancerInfo()
 
 
 if __name__ == '__main__':

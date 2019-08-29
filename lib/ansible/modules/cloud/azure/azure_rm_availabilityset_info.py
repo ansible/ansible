@@ -129,7 +129,7 @@ class AzureRMAvailabilitySetInfo(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(
+            ansible_info=dict(
                 azure_availabilitysets=[]
             )
         )
@@ -156,9 +156,9 @@ class AzureRMAvailabilitySetInfo(AzureRMModuleBase):
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
         if self.name:
-            self.results['ansible_facts']['azure_availabilitysets'] = self.get_item()
+            self.results['ansible_info']['azure_availabilitysets'] = self.get_item()
         else:
-            self.results['ansible_facts']['azure_availabilitysets'] = self.list_items()
+            self.results['ansible_info']['azure_availabilitysets'] = self.list_items()
 
         return self.results
 

@@ -1,1 +1,1 @@
-azure_rm_manageddisk_facts.py
+azure_rm_manageddisk_info.py

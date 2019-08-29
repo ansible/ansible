@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_securitygroup_facts
+module: azure_rm_securitygroup_info
 
-version_added: "2.1"
+version_added: "2.9"
 
 short_description: Get security group facts
 
@@ -48,12 +48,12 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one security group
-      azure_rm_securitygroup_facts:
+      azure_rm_securitygroup_info:
         resource_group: myResourceGroup
         name: secgroup001
 
     - name: Get facts for all security groups
-      azure_rm_securitygroup_facts:
+      azure_rm_securitygroup_info:
         resource_group: myResourceGroup
 
 '''
@@ -235,7 +235,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 AZURE_OBJECT_CLASS = 'NetworkSecurityGroup'
 
 
-class AzureRMSecurityGroupFacts(AzureRMModuleBase):
+class AzureRMSecurityGroupInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -247,25 +247,30 @@ class AzureRMSecurityGroupFacts(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_securitygroups=[])
+            ansible_info=dict(azure_securitygroups=[])
         )
 
         self.name = None
         self.resource_group = None
         self.tags = None
 
-        super(AzureRMSecurityGroupFacts, self).__init__(self.module_arg_spec,
-                                                        supports_tags=False,
-                                                        facts_module=True)
+        super(AzureRMSecurityGroupInfo, self).__init__(self.module_arg_spec,
+                                                       supports_tags=False,
+                                                       facts_module=True)
 
     def exec_module(self, **kwargs):
+        
+        is_old_facts = self.module._name == 'azure_rm_securitygroup_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_securitygroup_facts' module has been renamed to 'azure_rm_securitygroup_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
         if self.name is not None:
-            self.results['ansible_facts']['azure_securitygroups'] = self.get_item()
+            self.results['ansible_info']['azure_securitygroups'] = self.get_item()
         else:
-            self.results['ansible_facts']['azure_securitygroups'] = self.list_items()
+            self.results['ansible_info']['azure_securitygroups'] = self.list_items()
 
         return self.results
 
@@ -303,7 +308,7 @@ class AzureRMSecurityGroupFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMSecurityGroupFacts()
+    AzureRMSecurityGroupInfo()
 
 
 if __name__ == '__main__':

@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_dnszone_facts
+module: azure_rm_dnszone_info
 
-version_added: "2.4"
+version_added: "2.9"
 
 short_description: Get DNS zone facts
 
@@ -45,16 +45,16 @@ author:
 
 EXAMPLES = '''
 - name: Get facts for one zone
-  azure_rm_dnszone_facts:
+  azure_rm_dnszone_info:
     resource_group: myResourceGroup
     name: foobar22
 
 - name: Get facts for all zones in a resource group
-  azure_rm_dnszone_facts:
+  azure_rm_dnszone_info:
     resource_group: myResourceGroup
 
 - name: Get facts by tags
-  azure_rm_dnszone_facts:
+  azure_rm_dnszone_info:
     tags:
       - testing
 '''
@@ -137,7 +137,7 @@ except Exception:
 AZURE_OBJECT_CLASS = 'DnsZone'
 
 
-class AzureRMDNSZoneFacts(AzureRMModuleBase):
+class AzureRMDNSZoneInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -151,16 +151,20 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
         # store the results of the module operation
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_dnszones=[])
+            ansible_info=dict(azure_dnszones=[])
         )
 
         self.name = None
         self.resource_group = None
         self.tags = None
 
-        super(AzureRMDNSZoneFacts, self).__init__(self.module_arg_spec)
+        super(AzureRMDNSZoneInfo, self).__init__(self.module_arg_spec)
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_dnszone_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_dnszone_facts' module has been renamed to 'azure_rm_dnszone_info'", version='2.13')
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
@@ -180,7 +184,7 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
             # all the zones in a subscription
             results = self.list_items()
 
-        self.results['ansible_facts']['azure_dnszones'] = self.serialize_items(results)
+        self.results['ansible_info']['azure_dnszones'] = self.serialize_items(results)
         self.results['dnszones'] = self.curated_items(results)
 
         return self.results
@@ -247,7 +251,7 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMDNSZoneFacts()
+    AzureRMDNSZoneInfo()
 
 
 if __name__ == '__main__':
