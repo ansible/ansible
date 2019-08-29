@@ -1017,6 +1017,8 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'build-dep', 'fixed', 'latest', 'present']),
             update_cache=dict(type='bool', aliases=['update-cache']),
+            update_cache_retries=dict(type='int', default=5),
+            update_cache_max_retry_delay=dict(type='int', default=12),
             cache_valid_time=dict(type='int', default=0),
             purge=dict(type='bool', default=False),
             package=dict(type='list', aliases=['pkg', 'name']),
