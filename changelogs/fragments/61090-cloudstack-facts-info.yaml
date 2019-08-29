@@ -1,3 +1,0 @@
-minor_changes:
-- The ``cs_instance_facts`` module has been deprecated. Use ``cs_instance_info`` instead.
-- The ``cs_zone_facts`` module has been deprecated. Use ``cs_zone_info`` instead.

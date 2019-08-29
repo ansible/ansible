@@ -1,2 +1,0 @@
-minor_changes:
-  - meraki_* - Modules now respect 429 (rate limit) and 500/502 errors with a graceful backoff.

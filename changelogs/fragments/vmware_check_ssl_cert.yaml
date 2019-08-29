@@ -1,2 +1,0 @@
-bugfixes:
-- vmware - The VMware modules now enable the SSL certificate check unless ``validate_certs`` is ``false``.

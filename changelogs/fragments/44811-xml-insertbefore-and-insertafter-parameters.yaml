@@ -1,2 +1,0 @@
-minor_changes:
-  - xml - Introduce ``insertbefore`` and ``insertafter`` to specify the position (https://github.com/ansible/ansible/pull/44811)

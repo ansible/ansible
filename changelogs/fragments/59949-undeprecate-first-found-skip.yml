@@ -1,4 +1,0 @@
-bugfixes:
-- first_found - Un-deprecate ``skip``, as the alternative of ``errors`` does
-  not work with ``with_first_found`` and only use of ``lookup``
-  (https://github.com/ansible/ansible/issues/58942)

@@ -1,3 +1,0 @@
-minor_changes:
-- The ``vertica_facts`` module has been renamed to ``vertica_info``.
-  When called with the new name, the module no longer returns ``ansible_facts``.

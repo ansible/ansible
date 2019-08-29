@@ -1,2 +1,0 @@
-bugfixes:
-    - make command module more resilient unicode errors. Also to fs errors.

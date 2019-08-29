@@ -1,2 +1,0 @@
-bugfixes:
-- postgresql_table - fix schema handling (https://github.com/ansible/ansible/pull/57391)

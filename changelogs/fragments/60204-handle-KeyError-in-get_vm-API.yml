@@ -1,2 +1,0 @@
-minor_changes:
-- Fix Key Error in get_vm() api in vmware.py module util (https://github.com/ansible/ansible/issues/60129).

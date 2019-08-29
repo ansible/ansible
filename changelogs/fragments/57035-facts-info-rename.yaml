@@ -1,2 +1,0 @@
-minor_changes:
-- The ``one_image_facts`` module has been renamed to ``one_image_info``.

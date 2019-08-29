@@ -1,2 +1,0 @@
-minor_changes:
-  - purefa_user - change resulting fact dict from I(ansible_facts) to I(user_info)  (https://github.com/ansible/ansible/pull/61353)

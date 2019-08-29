@@ -1,2 +1,0 @@
-bugfixes:
-- tower_user - Fix to create user as a system auditor when specifying the `auditor` option (https://github.com/ansible/ansible/issues/54446)

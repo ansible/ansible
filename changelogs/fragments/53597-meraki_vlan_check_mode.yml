@@ -1,3 +1,0 @@
----
-minor_changes:
-  - "meraki_vlan - Add support for check mode."

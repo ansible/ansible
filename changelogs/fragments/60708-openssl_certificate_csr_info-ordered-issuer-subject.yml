@@ -1,3 +1,0 @@
-minor_changes:
-- "openssl_certificate_info - added ``issuer_ordered`` and ``subject_ordered`` return values."
-- "openssl_csr_info - added ``subject_ordered`` return value."
