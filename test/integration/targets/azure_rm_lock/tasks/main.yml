@@ -19,7 +19,7 @@
           - lock.changed
 
 - name: Query lock
-  azure_rm_lock_facts:
+  azure_rm_lock_info:
       managed_resource_id: "{{ vn.state.id }}"
   register: locks
 
@@ -40,7 +40,7 @@
           - lock.id
 
 - name: Query lock
-  azure_rm_lock_facts:
+  azure_rm_lock_info:
       name: keep
       managed_resource_id: "{{ vn.state.id }}"
   register: locks
@@ -84,7 +84,7 @@
           - lock.changed
 
 - name: Query lock
-  azure_rm_lock_facts:
+  azure_rm_lock_info:
       managed_resource_id: "{{ vn.state.id }}"
   register: locks
 

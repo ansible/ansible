@@ -112,9 +112,9 @@
     that: 
       - not results.changed
       - not results.failed
-      - results.ansible_facts.azure_availabilitysets[0].properties.platformFaultDomainCount == 2
-      - results.ansible_facts.azure_availabilitysets[0].properties.platformUpdateDomainCount == 5
-      - results.ansible_facts.azure_availabilitysets[0].sku == 'Aligned'
+      - results.ansible_info.azure_availabilitysets[0].properties.platformFaultDomainCount == 2
+      - results.ansible_info.azure_availabilitysets[0].properties.platformUpdateDomainCount == 5
+      - results.ansible_info.azure_availabilitysets[0].sku == 'Aligned'
 
 
 - name: Delete an availability set

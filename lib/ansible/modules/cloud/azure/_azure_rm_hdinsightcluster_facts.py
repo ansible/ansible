@@ -1,0 +1,1 @@
+azure_rm_hdinsightcluster_info.py
