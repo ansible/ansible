@@ -21,16 +21,16 @@
     that:
       - zone is successful
       - zone is not changed
-      - zone.dns1 == "8.8.8.8"
-      - zone.dns2 == "8.8.4.4"
-      - zone.internal_dns1 == "8.8.8.8"
-      - zone.internal_dns2 == "8.8.4.4"
-      - zone.local_storage_enabled == false
-      - zone.network_type == "Basic"
-      - zone.zone_token != ""
-      - zone.securitygroups_enabled == true
-      - zone.dhcp_provider == "VirtualRouter"
-      - zone.local_storage_enabled == false
+      - zone.zones[0].dns1 == "8.8.8.8"
+      - zone.zones[0].dns2 == "8.8.4.4"
+      - zone.zones[0].internal_dns1 == "8.8.8.8"
+      - zone.zones[0].internal_dns2 == "8.8.4.4"
+      - zone.zones[0].local_storage_enabled == false
+      - zone.zones[0].network_type == "Basic"
+      - zone.zones[0].zone_token != ""
+      - zone.zones[0].securitygroups_enabled == true
+      - zone.zones[0].dhcp_provider == "VirtualRouter"
+      - zone.zones[0].local_storage_enabled == false
 
 - name: get info from zone
   cs_zone_info:
@@ -41,13 +41,23 @@
     that:
       - zone is successful
       - zone is not changed
-      - zone.dns1 == "8.8.8.8"
-      - zone.dns2 == "8.8.4.4"
-      - zone.internal_dns1 == "8.8.8.8"
-      - zone.internal_dns2 == "8.8.4.4"
-      - zone.local_storage_enabled == false
-      - zone.network_type == "Basic"
-      - zone.zone_token != ""
-      - zone.securitygroups_enabled == true
-      - zone.dhcp_provider == "VirtualRouter"
-      - zone.local_storage_enabled == false
+      - zone.zones[0].dns1 == "8.8.8.8"
+      - zone.zones[0].dns2 == "8.8.4.4"
+      - zone.zones[0].internal_dns1 == "8.8.8.8"
+      - zone.zones[0].internal_dns2 == "8.8.4.4"
+      - zone.zones[0].local_storage_enabled == false
+      - zone.zones[0].network_type == "Basic"
+      - zone.zones[0].zone_token != ""
+      - zone.zones[0].securitygroups_enabled == true
+      - zone.zones[0].dhcp_provider == "VirtualRouter"
+      - zone.zones[0].local_storage_enabled == false
+
+- name: get info from all zones
+  cs_zone_info:
+  register: zones
+- name: verify get info from all zones
+  assert:
+    that:
+      - zones is successful
+      - zones is not changed
+      - zones.zones | length > 0

@@ -18,7 +18,7 @@
   register: zone_info
 
 - name: setup find the host name
-  shell: cs listHosts type=routing zoneid="{{ zone_info.id }}"
+  shell: cs listHosts type=routing zoneid="{{ zone_info.zones[0].id }}"
   args:
     chdir: "{{ playbook_dir }}"
   register: host
