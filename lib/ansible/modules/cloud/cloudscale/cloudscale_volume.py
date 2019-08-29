@@ -62,7 +62,7 @@ options:
         detach the volume. Currently a volume can only be attached to a
         single server.
     aliases: [ server_uuid ]
-    type: str
+    type: list
   tags:
     description:
       - Tags assosiated with the volume. Set this to C({}) to clear any tags.
