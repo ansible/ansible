@@ -94,6 +94,8 @@ EXAMPLES = """
 - name: set-application-site-group
   cp_mgmt_application_site_group:
     name: New Application Site Group 1
+    members:
+    - AliveProxy
     state: present
 
 - name: delete-application-site-group
