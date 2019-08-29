@@ -146,6 +146,7 @@ class L3_Interfaces(ConfigBase):
             for interface in want:
                 interface['name'] = normalize_interface(interface['name'])
                 if each['name'] == interface['name']:
+                    in_have.add(interface['name'])
                     break
                 elif interface['name'] != each['name']:
                     not_in_have.add(interface['name'])

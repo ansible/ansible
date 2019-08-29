@@ -124,7 +124,7 @@ overridden:
     - "ipv4 address 203.0.112.24 255.255.255.0"
     - "interface GigabitEthernet0/0/0/3.100"
     - "ipv4 address 198.51.102.1 255.255.255.0"
-    - "ipv6 address 2001:db8:0000:1::/64"
+    - "ipv6 address 2001:db8:1::/64"
 
   after:
     - name: Loopback888
@@ -136,7 +136,7 @@ overridden:
     - ipv4:
       - address: 198.51.102.1 255.255.255.0
       ipv6:
-      - address: 2001:db8:0:1::/64
+      - address: 2001:db8:1::/64
       name: GigabitEthernet0/0/0/3.100
 
 deleted:

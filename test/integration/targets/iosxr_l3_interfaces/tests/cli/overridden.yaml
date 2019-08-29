@@ -17,7 +17,7 @@
             ipv4:
             - address: 198.51.102.1/24
             ipv6:
-            - address: 2001:db8:0000:1::/64
+            - address: 2001:db8:1::/64
         state: overridden
       register: result
 
