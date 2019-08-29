@@ -1019,7 +1019,7 @@ class TaskExecutor:
         Returns the correct action plugin to handle the requestion task action
         '''
 
-        module_prefix = self._task.action.split('_')[0]
+        module_prefix = self._task.action.split('.')[-1].split('_')[0]
 
         collections = self._task.collections
 
