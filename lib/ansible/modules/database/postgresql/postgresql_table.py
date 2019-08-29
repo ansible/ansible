@@ -124,7 +124,7 @@ seealso:
   description: Complete reference of the PostgreSQL data types documentation.
   link: postgresql.org/docs/current/datatype.html
 author:
-- Andrew Klychkov (@Andersson007)
+- Andrei Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
 '''
 
