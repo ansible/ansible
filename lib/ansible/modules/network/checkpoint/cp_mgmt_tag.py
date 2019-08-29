@@ -83,7 +83,7 @@ EXAMPLES = """
 
 - name: delete-tag
   cp_mgmt_tag:
-    name: dda885bb-0d5b-4529-96eb-55b757847092
+    name: My New Tag1
     state: absent
 """
 
