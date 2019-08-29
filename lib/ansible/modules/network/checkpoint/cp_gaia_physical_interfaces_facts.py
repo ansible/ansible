@@ -25,19 +25,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = """
+module: cp_gaia_physical_interfaces_facts
 author: Yuval Feiger (@chkp-yuvalfe)
 description:
 - Show Physical interfaces
-module: cp_gaia_physical_interfaces_facts
+short_description: Show Physical interfaces
+version_added: '2.9'
 options:
   name:
     description: interface name to show.
     required: false
     type: str
-short_description: Show Physical interfaces
-version_added: '2.9'
 
 """
 
@@ -58,20 +57,17 @@ cp_gaia_physical_interface:
   type: list
 """
 
-import ast
-import sys
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.checkpoint.checkpoint import api_call_gaia
 
 
 def main():
     # arguments for the module:
-    fields = ast.literal_eval("""{"name": {"required": False, "type": "str"}}""")
+    fields = dict(
+        name=dict(required=False, type="str")
+    )
     module = AnsibleModule(argument_spec=fields, supports_check_mode=True)
     was_changed = False
-    single_fields = ["name"]
-    multiple_fields = []
     module_key_params = dict((k, v) for k, v in module.params.items() if k in ["name"] and v is not None)
 
     if len(module_key_params) > 0:
