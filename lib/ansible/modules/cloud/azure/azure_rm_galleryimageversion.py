@@ -364,8 +364,8 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                     self.to_do = Actions.Update
 
         # fix leftovers (if empty structures were left)
-        self.body['properties']['publishingProfile'].pop('snapshot', None)
-        self.body['properties']['publishingProfile'].pop('managed_image', None)
+        self.body.get('properties', {}).get('publishingProfile', {}).pop('snapshot', None)
+        self.body.get('properties', {}).get('publishingProfile', {}).pop('managed_image', None)
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log('Need to Create / Update the GalleryImageVersion instance')
