@@ -43,7 +43,7 @@
 - name: Assert that facts module returned result
   assert:
     that: 
-      - azure_dnszones[0].tags.test == 'modified'
+      - zones.dnszones[0].tags.test == 'modified'
       - zones.dnszones[0].type == 'public'
 
 - name: Create virtual network
