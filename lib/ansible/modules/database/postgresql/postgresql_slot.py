@@ -30,9 +30,6 @@ options:
   slot_type:
     description:
     - Slot type.
-    - For more information see
-      U(https://www.postgresql.org/docs/current/protocol-replication.html) and
-      U(https://www.postgresql.org/docs/current/logicaldecoding-explanation.html).
     type: str
     default: physical
     choices: [ logical, physical ]
@@ -78,6 +75,17 @@ options:
 notes:
 - Physical replication slots were introduced to PostgreSQL with version 9.4,
   while logical replication slots were added beginning with version 10.0.
+
+seealso:
+- name: PostgreSQL pg_replication_slots view reference
+  description: Complete reference of the PostgreSQL pg_replication_slots view.
+  link: https://www.postgresql.org/docs/current/view-pg-replication-slots.html
+- name: PostgreSQL streaming replication protocol reference
+  description: Complete reference of the PostgreSQL streaming replication protocol documentation.
+  link: https://www.postgresql.org/docs/current/protocol-replication.html
+- name: PostgreSQL logical replication protocol reference
+  description: Complete reference of the PostgreSQL logical replication protocol documentation.
+  link: https://www.postgresql.org/docs/current/protocol-logical-replication.html
 
 author:
 - John Scalia (@jscalia)

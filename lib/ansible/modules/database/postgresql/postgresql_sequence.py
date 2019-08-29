@@ -18,8 +18,7 @@ DOCUMENTATION = r'''
 module: postgresql_sequence
 short_description: Create, drop, or alter a PostgreSQL sequence
 description:
-- Allows to create, drop or change the definition of a sequence generator
-  U(https://www.postgresql.org/docs/current/sql-createsequence.html).
+- Allows to create, drop or change the definition of a sequence generator.
 version_added: '2.9'
 options:
   sequence:
@@ -138,6 +137,20 @@ options:
 notes:
 - If you do not pass db parameter, sequence will be created in the database
   named postgres.
+seealso:
+- module: postgresql_table
+- module: postgresql_owner
+- module: postgresql_privs
+- module: postgresql_tablespace
+- name: CREATE SEQUENCE reference
+  description: Complete reference of the CREATE SEQUENCE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createsequence.html
+- name: ALTER SEQUENCE reference
+  description: Complete reference of the ALTER SEQUENCE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-altersequence.html
+- name: DROP SEQUENCE reference
+  description: Complete reference of the DROP SEQUENCE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-dropsequence.html
 author:
 - Tobias Birkefeld (@tcraxs)
 extends_documentation_fragment: postgres
