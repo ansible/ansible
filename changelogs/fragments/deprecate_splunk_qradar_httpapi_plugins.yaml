@@ -1,4 +1,4 @@
-deprecated_features:
+removed_features:
   - splunk httpapi plugin, moved to splunk.enterprise_security collection (https://github.com/ansible-security/splunk_enterprise_security)
   - qradar httpapi plugin, moved to ibm.qradar collection (https://github.com/ansible-security/ibm_qradar)
 
