@@ -262,7 +262,7 @@ def chain_compare(a, b):
 # Noting that some chains have non-pem data in between each cert
 def pem_chain_split(pem):
     expr = re.compile(r"-+BEGIN\s+CERTIFICATE-+([a-zA-Z0-9\+\/=\s]+)-+END\s+CERTIFICATE-+")
-    pem_arr = re.findall(expr,to_text(pem))
+    pem_arr = re.findall(expr,to_text(pem.replace('\n','')))
     prefix = "-----BEGIN CERTIFICATE-----"
     suffix = "-----END CERTIFICATE-----"
     pem_arr = [(prefix + p + suffix) for p in pem_arr]

@@ -186,15 +186,16 @@ def get_fingerprint(path, passphrase=None):
             return None
     return get_fingerprint_of_bytes(publickey)
 
+
 def get_fingerprint_from_pem_cert(data):
-    """Generate the fingerprint of the public key. 
+    """Generate the fingerprint of the public key.
        Based only on the content of the public key.
        data argument should be PEM encoded bytes, not string or file path.
     """
-    
+
     cert = x509.load_pem_x509_certificate(data, cryptography_backend())
     return cert.fingerprint(hashes.SHA256())
-    
+
 
 def load_privatekey(path, passphrase=None, check_passphrase=True, content=None, backend='pyopenssl'):
     """Load the specified OpenSSL private key.
