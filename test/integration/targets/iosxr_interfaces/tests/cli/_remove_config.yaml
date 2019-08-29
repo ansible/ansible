@@ -18,7 +18,6 @@
   loop:
     - GigabitEthernet 0/0/0/0
     - GigabitEthernet 0/0/0/1
-    - preconfigure GigabitEthernet 0/0/0/1
-    - preconfigure GigabitEthernet 0/0/0/2
-    - preconfigure GigabitEthernet 0/0/0/3
+    - GigabitEthernet 0/0/0/2
+    - GigabitEthernet 0/0/0/3
   ignore_errors: yes
