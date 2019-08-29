@@ -153,6 +153,17 @@ options:
         required: false
         version_added: 2.8
         choices: ["DAEMON", "REPLICA"]
+    propagate_tags:
+        description:
+          - Specifies whether to propagate the tags from the task definition or the service to the tasks in the service. This option requires botocore >= 1.12.46.
+        required: false
+        version_added: 2.9
+        choices: ["SERVICE", "TASK_DEFINITION"]
+    tags:
+        description:
+          - A dictionary of one or more tags to assign to the load balancer. This option requires botocore >= 1.12.46.
+        required: false
+        version_added: 2.9
 extends_documentation_fragment:
     - aws
     - ec2
@@ -333,7 +344,7 @@ DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import ec2_argument_spec
-from ansible.module_utils.ec2 import snake_dict_to_camel_dict, map_complex_type, get_ec2_security_group_ids_from_names
+from ansible.module_utils.ec2 import snake_dict_to_camel_dict, map_complex_type, get_ec2_security_group_ids_from_names, ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
 
 try:
     import botocore
@@ -415,7 +426,8 @@ class EcsServiceManager:
     def create_service(self, service_name, cluster_name, task_definition, load_balancers,
                        desired_count, client_token, role, deployment_configuration,
                        placement_constraints, placement_strategy, health_check_grace_period_seconds,
-                       network_configuration, service_registries, launch_type, scheduling_strategy):
+                       network_configuration, service_registries, launch_type, scheduling_strategy,
+                       propagate_tags, tags):
 
         params = dict(
             cluster=cluster_name,
@@ -442,8 +454,43 @@ class EcsServiceManager:
 
         if scheduling_strategy:
             params['schedulingStrategy'] = scheduling_strategy
+        if propagate_tags:
+            params['propagateTags'] = propagate_tags
+        if tags:
+            params['tags'] = ansible_dict_to_boto3_tag_list(tags, 'key', 'value')
         response = self.ecs.create_service(**params)
         return self.jsonize(response['service'])
+
+    def list_tags_for_resource(self, module, arn):
+        try:
+            response = self.ecs.list_tags_for_resource(resourceArn=arn)
+            return boto3_tag_list_to_ansible_dict(response.get('tags'), 'key', 'value')
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Error listing tags for resource")
+
+    def update_tags(self, module, existing_tags, valid_tags, arn):
+        changed = False
+        to_add, to_remove = compare_aws_tags(existing_tags, valid_tags)
+        if to_remove:
+            self.untag_resource(module, arn, to_remove)
+            changed = True
+        if to_add:
+            self.tag_resource(module, arn, ansible_dict_to_boto3_tag_list(to_add, 'key', 'value'))
+            changed = True
+        return changed
+    
+    def tag_resource(self, module, arn, tags):
+        try:
+            return self.ecs.tag_resource(resourceArn=arn, tags=tags)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Error tagging resource")
+
+
+    def untag_resource(self, module, arn, tag_keys):
+        try:
+            return self.ecs.untag_resource(resourceArn=arn, tagKeys=tag_keys)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Error untagging resource")
 
     def update_service(self, service_name, cluster_name, task_definition,
                        desired_count, deployment_configuration, network_configuration,
@@ -523,7 +570,9 @@ def main():
         )),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         service_registries=dict(required=False, type='list', default=[]),
-        scheduling_strategy=dict(required=False, choices=['DAEMON', 'REPLICA'])
+        scheduling_strategy=dict(required=False, choices=['DAEMON', 'REPLICA']),
+        propagate_tags=dict(required=False, choices=['SERVICE', 'TASK_DEFINITION']),
+        tags=dict(required=False, type='dict')
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
@@ -566,6 +615,14 @@ def main():
     if module.params['health_check_grace_period_seconds']:
         if not module.botocore_at_least('1.8.20'):
             module.fail_json(msg='botocore needs to be version 1.8.20 or higher to use health_check_grace_period_seconds')
+    if module.params['propagate_tags']:
+        if not module.botocore_at_least('1.12.46'):
+            module.fail_json(msg='botocore needs to be version 1.12.46 or higher to use propagate_tags')
+    
+    tags = module.params.get('tags', None)
+    if tags:
+        if not module.botocore_at_least('1.12.46'):
+            module.fail_json(msg='botocore needs to be version 1.12.46 or higher to use tags')
 
     if module.params['state'] == 'present':
 
@@ -614,6 +671,10 @@ def main():
 
                     if (existing['loadBalancers'] or []) != loadBalancers:
                         module.fail_json(msg="It is not possible to update the load balancers of an existing service")
+                    
+                    if module.params['propagate_tags']:
+                        if existing.get('propagateTags', '') != module.params['propagate_tags']:
+                            module.fail_json(msg="It is not possible to update the propagate_tags property of an existing service")
 
                     # update required
                     response = service_mgr.update_service(module.params['name'],
@@ -624,6 +685,11 @@ def main():
                                                           network_configuration,
                                                           module.params['health_check_grace_period_seconds'],
                                                           module.params['force_new_deployment'])
+                    
+                    # update tags
+                    if tags:
+                        existing_tags = service_mgr.list_tags_for_resource(module, existing['serviceArn'])
+                        service_mgr.update_tags(module, existing_tags, tags, existing['serviceArn'])
 
                 else:
                     try:
@@ -641,7 +707,9 @@ def main():
                                                               network_configuration,
                                                               serviceRegistries,
                                                               module.params['launch_type'],
-                                                              module.params['scheduling_strategy']
+                                                              module.params['scheduling_strategy'],
+                                                              module.params['propagate_tags'],
+                                                              tags
                                                               )
                     except botocore.exceptions.ClientError as e:
                         module.fail_json_aws(e, msg="Couldn't create service")
