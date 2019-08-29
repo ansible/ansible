@@ -167,9 +167,7 @@ def get_fingerprint_of_bytes(source):
 
 
 def get_fingerprint(path, passphrase=None):
-    """Generate the fingerprint of the public key. 
-       Based on the private key
-    """
+    """Generate the fingerprint of the public key from the private key"""
 
     privatekey = load_privatekey(path, passphrase, check_passphrase=False)
     try:

@@ -114,7 +114,7 @@ class ACMServiceManager(object):
                 module.fail_json_aws(e, msg="Couldn't obtain certificate metadata for domain %s" % certificate['DomainName'])
             try:
                 cert_data.update(self.get_certificate_with_backoff(client, certificate['CertificateArn']))
-            except (BotoCoreError, ClientError) as e:
+            except (BotoCoreError, ClientError, KeyError) as e:
                 if e.response['Error']['Code'] != "RequestInProgressException":
                     module.fail_json_aws(e, msg="Couldn't obtain certificate data for domain %s" % certificate['DomainName'])
             cert_data = camel_dict_to_snake_dict(cert_data)

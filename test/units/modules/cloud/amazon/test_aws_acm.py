@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# (c) 2017 Red Hat Inc.
+# (c) 2019 Red Hat Inc.
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
