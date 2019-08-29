@@ -362,6 +362,8 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                 self.results['compare'] = []
                 if not self.default_compare(modifiers, self.body, old_response, '', self.results):
                     self.to_do = Actions.Update
+                    self.body['properties']['publishingProfile'].pop('snapshot', None)
+                    self.body['properties']['publishingProfile'].pop('managed_image', None)
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log('Need to Create / Update the GalleryImageVersion instance')
