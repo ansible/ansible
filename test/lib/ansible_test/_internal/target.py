@@ -233,10 +233,26 @@ def walk_integration_targets():
     prefixes = load_integration_prefixes()
     targets_path_tuple = tuple(path.split(os.path.sep))
 
-    entry_points = (
-        os.path.sep + os.path.join('tasks', 'main.yml'),
-        os.path.sep + os.path.join('tasks', 'main.yaml'),
+    entry_dirs = (
+        'defaults',
+        'files',
+        'handlers',
+        'meta',
+        'tasks',
+        'templates',
+        'vars',
     )
+
+    entry_files = (
+        'main.yml',
+        'main.yaml',
+    )
+
+    entry_points = []
+
+    for entry_dir in entry_dirs:
+        for entry_file in entry_files:
+            entry_points.append(os.path.join(os.path.sep, entry_dir, entry_file))
 
     # any directory with at least one file is a target
     path_tuples = set(tuple(os.path.dirname(p).split(os.path.sep))
