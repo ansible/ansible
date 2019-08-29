@@ -15,24 +15,31 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabvirtualnetwork_facts
-version_added: "2.8"
-short_description: Get Azure DevTest Lab Virtual Network facts
+module: azure_rm_devtestlabcustomimage_info
+version_added: "2.9"
+short_description: Get Azure DevTest Lab Custom Image facts
 description:
-    - Get facts of Azure DevTest Lab Virtual Network.
+    - Get facts of Azure Azure DevTest Lab Custom Image.
 
 options:
     resource_group:
         description:
             - The name of the resource group.
         required: True
+        type: str
     lab_name:
         description:
-            - The name of DevTest Lab.
+            - The name of the lab.
         required: True
+        type: str
     name:
         description:
-            - The name of DevTest Lab Virtual Network.
+            - The name of the custom image.
+        type: str
+    tags:
+        description:
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+        type: list
 
 extends_documentation_fragment:
     - azure
@@ -43,33 +50,33 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of DevTest Lab Virtual Network
-    azure_rm_devtestlabvirtualnetwork_facts:
+  - name: Get instance of Custom Image
+    azure_rm_devtestlabcustomimage_info:
       resource_group: myResourceGroup
       lab_name: myLab
-      name: myVirtualNetwork
+      name: myImage
 
-  - name: List all Virtual Networks in DevTest Lab
-    azure_rm_devtestlabvirtualnetwork_facts:
+  - name: List instances of Custom Image in the lab
+    azure_rm_devtestlabcustomimage_info:
       resource_group: myResourceGroup
       lab_name: myLab
-      name: myVirtualNetwork
+      name: myImage
 '''
 
 RETURN = '''
-virtualnetworks:
+custom_images:
     description:
-        - A list of dictionaries containing facts for DevTest Lab Virtual Network.
+        - A list of dictionaries containing facts for Custom Image.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - The identifier of the virtual network.
+                - The identifier of the artifact source.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/myLab/virt
-                     ualnetworks/myVirtualNetwork"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/cu
+                     stomimages/myImage"
         resource_group:
             description:
                 - Name of the resource group.
@@ -84,29 +91,29 @@ virtualnetworks:
             sample: myLab
         name:
             description:
-                - Name of the virtual network.
+                - The name of the image.
             returned: always
             type: str
-            sample: myVirtualNetwork
-        description:
+            sample: myImage
+        managed_shapshot_id:
             description:
-                - Description of the virtual network.
+                - Managed snapshot id.
             returned: always
             type: str
-            sample: My Virtual Network
-        external_provider_resource_id:
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.compute/snapshots/myImage"
+        source_vm_id:
             description:
-                - Resource id of an external virtual network.
+                - Source VM id.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/my
-                     VirtualNetwork"
-        provisioning_state:
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx//resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/myLab/v
+                     irtualmachines/myLabVm"
+        tags:
             description:
-                - Provisioning state of the virtual network.
+                - The tags of the resource.
             returned: always
-            type: str
-            sample: Succeeded
+            type: complex
+            sample: "{ 'MyTag':'MyValue' }"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -120,7 +127,7 @@ except ImportError:
     pass
 
 
-class AzureRMDevTestLabVirtualNetworkFacts(AzureRMModuleBase):
+class AzureRMDtlCustomImageInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -133,7 +140,11 @@ class AzureRMDevTestLabVirtualNetworkFacts(AzureRMModuleBase):
                 required=True
             ),
             name=dict(
-                type='str'
+                type='str',
+                required=True
+            ),
+            tags=dict(
+                type='list'
             )
         )
         # store the results of the module operation
@@ -144,50 +155,55 @@ class AzureRMDevTestLabVirtualNetworkFacts(AzureRMModuleBase):
         self.resource_group = None
         self.lab_name = None
         self.name = None
-        super(AzureRMDevTestLabVirtualNetworkFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        self.tags = None
+        super(AzureRMDtlCustomImageInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_devtestlabcustomimage_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_devtestlabcustomimage_facts' module has been renamed to 'azure_rm_devtestlabcustomimage_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if self.name:
-            self.results['virtualnetworks'] = self.get()
+            self.results['custom_images'] = self.get()
         else:
-            self.results['virtualnetworks'] = self.list()
-
+            self.results['custom_images'] = self.list()
         return self.results
-
-    def list(self):
-        response = None
-        results = []
-        try:
-            response = self.mgmt_client.virtual_networks.list(resource_group_name=self.resource_group,
-                                                              lab_name=self.lab_name)
-            self.log("Response : {0}".format(response))
-        except CloudError as e:
-            self.fail('Could not list Virtual Networks for DevTest Lab.')
-
-        if response is not None:
-            for item in response:
-                results.append(self.format_response(item))
-
-        return results
 
     def get(self):
         response = None
         results = []
         try:
-            response = self.mgmt_client.virtual_networks.get(resource_group_name=self.resource_group,
-                                                             lab_name=self.lab_name,
-                                                             name=self.name)
+            response = self.mgmt_client.custom_images.get(resource_group_name=self.resource_group,
+                                                          lab_name=self.lab_name,
+                                                          name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get facts for Virtual Network.')
+            self.log('Could not get facts for Custom Image.')
 
-        if response:
+        if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
+
+        return results
+
+    def list(self):
+        response = None
+        results = []
+        try:
+            response = self.mgmt_client.custom_images.list(resource_group_name=self.resource_group,
+                                                           lab_name=self.lab_name)
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.log('Could not get facts for Custom Image.')
+
+        if response is not None:
+            for item in response:
+                if self.has_tags(item.tags, self.tags):
+                    results.append(self.format_response(item))
 
         return results
 
@@ -196,17 +212,17 @@ class AzureRMDevTestLabVirtualNetworkFacts(AzureRMModuleBase):
         d = {
             'resource_group': self.resource_group,
             'lab_name': self.lab_name,
-            'name': d.get('name', None),
-            'id': d.get('id', None),
-            'external_provider_resource_id': d.get('external_provider_resource_id', None),
-            'provisioning_state': d.get('provisioning_state', None),
-            'description': d.get('description', None)
+            'name': d.get('name'),
+            'id': d.get('id'),
+            'managed_snapshot_id': d.get('managed_snapshot_id'),
+            'source_vm_id': d.get('vm', {}).get('source_vm_id'),
+            'tags': d.get('tags')
         }
         return d
 
 
 def main():
-    AzureRMDevTestLabVirtualNetworkFacts()
+    AzureRMDtlCustomImageInfo()
 
 
 if __name__ == '__main__':
