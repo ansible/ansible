@@ -85,6 +85,8 @@ class ContentLayout(Layout):
                  results_path,  # type: str
                  sanity_path,  # type: str
                  integration_path,  # type: str
+                 integration_targets_path,  # type: str
+                 integration_vars_path,  # type: str
                  unit_path,  # type: str
                  unit_module_path,  # type: str
                  unit_module_utils_path,  # type: str
@@ -97,11 +99,12 @@ class ContentLayout(Layout):
         self.results_path = results_path
         self.sanity_path = sanity_path
         self.integration_path = integration_path
-        self.integration_targets_path = os.path.join(integration_path, 'targets')
-        self.integration_vars_path = os.path.join(integration_path, 'integration_config.yml')
+        self.integration_targets_path = integration_targets_path
+        self.integration_vars_path = integration_vars_path
         self.unit_path = unit_path
         self.unit_module_path = unit_module_path
         self.unit_module_utils_path = unit_module_utils_path
+
         self.is_ansible = root == ANSIBLE_SOURCE_ROOT
 
     @property
