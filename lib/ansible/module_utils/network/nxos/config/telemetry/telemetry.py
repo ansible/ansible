@@ -22,7 +22,7 @@ from ansible.module_utils.network.nxos.facts.facts import Facts
 from ansible.module_utils.network.nxos.cmdref.telemetry.telemetry import TMS_GLOBAL, TMS_DESTGROUP, TMS_SENSORGROUP, TMS_SUBSCRIPTION
 from ansible.module_utils.network.nxos.utils.telemetry.telemetry import normalize_data, remove_duplicate_context
 from ansible.module_utils.network.nxos.utils.telemetry.telemetry import valiate_input, get_setval_path
-from ansible.module_utils.network.nxos.utils.telemetry.telemetry import get_module_params_subsection
+from ansible.module_utils.network.nxos.utils.telemetry.telemetry import get_module_params_subsection, remove_duplicate_commands
 from ansible.module_utils.network.nxos.utils.utils import normalize_interface
 from ansible.module_utils.network.nxos.nxos import NxosCmdRef
 
@@ -71,7 +71,6 @@ class Telemetry(ConfigBase):
         state = self._module.params['state']
         if 'overridden' in state:
             self._module.fail_json(msg='State <overridden> is invalid for this module.')
-
         # When state is 'deleted', the module_params should not contain data
         # under the 'config' key
         if 'deleted' in state and self._module.params.get('config'):
@@ -133,6 +132,10 @@ class Telemetry(ConfigBase):
         # and does not require any processing using NxosCmdRef objects.
         if state == 'deleted':
             return self._state_deleted(want, have)
+        elif state == 'replaced':
+            if want == have:
+                return []
+            return self._state_replaced(want, have)
 
         # Save off module params
         ALL_MP = self._module.params['config']
@@ -183,30 +186,6 @@ class Telemetry(ConfigBase):
                     if td['type'] == 'TMS_DESTGROUP':
                         normalize_data(ref)
 
-            if state == 'replaced':
-                # For state replaced we need to build NxosCmdRef objects for state on
-                # the device that is not specified in the playbook so that it can be
-                # removed.
-                re_pattern = r'{0}'.format(td['cmd'].split(' ')[0])
-                for line in device_cache_lines:
-                    if re.search(re_pattern, line):
-                        resource_key = line.strip()
-                        skip_resource_key = False
-                        # Skip id if it is being managed by the playbook.
-                        for id in saved_ids:
-                            re_pattern = r'{0}$'.format(id)
-                            if re.search(re_pattern, resource_key):
-                                skip_resource_key = True
-                                break
-                        if skip_resource_key:
-                            continue
-                        cmd_ref[td['type']]['ref'].append(NxosCmdRef(self._module, td['obj']))
-                        ref = cmd_ref[td['type']]['ref'][-1]
-                        ref.set_context([resource_key])
-                        ref.get_existing(device_cache)
-                        if td['type'] == 'TMS_DESTGROUP':
-                            normalize_data(ref)
-
         # Build Telemetry Destination Group NxosCmdRef Objects
         td = {'name': 'destination_groups', 'type': 'TMS_DESTGROUP',
               'obj': TMS_DESTGROUP, 'cmd': 'destination-group {0}'}
@@ -226,59 +205,201 @@ class Telemetry(ConfigBase):
             if want == have:
                 return []
             commands = self._state_merged(cmd_ref)
-        elif state == 'replaced':
-            if want == have:
-                return []
-            commands = self._state_replaced(cmd_ref)
         return commands
 
     @staticmethod
-    def _state_replaced(cmd_ref):
+    def _state_replaced(want, have):
         """ The command generator when state is replaced
         :rtype: A list
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        save_context = ['telemetry']
-        commands = cmd_ref['TMS_GLOBAL']['ref'][0].get_proposed(save_context)
+        commands = []
+        from pprint import pprint
+        ref = {}
+        ref['tms_global'] = NxosCmdRef([], TMS_GLOBAL, ref_only=True)
+        ref['tms_destgroup'] = NxosCmdRef([], TMS_DESTGROUP, ref_only=True)
+        ref['tms_sensorgroup'] = NxosCmdRef([], TMS_SENSORGROUP, ref_only=True)
+        ref['tms_subscription'] = NxosCmdRef([], TMS_SUBSCRIPTION, ref_only=True)
 
         # Order matters for state replaced.
         # First remove all subscriptions, followed by sensor-groups and destination-groups.
         # Second add all destination-groups, followed by sensor-groups and subscriptions
-        add = {'TMS_DESTGROUP': [], 'TMS_SENSORGROUP': [], 'TMS_SUBSCRIPTION': []}
+        add = {'TMS_GLOBAL': [], 'TMS_DESTGROUP': [], 'TMS_SENSORGROUP': [], 'TMS_SUBSCRIPTION': []}
         delete = {'TMS_DESTGROUP': [], 'TMS_SENSORGROUP': [], 'TMS_SUBSCRIPTION': []}
 
-        def remove_command(cmd_list):
-            remove = False
-            for cmd in cmd_list:
-                if re.search(r'^no', cmd):
-                    remove = True
-                    break
-            return remove
+        # Process Telemetry Global Want and Have Values
+        # Possible states:
+        # - want and have are (set) (equal: no action, not equal: replace with want)
+        # - want (set) have (not set) (add want)
+        # - want (not set) have (set) (delete have)
+        # - want (not set) have (not set) (no action)
+        all_global_properties = ['certificate', 'compression', 'source_interface', 'vrf']
+        dest_profile_properties = ['compression', 'source_interface', 'vrf']
+        dest_profile_remote_commands = []
+        for property in all_global_properties:
+            global_ctx = ref['tms_global']._ref['_template']['context']
+            property_ctx = ref['tms_global']._ref[property].get('context')
+            setval = ref['tms_global']._ref[property]['setval']
+            kind = ref['tms_global']._ref[property]['kind']
+            if want.get(property) is not None:
+                if have.get(property) is not None:
+                    if want.get(property) != have.get(property):
+                        if kind == 'dict':
+                            cmd = [setval.format(**want.get(property))]
+                        else:
+                            cmd = [setval.format(want.get(property))]
+                elif have.get(property) is None:
+                    if kind == 'dict':
+                        cmd = [setval.format(**want.get(property))]
+                    else:
+                        cmd = [setval.format(want.get(property))]
+            elif want.get(property) is None:
+                if have.get(property) is not None:
+                    if kind == 'dict':
+                        cmd = ['no ' + setval.format(**have.get(property))]
+                    else:
+                        cmd = ['no ' + setval.format(have.get(property))]
+                    if property in dest_profile_properties:
+                        dest_profile_remote_commands.extend(cmd)
 
-        if cmd_ref['TMS_DESTGROUP'].get('ref'):
-            for cr in cmd_ref['TMS_DESTGROUP']['ref']:
-                ref_cmd_list = cr.get_proposed(save_context)
-                if remove_command(ref_cmd_list):
-                    delete['TMS_DESTGROUP'].extend(ref_cmd_list)
-                else:
-                    add['TMS_DESTGROUP'].extend(ref_cmd_list)
+            ctx = global_ctx
+            if property_ctx is not None:
+                ctx.extend(property_ctx)
+            add['TMS_GLOBAL'].extend(ctx)
+            add['TMS_GLOBAL'].extend(cmd)
+        add['TMS_GLOBAL'] = remove_duplicate_commands(add['TMS_GLOBAL'])
+        # If all destination profile commands are being removed then just
+        # remove the config context instead.
+        if len(dest_profile_remote_commands) == 3:
+            for item in dest_profile_remote_commands:
+                add['TMS_GLOBAL'].remove(item)
+            add['TMS_GLOBAL'].remove('destination-profile')
+            add['TMS_GLOBAL'].extend(['no destination-profile'])
 
-        if cmd_ref['TMS_SENSORGROUP'].get('ref'):
-            for cr in cmd_ref['TMS_SENSORGROUP']['ref']:
-                ref_cmd_list = cr.get_proposed(save_context)
-                if remove_command(ref_cmd_list):
-                    delete['TMS_SENSORGROUP'].extend(ref_cmd_list)
-                else:
-                    add['TMS_SENSORGROUP'].extend(ref_cmd_list)
+        # Process Telemetry Destination Group Want and Have Values
+        # Possible states:
+        # - want and have are (set) (equal: no action, not equal: replace with want)
+        # - want (set) have (not set) (add want)
+        # - want (not set) have (set) (delete have)
+        # - want (not set) have (not set) (no action)
+        global_ctx = ref['tms_destgroup']._ref['_template']['context']
+        setval = ref['tms_destgroup']._ref['destination']['setval']
+        if want.get('destination_groups') is None:
+            if have.get('destination_groups') is not None:
+                for dg in have.get('destination_groups'):
+                    remove_context = ['{0} destination-group {1}'.format('no', dg['id'])]
+                    delete['TMS_DESTGROUP'].extend(global_ctx)
+                    if remove_context[0] not in delete['TMS_DESTGROUP']:
+                        delete['TMS_DESTGROUP'].extend(remove_context)
+        else:
+            for want_dg in want.get('destination_groups'):
+                want_dg['destination']['protocol'] = want_dg['destination']['protocol'].lower()
+                want_dg['destination']['encoding'] = want_dg['destination']['encoding'].lower()
+                if want_dg not in have.get('destination_groups'):
+                    property_ctx = ['destination-group {0}'.format(want_dg['id'])]
+                    cmd = [setval.format(**want_dg['destination'])]
+                    add['TMS_DESTGROUP'].extend(global_ctx)
+                    if property_ctx[0] not in add['TMS_DESTGROUP']:
+                        add['TMS_DESTGROUP'].extend(property_ctx)
+                    add['TMS_DESTGROUP'].extend(cmd)
+            for have_dg in have.get('destination_groups'):
+                if have_dg not in want.get('destination_groups'):
+                    have_id_in_want_ids = False
+                    for item in want.get('destination_groups'):
+                        if have_dg['id'] == item['id']:
+                            have_id_in_want_ids = True
+                    property_ctx = ['destination-group {0}'.format(have_dg['id'])]
+                    delete['TMS_DESTGROUP'].extend(global_ctx)
+                    if have_id_in_want_ids:
+                        cmd = ['no ' + setval.format(**have_dg['destination'])]
+                        if property_ctx[0] not in delete['TMS_DESTGROUP']:
+                            delete['TMS_DESTGROUP'].extend(property_ctx)
+                        delete['TMS_DESTGROUP'].extend(cmd)
+                    else:
+                        remove_context = ['no ' + property_ctx[0]]
+                        if remove_context[0] not in delete['TMS_DESTGROUP']:
+                            delete['TMS_DESTGROUP'].extend(remove_context)
 
-        if cmd_ref['TMS_SUBSCRIPTION'].get('ref'):
-            for cr in cmd_ref['TMS_SUBSCRIPTION']['ref']:
-                ref_cmd_list = cr.get_proposed(save_context)
-                if remove_command(ref_cmd_list):
-                    delete['TMS_SUBSCRIPTION'].extend(ref_cmd_list)
-                else:
-                    add['TMS_SUBSCRIPTION'].extend(ref_cmd_list)
+        add['TMS_DESTGROUP'] = remove_duplicate_context(add['TMS_DESTGROUP'])
+        delete['TMS_DESTGROUP'] = remove_duplicate_context(delete['TMS_DESTGROUP'])
+
+        import pdb ; pdb.set_trace()
+
+        # Process Telemetry Sensor Group Want and Have Values
+        # Possible states:
+        # - want and have are (set) (equal: no action, not equal: replace with want)
+        # - want (set) have (not set) (add want)
+        # - want (not set) have (set) (delete have)
+        # - want (not set) have (not set) (no action)
+        global_ctx = ref['tms_sensorgroup']._ref['_template']['context']
+        setval = {}
+        setval['data_source'] = ref['tms_sensorgroup']._ref['data_source']['setval']
+        setval['path'] = ref['tms_sensorgroup']._ref['path']['setval']
+        if want.get('sensor_groups') is None:
+            if have.get('sensor_groups') is not None:
+                for sg in have.get('sensor_groups'):
+                    remove_context = ['{0} sensor-group {1}'.format('no', sg['id'])]
+                    delete['TMS_SENSORGROUP'].extend(global_ctx)
+                    if remove_context[0] not in delete['TMS_SENSORGROUP']:
+                        delete['TMS_SENSORGROUP'].extend(remove_context)
+
+        for want_sg in want.get('sensor_groups'):
+            if want_sg not in have.get('sensor_groups'):
+                property_ctx = ['sensor-group {0}'.format(want_sg['id'])]
+                cmd = {}
+                if want_sg.get('data_source'):
+                    cmd['data_source'] = [setval['data_source'].format(want_sg['data_source'])]
+                if want_sg.get('path'):
+                    setval['path'] = get_setval_path(want_sg.get('path'))
+                    cmd['path'] = [setval['path'].format(**want_sg['path'])]
+                add['TMS_SENSORGROUP'].extend(global_ctx)
+                if property_ctx[0] not in add['TMS_SENSORGROUP']:
+                    add['TMS_SENSORGROUP'].extend(property_ctx)
+                if cmd.get('data_source'):
+                    add['TMS_SENSORGROUP'].extend(cmd['data_source'])
+                if cmd.get('path'):
+                    add['TMS_SENSORGROUP'].extend(cmd['path'])
+        for have_sg in have.get('sensor_groups'):
+            if have_sg not in want.get('sensor_groups'):
+                property_ctx = ['sensor-group {0}'.format(have_sg['id'])]
+                cmd = {}
+                if have_sg.get('data_source'):
+                    cmd['data_source'] = ['no ' + setval['data_source'].format(have_sg['data_source'])]
+                if have_sg.get('path'):
+                    setval['path'] = get_setval_path(have_sg.get('path'))
+                    cmd['path'] = ['no ' + setval['path'].format(**have_sg['path'])]
+                delete['TMS_SENSORGROUP'].extend(global_ctx)
+                if property_ctx[0] not in delete['TMS_SENSORGROUP']:
+                    delete['TMS_SENSORGROUP'].extend(property_ctx)
+                if cmd.get('data_source'):
+                    delete['TMS_SENSORGROUP'].extend(cmd['data_source'])
+                if cmd.get('path'):
+                    delete['TMS_SENSORGROUP'].extend(cmd['path'])
+
+        add['TMS_SENSORGROUP'] = remove_duplicate_context(add['TMS_SENSORGROUP'])
+        delete['TMS_SENSORGROUP'] = remove_duplicate_context(delete['TMS_SENSORGROUP'])
+
+        # Process Telemetry Subscription Want and Have Values
+        # Possible states:
+        # - want and have are (set) (equal: no action, not equal: replace with want)
+        # - want (set) have (not set) (add want)
+        # - want (not set) have (set) (delete have)
+        # - want (not set) have (not set) (no action)
+        global_ctx = ref['tms_subscription']._ref['_template']['context']
+        setval = {}
+        setval['destination_group'] = ref['tms_subscription']._ref['destination_group']['setval']
+        setval['sensor_group'] = ref['tms_subscription']._ref['sensor_group']['setval']
+        if want.get('subscriptions') is not None:
+            if have.get('subscriptions') is not None:
+                pass
+        elif want.get('subscriptions') is None:
+            if have.get('subscriptions') is not None:
+                for sub in have.get('subscriptions'):
+                    remove_context = ['{0} subscription {1}'.format('no', sub['id'])]
+                    # cmd = [setval.format(**dg['destination'])]
+                    delete['TMS_SUBSCRIPTION'].extend(global_ctx)
+                    delete['TMS_SUBSCRIPTION'].extend(remove_context)
 
         commands.extend(delete['TMS_SUBSCRIPTION'])
         commands.extend(delete['TMS_SENSORGROUP'])
@@ -286,7 +407,11 @@ class Telemetry(ConfigBase):
         commands.extend(add['TMS_DESTGROUP'])
         commands.extend(add['TMS_SENSORGROUP'])
         commands.extend(add['TMS_SUBSCRIPTION'])
-        return remove_duplicate_context(commands)
+        commands.extend(add['TMS_GLOBAL'])
+        commands = remove_duplicate_context(commands)
+        import pdb ; pdb.set_trace()
+
+        return commands
 
     @staticmethod
     def _state_merged(cmd_ref):

@@ -739,8 +739,11 @@ class NxosCmdRef:
           multiplier: 3
     """
 
-    def __init__(self, module, cmd_ref_str):
+    def __init__(self, module, cmd_ref_str, ref_only=None):
         """Initialize cmd_ref from yaml data."""
+        if ref_only is None:
+            ref_only = False
+
         self._module = module
         self._check_imports()
         self._yaml_load(cmd_ref_str)
@@ -754,10 +757,12 @@ class NxosCmdRef:
         ref['_proposed'] = []
         ref['_context'] = []
         ref['_resource_key'] = None
-        ref['_state'] = module.params.get('state', 'present')
-        self.feature_enable()
-        self.get_platform_defaults()
-        self.normalize_defaults()
+
+        if not ref_only:
+            ref['_state'] = module.params.get('state', 'present')
+            self.feature_enable()
+            self.get_platform_defaults()
+            self.normalize_defaults()
 
     def __getitem__(self, key=None):
         if key is None:
@@ -1153,65 +1158,9 @@ class NxosCmdRef:
                 for pval in playval.values():
                     self.build_cmd_set(pval, existing, k)
 
-        # Remove any duplicate commands.
-        # pylint: disable=unnecessary-lambda
-        cmds.extend(sorted(set(proposed), key=lambda x: proposed.index(x)))
-
-        if ref['_state'] == 'replaced':
-            # Remove any duplicate commands.
-            # pylint: disable=unnecessary-lambda
-            cmds.extend(sorted(set(proposed), key=lambda x: proposed.index(x)))
-            from pprint import pprint
-            import copy
-            ref['_state'] = 'deleted'
-            remove_keys = [x for x in ref['commands'] if x not in play_keys]
-            remove_keys_copy = copy.deepcopy(remove_keys)
-
-            # Remove the context if the key under this context is the only
-            # remaining configuration command.
-            for key in remove_keys:
-                if ref[key].get('context') or ref.get('_context') and ref[key].get('existing'):
-                    # This key exists in the config but we now need to check
-                    # and make sure no other config exists under this context
-                    # that is being managed by the playbook.
-                    config_under_context = False
-                    for pkey in play_keys:
-                        if ref[pkey].get('context') or ref.get('_context') and ref[pkey].get('existing'):
-                            config_under_context = True
-                    if config_under_context:
-                        # We found config under that context that we are managing
-                        # so we cannot remove the context.
-                        continue
-                    # If we get here it's safe to remove the key context if it exists.
-                    if ref[key].get('context'):
-                        cmds.extend([ref[key].get('context')[0]])
-                        cmds.extend(['no ' + ref[key].get('context')[-1]])
-                        remove_keys_copy.remove(key)
-                    # If we get here is's safe to remove context but don't ever remove
-                    # the save_context context passed in by the caller because there might
-                    # be other config under that context that is on the device but not in
-                    # scope for this ref object.
-                    if ref.get('_context') and not ref.get('_context') == save_context:
-                        cmds.extend([ref.get('_context')[0]])
-                        cmds.extend(['no ' + ref.get('_context')[-1]])
-                        remove_keys_copy.remove(key)
-
-            for key in remove_keys_copy:
-                existing = ref[key].get('existing')
-                if existing:
-                    for item in existing.values():
-                        self.build_cmd_set(item, existing, key)
-                elif ref.get('_context'):
-                    cmds.extend([ref.get('_context')[0]])
-                    cmds.extend(['no ' + ref.get('_context')[-1]])
-
-                # pylint: disable=unnecessary-lambda
-                temp_cmds = sorted(set(proposed), key=lambda x: proposed.index(x))
-                cmds.extend(temp_cmds)
-
         # Remove any duplicate commands before returning.
         # pylint: disable=unnecessary-lambda
-        cmds = sorted(set(cmds), key=lambda x: cmds.index(x))
+        cmds = sorted(set(proposed), key=lambda x: proposed.index(x))
         return cmds
 
 

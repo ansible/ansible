@@ -869,12 +869,16 @@ class TestNxosTelemetryModule(TestNxosModule):
                 ],
                 'subscriptions': [
                     {'id': 5,
-                     'destination_group': 55,
-                     'sensor_group': {'id': 1, 'sample_interval': 1000},
+                     'destination_group': 88,
+                     'sensor_group': {'id': 77, 'sample_interval': 1000},
+                     },
+                    {'id': 5,
+                     'destination_group': 99,
+                     'sensor_group': {'id': 77, 'sample_interval': 1000},
                      },
                     {'id': 88,
-                     'destination_group': 3,
-                     'sensor_group': {'id': 4, 'sample_interval': 2000},
+                     'destination_group': 99,
+                     'sensor_group': {'id': 99, 'sample_interval': 2000},
                      },
                 ],
             }
@@ -900,11 +904,12 @@ class TestNxosTelemetryModule(TestNxosModule):
             'data-source DME',
             'path sys/bgp depth 0 query-condition query_condition_xyz filter-condition filter_condition_xyz',
             'subscription 5',
-            'dst-grp 55',
-            'snsr-grp 1 sample-interval 1000',
+            'dst-grp 88',
+            'dst-grp 99',
+            'snsr-grp 77 sample-interval 1000',
             'subscription 88',
-            'dst-grp 3',
-            'snsr-grp 4 sample-interval 2000'
+            'dst-grp 99',
+            'snsr-grp 99 sample-interval 2000'
         ])
 
     def test_telemetry_deleted_input_validation_n9k(self):
@@ -963,10 +968,6 @@ class TestNxosTelemetryModule(TestNxosModule):
         ), ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'telemetry',
-            'certificate /bootflash/sample.key server.example.com',
-            'destination-profile',
-            'use-vrf blue',
-            'no source-interface loopback55',
             'no subscription 3',
             'no subscription 4',
             'no subscription 5',
@@ -976,7 +977,11 @@ class TestNxosTelemetryModule(TestNxosModule):
             'no sensor-group 55',
             'no sensor-group 56',
             'no destination-group 2',
-            'no destination-group 10'
+            'no destination-group 10',
+            'certificate /bootflash/sample.key server.example.com',
+            'destination-profile',
+            'no source-interface loopback55',
+            'use-vrf blue'
         ])
 
     def test_tms_replaced2_n9k(self):
@@ -1012,6 +1017,12 @@ class TestNxosTelemetryModule(TestNxosModule):
                      'path': {'name': 'sys/bgp', 'depth': 0, 'query_condition': 'query_condition_xyz', 'filter_condition': 'filter_condition_xyz'},
                      },
                 ],
+                'sensor_groups': [
+                    {'id': '56',
+                     'data_source': 'NX-API',
+                     'path': {'name': 'sys/bgp', 'depth': 0, 'query_condition': 'query_condition_xyz', 'filter_condition': 'filter_condition_xyz'},
+                     },
+                ],
             }
         }, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
@@ -1024,6 +1035,7 @@ class TestNxosTelemetryModule(TestNxosModule):
             'no subscription 6',
             'no subscription 7',
             'no sensor-group 2',
+            'no sensor-group 56',
             'no destination-group 2',
             'destination-group 10',
             'ip address 192.168.1.1 port 5001 protocol grpc encoding gpb',
@@ -1077,8 +1089,13 @@ class TestNxosTelemetryModule(TestNxosModule):
             'no certificate /bootflash/server.key localhost',
             'no source-interface loopback55',
             'no subscription 3',
+            'no subscription 4',
+            'no subscription 5',
+            'no subscription 6',
             'no sensor-group 2',
+            'no sensor-group 56',
             'no destination-group 2',
+            'no destination-group 10',
             'destination-group 55',
             'ip address 192.168.1.1 port 5001 protocol grpc encoding gpb',
             'sensor-group 55',

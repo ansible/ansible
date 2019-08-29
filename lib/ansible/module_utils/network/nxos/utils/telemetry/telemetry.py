@@ -155,7 +155,7 @@ def remove_duplicate_context(cmds):
         return remove_duplicate_context(cmds)
 
 
-def get_setval_path(module):
+def get_setval_path(module_or_path_data):
     ''' Build setval for path parameter based on playbook inputs
         Full Command:
           - path {name} depth {depth} query-condition {query_condition} filter-condition {filter_condition}
@@ -166,16 +166,44 @@ def get_setval_path(module):
           - query-condition {query_condition},
           - filter-condition {filter_condition}
     '''
-    path = module.params['config']['sensor_groups'][0].get('path')
+    if isinstance(module_or_path_data, dict):
+        path = module_or_path_data
+    else:
+        path = module_or_path_data.params['config']['sensor_groups'][0].get('path')
     if path is None:
         return path
 
     setval = 'path {name}'
     if 'depth' in path.keys():
-        setval = setval + ' depth {depth}'
+        if path.get('depth') != 'None':
+            setval = setval + ' depth {depth}'
     if 'query_condition' in path.keys():
-        setval = setval + ' query-condition {query_condition}'
+        if path.get('query_condition') != 'None':
+            setval = setval + ' query-condition {query_condition}'
     if 'filter_condition' in path.keys():
-        setval = setval + ' filter-condition {filter_condition}'
+        if path.get('filter_condition') != 'None':
+            setval = setval + ' filter-condition {filter_condition}'
 
     return setval
+
+
+def remove_duplicate_commands(commands_list):
+    # Remove any duplicate commands.
+    # pylint: disable=unnecessary-lambda
+    return sorted(set(commands_list), key=lambda x: commands_list.index(x))
+
+
+def massage_have(have):
+    # Massage have state into a data structure that is indexed by id for
+    # destination_groups, sensor_groups and subscriptions.
+    existing = {}
+    existing['destination_groups'] = {}
+    existing['sensor_groups'] = {}
+    existing['subscriptions'] = {}
+    for subgroup in ['destination_groups', 'sensor_groups', 'subscriptions']:
+        for item in have.get(subgroup, []):
+            id = item.get('id')
+            if id not in existing[subgroup].keys():
+                existing[subgroup][id] = []
+            existing[subgroup][id].append(item)
+    return existing
