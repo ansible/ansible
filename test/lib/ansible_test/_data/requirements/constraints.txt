@@ -36,6 +36,9 @@ lxml < 4.3.0 ; python_version < '2.7' # lxml 4.3.0 and later require python 2.7 
 pyvmomi < 6.0.0 ; python_version < '2.7' # pyvmomi 6.0.0 and later require python 2.7 or later
 pyone == 1.1.9 # newer versions do not pass current integration tests
 botocore >= 1.10.0 # adds support for the following AWS services: secretsmanager, fms, and acm-pca
+azure-common >= 1.1.12 ; python_version >= '2.7'
+azure-mgmt-nspkg >= 3.0.0 ; python_version >= '2.7'
+azure-nspkg >= 3.0.0 ; python_version >= '2.7'
 
 # freeze pylint and its requirements for consistent test results
 astroid == 2.2.5

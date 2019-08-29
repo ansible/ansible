@@ -1,0 +1,39 @@
+- name: Create Azure NetApp account
+  azure_rm_netapp_account:
+    resource_group: "{{ resource_group }}"
+    name: tests-netapp1
+    location: eastus
+  register: output
+
+- assert:
+    that: output.changed
+
+- name: Create Azure NetApp account (Idempotency)
+  azure_rm_netapp_account:
+    resource_group: "{{ resource_group }}"
+    name: tests-netapp1
+    location: eastus
+  register: output
+
+- assert:
+      that: not output.changed
+
+- name: Delete Azure NetApp account
+  azure_rm_netapp_account:
+    state: absent
+    resource_group: "{{ resource_group }}"
+    name: tests-netapp1
+  register: output
+
+- assert:
+    that: output.changed
+
+- name: Delete Azure NetApp account (Idempotency)
+  azure_rm_netapp_account:
+    state: absent
+    resource_group: "{{ resource_group }}"
+    name: tests-netapp1
+  register: output
+
+- assert:
+      that: not output.changed
