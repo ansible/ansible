@@ -921,7 +921,7 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
 
     check_pyyaml(args, args.python_version)
 
-    test_dir = os.path.expanduser('~/ansible_testing')
+    test_dir = os.path.join(ResultType.TMP.path, 'output_dir')
 
     if not args.explain and any('needs/ssh/' in target.aliases for target in targets):
         max_tries = 20

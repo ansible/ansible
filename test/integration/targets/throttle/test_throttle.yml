@@ -2,7 +2,7 @@
 - hosts: localhosts
   gather_facts: false
   vars:
-    throttledir: ~/ansible_testing/throttle.dir/
+    throttledir: "{{ lookup('env', 'OUTPUT_DIR') }}/throttle.dir/"
   tasks:
     - name: Clean throttledir '{{ throttledir }}'
       file:
