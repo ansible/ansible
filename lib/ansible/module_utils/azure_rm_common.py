@@ -179,7 +179,6 @@ try:
     from msrestazure import AzureConfiguration
     from msrest.authentication import Authentication
     from azure.mgmt.resource.locks import ManagementLockClient
-    from azure.mgmt.netapp.azure_net_app_files_management_client import AzureNetAppFilesManagementClient
 except ImportError as exc:
     Authentication = object
     HAS_AZURE_EXC = traceback.format_exc()
@@ -332,7 +331,6 @@ class AzureRMModuleBase(object):
         self._automation_client = None
         self._IoThub_client = None
         self._lock_client = None
-        self._netapp_client = None
 
         self.check_mode = self.module.check_mode
         self.api_profile = self.module.params.get('api_profile')
@@ -912,15 +910,6 @@ class AzureRMModuleBase(object):
                                                         base_url=self._cloud_environment.endpoints.resource_manager,
                                                         api_version='2018-05-01')
         return self._dns_client
-
-    @property
-    def netapp_client(self):
-        self.log('Getting netapp client')
-        if not self._netapp_client:
-            self._netapp_client = self.get_mgmt_svc_client(AzureNetAppFilesManagementClient,
-                                                           base_url=self._cloud_environment.endpoints.resource_manager,
-                                                           api_version='2018-05-01')
-        return self._netapp_client
 
     @property
     def dns_models(self):
