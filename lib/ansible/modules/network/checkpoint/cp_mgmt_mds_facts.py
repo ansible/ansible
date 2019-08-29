@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: cp_mgmt_mds_facts
-short_description: Get mds objects facts on Checkpoint over Web Services API
+short_description: Get Multi-Domain Server (mds) objects facts on Checkpoint over Web Services API
 description:
   - Get mds objects facts on Checkpoint devices.
   - All operations are performed over Web Services API.
