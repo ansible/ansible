@@ -213,7 +213,7 @@ class AnsibleCloudscaleVolume(AnsibleCloudscaleBase):
             volume = self._get('volumes/%s' % uuid)
             if volume:
                 self._info.update(volume)
-                self._info.update(dict(state='present'))
+                self._info['state'] = 'present'
 
         else:
             name = self._info.get('name')
@@ -227,7 +227,7 @@ class AnsibleCloudscaleVolume(AnsibleCloudscaleBase):
                                        "Use the 'uuid' parameter to identify the volume." % name)
             elif len(matching_volumes) == 1:
                 self._info.update(matching_volumes[0])
-                self._info.update(dict(state='present'))
+                self._info['state'] = 'present'
         return self._info
 
     def present(self):
