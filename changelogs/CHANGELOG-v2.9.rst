@@ -55,6 +55,7 @@ Minor Changes
 - Make ``ansible_index_var`` accessible as a magic variable.
 - Meraki modules now return data in snake_case instead of camelCase. The ANSIBLE_MERAKI_FORMAT environment variable can be set to camelcase to revert back to camelcase until deprecation in Ansible 2.13.
 - Now callback plugins MUST allow for setting options as deprecation period that allowed older callbacks to ignore this is over.
+- Refactored ``ansible-galaxy collections`` API code to be more friendly for future bugfixes
 - Remove duplicate implementation of memory reservation parameter in vmware_guest (https://github.com/ansible/ansible/issues/54335).
 - Restrict vcenter_folder to vCenter only, since folder creation api is not supported on ESXi hostsystem (https://github.com/ansible/ansible/issues/49938).
 - Templar - Speed up ``is_template`` by lexing the string, instead of actually templating the string (https://github.com/ansible/ansible/pull/57489)

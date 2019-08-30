@@ -358,6 +358,7 @@ releases:
     - fix_onepassword_failing_on_field_with_no_name.yaml
     - fix_safe_eval.yml
     - fix_strategy_inv_up.yml
+    - galaxy-ah.yaml
     - galaxy-argspec-verbosity.yaml
     - galaxy-collection-init.yaml
     - gather_subset_defaults.yml
