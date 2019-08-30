@@ -31,6 +31,7 @@ except ImportError:
         'xmltojson filter.'
     )
 
+
 def xmltojson(data):
     """ Converts an XML string to a JSON string. """
 
