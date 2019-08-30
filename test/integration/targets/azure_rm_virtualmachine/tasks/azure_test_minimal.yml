@@ -66,19 +66,19 @@
     state: absent
 
 - name: Query auto created NIC
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}01"
   register: nic_result
 
 - name: Query auto created security group
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}01"
   register: nsg_result
 
 - name: Query auto created public IP
-  azure_rm_publicipaddress_facts:
+  azure_rm_publicipaddress_info:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}01"
   register: pip_result
@@ -87,9 +87,9 @@
   assert:
     that:
       # what about the default storage group?
-      - nic_result.ansible_facts.azure_networkinterfaces | length == 0
-      - nsg_result.ansible_facts.azure_securitygroups | length == 0
-      - pip_result.ansible_facts.azure_publicipaddresses | length == 0
+      - nic_result.networkinterfaces | length == 0
+      - nsg_result.securitygroups | length == 0
+      - pip_result.publicipaddresses | length == 0
 
 - name: Destroy subnet
   azure_rm_subnet:
