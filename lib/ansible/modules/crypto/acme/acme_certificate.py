@@ -1099,6 +1099,7 @@ class ACMEClient(object):
                 # Try to select alternate chain depending on criteria
                 if self.module.params['select_alternate_chain']:
                     matching_chain = None
+                    all_chains = [cert] + alternate_chains
                     for criterium_idx, criterium in enumerate(self.module.params['select_alternate_chain']):
                         for v in ('subject_key_identifier', 'authority_key_identifier'):
                             if criterium[v]:
@@ -1108,9 +1109,9 @@ class ACMEClient(object):
                                     self.module.warn('Criterium {0} in select_alternate_chain has invalid {1} value. '
                                                      'Ignoring criterium.'.format(criterium_idx, v))
                                     continue
-                        for alt_chain in alternate_chains:
+                        for alt_chain in all_chains:
                             if self._chain_matches(alt_chain.get('chain', []), criterium):
-                                self.module.debug('Found matching alternative chain for criterium {0}'.format(criterium_idx))
+                                self.module.debug('Found matching chain for criterium {0}'.format(criterium_idx))
                                 matching_chain = alt_chain
                                 break
                         if matching_chain:
