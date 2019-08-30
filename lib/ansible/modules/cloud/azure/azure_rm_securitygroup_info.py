@@ -247,7 +247,6 @@ class AzureRMSecurityGroupInfo(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_info=dict(azure_securitygroups=[])
         )
 
         self.name = None
@@ -273,7 +272,9 @@ class AzureRMSecurityGroupInfo(AzureRMModuleBase):
             info = self.list_items()
 
         if is_old_facts:
-            self.results['ansible_facts']['azure_securitygroups'] = info
+            self.results['ansible_facts'] = {
+                'azure_securitygroups': info
+            }
         self.results['securitygroups'] = info
 
         return self.results
