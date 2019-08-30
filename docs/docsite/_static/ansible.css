@@ -171,6 +171,10 @@ table.documentation-table .value-required {
     padding: 0.4045em 1.618em;
 }
 
+/* Override sphinx rtd theme max-with of 800px */
+.wy-nav-content {
+    max-width: 100%;
+}
 
 .DocSiteBanner {
     display: flex;
@@ -345,7 +349,6 @@ table {
         background-color: #000;
         text-decoration: none;
         font-family: 'Open Sans', sans-serif;
-        width: 1100px;
     }
 
 
@@ -427,7 +430,6 @@ table {
         background-color: #000;
         text-decoration: none;
         font-family: 'Open Sans', sans-serif;
-        width: 1100px;
     }
 
 
@@ -451,7 +453,6 @@ table {
 
     .ansibleNav{
         height: 45px;
-        width: 1100px;
         font-size: 13px;
         padding: 0px 60px 0px 0px;
     }
