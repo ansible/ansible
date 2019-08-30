@@ -139,14 +139,13 @@ If ($state -eq 'present') {
 
     # If the account does not exist, create it
     If (-not $user_obj) {
+        $create_args = @{}
+        $create_args.Name = $username
         If ($null -ne $path){
-            $user_obj = New-ADUser -Name $username -Path $path -WhatIf:$check_mode -PassThru @extra_args
-            $user_guid = $user_obj.ObjectGUID
+          $create_args.Path = $path
         }
-        Else {
-            $user_obj = New-ADUser -Name $username -WhatIf:$check_mode -PassThru @extra_args
-            $user_guid = $user_obj.ObjectGUID
-        }
+        $user_obj = New-ADUser @create_args -WhatIf:$check_mode -PassThru @extra_args
+        $user_guid = $user_obj.ObjectGUID
         $new_user = $true
         $result.created = $true
         $result.changed = $true
