@@ -10,10 +10,7 @@
     - name: Override device configuration of all interfaces with provided configuration
       iosxr_l3_interfaces: &overridden
         config:
-          - name: GigabitEthernet0/0/0/3
-            ipv4:
-            - address: 203.0.112.24/24
-          - name: GigabitEthernet0/0/0/3.100
+          - name: GigabitEthernet0/0/0/1
             ipv4:
             - address: 198.51.102.1/24
             ipv6:
