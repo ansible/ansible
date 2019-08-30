@@ -29,7 +29,7 @@ except ImportError:
 import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
-from ansible.galaxy.api import GalaxyError
+from ansible.galaxy.api import CollectionVersionMetadata, GalaxyError
 from ansible.module_utils import six
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils.collection_loader import AnsibleCollectionRef
@@ -64,7 +64,8 @@ class CollectionRequirement:
         :param requirement: The version requirement string used to verify the list of versions fit the requirements.
         :param force: Whether the force flag applied to the collection.
         :param parent: The name of the parent the collection is a dependency of.
-        :param metadata: The collection metadata dict if it has already been retrieved.
+        :param metadata: The galaxy.api.CollectionVersionMetadata that has already been retrieved from the Galaxy
+            server.
         :param files: The files that exist inside the collection. This is based on the FILES.json file inside the
             collection artifact.
         :param skip: Whether to skip installing the collection. Should be set if the collection is already installed
@@ -81,7 +82,6 @@ class CollectionRequirement:
 
         self._metadata = metadata
         self._files = files
-        self._galaxy_info = None
 
         self.add_requirement(parent, requirement)
 
@@ -101,12 +101,12 @@ class CollectionRequirement:
     @property
     def dependencies(self):
         if self._metadata:
-            return self._metadata['dependencies']
+            return self._metadata.dependencies
         elif len(self.versions) > 1:
             return None
 
         self._get_metadata()
-        return self._metadata['dependencies']
+        return self._metadata.dependencies
 
     def add_requirement(self, parent, requirement):
         self.required_by.append((parent, requirement))
@@ -149,8 +149,8 @@ class CollectionRequirement:
         display.display("Installing '%s:%s' to '%s'" % (to_text(self), self.latest_version, collection_path))
 
         if self.b_path is None:
-            download_url = self._galaxy_info['download_url']
-            artifact_hash = self._galaxy_info['artifact']['sha256']
+            download_url = self._metadata.download_url
+            artifact_hash = self._metadata.artifact_sha256
             headers = {}
             self.api._add_auth_token(headers, download_url)
             self.b_path = _download_file(download_url, b_temp_path, artifact_hash, self.api.validate_certs,
@@ -186,8 +186,7 @@ class CollectionRequirement:
     def _get_metadata(self):
         if self._metadata:
             return
-        self._galaxy_info = self.api.get_collection_information(self.namespace, self.name, self.latest_version)
-        self._metadata = self._galaxy_info['metadata']
+        self._metadata = self.api.get_collection_version_metadata(self.namespace, self.name, self.latest_version)
 
     def _meets_requirements(self, version, requirements, parent):
         """
@@ -255,6 +254,7 @@ class CollectionRequirement:
         namespace = meta['namespace']
         name = meta['name']
         version = meta['version']
+        meta = CollectionVersionMetadata(namespace, name, version, None, None, meta['dependencies'])
 
         return CollectionRequirement(namespace, name, b_path, None, [version], version, force, parent=parent,
                                      metadata=meta, files=files)
@@ -275,22 +275,21 @@ class CollectionRequirement:
                                        % to_native(b_file_path))
 
         if 'manifest_file' in info:
-            meta = info['manifest_file']['collection_info']
+            manifest = info['manifest_file']['collection_info']
+            namespace = manifest['namespace']
+            name = manifest['name']
+            version = manifest['version']
+            dependencies = manifest['dependencies']
         else:
             display.warning("Collection at '%s' does not have a MANIFEST.json file, cannot detect version."
                             % to_text(b_path))
             parent_dir, name = os.path.split(to_text(b_path, errors='surrogate_or_strict'))
             namespace = os.path.split(parent_dir)[1]
-            meta = {
-                'namespace': namespace,
-                'name': name,
-                'version': '*',
-                'dependencies': {},
-            }
 
-        namespace = meta['namespace']
-        name = meta['name']
-        version = meta['version']
+            version = '*'
+            dependencies = {}
+
+        meta = CollectionVersionMetadata(namespace, name, version, None, None, dependencies)
 
         files = info.get('files_file', {}).get('files', {})
 
@@ -300,37 +299,31 @@ class CollectionRequirement:
     @staticmethod
     def from_name(collection, apis, requirement, force, parent=None):
         namespace, name = collection.split('.', 1)
-        galaxy_info = None
         galaxy_meta = None
 
         for api in apis:
-
-            is_single = False
             try:
                 if not (requirement == '*' or requirement.startswith('<') or requirement.startswith('>') or
                         requirement.startswith('!=')):
-                    is_single = True
                     if requirement.startswith('='):
                         requirement = requirement.lstrip('=')
 
-                    resp = api.get_collection_information(namespace, name, requirement)
+                    resp = api.get_collection_version_metadata(namespace, name, requirement)
+
+                    galaxy_meta = resp
+                    versions = [resp.version]
                 else:
                     resp = api.get_collection_versions(namespace, name)
+
+                    # Galaxy supports semver but ansible-galaxy does not. We ignore any versions that don't match
+                    # StrictVersion (x.y.z) and only support pre-releases if an explicit version was set (done above).
+                    versions = [v for v in resp if StrictVersion.version_re.match(v)]
             except GalaxyError as err:
                 if err.http_code == 404:
                     display.vvv("Collection '%s' is not available from server %s %s"
                                 % (collection, api.name, api.api_server))
                     continue
                 raise
-
-            if is_single:
-                galaxy_info = resp
-                galaxy_meta = resp['metadata']
-                versions = [resp['version']]
-            else:
-                # Galaxy supports semver but ansible-galaxy does not. We ignore any versions that don't match
-                # StrictVersion (x.y.z) and only support pre-releases if an explicit version was set (done above).
-                versions = [v for v in resp if StrictVersion.version_re.match(v)]
 
             display.vvv("Collection '%s' obtained from server %s %s" % (collection, api.name, api.api_server))
             break
@@ -339,7 +332,6 @@ class CollectionRequirement:
 
         req = CollectionRequirement(namespace, name, None, api, versions, requirement, force, parent=parent,
                                     metadata=galaxy_meta)
-        req._galaxy_info = galaxy_info
         return req
 
 
@@ -390,7 +382,8 @@ def publish_collection(collection_path, api, wait, timeout):
     import_uri = api.publish_collection(collection_path)
     if wait:
         display.display("Collection has been published to the Galaxy server %s %s" % (api.name, api.api_server))
-        _wait_import(import_uri, api, timeout)
+        with _display_progress():
+            api.wait_import_task(import_uri, timeout)
         display.display("Collection has been successfully published and imported to the Galaxy server %s %s"
                         % (api.name, api.api_server))
     else:
@@ -730,54 +723,6 @@ def _build_collection_tar(b_collection_path, b_tar_path, collection_manifest, fi
         collection_name = "%s.%s" % (collection_manifest['collection_info']['namespace'],
                                      collection_manifest['collection_info']['name'])
         display.display('Created collection for %s at %s' % (collection_name, to_text(b_tar_path)))
-
-
-def _wait_import(task_url, api, timeout):
-    # TODO: Potentially move into GalaxyAPI once the Automation Hub API is solidified.
-    headers = {}
-    api._add_auth_token(headers, task_url, required=True)
-
-    state = 'waiting'
-    data = None
-
-    display.display("Waiting until Galaxy import task %s has completed" % task_url)
-    with _display_progress():
-        start = time.time()
-        wait = 2
-
-        while timeout == 0 or (time.time() - start) < timeout:
-            resp = open_url(to_native(task_url, errors='surrogate_or_strict'), headers=headers, method='GET',
-                            validate_certs=api.validate_certs)
-            data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
-            state = data.get('state', 'waiting')
-
-            if data.get('finished_at', None):
-                break
-
-            display.vvv('Galaxy import process has a status of %s, wait %d seconds before trying again'
-                        % (state, wait))
-            time.sleep(wait)
-
-            # poor man's exponential backoff algo so we don't flood the Galaxy API, cap at 30 seconds.
-            wait = min(30, wait * 1.5)
-
-    if state == 'waiting':
-        raise AnsibleError("Timeout while waiting for the Galaxy import process to finish, check progress at '%s'"
-                           % to_native(task_url))
-
-    for message in data.get('messages', []):
-        level = message['level']
-        if level == 'error':
-            display.error("Galaxy import error message: %s" % message['message'])
-        elif level == 'warning':
-            display.warning("Galaxy import warning message: %s" % message['message'])
-        else:
-            display.vvv("Galaxy import message: %s - %s" % (level, message['message']))
-
-    if state == 'failed':
-        code = to_native(data['error'].get('code', 'UNKNOWN'))
-        description = to_native(data['error'].get('description', "Unknown error, see %s for more details" % task_url))
-        raise AnsibleError("Galaxy import process failed: %s (Code: %s)" % (description, code))
 
 
 def _find_existing_collections(path):

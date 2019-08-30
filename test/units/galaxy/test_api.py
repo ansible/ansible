@@ -12,6 +12,7 @@ import re
 import pytest
 import tarfile
 import tempfile
+import time
 
 from io import BytesIO, StringIO
 from units.compat.mock import MagicMock
@@ -19,11 +20,12 @@ from units.compat.mock import MagicMock
 from ansible import context
 from ansible.errors import AnsibleError
 from ansible.galaxy import api as galaxy_api
-from ansible.galaxy.api import GalaxyAPI, GalaxyError
+from ansible.galaxy.api import CollectionVersionMetadata, GalaxyAPI, GalaxyError
 from ansible.galaxy.token import GalaxyToken
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.six.moves.urllib import error as urllib_error
 from ansible.utils import context_objects as co
+from ansible.utils.display import Display
 
 
 @pytest.fixture(autouse='function')
@@ -53,12 +55,10 @@ def collection_artifact(tmp_path_factory):
 
 def get_test_galaxy_api(url, version):
     api = GalaxyAPI(None, "test", url)
-    api.initialized = True
-    api.available_api_versions = {version: '/api/%s' % version}
+    api._available_api_versions = {version: '/api/%s' % version}
     api.token = GalaxyToken(token="my token")
 
     return api
-
 
 
 def test_api_no_auth():
@@ -213,6 +213,23 @@ def test_initialise_unknown(monkeypatch):
         api.authenticate("github_token")
 
 
+def test_get_available_api_versions(monkeypatch):
+    mock_open = MagicMock()
+    mock_open.side_effect = [
+        StringIO(u'{"available_versions":{"v1":"/api/v1","v2":"/api/v2"}}'),
+    ]
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    api = GalaxyAPI(None, "test", "https://galaxy.ansible.com")
+    actual = api.available_api_versions
+    assert len(actual) == 2
+    assert actual['v1'] == u'/api/v1'
+    assert actual['v2'] == u'/api/v2'
+
+    assert mock_open.call_count == 1
+    assert mock_open.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api'
+
+
 def test_publish_collection_missing_file():
     fake_path = u'/fake/ÅÑŚÌβŁÈ/path'
     expected = to_native("The collection path specified '%s' does not exist." % fake_path)
@@ -310,27 +327,293 @@ def test_publish_failure(api_version, collection_url, response, expected, collec
         api.publish_collection(collection_artifact)
 
 
-@pytest.mark.parametrize('api_version, token_type, version, expected', [
-    ('v2', 'Token', None, 'collection'),
-    ('v2', 'Token', 'v2.1.13', 'collection/versions/v2.1.13'),
-    ('v3', 'Bearer', None, 'collection'),
-    ('v3', 'Bearer', 'v1.0.0', 'collection/versions/v1.0.0'),
+@pytest.mark.parametrize('api_version, token_type', [
+    ('v2', 'Token'),
+    ('v3', 'Bearer'),
 ])
-def test_get_collection_information_no_version(api_version, token_type, version, expected, monkeypatch):
+def test_wait_import_task(api_version, token_type, monkeypatch):
+    api = get_test_galaxy_api('https://galaxy.server.com', api_version)
+    import_uri = 'https://galaxy.server.com/api/%s/task/1234' % api_version
+
+    mock_open = MagicMock()
+    mock_open.return_value = StringIO(u'{"state":"success","finished_at":"time"}')
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    api.wait_import_task(import_uri)
+
+    assert mock_open.call_count == 1
+    assert mock_open.mock_calls[0][1][0] == import_uri
+    assert mock_open.mock_calls[0][2]['headers']['Authorization'] == '%s my token' % token_type
+
+    assert mock_display.call_count == 1
+    assert mock_display.mock_calls[0][1][0] == 'Waiting until Galaxy import task %s has completed' % import_uri
+
+
+@pytest.mark.parametrize('api_version, token_type', [
+    ('v2', 'Token'),
+    ('v3', 'Bearer'),
+])
+def test_wait_import_task_multiple_requests(api_version, token_type, monkeypatch):
+    api = get_test_galaxy_api('https://galaxy.server.com', api_version)
+    import_uri = 'https://galaxy.server.com/api/%s/task/1234' % api_version
+
+    mock_open = MagicMock()
+    mock_open.side_effect = [
+        StringIO(u'{"state":"test"}'),
+        StringIO(u'{"state":"success","finished_at":"time"}'),
+    ]
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    mock_vvv = MagicMock()
+    monkeypatch.setattr(Display, 'vvv', mock_vvv)
+
+    monkeypatch.setattr(time, 'sleep', MagicMock())
+
+    api.wait_import_task(import_uri)
+
+    assert mock_open.call_count == 2
+    assert mock_open.mock_calls[0][1][0] == import_uri
+    assert mock_open.mock_calls[0][2]['headers']['Authorization'] == '%s my token' % token_type
+    assert mock_open.mock_calls[1][1][0] == import_uri
+    assert mock_open.mock_calls[1][2]['headers']['Authorization'] == '%s my token' % token_type
+
+    assert mock_display.call_count == 1
+    assert mock_display.mock_calls[0][1][0] == 'Waiting until Galaxy import task %s has completed' % import_uri
+
+    assert mock_vvv.call_count == 2  # 1st is opening Galaxy token file.
+    assert mock_vvv.mock_calls[1][1][0] == \
+        'Galaxy import process has a status of test, wait 2 seconds before trying again'
+
+
+@pytest.mark.parametrize('api_version, token_type', [
+    ('v2', 'Token'),
+    ('v3', 'Bearer'),
+])
+def test_wait_import_task_with_failure(api_version, token_type, monkeypatch):
+    api = get_test_galaxy_api('https://galaxy.server.com', api_version)
+    import_uri = 'https://galaxy.server.com/api/%s/task/1234' % api_version
+
+    mock_open = MagicMock()
+    mock_open.side_effect = [
+        StringIO(to_text(json.dumps({
+            'finished_at': 'some_time',
+            'state': 'failed',
+            'error': {
+                'code': 'GW001',
+                'description': u'Becäuse I said so!',
+
+            },
+            'messages': [
+                {
+                    'level': 'error',
+                    'message': u'Somé error',
+                },
+                {
+                    'level': 'warning',
+                    'message': u'Some wärning',
+                },
+                {
+                    'level': 'info',
+                    'message': u'Somé info',
+                },
+            ],
+        }))),
+    ]
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    mock_vvv = MagicMock()
+    monkeypatch.setattr(Display, 'vvv', mock_vvv)
+
+    mock_warn = MagicMock()
+    monkeypatch.setattr(Display, 'warning', mock_warn)
+
+    mock_err = MagicMock()
+    monkeypatch.setattr(Display, 'error', mock_err)
+
+    expected = to_native(u'Galaxy import process failed: Becäuse I said so! (Code: GW001)')
+    with pytest.raises(AnsibleError, match=re.escape(expected)):
+        api.wait_import_task(import_uri)
+
+    assert mock_open.call_count == 1
+    assert mock_open.mock_calls[0][1][0] == import_uri
+    assert mock_open.mock_calls[0][2]['headers']['Authorization'] == '%s my token' % token_type
+
+    assert mock_display.call_count == 1
+    assert mock_display.mock_calls[0][1][0] == 'Waiting until Galaxy import task %s has completed' % import_uri
+
+    assert mock_vvv.call_count == 2  # 1st is opening Galaxy token file.
+    assert mock_vvv.mock_calls[1][1][0] == u'Galaxy import message: info - Somé info'
+
+    assert mock_warn.call_count == 1
+    assert mock_warn.mock_calls[0][1][0] == u'Galaxy import warning message: Some wärning'
+
+    assert mock_err.call_count == 1
+    assert mock_err.mock_calls[0][1][0] == u'Galaxy import error message: Somé error'
+
+
+@pytest.mark.parametrize('api_version, token_type', [
+    ('v2', 'Token'),
+    ('v3', 'Bearer'),
+])
+def test_wait_import_task_with_failure_no_error(api_version, token_type, monkeypatch):
+    api = get_test_galaxy_api('https://galaxy.server.com', api_version)
+    import_uri = 'https://galaxy.server.com/api/%s/task/1234' % api_version
+
+    mock_open = MagicMock()
+    mock_open.side_effect = [
+        StringIO(to_text(json.dumps({
+            'finished_at': 'some_time',
+            'state': 'failed',
+            'error': {},
+            'messages': [
+                {
+                    'level': 'error',
+                    'message': u'Somé error',
+                },
+                {
+                    'level': 'warning',
+                    'message': u'Some wärning',
+                },
+                {
+                    'level': 'info',
+                    'message': u'Somé info',
+                },
+            ],
+        }))),
+    ]
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    mock_vvv = MagicMock()
+    monkeypatch.setattr(Display, 'vvv', mock_vvv)
+
+    mock_warn = MagicMock()
+    monkeypatch.setattr(Display, 'warning', mock_warn)
+
+    mock_err = MagicMock()
+    monkeypatch.setattr(Display, 'error', mock_err)
+
+    expected = 'Galaxy import process failed: Unknown error, see %s for more details (Code: UNKNOWN)' % import_uri
+    with pytest.raises(AnsibleError, match=re.escape(expected)):
+        api.wait_import_task(import_uri)
+
+    assert mock_open.call_count == 1
+    assert mock_open.mock_calls[0][1][0] == import_uri
+    assert mock_open.mock_calls[0][2]['headers']['Authorization'] == '%s my token' % token_type
+
+    assert mock_display.call_count == 1
+    assert mock_display.mock_calls[0][1][0] == 'Waiting until Galaxy import task %s has completed' % import_uri
+
+    assert mock_vvv.call_count == 2  # 1st is opening Galaxy token file.
+    assert mock_vvv.mock_calls[1][1][0] == u'Galaxy import message: info - Somé info'
+
+    assert mock_warn.call_count == 1
+    assert mock_warn.mock_calls[0][1][0] == u'Galaxy import warning message: Some wärning'
+
+    assert mock_err.call_count == 1
+    assert mock_err.mock_calls[0][1][0] == u'Galaxy import error message: Somé error'
+
+
+@pytest.mark.parametrize('api_version, token_type', [
+    ('v2', 'Token'),
+    ('v3', 'Bearer'),
+])
+def test_wait_import_task_timeout(api_version, token_type, monkeypatch):
+    api = get_test_galaxy_api('https://galaxy.server.com', api_version)
+    import_uri = 'https://galaxy.server.com/api/%s/task/1234' % api_version
+
+    def return_response(*args, **kwargs):
+        return StringIO(u'{"state":"waiting"}')
+
+    mock_open = MagicMock()
+    mock_open.side_effect = return_response
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    mock_vvv = MagicMock()
+    monkeypatch.setattr(Display, 'vvv', mock_vvv)
+
+    monkeypatch.setattr(time, 'sleep', MagicMock())
+
+    expected = "Timeout while waiting for the Galaxy import process to finish, check progress at '%s'" % import_uri
+    with pytest.raises(AnsibleError, match=expected):
+        api.wait_import_task(import_uri, 1)
+
+    assert mock_open.call_count > 1
+    assert mock_open.mock_calls[0][1][0] == import_uri
+    assert mock_open.mock_calls[0][2]['headers']['Authorization'] == '%s my token' % token_type
+    assert mock_open.mock_calls[1][1][0] == import_uri
+    assert mock_open.mock_calls[1][2]['headers']['Authorization'] == '%s my token' % token_type
+
+    assert mock_display.call_count == 1
+    assert mock_display.mock_calls[0][1][0] == 'Waiting until Galaxy import task %s has completed' % import_uri
+
+    expected_wait_msg = 'Galaxy import process has a status of waiting, wait {0} seconds before trying again'
+    assert mock_vvv.call_count > 9  # 1st is opening Galaxy token file.
+    assert mock_vvv.mock_calls[1][1][0] == expected_wait_msg.format(2)
+    assert mock_vvv.mock_calls[2][1][0] == expected_wait_msg.format(3)
+    assert mock_vvv.mock_calls[3][1][0] == expected_wait_msg.format(4)
+    assert mock_vvv.mock_calls[4][1][0] == expected_wait_msg.format(6)
+    assert mock_vvv.mock_calls[5][1][0] == expected_wait_msg.format(10)
+    assert mock_vvv.mock_calls[6][1][0] == expected_wait_msg.format(15)
+    assert mock_vvv.mock_calls[7][1][0] == expected_wait_msg.format(22)
+    assert mock_vvv.mock_calls[8][1][0] == expected_wait_msg.format(30)
+
+
+@pytest.mark.parametrize('api_version, token_type, version', [
+    ('v2', 'Token', 'v2.1.13'),
+    ('v3', 'Bearer', 'v1.0.0'),
+])
+def test_get_collection_version_metadata_no_version(api_version, token_type, version, monkeypatch):
     api = get_test_galaxy_api('https://galaxy.server.com', api_version)
 
     mock_open = MagicMock()
     mock_open.side_effect = [
-        StringIO(u'{"data": "value"}'),
+        StringIO(to_text(json.dumps({
+            'download_url': 'https://downloadme.com',
+            'artifact': {
+                'sha256': 'ac47b6fac117d7c171812750dacda655b04533cf56b31080b82d1c0db3c9d80f',
+            },
+            'namespace': {
+                'name': 'namespace',
+            },
+            'collection': {
+                'name': 'collection',
+            },
+            'version': version,
+            'metadata': {
+                'dependencies': {},
+            }
+        }))),
     ]
     monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
 
-    actual = api.get_collection_information('namespace', 'collection', version=version)
+    actual = api.get_collection_version_metadata('namespace', 'collection', version)
 
-    assert actual == {u'data': u'value'}
+    assert isinstance(actual, CollectionVersionMetadata)
+    assert actual.namespace == u'namespace'
+    assert actual.name == u'collection'
+    assert actual.download_url == u'https://downloadme.com'
+    assert actual.artifact_sha256 == u'ac47b6fac117d7c171812750dacda655b04533cf56b31080b82d1c0db3c9d80f'
+    assert actual.version == version
+    assert actual.dependencies == {}
+
     assert mock_open.call_count == 1
-    assert mock_open.mock_calls[0][1][0] == '%s/api/%s/collections/namespace/%s' \
-        % (api.api_server, api_version, expected)
+    assert mock_open.mock_calls[0][1][0] == '%s/api/%s/collections/namespace/collection/versions/%s' \
+        % (api.api_server, api_version, version)
     assert mock_open.mock_calls[0][2]['headers']['Authorization'] == '%s my token' % token_type
 
 
