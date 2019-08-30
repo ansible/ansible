@@ -508,6 +508,8 @@ def _command_coverage_combine_powershell(args):
     invalid_path_count = 0
     invalid_path_chars = 0
 
+    coverage_file = os.path.join(ResultType.COVERAGE.path, COVERAGE_OUTPUT_FILE_NAME)
+
     for group in sorted(groups):
         coverage_data = groups[group]
 
@@ -530,7 +532,7 @@ def _command_coverage_combine_powershell(args):
                 coverage_data[source] = _default_stub_value(source_line_count)
 
         if not args.explain:
-            output_file = COVERAGE_OUTPUT_FILE_NAME + group + '-powershell'
+            output_file = coverage_file + group + '-powershell'
 
             write_json_test_results(ResultType.COVERAGE, output_file, coverage_data)
 
