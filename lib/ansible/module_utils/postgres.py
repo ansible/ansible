@@ -272,8 +272,11 @@ class PgMembership(object):
         return False
 
     def __check_roles_exist(self):
+        existent_groups = self.__roles_exist(self.groups)
+        existent_roles = self.__roles_exist(self.target_roles)
+
         for group in self.groups:
-            if not self.__role_exists(group):
+            if group not in existent_groups:
                 if self.fail_on_role:
                     self.module.fail_json(msg="Role %s does not exist" % group)
                 else:
@@ -281,7 +284,7 @@ class PgMembership(object):
                     self.non_existent_roles.append(group)
 
         for role in self.target_roles:
-            if not self.__role_exists(role):
+            if role not in existent_roles:
                 if self.fail_on_role:
                     self.module.fail_json(msg="Role %s does not exist" % role)
                 else:
@@ -301,5 +304,7 @@ class PgMembership(object):
 
         self.target_roles = [r for r in self.target_roles if r not in self.non_existent_roles]
 
-    def __role_exists(self, role):
-        return exec_sql(self, "SELECT 1 FROM pg_roles WHERE rolname = '%s'" % role, add_to_executed=False)
+    def __roles_exist(self, roles):
+        tmp = ["'" + x + "'" for x in roles]
+        query = "SELECT rolname FROM pg_roles WHERE rolname IN (%s)" % ','.join(tmp)
+        return [x[0] for x in exec_sql(self, query, add_to_executed=False)]
