@@ -1,0 +1,2 @@
+bugfixes:
+  - lxd_container - enables to set keys not present in existing config
