@@ -267,7 +267,7 @@ def PEM_body_to_DER(module, pem):
 
 
 # Store this globally to avoid repeated recompilation
-pem_chain_split_regex = re.compile(r"-+BEGIN\s+CERTIFICATE-+([a-zA-Z0-9\+\/=\s]+?)-+END\s+CERTIFICATE-+")
+pem_chain_split_regex = re.compile(r"------?BEGIN [A-Z0-9. ]*CERTIFICATE------?([a-zA-Z0-9\+\/=\s]+)------?END [A-Z0-9. ]*CERTIFICATE------?")
 
 
 # Use regex to split up a chain or single cert into an array of base64 encoded data
