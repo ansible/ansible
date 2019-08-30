@@ -146,10 +146,13 @@
     name: name_test
     name_format: dict_by_path
 
-- name: Verify that there are 4 base_dir values in dict values
+- name: Verify that there are 6 entries in dict
   assert:
     that:
-      - "(name_test.values() | selectattr('base_dir','defined') | list | count) == 4"
+      - "name_test | length == 6"
+
+      # jinja2 filters not available in some envs
+      # - "(name_test.values() | selectattr('base_dir','defined') | list | count) == 4"
 
 - name: include every directory in vars into var name_test as a dict by file name
   include_vars:
@@ -158,10 +161,13 @@
     name: name_test
     name_format: dict_by_file
 
-- name: Verify that there is 1 base_dir value in dict values
+- name: Verify that there are 4 entries in dict
   assert:
     that:
-      - "(name_test.values() | selectattr('base_dir','defined') | list | count) == 1"
+      - "name_test | length == 4"
+
+      # jinja2 filters not available in some envs
+      # - "(name_test.values() | selectattr('base_dir','defined') | list | count) == 1"
 
 - name: include every directory in vars into var name_test as a list by full file path
   include_vars:
@@ -170,10 +176,13 @@
     name: name_test
     name_format: list_by_path
 
-- name: Verify that there are 4 base_dir values in list
+- name: Verify that there are 6 values in list
   assert:
     that:
-      - "(name_test | selectattr('base_dir','defined') | list | count) == 4"
+      - "name_test | length == 6"
+
+      # jinja2 filters not available in some envs
+      # - "(name_test | selectattr('base_dir','defined') | list | count) == 4"
 
 - name: include every directory in vars into var name_test as a list by file name
   include_vars:
@@ -182,7 +191,10 @@
     name: name_test
     name_format: list_by_file
 
-- name: Verify that there is 1 base_dir value in list
+- name: Verify that there are 4 values in list
   assert:
     that:
-      - "(name_test | selectattr('base_dir','defined') | list | count) == 1"
+      - "name_test | length == 4"
+
+      # jinja2 filters not available in some envs
+      # - "(name_test | selectattr('base_dir','defined') | list | count) == 1"
