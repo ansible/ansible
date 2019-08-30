@@ -144,6 +144,10 @@ If ($state -eq 'present') {
         If ($null -ne $path){
           $create_args.Path = $path
         }
+        If ($null -ne $upn){
+          $create_args.UserPrincipalName  = $upn
+          $create_args.SamAccountName  = $upn.Split('@')[0]
+        }
         $user_obj = New-ADUser @create_args -WhatIf:$check_mode -PassThru @extra_args
         $user_guid = $user_obj.ObjectGUID
         $new_user = $true
