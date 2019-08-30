@@ -59,7 +59,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-azure_securitygroups:
+securitygroups:
     description:
         - List containing security group dicts.
     returned: always
@@ -268,9 +268,13 @@ class AzureRMSecurityGroupInfo(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         if self.name is not None:
-            self.results['ansible_info']['azure_securitygroups'] = self.get_item()
+            info = self.get_item()
         else:
-            self.results['ansible_info']['azure_securitygroups'] = self.list_items()
+            info = self.list_items()
+
+        if is_old_facts:
+            self.results['ansible_facts']['azure_securitygroups'] = info
+        self.results['securitygroups'] = info
 
         return self.results
 

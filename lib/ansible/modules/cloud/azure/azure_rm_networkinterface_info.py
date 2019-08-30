@@ -307,7 +307,8 @@ class AzureRMNetworkInterfaceInfo(AzureRMModuleBase):
         else:
             results = self.list_all()
 
-        self.results['ansible_info']['azure_networkinterfaces'] = self.serialize_nics(results)
+        if is_old_facts:
+            self.results['ansible_facts']['azure_networkinterfaces'] = self.serialize_nics(results)
         self.results['networkinterfaces'] = self.to_dict_list(results)
         return self.results
 
