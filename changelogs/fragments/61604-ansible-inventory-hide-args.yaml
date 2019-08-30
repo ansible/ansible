@@ -1,0 +1,3 @@
+bugfixes:
+- ansible-inventory - Properly hide arguments that should not be shown
+  (https://github.com/ansible/ansible/issues/61604)
