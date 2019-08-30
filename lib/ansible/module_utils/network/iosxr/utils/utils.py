@@ -96,6 +96,9 @@ def filter_dict_having_none_value(want, have):
                     if each.get('secondary') and diff_ip is True:
                         test_key_dict.update({'secondary': True})
                     test_dict.update({'ipv4': test_key_dict})
+                # Checks if want doesn't have secondary IP but have has secondary IP set
+                elif [True for each_have in have.get('ipv4') if 'secondary' in each_have]:
+                    test_dict.update({'ipv4': {'secondary': True}})
         if k == 'l2protocol':
             if want[k] != have.get('l2protocol') and have.get('l2protocol'):
                 test_dict.update({k: v})

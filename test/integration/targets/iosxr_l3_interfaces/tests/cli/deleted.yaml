@@ -10,10 +10,8 @@
     - name: Delete attributes of all configured interfaces
       iosxr_l3_interfaces: &deleted
         config:
+          - name: GigabitEthernet0/0/0/0
           - name: GigabitEthernet0/0/0/1
-          - name: GigabitEthernet0/0/0/2
-          - name: GigabitEthernet0/0/0/3
-          - name: GigabitEthernet0/0/0/3.100
         state: deleted
       register: result
 
