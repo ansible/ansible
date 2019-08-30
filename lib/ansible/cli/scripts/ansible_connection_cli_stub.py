@@ -120,7 +120,7 @@ class ConnectionProcess(object):
 
     def run(self):
         try:
-            while True:
+            while not self.connection._conn_closed:
                 signal.signal(signal.SIGALRM, self.connect_timeout)
                 signal.signal(signal.SIGTERM, self.handler)
                 signal.alarm(self.connection.get_option('persistent_connect_timeout'))
