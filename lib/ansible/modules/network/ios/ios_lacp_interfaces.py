@@ -74,7 +74,7 @@ options:
           type: int
   state:
     description:
-    - The state of the configuration after module completion
+    - The state the configuration should be left in
     type: str
     choices:
     - merged
@@ -315,14 +315,14 @@ EXAMPLES = """
 
 RETURN = """
 before:
-  description: The configuration as structured data prior to module invocation.
+  description: The configuration prior to the model invocation.
   returned: always
   type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
-  description: The configuration as structured data after module completion.
+  description: The resulting configuration model invocation.
   returned: when changed
   type: list
   sample: >

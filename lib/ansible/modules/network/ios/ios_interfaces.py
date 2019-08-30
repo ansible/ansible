@@ -88,7 +88,7 @@ options:
     - deleted
     default: merged
     description:
-    - The state of the configuration after module completion
+    - The state the configuration should be left in
     type: str
 """
 
@@ -362,12 +362,12 @@ EXAMPLES = """
 
 RETURN = """
 before:
-  description: The configuration as structured data prior to module invocation.
+  description: The configuration prior to the model invocation
   returned: always
   type: list
   sample: The configuration returned will alwys be in the same format of the paramters above.
 after:
-  description: The configuration as structured data after module completion.
+  description: The resulting configuration model invocation
   returned: when changed
   type: list
   sample: The configuration returned will alwys be in the same format of the paramters above.

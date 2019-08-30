@@ -126,7 +126,7 @@ options:
             type: bool
   state:
     description:
-    - The state of the configuration after module completion
+    - The state the configuration should be left in
     type: str
     choices:
     - merged
@@ -214,12 +214,12 @@ EXAMPLES = """
 
 RETURN = """
 before:
-  description: The configuration as structured data prior to module invocation.
+  description: The configuration prior to the model invocation
   returned: always
   type: dict
   sample: The configuration returned will alwys be in the same format of the paramters above.
 after:
-  description: The configuration as structured data after module completion.
+  description: The resulting configuration model invocation
   returned: when changed
   type: dict
   sample: The configuration returned will alwys be in the same format of the paramters above.
