@@ -225,10 +225,10 @@ arns:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils.aws.acm import ACMServiceManager
-from ansible.module_utils.crypto import get_fingerprint_from_pem_cert as get_fingerprint
 from ansible.module_utils._text import to_bytes, to_text
 from ssl import PEM_cert_to_DER_cert
-
+import base64
+import traceback
 import re  # regex library
 
 
@@ -237,22 +237,18 @@ import re  # regex library
 # Or a chain of PEM encoded certificates
 # May include some lines between each chain in the cert, e.g. "Subject: ..."
 # Returns True iff the chains/certs are functionally identical (including chain order)
-def chain_compare(a, b):
+def chain_compare(module, a, b):
 
-    # Use regex to split up a chain or single cert into an array of base64 encoded data
-    # Using "-----BEGIN CERTIFICATE-----" and "----END CERTIFICATE----"
-    # Noting that some chains have non-pem data in between each cert
-    expr = re.compile(r"-+BEGIN\s+CERTIFICATE-+([a-zA-Z0-9\+\/=\s]+)-+END\s+CERTIFICATE-+")
-    chain_a_pem = pem_chain_split(a)
-    chain_b_pem = pem_chain_split(b)
+    chain_a_pem = pem_chain_split(module, a)
+    chain_b_pem = pem_chain_split(module, b)
 
     if len(chain_a_pem) != len(chain_b_pem):
         return(False)
 
     # Chain length is the same
     for (ca, cb) in zip(chain_a_pem, chain_b_pem):
-        der_a = PEM_body_to_DER(ca)
-        der_b = PEM_body_to_DER(cb)
+        der_a = PEM_body_to_DER(module, ca)
+        der_b = PEM_body_to_DER(module, cb)
         if der_a != der_b:
             return(False)
 
@@ -260,21 +256,32 @@ def chain_compare(a, b):
 
 
 # Takes in PEM encoded data with no headers
-# returns equivilent DER
-def PEM_body_to_DER(pem):
-    prefix = "-----BEGIN CERTIFICATE-----"
-    suffix = "-----END CERTIFICATE-----"
-    pem_full = '\n'.join([prefix, pem, suffix])
-    return(PEM_cert_to_DER_cert(pem_full))
+# returns equivilent DER as byte array
+def PEM_body_to_DER(module, pem):
+    try:
+        der = base64.b64decode(to_text(pem))
+    except (ValueError, TypeError) as e:
+        module.fail_json(msg="Unable to decode certificate chain",
+                         exception=traceback.format_exc())
+    return(der)
+
+
+# Store this globally to avoid repeated recompilation
+pem_chain_split_regex = re.compile(r"-+BEGIN\s+CERTIFICATE-+([a-zA-Z0-9\+\/=\s]+?)-+END\s+CERTIFICATE-+")
 
 
 # Use regex to split up a chain or single cert into an array of base64 encoded data
 # Using "-----BEGIN CERTIFICATE-----" and "----END CERTIFICATE----"
 # Noting that some chains have non-pem data in between each cert
 # This function returns only what's between the headers, excluding the headers
-def pem_chain_split(pem):
-    expr = re.compile(r"-+BEGIN\s+CERTIFICATE-+([a-zA-Z0-9\+\/=\s]+?)-+END\s+CERTIFICATE-+")
-    pem_arr = re.findall(expr, to_text(pem))
+def pem_chain_split(module, pem):
+
+    pem_arr = re.findall(pem_chain_split_regex, to_text(pem))
+
+    if len(pem_arr) == 0:
+        # This happens if the regex doesn't match at all
+        module.fail_json(msg="Unable to split certificate chain. Possibly zero-length chain?")
+
     return(pem_arr)
 
 

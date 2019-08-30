@@ -24,6 +24,13 @@ from pprint import pprint
 
 def test_chain_compare():
 
+    # The functions we're testing take module as an argument
+    # Just so they can call module.fail_json
+    # Let's just use None for the unit tests,
+    # Because they shouldn't fail
+    # And if they do, fail_json is not applicable
+    module = None
+
     fixture_suffix = 'test/units/modules/cloud/amazon/fixtures/certs'
 
     # Test chain split function on super simple (invalid) certs
@@ -33,7 +40,7 @@ def test_chain_compare():
         path = fixture_suffix + '/' + fname
         with open(path, 'r') as f:
             pem = to_text(f.read())
-        actual = pem_chain_split(pem)
+        actual = pem_chain_split(module, pem)
         actual = [a.strip() for a in actual]
         if actual != expected:
             print("Expected:")
@@ -92,7 +99,7 @@ def test_chain_compare():
             chain['pem_text'] = to_text(f.read())
 
         # Test to make sure our regex isn't too greedy
-        chain['split'] = pem_chain_split(chain['pem_text'])
+        chain['split'] = pem_chain_split(module, chain['pem_text'])
         if len(chain['split']) != chain['length']:
             print("Cert before split")
             print(chain['pem_text'])
@@ -108,7 +115,7 @@ def test_chain_compare():
             expected = (chain_a['same_as'] == chain_b['same_as'])
 
             # Now test the comparison function
-            actual = chain_compare(chain_a['pem_text'], chain_b['pem_text'])
+            actual = chain_compare(module, chain_a['pem_text'], chain_b['pem_text'])
             if expected != actual:
                 print("Error, unexpected comparison result between \n%s\nand\n%s" % (chain_a['path'], chain_b['path']))
                 print("Expected %s got %s" % (str(expected), str(actual)))
