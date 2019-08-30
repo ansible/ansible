@@ -17,4 +17,3 @@ ansible-test env --timeout "${timeout}" --color -v
 
 # shellcheck disable=SC2086
 ansible-test units --color -v --docker default --python "${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
-    --num-workers 4 \
