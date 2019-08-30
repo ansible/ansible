@@ -1,6 +1,0 @@
-minor_changes:
-- "openssl_certificate - add support for subject key identifier and authority key identifier extensions. Subject key identifiers are created by default when not explicitly disabled."
-- "openssl_certificate - the ``ownca`` provider creates authority key identifiers if not explicitly disabled with ``ownca_create_authority_key_identifier: no``."
-- "openssl_certificate_info - add support for subject key identifier and authority key identifier extensions."
-- "openssl_csr - add support for subject key identifier and authority key identifier extensions."
-- "openssl_csr_info - add support for subject key identifier and authority key identifier extensions."

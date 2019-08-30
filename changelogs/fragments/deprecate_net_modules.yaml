@@ -1,5 +1,0 @@
-deprecated_features:
-- Deprecated ``net_interface``, ``net_linkagg``, ``net_lldp_interface``, ``net_l2_interface``, ``net_vlan``,
-  ``net_l3_interface``, ``net_vrf``, ``net_lldp``, ``net_banner``, ``net_logging``, ``net_system``, ``net_user``,
-  and ``net_static_route``.
-  Please use either the equivalent network role or the platform-specific resource module.

@@ -1,2 +1,0 @@
-bugfixes:
-  - podman_image - handle new output format for image build

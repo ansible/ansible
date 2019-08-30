@@ -1,2 +1,0 @@
-minor_changes:
-  - vultr - the retry on failure functionality was changed to use an exponential backoff behaviour.

@@ -1,2 +1,0 @@
-minor_changes:
-  - purefa_ra - change resulting fact dict from I(ansible_facts) to I(ra_info)  (https://github.com/ansible/ansible/pull/61355)

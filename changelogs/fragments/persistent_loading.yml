@@ -1,2 +1,0 @@
-bugfixes:
-    - pass correct loading context to persistent connections

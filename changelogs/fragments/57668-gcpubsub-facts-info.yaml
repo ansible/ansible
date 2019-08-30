@@ -1,2 +1,0 @@
-minor_changes:
-- The ``gcpubsub_facts`` module has been renamed to ``gcpubsub_info``.

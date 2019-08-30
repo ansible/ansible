@@ -1,2 +1,0 @@
-minor_changes:
-- Command line argument parsing - Switch from deprecated optparse to argparse

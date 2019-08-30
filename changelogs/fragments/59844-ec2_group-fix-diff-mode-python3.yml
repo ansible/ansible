@@ -1,2 +1,0 @@
-bugfixes:
-  - ec2_group - Fix traceback sorting dictionaries using Python 3 and ensure rules shown by diff mode are in a consistent order.

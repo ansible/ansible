@@ -1,2 +1,0 @@
-minor_changes:
-- Adjusted PowerShell and C# collection util imports to use a Python package name that reflects the location of the util in the collection. This is a breaking change, for more information see :ref:`porting_2.9_guide` for more information.

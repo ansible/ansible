@@ -1,3 +1,0 @@
-minor_changes:
-- The ``smartos_image_facts`` module has been renamed to ``smartos_image_info``.
-  When called with the new name, the module no longer returns ``ansible_facts``.

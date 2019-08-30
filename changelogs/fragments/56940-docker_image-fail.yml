@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_image - module failed when ``source: build`` was set but ``build.path`` options not specified."

@@ -1,2 +1,0 @@
-bugfixes:
-- "openssl_certificate - if both private key and CSR were specified, the idempotency check for ``selfsigned`` and ``ownca`` providers ignored the CSR."

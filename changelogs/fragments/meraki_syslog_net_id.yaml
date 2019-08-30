@@ -1,3 +1,0 @@
----
-bugfixes:
- - meraki_syslog - Module would ignore net_id parameter if passed.

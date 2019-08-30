@@ -1,2 +1,0 @@
-minor_changes:
- - "acme_certificate - all alternate chains can be retrieved using the new ``retrieve_all_alternates`` option."

@@ -1,3 +1,0 @@
----
-bugfixes:
-- "meraki_vlan - Module would make unnecessary API calls to Meraki when net_id is specified in task."

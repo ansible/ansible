@@ -1,4 +1,0 @@
-bugfixes:
-- "openssl_certificate - relative times did not work for ``pyopenssl`` backend under Python 3, and generally didn't work for ``valid_at`` and ``invalid_at`` for ``pyopenssl`` backend."
-- "openssl_certificate - ``invalid_at`` check was broken."
-- "openssl_certificate - ``key_usage`` check was broken for ``pyopenssl`` backend. Its error message was wrong for the ``cryptography`` backend."

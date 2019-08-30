@@ -1,2 +1,0 @@
-minor_changes:
-  - purefb_s3user - change resulting fact dict from I(ansible_facts) to I(s3user_info)  (https://github.com/ansible/ansible/pull/61356)

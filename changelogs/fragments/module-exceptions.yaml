@@ -1,2 +1,0 @@
-bugfixes:
-  - Module tracebacks are now recognized on stdout and stderr, intead of just on stderr.

@@ -1,2 +1,0 @@
-bugfixes:
-- k8s module - fix for case when resource definition yaml ended with 3 dashes

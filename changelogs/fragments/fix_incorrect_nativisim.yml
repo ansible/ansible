@@ -1,2 +1,0 @@
-bugfixes:
-    - fix incorrect uses of to_native that should be to_text instead.

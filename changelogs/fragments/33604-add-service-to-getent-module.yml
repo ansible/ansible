@@ -1,2 +1,0 @@
-minor_changes:
-    - getent - add service parameter to getent to lookup specified service

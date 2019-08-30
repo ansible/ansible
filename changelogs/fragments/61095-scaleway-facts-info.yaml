@@ -1,8 +1,0 @@
-minor_changes:
-- The ``scaleway_image_facts`` module has been deprecated. Use ``scaleway_image_info`` instead.
-- The ``scaleway_ip_facts`` module has been deprecated. Use ``scaleway_ip_info`` instead.
-- The ``scaleway_organization_facts`` module has been deprecated. Use ``scaleway_organization_info`` instead.
-- The ``scaleway_security_group_facts`` module has been deprecated. Use ``scaleway_security_group_info`` instead.
-- The ``scaleway_server_facts`` module has been deprecated. Use ``scaleway_server_info`` instead.
-- The ``scaleway_snapshot_facts`` module has been deprecated. Use ``scaleway_snapshot_info`` instead.
-- The ``scaleway_volume_facts`` module has been deprecated. Use ``scaleway_volume_info`` instead.

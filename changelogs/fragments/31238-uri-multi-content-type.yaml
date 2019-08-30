@@ -1,3 +1,0 @@
-bugfixes:
-- uri - Handle multiple Content-Type headers correctly
-  (https://github.com/ansible/ansible/pull/31238)
