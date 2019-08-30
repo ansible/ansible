@@ -48,13 +48,13 @@ options:
         - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
         type: int
         default: 5
-        version_added: '2.9'
+        version_added: '2.10'
     update_cache_retry_max_delay:
         description:
-        - Use an exponential backoff delay for each retry (see I(update_cache_retries)) up to this max. delay in seconds.
+        - Use an exponential backoff delay for each retry (see I(update_cache_retries)) up to this max delay in seconds.
         type: int
         default: 12
-        version_added: '2.9'
+        version_added: '2.10'
     validate_certs:
         description:
             - If C(no), SSL certificates for the target repo will not be validated. This should only be used
