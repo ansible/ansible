@@ -140,8 +140,34 @@ class OpenSSLBadPassphraseError(OpenSSLObjectError):
     pass
 
 
+def get_fingerprint_of_bytes(source):
+    """Generate the fingerprint of the given bytes."""
+
+    fingerprint = {}
+
+    try:
+        algorithms = hashlib.algorithms
+    except AttributeError:
+        try:
+            algorithms = hashlib.algorithms_guaranteed
+        except AttributeError:
+            return None
+
+    for algo in algorithms:
+        f = getattr(hashlib, algo)
+        h = f(source)
+        try:
+            # Certain hash functions have a hexdigest() which expects a length parameter
+            pubkey_digest = h.hexdigest()
+        except TypeError:
+            pubkey_digest = h.hexdigest(32)
+        fingerprint[algo] = ':'.join(pubkey_digest[i:i + 2] for i in range(0, len(pubkey_digest), 2))
+
+    return fingerprint
+
+
 def get_fingerprint(path, passphrase=None):
-    """Generate the fingerprint of the public key from the private key"""
+    """Generate the fingerprint of the public key. """
 
     privatekey = load_privatekey(path, passphrase, check_passphrase=False)
     try:
@@ -159,16 +185,6 @@ def get_fingerprint(path, passphrase=None):
             # yet we return no value in the fingerprint hash.
             return None
     return get_fingerprint_of_bytes(publickey)
-
-
-def get_fingerprint_from_pem_cert(data):
-    """Generate the fingerprint of the public key.
-       Based only on the content of the public key.
-       data argument should be PEM encoded bytes, not string or file path.
-    """
-
-    cert = x509.load_pem_x509_certificate(data, cryptography_backend())
-    return cert.fingerprint(hashes.SHA256())
 
 
 def load_privatekey(path, passphrase=None, check_passphrase=True, content=None, backend='pyopenssl'):
