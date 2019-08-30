@@ -10,6 +10,7 @@ from .util import (
     SubprocessError,
     display,
     raw_command,
+    to_text,
 )
 
 
@@ -128,5 +129,5 @@ class Git:
         try:
             return raw_command([self.git] + cmd, cwd=self.root, capture=True, str_errors=str_errors)[0]
         except SubprocessError as spe:
-            display.warning(spe)
+            display.warning(to_text(spe))
             return spe.stdout
