@@ -754,6 +754,7 @@ class SubprocessError(ApplicationError):
         super(SubprocessError, self).__init__(message)
 
         self.cmd = cmd
+        self.message = message
         self.status = status
         self.stdout = stdout
         self.stderr = stderr
