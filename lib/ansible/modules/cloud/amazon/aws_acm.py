@@ -258,13 +258,15 @@ def chain_compare(a, b):
 
     return(True)
 
+
 # Takes in PEM encoded data with no headers
 # returns equivilent DER
 def PEM_body_to_DER(pem):
     prefix = "-----BEGIN CERTIFICATE-----"
     suffix = "-----END CERTIFICATE-----"
-    pem_full = '\n'.join([prefix,pem,suffix])
+    pem_full = '\n'.join([prefix, pem, suffix])
     return(PEM_cert_to_DER_cert(pem_full))
+
 
 # Use regex to split up a chain or single cert into an array of base64 encoded data
 # Using "-----BEGIN CERTIFICATE-----" and "----END CERTIFICATE----"

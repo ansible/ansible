@@ -27,8 +27,8 @@ def test_chain_compare():
     fixture_suffix = 'test/units/modules/cloud/amazon/fixtures/certs'
 
     # Test chain split function on super simple (invalid) certs
-    expected = ['aaa','bbb','ccc']
-    
+    expected = ['aaa', 'bbb', 'ccc']
+
     for fname in ['simple-chain-a.cert', 'simple-chain-b.cert']:
         path = fixture_suffix + '/' + fname
         with open(path, 'r') as f:
