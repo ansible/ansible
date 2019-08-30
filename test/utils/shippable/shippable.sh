@@ -137,6 +137,8 @@ trap cleanup EXIT
 
 if [[ "${COVERAGE:-}" == "--coverage" ]]; then
     timeout=60
+elif [[ "${script}" == "azure" ]]; then
+    timeout=70
 else
     timeout=45
 fi
