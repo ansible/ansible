@@ -21,7 +21,7 @@ PRs must be raised well in advance of the dates below to have a chance of being 
 - 2019-09-19 Release Candidate 1
 - 2019-09-26 Release Candidate 2 (if needed)
 - 2019-10-03 Release Candidate 3 (if needed)
-- 2019-10-16 Release
+- 2019-10-10 Release
 
 
 
