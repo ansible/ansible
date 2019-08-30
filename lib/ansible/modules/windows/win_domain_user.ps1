@@ -79,6 +79,7 @@ $domain_server = Get-AnsibleParam -obj $params -name "domain_server" -type "str"
 
 # User account parameters
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$identity = Get-AnsibleParam -obj $params -name "identity" -type "str" -default $name
 $description = Get-AnsibleParam -obj $params -name "description" -type "str"
 $password = Get-AnsibleParam -obj $params -name "password" -type "str"
 $password_expired = Get-AnsibleParam -obj $params -name "password_expired" -type "bool"
@@ -125,7 +126,7 @@ if ($null -ne $domain_server) {
 }
 
 try {
-    $user_obj = Get-ADUser -Identity $name -Properties * @extra_args
+    $user_obj = Get-ADUser -Identity $identity -Properties * @extra_args
     $user_guid = $user_obj.ObjectGUID
 }
 catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
