@@ -31,7 +31,8 @@ options:
       - Default to C(name) if not set.
     type: str
     required: false
-    default $name
+    default: $name
+    version_added: '2.9'
   state:
     description:
       - When C(present), creates or updates the user account.
