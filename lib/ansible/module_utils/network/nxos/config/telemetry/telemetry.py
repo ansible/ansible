@@ -128,6 +128,7 @@ class Telemetry(ConfigBase):
         """
         state = self._module.params['state']
 
+        import pdb ; pdb.set_trace()
         # The deleted case is very simple since we purge all telemetry config
         # and does not require any processing using NxosCmdRef objects.
         if state == 'deleted':
@@ -373,12 +374,13 @@ class Telemetry(ConfigBase):
                         if have_sg.get('path'):
                             setval['path'] = get_setval_path(have_sg.get('path'))
                             cmd['path'] = ['no ' + setval['path'].format(**have_sg['path'])]
-                        if property_ctx[0] not in delete['TMS_SENSORGROUP']:
-                            delete['TMS_SENSORGROUP'].extend(property_ctx)
-                        if cmd.get('data_source'):
-                            delete['TMS_SENSORGROUP'].extend(cmd['data_source'])
-                        if cmd.get('path'):
-                            delete['TMS_SENSORGROUP'].extend(cmd['path'])
+                        if cmd:
+                            if property_ctx[0] not in delete['TMS_SENSORGROUP']:
+                                delete['TMS_SENSORGROUP'].extend(property_ctx)
+                            if cmd.get('data_source'):
+                                delete['TMS_SENSORGROUP'].extend(cmd['data_source'])
+                            if cmd.get('path'):
+                                delete['TMS_SENSORGROUP'].extend(cmd['path'])
                     else:
                         remove_context = ['no ' + property_ctx[0]]
                         if remove_context[0] not in delete['TMS_SENSORGROUP']:
@@ -387,7 +389,6 @@ class Telemetry(ConfigBase):
         add['TMS_SENSORGROUP'] = remove_duplicate_context(add['TMS_SENSORGROUP'])
         delete['TMS_SENSORGROUP'] = remove_duplicate_context(delete['TMS_SENSORGROUP'])
 
-        import pdb ; pdb.set_trace()
         # Process Telemetry Subscription Want and Have Values
         # Possible states:
         # - want and have are (set) (equal: no action, not equal: replace with want)
@@ -398,17 +399,63 @@ class Telemetry(ConfigBase):
         setval = {}
         setval['destination_group'] = ref['tms_subscription']._ref['destination_group']['setval']
         setval['sensor_group'] = ref['tms_subscription']._ref['sensor_group']['setval']
-        if want.get('subscriptions') is not None:
-            if have.get('subscriptions') is not None:
-                pass
-        elif want.get('subscriptions') is None:
+        if want.get('subscriptions') is None:
             if have.get('subscriptions') is not None:
                 for sub in have.get('subscriptions'):
                     remove_context = ['{0} subscription {1}'.format('no', sub['id'])]
-                    # cmd = [setval.format(**dg['destination'])]
                     delete['TMS_SUBSCRIPTION'].extend(global_ctx)
-                    delete['TMS_SUBSCRIPTION'].extend(remove_context)
+                    if remove_context[0] not in delete['TMS_SUBSCRIPTION']:
+                        delete['TMS_SUBSCRIPTION'].extend(remove_context)
+        else:
+            for want_sub in want.get('subscriptions'):
+                if want_sub not in have.get('subscriptions'):
+                    property_ctx = ['subscription {0}'.format(want_sub['id'])]
+                    cmd = {}
+                    if want_sub.get('destination_group'):
+                        cmd['destination_group'] = [setval['destination_group'].format(want_sub['destination_group'])]
+                    if want_sub.get('sensor_group'):
+                        cmd['sensor_group'] = [setval['sensor_group'].format(**want_sub['sensor_group'])]
+                    add['TMS_SUBSCRIPTION'].extend(global_ctx)
+                    if property_ctx[0] not in add['TMS_SUBSCRIPTION']:
+                        add['TMS_SUBSCRIPTION'].extend(property_ctx)
+                    if cmd.get('destination_group'):
+                        add['TMS_SUBSCRIPTION'].extend(cmd['destination_group'])
+                    if cmd.get('sensor_group'):
+                        add['TMS_SUBSCRIPTION'].extend(cmd['sensor_group'])
+            for have_sub in have.get('subscriptions'):
+                if have_sub not in want.get('subscriptions'):
+                    have_id_in_want_ids = False
+                    for item in want.get('subscriptions'):
+                        if have_sub['id'] == item['id']:
+                            have_id_in_want_ids = True
+                            if have_sub.get('destination_group') == item.get('destination_group'):
+                                have_id_in_want_ids = False
+                            if have_sub.get('sensor_group') == str(item.get('sensor_group')):
+                                have_id_in_want_ids = False
+                    property_ctx = ['subscription {0}'.format(have_sub['id'])]
+                    delete['TMS_SUBSCRIPTION'].extend(global_ctx)
+                    if have_id_in_want_ids:
+                        cmd = {}
+                        if have_sub.get('destination_group'):
+                            cmd['destination_group'] = ['no ' + setval['destination_group'].format(have_sub['destination_group'])]
+                        if have_sub.get('sensor_group'):
+                            cmd['sensor_group'] = ['no ' + setval['sensor_group'].format(**have_sub['sensor_group'])]
+                        if cmd:
+                            if property_ctx[0] not in delete['TMS_SUBSCRIPTION']:
+                                delete['TMS_SUBSCRIPTION'].extend(property_ctx)
+                            if cmd.get('destination_group'):
+                                delete['TMS_SUBSCRIPTION'].extend(cmd['destination_group'])
+                            if cmd.get('sensor_group'):
+                                delete['TMS_SUBSCRIPTION'].extend(cmd['sensor_group'])
+                    else:
+                        remove_context = ['no ' + property_ctx[0]]
+                        if remove_context[0] not in delete['TMS_SUBSCRIPTION']:
+                            delete['TMS_SUBSCRIPTION'].extend(remove_context)
 
+        add['TMS_SUBSCRIPTION'] = remove_duplicate_context(add['TMS_SUBSCRIPTION'])
+        delete['TMS_SUBSCRIPTION'] = remove_duplicate_context(delete['TMS_SUBSCRIPTION'])
+
+        import pdb ; pdb.set_trace()
         commands.extend(delete['TMS_SUBSCRIPTION'])
         commands.extend(delete['TMS_SENSORGROUP'])
         commands.extend(delete['TMS_DESTGROUP'])
@@ -417,7 +464,6 @@ class Telemetry(ConfigBase):
         commands.extend(add['TMS_SUBSCRIPTION'])
         commands.extend(add['TMS_GLOBAL'])
         commands = remove_duplicate_context(commands)
-        import pdb ; pdb.set_trace()
 
         return commands
 

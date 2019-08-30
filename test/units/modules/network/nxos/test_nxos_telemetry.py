@@ -998,7 +998,7 @@ class TestNxosTelemetryModule(TestNxosModule):
             'state': 'replaced',
             'config': {
                 'destination_groups': [
-                    {'id': '10',
+                    {'id': 10,
                      'destination': {'ip': '192.168.1.1', 'port': '5001', 'protocol': 'GRPC', 'encoding': 'GPB'},
                      },
                     {'id': '11',
@@ -1016,8 +1016,6 @@ class TestNxosTelemetryModule(TestNxosModule):
                      'data_source': 'NX-API',
                      'path': {'name': 'sys/bgp', 'depth': 0, 'query_condition': 'query_condition_xyz', 'filter_condition': 'filter_condition_xyz'},
                      },
-                ],
-                'sensor_groups': [
                     {'id': '56',
                      'data_source': 'NX-API',
                      'path': {'name': 'sys/bgp', 'depth': 0, 'query_condition': 'query_condition_xyz', 'filter_condition': 'filter_condition_xyz'},
@@ -1027,16 +1025,22 @@ class TestNxosTelemetryModule(TestNxosModule):
         }, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'telemetry',
-            'no destination-profile',
-            'no certificate /bootflash/server.key localhost',
             'no subscription 3',
             'no subscription 4',
             'no subscription 5',
             'no subscription 6',
             'no subscription 7',
             'no sensor-group 2',
-            'no sensor-group 56',
+            'sensor-group 56',
+            'no data-source DME',
+            'no path environment',
+            'no path interface',
+            'no path resources',
+            'no path vxlan',
             'no destination-group 2',
+            'destination-group 10',
+            'no ip address 192.168.0.1 port 50001 protocol grpc encoding gpb',
+            'no ip address 192.168.0.2 port 60001 protocol grpc encoding gpb',
             'destination-group 10',
             'ip address 192.168.1.1 port 5001 protocol grpc encoding gpb',
             'destination-group 11',
@@ -1046,7 +1050,12 @@ class TestNxosTelemetryModule(TestNxosModule):
             'ip address 192.168.1.1 port 5001 protocol grpc encoding gpb',
             'sensor-group 55',
             'data-source NX-API',
-            'path sys/bgp depth 0 query-condition query_condition_xyz filter-condition filter_condition_xyz'
+            'path sys/bgp depth 0 query-condition query_condition_xyz filter-condition filter_condition_xyz',
+            'sensor-group 56',
+            'data-source NX-API',
+            'path sys/bgp depth 0 query-condition query_condition_xyz filter-condition filter_condition_xyz',
+            'no certificate /bootflash/server.key localhost',
+            'no destination-profile'
         ])
 
     def test_tms_replaced3_n9k(self):
@@ -1061,37 +1070,37 @@ class TestNxosTelemetryModule(TestNxosModule):
         set_module_args({
             'state': 'replaced',
             'config': {
-                'compression': 'gzip',
                 'vrf': 'blue',
                 'destination_groups': [
-                    {'id': '55',
-                     'destination': {'ip': '192.168.1.1', 'port': '5001', 'protocol': 'GRPC', 'encoding': 'GPB'},
+                    {'id': 2,
+                     'destination': {'ip': '192.168.0.1', 'port': 50001, 'protocol': 'GRPC', 'encoding': 'GPB'},
                      },
                 ],
                 'sensor_groups': [
-                    {'id': '55',
+                    {'id': 55,
                      'data_source': 'NX-API',
                      'path': {'name': 'sys/bgp', 'depth': 0, 'query_condition': 'query_condition_xyz', 'filter_condition': 'filter_condition_xyz'},
                      },
                 ],
                 'subscriptions': [
                     {'id': 7,
-                     'destination_group': 55,
-                     'sensor_group': {'id': 1, 'sample_interval': 1000},
+                     'destination_group': 10,
+                     'sensor_group': {'id': 55, 'sample_interval': 1000},
+                     },
+                    {'id': 10,
+                     'destination_group': 2,
+                     'sensor_group': {'id': 55, 'sample_interval': 1000},
                      },
                 ],
             }
         }, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'telemetry',
-            'destination-profile',
-            'use-vrf blue',
-            'no certificate /bootflash/server.key localhost',
-            'no source-interface loopback55',
             'no subscription 3',
             'no subscription 4',
             'no subscription 5',
             'no subscription 6',
+            'no subscription 7',
             'no sensor-group 2',
             'no sensor-group 56',
             'no destination-group 2',
@@ -1102,8 +1111,7 @@ class TestNxosTelemetryModule(TestNxosModule):
             'data-source NX-API',
             'path sys/bgp depth 0 query-condition query_condition_xyz filter-condition filter_condition_xyz',
             'subscription 7',
-            'dst-grp 55',
-            'snsr-grp 1 sample-interval 1000'
+            'dst-grp 55', "dst-grp {'id': 1, 'sample_interval': 1000}", 'no certificate /bootflash/server.key localhost', 'destination-profile', 'no source-interface loopback55', 'use-vrf blue'
         ])
 
 
