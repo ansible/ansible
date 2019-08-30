@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
+    'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
@@ -39,7 +39,7 @@ options:
      - String value of the persona that the Windows is licensed to. Specify value of "" to clear the value.
    required: false
    type: str
-version_added: 2.9
+version_added: 2.10
 author:
  - RusoSova (@RusoSova)
 '''
