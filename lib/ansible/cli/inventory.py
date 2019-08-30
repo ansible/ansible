@@ -112,7 +112,7 @@ class InventoryCLI(CLI):
 
         # set host pattern to default if not supplied
         if options.args:
-            options.pattern = options.args[0]
+            options.pattern = options.args
         else:
             options.pattern = 'all'
 
