@@ -17,7 +17,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: azure_rm_datalakedir
-version_added: 2.9
+version_added: 2.10
 short_description: Setup Azure Datalake dirs
 description:
     - Create or delete an dir within a given directory in a Datalake.
@@ -31,7 +31,7 @@ options:
         description:
             - Name of the Datalake directory.
         required: true
-        type: str
+        type: path
     recursive:
         description: Specifies whether to delete dirs recursively or not
         type: bool
@@ -67,8 +67,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-dir_exists: Returns if dir exists before the operation
-  description:
+dir_exists:
+  description: Returns if dir exists before the operation
   returned: dir exists
   type: str
   sample: true
