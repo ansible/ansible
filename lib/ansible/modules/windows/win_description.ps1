@@ -63,7 +63,7 @@ Function WinOwnership {
     )
 	if ($action -eq "get") {
         try {
-            $regObj=Get-ItemProperty -Path $regPath
+            $regObj=Get-ItemProperty -LiteralPath $regPath
         } catch {
             $module.FailJson("There was an error fetching registry $($_.Exception.Message)")
         }
@@ -72,7 +72,7 @@ Function WinOwnership {
     #Upate Owner or Organization
     if ($action -eq "set") {
         try {
-            Set-ItemProperty -Path $regPath -Name $type -Value $value
+            Set-ItemProperty -LiteralPath $regPath -Name $type -Value $value
         } catch {
             $module.FailJson("There was an error updating $type $($_.Exception.Message)")
         }
