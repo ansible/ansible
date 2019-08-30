@@ -1,2 +1,0 @@
-bugfixes:
-  - hostname - fix regression with Oracle Linux (https://github.com/ansible/ansible/issues/42726)

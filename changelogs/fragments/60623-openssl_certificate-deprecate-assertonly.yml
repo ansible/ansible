@@ -1,2 +1,0 @@
-minor_changes:
-- "openssl_certificate - the ``assertonly`` provider has been deprecated. See examples in module to see how to replace it."

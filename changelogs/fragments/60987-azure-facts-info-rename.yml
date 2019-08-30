@@ -1,7 +1,0 @@
-minor_changes:
-- The ``azure_rm_aks_facts`` module has been renamed to ``azure_rm_aks_info``.
-- The ``azure_rm_aksversion_facts`` module has been renamed to ``azure_rm_aksversion_info``.
-- The ``azure_rm_applicationsecuritygroup_facts`` module has been renamed to ``azure_rm_applicationsecuritygroup_info``.
-- The ``azure_rm_appserviceplan_facts`` module has been renamed to ``azure_rm_appserviceplan_info``.
-- The ``azure_rm_autoscale_facts`` module has been renamed to ``azure_rm_autoscale_info``.
-- The ``azure_rm_availabilityset_facts`` module has been renamed to ``azure_rm_availabilityset_info``.

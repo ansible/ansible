@@ -1,2 +1,0 @@
-minor_changes:
-- Ansible will now warn if two aliases of the same option are used for Python modules.

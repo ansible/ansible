@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_* modules - improve error message when docker-py is missing / has wrong version."

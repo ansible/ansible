@@ -1,2 +1,0 @@
-minor_changes:
-- postgresql_query - Add array handling for positional_args and named_args parameters (https://github.com/ansible/ansible/issues/59955).

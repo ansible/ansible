@@ -1,2 +1,0 @@
-bugfixes:
-  - vultr_server - Fix idempotency for options ``ipv6_enabled`` and ``private_network_enabled``.

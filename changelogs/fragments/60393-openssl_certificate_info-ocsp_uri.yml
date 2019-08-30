@@ -1,2 +1,0 @@
-minor_changes:
-- "openssl_certificate_info - add ``ocsp_uri`` return value."

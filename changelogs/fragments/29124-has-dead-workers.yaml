@@ -1,4 +1,0 @@
-bugfixes:
-- TaskQueueManager - Ensure ``has_dead_workers`` can function, by using the
-  correct reference, and only allow an exit code of 0.
-  (https://github.com/ansible/ansible/issues/29124)

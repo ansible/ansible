@@ -1,2 +1,0 @@
-bugfixes:
-- Fix firewalld source option handling to be exclusive (https://github.com/ansible/ansible/issues/55683)
