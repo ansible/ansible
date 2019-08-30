@@ -1,2 +1,0 @@
-bugfixes:
-  - gather_facts - Clean up tmp files upon completion (https://github.com/ansible/ansible/issues/57248)

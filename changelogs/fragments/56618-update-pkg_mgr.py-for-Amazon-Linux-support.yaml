@@ -1,2 +1,0 @@
-bugfixes:
-  - pkg_mgr - Ansible 2.8.0 failing to install yum packages on Amazon Linux (https://github.com/ansible/ansible/issues/56583)

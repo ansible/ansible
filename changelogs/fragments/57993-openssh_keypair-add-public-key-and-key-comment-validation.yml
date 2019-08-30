@@ -1,2 +1,0 @@
-bugfixes:
-  - openssh_keypair - add public key and key comment validation on change

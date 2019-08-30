@@ -1,2 +1,0 @@
-minor_changes:
-  - get_certificate - added ``proxy_*`` options.

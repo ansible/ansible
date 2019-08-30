@@ -1,2 +1,0 @@
-minor_changes:
-- The ``nginx_status_facts`` module has been deprecated. Use ``nginx_status_info`` instead.

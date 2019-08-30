@@ -1,2 +1,0 @@
-minor_changes:
-- "docker_container - now tests for mount endpoint collisions (for both ``mounts`` and ``volumes``) to abort early when collisions are found"

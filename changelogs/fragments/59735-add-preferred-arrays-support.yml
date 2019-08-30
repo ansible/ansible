@@ -1,2 +1,0 @@
-minor_changes:
-  - Add I(preferred_arrays) param to enable preferred arrays to be set in a host configuration. (https://github.com/ansible/ansible/pull/59735)

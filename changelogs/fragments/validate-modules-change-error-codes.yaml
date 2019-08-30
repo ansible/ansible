@@ -1,2 +1,0 @@
-minor_changes:
-  - validate-modules - change numeric error codes to descriptive strings (https://github.com/ansible/ansible/pull/60711)

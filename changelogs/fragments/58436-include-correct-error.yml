@@ -1,3 +1,0 @@
-bugfixes:
-- includes - Ensure to use the correct filename when AnsibleFileNotFound is
-  encountered (https://github.com/ansible/ansible/issues/58436)

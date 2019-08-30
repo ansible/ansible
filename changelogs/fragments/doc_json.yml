@@ -1,2 +1,0 @@
-minor_changes:
-    - Allow ansible-doc to return JSON as output.

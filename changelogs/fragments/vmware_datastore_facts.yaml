@@ -1,2 +1,0 @@
-minor_changes:
-    - vmware_datastore_facts - When no datastore was found, returns an empty list.

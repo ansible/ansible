@@ -1,2 +1,0 @@
-bugfixes:
-  - apt_facts - fix performance regression when getting facts about apt packages (https://github.com/ansible/ansible/issues/60450)

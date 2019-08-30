@@ -1,3 +1,0 @@
-minor_changes:
-  - default collection - a playbook run inside a collection (eg, as part of a runme.sh integration test) will
-    first search the containing collection for unqualified module/action references (https://github.com/ansible/ansible/pull/61415)
