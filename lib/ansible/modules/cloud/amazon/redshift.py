@@ -178,7 +178,7 @@ options:
       - A dictionary of resource tags.
     type: dict
     aliases: ['resource_tags']
-    version_added: 2.9
+    version_added: 2.10
   purge_tags:
     description:
       - Purge existing tags that are not found in the cluster
