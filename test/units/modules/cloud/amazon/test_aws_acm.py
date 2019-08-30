@@ -24,45 +24,64 @@ from pprint import pprint
 
 def test_chain_compare():
 
+    fixture_suffix = 'test/units/modules/cloud/amazon/fixtures/certs'
+
+    # Test chain split function on super simple (invalid) certs
+    expected = ['aaa','bbb','ccc']
+    
+    for fname in ['simple-chain-a.cert', 'simple-chain-b.cert']:
+        path = fixture_suffix + '/' + fname
+        with open(path, 'r') as f:
+            pem = to_text(f.read())
+        actual = pem_chain_split(pem)
+        actual = [a.strip() for a in actual]
+        if actual != expected:
+            print("Expected:")
+            pprint(expected)
+            print("Actual:")
+            pprint(actual)
+            raise AssertionError("Failed to properly split %s" % fname)
+
+    # Now test real chains
     # chains with same same_as should be considered equal
     test_chains = [
         {  # Original Cert chain
-            'path': 'test/units/modules/cloud/amazon/fixtures/certs/chain-1.0.cert',
+            'path': fixture_suffix + '/chain-1.0.cert',
             'same_as': 1,
             'length': 3
         },
         {  # Same as 1.0, but longer PEM lines
-            'path': 'test/units/modules/cloud/amazon/fixtures/certs/chain-1.1.cert',
+            'path': fixture_suffix + '/chain-1.1.cert',
             'same_as': 1,
             'length': 3
         },
         {  # Same as 1.0, but without the stuff before each --------
-            'path': 'test/units/modules/cloud/amazon/fixtures/certs/chain-1.2.cert',
+            'path': fixture_suffix + '/chain-1.2.cert',
             'same_as': 1,
             'length': 3
         },
         {  # Same as 1.0, but in a different order, so should be considered different
-            'path': 'test/units/modules/cloud/amazon/fixtures/certs/chain-1.3.cert',
+            'path': fixture_suffix + '/chain-1.3.cert',
             'same_as': 2,
             'length': 3
         },
         {  # Same as 1.0, but with last link missing
-            'path': 'test/units/modules/cloud/amazon/fixtures/certs/chain-1.4.cert',
+            'path': fixture_suffix + '/chain-1.4.cert',
             'same_as': 3,
             'length': 2
         },
         {  # Completely different cert chain to all the others
-            'path': 'test/units/modules/cloud/amazon/fixtures/certs/chain-4.cert',
+            'path': fixture_suffix + '/chain-4.cert',
             'same_as': 4,
             'length': 3
         },
         {  # Single cert
-            'path': 'test/units/modules/cloud/amazon/fixtures/certs/a.pem',
+            'path': fixture_suffix + '/a.pem',
             'same_as': 5,
             'length': 1
         },
         {  # a different, single cert
-            'path': 'test/units/modules/cloud/amazon/fixtures/certs/b.pem',
+            'path': fixture_suffix + '/b.pem',
             'same_as': 6,
             'length': 1
         }
@@ -75,9 +94,13 @@ def test_chain_compare():
         # Test to make sure our regex isn't too greedy
         chain['split'] = pem_chain_split(chain['pem_text'])
         if len(chain['split']) != chain['length']:
-            print("path: %s" % chain['path'])
+            print("Cert before split")
+            print(chain['pem_text'])
+            print("Cert after split")
             pprint(chain['split'])
-            print("Chain length: %d" % len(chain['split']))
+            print("path: %s" % chain['path'])
+            print("Expected chain length: %d" % chain['length'])
+            print("Actual chain length: %d" % len(chain['split']))
             raise AssertionError("Chain %s was not split properly" % chain['path'])
 
     for chain_a in test_chains:

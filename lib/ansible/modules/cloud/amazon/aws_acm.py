@@ -251,22 +251,28 @@ def chain_compare(a, b):
 
     # Chain length is the same
     for (ca, cb) in zip(chain_a_pem, chain_b_pem):
-        der_a = PEM_cert_to_DER_cert(ca)
-        der_b = PEM_cert_to_DER_cert(cb)
+        der_a = PEM_body_to_DER(ca)
+        der_b = PEM_body_to_DER(cb)
         if der_a != der_b:
             return(False)
 
     return(True)
 
+# Takes in PEM encoded data with no headers
+# returns equivilent DER
+def PEM_body_to_DER(pem):
+    prefix = "-----BEGIN CERTIFICATE-----"
+    suffix = "-----END CERTIFICATE-----"
+    pem_full = '\n'.join([prefix,pem,suffix])
+    return(PEM_cert_to_DER_cert(pem_full))
+
 # Use regex to split up a chain or single cert into an array of base64 encoded data
 # Using "-----BEGIN CERTIFICATE-----" and "----END CERTIFICATE----"
 # Noting that some chains have non-pem data in between each cert
+# This function returns only what's between the headers, excluding the headers
 def pem_chain_split(pem):
-    expr = re.compile(r"-+BEGIN\s+CERTIFICATE-+([a-zA-Z0-9\+\/=\s]+)-+END\s+CERTIFICATE-+")
-    pem_arr = re.findall(expr, to_text(pem.replace('\n', '')))
-    prefix = "-----BEGIN CERTIFICATE-----"
-    suffix = "-----END CERTIFICATE-----"
-    pem_arr = [(prefix + p + suffix) for p in pem_arr]
+    expr = re.compile(r"-+BEGIN\s+CERTIFICATE-+([a-zA-Z0-9\+\/=\s]+?)-+END\s+CERTIFICATE-+")
+    pem_arr = re.findall(expr, to_text(pem))
     return(pem_arr)
 
 
