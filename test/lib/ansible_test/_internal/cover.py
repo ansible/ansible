@@ -70,7 +70,12 @@ def command_coverage_combine(args):
     :type args: CoverageConfig
     :rtype: list[str]
     """
-    return _command_coverage_combine_powershell(args) + _command_coverage_combine_python(args)
+    paths = _command_coverage_combine_powershell(args) + _command_coverage_combine_python(args)
+
+    for path in paths:
+        display.info('Generated combined output: %s' % path, verbosity=1)
+
+    return paths
 
 
 def _command_coverage_combine_python(args):
@@ -508,8 +513,6 @@ def _command_coverage_combine_powershell(args):
     invalid_path_count = 0
     invalid_path_chars = 0
 
-    coverage_file = os.path.join(ResultType.COVERAGE.path, COVERAGE_OUTPUT_FILE_NAME)
-
     for group in sorted(groups):
         coverage_data = groups[group]
 
@@ -532,11 +535,11 @@ def _command_coverage_combine_powershell(args):
                 coverage_data[source] = _default_stub_value(source_line_count)
 
         if not args.explain:
-            output_file = coverage_file + group + '-powershell'
+            output_file = COVERAGE_OUTPUT_FILE_NAME + group + '-powershell'
 
             write_json_test_results(ResultType.COVERAGE, output_file, coverage_data)
 
-            output_files.append(output_file)
+            output_files.append(os.path.join(ResultType.COVERAGE.path, output_file))
 
     if invalid_path_count > 0:
         display.warning(
