@@ -88,7 +88,6 @@ overridden:
   after:
     - name: Loopback888
     - name: Loopback999
-    - name: GigabitEthernet0/0/0/0
     - ipv4:
       - address: 198.51.102.1 255.255.255.0
       ipv6:
