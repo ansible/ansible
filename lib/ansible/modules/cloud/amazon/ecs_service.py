@@ -155,7 +155,8 @@ options:
         choices: ["DAEMON", "REPLICA"]
     propagate_tags:
         description:
-          - Specifies whether to propagate the tags from the task definition or the service to the tasks in the service. This option requires botocore >= 1.12.46.
+          - Specifies whether to propagate the tags from the task definition or the service to the tasks in the service.
+            This option requires botocore >= 1.12.46.
         required: false
         version_added: 2.9
         choices: ["SERVICE", "TASK_DEFINITION"]
@@ -344,7 +345,8 @@ DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import ec2_argument_spec
-from ansible.module_utils.ec2 import snake_dict_to_camel_dict, map_complex_type, get_ec2_security_group_ids_from_names, ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
+from ansible.module_utils.ec2 import snake_dict_to_camel_dict, map_complex_type, get_ec2_security_group_ids_from_names
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
 
 try:
     import botocore
@@ -461,36 +463,36 @@ class EcsServiceManager:
         response = self.ecs.create_service(**params)
         return self.jsonize(response['service'])
 
-    def list_tags_for_resource(self, module, arn):
+    def list_tags_for_resource(self, arn):
         try:
             response = self.ecs.list_tags_for_resource(resourceArn=arn)
             return boto3_tag_list_to_ansible_dict(response.get('tags'), 'key', 'value')
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Error listing tags for resource")
+            self.module.fail_json_aws(e, msg="Error listing tags for resource")
 
-    def update_tags(self, module, existing_tags, valid_tags, arn):
+    def update_tags(self, tags, arn):
+        existing_tags = self.list_tags_for_resource(arn)
         changed = False
-        to_add, to_remove = compare_aws_tags(existing_tags, valid_tags)
+        to_add, to_remove = compare_aws_tags(existing_tags, tags)
         if to_remove:
-            self.untag_resource(module, arn, to_remove)
+            self.untag_resource(arn, to_remove)
             changed = True
         if to_add:
-            self.tag_resource(module, arn, ansible_dict_to_boto3_tag_list(to_add, 'key', 'value'))
+            self.tag_resource(arn, ansible_dict_to_boto3_tag_list(to_add, 'key', 'value'))
             changed = True
         return changed
-    
-    def tag_resource(self, module, arn, tags):
+
+    def tag_resource(self, arn, tags):
         try:
             return self.ecs.tag_resource(resourceArn=arn, tags=tags)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Error tagging resource")
+            self.module.fail_json_aws(e, msg="Error tagging resource")
 
-
-    def untag_resource(self, module, arn, tag_keys):
+    def untag_resource(self, arn, tag_keys):
         try:
             return self.ecs.untag_resource(resourceArn=arn, tagKeys=tag_keys)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Error untagging resource")
+            self.module.fail_json_aws(e, msg="Error untagging resource")
 
     def update_service(self, service_name, cluster_name, task_definition,
                        desired_count, deployment_configuration, network_configuration,
@@ -618,7 +620,7 @@ def main():
     if module.params['propagate_tags']:
         if not module.botocore_at_least('1.12.46'):
             module.fail_json(msg='botocore needs to be version 1.12.46 or higher to use propagate_tags')
-    
+
     tags = module.params.get('tags', None)
     if tags:
         if not module.botocore_at_least('1.12.46'):
@@ -638,7 +640,10 @@ def main():
             else:
                 update = True
 
-        if not matching:
+        if matching:
+            if tags:
+                results['changed'] = service_mgr.update_tags(tags, existing['serviceArn'])
+        else:
             if not module.check_mode:
 
                 role = module.params['role']
@@ -655,8 +660,7 @@ def main():
                         loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
 
                 if update:
-                    # check various parameters and boto versions and give a helpful error in boto is not new enough for feature
-
+                    # check various parameters and boto versions and give a helpful error if boto is not new enough for feature
                     if module.params['scheduling_strategy']:
                         if not module.botocore_at_least('1.10.37'):
                             module.fail_json(msg='botocore needs to be version 1.10.37 or higher to use scheduling_strategy')
@@ -671,7 +675,7 @@ def main():
 
                     if (existing['loadBalancers'] or []) != loadBalancers:
                         module.fail_json(msg="It is not possible to update the load balancers of an existing service")
-                    
+
                     if module.params['propagate_tags']:
                         if existing.get('propagateTags', '') != module.params['propagate_tags']:
                             module.fail_json(msg="It is not possible to update the propagate_tags property of an existing service")
@@ -685,11 +689,9 @@ def main():
                                                           network_configuration,
                                                           module.params['health_check_grace_period_seconds'],
                                                           module.params['force_new_deployment'])
-                    
-                    # update tags
+
                     if tags:
-                        existing_tags = service_mgr.list_tags_for_resource(module, existing['serviceArn'])
-                        service_mgr.update_tags(module, existing_tags, tags, existing['serviceArn'])
+                        service_mgr.update_tags(tags, existing['serviceArn'])
 
                 else:
                     try:
