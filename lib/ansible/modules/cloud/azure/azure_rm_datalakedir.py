@@ -17,7 +17,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: azure_rm_datalakedir
-version_added: 2.10
+version_added: '2.10'
 short_description: Setup Azure Datalake dirs
 description:
     - Create or delete an dir within a given directory in a Datalake.
