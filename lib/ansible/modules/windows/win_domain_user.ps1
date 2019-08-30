@@ -78,7 +78,7 @@ $domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "
 $domain_server = Get-AnsibleParam -obj $params -name "domain_server" -type "str"
 
 # User account parameters
-$username = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $description = Get-AnsibleParam -obj $params -name "description" -type "str"
 $password = Get-AnsibleParam -obj $params -name "password" -type "str"
 $password_expired = Get-AnsibleParam -obj $params -name "password_expired" -type "bool"
@@ -125,7 +125,7 @@ if ($null -ne $domain_server) {
 }
 
 try {
-    $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+    $user_obj = Get-ADUser -Identity $name -Properties * @extra_args
     $user_guid = $user_obj.ObjectGUID
 }
 catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
@@ -140,7 +140,7 @@ If ($state -eq 'present') {
     # If the account does not exist, create it
     If (-not $user_obj) {
         $create_args = @{}
-        $create_args.Name = $username
+        $create_args.Name = $name
         If ($null -ne $path){
           $create_args.Path = $path
         }
@@ -268,7 +268,7 @@ If ($state -eq 'present') {
         try {
             $user_obj = $user_obj | Set-ADUser -WhatIf:$check_mode -PassThru @set_args
         } catch {
-            Fail-Json $result "failed to change user $($username): $($_.Exception.Message)"
+            Fail-Json $result "failed to change user $($name): $($_.Exception.Message)"
         }
         $result.changed = $true
     }
@@ -363,12 +363,12 @@ If ($user_obj) {
         $user_groups += $group.name
     }
     $result.groups = $user_groups
-    $result.msg = "User '$username' is present"
+    $result.msg = "User '$name' is present"
     $result.state = "present"
 }
 Else {
-    $result.name = $username
-    $result.msg = "User '$username' is absent"
+    $result.name = $name
+    $result.msg = "User '$name' is absent"
     $result.state = "absent"
 }
 
