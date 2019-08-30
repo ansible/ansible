@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_dataleakdir
-version_added: 2.8
+module: azure_rm_datalakedir
+version_added: 2.9
 short_description: Setup Azure Datalake dirs
 description:
     - Create or delete an dir within a given directory in a Datalake.
@@ -31,15 +31,15 @@ options:
         description:
             - Name of the Datalake directory.
         required: true
-        type: str
+        type: path
     recursive:
         description: Specifies whether to delete dirs recursively or not
         type: bool
         default: false
-        required: on absent
     state:
         description:
             - Assert the state of the dir. Use C(present) to create a directory and C(absent) to delete it.
+        type: str
         default: present
         choices:
             - absent

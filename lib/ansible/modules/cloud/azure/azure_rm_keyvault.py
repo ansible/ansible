@@ -141,7 +141,7 @@ options:
         description:
             - Create vault in recovery mode.
         type: bool
-    state:
+        :
         description:
             - Assert the state of the KeyVault. Use C(present) to create or update an KeyVault and C(absent) to delete it.
         default: present
