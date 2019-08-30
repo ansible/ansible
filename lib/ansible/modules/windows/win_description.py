@@ -39,7 +39,7 @@ options:
      - String value of the persona that the Windows is licensed to. Specify value of "" to clear the value.
    required: false
    type: str
-version_added: 2.10
+version_added: '2.10'
 author:
  - RusoSova (@RusoSova)
 '''
