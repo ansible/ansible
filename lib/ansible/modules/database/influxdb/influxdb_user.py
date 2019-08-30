@@ -166,16 +166,17 @@ def set_user_grants(module, client, user_name, grants):
 
     try:
         current_grants = client.get_list_privileges(user_name)
+        parsed_grants = []
         # Fix privileges wording
         for i, v in enumerate(current_grants):
-            if v['privilege'] == 'ALL PRIVILEGES':
-                v['privilege'] = 'ALL'
-                current_grants[i] = v
-            elif v['privilege'] == 'NO PRIVILEGES':
-                del(current_grants[i])
+            if v['privilege'] != 'NO PRIVILEGES':
+                if v['privilege'] == 'ALL PRIVILEGES':
+                    v['privilege'] = 'ALL'
+                    current_grants[i] = v
+            parsed_grants.add(current_grants[i])
 
         # check if the current grants are included in the desired ones
-        for current_grant in current_grants:
+        for current_grant in parsed_grants:
             if current_grant not in grants:
                 if not module.check_mode:
                     client.revoke_privilege(current_grant['privilege'],
@@ -185,7 +186,7 @@ def set_user_grants(module, client, user_name, grants):
 
         # check if the desired grants are included in the current ones
         for grant in grants:
-            if grant not in current_grants:
+            if grant not in parsed_grants:
                 if not module.check_mode:
                     client.grant_privilege(grant['privilege'],
                                            grant['database'],
