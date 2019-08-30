@@ -14,9 +14,19 @@ else
     timeout=6
 fi
 
+group1=()
+group2=()
+
+# create two groups by putting long running network tests into one group
+# add or remove more network platforms as needed to balance the two groups
+for network in f5 fortios ios nxos junos; do
+    group1+=(--exclude "${network}")
+    group2+=("${network}")
+done
+
 case "${group}" in
-    1) options=(--exclude test/units/modules/network/) ;;
-    2) options=(          test/units/modules/network/) ;;
+    1) options=("${group1[@]}") ;;
+    2) options=("${group2[@]}") ;;
 esac
 
 ansible-test env --timeout "${timeout}" --color -v
