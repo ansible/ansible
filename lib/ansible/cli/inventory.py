@@ -64,8 +64,9 @@ class InventoryCLI(CLI):
         opt_help.add_basedir_options(self.parser)
 
         # remove unused default options
-        self.parser.add_argument('--limit', default=argparse.SUPPRESS, type=lambda v: self.parser.error('unrecognized arguments: --limit'))
-        self.parser.add_argument('--list-hosts', default=argparse.SUPPRESS, type=lambda v: self.parser.error('unrecognized arguments: --list-hosts'))
+        self.parser.add_argument('--limit', help=argparse.SUPPRESS, type=lambda v: self.parser.error('unrecognized arguments: --limit'))
+        self.parser.add_argument('-l', help=argparse.SUPPRESS, type=lambda v: self.parser.error('unrecognized arguments: --limit'))
+        self.parser.add_argument('--list-hosts', help=argparse.SUPPRESS, type=lambda v: self.parser.error('unrecognized arguments: --list-hosts'))
 
         self.parser.add_argument('args', metavar='host|group', nargs='?')
 
