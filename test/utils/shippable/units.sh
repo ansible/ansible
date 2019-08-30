@@ -26,6 +26,12 @@ networks=(
     fortios
     ios
     junos
+    netact
+    netscaler
+    netvisor
+    nos
+    nso
+    nuage
     nxos
     onyx
     opx
