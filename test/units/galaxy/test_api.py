@@ -146,7 +146,7 @@ def test_initialise_galaxy(monkeypatch):
     assert actual == {u'token': u'my token'}
     assert mock_open.call_count == 2
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api'
-    assert mock_open.mock_calls[1][1][0] == 'https://galaxy.ansible.com/api/v1/tokens'
+    assert mock_open.mock_calls[1][1][0] == 'https://galaxy.ansible.com/api/v1/tokens/'
     assert mock_open.mock_calls[1][2]['data'] == 'github_token=github_token'
 
 
@@ -168,7 +168,7 @@ def test_initialise_galaxy_with_auth(monkeypatch):
     assert mock_open.call_count == 2
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api'
     assert mock_open.mock_calls[0][2]['headers'] == {'Authorization': 'Token my_token'}
-    assert mock_open.mock_calls[1][1][0] == 'https://galaxy.ansible.com/api/v1/tokens'
+    assert mock_open.mock_calls[1][1][0] == 'https://galaxy.ansible.com/api/v1/tokens/'
     assert mock_open.mock_calls[1][2]['data'] == 'github_token=github_token'
 
 
@@ -194,7 +194,7 @@ def test_initialise_automation_hub(monkeypatch):
     assert mock_open.mock_calls[0][2]['headers'] == {'Authorization': 'Token my_token'}
     assert mock_open.mock_calls[1][1][0] == 'https://galaxy.ansible.com/api'
     assert mock_open.mock_calls[1][2]['headers'] == {'Authorization': 'Bearer my_token'}
-    assert mock_open.mock_calls[2][1][0] == 'https://galaxy.ansible.com/api/v1/tokens'
+    assert mock_open.mock_calls[2][1][0] == 'https://galaxy.ansible.com/api/v1/tokens/'
     assert mock_open.mock_calls[2][2]['data'] == 'github_token=github_token'
 
 
@@ -274,7 +274,7 @@ def test_publish_collection(api_version, collection_url, collection_artifact, mo
     actual = api.publish_collection(collection_artifact)
     assert actual == 'http://task.url/'
     assert mock_call.call_count == 1
-    assert mock_call.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api/%s/%s' % (api_version, collection_url)
+    assert mock_call.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api/%s/%s/' % (api_version, collection_url)
     assert mock_call.mock_calls[0][2]['headers']['Content-length'] == len(mock_call.mock_calls[0][2]['args'])
     assert mock_call.mock_calls[0][2]['headers']['Content-type'].startswith(
         'multipart/form-data; boundary=--------------------------')
