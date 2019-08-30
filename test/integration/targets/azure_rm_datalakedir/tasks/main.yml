@@ -1,0 +1,83 @@
+- name: prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    tenant_id: "{{ azure_tenant }}"
+  run_once: yes
+
+- name: create datalake instance
+  azure_rm_resource:
+    resource_group: "{{ resource_group }}"
+    provider: DataLakeStore
+    resource_type: accounts
+    resource_name: "datalake{{ rpfx }}"
+    api_version: '2016-11-01'
+    body:
+      location: "westeurope"
+
+- name: wait for datalake to be ready
+  azure_rm_resource_facts:
+    api_version: '2016-11-01'
+    resource_group: "{{ resource_group }}"
+    provider: DataLakeStore
+    resource_type: accounts
+    resource_name: "datalake{{ rpfx }}"
+  register: output
+  until: output.response[0].properties.state == 'Active'
+  delay: 10
+
+- name: create directory /raw on datalake{{ rpfx }}
+  azure_rm_datalakedir:
+    dir_name: "/raw"
+    store_name: "datalake{{ rpfx }}"
+  register: output
+
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: create directory /raw on datalake{{ rpfx }} again
+  azure_rm_datalakedir:
+    dir_name: "/raw"
+    store_name: "datalake{{ rpfx }}"
+  register: output
+
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: delete directory /raw on datalake{{ rpfx }}
+  azure_rm_datalakedir:
+    dir_name: "/raw"
+    store_name: "datalake{{ rpfx }}"
+    state: absent
+    recursive: true
+  register: output
+
+- assert:
+    that: output.changed
+
+- name: delete directory /raw on datalake{{ rpfx }} again
+  azure_rm_datalakedir:
+    dir_name: "/raw"
+    store_name: "datalake{{ rpfx }}"
+    state: absent
+    recursive: true
+  register: output
+
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: delete datalake instance
+  azure_rm_resource:
+    resource_group: "{{ resource_group }}"
+    provider: DataLakeStore
+    resource_type: accounts
+    resource_name: "datalake{{ rpfx }}"
+    method: DELETE
+    api_version: '2016-11-01'
+    body:
+      location: "westeurope"
