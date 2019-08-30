@@ -138,3 +138,51 @@
   assert:
     that:
       - "service_name ==  'my_custom_service'"
+
+- name: include every directory in vars into var name_test as a dict by full file path
+  include_vars:
+    dir: vars
+    extensions: ['', 'yaml', 'yml', 'json']
+    name: name_test
+    name_format: dict_by_path
+
+- name: Verify that there are 4 base_dir values in dict values
+  assert:
+    that:
+      - "(name_test.values() | selectattr('base_dir','defined') | list | count) == 4"
+
+- name: include every directory in vars into var name_test as a dict by file name
+  include_vars:
+    dir: vars
+    extensions: ['', 'yaml', 'yml', 'json']
+    name: name_test
+    name_format: dict_by_file
+
+- name: Verify that there is 1 base_dir value in dict values
+  assert:
+    that:
+      - "(name_test.values() | selectattr('base_dir','defined') | list | count) == 1"
+
+- name: include every directory in vars into var name_test as a list by full file path
+  include_vars:
+    dir: vars
+    extensions: ['', 'yaml', 'yml', 'json']
+    name: name_test
+    name_format: list_by_path
+
+- name: Verify that there are 4 base_dir values in list
+  assert:
+    that:
+      - "(name_test | selectattr('base_dir','defined') | list | count) == 4"
+
+- name: include every directory in vars into var name_test as a list by file name
+  include_vars:
+    dir: vars
+    extensions: ['', 'yaml', 'yml', 'json']
+    name: name_test
+    name_format: list_by_file
+
+- name: Verify that there is 1 base_dir value in list
+  assert:
+    that:
+      - "(name_test | selectattr('base_dir','defined') | list | count) == 1"

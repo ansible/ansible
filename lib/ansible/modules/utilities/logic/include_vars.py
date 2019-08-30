@@ -44,6 +44,22 @@ options:
       - If omitted (null) they will be made top level vars.
     type: str
     version_added: "2.2"
+  name_format:
+    description:
+      - The format to assign into the variable in I(name).
+      - Ignored if I(name) is omitted.
+      - Defaults to C(dict) which preserves the previous behavior of I(name).
+      - With C(dict_by_path), the variable in I(name) is a C(dict) where each key is the full path of the file
+        from which the vars were loaded, and the value is a C(dict) containing those vars.
+      - C(dict_by_file) is the same as above, but only the C(basename) of the file is used as the key. This means
+        that if a file with the same name exists at a different directory level, the last read file will "win"
+        and overwrite that key's values.
+      - C(list_by_path) and C(list_by_file) work the same way as their C(dict_by_*) counterparts, except that they
+        only return the values of the resulting C(dict), so the variable in I(name) will be a list of those values.
+    default: "dict"
+    choices: [ dict, dict_by_path, dict_by_file, list_by_path, list_by_file ]
+    type: str
+    version_added: "2.10"
   depth:
     description:
       - When using C(dir), this module will, by default, recursively go through each sub directory and load up the
@@ -143,6 +159,24 @@ EXAMPLES = r'''
     dir: vars
     ignore_unknown_extensions: True
     extensions: ['', 'yaml', 'yml', 'json']
+
+- name: Include vars files in vars/services in var stuff as a dict per filepath (2.9)
+  include_vars:
+    dir: vars/services
+    name: stuff
+    name_format: dict_by_path
+
+- name: Include vars files in vars/services in var stuff as a dict per filename (2.9)
+  include_vars:
+    dir: vars/services
+    name: stuff
+    name_format: dict_by_file
+
+- name: Include vars files in vars/services in var stuff as a list per filepath (2.9)
+  include_vars:
+    dir: vars/services
+    name: stuff
+    name_format: list_by_path
 '''
 
 RETURN = r'''

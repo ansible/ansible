@@ -9,6 +9,7 @@ import re
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
+from ansible.module_utils.six import itervalues
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
 
@@ -18,9 +19,10 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
+    VALID_NAME_FORMATS = ['dict', 'dict_by_path', 'dict_by_file', 'list_by_path', 'list_by_file']
     VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions', 'ignore_unknown_extensions']
     VALID_FILE_ARGUMENTS = ['file', '_raw_params']
-    VALID_ALL = ['name']
+    VALID_ALL = ['name', 'name_format']
 
     def _set_dir_defaults(self):
         if not self.depth:
@@ -47,6 +49,7 @@ class ActionModule(ActionBase):
         """ Set instance variables based on the arguments that were passed """
 
         self.return_results_as_name = self._task.args.get('name', None)
+        self.return_results_as_name_format = self._task.args.get('name_format', 'dict')
         self.source_dir = self._task.args.get('dir', None)
         self.source_file = self._task.args.get('file', None)
         if not self.source_dir and not self.source_file:
@@ -57,6 +60,10 @@ class ActionModule(ActionBase):
         self.ignore_unknown_extensions = self._task.args.get('ignore_unknown_extensions', False)
         self.ignore_files = self._task.args.get('ignore_files', None)
         self.valid_extensions = self._task.args.get('extensions', self.VALID_FILE_EXTENSIONS)
+
+        # validate name format
+        if self.return_results_as_name_format not in self.VALID_NAME_FORMATS:
+            raise AnsibleError('{0} is not a valid value for the name_format option.'.format(self.return_results_as_name_format))
 
         # convert/validate extensions list
         if isinstance(self.valid_extensions, string_types):
@@ -125,7 +132,11 @@ class ActionModule(ActionBase):
 
         if self.return_results_as_name:
             scope = dict()
-            scope[self.return_results_as_name] = results
+            if self.return_results_as_name_format.startswith('list_by_'):
+                scope[self.return_results_as_name] = [value for value in itervalues(results)]
+            else:
+                scope[self.return_results_as_name] = results
+
             results = scope
 
         result = super(ActionModule, self).run(task_vars=task_vars)
@@ -231,7 +242,15 @@ class ActionModule(ActionBase):
                 err_msg = ('{0} must be stored as a dictionary/hash'.format(to_native(filename)))
             else:
                 self.included_files.append(filename)
-                results.update(data)
+                if self.return_results_as_name and self.return_results_as_name_format != 'dict':
+                    if self.return_results_as_name_format.endswith('_by_file'):
+                        fkey = path.basename(filename)
+                    else:
+                        fkey = filename
+
+                    results.update({fkey: data})
+                else:
+                    results.update(data)
 
         return failed, err_msg, results
 
