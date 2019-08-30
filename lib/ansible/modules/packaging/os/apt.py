@@ -43,13 +43,13 @@ options:
       - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
     type: int
     default: 5
-    version_added: '2.9'
+    version_added: '2.10'
   update_cache_retry_max_delay:
     description:
-      - Use an exponential backoff delay for each retry (see I(update_cache_retries)) up to this max. delay in seconds.
+      - Use an exponential backoff delay for each retry (see I(update_cache_retries)) up to this max delay in seconds.
     type: int
     default: 12
-    version_added: '2.9'
+    version_added: '2.10'
   cache_valid_time:
     description:
       - Update the apt cache if its older than the I(cache_valid_time). This option is set in seconds.
