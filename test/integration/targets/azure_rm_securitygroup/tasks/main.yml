@@ -133,11 +133,11 @@
 - name: Gather facts for all accounts
   azure_rm_securitygroup_info:
       resource_group: "{{ resource_group }}"
-  register: output
+  register: output_groups
 
 - assert:
       that:
-          - output.securitygroups | length > 0
+          - output_groups.securitygroups | length > 0
 
 - name: Create security group with source_address_prefixes
   azure_rm_securitygroup:
@@ -290,7 +290,7 @@
       resource_group: "{{ resource_group }}"
       name: "{{ item.name }}"
       state: absent
-  with_items: "{{ azure_securitygroups }}"
+  with_items: "{{ output_groups.securitygroups }}"
 
 - name: Should have no security groups remaining
   azure_rm_securitygroup_info:
