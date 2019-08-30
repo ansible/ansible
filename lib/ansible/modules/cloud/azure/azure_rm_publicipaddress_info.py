@@ -207,7 +207,6 @@ class AzureRMPublicIPInfo(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_publicipaddresses=[])
         )
 
         self.name = None
@@ -240,7 +239,9 @@ class AzureRMPublicIPInfo(AzureRMModuleBase):
         raw = self.filter(result)
 
         if is_old_facts:
-            self.results['ansible_facts']['azure_publicipaddresses'] = self.serialize(raw)
+            self.results['ansible_facts'] = {
+                'azure_publicipaddresses': self.serialize(raw),
+            }
         self.results['publicipaddresses'] = self.format(raw)
 
         return self.results
