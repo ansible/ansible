@@ -34,7 +34,7 @@ options:
     description:
     - The source IP Address.
     type: str
-  port:
+  udp:
     description:
     - The port number of UDP packets to send.
     type: int
@@ -99,7 +99,7 @@ def main():
         probe=dict(type="int"),
         dest=dict(type="str", required=True),
         source=dict(type="str"),
-        port=dict(type="int"),
+        udp=dict(type="int"),
         ttl_min=dict(type="int"),
         ttl_max=dict(type="int"),
         vrf=dict(type="str")
@@ -112,7 +112,7 @@ def main():
     probe = module.params["probe"]
     dest = module.params["dest"]
     source = module.params["source"]
-    port = module.params["port"]
+    udp = module.params["udp"]
     ttl_min = module.params["ttl_min"]
     ttl_max = module.params["ttl_max"]
     vrf = module.params["vrf"]
@@ -124,7 +124,7 @@ def main():
     if warnings:
         results["warnings"] = warnings
 
-    results["commands"] = [build_trace(module, dest, source, probe, port, ttl_min, ttl_max, vrf)]
+    results["commands"] = [build_trace(module, dest, source, probe, udp, ttl_min, ttl_max, vrf)]
 
     trace_results = run_commands(module, commands=results["commands"])
     trace_results_list = trace_results[0].split("\n")
@@ -149,7 +149,7 @@ def main():
     module.exit_json(**results)
 
 
-def build_trace(module, dest, source=None, probe=None, port=None, ttl_min=None, ttl_max=None, vrf=None):
+def build_trace(module, dest, source=None, probe=None, udp=None, ttl_min=None, ttl_max=None, vrf=None):
     """
     Function to build the command to send to the terminal for the switch
     to execute. All args come from the module's unique params.
@@ -159,10 +159,13 @@ def build_trace(module, dest, source=None, probe=None, port=None, ttl_min=None, 
     else:
         cmd = "traceroute {0}".format(dest)
 
-    for command in ["source", "probe", "port"]:
+    for command in ["source", "probe"]:
         arg = module.params[command]
         if arg:
             cmd += " {0} {1}".format(command, arg)
+
+    if udp is not None:
+        cmd += " {0} {1}".format("port", udp)
 
     if ttl_min is not None and ttl_max is not None:
         cmd += " {0} {1} {2}".format("ttl", ttl_min, ttl_max)
