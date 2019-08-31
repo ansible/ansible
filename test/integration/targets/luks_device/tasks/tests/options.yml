@@ -1,0 +1,31 @@
+---
+- name: Create with keysize
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: present
+    keyfile: "{{ role_path }}/files/keyfile1"
+    keysize: 256
+  become: yes
+  register: create_with_keysize
+- name: Create with keysize (idempotent)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: present
+    keyfile: "{{ role_path }}/files/keyfile1"
+    keysize: 256
+  become: yes
+  register: create_idem_with_keysize
+- name: Create with different keysize (idempotent since we do not update keysize)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: present
+    keyfile: "{{ role_path }}/files/keyfile1"
+    keysize: 512
+  become: yes
+  register: create_idem_with_diff_keysize
+
+- assert:
+    that:
+      - create_with_keysize is changed
+      - create_idem_with_keysize is not changed
+      - create_idem_with_diff_keysize is not changed
