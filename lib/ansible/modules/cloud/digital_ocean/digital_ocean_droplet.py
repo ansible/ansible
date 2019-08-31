@@ -252,7 +252,12 @@ class DODroplet(object):
             self.module.exit_json(changed=False, data=droplet_data)
         if self.module.check_mode:
             self.module.exit_json(changed=True)
-        response = self.rest.post('droplets', data=self.module.params)
+        data = self.module.params
+        try:
+            del data['id']
+        except KeyError:
+            pass
+        response = self.rest.post('droplets', data=data)
         json_data = response.json
         if response.status_code >= 400:
             self.module.fail_json(changed=False, msg=json_data['message'])
