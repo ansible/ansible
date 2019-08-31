@@ -18,15 +18,6 @@ class DummyModule(object):
     def get_bin_path(self, command, dummy):
         return command
 
-    def run_command(self, cmd):
-        out = None
-        if len(cmd) > 0:
-            if cmd[0] == 'blkid':
-                out = '/dev/dummy:UUID="25e718ef-89d5-4089-8f1a-33896326b734"'\
-                      ' LABEL="labelName" TYPE="crypto_LUKS"'
-
-        return out
-
 
 # ===== Handler & CryptHandler methods tests =====
 
@@ -97,7 +88,7 @@ LUKS_OPEN_DATA = (
     ("dummy", "key", "absent", "name", None, False),
     ("dummy", "key", "closed", "name", None, False),
     ("dummy", "key", "opened", "name", None, True),
-    (None, "key", "opened", "name", None, True),
+    (None, "key", "opened", "name", None, False),
     ("dummy", None, "opened", "name", None, False),
     ("dummy", "key", "opened", "name", "name", False),
     ("dummy", "key", "opened", "beer", "name", "exception"))
@@ -152,7 +143,7 @@ def test_luks_create(device, keyfile, state, is_luks, label, expected,
         conditions = luks_device.ConditionsHandler(module, crypt)
         assert conditions.luks_create() == expected
     except ValueError:
-        assert expected == "exception" or expected is False
+        assert expected == "exception"
 
 
 @pytest.mark.parametrize("device, state, is_luks, expected",
@@ -171,7 +162,7 @@ def test_luks_remove(device, state, is_luks, expected, monkeypatch):
         conditions = luks_device.ConditionsHandler(module, crypt)
         assert conditions.luks_remove() == expected
     except ValueError:
-        assert expected == "exception" or expected is False
+        assert expected == "exception"
 
 
 @pytest.mark.parametrize("device, keyfile, state, name, "
@@ -191,12 +182,12 @@ def test_luks_open(device, keyfile, state, name, name_by_dev,
                         lambda x, y: name_by_dev)
     monkeypatch.setattr(luks_device.CryptHandler,
                         "get_container_device_by_name",
-                        lambda x, y: "/dev/dummy")
+                        lambda x, y: device)
     monkeypatch.setattr(luks_device.Handler, "_run_command",
                         lambda x, y: [0, device, ""])
     crypt = luks_device.CryptHandler(module)
-    conditions = luks_device.ConditionsHandler(module, crypt)
     try:
+        conditions = luks_device.ConditionsHandler(module, crypt)
         assert conditions.luks_open() == expected
     except ValueError:
         assert expected == "exception"
@@ -225,7 +216,7 @@ def test_luks_close(device, dev_by_name, name, name_by_dev, state,
         conditions = luks_device.ConditionsHandler(module, crypt)
         assert conditions.luks_close() == expected
     except ValueError:
-        assert expected == "exception" or expected is False
+        assert expected == "exception"
 
 
 @pytest.mark.parametrize("device, keyfile, new_keyfile, state, label, expected",
@@ -246,7 +237,7 @@ def test_luks_add_key(device, keyfile, new_keyfile, state, label, expected, monk
         conditions = luks_device.ConditionsHandler(module, module)
         assert conditions.luks_add_key() == expected
     except ValueError:
-        assert expected == "exception" or expected is False
+        assert expected == "exception"
 
 
 @pytest.mark.parametrize("device, remove_keyfile, state, label, expected",
@@ -270,4 +261,4 @@ def test_luks_remove_key(device, remove_keyfile, state, label, expected, monkeyp
         conditions = luks_device.ConditionsHandler(module, crypt)
         assert conditions.luks_remove_key() == expected
     except ValueError:
-        assert expected == "exception" or expected is False
+        assert expected == "exception"

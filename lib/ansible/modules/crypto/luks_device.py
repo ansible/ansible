@@ -102,24 +102,26 @@ options:
         default: no
     label:
         description:
-            - "This option allow the user creates a LUKS2 format container with
-              label support, then late it could be used to identify container
-              instead of inform the device"
+            - "This option allow the user to create a LUKS2 format container
+              with label support, respectively to identify the container by
+              label on later usages."
+            - "Will only be used on container creation, or when I(device) is
+              not specified."
         type: str
-        version_added: "2.9"
+        version_added: "2.10"
     uuid:
         description:
-            - "With this option user can inform the LUKS container by UUID
-              instead of pass the raw device"
+            - "With this option user can identify the LUKS container by UUID."
+            - "Will only be used when I(device) and I(label) are not specified."
         type: str
-        version_added: "2.9"
+        version_added: "2.10"
 
 
 requirements:
     - "cryptsetup"
-    - "wipefs"
+    - "wipefs (when I(state) is C(absent))"
     - "lsblk"
-    - "blkid"
+    - "blkid (when I(label) or I(uuid) options are used)"
 
 author:
     "Jan Pokorny (@japokorn)"
@@ -181,14 +183,14 @@ EXAMPLES = '''
     keyfile: "/vault/keyfile"
     label: personalLabelName
 
-- name: open the LUKS container based on label or UUID without device; name it "mycrypt"
+- name: open the LUKS container based on label without device; name it "mycrypt"
   luks_device:
     label: "personalLabelName"
     state: "opened"
     name: "mycrypt"
     keyfile: "/vault/keyfile"
 
-- name: close container based on UUID or Label
+- name: close container based on UUID
   luks_device:
     uuid: 03ecd578-fad4-4e6c-9348-842e3e8fa340
     state: "closed"
@@ -228,7 +230,6 @@ class Handler(object):
     def __init__(self, module):
         self._module = module
         self._lsblk_bin = self._module.get_bin_path('lsblk', True)
-        self._blkid_bin = self._module.get_bin_path('blkid', True)
 
     def _run_command(self, command):
         return self._module.run_command(command)
@@ -236,32 +237,26 @@ class Handler(object):
     def get_device_by_uuid(self, uuid):
         ''' Returns the device that holds UUID passed by user
         '''
+        self._blkid_bin = self._module.get_bin_path('blkid', True)
         uuid = self._module.params['uuid']
         if uuid is None:
             return None
-
-        query = "%s=%s" % ("UUID", uuid)
-        result = self._run_command([self._blkid_bin, '-l', '-t', query])
-
+        result = self._run_command([self._blkid_bin, '--uuid', uuid])
         if result[RETURN_CODE] != 0:
             return None
-
-        return result[STDOUT].split(':')[0]
+        return result[STDOUT].strip()
 
     def get_device_by_label(self, label):
         ''' Returns the device that holds label passed by user
         '''
+        self._blkid_bin = self._module.get_bin_path('blkid', True)
         label = self._module.params['label']
         if label is None:
             return None
-
-        query = "%s=%s" % ("LABEL", label)
-        result = self._run_command([self._blkid_bin, '-l', '-t', query])
-
+        result = self._run_command([self._blkid_bin, '--label', label])
         if result[RETURN_CODE] != 0:
             return None
-
-        return result[STDOUT].split(':')[0]
+        return result[STDOUT].strip()
 
     def generate_luks_name(self, device):
         ''' Generate name for luks based on device UUID ('luks-<UUID>').
@@ -339,7 +334,7 @@ class CryptHandler(Handler):
 
     def run_luks_open(self, device, keyfile, name):
         result = self._run_command([self._cryptsetup_bin, '--key-file', keyfile,
-                                    'open', device, name])
+                                    'open', '--type', 'luks', device, name])
         if result[RETURN_CODE] != 0:
             raise ValueError('Error while opening LUKS container on %s: %s'
                              % (device, result[STDERR]))
@@ -430,12 +425,6 @@ class ConditionsHandler(Handler):
             device = self.get_device_by_uuid(uuid)
         elif device is None and name is not None:
             device = self._crypthandler.get_container_device_by_name(name)
-
-        if device is None:
-            error_msg = "Can't find the properly device based on label or " \
-                        "UUID, please review your playbook and check if the" \
-                        " label/UUID informed was correct on remote"
-            self._module.fail_json(msg=error_msg)
 
         return device
 
@@ -549,7 +538,7 @@ def run_module():
         new_keyfile=dict(type='path'),
         remove_keyfile=dict(type='path'),
         force_remove_last_key=dict(type='bool', default=False),
-        keysize=dict(type='int')
+        keysize=dict(type='int'),
         label=dict(type='str'),
         uuid=dict(type='str'),
     )
