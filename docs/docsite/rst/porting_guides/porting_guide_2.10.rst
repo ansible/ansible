@@ -45,7 +45,7 @@ Modules removed
 
 The following modules no longer exist:
 
-* No notable changes
+* letsencrypt use :ref:`acme_certificate <acme_certificate_module>` instead.
 
 
 Deprecation notices
