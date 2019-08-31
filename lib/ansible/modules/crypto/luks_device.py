@@ -68,7 +68,7 @@ options:
         description:
             - "Sets the key size only if LUKS container does not exist."
         type: int
-        version_added: '2.9'
+        version_added: '2.10'
     new_keyfile:
         description:
             - "Adds additional key to given container on I(device).
