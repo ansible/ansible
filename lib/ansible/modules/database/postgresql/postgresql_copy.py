@@ -57,6 +57,7 @@ options:
     - Mark I(src)/I(dst) as a program. Data will be copied to/from a program.
     - See block Examples and PROGRAM arg description U(https://www.postgresql.org/docs/current/sql-copy.html).
     type: bool
+    default: no
   options:
     description:
     - Options of COPY command.
@@ -334,7 +335,7 @@ def main():
         dst=dict(type='str', aliases=['destination']),
         columns=dict(type='list', aliases=['column']),
         options=dict(type='dict'),
-        program=dict(type='bool'),
+        program=dict(type='bool', default=False),
         db=dict(type='str', aliases=['login_db']),
         session_role=dict(type='str'),
     )

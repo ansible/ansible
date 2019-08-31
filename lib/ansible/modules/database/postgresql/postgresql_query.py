@@ -64,6 +64,7 @@ options:
       (e.g., VACUUM).
     - Mutually exclusive with I(check_mode).
     type: bool
+    default: no
     version_added: '2.9'
 author:
 - Felix Archambault (@archf)
@@ -233,7 +234,7 @@ def main():
         named_args=dict(type='dict'),
         session_role=dict(type='str'),
         path_to_script=dict(type='path'),
-        autocommit=dict(type='bool'),
+        autocommit=dict(type='bool', default=False),
     )
 
     module = AnsibleModule(
