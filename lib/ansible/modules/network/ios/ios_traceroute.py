@@ -134,7 +134,7 @@ def main():
         hop_result = parse_trace(trace_line)
         if isinstance(hop_result, list):
             parse_result.append(hop_result)
-        elif isinstance(hop_result, str) and parse_result != []:
+        elif isinstance(hop_result, str):
             parse_result[-1].append(hop_result)
 
     parse_result_dict = {}
