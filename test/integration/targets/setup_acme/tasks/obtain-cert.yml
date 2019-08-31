@@ -112,7 +112,7 @@
     account_email: "{{ account_email }}"
     data: "{{ challenge_data }}"
     retrieve_all_alternates: "{{ retrieve_all_alternates | default(omit) }}"
-    select_alternate_chain: "{{ select_alternate_chain | default(omit) if select_crypto_backend == 'cryptography' else omit }}"
+    select_chain: "{{ select_chain | default(omit) if select_crypto_backend == 'cryptography' else omit }}"
   register: certificate_obtain_result
   when: challenge_data is changed
 - name: ({{ certgen_title }}) Deleting HTTP challenges

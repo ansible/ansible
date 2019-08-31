@@ -59,7 +59,7 @@
     account_email: "example@example.org"
     retrieve_all_alternates: yes
     acme_expected_root_number: 1
-    select_alternate_chain:
+    select_chain:
       - test_certificates: last
         issuer: "{{ acme_roots[1].subject }}"
 - name: Store obtain results for cert 1
@@ -84,7 +84,7 @@
     account_email: ""
     acme_expected_root_number: 0
     retrieve_all_alternates: yes
-    select_alternate_chain:
+    select_chain:
       # All intermediates have the same subject, so always the first
       # chain will be found, and we need a second condition to make sure
       # that the first condition actually works. (The second condition
@@ -115,7 +115,7 @@
     account_email: ""
     acme_expected_root_number: 0
     retrieve_all_alternates: yes
-    select_alternate_chain:
+    select_chain:
       - test_certificates: last
         subject: "{{ acme_roots[1].subject }}"
 - name: Store obtain results for cert 3
@@ -140,7 +140,7 @@
     terms_agreed: no
     account_email: ""
     acme_expected_root_number: 2
-    select_alternate_chain:
+    select_chain:
       - test_certificates: last
         issuer: "{{ acme_roots[2].subject }}"
       - test_certificates: last
@@ -246,7 +246,7 @@
     terms_agreed: yes
     account_email: "example@example.org"
     acme_expected_root_number: 0
-    select_alternate_chain:
+    select_chain:
       # All intermediates have the same subject key identifier, so always
       # the first chain will be found, and we need a second condition to
       # make sure that the first condition actually works. (The second
@@ -279,7 +279,7 @@
     terms_agreed: yes
     account_email: "example@example.org"
     acme_expected_root_number: 2
-    select_alternate_chain:
+    select_chain:
       - test_certificates: last
         authority_key_identifier: "{{ acme_roots[2].subject_key_identifier }}"
 - name: Store obtain results for cert 7

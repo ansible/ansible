@@ -199,16 +199,16 @@ options:
     version_added: 2.6
   retrieve_all_alternates:
     description:
-      - "When set to C(yes), will retrieve all alternate chains offered by the ACME CA.
+      - "When set to C(yes), will retrieve all alternate trust chains offered by the ACME CA.
          These will not be written to disk, but will be returned together with the main
          chain as C(all_chains). See the documentation for the C(all_chains) return
          value for details."
     type: bool
     default: no
     version_added: "2.9"
-  select_alternate_chain:
+  select_chain:
     description:
-      - "Allows to specify criteria by which an alternate chain can be selected."
+      - "Allows to specify criteria by which an (alternate) trust chain can be selected."
       - "The list of criteria will be processed one by one until a chain is found
          matching a criterium. If such a chain is found, it will be used by the
          module instead of the default chain."
@@ -383,7 +383,7 @@ EXAMPLES = r'''
     # As long as Let's Encrypt provides alternate chains with the cross-signed root(s) when
     # switching to their own ISRG Root X1 root, this will use the chain ending with a cross-signed
     # root. This chain is more compatible with older TLS clients.
-    select_alternate_chain:
+    select_chain:
       - test_certificates: last
         issuer:
           CN: DST Root CA X3
@@ -1070,7 +1070,7 @@ class ACMEClient(object):
         else:
             cert_uri = self._finalize_cert()
             cert = self._download_cert(cert_uri)
-            if self.module.params['retrieve_all_alternates'] or self.module.params['select_alternate_chain']:
+            if self.module.params['retrieve_all_alternates'] or self.module.params['select_chain']:
                 # Retrieve alternate chains
                 alternate_chains = []
                 for alternate in cert['alternates']:
@@ -1097,16 +1097,16 @@ class ACMEClient(object):
                         _append_all_chains(alt_chain)
 
                 # Try to select alternate chain depending on criteria
-                if self.module.params['select_alternate_chain']:
+                if self.module.params['select_chain']:
                     matching_chain = None
                     all_chains = [cert] + alternate_chains
-                    for criterium_idx, criterium in enumerate(self.module.params['select_alternate_chain']):
+                    for criterium_idx, criterium in enumerate(self.module.params['select_chain']):
                         for v in ('subject_key_identifier', 'authority_key_identifier'):
                             if criterium[v]:
                                 try:
                                     criterium[v] = binascii.unhexlify(criterium[v].replace(':', ''))
                                 except Exception:
-                                    self.module.warn('Criterium {0} in select_alternate_chain has invalid {1} value. '
+                                    self.module.warn('Criterium {0} in select_chain has invalid {1} value. '
                                                      'Ignoring criterium.'.format(criterium_idx, v))
                                     continue
                         for alt_chain in all_chains:
@@ -1181,7 +1181,7 @@ def main():
         deactivate_authzs=dict(type='bool', default=False),
         force=dict(type='bool', default=False),
         retrieve_all_alternates=dict(type='bool', default=False),
-        select_alternate_chain=dict(type='list', elements='dict', options=dict(
+        select_chain=dict(type='list', elements='dict', options=dict(
             test_certificates=dict(type='str', default='all', choices=['last', 'all']),
             issuer=dict(type='dict'),
             subject=dict(type='dict'),
@@ -1201,9 +1201,9 @@ def main():
         supports_check_mode=True,
     )
     backend = handle_standard_module_arguments(module)
-    if module.params['select_alternate_chain']:
+    if module.params['select_chain']:
         if backend != 'cryptography':
-            module.fail_json(msg="The 'select_alternate_chain' can only be used with the 'cryptography' backend.")
+            module.fail_json(msg="The 'select_chain' can only be used with the 'cryptography' backend.")
         elif not CRYPTOGRAPHY_FOUND:
             module.fail_json(msg=missing_required_lib('cryptography'))
 
