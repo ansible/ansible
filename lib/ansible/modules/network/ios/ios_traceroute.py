@@ -188,13 +188,13 @@ def parse_trace(trace_line):
         for trace_item in trace_line_list:
             match_ip = ip_re.search(trace_item)
             if match_ip:
-                ip_list.append(match_ip.group())
+                ip_list.append(match_ip.group(0))
         return ip_list
     else:
         for trace_item in trace_line_list:
             match_ip = ip_re.search(trace_item)
             if match_ip:
-                return match_ip.group()
+                return match_ip.group(0)
 
 
 if __name__ == "__main__":
