@@ -33,6 +33,7 @@
     dest: '{{ management_ip }}'
     probe: 4
     source: '{{ management_ip }}'
+    udp: 30000
     ttl_min: 1
     ttl_max: 20
     provider: "{{ cli }}"
