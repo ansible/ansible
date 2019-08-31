@@ -64,6 +64,11 @@ options:
             - "BEWARE that working with keyfiles in plaintext is dangerous.
               Make sure that they are protected."
         type: path
+    keysize:
+        description:
+            - "Sets the key size only if LUKS container does not exist."
+        type: int
+        version_added: '2.10'
     new_keyfile:
         description:
             - "Adds additional key to given container on I(device).
@@ -249,10 +254,15 @@ class CryptHandler(Handler):
         result = self._run_command([self._cryptsetup_bin, 'isLuks', device])
         return result[RETURN_CODE] == 0
 
-    def run_luks_create(self, device, keyfile):
+    def run_luks_create(self, device, keyfile, keysize):
         # create a new luks container; use batch mode to auto confirm
-        result = self._run_command([self._cryptsetup_bin, 'luksFormat',
-                                    '-q', device, keyfile])
+        options = []
+        if keysize is not None:
+            options.append('--key-size=' + str(keysize))
+        args = [self._cryptsetup_bin, 'luksFormat']
+        args.extend(options)
+        args.extend(['-q', device, keyfile])
+        result = self._run_command(args)
         if result[RETURN_CODE] != 0:
             raise ValueError('Error while creating LUKS on %s: %s'
                              % (device, result[STDERR]))
@@ -450,6 +460,7 @@ def run_module():
         new_keyfile=dict(type='path'),
         remove_keyfile=dict(type='path'),
         force_remove_last_key=dict(type='bool', default=False),
+        keysize=dict(type='int')
     )
 
     # seed the result dict in the object
@@ -481,7 +492,8 @@ def run_module():
         if not module.check_mode:
             try:
                 crypt.run_luks_create(module.params['device'],
-                                      module.params['keyfile'])
+                                      module.params['keyfile'],
+                                      module.params['keysize'])
             except ValueError as e:
                 module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True
