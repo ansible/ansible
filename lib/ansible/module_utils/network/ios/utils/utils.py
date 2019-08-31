@@ -138,6 +138,8 @@ def validate_ipv6(value, module):
 def validate_n_expand_ipv4(module, want):
     # Check if input IPV4 is valid IP and expand IPV4 with its subnet mask
     ip_addr_want = want.get('address')
+    if len(ip_addr_want.split(' ')) > 1:
+        return ip_addr_want
     validate_ipv4(ip_addr_want, module)
     ip = ip_addr_want.split('/')
     if len(ip) == 2:
