@@ -25,7 +25,7 @@
 - name: expected successful ping
   ios_ping: &valid_ip
     dest: '{{ management_ip }}'
-    size: 1500
+    size: 1000
     provider: "{{ cli }}"
   register: esp
  
@@ -33,7 +33,7 @@
   ios_ping: &invalid_ip
     dest: '10.255.255.250'
     timeout: 45
-    size: 1500
+    size: 1000
     provider: "{{ cli }}"
   register: uup
   ignore_errors: yes
