@@ -134,7 +134,7 @@ def main():
         hop_result = parse_trace(trace_line)
         if isinstance(hop_result, list):
             parse_result.append(hop_result)
-        elif isinstance(hop_result, str):
+        elif isinstance(hop_result, str) and parse_result != []:
             parse_result[-1].append(hop_result)
 
     parse_result_dict = {}
@@ -191,10 +191,10 @@ def parse_trace(trace_line):
                 ip_list.append(match_ip.group())
         return ip_list
     else:
-        match_ip = ip_re.search(trace_line_list[4])
-        if match_ip:
-            return match_ip.group()
-
+        for trace_item in trace_line_list:
+            match_ip = ip_re.search(trace_item)
+            if match_ip:
+                return match_ip.group()
 
 if __name__ == "__main__":
     main()
