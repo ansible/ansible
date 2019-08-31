@@ -866,9 +866,12 @@ class ContainerManager(DockerBaseClass):
                 except Exception as exc:
                     self.client.fail("Error: service image lookup failed - %s" % str(exc))
 
+                out_redir_name, err_redir_name = make_redirection_tempfiles()
                 # pull the image
                 try:
-                    service.pull(ignore_pull_failures=False)
+                    with stdout_redirector(out_redir_name):
+                        with stderr_redirector(err_redir_name):
+                            service.pull(ignore_pull_failures=False)
                 except Exception as exc:
                     self.client.fail("Error: pull failed with %s" % str(exc))
 
@@ -913,9 +916,12 @@ class ContainerManager(DockerBaseClass):
                     except Exception as exc:
                         self.client.fail("Error: service image lookup failed - %s" % str(exc))
 
+                    out_redir_name, err_redir_name = make_redirection_tempfiles()
                     # build the image
                     try:
-                        new_image_id = service.build(pull=self.pull, no_cache=self.nocache)
+                        with stdout_redirector(out_redir_name):
+                            with stderr_redirector(err_redir_name):
+                                new_image_id = service.build(pull=self.pull, no_cache=self.nocache)
                     except Exception as exc:
                         self.client.fail("Error: build failed with %s" % str(exc))
 
@@ -946,8 +952,11 @@ class ContainerManager(DockerBaseClass):
             ))
         if not self.check_mode and result['changed']:
             image_type = image_type_from_opt('--rmi', self.remove_images)
+            out_redir_name, err_redir_name = make_redirection_tempfiles()
             try:
-                self.project.down(image_type, self.remove_volumes, self.remove_orphans)
+                with stdout_redirector(out_redir_name):
+                    with stderr_redirector(err_redir_name):
+                        self.project.down(image_type, self.remove_volumes, self.remove_orphans)
             except Exception as exc:
                 self.client.fail("Error stopping project - %s" % str(exc))
         return result
@@ -1037,8 +1046,11 @@ class ContainerManager(DockerBaseClass):
                     result['changed'] = True
                     service_res['scale'] = scale - len(containers)
                     if not self.check_mode:
+                        out_redir_name, err_redir_name = make_redirection_tempfiles()
                         try:
-                            service.scale(scale)
+                            with stdout_redirector(out_redir_name):
+                                with stderr_redirector(err_redir_name):
+                                    service.scale(scale)
                         except Exception as exc:
                             self.client.fail("Error scaling %s - %s" % (service.name, str(exc)))
                     result['actions'].append(service_res)
