@@ -173,7 +173,7 @@ def set_user_grants(module, client, user_name, grants):
                 if v['privilege'] == 'ALL PRIVILEGES':
                     v['privilege'] = 'ALL'
                     current_grants[i] = v
-            parsed_grants.add(current_grants[i])
+                parsed_grants.add(current_grants[i])
 
         # check if the current grants are included in the desired ones
         for current_grant in parsed_grants:
