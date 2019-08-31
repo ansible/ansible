@@ -39,14 +39,15 @@ class ActionModule(ActionNetworkModule):
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        self._config_module = True if self._task.action == 'nxos_config' else False
+        module_name = self._task.action.split('.')[-1]
+        self._config_module = True if module_name == 'nxos_config' else False
         socket_path = None
 
         if (self._play_context.connection == 'httpapi' or self._task.args.get('provider', {}).get('transport') == 'nxapi') \
-                and self._task.action in ('nxos_file_copy', 'nxos_nxapi'):
-            return {'failed': True, 'msg': "Transport type 'nxapi' is not valid for '%s' module." % (self._task.action)}
+                and module_name in ('nxos_file_copy', 'nxos_nxapi'):
+            return {'failed': True, 'msg': "Transport type 'nxapi' is not valid for '%s' module." % (module_name)}
 
-        if self._task.action == 'nxos_file_copy':
+        if module_name == 'nxos_file_copy':
             self._task.args['host'] = self._play_context.remote_addr
             self._task.args['password'] = self._play_context.password
             if self._play_context.connection == 'network_cli':
@@ -54,7 +55,7 @@ class ActionModule(ActionNetworkModule):
             elif self._play_context.connection == 'local':
                 self._task.args['username'] = self._play_context.connection_user
 
-        if self._task.action == 'nxos_install_os':
+        if module_name == 'nxos_install_os':
             persistent_command_timeout = 0
             persistent_connect_timeout = 0
             connection = self._connection
