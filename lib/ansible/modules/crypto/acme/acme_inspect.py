@@ -248,7 +248,7 @@ output_json:
 from ansible.module_utils.acme import (
     ModuleFailException,
     ACMEAccount,
-    set_crypto_backend,
+    handle_standard_module_arguments,
     get_default_argspec,
 )
 
@@ -278,12 +278,7 @@ def main():
             ['method', 'post', ['account_key_src', 'account_key_content'], True],
         ),
     )
-    set_crypto_backend(module)
-
-    if not module.params.get('validate_certs'):
-        module.warn(warning='Disabling certificate validation for communications with ACME endpoint. ' +
-                            'This should only be done for testing against a local ACME server for ' +
-                            'development purposes, but *never* for production purposes.')
+    handle_standard_module_arguments(module)
 
     result = dict()
     changed = False

@@ -127,7 +127,7 @@ from ansible.module_utils.acme import (
     ACMEAccount,
     nopad_b64,
     pem_to_der,
-    set_crypto_backend,
+    handle_standard_module_arguments,
     get_default_argspec,
 )
 
@@ -152,12 +152,7 @@ def main():
         ),
         supports_check_mode=False,
     )
-    set_crypto_backend(module)
-
-    if not module.params.get('validate_certs'):
-        module.warn(warning='Disabling certificate validation for communications with ACME endpoint. ' +
-                            'This should only be done for testing against a local ACME server for ' +
-                            'development purposes, but *never* for production purposes.')
+    handle_standard_module_arguments(module)
 
     try:
         account = ACMEAccount(module)

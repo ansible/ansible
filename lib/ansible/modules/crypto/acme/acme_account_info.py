@@ -196,7 +196,7 @@ orders:
 from ansible.module_utils.acme import (
     ModuleFailException,
     ACMEAccount,
-    set_crypto_backend,
+    handle_standard_module_arguments,
     process_links,
     get_default_argspec,
 )
@@ -258,14 +258,7 @@ def main():
     )
     if module._name == 'acme_account_facts':
         module.deprecate("The 'acme_account_facts' module has been renamed to 'acme_account_info'", version='2.12')
-    set_crypto_backend(module)
-
-    if not module.params.get('validate_certs'):
-        module.warn(warning='Disabling certificate validation for communications with ACME endpoint. ' +
-                            'This should only be done for testing against a local ACME server for ' +
-                            'development purposes, but *never* for production purposes.')
-    if module.params.get('acme_version') < 2:
-        module.fail_json(msg='The acme_account module requires the ACME v2 protocol!')
+    handle_standard_module_arguments(module, needs_acme_v2=True)
 
     try:
         account = ACMEAccount(module)

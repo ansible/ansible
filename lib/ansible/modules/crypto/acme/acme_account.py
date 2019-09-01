@@ -132,7 +132,7 @@ account_uri:
 from ansible.module_utils.acme import (
     ModuleFailException,
     ACMEAccount,
-    set_crypto_backend,
+    handle_standard_module_arguments,
     get_default_argspec,
 )
 
@@ -165,14 +165,7 @@ def main():
         ),
         supports_check_mode=True,
     )
-    set_crypto_backend(module)
-
-    if not module.params.get('validate_certs'):
-        module.warn(warning='Disabling certificate validation for communications with ACME endpoint. ' +
-                            'This should only be done for testing against a local ACME server for ' +
-                            'development purposes, but *never* for production purposes.')
-    if module.params.get('acme_version') < 2:
-        module.fail_json(msg='The acme_account module requires the ACME v2 protocol!')
+    handle_standard_module_arguments(module, needs_acme_v2=True)
 
     try:
         account = ACMEAccount(module)

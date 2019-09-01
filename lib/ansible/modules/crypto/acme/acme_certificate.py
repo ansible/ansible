@@ -422,14 +422,13 @@ from ansible.module_utils.acme import (
     cryptography_get_csr_identifiers,
     openssl_get_csr_identifiers,
     cryptography_get_cert_days,
-    set_crypto_backend,
+    handle_standard_module_arguments,
     process_links,
     get_default_argspec,
 )
 
 import base64
 import hashlib
-import locale
 import os
 import re
 import textwrap
@@ -1017,16 +1016,7 @@ def main():
         ),
         supports_check_mode=True,
     )
-    set_crypto_backend(module)
-
-    # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
-    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
-    locale.setlocale(locale.LC_ALL, 'C')
-
-    if not module.params.get('validate_certs'):
-        module.warn(warning='Disabling certificate validation for communications with ACME endpoint. ' +
-                            'This should only be done for testing against a local ACME server for ' +
-                            'development purposes, but *never* for production purposes.')
+    handle_standard_module_arguments(module)
 
     try:
         if module.params.get('dest'):

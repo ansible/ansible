@@ -20,6 +20,7 @@ import copy
 import datetime
 import hashlib
 import json
+import locale
 import os
 import re
 import shutil
@@ -956,3 +957,23 @@ def get_default_argspec():
         validate_certs=dict(type='bool', default=True),
         select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
     )
+
+
+def handle_standard_module_arguments(module, needs_acme_v2=False):
+    '''
+    '''
+    set_crypto_backend(module)
+
+    if not module.params['validate_certs']:
+        module.warn(
+            'Disabling certificate validation for communications with ACME endpoint. '
+            'This should only be done for testing against a local ACME server for '
+            'development purposes, but *never* for production purposes.'
+        )
+
+    if needs_acme_v2 and module.params['acme_version'] < 2:
+        module.fail_json(msg='The {0} module requires the ACME v2 protocol!'.format(module._name))
+
+    # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+    locale.setlocale(locale.LC_ALL, 'C')
