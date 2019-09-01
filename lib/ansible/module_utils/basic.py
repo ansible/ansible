@@ -724,14 +724,17 @@ class AnsibleModule(object):
         deprecate(msg, version)
         self.log('[DEPRECATION WARNING] %s %s' % (msg, version))
 
-    def load_file_common_arguments(self, params):
+    def load_file_common_arguments(self, params, path=None):
         '''
         many modules deal with files, this encapsulates common
         options that the file module accepts such that it is directly
         available to all modules and they can share code.
+
+        Allows to overwrite the path/dest module argument by providing path.
         '''
 
-        path = params.get('path', params.get('dest', None))
+        if path is None:
+            path = params.get('path', params.get('dest', None))
         if path is None:
             return {}
         else:
