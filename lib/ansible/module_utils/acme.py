@@ -961,6 +961,7 @@ def get_default_argspec():
 
 def handle_standard_module_arguments(module, needs_acme_v2=False):
     '''
+    Do standard module setup, argument handling and warning emitting.
     '''
     set_crypto_backend(module)
 
