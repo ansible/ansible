@@ -192,7 +192,7 @@ changed:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import exec_command, load_config
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
@@ -273,10 +273,12 @@ class NetStreamAging(object):
         inactive_tmp["vxlan"] = "30"
         tcp_tmp["ip"] = "absent"
         tcp_tmp["vxlan"] = "absent"
-        flags = list()
-        exp = " | ignore-case include netstream timeout"
-        flags.append(exp)
-        config = get_config(self.module, flags)
+
+        cmd = "display current-configuration | include ^netstream timeout"
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0：
+            self.module.fail_json(msg=err)
+        config = str(out).strip()
         if config:
             config = config.lstrip()
             config_list = config.split('\n')
@@ -313,10 +315,11 @@ class NetStreamAging(object):
         inactive_tmp["vxlan"] = "30"
         tcp_tmp["ip"] = "absent"
         tcp_tmp["vxlan"] = "absent"
-        flags = list()
-        exp = " | ignore-case include netstream timeout"
-        flags.append(exp)
-        config = get_config(self.module, flags)
+        cmd = "display current-configuration | include ^netstream timeout"
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0：
+            self.module.fail_json(msg=err)
+        config = str(out).strip()
         if config:
             config = config.lstrip()
             config_list = config.split('\n')
