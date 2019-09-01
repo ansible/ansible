@@ -873,7 +873,11 @@ class ContainerManager(DockerBaseClass):
                         with stderr_redirector(err_redir_name):
                             service.pull(ignore_pull_failures=False)
                 except Exception as exc:
-                    self.client.fail("Error: pull failed with %s" % str(exc))
+                    fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                                   msg_format="Error: pull failed with %s")
+                    self.client.fail(**fail_reason)
+                else:
+                    cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
 
                 # store the new image ID
                 new_image_id = ''
