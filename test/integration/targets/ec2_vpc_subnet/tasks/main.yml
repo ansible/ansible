@@ -1,23 +1,15 @@
 ---
-# A Note about ec2 environment variable name preference:
-#  - EC2_URL -> AWS_URL
-#  - EC2_ACCESS_KEY -> AWS_ACCESS_KEY_ID -> AWS_ACCESS_KEY
-#  - EC2_SECRET_KEY -> AWS_SECRET_ACCESS_KEY -> AWX_SECRET_KEY
-#  - EC2_REGION -> AWS_REGION
-#
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  block:
 
-# - include: ../../setup_ec2/tasks/common.yml module_name: ec2_vpc_subnet
-
-- block:
 
     - name: set up aws connection info
       set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: yes
 
     # ============================================================
     - name: create a VPC
@@ -25,7 +17,6 @@
         name: "{{ resource_prefix }}-vpc"
         state: present
         cidr_block: "10.232.232.128/26"
-        <<: *aws_connection_info
         tags:
           Name: "{{ resource_prefix }}-vpc"
           Description: "Created by ansible-test"
@@ -40,7 +31,6 @@
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
-        <<: *aws_connection_info
         state: present
       check_mode: true
       register: vpc_subnet_create
@@ -58,7 +48,6 @@
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
-        <<: *aws_connection_info
         state: present
       register: vpc_subnet_create
 
@@ -78,7 +67,6 @@
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
-        <<: *aws_connection_info
         state: present
       check_mode: true
       register: vpc_subnet_recreate
@@ -96,7 +84,6 @@
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
-        <<: *aws_connection_info
         state: present
       register: vpc_subnet_recreate
 
@@ -115,7 +102,6 @@
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
-        <<: *aws_connection_info
         state: present
         map_public: true
       check_mode: true
@@ -134,7 +120,6 @@
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
-        <<: *aws_connection_info
         state: present
         map_public: true
       register: vpc_subnet_modify
@@ -155,7 +140,6 @@
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
-        <<: *aws_connection_info
         state: present
       register: vpc_subnet_ipv6_failed
       ignore_errors: yes
@@ -176,7 +160,6 @@
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
           AnotherTag: SomeValue
-        <<: *aws_connection_info
         state: present
       check_mode: true
       register: vpc_subnet_add_a_tag
@@ -195,7 +178,6 @@
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
           AnotherTag: SomeValue
-        <<: *aws_connection_info
         state: present
       register: vpc_subnet_add_a_tag
 
@@ -215,7 +197,6 @@
         vpc_id: "{{ vpc_result.vpc.id }}"
         tags:
           AnotherTag: SomeValue
-        <<: *aws_connection_info
         state: present
       check_mode: true
       register: vpc_subnet_remove_tags
@@ -232,7 +213,6 @@
         vpc_id: "{{ vpc_result.vpc.id }}"
         tags:
           AnotherTag: SomeValue
-        <<: *aws_connection_info
         state: present
       register: vpc_subnet_remove_tags
 
@@ -253,7 +233,6 @@
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
-        <<: *aws_connection_info
         state: present
         purge_tags: false
       check_mode: true
@@ -272,7 +251,6 @@
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
-        <<: *aws_connection_info
         state: present
         purge_tags: false
       register: vpc_subnet_change_tags
@@ -291,7 +269,6 @@
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
         state: absent
-        <<: *aws_connection_info
       check_mode: true
       register: result
 
@@ -305,7 +282,6 @@
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
         state: absent
-        <<: *aws_connection_info
       register: result
 
     - name: assert state=absent (expected changed=true)
@@ -319,7 +295,6 @@
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
         state: absent
-        <<: *aws_connection_info
       check_mode: true
       register: result
 
@@ -333,7 +308,6 @@
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
         state: absent
-        <<: *aws_connection_info
       register: result
 
     - name: assert state=absent (expected changed=false)
@@ -347,7 +321,6 @@
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
         state: present
-        <<: *aws_connection_info
       check_mode: true
       register: subnet_without_az
 
@@ -361,7 +334,6 @@
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
         state: present
-        <<: *aws_connection_info
       register: subnet_without_az
 
     - name: check that subnet without AZ works fine
@@ -375,7 +347,6 @@
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
         state: absent
-        <<: *aws_connection_info
       check_mode: true
       register: result
 
@@ -389,7 +360,6 @@
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
         state: absent
-        <<: *aws_connection_info
       register: result
 
     - name: assert state=absent (expected changed=true)
@@ -399,27 +369,28 @@
 
     # ============================================================
     # FIXME - Replace by creating IPv6 enabled VPC once ec2_vpc_net module supports it.
+    - name:
+      set_fact:
+        aws_connection_env:
+          AWS_ACCESS_KEY_ID:     "{{ aws_access_key }}"
+          AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+          AWS_SESSION_TOKEN:     "{{ security_token | default(omit) }}"
+          AWS_DEFAULT_REGION:    "{{ aws_region }}"
+      no_log: yes
+
     - name: install aws cli - FIXME temporary this should go for a lighterweight solution
       command: pip install awscli
 
     - name: Assign an Amazon provided IPv6 CIDR block to the VPC
       command: aws ec2 associate-vpc-cidr-block --amazon-provided-ipv6-cidr-block --vpc-id '{{ vpc_result.vpc.id }}'
-      environment:
-          AWS_ACCESS_KEY_ID: '{{aws_access_key}}'
-          AWS_SECRET_ACCESS_KEY: '{{aws_secret_key}}'
-          AWS_SESSION_TOKEN: '{{security_token}}'
-          AWS_DEFAULT_REGION: '{{aws_region}}'
+      environment: '{{ aws_connection_env }}'
 
     - name: wait for the IPv6 CIDR to be assigned
       command: sleep 5
 
     - name: Get the assigned IPv6 CIDR
       command: aws ec2 describe-vpcs --vpc-ids '{{ vpc_result.vpc.id }}'
-      environment:
-          AWS_ACCESS_KEY_ID: '{{aws_access_key}}'
-          AWS_SECRET_ACCESS_KEY: '{{aws_secret_key}}'
-          AWS_SESSION_TOKEN: '{{security_token}}'
-          AWS_DEFAULT_REGION: '{{aws_region}}'
+      environment: '{{ aws_connection_env }}'
       register: vpc_ipv6
 
     - set_fact:
@@ -433,7 +404,6 @@
         ipv6_cidr: "{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}"
         assign_instances_ipv6: true
         state: present
-        <<: *aws_connection_info
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
@@ -452,7 +422,6 @@
         ipv6_cidr: "{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}"
         assign_instances_ipv6: true
         state: present
-        <<: *aws_connection_info
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
@@ -475,7 +444,6 @@
         vpc_id: "{{ vpc_result.vpc.id }}"
         ipv6_cidr: "{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}"
         assign_instances_ipv6: true
-        <<: *aws_connection_info
         state: present
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
@@ -494,7 +462,6 @@
         vpc_id: "{{ vpc_result.vpc.id }}"
         ipv6_cidr: "{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}"
         assign_instances_ipv6: true
-        <<: *aws_connection_info
         state: present
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
@@ -514,7 +481,6 @@
         vpc_id: "{{ vpc_result.vpc.id }}"
         ipv6_cidr: "{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}"
         assign_instances_ipv6: false
-        <<: *aws_connection_info
         state: present
         purge_tags: false
       check_mode: true
@@ -531,7 +497,6 @@
         vpc_id: "{{ vpc_result.vpc.id }}"
         ipv6_cidr: "{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}"
         assign_instances_ipv6: false
-        <<: *aws_connection_info
         state: present
         purge_tags: false
       register: vpc_change_attribute
@@ -548,7 +513,6 @@
         cidr: "10.232.232.144/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
         ipv6_cidr: "{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}"
-        <<: *aws_connection_info
         state: present
         purge_tags: false
       register: vpc_add_duplicate_ipv6
@@ -565,7 +529,6 @@
       ec2_vpc_subnet:
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
-        <<: *aws_connection_info
         state: present
         purge_tags: false
       check_mode: true
@@ -580,7 +543,6 @@
       ec2_vpc_subnet:
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
-        <<: *aws_connection_info
         state: present
         purge_tags: false
       register: vpc_remove_ipv6_cidr
@@ -601,7 +563,6 @@
         purge_tags: false
         tags:
           looks_like_boolean: true
-        <<: *aws_connection_info
       check_mode: true
       register: vpc_subnet_info
 
@@ -618,7 +579,6 @@
         purge_tags: false
         tags:
           looks_like_boolean: true
-        <<: *aws_connection_info
       register: vpc_subnet_info
 
     - name: assert a tag was added
@@ -636,7 +596,6 @@
         purge_tags: false
         tags:
           looks_like_boolean: true
-        <<: *aws_connection_info
       check_mode: true
       register: vpc_subnet_info
 
@@ -653,7 +612,6 @@
         purge_tags: false
         tags:
           looks_like_boolean: true
-        <<: *aws_connection_info
       register: vpc_subnet_info
 
     - name: assert a tag was added
@@ -672,11 +630,9 @@
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
         state: absent
-        <<: *aws_connection_info
 
     - name: tidy up VPC
       ec2_vpc_net:
         name: "{{ resource_prefix }}-vpc"
         state: absent
         cidr_block: "10.232.232.128/26"
-        <<: *aws_connection_info
