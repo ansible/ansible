@@ -927,7 +927,11 @@ class ContainerManager(DockerBaseClass):
                             with stderr_redirector(err_redir_name):
                                 new_image_id = service.build(pull=self.pull, no_cache=self.nocache)
                     except Exception as exc:
-                        self.client.fail("Error: build failed with %s" % str(exc))
+                        fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                msg_format="Error: build failed with %s")
+                        self.client.fail(**fail_reason)
+                    else:
+                        cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
 
                     if new_image_id not in old_image_id:
                         # if a new image was built
@@ -962,7 +966,11 @@ class ContainerManager(DockerBaseClass):
                     with stderr_redirector(err_redir_name):
                         self.project.down(image_type, self.remove_volumes, self.remove_orphans)
             except Exception as exc:
-                self.client.fail("Error stopping project - %s" % str(exc))
+                fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                                msg_format="Error stopping project - %s)
+                self.client.fail(**fail_reason)
+            else:
+                cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
         return result
 
     def cmd_stop(self, service_names):
@@ -992,7 +1000,7 @@ class ContainerManager(DockerBaseClass):
                         self.project.stop(service_names=service_names, timeout=self.timeout)
             except Exception as exc:
                 fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
-                                               msg_format="Error stopping project %s")
+                                                msg_format="Error stopping project %s")
                 self.client.fail(**fail_reason)
             else:
                 cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
@@ -1057,6 +1065,11 @@ class ContainerManager(DockerBaseClass):
                                     service.scale(scale)
                         except Exception as exc:
                             self.client.fail("Error scaling %s - %s" % (service.name, str(exc)))
+                            fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                                            msg_format="Error scaling {0} - %s".format(service.name))
+                            self.client.fail(**fail_reason)
+                        else:
+                            cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
                     result['actions'].append(service_res)
         return result
 
