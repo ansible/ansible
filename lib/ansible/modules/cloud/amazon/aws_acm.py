@@ -252,7 +252,7 @@ def chain_compare(module, a, b):
         if der_a != der_b:
             return False
 
-    return True 
+    return True
 
 
 # Takes in PEM encoded data with no headers
