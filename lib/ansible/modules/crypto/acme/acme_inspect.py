@@ -246,7 +246,10 @@ output_json:
 '''
 
 from ansible.module_utils.acme import (
-    ModuleFailException, ACMEAccount, set_crypto_backend,
+    ModuleFailException,
+    ACMEAccount,
+    set_crypto_backend,
+    get_default_argspec,
 )
 
 from ansible.module_utils.basic import AnsibleModule
@@ -256,20 +259,15 @@ import json
 
 
 def main():
+    argument_spec = get_default_argspec()
+    argument_spec.update(dict(
+        url=dict(type='str'),
+        method=dict(type='str', choices=['get', 'post', 'directory-only'], default='get'),
+        content=dict(type='str'),
+        fail_on_acme_error=dict(type='bool', default=True),
+    ))
     module = AnsibleModule(
-        argument_spec=dict(
-            account_key_src=dict(type='path', aliases=['account_key']),
-            account_key_content=dict(type='str', no_log=True),
-            account_uri=dict(type='str'),
-            acme_directory=dict(type='str', default='https://acme-staging.api.letsencrypt.org/directory'),
-            acme_version=dict(type='int', default=1, choices=[1, 2]),
-            validate_certs=dict(type='bool', default=True),
-            url=dict(type='str'),
-            method=dict(type='str', choices=['get', 'post', 'directory-only'], default='get'),
-            content=dict(type='str'),
-            fail_on_acme_error=dict(type='bool', default=True),
-            select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
-        ),
+        argument_spec=argument_spec,
         mutually_exclusive=(
             ['account_key_src', 'account_key_content'],
         ),

@@ -941,3 +941,18 @@ def process_links(info, callback):
         link = info['link']
         for url, relation in re.findall(r'<([^>]+)>;rel="(\w+)"', link):
             callback(unquote(url), relation)
+
+
+def get_default_argspec():
+    '''
+    Provides default argument spec for the options documented in the acme doc fragment.
+    '''
+    return dict(
+        account_key_src=dict(type='path', aliases=['account_key']),
+        account_key_content=dict(type='str', no_log=True),
+        account_uri=dict(type='str'),
+        acme_directory=dict(type='str', default='https://acme-staging.api.letsencrypt.org/directory'),
+        acme_version=dict(type='int', default=1, choices=[1, 2]),
+        validate_certs=dict(type='bool', default=True),
+        select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
+    )

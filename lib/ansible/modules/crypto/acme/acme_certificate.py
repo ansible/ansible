@@ -414,7 +414,9 @@ all_chains:
 
 from ansible.module_utils.acme import (
     ModuleFailException,
-    write_file, nopad_b64, pem_to_der,
+    write_file,
+    nopad_b64,
+    pem_to_der,
     ACMEAccount,
     HAS_CURRENT_CRYPTOGRAPHY,
     cryptography_get_csr_identifiers,
@@ -422,6 +424,7 @@ from ansible.module_utils.acme import (
     cryptography_get_cert_days,
     set_crypto_backend,
     process_links,
+    get_default_argspec,
 )
 
 import base64
@@ -431,7 +434,6 @@ import os
 import re
 import textwrap
 import time
-import urllib
 from datetime import datetime
 
 from ansible.module_utils.basic import AnsibleModule
@@ -987,30 +989,25 @@ class ACMEClient(object):
 
 
 def main():
+    argument_spec = get_default_argspec()
+    argument_spec.update(dict(
+        modify_account=dict(type='bool', default=True),
+        account_email=dict(type='str'),
+        agreement=dict(type='str'),
+        terms_agreed=dict(type='bool', default=False),
+        challenge=dict(type='str', default='http-01', choices=['http-01', 'dns-01', 'tls-alpn-01']),
+        csr=dict(type='path', required=True, aliases=['src']),
+        data=dict(type='dict'),
+        dest=dict(type='path', aliases=['cert']),
+        fullchain_dest=dict(type='path', aliases=['fullchain']),
+        chain_dest=dict(type='path', aliases=['chain']),
+        remaining_days=dict(type='int', default=10),
+        deactivate_authzs=dict(type='bool', default=False),
+        force=dict(type='bool', default=False),
+        retrieve_all_alternates=dict(type='bool', default=False),
+    ))
     module = AnsibleModule(
-        argument_spec=dict(
-            account_key_src=dict(type='path', aliases=['account_key']),
-            account_key_content=dict(type='str', no_log=True),
-            account_uri=dict(type='str'),
-            modify_account=dict(type='bool', default=True),
-            acme_directory=dict(type='str', default='https://acme-staging.api.letsencrypt.org/directory'),
-            acme_version=dict(type='int', default=1, choices=[1, 2]),
-            validate_certs=dict(default=True, type='bool'),
-            account_email=dict(type='str'),
-            agreement=dict(type='str'),
-            terms_agreed=dict(type='bool', default=False),
-            challenge=dict(type='str', default='http-01', choices=['http-01', 'dns-01', 'tls-alpn-01']),
-            csr=dict(type='path', required=True, aliases=['src']),
-            data=dict(type='dict'),
-            dest=dict(type='path', aliases=['cert']),
-            fullchain_dest=dict(type='path', aliases=['fullchain']),
-            chain_dest=dict(type='path', aliases=['chain']),
-            remaining_days=dict(type='int', default=10),
-            deactivate_authzs=dict(type='bool', default=False),
-            force=dict(type='bool', default=False),
-            retrieve_all_alternates=dict(type='bool', default=False),
-            select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
-        ),
+        argument_spec=argument_spec,
         required_one_of=(
             ['account_key_src', 'account_key_content'],
             ['dest', 'fullchain_dest'],
