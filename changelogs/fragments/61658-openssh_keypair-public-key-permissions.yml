@@ -1,0 +1,2 @@
+bugfixes:
+- "openssh_keypair - public key's file attributes (permissions, owner, group, etc.) are now set to the same values as the private key."
