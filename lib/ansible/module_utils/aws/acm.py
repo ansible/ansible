@@ -148,7 +148,7 @@ class ACMServiceManager(object):
             cert_data = self.describe_certificate_with_backoff(client=client, certificate_arn=arn)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Couldn't obtain certificate data for arn %s" % arn)
-        return(cert_data['DomainName'])
+        return cert_data['DomainName']
 
     @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
     def import_certificate_with_backoff(self, client, certificate, private_key, certificate_chain, arn):
@@ -170,7 +170,7 @@ class ACMServiceManager(object):
             else:
                 ret = client.import_certificate(Certificate=to_bytes(certificate),
                                                 PrivateKey=to_bytes(private_key))
-        return(ret['CertificateArn'])
+        return ret['CertificateArn']
 
     # Tags are a normal Ansible style dict
     # {'Key':'Value'}
@@ -207,4 +207,4 @@ class ACMServiceManager(object):
                 module.fail_json_aws(e, msg="Couldn't tag certificate %s, couldn't delete it either" % arn)
             module.fail_json_aws(e, msg="Couldn't tag certificate %s" % arn)
 
-        return(arn)
+        return arn

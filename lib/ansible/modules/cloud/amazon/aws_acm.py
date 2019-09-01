@@ -243,16 +243,16 @@ def chain_compare(module, a, b):
     chain_b_pem = pem_chain_split(module, b)
 
     if len(chain_a_pem) != len(chain_b_pem):
-        return(False)
+        return False
 
     # Chain length is the same
     for (ca, cb) in zip(chain_a_pem, chain_b_pem):
         der_a = PEM_body_to_DER(module, ca)
         der_b = PEM_body_to_DER(module, cb)
         if der_a != der_b:
-            return(False)
+            return False
 
-    return(True)
+    return True 
 
 
 # Takes in PEM encoded data with no headers
@@ -263,7 +263,7 @@ def PEM_body_to_DER(module, pem):
     except (ValueError, TypeError) as e:
         module.fail_json(msg="Unable to decode certificate chain",
                          exception=traceback.format_exc())
-    return(der)
+    return der
 
 
 # Store this globally to avoid repeated recompilation
@@ -282,7 +282,7 @@ def pem_chain_split(module, pem):
         # This happens if the regex doesn't match at all
         module.fail_json(msg="Unable to split certificate chain. Possibly zero-length chain?")
 
-    return(pem_arr)
+    return pem_arr
 
 
 def main():
