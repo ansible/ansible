@@ -67,6 +67,7 @@ options:
          new standardized ACME v2 endpoint."
       - "The default value is 1. Note that in Ansible 2.14, this option will
          be required and no longer has a default."
+      - "Please also note that we will deprecate ACME v1 support eventually."
     type: int
     choices: [ 1, 2 ]
     version_added: "2.5"
