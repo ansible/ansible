@@ -65,8 +65,9 @@ options:
       - "The ACME version of the endpoint."
       - "Must be 1 for the classic Let's Encrypt ACME endpoint, or 2 for the
          new standardized ACME v2 endpoint."
+      - "The default value is 1. Note that in Ansible 2.14, this option will
+         be required and no longer has a default."
     type: int
-    default: 1
     choices: [ 1, 2 ]
     version_added: "2.5"
   acme_directory:
