@@ -28,7 +28,7 @@ Connections Available
 
 
 Example Meraki Task
-----------------
+-------------------
 
 .. code-block:: yaml
 
