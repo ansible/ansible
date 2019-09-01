@@ -25,7 +25,7 @@ options:
       - If a certificate with this ARN exists in a different region, this task will fail
     aliases:
      - arn
-    version_added: '2.9'
+    version_added: '2.10'
     type: str
   domain_name:
     description:
@@ -43,7 +43,7 @@ options:
     description:
       - Filter results to show only certificates with tags that match all the tags specified here.
     type: dict
-    version_added: '2.9'
+    version_added: '2.10'
 requirements:
   - boto3
 author:
