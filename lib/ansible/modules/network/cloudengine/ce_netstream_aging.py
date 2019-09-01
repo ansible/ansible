@@ -276,7 +276,7 @@ class NetStreamAging(object):
 
         cmd = "display current-configuration | include ^netstream timeout"
         rc, out, err = exec_command(self.module, cmd)
-        if rc != 0：
+        if rc != 0:
             self.module.fail_json(msg=err)
         config = str(out).strip()
         if config:
@@ -317,7 +317,7 @@ class NetStreamAging(object):
         tcp_tmp["vxlan"] = "absent"
         cmd = "display current-configuration | include ^netstream timeout"
         rc, out, err = exec_command(self.module, cmd)
-        if rc != 0：
+        if rc != 0:
             self.module.fail_json(msg=err)
         config = str(out).strip()
         if config:
