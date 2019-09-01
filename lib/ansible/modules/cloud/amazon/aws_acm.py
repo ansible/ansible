@@ -71,7 +71,7 @@ description:
     this module will delete all ACM resources in this AWS region with a corresponding C(Name) tag.
     If there are none, it will succeed without effect.
   - Note that this may not work properly with keys of size 4096 bits, due to a limitation of the ACM API.
-version_added: "2.9"
+version_added: "2.10"
 options:
   certificate:
     description:
