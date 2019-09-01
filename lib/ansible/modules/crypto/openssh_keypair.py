@@ -230,7 +230,7 @@ class Keypair(object):
         file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
-        file_args['path'] = file_args['path'] + b'.pub'
+        file_args['path'] = file_args['path'] + '.pub'
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
 
@@ -301,7 +301,7 @@ class Keypair(object):
 
         def _check_perms(module):
             file_args = module.load_file_common_arguments(module.params)
-            file_args['path'] = file_args['path'] + b'.pub'
+            file_args['path'] = file_args['path'] + '.pub'
             return not module.set_fs_attributes_if_different(file_args, False)
 
         pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
