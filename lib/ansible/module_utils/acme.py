@@ -541,6 +541,16 @@ class ACMEAccount(object):
         else:
             return _sign_request_openssl(self._openssl_bin, self.module, payload64, protected64, key_data)
 
+    def _log(self, msg, data=None):
+        '''
+        Write arguments to acme.log when logging is enabled.
+        '''
+        if False:
+            with open('acme.log', 'ab') as f:
+                f.write('[{0}] {1}\n'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%s'), msg).encode('utf-8'))
+                if data is not None:
+                    f.write('{0}\n\n'.format(json.dumps(data, indent=2, sort_keys=True)).encode('utf-8'))
+
     def send_signed_request(self, url, payload, key_data=None, jws_header=None, parse_json_result=True, encode_payload=True):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
@@ -559,11 +569,15 @@ class ACMEAccount(object):
             if self.version != 1:
                 protected["url"] = url
 
+            self._log('URL', url)
+            self._log('protected', protected)
+            self._log('payload', payload)
             data = self.sign_request(protected, payload, key_data, encode_payload=encode_payload)
             if self.version == 1:
                 data["header"] = jws_header.copy()
                 for k, v in protected.items():
                     hv = data["header"].pop(k, None)
+            self._log('signed request', data)
             data = self.module.jsonify(data)
 
             headers = {
@@ -580,6 +594,7 @@ class ACMEAccount(object):
                 if (parse_json_result and info['content-type'].startswith('application/json')) or 400 <= info['status'] < 600:
                     try:
                         decoded_result = self.module.from_json(content.decode('utf8'))
+                        self._log('parsed result', decoded_result)
                         # In case of badNonce error, try again (up to 5 times)
                         # (https://tools.ietf.org/html/rfc8555#section-6.7)
                         if (400 <= info['status'] < 600 and
