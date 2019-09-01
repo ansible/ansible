@@ -656,8 +656,7 @@ def main():
             # allow file attribute changes
             resp['changed'] = True
             module.params['path'] = dest
-            file_args = module.load_file_common_arguments(module.params)
-            file_args['path'] = dest
+            file_args = module.load_file_common_arguments(module.params, path=dest)
             resp['changed'] = module.set_fs_attributes_if_different(file_args, resp['changed'])
         resp['path'] = dest
 

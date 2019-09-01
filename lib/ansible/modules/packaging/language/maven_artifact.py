@@ -662,8 +662,7 @@ def main():
         except ValueError as e:
             module.fail_json(msg=e.args[0])
 
-    module.params['dest'] = dest
-    file_args = module.load_file_common_arguments(module.params)
+    file_args = module.load_file_common_arguments(module.params, path=dest)
     changed = module.set_fs_attributes_if_different(file_args, changed)
     if changed:
         module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier,
