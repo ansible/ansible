@@ -254,7 +254,7 @@ class L3_Interfaces(ConfigBase):
             if have.get('ipv4'):
                 ipv4 = tuple(set(dict(want_dict).get('ipv4')) - set(dict(have_dict).get('ipv4')))
                 if ipv4:
-                    ipv4 = ipv4 if check_diff_again(dict(want_dict).get('ipv4'), dict(have_dict).get('ipv4')) else ()
+                    ipv4 = ipv4 if self.check_diff_again(dict(want_dict).get('ipv4'), dict(have_dict).get('ipv4')) else ()
             else:
                 diff = want_dict - have_dict
                 ipv4 = dict(diff).get('ipv4')
