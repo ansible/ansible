@@ -1055,7 +1055,11 @@ class User(object):
         cmd.append(ssh_key_file)
 
         (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
-        return out.strip()
+        if rc == 0:
+            ssh_public_key = out.strip()
+        else:
+            ssh_public_key = err.strip()
+        return ssh_public_key
 
     def create_user(self):
         # by default we use the create_user_useradd method
