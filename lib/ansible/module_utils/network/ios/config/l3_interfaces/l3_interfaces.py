@@ -204,6 +204,34 @@ class L3_Interfaces(ConfigBase):
 
         return commands
 
+    def check_diff_again(self, want, have):
+        """
+        Check the IPV4 difference again when secondary IP is configured,
+        as sometimes due to difference in order set difference may result
+        into difference, when there's actually no difference between
+        want and have
+        :param want: want_dict IPV4
+        :param have: have_dict IPV4
+        :return: diff
+        """
+        ip = True
+        sec_ip = True
+        for each in want:
+            secondary_want = True if dict(each).get('secondary') else False
+            for every in have:
+                secondary_have = True if dict(every).get('secondary') else False
+                if secondary_want and secondary_have is False:
+                    continue
+                elif secondary_want and secondary_have:
+                    sec_ip = False if dict(each).get('address') == dict(every).get('address') else True
+                elif secondary_want is False and secondary_have is False:
+                    ip = False if dict(each).get('address') == dict(every).get('address') else True
+
+        if ip or sec_ip:
+            return True
+        elif ip is False and sec_ip is False:
+            return False
+
     def _set_config(self, want, have, module):
         # Set the interface config based on the want and have config
         commands = []
@@ -225,6 +253,8 @@ class L3_Interfaces(ConfigBase):
             # Get the diff b/w want and have IPV4
             if have.get('ipv4'):
                 ipv4 = tuple(set(dict(want_dict).get('ipv4')) - set(dict(have_dict).get('ipv4')))
+                if ipv4:
+                    ipv4 = ipv4 if check_diff_again(dict(want_dict).get('ipv4'), dict(have_dict).get('ipv4')) else ()
             else:
                 diff = want_dict - have_dict
                 ipv4 = dict(diff).get('ipv4')
