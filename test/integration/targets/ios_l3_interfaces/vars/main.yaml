@@ -158,11 +158,3 @@ deleted:
       name: GigabitEthernet0/0
     - name: GigabitEthernet0/1
     - name: GigabitEthernet0/2
-
-round_trip:
-  after:
-    - ipv4:
-      - address: 192.0.2.1 255.255.255.0
-        secondary: true
-      - address: 192.0.2.2 255.255.255.0
-      name: GigabitEthernet0/2
