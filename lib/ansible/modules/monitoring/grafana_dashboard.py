@@ -49,6 +49,11 @@ options:
       - The Grafana Organisation ID where the dashboard will be imported / exported.
       - Not used when I(grafana_api_key) is set, because the grafana_api_key only belongs to one organisation..
     default: 1
+  folder_id:
+    description:
+      - The Grafana folder where this dashboard will be imported to.
+    default: 0
+    version_added: '2.10'
   state:
     description:
       - State of the dashboard.
@@ -195,6 +200,22 @@ def get_grafana_version(module, grafana_url, headers):
     return int(grafana_version)
 
 
+def grafana_folder_exists(module, grafana_url, grafana_version, id, headers):
+    if grafana_version < 5:
+        return False
+
+    # 0 is a special case — the 'General' folder
+    if id == 0:
+        return True
+
+    r, info = fetch_url(module, '%s/api/folders/id/%d' % (grafana_url, id), headers=headers, method='GET')
+
+    if info['status'] == 200:
+        return True
+
+    return False
+
+
 def grafana_dashboard_exists(module, grafana_url, uid, headers):
     dashboard_exists = False
     dashboard = {}
@@ -251,10 +272,19 @@ def grafana_create_dashboard(module, data):
         else:
             uid = None
 
+    result = {}
+
+    # test if the folder exists
+    folder_exists = grafana_folder_exists(module, data['grafana_url'], grafana_version, data['folder_id'], headers)
+    if folder_exists is False:
+        result['msg'] = "Dashboard folder %d does not exist." % data['folder_id']
+        result['uid'] = uid
+        result['changed'] = False
+        return result
+
     # test if dashboard already exists
     dashboard_exists, dashboard = grafana_dashboard_exists(module, data['grafana_url'], uid, headers=headers)
 
-    result = {}
     if dashboard_exists is True:
         if dashboard == payload:
             # unchanged
@@ -267,6 +297,9 @@ def grafana_create_dashboard(module, data):
                 payload['overwrite'] = True
             if 'message' in data and data['message']:
                 payload['message'] = data['message']
+
+            if grafana_version >= 5:
+                payload['folderId'] = data['folder_id']
 
             r, info = fetch_url(module, '%s/api/dashboards/db' % data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
             if info['status'] == 200:
@@ -394,6 +427,7 @@ def main():
         url_password=dict(aliases=['grafana_password'], default='admin', no_log=True),
         grafana_api_key=dict(type='str', no_log=True),
         org_id=dict(default=1, type='int'),
+        folder_id=dict(default=0, type='int'),
         uid=dict(type='str'),
         slug=dict(type='str'),
         path=dict(type='str'),
