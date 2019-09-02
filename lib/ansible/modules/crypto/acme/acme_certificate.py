@@ -639,6 +639,7 @@ class ACMEClient(object):
                 keyauthorization = self.account.get_keyauthorization(token)
                 challenge_response["resource"] = "challenge"
                 challenge_response["keyAuthorization"] = keyauthorization
+                challenge_response["type"] = self.challenge
             result, info = self.account.send_signed_request(uri, challenge_response)
             if info['status'] not in [200, 202]:
                 raise ModuleFailException("Error validating challenge: CODE: {0} RESULT: {1}".format(info['status'], result))

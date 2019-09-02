@@ -561,7 +561,9 @@ class ACMEAccount(object):
 
             data = self.sign_request(protected, payload, key_data, encode_payload=encode_payload)
             if self.version == 1:
-                data["header"] = jws_header
+                data["header"] = jws_header.copy()
+                for k, v in protected.items():
+                    hv = data["header"].pop(k, None)
             data = self.module.jsonify(data)
 
             headers = {
