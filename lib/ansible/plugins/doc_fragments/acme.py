@@ -65,8 +65,8 @@ options:
       - "The ACME version of the endpoint."
       - "Must be 1 for the classic Let's Encrypt ACME endpoint, or 2 for the
          new standardized ACME v2 endpoint."
-      - "The default value is 1. Note that in Ansible 2.14, this option will
-         be required and no longer has a default."
+      - "The default value is 1. Note that in Ansible 2.14, this option I(will
+         be required) and will no longer have a default."
       - "Please also note that we will deprecate ACME v1 support eventually."
     type: int
     choices: [ 1, 2 ]
@@ -78,6 +78,9 @@ options:
       - "For safety reasons the default is set to the Let's Encrypt staging
          server (for the ACME v1 protocol). This will create technically correct,
          but untrusted certificates."
+      - "The default value is U(https://acme-staging.api.letsencrypt.org/directory).
+         Note that in Ansible 2.14, this option I(will be required) and will no longer
+         have a default."
       - "For Let's Encrypt, all staging endpoints can be found here:
          U(https://letsencrypt.org/docs/staging-environment/)"
       - "For Let's Encrypt, the production directory URL for ACME v1 is
@@ -87,7 +90,6 @@ options:
          (staging and production) and against the
          L(Pebble testing server,https://github.com/letsencrypt/Pebble)."
     type: str
-    default: https://acme-staging.api.letsencrypt.org/directory
   validate_certs:
     description:
       - Whether calls to the ACME directory will validate TLS certificates.
