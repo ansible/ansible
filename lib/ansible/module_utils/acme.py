@@ -824,6 +824,8 @@ class ACMEAccount(object):
             account_data = dict(account_data)
             account_data.update(update_request)
         else:
+            if self.version == 1:
+                update_request['resource'] = 'reg'
             account_data, dummy = self.send_signed_request(self.uri, update_request)
         return True, account_data
 
