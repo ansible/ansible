@@ -54,7 +54,7 @@ seealso:
     description: Documentation for the Let's Encrypt Certification Authority.
                  Provides useful information for example on rate limits.
     link: https://letsencrypt.org/docs/
-  - name: Buypass GO SSL
+  - name: Buypass Go SSL
     description: Documentation for the Buypass Certification Authority.
                  Provides useful information for example on rate limits.
     link: https://www.buypass.com/ssl/products/acme

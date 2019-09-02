@@ -22,7 +22,7 @@ notes:
   - "Although the defaults are chosen so that the module can be used with
      the L(Let's Encrypt,https://letsencrypt.org/) CA, the module can in
      principle be used with any CA providing an ACME endpoint, such as
-     L(Buypass,https://www.buypass.com/ssl/products/acme)."
+     L(Buypass Go SSL,https://www.buypass.com/ssl/products/acme)."
 requirements:
   - python >= 2.6
   - either openssl or L(cryptography,https://cryptography.io/) >= 1.5
