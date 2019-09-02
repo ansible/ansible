@@ -385,12 +385,6 @@ class StrategyBase:
         host_name = result.get('_ansible_delegated_vars', {}).get('ansible_delegated_host', None)
         return [host_name or task.delegate_to]
 
-    def get_handler_templar(self, handler_task, iterator):
-        handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task,
-                                                       _hosts=self._hosts_cache,
-                                                       _hosts_all=self._hosts_cache_all)
-        return Templar(loader=self._loader, variables=handler_vars)
-
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         '''
@@ -399,6 +393,7 @@ class StrategyBase:
         '''
 
         ret_results = []
+        handler_templar = Templar(self._loader)
 
         def get_original_host(host_name):
             # FIXME: this should not need x2 _inventory
@@ -414,8 +409,12 @@ class StrategyBase:
                 for handler_task in handler_block.block:
                     if handler_task.name:
                         if not handler_task.cached_name:
-                            templar = self.get_handler_templar(handler_task, iterator)
-                            handler_task.name = templar.template(handler_task.name)
+                            if handler_templar.is_template(handler_task.name):
+                                handler_templar.available_variables = self._variable_manager.get_vars(play=iterator._play,
+                                                                                                      task=handler_task,
+                                                                                                      _hosts=self._hosts_cache,
+                                                                                                      _hosts_all=self._hosts_cache_all)
+                                handler_task.name = handler_templar.template(handler_task.name)
                             handler_task.cached_name = True
 
                         try:
@@ -570,9 +569,11 @@ class StrategyBase:
                                 for listening_handler_block in iterator._play.handlers:
                                     for listening_handler in listening_handler_block.block:
                                         listeners = getattr(listening_handler, 'listen', []) or []
-                                        templar = self.get_handler_templar(listening_handler, iterator)
+                                        if not listeners:
+                                            continue
+
                                         listeners = listening_handler.get_validated_value(
-                                            'listen', listening_handler._valid_attrs['listen'], listeners, templar
+                                            'listen', listening_handler._valid_attrs['listen'], listeners, handler_templar
                                         )
                                         if handler_name not in listeners:
                                             continue
