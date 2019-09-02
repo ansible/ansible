@@ -356,7 +356,7 @@ class AzureRMModuleBase(object):
             try:
                 client_module = importlib.import_module(client_type.__module__)
                 client_version = client_module.VERSION
-            except RuntimeError:
+            except (RuntimeError, AttributeError):
                 # can't get at the module version for some reason, just fail silently...
                 return
             expected_version = package_version.get('expected_version')
