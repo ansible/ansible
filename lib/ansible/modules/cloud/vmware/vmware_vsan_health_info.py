@@ -18,7 +18,7 @@ module: vmware_vsan_health_info
 
 short_description: Gather information about a VMware vSAN cluster's health
 
-version_added: "2.9"
+version_added: "2.10"
 
 description:
     - "Gather information about a VMware vSAN cluster's health"
