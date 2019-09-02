@@ -178,13 +178,13 @@ options:
       - A dictionary of resource tags.
     type: dict
     aliases: ['resource_tags']
-    version_added: 2.9
+    version_added: "2.10"
   purge_tags:
     description:
       - Purge existing tags that are not found in the cluster
     type: bool
     default: 'yes'
-    version_added: 2.9
+    version_added: "2.10"
 requirements: [ 'boto3' ]
 extends_documentation_fragment:
   - aws
@@ -268,7 +268,6 @@ cluster:
             description: status of the enhanced vpc routing feature.
             returned: success
             type: bool
-            type: boolean
         tags:
             description: aws tags for cluster.
             returned: success
@@ -280,7 +279,7 @@ try:
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
-from ansible.module_utils.ec2 import AWSRetry, snake_dict_to_camel_dict
+from ansible.module_utils.ec2 import AWSRetry, snake_dict_to_camel_dict, boto3_tag_list_to_ansible_dict, compare_aws_tags, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.aws.iam import get_aws_account_id
 
@@ -460,6 +459,11 @@ def create_cluster(module, redshift):
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Failed to describe cluster")
 
+    if tags:
+        if _ensure_tags(redshift, identifier, resource['Tags'], module):
+            changed = True
+            resource = _describe_cluster(redshift, identifier)
+
     return(changed, _collect_facts(resource))
 
 
@@ -566,12 +570,10 @@ def modify_cluster(module, redshift):
         try:
             waiter.wait(
                 ClusterIdentifier=identifier,
-                WaiterConfig=dict(MaxAttempts=attempts)
-                )
+                WaiterConfig=dict(MaxAttempts=attempts))
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e,
-                                 msg="Timeout waiting for cluster enhanced vpc routing modification"
-                                )
+                                 msg="Timeout waiting for cluster enhanced vpc routing modification")
 
     # change the rest
     try:
@@ -641,7 +643,7 @@ def main():
         wait_timeout=dict(type='int', default=300),
         tags=dict(type='dict', aliases=['resource_tags']),
         purge_tags=dict(type='bool', default=True)
-    ))
+    )
 
     required_if = [
         ('command', 'delete', ['skip_final_cluster_snapshot']),

@@ -92,7 +92,8 @@
               "redshift:DescribeClusters",
               "redshift:DescribeTags",
               "redshift:ModifyCluster",
-              "redshift:RebootCluster"
+              "redshift:RebootCluster",
+              "sts:GetCallerIdentity"
           ],
           "Effect": "Allow",
           "Resource": "*"

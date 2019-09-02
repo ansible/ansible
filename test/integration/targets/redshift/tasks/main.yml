@@ -272,13 +272,73 @@
       register: result
 
 
-    - name: assert create
+    - name: assert tags change
       assert:
         that:
           - 'result.changed'
           - 'result.cluster.identifier == "{{ redshift_cluster_name }}"'
           - 'result.cluster.db_name == "integration_test"'
           - 'result.cluster.tags.foo == "bar"'
+
+
+  #  ============================================================
+
+    - name: test purge tags
+      redshift:
+        command: create
+        identifier: "{{ redshift_cluster_name }}"
+        username: "{{ redshift_master_username }}"
+        password: "{{ reshift_master_password }}"
+        node_type: "{{ node_type }}"
+        cluster_type: multi-node
+        number_of_nodes: 3
+        wait: yes
+        db_name: "integration_test"
+        tags:
+          test1: value1
+        purge_tags: false
+        wait_timeout: 1800
+        <<: *aws_connection_info
+      register: result
+
+
+    - name: assert tags change
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.cluster.identifier == "{{ redshift_cluster_name }}"'
+          - 'result.cluster.db_name == "integration_test"'
+          - 'result.cluster.tags.test1 == "value1"'
+          - 'result.cluster.tags.foo == "bar"'
+          - 'result.cluster.tags | count() == 2'
+
+
+
+  #  ============================================================
+
+    - name: test no change to tags when tags is None
+      redshift:
+        command: create
+        identifier: "{{ redshift_cluster_name }}"
+        username: "{{ redshift_master_username }}"
+        password: "{{ reshift_master_password }}"
+        node_type: "{{ node_type }}"
+        cluster_type: multi-node
+        number_of_nodes: 3
+        wait: yes
+        db_name: "integration_test"
+        wait_timeout: 1800
+        <<: *aws_connection_info
+      register: result
+
+
+    - name: assert create
+      assert:
+        that:
+          - 'not result.changed'
+          - 'result.cluster.identifier == "{{ redshift_cluster_name }}"'
+          - 'result.cluster.db_name == "integration_test"'
+          - 'result.cluster.tags | count() == 2'
 
 
   #  ============================================================
