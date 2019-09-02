@@ -34,7 +34,7 @@
 #           supershipit - supershipiteers can turn a shipit into a supershipit
 #
 
-automerge: True
+automerge: False
 files:
   .github/BOTMETA.yml:
     labels: botmeta
