@@ -5,7 +5,7 @@
 - include_tasks: _remove_config.yaml
 
 - block:
-    - name: Apply the provided configuration (base config)
+    - name: Round Trip test by applying the provided configuration (base config)
       ios_l3_interfaces:
         config:
           - name: GigabitEthernet0/2
