@@ -1046,13 +1046,16 @@ class User(object):
         return self.execute_command(cmd, obey_checkmode=False)
 
     def get_ssh_public_key(self):
-        ssh_public_key_file = '%s.pub' % self.get_ssh_key_path()
-        try:
-            with open(ssh_public_key_file, 'r') as f:
-                ssh_public_key = f.read().strip()
-        except IOError:
+        ssh_key_file = self.get_ssh_key_path()
+        if not os.path.exists(ssh_key_file):
             return None
-        return ssh_public_key
+        cmd = [self.module.get_bin_path('ssh-keygen', True)]
+        cmd.append('-y')
+        cmd.append('-f')
+        cmd.append(ssh_key_file)
+
+        (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
+        return out.strip()
 
     def create_user(self):
         # by default we use the create_user_useradd method
