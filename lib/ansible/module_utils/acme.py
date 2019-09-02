@@ -962,7 +962,7 @@ def process_links(info, callback):
     '''
     if 'link' in info:
         link = info['link']
-        for url, relation in re.findall(r'<([^>]+)>;rel="(\w+)"', link):
+        for url, relation in re.findall(r'<([^>]+)>;\s*rel="(\w+)"', link):
             callback(unquote(url), relation)
 
 
