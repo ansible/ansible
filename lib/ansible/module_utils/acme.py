@@ -474,6 +474,9 @@ class ACMEAccount(object):
     '''
 
     def __init__(self, module):
+        # Set to true to enable logging of all signed requests
+        self._debug = False
+
         self.module = module
         self.version = module.params['acme_version']
         # account_key path and content are mutually exclusive
@@ -545,7 +548,7 @@ class ACMEAccount(object):
         '''
         Write arguments to acme.log when logging is enabled.
         '''
-        if False:
+        if self._debug:
             with open('acme.log', 'ab') as f:
                 f.write('[{0}] {1}\n'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%s'), msg).encode('utf-8'))
                 if data is not None:
