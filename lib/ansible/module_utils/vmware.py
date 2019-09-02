@@ -557,7 +557,6 @@ def connect_to_api(module, disconnect_atexit=True, return_si=False):
         atexit.register(connect.Disconnect, service_instance)
     if return_si:
         return service_instance, service_instance.RetrieveContent()
-
     return service_instance.RetrieveContent()
 
 
