@@ -36,6 +36,7 @@ class InfluxDb():
         self.check_lib()
         self.hostname = self.params['hostname']
         self.port = self.params['port']
+        self.path = self.params['path']
         self.username = self.params['username']
         self.password = self.params['password']
         self.database_name = self.params.get('database_name')
@@ -52,6 +53,7 @@ class InfluxDb():
         return dict(
             hostname=dict(type='str', default='localhost'),
             port=dict(type='int', default=8086),
+            path=dict(type='str', default=''),
             username=dict(type='str', default='root', aliases=['login_username']),
             password=dict(type='str', default='root', no_log=True, aliases=['login_password']),
             ssl=dict(type='bool', default=False),
@@ -67,6 +69,7 @@ class InfluxDb():
         args = dict(
             host=self.hostname,
             port=self.port,
+            path=self.path,
             username=self.username,
             password=self.password,
             database=self.database_name,
