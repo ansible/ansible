@@ -29,12 +29,12 @@ from .nxos_module import TestNxosModule, load_fixture, set_module_args
 ignore_provider_arg = True
 
 
-class TestNxosBfdInterfacesModule(TestNxosModule):
+class TestNxosHsrpInterfacesModule(TestNxosModule):
 
     module = nxos_hsrp_interfaces
 
     def setUp(self):
-        super(TestNxosBfdInterfacesModule, self).setUp()
+        super(TestNxosHsrpInterfacesModule, self).setUp()
 
         self.mock_FACT_LEGACY_SUBSETS = patch('ansible.module_utils.network.nxos.facts.facts.FACT_LEGACY_SUBSETS')
         self.FACT_LEGACY_SUBSETS = self.mock_FACT_LEGACY_SUBSETS.start()
@@ -49,7 +49,7 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
         self.edit_config = self.mock_edit_config.start()
 
     def tearDown(self):
-        super(TestNxosBfdInterfacesModule, self).tearDown()
+        super(TestNxosHsrpInterfacesModule, self).tearDown()
         self.mock_FACT_LEGACY_SUBSETS.stop()
         self.mock_get_resource_connection_config.stop()
         self.mock_get_resource_connection_facts.stop()
@@ -61,7 +61,7 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
         self.edit_config.return_value = None
 
     # ---------------------------
-    # Bfd_interfaces Test Cases
+    # Hsrp_interfaces Test Cases
     # ---------------------------
 
     # 'state' logic behaviors

@@ -82,7 +82,12 @@ class Hsrp_interfaces(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        want = self._module.params['config']
+        config = self._module.params['config']
+        want = []
+        if config:
+            for w in config:
+                w.update({'name': normalize_interface(w['name'])})
+                want.append(w)
         have = existing_hsrp_interfaces_facts
         resp = self.set_state(want, have)
         return to_list(resp)
@@ -152,7 +157,7 @@ class Hsrp_interfaces(ConfigBase):
         for h in have:
             # Check existing states, set to default if not in want or different than want
             h = flatten_dict(h)
-            obj_in_want = flatten_dict(search_obj_in_list(h['name'], want, 'name'))
+            obj_in_want = search_obj_in_list(h['name'], want, 'name')
             if obj_in_want:
                 # Let the 'want' loop handle all vals for this interface
                 continue
@@ -224,7 +229,7 @@ class Hsrp_interfaces(ConfigBase):
             if want['bfd'] == 'enable':
                 cmd = 'hsrp bfd'
                 cmds.append(cmd)
-            elif want['bfd'] == 'disable' and obj_in_have.get('bfd') == 'enable':
+            elif want['bfd'] == 'disable' and obj_in_have and obj_in_have.get('bfd') == 'enable':
                 cmd = 'no hsrp bfd'
                 cmds.append(cmd)
 
@@ -234,11 +239,10 @@ class Hsrp_interfaces(ConfigBase):
 
     def set_commands(self, want, have):
         cmds = []
-        obj_in_have = flatten_dict(search_obj_in_list(want['name'], have, 'name'))
+        obj_in_have = search_obj_in_list(want['name'], have, 'name')
         if not obj_in_have:
             cmds = self.add_commands(want, obj_in_have)
         else:
             diff = self.diff_of_dicts(want, obj_in_have)
             cmds = self.add_commands(diff, obj_in_have)
-
         return cmds
