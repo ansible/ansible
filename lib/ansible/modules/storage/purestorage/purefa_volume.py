@@ -65,7 +65,7 @@ options:
       K will mean 1000
       M will mean 1000000
       To clear an existing IOPs setting use 0 (zero)
-    version_added: '2.9'
+    version_added: '2.10'
     type: str
 extends_documentation_fragment:
 - purestorage.fa
