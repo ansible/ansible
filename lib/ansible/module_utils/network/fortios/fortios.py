@@ -253,7 +253,7 @@ class AnsibleFortios(object):
             try:
                 self.forti_device.open()
             except Exception as e:
-                self.module.fail_json(msg='Error connecting device. %s' % to_native(e),
+                self.module.fail_json(msg='Error connecting device. %s' % to_text(e),
                                       exception=traceback.format_exc())
 
     def load_config(self, path):
@@ -266,7 +266,7 @@ class AnsibleFortios(object):
                 running = f.read()
                 f.close()
             except IOError as e:
-                self.module.fail_json(msg='Error reading configuration file. %s' % to_native(e),
+                self.module.fail_json(msg='Error reading configuration file. %s' % to_text(e),
                                       exception=traceback.format_exc())
             self.forti_device.load_config(config_text=running, path=path)
 
@@ -276,7 +276,7 @@ class AnsibleFortios(object):
                 self.forti_device.load_config(path=path)
             except Exception as e:
                 self.forti_device.close()
-                self.module.fail_json(msg='Error reading running config. %s' % to_native(e),
+                self.module.fail_json(msg='Error reading running config. %s' % to_text(e),
                                       exception=traceback.format_exc())
 
         # set configs in object
@@ -302,7 +302,7 @@ class AnsibleFortios(object):
                     f.close()
                 except IOError as e:
                     self.module.fail_json(msg='Error writing configuration file. %s' %
-                                          to_native(e), exception=traceback.format_exc())
+                                          to_text(e), exception=traceback.format_exc())
             else:
                 try:
                     self.forti_device.commit()
