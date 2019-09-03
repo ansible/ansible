@@ -229,7 +229,8 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'REPLICATION SLAVE ADMIN', 'RESOURCE GROUP ADMIN',
                          'RESOURCE GROUP USER', 'ROLE ADMIN', 'SET USER ID',
                          'SESSION VARIABLES ADMIN', 'SYSTEM VARIABLES ADMIN',
-                         'VERSION TOKEN ADMIN', 'XA RECOVER ADMIN'))
+                         'VERSION TOKEN ADMIN', 'XA RECOVER ADMIN',
+                         'LOAD FROM S3', 'SELECT INTO S3'))
 
 
 class InvalidPrivsError(Exception):
