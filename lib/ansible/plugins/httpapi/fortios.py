@@ -33,7 +33,7 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 author:
-    - Miguel Angel Muñoz (@magonzalez)
+    - Miguel Angel Munoz (@magonzalez)
 httpapi : fortios
 short_description: HttpApi Plugin for Fortinet FortiOS Appliance or VM
 description:
