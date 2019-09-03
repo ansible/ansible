@@ -47,7 +47,7 @@ options:
     delete_policy:
         description:
             - deprecated. Use I(purge_policy) instead. To be removed in
-              Ansible 2.13
+              Ansible 2.14
         required: false
         default: false
     purge_policy:
@@ -56,7 +56,7 @@ options:
         required: false
         default: false
         type: bool
-        version_added: '2.9'
+        version_added: '2.10'
     image_tag_mutability:
         description:
             - Configure whether repository should be mutable (ie. an already existing tag can be overwritten) or not.
@@ -69,13 +69,13 @@ options:
         description:
             - JSON or dict that represents the new lifecycle policy
         required: false
-        version_added: '2.9'
+        version_added: '2.10'
     purge_lifecycle_policy:
         description:
             - if yes, remove the lifecycle policy from the repository
         required: false
         default: false
-        version_added: '2.9'
+        version_added: '2.10'
     state:
         description:
             - Create or destroy the repository.
