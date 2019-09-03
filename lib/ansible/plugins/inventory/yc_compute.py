@@ -16,7 +16,7 @@ DOCUMENTATION = r'''
     description:
       - Pull inventory from Yandex Cloud Compute.
       - Uses a YAML configuration file that ends with yc_compute.(yml|yaml) or yc.(yml|yaml).
-    version_added: "2.9"
+    version_added: "2.10"
     options:
       auth_kind:
         description: The type of credential used.
