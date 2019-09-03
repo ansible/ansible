@@ -238,6 +238,21 @@ a tarball of the built collection in the current directory which can be uploaded
 This tarball is mainly intended to upload to Galaxy
 as a distribution method, but you can use it directly to install the collection on target systems.
 
+.. _trying_collection_locally:
+
+Trying collection locally
+-------------------------
+
+You can try your collection locally by installing it from the tarball.
+
+.. code-block:: bash
+
+   ansible-galaxy collection install my_namespace-my_collection-1.0.0.tar.gz -p ./collections/ansible_collections
+
+You should use one of the values configured in :ref:`COLLECTIONS_PATHS` for your path. This is also where Ansible itself will expect to find collections when attempting to use them.
+
+Then try to use the local collection inside a playbook, for more details see :ref:`Using collections <using_collections>`
+
 .. _publishing_collections:
 
 Publishing collections
@@ -470,6 +485,8 @@ For operations where only one Galaxy server is used, i.e. ``publish``, ``info``,
     collection. The install process will not search for a collection requirement in a different Galaxy instance.
 
 
+.. _using_collections:
+ 
 Using collections
 =================
 
