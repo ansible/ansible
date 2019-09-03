@@ -87,7 +87,7 @@ options:
      description:
        - Ignored. Present for backwards compatibility
    volume:
-     version_added: "2.9"
+     version_added: "2.10"
      description:
        - ID of a volume to create an image from.
        - The volume must be in AVAILABLE state.
