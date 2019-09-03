@@ -117,11 +117,11 @@ class FortiOSHandler(object):
 
         if status == 200:
             if vdom == "global":
-                return json.loads(result_data)[0]['results']
+                return json.loads(to_text(result_data))[0]['results']
             else:
-                return json.loads(result_data)['results']
+                return json.loads(to_text(result_data))['results']
         else:
-            return json.loads(result_data)
+            return json.loads(to_text(result_data))
 
     def get_mkeyname(self, path, name, vdom=None):
         schema = self.schema(path, name, vdom=vdom)
@@ -200,10 +200,10 @@ class FortiOSHandler(object):
 
     def formatresponse(self, res, vdom=None):
         if vdom == "global":
-            resp = json.loads(res)[0]
+            resp = json.loads(to_text(res))[0]
             resp['vdom'] = "global"
         else:
-            resp = json.loads(res)
+            resp = json.loads(to_text(res))
         return resp
 
 # BEGIN DEPRECATED
