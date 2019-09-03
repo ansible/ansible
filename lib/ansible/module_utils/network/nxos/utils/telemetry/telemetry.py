@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import re
+from copy import deepcopy
 
 
 def get_module_params_subsection(module_params, tms_config, resource_key=None):
@@ -193,17 +194,48 @@ def remove_duplicate_commands(commands_list):
     return sorted(set(commands_list), key=lambda x: commands_list.index(x))
 
 
-def massage_have(have):
-    # Massage have state into a data structure that is indexed by id for
-    # destination_groups, sensor_groups and subscriptions.
-    existing = {}
-    existing['destination_groups'] = {}
-    existing['sensor_groups'] = {}
-    existing['subscriptions'] = {}
+def massage_data(have_or_want):
+    # Massage non global into a data structure that is indexed by id and
+    # normalized for destination_groups, sensor_groups and subscriptions.
+    data = deepcopy(have_or_want)
+    massaged = {}
+    massaged['destination_groups'] = {}
+    massaged['sensor_groups'] = {}
+    massaged['subscriptions'] = {}
+    from pprint import pprint
     for subgroup in ['destination_groups', 'sensor_groups', 'subscriptions']:
-        for item in have.get(subgroup, []):
-            id = item.get('id')
-            if id not in existing[subgroup].keys():
-                existing[subgroup][id] = []
-            existing[subgroup][id].append(item)
-    return existing
+        for item in data.get(subgroup, []):
+            id = str(item.get('id'))
+            # import pdb ; pdb.set_trace()
+            if id not in massaged[subgroup].keys():
+                massaged[subgroup][id] = []
+            item.pop('id')
+            if not item:
+                item = None
+            else:
+                if item.get('destination'):
+                    if item.get('destination').get('port'):
+                        item['destination']['port'] = str(item['destination']['port'])
+                    if item.get('destination').get('protocol'):
+                        item['destination']['protocol'] = item['destination']['protocol'].lower()
+                    if item.get('destination').get('encoding'):
+                        item['destination']['encoding'] = item['destination']['encoding'].lower()
+                if item.get('path'):
+                    if item.get('path').get('depth'):
+                        item['path']['depth'] = str(item['path']['depth'])
+                if item.get('destination_group'):
+                    item['destination_group'] = str(item['destination_group'])
+                if item.get('sensor_group'):
+                    if item.get('sensor_group').get('id'):
+                        item['sensor_group']['id'] = str(item['sensor_group']['id'])
+                    if item.get('sensor_group').get('sample_interval'):
+                        item['sensor_group']['sample_interval'] = str(item['sensor_group']['sample_interval'])
+                if item.get('destination_group') and item.get('sensor_group'):
+                    item_copy = deepcopy(item)
+                    del item_copy['sensor_group']
+                    del item['destination_group']
+                    massaged[subgroup][id].append(item_copy)
+                    massaged[subgroup][id].append(item)
+                    continue
+            massaged[subgroup][id].append(item)
+    return massaged

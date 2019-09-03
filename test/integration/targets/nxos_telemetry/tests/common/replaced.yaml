@@ -79,6 +79,7 @@
           key: /file_dir/new_server.key
           hostname: newhost.example.com
         vrf: management
+        compression: gzip
         destination_groups:
           - id: 2
             destination:
@@ -92,13 +93,24 @@
               port: 55001
               protocol: grpc
               encoding: gpb
+        sensor_groups:
+          - id: 100
+            data_source: NX-API
+            path:
+              name: sys/bgp/inst
+              depth: unbounded
+              query_condition: foo
+              filter_condition: foo
         subscriptions:
           - id: 99
-            destination_group: 10
+            destination_group: 2
             sensor_group:
               id: 100
               sample_interval: 2000
     register: result
+
+  - name: Telemetry - replaced - idempotent
+    nxos_telemetry: *replace
 
   always:
   # - name: Teardown

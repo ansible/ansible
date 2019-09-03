@@ -21,7 +21,7 @@ from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.nxos.facts.facts import Facts
 from ansible.module_utils.network.nxos.cmdref.telemetry.telemetry import TMS_GLOBAL, TMS_DESTGROUP, TMS_SENSORGROUP, TMS_SUBSCRIPTION
 from ansible.module_utils.network.nxos.utils.telemetry.telemetry import normalize_data, remove_duplicate_context
-from ansible.module_utils.network.nxos.utils.telemetry.telemetry import valiate_input, get_setval_path
+from ansible.module_utils.network.nxos.utils.telemetry.telemetry import valiate_input, get_setval_path, massage_data
 from ansible.module_utils.network.nxos.utils.telemetry.telemetry import get_module_params_subsection, remove_duplicate_commands
 from ansible.module_utils.network.nxos.utils.utils import normalize_interface
 from ansible.module_utils.network.nxos.nxos import NxosCmdRef
@@ -128,7 +128,6 @@ class Telemetry(ConfigBase):
         """
         state = self._module.params['state']
 
-        import pdb ; pdb.set_trace()
         # The deleted case is very simple since we purge all telemetry config
         # and does not require any processing using NxosCmdRef objects.
         if state == 'deleted':
@@ -216,7 +215,10 @@ class Telemetry(ConfigBase):
                   to the desired configuration
         """
         commands = []
+        massaged_have = massage_data(have)
+        massaged_want = massage_data(want)
         from pprint import pprint
+
         ref = {}
         ref['tms_global'] = NxosCmdRef([], TMS_GLOBAL, ref_only=True)
         ref['tms_destgroup'] = NxosCmdRef([], TMS_DESTGROUP, ref_only=True)
@@ -235,10 +237,15 @@ class Telemetry(ConfigBase):
         # - want (set) have (not set) (add want)
         # - want (not set) have (set) (delete have)
         # - want (not set) have (not set) (no action)
+        # global_ctx = ref['tms_global']._ref['_template']['context']
+        # property_ctx = ref['tms_global']._ref['certificate'].get('context')
+        # setval = ref['tms_global']._ref['certificate']['setval']
+        #
         all_global_properties = ['certificate', 'compression', 'source_interface', 'vrf']
         dest_profile_properties = ['compression', 'source_interface', 'vrf']
         dest_profile_remote_commands = []
         for property in all_global_properties:
+            cmd = None
             global_ctx = ref['tms_global']._ref['_template']['context']
             property_ctx = ref['tms_global']._ref[property].get('context')
             setval = ref['tms_global']._ref[property]['setval']
@@ -268,7 +275,8 @@ class Telemetry(ConfigBase):
             if property_ctx is not None:
                 ctx.extend(property_ctx)
             add['TMS_GLOBAL'].extend(ctx)
-            add['TMS_GLOBAL'].extend(cmd)
+            if cmd is not None:
+                add['TMS_GLOBAL'].extend(cmd)
         add['TMS_GLOBAL'] = remove_duplicate_commands(add['TMS_GLOBAL'])
         # If all destination profile commands are being removed then just
         # remove the config context instead.
@@ -278,184 +286,183 @@ class Telemetry(ConfigBase):
             add['TMS_GLOBAL'].remove('destination-profile')
             add['TMS_GLOBAL'].extend(['no destination-profile'])
 
-        # Process Telemetry Destination Group Want and Have Values
+        # Process Telemetry destination_group, sensor_group and subscription Want and Have Values
         # Possible states:
+        # - want (not set) have (set) (delete have)
         # - want and have are (set) (equal: no action, not equal: replace with want)
         # - want (set) have (not set) (add want)
-        # - want (not set) have (set) (delete have)
         # - want (not set) have (not set) (no action)
-        global_ctx = ref['tms_destgroup']._ref['_template']['context']
-        setval = ref['tms_destgroup']._ref['destination']['setval']
-        if want.get('destination_groups') is None:
-            if have.get('destination_groups') is not None:
-                for dg in have.get('destination_groups'):
-                    remove_context = ['{0} destination-group {1}'.format('no', dg['id'])]
-                    delete['TMS_DESTGROUP'].extend(global_ctx)
-                    if remove_context[0] not in delete['TMS_DESTGROUP']:
-                        delete['TMS_DESTGROUP'].extend(remove_context)
-        else:
-            for want_dg in want.get('destination_groups'):
-                want_dg['destination']['protocol'] = want_dg['destination']['protocol'].lower()
-                want_dg['destination']['encoding'] = want_dg['destination']['encoding'].lower()
-                if want_dg not in have.get('destination_groups'):
-                    property_ctx = ['destination-group {0}'.format(want_dg['id'])]
-                    cmd = [setval.format(**want_dg['destination'])]
-                    add['TMS_DESTGROUP'].extend(global_ctx)
-                    if property_ctx[0] not in add['TMS_DESTGROUP']:
-                        add['TMS_DESTGROUP'].extend(property_ctx)
-                    add['TMS_DESTGROUP'].extend(cmd)
-            for have_dg in have.get('destination_groups'):
-                if have_dg not in want.get('destination_groups'):
-                    have_id_in_want_ids = False
-                    for item in want.get('destination_groups'):
-                        if have_dg['id'] == item['id']:
-                            have_id_in_want_ids = True
-                    property_ctx = ['destination-group {0}'.format(have_dg['id'])]
-                    delete['TMS_DESTGROUP'].extend(global_ctx)
-                    if have_id_in_want_ids:
-                        cmd = ['no ' + setval.format(**have_dg['destination'])]
-                        if property_ctx[0] not in delete['TMS_DESTGROUP']:
-                            delete['TMS_DESTGROUP'].extend(property_ctx)
-                        delete['TMS_DESTGROUP'].extend(cmd)
-                    else:
-                        remove_context = ['no ' + property_ctx[0]]
-                        if remove_context[0] not in delete['TMS_DESTGROUP']:
-                            delete['TMS_DESTGROUP'].extend(remove_context)
+        tms_resources = ['TMS_DESTGROUP', 'TMS_SENSORGROUP', 'TMS_SUBSCRIPTION']
+        for resource in tms_resources:
+            if resource == 'TMS_DESTGROUP':
+                name = 'destination-group'
+                cmd_property = 'destination'
+                global_ctx = ref['tms_destgroup']._ref['_template']['context']
+                setval = ref['tms_destgroup']._ref['destination']['setval']
+                want_resources = massaged_want.get('destination_groups')
+                have_resources = massaged_have.get('destination_groups')
+            if resource == 'TMS_SENSORGROUP':
+                name = 'sensor-group'
+                global_ctx = ref['tms_sensorgroup']._ref['_template']['context']
+                setval = {}
+                setval['data_source'] = ref['tms_sensorgroup']._ref['data_source']['setval']
+                setval['path'] = ref['tms_sensorgroup']._ref['path']['setval']
+                want_resources = massaged_want.get('sensor_groups')
+                have_resources = massaged_have.get('sensor_groups')
+            if resource == 'TMS_SUBSCRIPTION':
+                name = 'subscription'
+                global_ctx = ref['tms_subscription']._ref['_template']['context']
+                setval = {}
+                setval['destination_group'] = ref['tms_subscription']._ref['destination_group']['setval']
+                setval['sensor_group'] = ref['tms_subscription']._ref['sensor_group']['setval']
+                want_resources = massaged_want.get('subscriptions')
+                have_resources = massaged_have.get('subscriptions')
 
-        add['TMS_DESTGROUP'] = remove_duplicate_context(add['TMS_DESTGROUP'])
-        delete['TMS_DESTGROUP'] = remove_duplicate_context(delete['TMS_DESTGROUP'])
+            if not want_resources and have_resources:
+                # want not and have not set so delete have
+                for key in have_resources.keys():
+                    remove_context = ['{0} {1} {2}'.format('no', name, key)]
+                    delete[resource].extend(global_ctx)
+                    if remove_context[0] not in delete[resource]:
+                        delete[resource].extend(remove_context)
+            else:
+                # want and have are set.
+                # process wants:
+                for want_key in want_resources.keys():
+                    if want_key not in have_resources.keys():
+                        # Want resource key not in have resource key so add it
+                        property_ctx = ['{0} {1}'.format(name, want_key)]
+                        for item in want_resources[want_key]:
+                            if resource == 'TMS_DESTGROUP':
+                                cmd = [setval.format(**item[cmd_property])]
+                                add[resource].extend(global_ctx)
+                                if property_ctx[0] not in add[resource]:
+                                    add[resource].extend(property_ctx)
+                                add[resource].extend(cmd)
+                            if resource == 'TMS_SENSORGROUP':
+                                cmd = {}
+                                if item.get('data_source'):
+                                    cmd['data_source'] = [setval['data_source'].format(item['data_source'])]
+                                if item.get('path'):
+                                    setval['path'] = get_setval_path(item.get('path'))
+                                    cmd['path'] = [setval['path'].format(**item['path'])]
+                                add[resource].extend(global_ctx)
+                                if property_ctx[0] not in add[resource]:
+                                    add[resource].extend(property_ctx)
+                                if cmd.get('data_source'):
+                                    add[resource].extend(cmd['data_source'])
+                                if cmd.get('path'):
+                                    add[resource].extend(cmd['path'])
+                            if resource == 'TMS_SUBSCRIPTION':
+                                cmd = {}
+                                if item.get('destination_group'):
+                                    cmd['destination_group'] = [setval['destination_group'].format(item['destination_group'])]
+                                if item.get('sensor_group'):
+                                    cmd['sensor_group'] = [setval['sensor_group'].format(**item['sensor_group'])]
+                                add[resource].extend(global_ctx)
+                                if property_ctx[0] not in add[resource]:
+                                    add[resource].extend(property_ctx)
+                                if cmd.get('destination_group'):
+                                    add[resource].extend(cmd['destination_group'])
+                                if cmd.get('sensor_group'):
+                                    add[resource].extend(cmd['sensor_group'])
 
-        # Process Telemetry Sensor Group Want and Have Values
-        # Possible states:
-        # - want and have are (set) (equal: no action, not equal: replace with want)
-        # - want (set) have (not set) (add want)
-        # - want (not set) have (set) (delete have)
-        # - want (not set) have (not set) (no action)
-        global_ctx = ref['tms_sensorgroup']._ref['_template']['context']
-        setval = {}
-        setval['data_source'] = ref['tms_sensorgroup']._ref['data_source']['setval']
-        setval['path'] = ref['tms_sensorgroup']._ref['path']['setval']
-        if want.get('sensor_groups') is None:
-            if have.get('sensor_groups') is not None:
-                for sg in have.get('sensor_groups'):
-                    remove_context = ['{0} sensor-group {1}'.format('no', sg['id'])]
-                    delete['TMS_SENSORGROUP'].extend(global_ctx)
-                    if remove_context[0] not in delete['TMS_SENSORGROUP']:
-                        delete['TMS_SENSORGROUP'].extend(remove_context)
-        else:
-            for want_sg in want.get('sensor_groups'):
-                if want_sg not in have.get('sensor_groups'):
-                    property_ctx = ['sensor-group {0}'.format(want_sg['id'])]
-                    cmd = {}
-                    if want_sg.get('data_source'):
-                        cmd['data_source'] = [setval['data_source'].format(want_sg['data_source'])]
-                    if want_sg.get('path'):
-                        setval['path'] = get_setval_path(want_sg.get('path'))
-                        cmd['path'] = [setval['path'].format(**want_sg['path'])]
-                    add['TMS_SENSORGROUP'].extend(global_ctx)
-                    if property_ctx[0] not in add['TMS_SENSORGROUP']:
-                        add['TMS_SENSORGROUP'].extend(property_ctx)
-                    if cmd.get('data_source'):
-                        add['TMS_SENSORGROUP'].extend(cmd['data_source'])
-                    if cmd.get('path'):
-                        add['TMS_SENSORGROUP'].extend(cmd['path'])
-            for have_sg in have.get('sensor_groups'):
-                if have_sg not in want.get('sensor_groups'):
-                    have_id_in_want_ids = False
-                    for item in want.get('sensor_groups'):
-                        if have_sg['id'] == item['id']:
-                            have_id_in_want_ids = True
-                    property_ctx = ['sensor-group {0}'.format(have_sg['id'])]
-                    delete['TMS_SENSORGROUP'].extend(global_ctx)
-                    if have_id_in_want_ids:
-                        cmd = {}
-                        if have_sg.get('data_source'):
-                            cmd['data_source'] = ['no ' + setval['data_source'].format(have_sg['data_source'])]
-                        if have_sg.get('path'):
-                            setval['path'] = get_setval_path(have_sg.get('path'))
-                            cmd['path'] = ['no ' + setval['path'].format(**have_sg['path'])]
-                        if cmd:
-                            if property_ctx[0] not in delete['TMS_SENSORGROUP']:
-                                delete['TMS_SENSORGROUP'].extend(property_ctx)
-                            if cmd.get('data_source'):
-                                delete['TMS_SENSORGROUP'].extend(cmd['data_source'])
-                            if cmd.get('path'):
-                                delete['TMS_SENSORGROUP'].extend(cmd['path'])
-                    else:
-                        remove_context = ['no ' + property_ctx[0]]
-                        if remove_context[0] not in delete['TMS_SENSORGROUP']:
-                            delete['TMS_SENSORGROUP'].extend(remove_context)
+                    elif want_key in have_resources.keys():
+                        # Want resource key exists in have resource keys but we need to
+                        # inspect the individual items under the resource key
+                        # for differences
+                        for item in want_resources[want_key]:
+                            if item not in have_resources[want_key]:
+                                # item wanted but does not exist so add it
+                                property_ctx = ['{0} {1}'.format(name, want_key)]
+                                if resource == 'TMS_DESTGROUP':
+                                    cmd = [setval.format(**item[cmd_property])]
+                                    add[resource].extend(global_ctx)
+                                    if property_ctx[0] not in add[resource]:
+                                        add[resource].extend(property_ctx)
+                                    add[resource].extend(cmd)
+                                if resource == 'TMS_SENSORGROUP':
+                                    cmd = {}
+                                    if item.get('data_source'):
+                                        cmd['data_source'] = [setval['data_source'].format(item['data_source'])]
+                                    if item.get('path'):
+                                        setval['path'] = get_setval_path(item.get('path'))
+                                        cmd['path'] = [setval['path'].format(**item['path'])]
+                                    add[resource].extend(global_ctx)
+                                    if property_ctx[0] not in add[resource]:
+                                        add[resource].extend(property_ctx)
+                                    if cmd.get('data_source'):
+                                        add[resource].extend(cmd['data_source'])
+                                    if cmd.get('path'):
+                                        add[resource].extend(cmd['path'])
+                                if resource == 'TMS_SUBSCRIPTION':
+                                    cmd = {}
+                                    if item.get('destination_group'):
+                                        cmd['destination_group'] = [setval['destination_group'].format(item['destination_group'])]
+                                    if item.get('sensor_group'):
+                                        cmd['sensor_group'] = [setval['sensor_group'].format(**item['sensor_group'])]
+                                    add[resource].extend(global_ctx)
+                                    if property_ctx[0] not in add[resource]:
+                                        add[resource].extend(property_ctx)
+                                    if cmd.get('destination_group'):
+                                        add[resource].extend(cmd['destination_group'])
+                                    if cmd.get('sensor_group'):
+                                        add[resource].extend(cmd['sensor_group'])
 
-        add['TMS_SENSORGROUP'] = remove_duplicate_context(add['TMS_SENSORGROUP'])
-        delete['TMS_SENSORGROUP'] = remove_duplicate_context(delete['TMS_SENSORGROUP'])
+                # process haves:
+                for have_key in have_resources.keys():
+                    if have_key not in want_resources.keys():
+                        # Want resource key is not in have resource keys so remove it
+                        cmd = ['no ' + '{0} {1}'.format(name, have_key)]
+                        delete[resource].extend(global_ctx)
+                        delete[resource].extend(cmd)
+                    elif have_key in want_resources.keys():
+                        # Have resource key exists in want resource keys but we need to
+                        # inspect the individual items under the resource key
+                        # for differences
+                        for item in have_resources[have_key]:
+                            if item not in want_resources[have_key]:
+                                if item is None:
+                                    continue
+                                # have item not wanted so remove it
+                                property_ctx = ['{0} {1}'.format(name, have_key)]
+                                if resource == 'TMS_DESTGROUP':
+                                    cmd = ['no ' + setval.format(**item[cmd_property])]
+                                    delete[resource].extend(global_ctx)
+                                    if property_ctx[0] not in delete[resource]:
+                                        delete[resource].extend(property_ctx)
+                                    delete[resource].extend(cmd)
+                                if resource == 'TMS_SENSORGROUP':
+                                    cmd = {}
+                                    if item.get('data_source'):
+                                        cmd['data_source'] = ['no ' + setval['data_source'].format(item['data_source'])]
+                                    if item.get('path'):
+                                        setval['path'] = get_setval_path(item.get('path'))
+                                        cmd['path'] = ['no ' + setval['path'].format(**item['path'])]
+                                    delete[resource].extend(global_ctx)
+                                    if property_ctx[0] not in delete[resource]:
+                                        delete[resource].extend(property_ctx)
+                                    if cmd.get('data_source'):
+                                        delete[resource].extend(cmd['data_source'])
+                                    if cmd.get('path'):
+                                        delete[resource].extend(cmd['path'])
+                                if resource == 'TMS_SUBSCRIPTION':
+                                    cmd = {}
+                                    if item.get('destination_group'):
+                                        cmd['destination_group'] = ['no ' + setval['destination_group'].format(item['destination_group'])]
+                                    if item.get('sensor_group'):
+                                        cmd['sensor_group'] = ['no ' + setval['sensor_group'].format(**item['sensor_group'])]
+                                    delete[resource].extend(global_ctx)
+                                    if property_ctx[0] not in delete[resource]:
+                                        delete[resource].extend(property_ctx)
+                                    if cmd.get('destination_group'):
+                                        delete[resource].extend(cmd['destination_group'])
+                                    if cmd.get('sensor_group'):
+                                        delete[resource].extend(cmd['sensor_group'])
 
-        # Process Telemetry Subscription Want and Have Values
-        # Possible states:
-        # - want and have are (set) (equal: no action, not equal: replace with want)
-        # - want (set) have (not set) (add want)
-        # - want (not set) have (set) (delete have)
-        # - want (not set) have (not set) (no action)
-        global_ctx = ref['tms_subscription']._ref['_template']['context']
-        setval = {}
-        setval['destination_group'] = ref['tms_subscription']._ref['destination_group']['setval']
-        setval['sensor_group'] = ref['tms_subscription']._ref['sensor_group']['setval']
-        if want.get('subscriptions') is None:
-            if have.get('subscriptions') is not None:
-                for sub in have.get('subscriptions'):
-                    remove_context = ['{0} subscription {1}'.format('no', sub['id'])]
-                    delete['TMS_SUBSCRIPTION'].extend(global_ctx)
-                    if remove_context[0] not in delete['TMS_SUBSCRIPTION']:
-                        delete['TMS_SUBSCRIPTION'].extend(remove_context)
-        else:
-            for want_sub in want.get('subscriptions'):
-                if want_sub not in have.get('subscriptions'):
-                    property_ctx = ['subscription {0}'.format(want_sub['id'])]
-                    cmd = {}
-                    if want_sub.get('destination_group'):
-                        cmd['destination_group'] = [setval['destination_group'].format(want_sub['destination_group'])]
-                    if want_sub.get('sensor_group'):
-                        cmd['sensor_group'] = [setval['sensor_group'].format(**want_sub['sensor_group'])]
-                    add['TMS_SUBSCRIPTION'].extend(global_ctx)
-                    if property_ctx[0] not in add['TMS_SUBSCRIPTION']:
-                        add['TMS_SUBSCRIPTION'].extend(property_ctx)
-                    if cmd.get('destination_group'):
-                        add['TMS_SUBSCRIPTION'].extend(cmd['destination_group'])
-                    if cmd.get('sensor_group'):
-                        add['TMS_SUBSCRIPTION'].extend(cmd['sensor_group'])
-            for have_sub in have.get('subscriptions'):
-                if have_sub not in want.get('subscriptions'):
-                    have_id_in_want_ids = False
-                    for item in want.get('subscriptions'):
-                        if have_sub['id'] == item['id']:
-                            have_id_in_want_ids = True
-                            if have_sub.get('destination_group') == item.get('destination_group'):
-                                have_id_in_want_ids = False
-                            if have_sub.get('sensor_group') == str(item.get('sensor_group')):
-                                have_id_in_want_ids = False
-                    property_ctx = ['subscription {0}'.format(have_sub['id'])]
-                    delete['TMS_SUBSCRIPTION'].extend(global_ctx)
-                    if have_id_in_want_ids:
-                        cmd = {}
-                        if have_sub.get('destination_group'):
-                            cmd['destination_group'] = ['no ' + setval['destination_group'].format(have_sub['destination_group'])]
-                        if have_sub.get('sensor_group'):
-                            cmd['sensor_group'] = ['no ' + setval['sensor_group'].format(**have_sub['sensor_group'])]
-                        if cmd:
-                            if property_ctx[0] not in delete['TMS_SUBSCRIPTION']:
-                                delete['TMS_SUBSCRIPTION'].extend(property_ctx)
-                            if cmd.get('destination_group'):
-                                delete['TMS_SUBSCRIPTION'].extend(cmd['destination_group'])
-                            if cmd.get('sensor_group'):
-                                delete['TMS_SUBSCRIPTION'].extend(cmd['sensor_group'])
-                    else:
-                        remove_context = ['no ' + property_ctx[0]]
-                        if remove_context[0] not in delete['TMS_SUBSCRIPTION']:
-                            delete['TMS_SUBSCRIPTION'].extend(remove_context)
+            add[resource] = remove_duplicate_context(add[resource])
+            delete[resource] = remove_duplicate_context(delete[resource])
 
-        add['TMS_SUBSCRIPTION'] = remove_duplicate_context(add['TMS_SUBSCRIPTION'])
-        delete['TMS_SUBSCRIPTION'] = remove_duplicate_context(delete['TMS_SUBSCRIPTION'])
-
-        import pdb ; pdb.set_trace()
         commands.extend(delete['TMS_SUBSCRIPTION'])
         commands.extend(delete['TMS_SENSORGROUP'])
         commands.extend(delete['TMS_DESTGROUP'])
