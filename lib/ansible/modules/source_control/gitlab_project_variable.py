@@ -240,8 +240,8 @@ def main():
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
         module.fail_json(msg="Failed to connect to GitLab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
-            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s. \
+            GitLab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
 
     this_gitlab = GitlabProjectVariables(module=module, gitlab_instance=gitlab_instance)
 

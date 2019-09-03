@@ -11,7 +11,7 @@
     name: "{{ gitlab_project_name }}"
     state: present
 
-- name: Cleanup Gitlab runner
+- name: Cleanup GitLab runner
   gitlab_runner:
     server_url: "{{ gitlab_host }}"
     validate_certs: false
@@ -20,7 +20,7 @@
     registration_token: "{{ gitlab_runner_registration_token }}"
     state: absent
 
-- name: Create Gitlab Runner
+- name: Create GitLab Runner
   gitlab_runner:
     server_url: "{{ gitlab_host }}"
     validate_certs: false
@@ -37,7 +37,7 @@
 
 
 #### COMMENTED AS MODULE WILL UPDATE THE RUNNER IF EXISTS. TO BE DISCUSSED ####
-# - name: Create Gitlab Runner ( Idempotency test )
+# - name: Create GitLab Runner ( Idempotency test )
 #   gitlab_runner:
 #     server_url: "{{ gitlab_host }}"
 #     validate_certs: false
@@ -52,7 +52,7 @@
 #     that:
 #       - gitlab_runner_state_again is not changed
 
-- name: Remove Gitlab Runner
+- name: Remove GitLab Runner
   gitlab_runner:
     server_url: "{{ gitlab_host }}"
     validate_certs: false
