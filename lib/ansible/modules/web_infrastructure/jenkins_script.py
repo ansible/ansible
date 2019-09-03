@@ -121,7 +121,7 @@ def is_csrf_protection_enabled(module):
     return json.loads(content).get('useCrumbs', False)
 
 
-def get_crumb(module):
+def get_crumb_headers(module):
     resp, info = fetch_url(module,
                            module.params['url'] + '/crumbIssuer/api/json',
                            method='GET')
@@ -129,7 +129,14 @@ def get_crumb(module):
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
 
     content = to_native(resp.read())
-    return json.loads(content)
+    crumb_data = json.loads(content)
+    cookies_data = info.get('set-cookie', '')
+
+    headers = {
+        crumb_data['crumbRequestField']: crumb_data['crumb'],
+        'Cookie': cookies_data
+    }
+    return headers
 
 
 def main():
@@ -164,8 +171,7 @@ def main():
 
     headers = {}
     if is_csrf_protection_enabled(module):
-        crumb = get_crumb(module)
-        headers = {crumb['crumbRequestField']: crumb['crumb']}
+        headers = get_crumb_headers(module)
 
     resp, info = fetch_url(module,
                            module.params['url'] + "/scriptText",
