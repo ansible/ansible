@@ -1232,7 +1232,7 @@ class TaskParameters(DockerBaseClass):
                     self.fail("Failed to convert %s to bytes: %s" % (param_name, exc))
 
         self.publish_all_ports = False
-        self.published_ports = self._parse_publish_ports()
+        self.published_ports = self._parse_publish_ports() if self.published_ports else None
         if self.published_ports in ('all', 'ALL'):
             self.publish_all_ports = True
             self.published_ports = None
