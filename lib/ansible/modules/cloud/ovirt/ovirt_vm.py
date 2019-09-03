@@ -1186,6 +1186,7 @@ from ansible.module_utils.ovirt import (
     search_by_attributes,
     search_by_name,
     wait,
+    engine_supported,
 )
 
 
@@ -2139,6 +2140,15 @@ def import_vm(module, connection):
     return True
 
 
+def check_deprecated_params(module, connection):
+    if engine_supported(connection, '4.4') and \
+            (module.params.get('kernel_params_persist') is not None or
+             module.params.get('kernel_path') is not None or
+             module.params.get('initrd_path') is not None or
+             module.params.get('kernel_params') is not None):
+        module.warn("Parameters 'kernel_params_persist', 'kernel_path', 'initrd_path', 'kernel_params' are not supported since oVirt 4.4.")
+
+
 def control_state(vm, vms_service, module):
     if vm is None:
         return
@@ -2284,6 +2294,7 @@ def main():
         state = module.params['state']
         auth = module.params.pop('auth')
         connection = create_connection(auth)
+        check_deprecated_params(module, connection)
         vms_service = connection.system_service().vms_service()
         vms_module = VmsModule(
             connection=connection,
