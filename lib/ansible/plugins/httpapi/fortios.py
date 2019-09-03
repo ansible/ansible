@@ -33,7 +33,7 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 author:
-    - Miguel Angel Muñoz (@magonzalez)
+    - Miguel Angel Munoz (@magonzalez)
 httpapi : fortios
 short_description: HttpApi Plugin for Fortinet FortiOS Appliance or VM
 description:
@@ -43,7 +43,7 @@ version_added: "2.9"
 
 from ansible.plugins.httpapi import HttpApiBase
 from ansible.module_utils.basic import to_text
-import urllib
+from ansible.module_utils.six.moves import urllib
 import json
 import re
 
