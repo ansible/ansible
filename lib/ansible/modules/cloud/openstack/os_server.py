@@ -81,7 +81,7 @@ options:
          description:
             - 'A "tag" for the specific port to be passed via metadata.
               Eg: tag: test_tag'
-         version_added: "2.9"
+         version_added: '2.10'
    auto_ip:
      description:
         - Ensure instance has public ip however the cloud wants to do that

@@ -527,7 +527,7 @@ options:
     - Configuration for controlling how IPs are allocated in the cluster.
     required: false
     type: dict
-    version_added: 2.9
+    version_added: '2.10'
     suboptions:
       enabled:
         description:

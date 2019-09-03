@@ -36,7 +36,7 @@ options:
         description:
             - Number of seconds to sleep between checks.
         default: 5
-        version_added: "2.9"
+        version_added: '2.10'
     memory:
         description:
             - The amount of memory to be requested by virtual machine.
