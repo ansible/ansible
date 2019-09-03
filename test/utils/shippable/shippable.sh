@@ -9,6 +9,28 @@ script="${args[0]}"
 
 test="$1"
 
+function get_default_image_version {
+    # Find the completion file and parse it to get the default test image version
+    # Returns 'latest' if unable to parse the completion file
+
+    version='latest'
+    completion_file="$(find test -type f -name 'docker.txt' | tail -n 1)"
+    if [[ -f "$completion_file" ]]; then
+        found_version=$(grep 'default' "$completion_file" | cut -d ':' -f 2 | cut -d ' ' -f 1)
+
+        if [[ -n "$found_version" ]]; then
+            version="$found_version"
+        fi
+    fi
+
+    echo "$version"
+}
+
+# Pull correct version of default test image only for certain tests
+if [[ "${script}" =~ (units|sanity|windows|network) ]]; then
+    docker pull "quay.io/ansible/default-test-container:$(get_default_image_version)"
+fi
+
 docker images ansible/ansible
 docker images quay.io/ansible/*
 docker ps
