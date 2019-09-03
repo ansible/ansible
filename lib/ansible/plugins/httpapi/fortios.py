@@ -46,6 +46,7 @@ from ansible.module_utils.basic import to_text
 import urllib
 import json
 import re
+import sys
 
 
 class HttpApi(HttpApiBase):
@@ -65,7 +66,11 @@ class HttpApi(HttpApiBase):
     def login(self, username, password):
         """Call a defined login endpoint to receive an authentication token."""
 
-        data = "username=" + urllib.parse.quote(username) + "&secretkey=" + urllib.parse.quote(password) + "&ajax=1"
+        if sys.version_info[0] >= 3:
+            data = "username=" + urllib.parse.quote(username) + "&secretkey=" + urllib.parse.quote(password) + "&ajax=1"
+        else:
+            data = "username=" + urllib.quote(username) + "&secretkey=" + urllib.quote(password) + "&ajax=1"
+
         dummy, result_data = self.send_request(url='/logincheck', data=data, method='POST')
         if result_data[0] != '1':
             raise Exception('Wrong credentials. Please check')
