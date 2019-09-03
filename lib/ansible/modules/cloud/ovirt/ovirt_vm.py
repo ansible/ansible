@@ -487,21 +487,25 @@ options:
         description:
             - "If I(true) C(kernel_params), C(initrd_path) and C(kernel_path) will persist in virtual machine configuration,
                if I(False) it will be used for run once."
+            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
         type: bool
         version_added: "2.8"
     kernel_path:
         description:
             - Path to a kernel image used to boot the virtual machine.
             - Kernel image must be stored on either the ISO domain or on the host's storage.
+            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
         version_added: "2.3"
     initrd_path:
         description:
             - Path to an initial ramdisk to be used with the kernel specified by C(kernel_path) option.
             - Ramdisk image must be stored on either the ISO domain or on the host's storage.
+            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
         version_added: "2.3"
     kernel_params:
         description:
             - Kernel command line parameters (formatted as string) to be used with the kernel specified by C(kernel_path) option.
+            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
         version_added: "2.3"
     instance_type:
         description:
