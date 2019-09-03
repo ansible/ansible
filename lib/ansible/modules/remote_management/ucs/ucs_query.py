@@ -47,7 +47,7 @@ requirements:
 author:
     - John McDonough (@movinalot)
     - CiscoUcs (@CiscoUcs)
-version_added: "2.9"
+version_added: "2.10"
 '''
 
 EXAMPLES = r'''
