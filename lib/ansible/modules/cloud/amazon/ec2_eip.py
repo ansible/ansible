@@ -273,7 +273,6 @@ def associate_ip_and_device(ec2, module, address, private_ip_address, device_id,
     return {'changed': True}
 
 
-@AWSRetry.jittered_backoff()
 def disassociate_ip_and_device(ec2, module, address, device_id, check_mode, is_instance=True):
     if not address_is_associated_with_device(ec2, module, address, device_id, is_instance):
         return {'changed': False}
@@ -378,7 +377,6 @@ def allocate_address(ec2, module, domain, reuse_existing_ip_allowed, check_mode,
     return result
 
 
-@AWSRetry.jittered_backoff()
 def release_address(ec2, module, address, check_mode):
     """ Release a previously allocated elastic IP address """
 
@@ -393,6 +391,13 @@ def release_address(ec2, module, address, check_mode):
 
 
 @AWSRetry.jittered_backoff()
+def describe_eni_with_backoff(ec2, module, device_id):
+    try:
+        return ec2.describe_network_interfaces(NetworkInterfaceIds=[device_id])
+    except is_boto3_error_code('InvalidNetworkInterfaceID.NotFound') as e:
+        module.fail_json_aws(e, msg="Couldn't get list of network interfaces.")
+
+
 def find_device(ec2, module, device_id, is_instance=True):
     """ Attempt to find the EC2 instance and return it """
 
@@ -409,7 +414,7 @@ def find_device(ec2, module, device_id, is_instance=True):
                 return instances[0]
     else:
         try:
-            interfaces = ec2.describe_network_interfaces(NetworkInterfaceIds=[device_id], aws_retry=True)
+            interfaces = describe_eni_with_backoff(ec2, module, device_id)
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json_aws(e, msg="Couldn't get list of network interfaces.")
         if len(interfaces) == 1:
