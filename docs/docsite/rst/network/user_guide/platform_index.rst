@@ -20,6 +20,7 @@ Some Ansible Network platforms support multiple connection types, privilege esca
    platform_ios
    platform_ironware
    platform_junos
+   platform_meraki
    platform_netvisor
    platform_nos
    platform_nxos
@@ -73,6 +74,8 @@ Settings by Platform
 | Lenovo CNOS       | ``cnos``                | ✓           |         |         | ✓        |
 +-------------------+-------------------------+-------------+---------+---------+----------+
 | Lenovo ENOS       | ``enos``                | ✓           |         |         | ✓        |
++-------------------+-------------------------+-------------+---------+---------+----------+
+| Meraki            | ``meraki``              |             |         |         | ✓        |
 +-------------------+-------------------------+-------------+---------+---------+----------+
 | MikroTik RouterOS | ``routeros``            | ✓           |         |         |          |
 +-------------------+-------------------------+-------------+---------+---------+----------+
