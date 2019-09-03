@@ -66,7 +66,7 @@ options:
     description:
       - Set to true to put vm on hold while creating
     default: False
-    version_added: '2.9'
+    version_added: '2.10'
   instance_ids:
     description:
       - A list of instance ids used for states':' C(absent), C(running), C(rebooted), C(poweredoff)
@@ -178,7 +178,7 @@ options:
       - Create a private persistent copy of the template plus any image defined in DISK, and instantiate that copy.
     default: NO
     type: bool
-    version_added: '2.9'
+    version_added: '2.10'
 author:
     - "Milan Ilic (@ilicmilan)"
     - "Jan Meerkamp (@meerkampdvv)"
