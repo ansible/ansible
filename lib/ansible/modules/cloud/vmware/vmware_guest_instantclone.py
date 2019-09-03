@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vmware_guest_snapshot
+module: vmware_guest_instantclone
 short_description: Manages virtual machines instant clones in vCenter
 description:
     - This module can be used to create instant clones of a given virtual machine.
@@ -29,9 +29,19 @@ requirements:
 options:
    name:
     description:
-    - Name of the new instant clone VM
+    - Name of the new instant clone VM.
     required: True
     type: str
+   source_vm:
+    description:
+    - Name of the source VM to clone from, for best results ensure it is in a frozen state.
+    required: True
+    type: str
+   customvalues:
+    description:
+    - A Key / Value list of custom configuration parameters.
+    required: False
+    type: list
 extends_documentation_fragment: vmware.documentation
 '''
 EXAMPLES = r'''
@@ -53,6 +63,7 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, vmware_argument_spec,
                                          set_vm_power_state, PyVmomi, wait_for_task, TaskError)
 
+
 def deploy_instantclone(module):
     # Ensure required params are given
     if module.params['source_vm'] is None:
@@ -70,7 +81,7 @@ def deploy_instantclone(module):
     if vm_state['instant_clone_frozen'] is None:
         module.module.fail_json(msg='Unable to determine if VM is in a frozen state. Is vSphere running 6.7 or later?')
 
-    # Build VM config object
+    # Build VM config dict
     config = []
     # If customvalues is not empty, fill config
     if len(module.params['customvalues']) != 0:
@@ -153,6 +164,7 @@ def deploy_instantclone(module):
         'instance': vm_facts,
         'clone_method': 'InstantClone_Task'
     }
+
 
 def main():
     argument_spec = vmware_argument_spec()
