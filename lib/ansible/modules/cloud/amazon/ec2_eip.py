@@ -341,7 +341,6 @@ def address_is_associated_with_device(ec2, module, address, device_id, is_instan
     return False
 
 
-@AWSRetry.jittered_backoff()
 def allocate_address(ec2, module, domain, reuse_existing_ip_allowed, check_mode, tag_dict=None, public_ipv4_pool=None):
     """ Allocate a new elastic IP address (when needed) and return it """
     if reuse_existing_ip_allowed:
