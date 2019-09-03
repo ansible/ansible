@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 # -- makefile --
 
-DEB_PYTHON2_MODULE_PACKAGES=ansible
+DEB_PYTHON2_MODULE_PACKAGES=ansible ansible_test
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/python-distutils.mk
