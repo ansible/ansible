@@ -1,0 +1,3 @@
+bugfixes:
+  - jenkins_script - Address Improved CSRF protection (https://github.com/ansible/ansible/issues/61712)
+  - jenkins_plugin - Address Improved CSRF protection (https://github.com/ansible/ansible/issues/61712)
