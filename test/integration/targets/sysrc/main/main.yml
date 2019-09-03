@@ -1,0 +1,201 @@
+---
+- name: Test on FreeBSD VMs
+  when:
+    - ansible_facts.virtualization_type != 'docker'
+    - ansible_facts.distribution == 'FreeBSD'
+  block:
+    ##
+    ## sysrc - /etc/rc.conf manipulation
+    ##
+    - name: add to /etc/rc.conf
+      sysrc:
+        name: sysrc_test
+        value: test
+      register: sysrc_test0
+
+    - name: get file content
+      shell: "cat /etc/rc.conf | egrep -v ^\\#"
+      register: sysrc_content0
+
+    - name: add to /etc/rc.conf
+      sysrc:
+        name: sysrc_test
+        value: test
+      register: sysrc_test0_change
+
+    - name: validate results
+      assert:
+        that:
+          - "sysrc_test0 is changed"
+          - "sysrc_test0_change is not changed"
+          - "'sysrc_test=\"test\"' in sysrc_content0.stdout_lines"
+
+    - name: Remove from /etc/rc.conf
+      sysrc:
+        name: sysrc_test
+        state: absent
+      register: sysrc_test1
+
+    - name: get file content
+      shell: "cat /etc/rc.conf | egrep -v ^\\#"
+      register: sysrc_content1
+
+    - name: Remove from /etc/rc.conf
+      sysrc:
+        name: sysrc_test
+        state: absent
+      register: sysrc_test1_change
+
+    - name: validate results for key removal
+      assert:
+        that:
+          - sysrc_test1 is changed
+          - sysrc_test1_change is not changed
+          - '"sysrc_test1" not in sysrc_content1.stdout_lines'
+
+    ##
+    ## sysrc - append/subtract
+    ##
+    - name: append value (creates)
+      sysrc:
+        name: sysrc_test_append
+        state: append
+        value: test_a
+      register: sysrc_test2_create
+
+    - name: append value (append)
+      sysrc:
+        name: sysrc_test_append
+        state: append
+        value: test_b
+      register: sysrc_test2
+
+    - name: get file content
+      shell: "cat /etc/rc.conf | egrep -v ^\\#"
+      register: sysrc_content2
+
+    - name: append same value
+      sysrc:
+        name: sysrc_test_append
+        state: append
+        value: test_b
+      register: sysrc_test2_change
+
+    - name: validate results for key appending
+      assert:
+        that:
+          - sysrc_test2_create is changed
+          - sysrc_test2 is changed
+          - sysrc_test2_change is not changed
+          - '"sysrc_test_append=\"test_a test_b\"" in sysrc_content2.stdout_lines'
+
+    - name: Subtract value
+      sysrc:
+        name: sysrc_test_append
+        state: subtract
+        value: test_b
+      register: sysrc_test3
+
+    - name: get file content
+      shell: "cat /etc/rc.conf | egrep -v ^\\#"
+      register: sysrc_content3
+
+    - name: Subtract value
+      sysrc:
+        name: sysrc_test_append
+        state: subtract
+        value: test_b
+      register: sysrc_test3_change
+
+    - name: validate results for key subtraction
+      assert:
+        that:
+          - sysrc_test3 is changed
+          - sysrc_test3_change is not changed
+          - '"sysrc_test_append=\"test_a\"" in sysrc_content3.stdout_lines'
+
+    ##
+    ## sysrc - append/subtract with delimiter
+    ##
+    - name: append value (delimiter)
+      sysrc:
+        name: sysrc_test_append
+        state: append
+        delim: ','
+        value: test_b
+      register: sysrc_test4
+
+    - name: get file content
+      shell: "cat /etc/rc.conf | egrep -v ^\\#"
+      register: sysrc_content4
+
+    - name: append value again (delimiter)
+      sysrc:
+        name: sysrc_test_append
+        state: append
+        delim: ','
+        value: test_b
+      register: sysrc_test4_change
+
+    - name: validate results for key appending
+      assert:
+        that:
+          - sysrc_test4 is changed
+          - sysrc_test4_change is not changed
+          - '"sysrc_test_append=\"test_a,test_b\"" in sysrc_content4.stdout_lines'
+
+    - name: subtract value (delimiter)
+      sysrc:
+        name: sysrc_test_append
+        state: subtract
+        delim: ','
+        value: test_b
+      register: sysrc_test5
+
+    - name: get file content
+      shell: "cat /etc/rc.conf | egrep -v ^\\#"
+      register: sysrc_content5
+
+    - name: subtract value again (delimiter)
+      sysrc:
+        name: sysrc_test_append
+        state: subtract
+        delim: ','
+        value: test_b
+      register: sysrc_test5_change
+
+    - name: validate results for key appending
+      assert:
+        that:
+          - sysrc_test5 is changed
+          - sysrc_test5_change is not changed
+          - '"sysrc_test_append=\"test_a\"" in sysrc_content5.stdout_lines'
+
+    ##
+    ## sysrc - uses alternate file
+    ##
+    - name: use alternate file
+      sysrc:
+        name: sysrc_test
+        value: test
+        dest: /tmp/sysrc_file
+      register: sysrc_test6
+
+    - name: assert file exists
+      stat:
+        path: /tmp/sysrc_file
+      register: sysrc_file
+
+    - name: validate file
+      assert:
+        that:
+          - sysrc_test6 is changed
+          - sysrc_file.stat.exists
+
+    # OID-like variables should fail
+    - name: oid style names should fail
+      register: sysrc_no_oid
+      failed_when: '"Name may only contain alpha-numeric and underscore characters" not in sysrc_no_oid.msg'
+      sysrc:
+        name: a.b
+        value: test
