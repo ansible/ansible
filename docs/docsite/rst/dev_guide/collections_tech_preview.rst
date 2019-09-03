@@ -322,20 +322,20 @@ See the `content_collector README <https://github.com/ansible/content_collector>
 Installing collections
 ======================
 
-You can use the ``ansible-galaxy collection install`` command to install a collection on your system. The collection by default is installed at ``/path/ansible_collections/my_namespace/my_collection``. You can optionally add the ``-p`` option to specify an alternate location.
+You can use the ``ansible-galaxy collection install`` command to install a collection on your system. You must specify an installation location using the ``-p`` option.
 
 To install a collection hosted in Galaxy:
 
 .. code-block:: bash
 
-   ansible-galaxy collection install my_namespace.my_collection -p /path
+   ansible-galaxy collection install my_namespace.my_collection -p /collections
 
 
 You can also directly use the tarball from your build:
 
 .. code-block:: bash
 
-   ansible-galaxy collection install my_namespace-my_collection-1.0.0.tar.gz -p ./collections/ansible_collections
+   ansible-galaxy collection install my_namespace-my_collection-1.0.0.tar.gz -p ./collections
 
 .. note::
     The install command automatically appends the path ``ansible_collections`` to the one specified  with the ``-p`` option unless the
