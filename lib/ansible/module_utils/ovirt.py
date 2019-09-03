@@ -254,7 +254,8 @@ def search_by_attributes(service, list_params=None, **kwargs):
     # Check if 'list' method support search(look for search parameter):
     if 'search' in inspect.getargspec(service.list)[0]:
         res = service.list(
-            search=' and '.join('{0}={1}'.format(k, v) for k, v in kwargs.items()),
+            # There must be double quotes around name, because some oVirt resources it's possible to create then with space in name.
+            search=' and '.join('{0}="{1}"'.format(k, v) for k, v in kwargs.items()),
             **list_params
         )
     else:
@@ -281,7 +282,8 @@ def search_by_name(service, name, **kwargs):
     # Check if 'list' method support search(look for search parameter):
     if 'search' in inspect.getargspec(service.list)[0]:
         res = service.list(
-            search="name={name}".format(name=name)
+            # There must be double quotes around name, because some oVirt resources it's possible to create then with space in name.
+            search='name="{name}"'.format(name=name)
         )
     else:
         res = [e for e in service.list() if e.name == name]
