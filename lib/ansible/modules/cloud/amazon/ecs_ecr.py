@@ -183,7 +183,8 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, boto_exception, ec2_argument_spec,
-                                      get_aws_connection_info, compare_policies)
+                                      get_aws_connection_info, compare_policies,
+                                      sort_json_policy_dict)
 from ansible.module_utils.six import string_types
 
 
@@ -296,6 +297,49 @@ class EcsEcr:
             return policy
         else:
             policy = self.get_repository_policy(registry_id, name)
+            if policy:
+                self.skipped = True
+                return policy
+            return None
+
+    def get_lifecycle_policy(self, registry_id, name):
+        try:
+            res = self.ecr.get_lifecycle_policy(
+                repositoryName=name, **build_kwargs(registry_id))
+            text = res.get('lifecyclePolicyText')
+            return text and json.loads(text)
+        except ClientError as err:
+            code = err.response['Error'].get('Code', 'Unknown')
+            if code == 'LifecyclePolicyNotFoundException':
+                return None
+            raise
+
+    def put_lifecycle_policy(self, registry_id, name, policy_text):
+        if not self.check_mode:
+            policy = self.ecr.put_lifecycle_policy(
+                repositoryName=name,
+                lifecyclePolicyText=policy_text,
+                **build_kwargs(registry_id))
+            self.changed = True
+            return policy
+        else:
+            self.skipped = True
+            if self.get_repository(registry_id, name) is None:
+                printable = name
+                if registry_id:
+                    printable = '{0}:{1}'.format(registry_id, name)
+                raise Exception(
+                    'could not find repository {0}'.format(printable))
+            return
+
+    def delete_lifecycle_policy(self, registry_id, name):
+        if not self.check_mode:
+            policy = self.ecr.delete_lifecycle_policy(
+                repositoryName=name, **build_kwargs(registry_id))
+            self.changed = True
+            return policy
+        else:
+            policy = self.get_lifecycle_policy(registry_id, name)
             if policy:
                 self.skipped = True
                 return policy
