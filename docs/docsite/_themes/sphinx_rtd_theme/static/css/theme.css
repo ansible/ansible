@@ -3439,9 +3439,8 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
 }
 }
 @media screen and (min-width: 1100px) {
-/* Ansible -remove rightside gray bar
 .wy-nav-content-wrap {
-    background: rgba(0, 0, 0, 0.05); */
+    background: rgba(0, 0, 0, 0.05);
 }
 .wy-nav-content {
     margin: 0;

@@ -186,12 +186,6 @@ table.documentation-table .value-required {
     position: relative;
 }
 
-/* Ansible -remove rightside gray bar
-@media screen and (min-width: 1100px) {
-  .wy-nav-content-wrap {
-    background: rgba(0, 0, 0, 0);
-} */
-
 /* Ansible - remove so highlight indenting is correct  */
 .rst-content .highlighted {
     padding: 0 0px;
