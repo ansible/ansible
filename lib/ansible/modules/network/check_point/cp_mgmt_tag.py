@@ -43,7 +43,7 @@ options:
   tags:
     description:
       - Collection of tag identifiers.
-     Pype: list
+    type: list
   color:
     description:
       - Color of the object. Should be one of existing colors.
