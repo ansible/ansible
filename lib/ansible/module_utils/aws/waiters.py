@@ -162,11 +162,6 @@ ec2_data = {
                     "argument": "VpnGateways[0].State == 'available'",
                     "state": "success"
                 },
-                {
-                    "matcher": "error",
-                    "expected": False,
-                    "state": "retry"
-                },
             ]
         },
     }
