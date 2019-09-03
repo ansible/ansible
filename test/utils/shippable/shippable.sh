@@ -17,6 +17,15 @@ for container in $(docker ps --format '{{.Image}} {{.ID}}' | grep -v '^drydock/'
     docker rm -f "${container}" || true  # ignore errors
 done
 
+for i in network windows sanity; do
+    if [[ "${script}" == "${i}" ]]; then
+        # Prefetch the default test container to avoid any
+        # slow down during the test execution
+        docker pull quay.io/ansible/default-test-container
+        break
+    fi
+done
+
 docker ps
 
 if [ -d /home/shippable/cache/ ]; then
