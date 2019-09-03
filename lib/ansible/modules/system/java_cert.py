@@ -252,6 +252,9 @@ def import_cert_path(module, executable, path, keystore_path, keystore_pass, ali
     if trust_cacert:
         import_cmd = import_cmd + " -trustcacerts"
 
+    if trust_cacert:
+        import_cmd = import_cmd + " -trustcacerts"
+
     if module.check_mode:
         module.exit_json(changed=True)
 
