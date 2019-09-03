@@ -261,10 +261,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_config_context(self, host):
         try:
-            if self.config_context:
-                url = self.api_endpoint + "/api/dcim/devices/" + str(host["id"])
-                device_lookup = self._fetch_information(url)
-                return [device_lookup["config_context"]]
+            return [host["config_context"]]
         except Exception:
             return
 
@@ -378,8 +375,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         if self.query_filters:
             query_parameters.extend(filter(lambda x: x,
                                            map(self.validate_query_parameters, self.query_filters)))
-        self.device_url = self.api_endpoint + "/api/dcim/devices/?" + urlencode(query_parameters)
-        self.virtual_machines_url = self.api_endpoint + "/api/virtualization/virtual-machines/?" + urlencode(query_parameters)
+        if self.config_context:
+            self.device_url = self.api_endpoint + "/api/dcim/devices/?" + urlencode(query_parameters)
+            self.virtual_machines_url = self.api_endpoint + "/api/virtualization/virtual-machines/?" + urlencode(query_parameters)
+        else:
+            self.device_url = self.api_endpoint + "/api/dcim/devices/?" + urlencode(query_parameters) + "&exclude=config_context"
+            self.virtual_machines_url = self.api_endpoint + "/api/virtualization/virtual-machines/?" + urlencode(query_parameters) + "&exclude=config_context"
 
     def fetch_hosts(self):
         return chain(
