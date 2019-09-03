@@ -32,7 +32,7 @@ extends_documentation_fragment:
 options:
   api_token:
     description:
-      - Gitlab token for logging in.
+      - GitLab token for logging in.
     version_added: "2.8"
     type: str
     aliases:
@@ -105,7 +105,7 @@ options:
     description:
       - Secret token to validate hook messages at the receiver.
       - If this is present it will always result in a change as it cannot be retrieved from GitLab.
-      - Will show up in the X-Gitlab-Token HTTP request header
+      - Will show up in the X-GitLab-Token HTTP request header
     required: false
     type: str
 '''
@@ -153,7 +153,7 @@ result:
   type: dict
 
 error:
-  description: the error message returned by the Gitlab API
+  description: the error message returned by the GitLab API
   returned: failed
   type: str
   sample: "400: path is already in use"
@@ -365,10 +365,10 @@ def main():
                                         private_token=gitlab_token, api_version=4)
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
-            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s. \
+            GitLab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
 
     gitlab_hook = GitLabHook(module, gitlab_instance)
 
