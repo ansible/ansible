@@ -459,7 +459,9 @@ def create_single_device(module, packet_conn, hostname):
         facility=facility,
         operating_system=operating_system,
         userdata=user_data,
-        locked=locked)
+        locked=locked,
+        ipxe_script_url=ipxe_script_url,
+        always_pxe=always_pxe)
     return device
 
 
