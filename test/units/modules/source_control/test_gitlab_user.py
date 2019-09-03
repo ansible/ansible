@@ -25,7 +25,7 @@ try:
                          resp_get_member, resp_get_group, resp_add_member,
                          resp_update_member, resp_get_member)
 
-    # Gitlab module requirements
+    # GitLab module requirements
     if python_version_match_requirement():
         from gitlab.v4.objects import User
 except ImportError:
