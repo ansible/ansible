@@ -14,8 +14,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: java_cert
-version_added: '2.4'
-short_description: Uses keytool to import/remove key from java keystore(cacerts)
+version_added: '2.3'
+short_description: Uses keytool to import/remove key from java keystore (cacerts)
 description:
   - This is a wrapper module around keytool, which can be used to import/remove
     certificates from a given java keystore.
@@ -39,11 +39,13 @@ options:
   cert_alias:
     description:
       - Imported certificate alias.
+      - The alias is used when checking for the presence of a certificate in the keystore.
+    type: str
   trust_cacert:
     description:
-      - Trust imported cert as CAcert
+      - Trust imported cert as CAcert.
     default: False
-    version_added: "2.6"
+    version_added: "2.10"
   pkcs12_path:
     description:
       - Local path to load PKCS12 keystore from.
@@ -101,6 +103,7 @@ EXAMPLES = r'''
     keystore_path: /usr/lib/jvm/jre7/lib/security/cacerts
     keystore_pass: changeit
     state: present
+
 - name: Remove certificate with given alias from a keystore
   java_cert:
     cert_url: google.com
@@ -108,6 +111,7 @@ EXAMPLES = r'''
     keystore_pass: changeit
     executable: /usr/lib/jvm/jre7/bin/keytool
     state: absent
+
 - name: Import trusted CA from SSL certificate
   java_cert:
     cert_path: /opt/certs/rootca.crt
@@ -117,6 +121,7 @@ EXAMPLES = r'''
     state: present
     cert_alias: LE_RootCA
     trust_cacert: True
+
 - name: Import SSL certificate from google.com to a keystore, create it if it doesn't exist
   java_cert:
     cert_url: google.com
@@ -124,6 +129,7 @@ EXAMPLES = r'''
     keystore_pass: changeit
     keystore_create: yes
     state: present
+
 - name: Import a pkcs12 keystore with a specified alias, create it if it doesn't exist
   java_cert:
     pkcs12_path: "/tmp/importkeystore.p12"
@@ -152,11 +158,13 @@ msg:
   returned: success
   type: str
   sample: "Module require existing keystore at keystore_path '/tmp/test/cacerts'"
+
 rc:
   description: Keytool command execution return value.
   returned: success
   type: int
   sample: "0"
+
 cmd:
   description: Executed command to get action done.
   returned: success
@@ -220,9 +228,6 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
     if trust_cacert:
         import_cmd = import_cmd + " -trustcacerts"
 
-    if module.check_mode:
-        module.exit_json(changed=True)
-
     # Fetch SSL certificate from remote host.
     (_, fetch_out, _) = module.run_command(fetch_cmd, check_rc=True)
 
@@ -243,7 +248,6 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
 def import_cert_path(module, executable, path, keystore_path, keystore_pass, alias, keystore_type, trust_cacert):
     ''' Import certificate from path into keystore located on
         keystore_path as alias '''
-
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
                   "-storepass '%s' -file '%s' -alias '%s' %s") % (executable, keystore_path,
                                                                   keystore_pass, path, alias,
@@ -251,12 +255,6 @@ def import_cert_path(module, executable, path, keystore_path, keystore_pass, ali
 
     if trust_cacert:
         import_cmd = import_cmd + " -trustcacerts"
-
-    if trust_cacert:
-        import_cmd = import_cmd + " -trustcacerts"
-
-    if module.check_mode:
-        module.exit_json(changed=True)
 
     # Use local certificate from local path and import it to a java keystore
     (import_rc, import_out, import_err) = module.run_command(import_cmd,
