@@ -23,7 +23,7 @@ try:
                          resp_get_group, resp_get_project_by_name, resp_create_project,
                          resp_get_project, resp_delete_project, resp_get_user)
 
-    # Gitlab module requirements
+    # GitLab module requirements
     if python_version_match_requirement():
         from gitlab.v4.objects import Project
 except ImportError:

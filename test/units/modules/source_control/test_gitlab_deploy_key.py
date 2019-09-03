@@ -23,7 +23,7 @@ try:
                          resp_get_project, resp_find_project_deploy_key,
                          resp_create_project_deploy_key, resp_delete_project_deploy_key)
 
-    # Gitlab module requirements
+    # GitLab module requirements
     if python_version_match_requirement():
         from gitlab.v4.objects import ProjectKey
 except ImportError:

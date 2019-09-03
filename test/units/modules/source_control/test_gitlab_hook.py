@@ -22,7 +22,7 @@ try:
                          resp_get_project, resp_find_project_hook,
                          resp_create_project_hook, resp_delete_project_hook)
 
-    # Gitlab module requirements
+    # GitLab module requirements
     if python_version_match_requirement():
         from gitlab.v4.objects import ProjectHook
 except ImportError:
