@@ -379,10 +379,12 @@ def map_params_to_obj(module):
 
 
 def get_value(arg, config, module):
-    extra_arg_regex = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(arg), re.M)
     value = ''
     if arg in config:
-        value = extra_arg_regex.search(config).group('value')
+        extra_arg_regex = re.compile(r'(?:{0}\s)(?P<value>.*)'.format(arg), re.M)
+        command = extra_arg_regex.search(config)
+        if command:
+            value = command.group('value')
     return value
 
 
