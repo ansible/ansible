@@ -206,19 +206,38 @@ class L3_Interfaces(ConfigBase):
 
     def verify_diff_again(self, want, have):
         """
-        Verify the IPV4 difference again when sometimes due to
-        difference in order, set difference may result into difference,
+        Verify the IPV4 difference again as sometimes due to
+        change in order of set, set difference may result into change,
         when there's actually no difference between want and have
         :param want: want_dict IPV4
         :param have: have_dict IPV4
         :return: diff
         """
-        for each in want[0]:
-            diff = True
-            for every in have[0]:
-                if every == each:
-                    diff = False
+        diff = False
+        for each in want:
+            each_want = dict(each)
+            for every in have:
+                every_have = dict(every)
+                if each_want.get('address') != every_have.get('address') and \
+                        each_want.get('secondary') != every_have.get('secondary') and \
+                        len(each_want.keys()) == len(every_have.keys()):
+                    diff = True
                     break
+                elif each_want.get('dhcp_client') != every_have.get('dhcp_client') and each_want.get(
+                        'dhcp_client') is not None:
+                    diff = True
+                    break
+                elif each_want.get('dhcp_hostname') != every_have.get('dhcp_hostname') and each_want.get(
+                        'dhcp_hostname') is not None:
+                    diff = True
+                    break
+                elif each_want.get('address') != every_have.get('address') and len(each_want.keys()) == len(
+                        every_have.keys()):
+                    diff = True
+                    break
+            if diff:
+                break
+
         return diff
 
     def _set_config(self, want, have, module):
