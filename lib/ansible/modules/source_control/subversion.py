@@ -170,7 +170,7 @@ class Subversion(object):
         '''Change working directory's repo.'''
         # switch to ensure we are pointing at correct repo.
         # it also updates!
-        output = self._exec(["switch", self.repo, self.dest])
+        output = self._exec(["switch", "--revision", self.revision, self.repo, self.dest])
         for line in output:
             if re.search(r'^[ABDUCGE]\s', line):
                 return True
@@ -217,7 +217,7 @@ class Subversion(object):
 
     def needs_update(self):
         curr, url = self.get_revision()
-        out2 = '\n'.join(self._exec(["info", "-r", "HEAD", self.dest]))
+        out2 = '\n'.join(self._exec(["info", "-r", self.revision, self.dest]))
         head = re.search(r'^Revision:.*$', out2, re.MULTILINE).group(0)
         rev1 = int(curr.split(':')[1].strip())
         rev2 = int(head.split(':')[1].strip())
