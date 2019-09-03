@@ -37,7 +37,7 @@ options:
         or the size of the CIDR block.
     default: False
     type: bool
-    version_added: '2.9'
+    version_added: '2.10'
   purge_cidrs:
     description:
       - Remove CIDRs that are associated with the VPC and are not specified in C(cidr_block).
@@ -426,9 +426,21 @@ def main():
         if len(cidr_block) > 1:
             for cidr in to_add:
                 changed = True
-                connection.associate_vpc_cidr_block(CidrBlock=cidr, VpcId=vpc_id)
+                try:
+                    connection.associate_vpc_cidr_block(CidrBlock=cidr, VpcId=vpc_id)
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    module.fail_json_aws(e, "Unable to associate CIDR {0}.".format(ipv6_cidr))
         if ipv6_cidr:
-            connection.associate_vpc_cidr_block(AmazonProvidedIpv6CidrBlock=ipv6_cidr, VpcId=vpc_id)
+            if 'Ipv6CidrBlockAssociationSet' in vpc_obj.keys():
+                module.warn("Only one IPv6 CIDR is permitted per VPC, {0} already has CIDR {1}".format(
+                    vpc_id,
+                    vpc_obj['Ipv6CidrBlockAssociationSet'][0]['Ipv6CidrBlock']))
+            else:
+                try:
+                    connection.associate_vpc_cidr_block(AmazonProvidedIpv6CidrBlock=ipv6_cidr, VpcId=vpc_id)
+                    changed = True
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    module.fail_json_aws(e, "Unable to associate CIDR {0}.".format(ipv6_cidr))
 
         if purge_cidrs:
             for association_id in to_remove:
