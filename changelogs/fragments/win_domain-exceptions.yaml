@@ -1,0 +1,2 @@
+bugfixes:
+- win_domain - Set reboot required dependent on exception and add exception id to error message
