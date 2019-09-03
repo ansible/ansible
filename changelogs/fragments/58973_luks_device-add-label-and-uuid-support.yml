@@ -1,0 +1,2 @@
+minor_changes:
+    - luks_device - added support to use UUIDs, and labels with LUKS2 containers
