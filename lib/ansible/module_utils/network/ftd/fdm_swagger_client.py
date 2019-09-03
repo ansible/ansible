@@ -78,6 +78,10 @@ class QueryParams:
     FILTER = 'filter'
 
 
+class PathParams:
+    OBJ_ID = 'objId'
+
+
 def _get_model_name_from_url(schema_ref):
     path = schema_ref.split('/')
     return path[len(path) - 1]
@@ -515,9 +519,9 @@ class FdmSwaggerValidator:
     def _is_enum(self, model):
         return self._is_string_type(model) and PropName.ENUM in model
 
-    def _check_enum(self, status, model, data, path):
-        if data is not None and data not in model[PropName.ENUM]:
-            self._add_invalid_type_report(status, path, '', PropName.ENUM, data)
+    def _check_enum(self, status, model, value, path):
+        if value is not None and value not in model[PropName.ENUM]:
+            self._add_invalid_type_report(status, path, '', PropName.ENUM, value)
 
     def _add_invalid_type_report(self, status, path, prop_name, expected_type, actually_value):
         status[PropName.INVALID_TYPE].append({

@@ -39,9 +39,16 @@ ARBITRARY_RESPONSE = {'status': 'Arbitrary request sent'}
 
 
 class TestUpsertOperationUnitTests(unittest.TestCase):
-    def setUp(self):
+
+    @mock.patch.object(BaseConfigurationResource, '_fetch_system_info')
+    def setUp(self, fetch_system_info_mock):
         self._conn = mock.MagicMock()
         self._resource = BaseConfigurationResource(self._conn)
+        fetch_system_info_mock.return_value = {
+            'databaseInfo': {
+                'buildVersion': '6.3.0'
+            }
+        }
 
     def test_get_operation_name(self):
         operation_a = mock.MagicMock()
@@ -856,10 +863,17 @@ class TestUpsertOperationFunctionalTests(object):
 
     @staticmethod
     def _resource_execute_operation(params, connection):
-        resource = BaseConfigurationResource(connection)
-        op_name = params['operation']
 
-        resp = resource.execute_operation(op_name, params)
+        with mock.patch.object(BaseConfigurationResource, '_fetch_system_info') as fetch_system_info_mock:
+            fetch_system_info_mock.return_value = {
+                'databaseInfo': {
+                    'buildVersion': '6.3.0'
+                }
+            }
+            resource = BaseConfigurationResource(connection)
+            op_name = params['operation']
+
+            resp = resource.execute_operation(op_name, params)
 
         return resp
 
