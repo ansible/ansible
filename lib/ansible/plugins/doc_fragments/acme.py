@@ -42,7 +42,7 @@ options:
       - "Content of the ACME account RSA or Elliptic Curve key."
       - "Mutually exclusive with C(account_key_src)."
       - "Required if C(account_key_src) is not used."
-      - "I(Warning): the content will be written into a temporary file, which will
+      - "*Warning:* the content will be written into a temporary file, which will
          be deleted by Ansible when the module completes. Since this is an
          important private key — it can be used to change the account key,
          or to revoke your certificates without knowing their private keys
@@ -65,8 +65,8 @@ options:
       - "The ACME version of the endpoint."
       - "Must be 1 for the classic Let's Encrypt ACME endpoint, or 2 for the
          new standardized ACME v2 endpoint."
-      - "The default value is 1. Note that in Ansible 2.14, this option I(will
-         be required) and will no longer have a default."
+      - "The default value is 1. Note that in Ansible 2.14, this option *will
+         be required* and will no longer have a default."
       - "Please also note that we will deprecate ACME v1 support eventually."
     type: int
     choices: [ 1, 2 ]
@@ -79,21 +79,21 @@ options:
          server (for the ACME v1 protocol). This will create technically correct,
          but untrusted certificates."
       - "The default value is U(https://acme-staging.api.letsencrypt.org/directory).
-         Note that in Ansible 2.14, this option I(will be required) and will no longer
+         Note that in Ansible 2.14, this option *will be required* and will no longer
          have a default."
       - "For Let's Encrypt, all staging endpoints can be found here:
          U(https://letsencrypt.org/docs/staging-environment/)"
       - "For Let's Encrypt, the production directory URL for ACME v1 is
          U(https://acme-v01.api.letsencrypt.org/directory), and the production
          directory URL for ACME v2 is U(https://acme-v02.api.letsencrypt.org/directory)."
-      - "I(Warning): So far, the module has only been tested against Let's Encrypt
+      - "*Warning:* So far, the module has only been tested against Let's Encrypt
          (staging and production) and against the
          L(Pebble testing server,https://github.com/letsencrypt/Pebble)."
     type: str
   validate_certs:
     description:
       - Whether calls to the ACME directory will validate TLS certificates.
-      - "I(Warning): Should I(only ever) be set to C(no) for testing purposes,
+      - "*Warning:* Should *only ever* be set to C(no) for testing purposes,
          for example when testing against a local Pebble server."
     type: bool
     default: yes
