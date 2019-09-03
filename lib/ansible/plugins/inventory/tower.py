@@ -65,6 +65,12 @@ DOCUMENTATION = '''
             type: bool
             default: False
             version_added: "2.8"
+        filters:
+          description:
+              - A dictionary of key and value pairs passed in query filters in request to obtain hosts.
+              - See the API documentation https://docs.ansible.com/ansible-tower/latest/html/towerapi/api_ref.html#/Inventories/Inventories_inventories_hosts_list for syntax.
+          type: dict
+          default: {}
 '''
 
 EXAMPLES = '''
@@ -81,6 +87,13 @@ inventory_id: the_ID_of_targeted_ansible_tower_inventory
 # Then you can run the following command.
 # If some of the arguments are missing, Ansible will attempt to read them from environment variables.
 # ansible-inventory -i /path/to/tower_inventory.yml --list
+
+# Example using filters
+plugin: tower
+inventory_id: the_ID_of_targeted_ansible_tower_inventory
+filters:
+    name__startswith: web
+    group__name: dev
 
 # Example for reading from environment variables:
 
@@ -169,9 +182,28 @@ class InventoryModule(BaseInventoryPlugin):
             if group_name != '_meta':
                 self.inventory.add_group(group_name)
 
+        # If user gave filters option, perform requests to filter the hosts
+        filters = self.get_option('filters')
+        if filters:
+            filter_string = '&'.join(['{}={}'.format(k, v) for k, v in filters.items()])
+            filter_url = '/api/v2/inventories/{inv_id}/hosts/?{filter}'.format(
+                inv_id=inventory_id, filter=filter_string
+            )
+            include_names = set()
+            next_url = urljoin(tower_host, filter_url)
+            while next_url:
+                r = self.make_request(request_handler, next_url)
+                for host_data in r['results']:
+                    include_names.add(host_data['name'])
+                next_url = r['next']
+        else:
+            include_names = None
+
         # Then, create all hosts and add the host vars.
         all_hosts = inventory['_meta']['hostvars']
         for host_name, host_vars in six.iteritems(all_hosts):
+            if (include_names is not None) and (host_name not in include_names):
+                continue
             self.inventory.add_host(host_name)
             for var_name, var_value in six.iteritems(host_vars):
                 self.inventory.set_variable(host_name, var_name, var_value)
