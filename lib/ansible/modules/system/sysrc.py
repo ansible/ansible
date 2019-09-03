@@ -5,49 +5,62 @@
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-DOCUMENTATION = '''
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
+
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
+
+DOCUMENTATION = r'''
 ---
+author:
+    - David Lundgren (@dlundgren)
 module: sysrc
 short_description: Manage FreeBSD using sysrc
-requirements: []
-version_added: 2.9
-author: David Lundgren
+version_added: '2.10'
 description:
     - Manages /etc/rc.conf for FreeBSD
 options:
     name:
-        required: true
         description:
             - Name of variable in $dest to manage.
-            - NOTE: cannot use . (periods) in the name as sysrc doesn't support OID style names
+        type: str
+        required: true
     value:
-        required: false
         description:
             - The value if "present"
+        type: str
     state:
-        required: false
-        default: "present"
-        choices: [ present, absent, append, subtract ]
         description:
             - Whether the var should be present or absent in $dest.
             - append/subtract will add or remove the value from a list.
+        type: str
+        default: "present"
+        choices: [ present, absent, append, subtract ]
     dest:
-        required: false
-        default: "/etc/rc.conf"
         description:
             - What file should be operated on
+        type: str
+        default: "/etc/rc.conf"
     delim:
-        required: false
-        default: " "
         description:
             - Delimiter used in append/subtract mode
+        default: " "
+        type: str
     jail:
-        required: false
         description:
             - Name or ID of the jail to operate on
+        required: false
+        type: str
+notes:
+  - The C(name) cannot use . (periods) as sysrc doesn't support OID style names
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 ---
 # enable mysql in the /etc/rc.conf
 - name: Configure mysql pid file
@@ -78,19 +91,27 @@ EXAMPLES = '''
     jail: www
 '''
 
-import re
+RETURN = r'''
+changed:
+  description: Return changed for sysrc actions as true or false.
+  returned: always
+  type: bool
+'''
+
 from ansible.module_utils.basic import AnsibleModule
+import re
+
 
 class sysrc(object):
     def __init__(self, module, name, value, dest, delim, jail):
-        self.module  = module
-        self.name    = name
+        self.module = module
+        self.name = name
         self.changed = False
-        self.value   = value
-        self.dest    = dest
-        self.delim   = delim
-        self.jail    = jail
-        self.sysrc   = module.get_bin_path('sysrc', True)
+        self.value = value
+        self.dest = dest
+        self.delim = delim
+        self.jail = jail
+        self.sysrc = module.get_bin_path('sysrc', True)
 
     def has_unknown_variable(self, out, err):
         # newer versions of sysrc use stderr instead of stdout
@@ -120,7 +141,7 @@ class sysrc(object):
 
         self.module._verbosity = 5
         (rc, out, err) = self.run_sysrc("%s=%s" % (self.name, self.value))
-        if out.find("%s:" % (self.name)) == 0 and re.search("\-\> %s$" % re.escape(self.value), out) is not None:
+        if out.find("%s:" % self.name) == 0 and re.search("-> %s$" % re.escape(self.value), out) is not None:
             self.changed = True
             return True
         else:
@@ -145,7 +166,7 @@ class sysrc(object):
 
         setstring = '%s+=%s%s' % (self.name, self.delim, self.value)
         (rc, out, err) = self.run_sysrc(setstring)
-        if out.find("%s:" % (self.name)) == 0:
+        if out.find("%s:" % self.name) == 0:
             values = out.split(' -> ')[1].strip().split(self.delim)
             if self.value in values:
                 self.changed = True
@@ -162,7 +183,7 @@ class sysrc(object):
 
         setstring = '%s-=%s%s' % (self.name, self.delim, self.value)
         (rc, out, err) = self.run_sysrc(setstring)
-        if out.find("%s:" % (self.name)) == 0:
+        if out.find("%s:" % self.name) == 0:
             values = out.split(' -> ')[1].strip().split(self.delim)
             if self.value in values:
                 return False
@@ -190,51 +211,37 @@ class sysrc(object):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name  = dict(
-                required = True
-            ),
-            value = dict(
-                default = None
-            ),
-            state = dict(
-                default = 'present',
-                choices = [ 'present', 'absent', 'append', 'subtract' ]
-            ),
-            dest  = dict(
-                default = '/etc/rc.conf'
-            ),
-            delim = dict(
-                default = ' '
-            ),
-            jail = dict(
-                default = None
-            ),
+        argument_spec=dict(
+            name=dict(type='str', required=True),
+            value=dict(type='str', default=None),
+            state=dict(type='str', default='present', choices=['present', 'absent', 'append', 'subtract']),
+            dest=dict(type='str', default='/etc/rc.conf'),
+            delim=dict(type='str', default=' '),
+            jail=dict(type='str', default=None),
         ),
         supports_check_mode=True,
     )
 
-    name   = module.params.pop('name')
+    name = module.params.pop('name')
     # OID style names are not supported
     if not re.match('^[a-zA-Z0-9_]+$', name):
         module.fail_json(
             msg="Name may only contain alpha-numeric and underscore characters"
         )
 
-    value  = module.params.pop('value')
-    state  = module.params.pop('state')
-    dest   = module.params.pop('dest')
-    delim  = module.params.pop('delim')
-    jail   = module.params.pop('jail')
-    result = {
-        'name'  : name,
-        'stated' : state,
-        'state' : state,
-        'value' : value,
-        'dest'  : dest,
-        'delim' : delim,
-        'jail'  : jail,
-    }
+    value = module.params.pop('value')
+    state = module.params.pop('state')
+    dest = module.params.pop('dest')
+    delim = module.params.pop('delim')
+    jail = module.params.pop('jail')
+    result = dict(
+        name=name,
+        state=state,
+        value=value,
+        dest=dest,
+        delim=delim,
+        jail=jail
+    )
 
     rcValue = sysrc(module, name, value, dest, delim, jail)
 
@@ -260,4 +267,6 @@ def main():
 
     module.exit_json(**result)
 
-main()
+
+if __name__ == '__main__':
+    main()
