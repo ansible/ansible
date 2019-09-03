@@ -286,10 +286,10 @@ class JenkinsPlugin(object):
         self.timeout = self.params['timeout']
 
         # Crumb
-        self.crumb = {}
+        self.crumb_headers = {}
 
         if self._csrf_enabled():
-            self.crumb = self._get_crumb()
+            self.crumb_headers = self._get_crumb_headers()
 
         # Get list of installed plugins
         self._get_installed_plugins()
@@ -308,20 +308,40 @@ class JenkinsPlugin(object):
     def _get_json_data(self, url, what, **kwargs):
         # Get the JSON data
         r = self._get_url_data(url, what, **kwargs)
+        return self._response_to_json(r)
 
+    def _response_to_json(self, response):
         # Parse the JSON data
         try:
-            json_data = json.loads(to_native(r.read()))
+            json_data = json.loads(to_native(response.read()))
         except Exception as e:
             self.module.fail_json(
-                msg="Cannot parse %s JSON data." % what,
+                msg="Cannot parse JSON data.",
                 details=to_native(e))
 
         return json_data
 
-    def _get_url_data(
+    def _get_url_data(self, *args, **kwargs):
+        """
+        This method is merely a wrapper for `_get_url_data_and_info`,
+        please see that method documentation for more details.
+        """
+        response, info = self._get_url_data_and_info(*args, **kwargs)
+        return response
+
+    def _get_url_data_and_info(
             self, url, what=None, msg_status=None, msg_exception=None,
             **kwargs):
+        """
+        This method was added because with recent versions of Jenkins we
+        sometimes need response metadata (in addition to response
+        payload).
+        To minimize the scope of changes, we made `_get_url_data` a
+        wrapper of this method that keeps returning just response object
+        to its callers, but maybe in the future these two methods should
+        be merged.
+
+        """
         # Compose default messages
         if msg_status is None:
             msg_status = "Cannot get %s" % what
@@ -332,22 +352,26 @@ class JenkinsPlugin(object):
         # Get the URL data
         try:
             response, info = fetch_url(
-                self.module, url, timeout=self.timeout, **kwargs)
+                self.module, url, timeout=self.timeout,
+                headers=self.crumb_headers, **kwargs)
 
             if info['status'] != 200:
                 self.module.fail_json(msg=msg_status, details=info['msg'])
         except Exception as e:
             self.module.fail_json(msg=msg_exception, details=to_native(e))
 
-        return response
+        return response, info
 
-    def _get_crumb(self):
-        crumb_data = self._get_json_data(
+    def _get_crumb_headers(self):
+        response, info = self._get_url_data_and_info(
             "%s/%s" % (self.url, "crumbIssuer/api/json"), 'Crumb')
+        crumb_data = self._response_to_json(response)
+        cookies_data = info.get('set-cookie', '')
 
         if 'crumbRequestField' in crumb_data and 'crumb' in crumb_data:
             ret = {
-                crumb_data['crumbRequestField']: crumb_data['crumb']
+                crumb_data['crumbRequestField']: crumb_data['crumb'],
+                'Cookie': cookies_data
             }
         else:
             self.module.fail_json(
@@ -405,7 +429,6 @@ class JenkinsPlugin(object):
                 script_data = {
                     'script': install_script
                 }
-                script_data.update(self.crumb)
                 data = urlencode(script_data)
 
                 # Send the installation request
@@ -691,14 +714,12 @@ class JenkinsPlugin(object):
     def _pm_query(self, action, msg):
         url = "%s/pluginManager/plugin/%s/%s" % (
             self.params['url'], self.params['name'], action)
-        data = urlencode(self.crumb)
 
         # Send the request
         self._get_url_data(
             url,
             msg_status="Plugin not found. %s" % url,
-            msg_exception="%s has failed." % msg,
-            data=data)
+            msg_exception="%s has failed." % msg)
 
 
 def main():
