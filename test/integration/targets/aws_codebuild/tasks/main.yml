@@ -16,13 +16,6 @@
           region: "{{ aws_region }}"
       no_log: yes
 
-    # IAM role names have to be less than 64 characters
-    # The 8 digit identifier at the end of resource_prefix helps determine during
-    # which test something was created and allows tests to be run in parallel
-    - name: set the role name
-      set_fact:
-        iam_role_name: "ansible-test-sts-{{ resource_prefix | regex_search('([0-9]+)$') }}-codebuild-service-role"
-
     - name: create IAM role needed for CodeBuild
       iam_role:
         name: "{{ iam_role_name }}"
