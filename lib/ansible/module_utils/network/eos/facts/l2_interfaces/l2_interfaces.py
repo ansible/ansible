@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
 The eos l2_interfaces fact class
 It is in this file the configuration is collected from the device
@@ -39,9 +40,9 @@ class L2_interfacesFacts(object):
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for l2_interfaces
 
-        :param module: the module instance
         :param connection: the device connection
-        :param data: previously collected conf
+        :param ansible_facts: Facts dictionary
+        :param data: previously collected configuration
         :rtype: dictionary
         :returns: facts
         """
