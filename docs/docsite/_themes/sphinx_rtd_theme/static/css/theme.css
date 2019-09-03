@@ -3267,8 +3267,7 @@ html {
     background: #fcfcfc;
 }
 .wy-grid-for-nav {
-  /* Ansible - changed to relative to remove extraneous side scroll bar */
-    position: relative;
+    position: absolute;
     width: 100%;
     height: 100%}
 .wy-nav-side {
@@ -3284,8 +3283,6 @@ html {
     color: #9b9b9b;
     background: #343131;
     z-index: 200;
-    /* Ansible - keeps left-nav from overwriting Documentation title */
-    top: 45px;
 }
 .wy-side-scroll {
     width: 320px;
@@ -3442,9 +3439,10 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
 }
 }
 @media screen and (min-width: 1100px) {
-/* Ansible -remove rightside gray bar    .wy-nav-content-wrap {
-    background: rgba(0, 0, 0, 0.05);
-} */
+/* Ansible -remove rightside gray bar
+.wy-nav-content-wrap {
+    background: rgba(0, 0, 0, 0.05); */
+}
 .wy-nav-content {
     margin: 0;
     background: #fcfcfc;
@@ -3770,7 +3768,6 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
     background: #F1C40F;
     display: inline-block;
     font-weight: bold;
-  /* Ansible - remove so highlight indenting is correct  padding: 0 6px; */
 }
 .rst-content .footnote-reference, .rst-content .citation-reference {
     vertical-align: baseline;
