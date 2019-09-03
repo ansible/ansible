@@ -7,7 +7,7 @@ __metaclass__ = type
 DOCUMENTATION = r'''
     name: yc_compute
     plugin_type: inventory
-    short_description: Yandex.Cloud Compute inventory source 
+    short_description: Yandex.Cloud Compute inventory source
     requirements:
       - yandexcloud==0.10.1
     extends_documentation_fragment:
@@ -33,13 +33,13 @@ DOCUMENTATION = r'''
       service_account_file:
         description:
           - The path of a Service Account JSON file. Must be set if auth_kind is "serviceaccountfile".
-          - "Service Account JSON file can be created by C(yc) tool:" 
+          - "Service Account JSON file can be created by C(yc) tool:"
           - C(yc iam key create --service-account-name my_service_account --output my_service_account.json)
         type: path
         env:
           - name: YC_ANSIBLE_SERVICE_ACCOUNT_FILE
       service_account_contents:
-        description: Similar to service_account_file. Should contain raw contents of the Service Account JSON file. 
+        description: Similar to service_account_file. Should contain raw contents of the Service Account JSON file.
         type: string
         env:
           - name: YC_ANSIBLE_SERVICE_ACCOUNT_CONTENTS
@@ -191,7 +191,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 return boolean(self.templar.template(conditional))
             except Exception as e:
                 if strict:
-                    raise AnsibleParserError('Could not apply host filter "{}": {}'.format(rule, to_native(e)))
+                    raise AnsibleParserError('Could not apply host filter "{0}": {1}'.format(rule, to_native(e)))
                 continue
 
     def list_instances(self, folder_id, remote_filter):
@@ -246,12 +246,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     with open(sa_file_path, 'r') as f:
                         sa_file_contents = f.read()
                 except Exception as e:
-                    raise AnsibleError('Error reading Service Account data from file: "{}": {}'
+                    raise AnsibleError('Error reading Service Account data from file: "{0}": {1}'
                                        .format(sa_file_path, to_native(e)))
             try:
                 sa = json.loads(sa_file_contents)
             except Exception as e:
-                raise AnsibleError('Error reading Service Account data from JSON: {}'.format(to_native(e)))
+                raise AnsibleError('Error reading Service Account data from JSON: {0}'.format(to_native(e)))
             self.sdk = yandexcloud.SDK(interceptor=interceptor, service_account_key=sa)
 
         elif auth_kind == 'oauth':
@@ -260,7 +260,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 raise AnsibleError('oauth_token should be set')
             self.sdk = yandexcloud.SDK(interceptor=interceptor, token=oauth_token)
         else:
-            raise AnsibleError('Unknown value for auth_kind: {}'.format(auth_kind))
+            raise AnsibleError('Unknown value for auth_kind: {0}'.format(auth_kind))
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
