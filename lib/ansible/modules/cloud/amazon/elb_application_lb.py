@@ -570,7 +570,7 @@ def main():
                                   ('state', 'present', ['subnets', 'security_groups'])
                               ],
                               required_together=[
-                                  ['access_logs_enabled', 'access_logs_s3_bucket', 'access_logs_s3_prefix']
+                                  ['access_logs_enabled', 'access_logs_s3_bucket']
                               ]
                               )
 
