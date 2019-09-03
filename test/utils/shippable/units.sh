@@ -11,7 +11,7 @@ group="${args[2]}"
 if [[ "${COVERAGE:-}" == "--coverage" ]]; then
     timeout=60
 else
-    timeout=6
+    timeout=11
 fi
 
 group1=()
