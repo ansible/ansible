@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Extended loop variables now work with includes (https://github.com/ansible/ansible/pull/61231)
