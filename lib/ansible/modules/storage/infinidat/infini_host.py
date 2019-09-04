@@ -6,6 +6,7 @@
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
+from infi.dtypes.iqn import make_iscsi_name
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -36,6 +37,10 @@ options:
     description:
       - List of wwns of the host
     required: false
+  iqns:
+    description:
+      - List of iqns of the host
+    required: false
   volume:
     description:
       - Volume name to map to the host
@@ -52,12 +57,14 @@ EXAMPLES = '''
     password: secret
     system: ibox001
 
-- name: Make sure host bar is available with wwn ports
+- name: Make sure host bar is available with wwn/iqn ports
   infini_host:
     name: bar.example.com
     wwns:
       - "00:00:00:00:00:00:00"
       - "11:11:11:11:11:11:11"
+    iqns:
+        - "iqn.yyyy-mm.reverse-domain:unique-string"
     system: ibox01
     user: admin
     password: secret
@@ -100,7 +107,11 @@ def create_host(module, system):
         host = system.hosts.create(name=module.params['name'])
         if module.params['wwns']:
             for p in module.params['wwns']:
-                host.add_fc_port(p)
+                host.add_port(p)
+        if module.params['iqns']:
+            for p in module.params['iqns']:
+                address = make_iscsi_name(p)
+                host.add_port(address)
         if module.params['volume']:
             host.map_volume(system.volumes.get(name=module.params['volume']))
     module.exit_json(changed=changed)
@@ -127,6 +138,7 @@ def main():
             name=dict(required=True),
             state=dict(default='present', choices=['present', 'absent']),
             wwns=dict(type='list'),
+            iqns=dict(type='list'),
             volume=dict()
         )
     )
