@@ -70,7 +70,7 @@ options:
     default: present
   path:
     description:
-      - The path in which to search for C(osx_defaults).
+      - The path in which to search for C(defaults).
     type: str
     default: /usr/bin:/usr/local/bin
 notes:
@@ -91,6 +91,13 @@ EXAMPLES = r'''
     type: string
     value: Centimeters
     state: present
+
+- osx_defaults:
+    domain: /Library/Preferences/com.apple.SoftwareUpdate
+    key: AutomaticCheckEnabled
+    type: int
+    value: 1
+  become: yes
 
 - osx_defaults:
     domain: com.apple.screensaver
