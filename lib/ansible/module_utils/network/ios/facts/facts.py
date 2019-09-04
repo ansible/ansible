@@ -13,7 +13,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-from ansible.module_utils.network.ios.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.ios.facts.interfaces.interfaces import InterfacesFacts
 from ansible.module_utils.network.ios.facts.l2_interfaces.l2_interfaces import L2_InterfacesFacts
