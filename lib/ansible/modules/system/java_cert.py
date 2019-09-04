@@ -41,6 +41,12 @@ options:
       - Imported certificate alias.
       - The alias is used when checking for the presence of a certificate in the keystore.
     type: str
+  trust_cacert:
+    description:
+      - Trust imported cert as CAcert.
+    type: bool
+    default: False
+    version_added: "2.10"
   pkcs12_path:
     description:
       - Local path to load PKCS12 keystore from.
@@ -106,6 +112,16 @@ EXAMPLES = r'''
     keystore_pass: changeit
     executable: /usr/lib/jvm/jre7/bin/keytool
     state: absent
+
+- name: Import trusted CA from SSL certificate
+  java_cert:
+    cert_path: /opt/certs/rootca.crt
+    keystore_path: /tmp/cacerts
+    keystore_pass: changeit
+    keystore_create: yes
+    state: present
+    cert_alias: LE_RootCA
+    trust_cacert: True
 
 - name: Import SSL certificate from google.com to a keystore, create it if it doesn't exist
   java_cert:
@@ -183,7 +199,7 @@ def check_cert_present(module, executable, keystore_path, keystore_pass, alias, 
     return False
 
 
-def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias, keystore_type):
+def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias, keystore_type, trust_cacert):
     ''' Import certificate from URL into keystore located at keystore_path '''
 
     https_proxy = os.getenv("https_proxy")
@@ -209,6 +225,8 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
                   "-storepass '%s' -alias '%s' %s") % (executable, keystore_path,
                                                        keystore_pass, alias,
                                                        get_keystore_type(keystore_type))
+    if trust_cacert:
+        import_cmd = import_cmd + " -trustcacerts"
 
     # Fetch SSL certificate from remote host.
     (_, fetch_out, _) = module.run_command(fetch_cmd, check_rc=True)
@@ -227,13 +245,16 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
                          error=import_err)
 
 
-def import_cert_path(module, executable, path, keystore_path, keystore_pass, alias, keystore_type):
+def import_cert_path(module, executable, path, keystore_path, keystore_pass, alias, keystore_type, trust_cacert):
     ''' Import certificate from path into keystore located on
         keystore_path as alias '''
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
                   "-storepass '%s' -file '%s' -alias '%s' %s") % (executable, keystore_path,
                                                                   keystore_pass, path, alias,
                                                                   get_keystore_type(keystore_type))
+
+    if trust_cacert:
+        import_cmd = import_cmd + " -trustcacerts"
 
     # Use local certificate from local path and import it to a java keystore
     (import_rc, import_out, import_err) = module.run_command(import_cmd,
@@ -311,6 +332,7 @@ def main():
         cert_port=dict(type='int', default=443),
         keystore_path=dict(type='path'),
         keystore_pass=dict(type='str', required=True, no_log=True),
+        trust_cacert=dict(type='bool', default=False),
         keystore_create=dict(type='bool', default=False),
         keystore_type=dict(type='str'),
         executable=dict(type='str', default='keytool'),
@@ -336,6 +358,7 @@ def main():
     pkcs12_alias = module.params.get('pkcs12_alias', '1')
 
     cert_alias = module.params.get('cert_alias') or url
+    trust_cacert = module.params.get('trust_cacert')
 
     keystore_path = module.params.get('keystore_path')
     keystore_pass = module.params.get('keystore_pass')
@@ -373,11 +396,11 @@ def main():
 
         if path:
             import_cert_path(module, executable, path, keystore_path,
-                             keystore_pass, cert_alias, keystore_type)
+                             keystore_pass, cert_alias, keystore_type, trust_cacert)
 
         if url:
             import_cert_url(module, executable, url, port, keystore_path,
-                            keystore_pass, cert_alias, keystore_type)
+                            keystore_pass, cert_alias, keystore_type, trust_cacert)
 
     module.exit_json(changed=False)
 
