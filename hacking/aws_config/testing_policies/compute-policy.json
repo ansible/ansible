@@ -33,6 +33,9 @@
             "Sid": "AllowUnspecifiedEC2Resource",
             "Effect": "Allow",
             "Action": [
+                "ec2:*LaunchTemplate",
+                "ec2:*LaunchTemplateVersion",
+                "ec2:*LaunchTemplateVersions",
                 "ec2:AllocateAddress",
                 "ec2:AssociateAddress",
                 "ec2:AssociateDhcpOptions",
