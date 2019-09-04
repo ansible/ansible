@@ -7,6 +7,8 @@
 The facts base class
 this contains methods common to all facts subsets
 """
+
+from ansible.module_utils.facts.collector import get_collector_names
 from ansible.module_utils.network.common.network import get_resource_connection
 from ansible.module_utils.six import iteritems
 
@@ -31,53 +33,6 @@ class FactsBase(object):
         if not self._gather_network_resources:
             self._gather_network_resources = ['!all']
 
-    def gen_runable(self, subsets, valid_subsets):
-        """ Generate the runable subset
-
-        :param module: The module instance
-        :param subsets: The provided subsets
-        :param valid_subsets: The valid subsets
-        :rtype: list
-        :returns: The runable subsets
-        """
-        runable_subsets = set()
-        exclude_subsets = set()
-        minimal_gather_subset = frozenset(['default'])
-
-        for subset in subsets:
-            if subset == 'all':
-                runable_subsets.update(valid_subsets)
-                continue
-            if subset == 'min' and minimal_gather_subset:
-                runable_subsets.update(minimal_gather_subset)
-                continue
-            if subset.startswith('!'):
-                subset = subset[1:]
-                if subset == 'min':
-                    exclude_subsets.update(minimal_gather_subset)
-                    continue
-                if subset == 'all':
-                    exclude_subsets.update(
-                        valid_subsets - minimal_gather_subset)
-                    continue
-                exclude = True
-            else:
-                exclude = False
-
-            if subset not in valid_subsets:
-                self._module.fail_json(msg='Subset must be one of [%s], got %s' %
-                                           (', '.join(sorted([item for item in valid_subsets])), subset))
-
-            if exclude:
-                exclude_subsets.add(subset)
-            else:
-                runable_subsets.add(subset)
-
-        if not runable_subsets:
-            runable_subsets.update(valid_subsets)
-        runable_subsets.difference_update(exclude_subsets)
-        return runable_subsets
-
     def get_network_resources_facts(self, net_res_choices, facts_resource_obj_map, resource_facts_type=None, data=None):
         """
         :param net_res_choices:
@@ -93,7 +48,8 @@ class FactsBase(object):
             if not resource_facts_type:
                 resource_facts_type = self._gather_network_resources
 
-            restorun_subsets = self.gen_runable(resource_facts_type, frozenset(net_res_choices))
+            restorun_subsets = get_collector_names(valid_subsets=net_res_choices,
+                                                   gather_subset=resource_facts_type)
             if restorun_subsets:
                 self.ansible_facts['ansible_net_gather_network_resources'] = list(restorun_subsets)
                 instances = list()
@@ -111,8 +67,9 @@ class FactsBase(object):
         if not legacy_facts_type:
             legacy_facts_type = self._gather_subset
 
-        runable_subsets = self.gen_runable(legacy_facts_type, frozenset(fact_legacy_obj_map.keys()))
-        runable_subsets.add('default')
+        runable_subsets = get_collector_names(valid_subsets=frozenset(fact_legacy_obj_map.keys()),
+                                              minimal_gather_subset=frozenset(['default']),
+                                              gather_subset=legacy_facts_type)
         if runable_subsets:
             facts = dict()
             self.ansible_facts['ansible_net_gather_subset'] = list(runable_subsets)
