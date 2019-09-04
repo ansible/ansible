@@ -819,7 +819,6 @@ class AzureRMIoTHub(AzureRMModuleBase):
         try:
             return self.IoThub_client.iot_hub_resource.get(self.resource_group, self.name)
         except Exception:
-            pass
             return None
 
     def create_or_update_hub(self, hub):
