@@ -217,7 +217,6 @@ class Telemetry(ConfigBase):
         commands = []
         massaged_have = massage_data(have)
         massaged_want = massage_data(want)
-        from pprint import pprint
 
         ref = {}
         ref['tms_global'] = NxosCmdRef([], TMS_GLOBAL, ref_only=True)
@@ -271,12 +270,13 @@ class Telemetry(ConfigBase):
                     if property in dest_profile_properties:
                         dest_profile_remote_commands.extend(cmd)
 
-            ctx = global_ctx
-            if property_ctx is not None:
-                ctx.extend(property_ctx)
-            add['TMS_GLOBAL'].extend(ctx)
             if cmd is not None:
+                ctx = global_ctx
+                if property_ctx is not None:
+                    ctx.extend(property_ctx)
+                add['TMS_GLOBAL'].extend(ctx)
                 add['TMS_GLOBAL'].extend(cmd)
+
         add['TMS_GLOBAL'] = remove_duplicate_commands(add['TMS_GLOBAL'])
         # If all destination profile commands are being removed then just
         # remove the config context instead.
@@ -373,6 +373,8 @@ class Telemetry(ConfigBase):
                         # for differences
                         for item in want_resources[want_key]:
                             if item not in have_resources[want_key]:
+                                if item is None:
+                                    continue
                                 # item wanted but does not exist so add it
                                 property_ctx = ['{0} {1}'.format(name, want_key)]
                                 if resource == 'TMS_DESTGROUP':

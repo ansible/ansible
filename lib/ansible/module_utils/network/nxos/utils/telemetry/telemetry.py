@@ -206,7 +206,6 @@ def massage_data(have_or_want):
     for subgroup in ['destination_groups', 'sensor_groups', 'subscriptions']:
         for item in data.get(subgroup, []):
             id = str(item.get('id'))
-            # import pdb ; pdb.set_trace()
             if id not in massaged[subgroup].keys():
                 massaged[subgroup][id] = []
             item.pop('id')
@@ -221,7 +220,10 @@ def massage_data(have_or_want):
                     if item.get('destination').get('encoding'):
                         item['destination']['encoding'] = item['destination']['encoding'].lower()
                 if item.get('path'):
-                    if item.get('path').get('depth'):
+                    for key in ['filter_condition', 'query_condition', 'depth']:
+                        if item.get('path').get(key) == 'None':
+                            del item['path'][key]
+                    if item.get('path').get('depth') >= 0:
                         item['path']['depth'] = str(item['path']['depth'])
                 if item.get('destination_group'):
                     item['destination_group'] = str(item['destination_group'])
@@ -234,6 +236,13 @@ def massage_data(have_or_want):
                     item_copy = deepcopy(item)
                     del item_copy['sensor_group']
                     del item['destination_group']
+                    massaged[subgroup][id].append(item_copy)
+                    massaged[subgroup][id].append(item)
+                    continue
+                if item.get('path') and item.get('data_source'):
+                    item_copy = deepcopy(item)
+                    del item_copy['data_source']
+                    del item['path']
                     massaged[subgroup][id].append(item_copy)
                     massaged[subgroup][id].append(item)
                     continue

@@ -1,12 +1,16 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_telemetry replaced sanity test"
 
-# - set_fact: source_interface="Loopback55"
-#   when: imagetag and (major_version is version_compare('9.1', 'ge'))
-#
-# - set_fact: command_list_length=30
-# - set_fact: command_list_length=31
-#   when: imagetag and (major_version is version_compare('9.1', 'ge'))
+- set_fact: source_interface="Loopback55"
+  when: imagetag and (major_version is version_compare('9.1', 'ge'))
+
+- set_fact: command_list_length=27
+- set_fact: command_list_length=28
+  when: imagetag and (major_version is version_compare('9.1', 'ge'))
+
+- set_fact: dict_facts_length=6
+- set_fact: dict_facts_length=7
+  when: imagetag and (major_version is version_compare('9.1', 'ge'))
 
 - name: Setup - disable feature telemetry
   nxos_feature: &setup_teardown
@@ -27,7 +31,6 @@
         destination-profile
           use-vrf blue
           use-compression gzip
-          source-interface loopback55
         destination-group 2
           ip address 192.168.0.1 port 50001 protocol gRPC encoding GPB
           ip address 192.168.0.2 port 60001 protocol gRPC encoding GPB
@@ -61,6 +64,14 @@
           dst-grp 99
           snsr-grp 8 sample-interval 90000
           snsr-grp 77 sample-interval 2000
+
+- name: Setup - add initial source-interface telemetry config
+  cli_config:
+    config: |
+      telemetry
+        destination-profile
+          source-interface loopback55
+  when: imagetag and (major_version is version_compare('9.1', 'ge'))
 
 - block:
   - name: Gather Telemetry Facts Before Changes
@@ -109,12 +120,72 @@
               sample_interval: 2000
     register: result
 
-  - name: Telemetry - replaced - idempotent
+  - assert:
+      that:
+        - "result.changed == true"
+        - "result.before|length == {{ dict_facts_length }}"
+        - "result.before.certificate|length == 2"
+        - "result.before.destination_groups|length == 7"
+        - "result.before.sensor_groups|length == 8"
+        - "result.before.subscriptions|length == 10"
+        - "'telemetry' in result.commands"
+        - "'no subscription 55' in result.commands"
+        - "'subscription 99' in result.commands"
+        - "'no dst-grp 99' in result.commands"
+        - "'no snsr-grp 8 sample-interval 90000' in result.commands"
+        - "'no snsr-grp 77 sample-interval 2000' in result.commands"
+        - "'no subscription 44' in result.commands"
+        - "'no sensor-group 55' in result.commands"
+        - "'no sensor-group 8' in result.commands"
+        - "'no sensor-group 2' in result.commands"
+        - "'no sensor-group 77' in result.commands"
+        - "'no destination-group 99' in result.commands"
+        - "'no destination-group 10' in result.commands"
+        - "'destination-group 2' in result.commands"
+        - "'no ip address 192.168.0.1 port 50001 protocol grpc encoding gpb' in result.commands"
+        - "'no ip address 192.168.0.2 port 60001 protocol grpc encoding gpb' in result.commands"
+        - "'destination-group 2' in result.commands"
+        - "'ip address 192.168.0.1 port 65001 protocol grpc encoding gpb' in result.commands"
+        - "'ip address 192.168.0.3 port 55001 protocol grpc encoding gpb' in result.commands"
+        - "'sensor-group 100' in result.commands"
+        - "'path sys/bgp/inst depth unbounded query-condition foo filter-condition foo' in result.commands"
+        - "'data-source NX-API' in result.commands"
+        - "'subscription 99' in result.commands"
+        - "'snsr-grp 100 sample-interval 2000' in result.commands"
+        - "'certificate /file_dir/new_server.key newhost.example.com' in result.commands"
+        - "'destination-profile' in result.commands"
+        - "'use-vrf management' in result.commands"
+        - "result.commands|length == {{ command_list_length }}"
+
+  # Source interface may or may not be included based on the image version.
+  - assert:
+      that:
+        - "'no source-interface loopback55' in result.commands"
+    when: imagetag and (major_version is version_compare('9.1', 'ge'))
+
+  - assert:
+      that:
+        - "(ansible_facts.network_resources.telemetry|dict2items)|symmetric_difference(result.before|dict2items)|length == 0"
+
+  - name: Gather Telemetry Facts After Changes
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "(ansible_facts.network_resources.telemetry|dict2items)|symmetric_difference(result.after|dict2items)|length == 0"
+
+  - name: Telemetry - replaced - idempotence
     nxos_telemetry: *replace
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
 
   always:
-  # - name: Teardown
-  #   nxos_feature: *setup_teardown
-  #   ignore_errors: yes
+  - name: Teardown
+    nxos_feature: *setup_teardown
+    ignore_errors: yes
 
   - debug: msg="END connection={{ ansible_connection }} nxos_telemetry replaced sanity test"

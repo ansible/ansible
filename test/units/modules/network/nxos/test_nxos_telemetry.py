@@ -1121,6 +1121,104 @@ class TestNxosTelemetryModule(TestNxosModule):
             'use-vrf blue'
         ])
 
+    def test_tms_replaced_idempotent_n9k(self):
+        # Assumes feature telemetry is enabled
+        # Modify vrf global config, remove default all other global config.
+        # destination-group 2 destination '192.168.0.1' idempotent
+        # destination-group 2 destination '192.168.0.2' remove
+        # remove all other destination-groups
+        # Modify sensor-group 55 and delete all others
+        # Modify subscription 7, add 10 and delete all others
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        set_module_args({
+            'state': 'replaced',
+            'config': {
+                'certificate': {'key': '/bootflash/server.key', 'hostname': 'localhost'},
+                'compression': 'gzip',
+                'vrf': 'management',
+                'source_interface': 'loopback55',
+                'destination_groups': [
+                    {'id': 2,
+                     'destination': {'ip': '192.168.0.1', 'port': 50001, 'protocol': 'GRPC', 'encoding': 'GPB'},
+                     },
+                    {'id': 2,
+                     'destination': {'ip': '192.168.0.2', 'port': 60001, 'protocol': 'GRPC', 'encoding': 'GPB'},
+                     },
+                    {'id': 10,
+                     'destination': {'ip': '192.168.0.1', 'port': 50001, 'protocol': 'GRPC', 'encoding': 'GPB'},
+                     },
+                    {'id': 10,
+                     'destination': {'ip': '192.168.0.2', 'port': 60001, 'protocol': 'GRPC', 'encoding': 'GPB'},
+                     },
+                ],
+                'sensor_groups': [
+                    {'id': 2,
+                     'data_source': 'DME',
+                     'path': {'name': 'boo', 'depth': 0},
+                     },
+                    {'id': 2,
+                     'path': {'name': 'sys/ospf', 'depth': 0, 'query_condition': 'qc', 'filter_condition': 'fc'},
+                     },
+                    {'id': 2,
+                     'path': {'name': 'interfaces', 'depth': 0},
+                     },
+                    {'id': 2,
+                     'path': {'name': 'sys/bgp'},
+                     },
+                    {'id': 2,
+                     'path': {'name': 'sys/bgp/inst', 'depth': 0, 'query_condition': 'foo', 'filter_condition': 'foo'},
+                     },
+                    {'id': 2,
+                     'path': {'name': 'sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11]'},
+                     },
+                    {'id': 2,
+                     'path': {'name': 'sys/bgp/inst/dom-default/peer-[20.20.20.11]/ent-[20.20.20.11]'},
+                     },
+                    {'id': 2,
+                     'path': {'name': 'too', 'depth': 0, 'filter_condition': 'foo'},
+                     },
+                    {'id': 55},
+                    {'id': 56,
+                     'data_source': 'DME',
+                     },
+                    {'id': 56,
+                     'path': {'name': 'environment'},
+                     },
+                    {'id': 56,
+                     'path': {'name': 'interface'},
+                     },
+                    {'id': 56,
+                     'path': {'name': 'resources'},
+                     },
+                    {'id': 56,
+                     'path': {'name': 'vxlan'},
+                     },
+                ],
+                'subscriptions': [
+                    {'id': 3},
+                    {'id': 4,
+                     'destination_group': 2,
+                     'sensor_group': {'id': 2, 'sample_interval': 1000},
+                     },
+                    {'id': 5,
+                     'destination_group': 2,
+                     },
+                    {'id': 5,
+                     'sensor_group': {'id': 2, 'sample_interval': 1000},
+                     },
+                    {'id': 6,
+                     'destination_group': 10,
+                     },
+                    {'id': 7,
+                     'destination_group': 10,
+                     'sensor_group': {'id': 2, 'sample_interval': 1000},
+                     },
+                ],
+            }
+        }, ignore_provider_arg)
+        self.execute_module(changed=False, commands=[])
+
 
 def build_args(data, type, state=None, check_mode=None):
     if state is None:
