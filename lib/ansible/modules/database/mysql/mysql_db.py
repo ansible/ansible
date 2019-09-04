@@ -39,7 +39,7 @@ options:
       - Collation mode (sorting). This only applies to new table/databases and does not update existing ones, this is a limitation of MySQL.
   encoding:
     description:
-      - Encoding mode to use, examples include C(utf8) or C(latin1_swedish_ci)
+      - Encoding mode to use, examples include C(utf8) or C(latin1_swedish_ci), at creation of database or importation of sql script
   target:
     description:
       - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
@@ -90,7 +90,7 @@ EXAMPLES = r'''
   copy:
     src: dump.sql.bz2
     dest: /tmp
-
+    
 - name: Restore database
   mysql_db:
     name: my_db
@@ -117,10 +117,19 @@ EXAMPLES = r'''
     name: all
     target: /tmp/dump.sql
 
-- name: Import file.sql similar to mysql -u <username> -p <password> < hostname.sql
+# Basic import of sql script file
+- name: Import dump.sql similar to mysql -u <username> -p <password> < dump.sql
   mysql_db:
     state: import
     name: all
+    target: /tmp/dump.sql
+    
+# Import of sql script with encoding option
+- name: Import dump.sql with specific latin1 encoding, similar to mysql -u <username> --default-character-set=latin1 -p <password> < dump.sql
+  mysql_db:
+    state: import
+    name: all
+    encoding: "latin1" 
     target: /tmp/dump.sql
 
 - name: Delete database with name 'bobdata'
