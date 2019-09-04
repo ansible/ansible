@@ -100,7 +100,7 @@ EXAMPLES = """
     msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200 namespace=teama/admins')}}"
 
 # to work with kv v2 (vault api - for kv v2 -  GET method requires that PATH should be "secret/data/:path")
-- name: Return all secrets kv v2 from a path
+- name: Return all kv v2 secrets from a path
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/data/hello token=my_vault_token url=http://myvault_url:8200') }}"
 
