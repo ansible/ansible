@@ -4,39 +4,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 - block:
-  # - name: Test an API key is provided
-  #   fail:
-  #     msg: Please define an API key
-  #   when: auth_key is not defined
-    
-  # - name: Use an invalid domain
-  #   meraki_switchport:
-  #     auth_key: '{{ auth_key }}'
-  #     host: marrrraki.com
-  #     state: query
-  #     serial: Q2HP-2C6E-GTLD
-  #     org_name: IntTestOrg
-  #   delegate_to: localhost
-  #   register: invaliddomain
-  #   ignore_errors: yes
-    
-  # - name: Disable HTTP
-  #   meraki_switchport:
-  #     auth_key: '{{ auth_key }}'
-  #     use_https: false
-  #     state: query
-  #     serial: Q2HP-2C6E-
-  #     output_level: debug
-  #   delegate_to: localhost
-  #   register: http
-  #   ignore_errors: yes
-
-  # - name: Connection assertions
-  #   assert:
-  #     that:
-  #       - '"Failed to connect to" in invaliddomain.msg'
-  #       - '"http" in http.url'
-
   - set_fact:
       syslog_test_net_name: 'syslog_{{test_net_name}}'
 
@@ -155,9 +122,6 @@
     register: invalid_role
     ignore_errors: yes
 
-  # - debug:
-  #     msg: '{{invalid_role.body.errors.0}}'
-
   - assert:
       that:
         - '"Please select at least one valid role" in invalid_role.body.errors.0'
@@ -182,7 +146,6 @@
   - assert:
       that:
         - add_role.data.0.roles.0 == 'Flows'
-        # - add_role.data.0.roles | length == 2
 
   always:
     - name: Delete syslog test network
