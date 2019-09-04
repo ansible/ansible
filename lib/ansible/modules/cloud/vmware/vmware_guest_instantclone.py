@@ -75,16 +75,15 @@ class PyVmomiHelper(PyVmomi):
     def __init__(self, module):
         super(PyVmomiHelper, self).__init__(module)
 
-    def deploy_instantclone(self):
-        # Ensure required params are given
-        if self.module.params['source_vm'] is None:
-            self.module.fail_json(msg='Please specify the source VM name or UUID in the source_vm parameter. The source VM must be running.')
-        if self.module.params['name'] is None:
-            self.module.fail_json(msg='A name for the new VM must be provided in the name parameter.')
-        # Gather needed facts from the base VM for the instant clone
-        vm = find_obj(self.module.content, [vim.VirtualMachine], self.module.params['source_vm'])
-        if vm is None:
-            self.module.fail_json(msg="Failed to find the VM: %s" % self.module.params['source_vm'])
+    def remove_vm(self, vm):
+        task = vm.Destroy()
+        wait_for_task(task)
+        if task.info.state == 'error':
+            return {'changed': self.module.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'destroy'}
+        else:
+            return {'changed': self.module.change_applied, 'failed': False}
+
+    def deploy_instantclone(self, vm):
         vm_state = gather_vm_facts(self.module.content, vm)
         # An instant clone requires the base VM to be running, fail if it is not
         if vm_state['hw_power_status'] != 'poweredOn':
@@ -184,18 +183,33 @@ def main():
     argument_spec.update(
         state=dict(default='present', choices=['present', 'absent']),
         name=dict(type='str'),
-        source_vm=dict(type='str'),
+        uuid=dict(type='str'),
+        moid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
+        folder=dict(type='str'),
+        datacenter=dict(required=True, type='str'),
+        clone_name=dict(type='str'),
         customvalues=dict(type='list', default=[]),
     )
-
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True,
-                           )
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+        required_one_of=[
+            ['name', 'uuid', 'moid']
+        ],
+    )
 
     result = {'failed': False, 'changed': False}
 
     pyv = PyVmomiHelper(module)
     vm = pyv.get_vm()
+
+    if not vm:
+        vm_id = (module.params.get('uuid') or module.params.get('name') or module.params.get('moid'))
+        module.fail_json(msg="Unable to manage snapshots for non-existing VM %s" % vm_id)
+
+    if not module.params['clone_name']:
+        module.fail_json(msg='Please specify a name for the new clone using the clone_name parameter.')
 
     # The clone doesn't exist
     if not vm:
@@ -207,7 +221,7 @@ def main():
                 )
                 module.exit_json(**result)
             # Create and instant clone
-            result = pyv.deploy_instantclone()
+            result = pyv.deploy_instantclone(vm)
     # The clone is present
     else:
         if module.params['state'] == 'absent':
@@ -218,7 +232,7 @@ def main():
                 )
                 module.exit_json(**result)
             # Delete the clone
-            vm.Destory()
+            result = pyv.remove_vm(vm)
 
     if result['failed']:
         module.fail_json(**result)
