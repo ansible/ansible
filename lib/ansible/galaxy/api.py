@@ -271,7 +271,7 @@ class GalaxyAPI:
             raise AnsibleError("Invalid role name (%s). Specify role as format: username.rolename" % role_name)
 
         url = _urljoin(self.api_server, self.available_api_versions['v1'], "roles",
-                       "?owner__username=%s&name=%s" % (user_name, role_name))[:-1]
+                       "?owner__username=%s&name=%s" % (user_name, role_name))
         data = self._call_galaxy(url)
         if len(data["results"]) != 0:
             return data["results"][0]
@@ -287,7 +287,7 @@ class GalaxyAPI:
         results = []
         try:
             url = _urljoin(self.api_server, self.available_api_versions['v1'], "roles", role_id, related,
-                           "?page_size=50")[:-1]
+                           "?page_size=50")
             data = self._call_galaxy(url)
             results = data['results']
             done = (data.get('next_link', None) is None)
@@ -307,7 +307,7 @@ class GalaxyAPI:
         Fetch the list of items specified.
         """
         try:
-            url = _urljoin(self.api_server, self.available_api_versions['v1'], what, "?page_size")[:-1]
+            url = _urljoin(self.api_server, self.available_api_versions['v1'], what, "?page_size")
             data = self._call_galaxy(url)
             if "results" in data:
                 results = data['results']
@@ -328,7 +328,7 @@ class GalaxyAPI:
     @g_connect(['v1'])
     def search_roles(self, search, **kwargs):
 
-        search_url = _urljoin(self.api_server, self.available_api_versions['v1'], "search", "roles", "?")[:-1]
+        search_url = _urljoin(self.api_server, self.available_api_versions['v1'], "search", "roles", "?")
 
         if search:
             search_url += '&autocomplete=' + to_text(urlquote(to_bytes(search)))
@@ -382,7 +382,7 @@ class GalaxyAPI:
     @g_connect(['v1'])
     def delete_role(self, github_user, github_repo):
         url = _urljoin(self.api_server, self.available_api_versions['v1'], "removerole",
-                       "?github_user=%s&github_repo=%s" % (github_user, github_repo))[:-1]
+                       "?github_user=%s&github_repo=%s" % (github_user, github_repo))
         data = self._call_galaxy(url, auth_required=True, method='DELETE')
         return data
 
