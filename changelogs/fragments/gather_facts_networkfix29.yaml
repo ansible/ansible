@@ -1,0 +1,2 @@
+bugfixes:
+- Fix negated all,min for network_facts and remove choices (https://github.com/ansible/ansible/pull/61362).
