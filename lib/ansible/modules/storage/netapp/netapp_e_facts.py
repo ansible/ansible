@@ -16,10 +16,6 @@ module: netapp_e_facts
 short_description: NetApp E-Series retrieve facts about NetApp E-Series storage arrays
 description:
     - The netapp_e_facts module returns a collection of facts regarding NetApp E-Series storage arrays.
-    - When contacting a storage array directly the collection includes details about the array, controllers, management
-      interfaces, hostside interfaces, driveside interfaces, disks, storage pools, volumes, snapshots, and features.
-    - When contacting a web services proxy the collection will include basic information regarding the storage systems
-      that are under its management.
 version_added: '2.2'
 author:
     - Kevin Hulquest (@hulquest)
@@ -32,18 +28,11 @@ EXAMPLES = """
 ---
 - name: Get array facts
   netapp_e_facts:
-      ssid: "{{ netapp_array_id }}"
-      api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
-      api_username: "{{ netapp_api_username }}"
-      api_password: "{{ netapp_api_password }}"
-      validate_certs: "{{ netapp_api_validate_certs }}"
-- name: Get array facts
-  netapp_e_facts:
-      ssid: 1
-      api_url: https://192.168.1.100:8443/devmgr/v2
-      api_username: myApiUser
-      api_password: myApiPass
-      validate_certs: true
+    ssid: "1"
+    api_url: "https://192.168.1.100:8443/devmgr/v2"
+    api_username: "admin"
+    api_password: "adminpass"
+    validate_certs: true
 """
 
 RETURN = """
@@ -275,7 +264,7 @@ class Facts(NetAppESeriesModule):
 
     def get_array_facts(self):
         """Extract particular facts from the storage array graph"""
-        facts = dict(facts_from_proxy=False, ssid=self.ssid)
+        facts = dict(facts_from_proxy=(not self.is_embedded()), ssid=self.ssid)
         controller_reference_label = self.get_controllers()
         array_facts = None
 
@@ -283,8 +272,7 @@ class Facts(NetAppESeriesModule):
         try:
             rc, array_facts = self.request("storage-systems/%s/graph" % self.ssid)
         except Exception as error:
-            self.module.fail_json(msg="Failed to obtain facts from storage array with id [%s]. Error [%s]"
-                                      % (self.ssid, str(error)))
+            self.module.fail_json(msg="Failed to obtain facts from storage array with id [%s]. Error [%s]" % (self.ssid, str(error)))
 
         facts['netapp_storage_array'] = dict(
             name=array_facts['sa']['saData']['storageArrayLabel'],
