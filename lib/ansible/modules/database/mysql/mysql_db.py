@@ -117,13 +117,6 @@ EXAMPLES = r'''
     name: all
     target: /tmp/dump.sql
 
-# Basic import of sql script file
-- name: Import dump.sql similar to mysql -u <username> -p <password> < dump.sql
-  mysql_db:
-    state: import
-    name: all
-    target: /tmp/dump.sql
-
 # Import of sql script with encoding option
 - name: Import dump.sql with specific latin1 encoding, similar to mysql -u <username> --default-character-set=latin1 -p <password> < dump.sql
   mysql_db:
