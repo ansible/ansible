@@ -1,0 +1,5 @@
+---
+# defaults file for sts_assume_role
+
+# IAM role names have to be less than 64 characters
+iam_role_name: "{{ resource_shortprefix }}-sts-assume-role"

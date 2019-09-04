@@ -1,39 +1,25 @@
 ---
 # tasks file for sts_assume_role
 
-- block:
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  block:
+    - name: get ARN of calling user
+      aws_caller_info:
+      register: aws_caller_info
 
-    # ============================================================
-    # TODO create simple ansible sts_get_caller_identity module
-    - blockinfile:
-        path: "{{ output_dir }}/sts.py"
-        create: yes
-        block: |
-          #!/usr/bin/env python
-          import boto3
-          sts = boto3.client('sts')
-          response = sts.get_caller_identity()
-          print(response['Account'])
-
-    - name: get the aws account id
-      command: "{{ ansible_python.executable }} '{{ output_dir }}/sts.py'"
-      environment:
-        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
-        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
-        AWS_SESSION_TOKEN: "{{ security_token }}"
-      register: result
-
-    - name: register account id
+    - name: extract account id
       set_fact:
-        aws_account: "{{ result.stdout | replace('\n', '') }}"
+        aws_account: "{{ aws_caller_info.account }}"
 
     # ============================================================
     - name: create test iam role
       iam_role:
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        name: "ansible-test-sts-{{ resource_prefix }}"
+        name: "{{ iam_role_name }}"
         assume_role_policy_document:  "{{ lookup('template','policy.json.j2') }}"
         create_instance_profile: False
         managed_policy:
@@ -48,6 +34,7 @@
 
     # ============================================================
     - name: test with no parameters
+      module_defaults: { group/aws: {} }
       sts_assume_role:
       register: result
       ignore_errors: true
@@ -61,10 +48,6 @@
     # ============================================================
     - name: test with empty parameters
       sts_assume_role:
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region}}"
         role_arn:
         role_session_name:
         policy:
@@ -78,8 +61,8 @@
     - name: assert with empty parameters
       assert:
         that:
-           - 'result.failed'
-           - "'Missing required parameter in input:' in result.msg"
+          - 'result.failed'
+          - "'Missing required parameter in input:' in result.msg"
       when: result.module_stderr is not defined
 
     - name: assert with empty parameters
@@ -92,9 +75,6 @@
     # ============================================================
     - name: test with only 'role_arn' parameter
       sts_assume_role:
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         role_arn: "{{ test_role.iam_role.arn }}"
       register: result
       ignore_errors: true
@@ -108,9 +88,6 @@
     # ============================================================
     - name: test with only 'role_session_name' parameter
       sts_assume_role:
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         role_session_name: "AnsibleTest"
       register: result
       ignore_errors: true
@@ -124,10 +101,6 @@
     # ============================================================
     - name: test assume role with invalid policy
       sts_assume_role:
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region }}"
         role_arn: "{{ test_role.iam_role.arn }}"
         role_session_name: "AnsibleTest"
         policy: "invalid policy"
@@ -151,10 +124,6 @@
     # ============================================================
     - name: test assume role with invalid duration seconds
       sts_assume_role:
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region}}"
         role_arn: "{{ test_role.iam_role.arn }}"
         role_session_name: AnsibleTest
         duration_seconds: invalid duration
@@ -170,10 +139,6 @@
     # ============================================================
     - name: test assume role with invalid external id
       sts_assume_role:
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region}}"
         role_arn: "{{ test_role.iam_role.arn }}"
         role_session_name: AnsibleTest
         external_id: invalid external id
@@ -197,10 +162,6 @@
     # ============================================================
     - name: test assume role with invalid mfa serial number
       sts_assume_role:
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region}}"
         role_arn: "{{ test_role.iam_role.arn }}"
         role_session_name: AnsibleTest
         mfa_serial_number: invalid serial number
@@ -224,10 +185,6 @@
     # ============================================================
     - name: test assume role with invalid mfa token code
       sts_assume_role:
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region}}"
         role_arn: "{{ test_role.iam_role.arn }}"
         role_session_name: AnsibleTest
         mfa_token: invalid token code
@@ -251,10 +208,6 @@
     # ============================================================
     - name: test assume role with invalid role_arn
       sts_assume_role:
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region}}"
         role_arn: invalid role arn
         role_session_name: AnsibleTest
       register: result
@@ -277,10 +230,6 @@
     # ============================================================
     - name: test assume not existing sts role
       sts_assume_role:
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region}}"
         role_arn: "arn:aws:iam::123456789:role/non-existing-role"
         role_session_name: "AnsibleTest"
       register: result
@@ -303,10 +252,6 @@
     # ============================================================
     - name: test assume role
       sts_assume_role:
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region }}"
         role_arn: "{{ test_role.iam_role.arn }}"
         role_session_name: AnsibleTest
       register: assumed_role
@@ -326,8 +271,7 @@
         aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
         aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
         security_token: "{{ assumed_role.sts_creds.session_token }}"
-        region: "{{ aws_region}}"
-        name: "ansible-test-sts-{{ resource_prefix }}"
+        name: "{{ iam_role_name }}"
         assume_role_policy_document: "{{ lookup('template','policy.json.j2') }}"
         create_instance_profile: False
         state: present
@@ -346,8 +290,7 @@
         aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
         aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
         security_token: "{{ assumed_role.sts_creds.session_token }}"
-        region: "{{ aws_region}}"
-        name: "ansible-test-sts-{{ resource_prefix }}-new"
+        name: "{{ iam_role_name }}-new"
         assume_role_policy_document: "{{ lookup('template','policy.json.j2') }}"
         state: present
       register: result
@@ -374,11 +317,10 @@
 
     - name: delete test iam role
       iam_role:
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        name: "ansible-test-sts-{{ resource_prefix }}"
-        assume_role_policy_document:  "{{ lookup('template','policy.json.j2') }}"
-        managed_policy:
-          - arn:aws:iam::aws:policy/IAMReadOnlyAccess
+        name: "{{ iam_role_name }}"
+        state: absent
+
+    - name: delete test iam role
+      iam_role:
+        name: "{{ iam_role_name }}-new"
         state: absent
