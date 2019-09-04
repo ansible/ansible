@@ -210,15 +210,6 @@ def clean_custom_format(data):
     return data
 
 
-def custom_struct_to_meraki_format(data):
-    new_struct = {'bandwidthLimits': None}
-    for interface in INT_NAMES:
-        if interface in data:
-            new_struct['bandwidthLimits'][interface] = {'limitUp': data[interface]['bandwidth_limits']['limit_up'],
-                                                        'limitDown': data[interface]['bandwidth_limits']['limit_down']}
-    return new_struct
-
-
 def meraki_struct_to_custom_format(data):
     new_struct = {}
     for interface in INT_NAMES:

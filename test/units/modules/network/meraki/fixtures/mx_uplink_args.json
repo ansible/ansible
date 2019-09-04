@@ -1,0 +1,38 @@
+{
+  "meraki_format": {
+    "bandwidthLimits": {
+      "wan1": {
+        "limitUp": 1000000,
+        "limitDown": 1000000
+      },
+      "wan2": {
+        "limitUp": 1000000,
+        "limitDown": 1000000
+      },
+      "cellular": {
+        "limitUp": null,
+        "limitDown": null
+      }
+    }
+  },
+  "ansible_format": {
+    "wan1": {
+      "bandwidth_limits": {
+        "limit_up": 1000000,
+        "limit_down": 1000000
+      }
+    },
+    "wan2": {
+      "bandwidth_limits": {
+        "limit_up": 1000000,
+        "limit_down": 1000000
+      }
+    },
+    "cellular": {
+      "bandwidth_limits": {
+        "limit_up": null,
+        "limit_down": null
+      }
+    }
+  }
+}
