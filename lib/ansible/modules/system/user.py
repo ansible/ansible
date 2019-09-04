@@ -93,7 +93,8 @@ options:
             - Optionally set the user's password to this crypted value.
             - On macOS systems, this value has to be cleartext. Beware of security issues.
             - To create a disabled account on Linux systems, set this to C('!') or C('*').
-            - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
+            - To create a disabled account on OpenBSD, set this to C('*************').
+            - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
               for details on various ways to generate these password values.
         type: str
     state:
@@ -514,8 +515,8 @@ class User(object):
         if self.module.params['password'] and self.platform != 'Darwin':
             maybe_invalid = False
 
-            # Allow setting the password to * or ! in order to disable the account
-            if self.module.params['password'] in set(['*', '!']):
+            # Allow setting certain passwords in order to disable the account
+            if self.module.params['password'] in set(['*', '!', '*************']):
                 maybe_invalid = False
             else:
                 # : for delimiter, * for disable user, ! for lock user

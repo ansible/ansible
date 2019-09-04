@@ -105,11 +105,18 @@
         password: '*'
       register: test_user_encrypt4
 
-    - name: there should be no warnings when setting the password to '!' and '*'
+    - name: change password to '*************'
+      user:
+        name: ansibulluser
+        password: '*************'
+      register: test_user_encrypt5
+
+    - name: there should be no warnings when setting the password to '!',  '*' or '*************'
       assert:
         that:
           - "'warnings' not in test_user_encrypt3"
           - "'warnings' not in test_user_encrypt4"
+          - "'warnings' not in test_user_encrypt5"
   when: ansible_facts.system != 'Darwin'
 
 
