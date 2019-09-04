@@ -8,4 +8,5 @@ codepipeline_name: "{{ resource_prefix }}-test-codepipeline"
 # which test something was created and allows tests to be run in parallel
 # Shippable resource_prefixes are in the format shippable-123456-123, so in those cases
 # we need both sets of digits to keep the resource name unique
-codepipeline_service_role_name: "ansible-test-sts-{{ resource_prefix | regex_search('(\\d+-?)(\\d+)$') }}"
+unique_id: "{{ resource_prefix | regex_search('(\\d+-?)(\\d+)$') }}"
+codepipeline_service_role_name: "ansible-test-sts-{{ unique_id }}-codebuild-service-role"
