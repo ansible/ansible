@@ -44,7 +44,7 @@ options:
   trust_cacert:
     description:
       - Trust imported cert as CAcert.
-    default: False 
+    default: False
     version_added: "2.10"
   pkcs12_path:
     description:
