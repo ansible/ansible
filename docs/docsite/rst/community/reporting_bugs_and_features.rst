@@ -37,5 +37,3 @@ Requesting a feature
 ====================
 
 The best way to get a feature into Ansible is to :ref:`submit a pull request <community_pull_requests>`.
-
-The next best way of getting a feature into Ansible is to submit a proposal through the `Ansible proposal process  <https://github.com/ansible/proposals>`_.
