@@ -1,10 +1,12 @@
-/* Fix for read the docs theme:
+/*! minified with http://css-minify.online-domain-tools.com/ - all comments
+ * must have ! to preserve during minifying with that tool */
+/*! Fix for read the docs theme:
  * https://rackerlabs.github.io/docs-rackspace/tools/rtd-tables.html
  */
-/* override table width restrictions */
+/*! override table width restrictions */
 @media screen and (min-width: 767px) {
 
-  /* If we ever publish to read the docs, we need to use !important for these
+  /*! If we ever publish to read the docs, we need to use !important for these
    * two styles as read the docs itself loads their theme in a way that we
    * can't otherwise override it.
    */
@@ -17,12 +19,12 @@
    }
 }
 
-/*
+/*!
  * We use the class documentation-table for attribute tables where the first
  * column is the name of an attribute and the second column is the description.
  */
 
-/* These tables look like this:
+/*! These tables look like this:
  *
  *  Attribute Name     Description
  *  --------------     -----------
@@ -38,7 +40,7 @@
  * required is given the class .value-required
  */
 
-/* The extra .rst-content is so this will override rtd theme */
+/*! The extra .rst-content is so this will override rtd theme */
 .rst-content table.documentation-table td {
     vertical-align: top;
 }
@@ -52,8 +54,8 @@ table.documentation-table td:first-child p:first-child {
     font-weight: bold;
     display: inline;
 }
-/* This is now redundant with above position-based styling */
-/*
+/*! This is now redundant with above position-based styling */
+/*!
 table.documentation-table .value-name {
     font-weight: bold;
     display: inline;
@@ -76,7 +78,7 @@ table.documentation-table .value-required {
     display: inline;
 }
 
-/* Ansible-specific CSS pulled out of rtd theme for 2.9 */
+/*! Ansible-specific CSS pulled out of rtd theme for 2.9 */
 
 .DocSiteProduct-header {
     flex: 1;
@@ -152,7 +154,7 @@ table.documentation-table .value-required {
     margin-bottom: 10px;
 
 }
-/* Ansible color scheme */
+/*! Ansible color scheme */
 .wy-side-nav-search {
     background-color: #5bbdbf;
 }
@@ -171,22 +173,22 @@ table.documentation-table .value-required {
     padding: 0.4045em 1.618em;
 }
 
-/* Override sphinx rtd theme max-with of 800px */
+/*! Override sphinx rtd theme max-with of 800px */
 .wy-nav-content {
     max-width: 100%;
 }
 
-/* Override sphinx_rtd_theme - keeps left-nav from overwriting Documentation title */
+/*! Override sphinx_rtd_theme - keeps left-nav from overwriting Documentation title */
 .wy-nav-side {
     top: 45px;
 }
 
+/*! Ansible - changed absolute to relative to remove extraneous side scroll bar */
 .wy-grid-for-nav {
-  /* Ansible - changed to relative to remove extraneous side scroll bar */
     position: relative;
 }
 
-/* Ansible - remove so highlight indenting is correct  */
+/*! Ansible - remove so highlight indenting is correct  */
 .rst-content .highlighted {
     padding: 0 0px;
 }
@@ -248,11 +250,11 @@ table {
     abbr[title]:after { content: " (" attr(title) ")"; }
 
     .ir a:after, a[href^="javascript:"]:after, a[href^="#"]:after { content: ""; }
-  /* Don't show links for images, or javascript/internal links */
+  /*! Don't show links for images, or javascript/internal links */
     pre, blockquote { border: 0px solid #999; page-break-inside: avoid; }
 
     thead { display: table-header-group; }
- /* h5bp.com/t */
+ /*! h5bp.com/t */
     tr, img { page-break-inside: avoid; }
 
     img { max-width: 100% !important; }
