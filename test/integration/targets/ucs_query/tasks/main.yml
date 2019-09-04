@@ -1,0 +1,42 @@
+# Test code for the UCS Query module
+# Copyright 2019, John McDonough (@movinalot)
+
+- name: Test that we have a UCS host, UCS username, and UCS password
+  fail:
+    msg: 'Please define the following variables: ucs_hostname, ucs_username and ucs_password.'
+  when: ucs_hostname is not defined or ucs_username is not defined or ucs_password is not defined
+  vars:
+    login_info: &login_info
+      <<: *login_info
+
+# Query for Class ID
+- name: Query Class ID
+  ucs_query:
+    <<: *login_info
+    class_ids: computeBlade
+    delegate_to: localhost
+  register: single_class
+
+# Query for Class IDs
+- name: Query Class IDs
+  ucs_query:
+    <<: *login_info
+    class_ids: computeBlade, fabricVlan
+    delegate_to: localhost
+  register: multiple_classes
+
+# Query for Dn
+- name: Query Dn
+  ucs_query:
+    <<: *login_info
+    distinguished_names: org-root
+    delegate_to: localhost
+  register: single_dn
+
+# Query for Dn
+- name: Query Dns
+  ucs_query:
+    <<: *login_info
+    distinguished_names: org-root, sys/rack-unit-1, sys/chassis-1/blade-2
+    delegate_to: localhost
+  register: multiple_dns
