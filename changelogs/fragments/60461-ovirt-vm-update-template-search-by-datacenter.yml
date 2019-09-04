@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt_vm - update tempalte search by datacenter (https://github.com/ansible/ansible/issues/59189)

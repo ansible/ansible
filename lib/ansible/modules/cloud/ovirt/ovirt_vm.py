@@ -1206,8 +1206,11 @@ class VmsModule(BaseModule):
         template = None
         templates_service = self._connection.system_service().templates_service()
         if self.param('template'):
+            clusters_service = self._connection.system_service().clusters_service()
+            cluster = search_by_name(clusters_service, self.param('cluster'))
+            data_center = self._connection.follow_link(cluster.data_center)
             templates = templates_service.list(
-                search='name=%s and cluster=%s' % (self.param('template'), self.param('cluster'))
+                search='name=%s and datacenter=%s' % (self.param('template'), data_center.name)
             )
             if self.param('template_version'):
                 templates = [
@@ -1216,10 +1219,10 @@ class VmsModule(BaseModule):
                 ]
             if not templates:
                 raise ValueError(
-                    "Template with name '%s' and version '%s' in cluster '%s' was not found'" % (
+                    "Template with name '%s' and version '%s' in data center '%s' was not found'" % (
                         self.param('template'),
                         self.param('template_version'),
-                        self.param('cluster')
+                        data_center.name
                     )
                 )
             template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
