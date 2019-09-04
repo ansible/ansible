@@ -1140,7 +1140,7 @@ def build_top_level_options(params):
         spec.setdefault('Placement', {'GroupName': str(params.get('placement_group'))})
     if params.get('ebs_optimized') is not None:
         if params.get('ebs_optimized') == 'auto':
-            ebs_optimized = True if _supports_ebs_optimized(params.get('instance_type')) else False
+            ebs_optimized = _supports_ebs_optimized(params.get('instance_type'))
         else:
             ebs_optimized = boolean(params.get('ebs_optimized'))
         spec['EbsOptimized'] = ebs_optimized
