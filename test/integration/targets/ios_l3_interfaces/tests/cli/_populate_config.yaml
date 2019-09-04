@@ -5,8 +5,8 @@
   vars:
     lines: |
       interface GigabitEthernet 0/1
-      ip address dhcp client-id GigabitEthernet 0/0 hostname test.com
+      ip address 203.0.113.27 255.255.255.0
       interface GigabitEthernet 0/2
-      ip address 192.168.2.1 255.255.255.0 secondary
-      ip address 192.168.2.2 255.255.255.0
-      ipv6 address fd5d:12c9:2201:1::1/64
+      ip address 192.0.2.1 255.255.255.0 secondary
+      ip address 192.0.2.2 255.255.255.0
+      ipv6 address 2001:db8:0:3::/64
