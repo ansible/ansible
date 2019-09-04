@@ -17,7 +17,8 @@ __metaclass__ = type
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import dict_diff, to_list, remove_empties
 from ansible.module_utils.network.nxos.facts.facts import Facts
-from ansible.module_utils.network.nxos.utils.utils import get_interface_type, normalize_interface, search_obj_in_list, validate_ipv4_addr, validate_ipv6_addr, sanitize_interface_facts
+from ansible.module_utils.network.nxos.utils.utils import get_interface_type, normalize_interface, search_obj_in_list, validate_ipv4_addr, validate_ipv6_addr
+from ansible.module_utils.network.nxos.utils.utils import sanitize_interface_facts
 
 
 class L3_interfaces(ConfigBase):
@@ -48,6 +49,7 @@ class L3_interfaces(ConfigBase):
         """
         facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
         l3_interfaces_facts = facts['ansible_network_resources'].get('l3_interfaces')
+
         if not l3_interfaces_facts:
             return []
         return sanitize_interface_facts(l3_interfaces_facts)
