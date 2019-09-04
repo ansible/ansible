@@ -41,8 +41,8 @@ options:
     choices: ['on', 'host', 'console', 'monitor', 'buffered', 'trap']
   name:
     description:
-      - If value of C(dest) is I(host) C(name) should be specified,
-        which indicates hostname or IP address.
+      - The hostname or IP address of the destination.
+      - Required when I(dest=host).
   size:
     description:
       - Size of buffer. The acceptable value is in range from 4096 to
