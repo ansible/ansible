@@ -115,6 +115,16 @@ options:
             - "Will only be used when I(device) and I(label) are not specified."
         type: str
         version_added: "2.10"
+    type:
+        description:
+            - "This option allow the user explicit define the format of LUKS
+              container that wants to work with. Options are 'luks1' or 'luks2'"
+            - "Will use per default 'luks2' if I(label) is specified, and the
+              option defined by user if I(label) is not specified."
+        type: str
+        choices: [luks1, luks2]
+        version_added: "2.10"
+
 
 
 requirements:
@@ -195,6 +205,13 @@ EXAMPLES = '''
     uuid: 03ecd578-fad4-4e6c-9348-842e3e8fa340
     state: "closed"
     name: "mycrypt"
+
+- name: create a container using luks2 format
+  luks_device:
+    device: "/dev/loop0"
+    state: "present"
+    keyfile: "/vault/keyfile"
+    type: luks2
 '''
 
 RETURN = '''
@@ -317,16 +334,21 @@ class CryptHandler(Handler):
 
     def run_luks_create(self, device, keyfile, keysize):
         # create a new luks container; use batch mode to auto confirm
-        label = self._module.params.get('label')
+        type = self._module.params['type']
+        label = self._module.params['label']
+
         options = []
         if keysize is not None:
             options.append('--key-size=' + str(keysize))
         if label is not None:
-            # create luks container v2 with label
             options.extend(['--type', 'luks2', '--label', label])
+        elif type is not None:
+            options.extend(['--type', type])
+
         args = [self._cryptsetup_bin, 'luksFormat']
         args.extend(options)
         args.extend(['-q', device, keyfile])
+
         result = self._run_command(args)
         if result[RETURN_CODE] != 0:
             raise ValueError('Error while creating LUKS on %s: %s'
@@ -541,6 +563,7 @@ def run_module():
         keysize=dict(type='int'),
         label=dict(type='str'),
         uuid=dict(type='str'),
+        type=dict(type='str', choices=['luks1', 'luks2']),
     )
 
     # seed the result dict in the object
