@@ -63,16 +63,11 @@ options:
         to a given subset. Possible values for this argument include
         all and the resources like interfaces, vlans etc.
         Can specify a list of values to include a larger subset.
-    choices: ['all', '!all',
-              'interfaces', '!interfaces',
-              'lacp', '!lacp',
-              'lacp_interfaces', '!lacp_interfaces',
-              'lag_interfaces', '!lag_interfaces',
-              'l2_interfaces', '!l2_interfaces',
-              'l3_interfaces', '!l3_interfaces',
-              'lldp_global', '!lldp_global',
-              'lldp_interfaces', '!lldp_interfaces',
-              'vlans', '!vlans']
+        Values can also be used with an initial C(M(!)) to specify that
+        a specific subset should not be collected.
+        Valid subsets are 'all', 'interfaces', 'lacp', 'lacp_interfaces',
+              'lag_interfaces', 'l2_interfaces', 'l3_interfaces', 'lldp_global',
+              'lldp_interfaces', 'vlans'.
     required: false
     version_added: "2.9"
 requirements:
