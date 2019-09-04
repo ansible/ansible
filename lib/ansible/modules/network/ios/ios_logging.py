@@ -41,9 +41,8 @@ options:
     choices: ['on', 'host', 'console', 'monitor', 'buffered', 'trap']
   name:
     description:
-      - If value of C(dest) is I(file) it indicates file-name,
-        for I(user) it indicates username and for I(host) indicates
-        the host name to be notified.
+      - If value of C(dest) is I(host) C(name) should be specified,
+        which indicates hostname or IP address.
   size:
     description:
       - Size of buffer. The acceptable value is in range from 4096 to
