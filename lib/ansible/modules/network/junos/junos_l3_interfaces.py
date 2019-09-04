@@ -374,10 +374,10 @@ after:
      of the parameters above.
   type: list
 commands:
-  description: The set of commands pushed to the remote device.
+  description: The set of commands in xml pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['xml 1', 'xml 2', 'xml 3']
 """
 
 
