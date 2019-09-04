@@ -5,3 +5,6 @@ pytest
 pytest-mock
 pytest-xdist
 pyyaml
+
+# requirement for maven_artifact
+semantic_version
