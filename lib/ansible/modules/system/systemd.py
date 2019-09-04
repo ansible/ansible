@@ -272,6 +272,10 @@ def is_running_service(service_status):
     return service_status['ActiveState'] in set(['active', 'activating'])
 
 
+def is_deactivating_service(service_status):
+    return service_status['ActiveState'] in set(['deactivating'])
+
+
 def request_was_ignored(out):
     return '=' not in out and 'ignoring request' in out
 
@@ -492,7 +496,7 @@ def main():
                     if not is_running_service(result['status']):
                         action = 'start'
                 elif module.params['state'] == 'stopped':
-                    if is_running_service(result['status']):
+                    if is_running_service(result['status']) or is_deactivating_service(result['status']):
                         action = 'stop'
                 else:
                     if not is_running_service(result['status']):
