@@ -389,6 +389,9 @@ def create_bucket(module, s3, bucket, location=None):
             s3.create_bucket(Bucket=bucket, CreateBucketConfiguration=configuration)
         else:
             s3.create_bucket(Bucket=bucket)
+        if module.params.get('permission'):
+            # Wait for the bucket to exist before setting ACLs
+            s3.get_waiter('bucket_exists').wait(Bucket=bucket)
         for acl in module.params.get('permission'):
             s3.put_bucket_acl(ACL=acl, Bucket=bucket)
     except botocore.exceptions.ClientError as e:
