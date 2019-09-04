@@ -134,5 +134,3 @@ class TestNxosL3InterfacesModule(TestNxosModule):
         # playbook['state'] = 'replaced'
         # set_module_args(playbook, ignore_provider_arg)
         # self.execute_module(changed=True, commands=replaced)
-
-
