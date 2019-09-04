@@ -561,7 +561,7 @@ class JenkinsPlugin(object):
 
         # Open the updates file
         try:
-            f = open(updates_file)
+            f = open(updates_file, encoding='utf-8')
         except IOError as e:
             self.module.fail_json(
                 msg="Cannot open temporal updates file.",
