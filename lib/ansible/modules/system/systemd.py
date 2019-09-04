@@ -271,7 +271,7 @@ from ansible.module_utils._text import to_native
 
 
 def is_running_service(service_status):
-    return service_status['ActiveState'] in set(['active', 'activating', 'deactivating'])
+    return service_status['ActiveState'] in set(['active', 'activating'])
 
 
 def is_deactivating_service(service_status):
