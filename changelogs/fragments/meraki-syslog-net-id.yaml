@@ -1,0 +1,2 @@
+bugfixes:
+  - meraki_syslog - Properly handle tasks with `net_id` instead of `net_name`.
