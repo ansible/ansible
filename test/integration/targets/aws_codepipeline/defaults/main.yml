@@ -9,4 +9,4 @@ codepipeline_name: "{{ resource_prefix }}-test-codepipeline"
 # Shippable resource_prefixes are in the format shippable-123456-123, so in those cases
 # we need both sets of digits to keep the resource name unique
 unique_id: "{{ resource_prefix | regex_search('(\\d+-?)(\\d+)$') }}"
-codepipeline_service_role_name: "ansible-test-sts-{{ unique_id }}-codebuild-service-role"
+codepipeline_service_role_name: "ansible-test-sts-{{ unique_id }}-codepipeline-role"
