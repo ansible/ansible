@@ -45,15 +45,14 @@ options:
         all and the resources like interfaces, vlans etc.
         Can specify a list of values to include a larger subset. Values
         can also be used with an initial C(M(!)) to specify that a
-        specific subset should not be collected.
+        specific subset should not be collected. Values can also be used
+        with an initial C(M(!)) to specify that a specific subset should
+        not be collected.
+        Valid subsets are 'all', 'interfaces', 'l2_interfaces', 'l3_interfaces',
+        'lacp', 'lacp_interfaces', 'lag_interfaces', 'lldp_global', 'lldp_interfaces',
+        'vlans'.
     required: false
     type: list
-    choices: [
-        'all', '!all', 'interfaces', '!interfaces', 'l2_interfaces', '!l2_interfaces',
-        'l3_interfaces', '!l3_interfaces', 'lacp', '!lacp', 'lacp_interfaces', '!lacp_interfaces',
-        'lag_interfaces', '!lag_interfaces', 'lldp_global', '!lldp_global', 'lldp_interfaces', '!lldp_interfaces',
-        'vlans', '!vlans',
-    ]
     version_added: "2.9"
 """
 

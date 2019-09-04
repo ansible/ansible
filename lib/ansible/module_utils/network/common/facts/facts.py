@@ -31,18 +31,21 @@ class FactsBase(object):
         if not self._gather_network_resources:
             self._gather_network_resources = ['!all']
 
-    def gen_runable(self, subsets, valid_subsets):
+    def gen_runable(self, subsets, valid_subsets, resource_facts=False):
         """ Generate the runable subset
 
         :param module: The module instance
         :param subsets: The provided subsets
         :param valid_subsets: The valid subsets
+        :param resource_facts: A boolean flag
         :rtype: list
         :returns: The runable subsets
         """
         runable_subsets = set()
         exclude_subsets = set()
-        minimal_gather_subset = frozenset(['default'])
+        minimal_gather_subset = set()
+        if not resource_facts:
+            minimal_gather_subset = frozenset(['default'])
 
         for subset in subsets:
             if subset == 'all':
@@ -78,43 +81,39 @@ class FactsBase(object):
         runable_subsets.difference_update(exclude_subsets)
         return runable_subsets
 
-    def get_network_resources_facts(self, net_res_choices, facts_resource_obj_map, resource_facts_type=None, data=None):
+    def get_network_resources_facts(self, facts_resource_obj_map, resource_facts_type=None, data=None):
         """
-        :param net_res_choices:
         :param fact_resource_subsets:
         :param data: previously collected configuration
         :return:
         """
-        if net_res_choices:
-            if 'all' in net_res_choices:
-                net_res_choices.remove('all')
+        if not resource_facts_type:
+            resource_facts_type = self._gather_network_resources
 
-        if net_res_choices:
-            if not resource_facts_type:
-                resource_facts_type = self._gather_network_resources
+        restorun_subsets = self.gen_runable(resource_facts_type, frozenset(facts_resource_obj_map.keys()), resource_facts=True)
+        if restorun_subsets:
+            self.ansible_facts['ansible_net_gather_network_resources'] = list(restorun_subsets)
+            instances = list()
+            for key in restorun_subsets:
+                fact_cls_obj = facts_resource_obj_map.get(key)
+                if fact_cls_obj:
+                    instances.append(fact_cls_obj(self._module))
+                else:
+                    self._warnings.extend(["network resource fact gathering for '%s' is not supported" % key])
 
-            restorun_subsets = self.gen_runable(resource_facts_type, frozenset(net_res_choices))
-            if restorun_subsets:
-                self.ansible_facts['ansible_net_gather_network_resources'] = list(restorun_subsets)
-                instances = list()
-                for key in restorun_subsets:
-                    fact_cls_obj = facts_resource_obj_map.get(key)
-                    if fact_cls_obj:
-                        instances.append(fact_cls_obj(self._module))
-                    else:
-                        self._warnings.extend(["network resource fact gathering for '%s' is not supported" % key])
-
-                for inst in instances:
-                    inst.populate_facts(self._connection, self.ansible_facts, data)
+            for inst in instances:
+                inst.populate_facts(self._connection, self.ansible_facts, data)
 
     def get_network_legacy_facts(self, fact_legacy_obj_map, legacy_facts_type=None):
         if not legacy_facts_type:
             legacy_facts_type = self._gather_subset
 
         runable_subsets = self.gen_runable(legacy_facts_type, frozenset(fact_legacy_obj_map.keys()))
-        runable_subsets.add('default')
         if runable_subsets:
             facts = dict()
+            # default subset should always returned be with legacy facts subsets
+            if 'default' not in runable_subsets:
+                runable_subsets.add('default')
             self.ansible_facts['ansible_net_gather_subset'] = list(runable_subsets)
 
             instances = list()
