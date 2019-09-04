@@ -46,13 +46,6 @@ DELETE_PAYLOAD = {'name': 'test_new_network', 'state': 'absent'}
 class TestCheckpointNetwork(object):
     module = cp_mgmt_network
 
-    checkpoint_argument_spec_for_objects = dict(
-        auto_publish_session=dict(type='bool'),
-        wait_for_task=dict(type='bool', default=True),
-        state=dict(type='str', required=True, choices=['present', 'absent']),
-        version=dict(type='str')
-    )
-
     @pytest.fixture(autouse=True)
     def module_mock(self, mocker):
         return mocker.patch.multiple(basic.AnsibleModule, exit_json=exit_json, fail_json=fail_json)
@@ -114,10 +107,3 @@ class TestCheckpointNetwork(object):
         with pytest.raises(AnsibleExitJson) as ex:
             self.module.main()
         return ex.value.args[0]
-
-    def _run_module_with_fail_json(self, module_args):
-        set_module_args(module_args)
-        with pytest.raises(AnsibleFailJson) as exc:
-            self.module.main()
-        result = exc.value.args[0]
-        return result
