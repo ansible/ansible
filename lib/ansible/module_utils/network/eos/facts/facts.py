@@ -11,7 +11,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.module_utils.network.common.facts.facts import FactsBase
-from ansible.module_utils.network.eos.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.eos.facts.interfaces.interfaces import InterfacesFacts
 from ansible.module_utils.network.eos.facts.l2_interfaces.l2_interfaces import L2_interfacesFacts
 from ansible.module_utils.network.eos.facts.l3_interfaces.l3_interfaces import L3_interfacesFacts
