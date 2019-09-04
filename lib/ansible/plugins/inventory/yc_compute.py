@@ -70,10 +70,6 @@ DOCUMENTATION = r'''
           - When overriding this option don't forget to explicitly include default value to your rules (if you need it).
         type: list
         default: status == 'RUNNING'
-      conditional_groups:
-        description: Add hosts to group based on Jinja2 conditionals.
-        type: dict
-        default: {}
       api_retry_count:
         description: Retries count for API calls.
         type: int
@@ -107,7 +103,7 @@ keyed_groups:
   # Place hosts in groups named by value of labels['group'].
   - key: labels['group']
 
-conditional_groups:
+groups:
   # Place hosts in 'ssd' group if they have appropriate disk_type label.
   ssd: labels['disk_type'] == 'ssd'
 '''
@@ -219,7 +215,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     host=hostname,
                     strict=strict)
                 self._add_host_to_composed_groups(
-                    groups=self.get_option('conditional_groups'),
+                    groups=self.get_option('groups'),
                     variables=instance,
                     host=hostname,
                     strict=strict)
