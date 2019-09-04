@@ -5,8 +5,7 @@
             "Sid": "AllowS3AnsibleTestBuckets",
             "Action": [
                 "s3:CreateBucket",
-                "s3:DeleteBucket",
-                "s3:DeleteObject",
+                "s3:Delete*",
                 "s3:GetBucketPolicy",
                 "s3:GetBucketRequestPayment",
                 "s3:GetBucketTagging",
@@ -15,7 +14,7 @@
                 "s3:GetObject",
                 "s3:GetBucketNotification",
                 "s3:HeadBucket",
-                "s3:ListBucket",
+                "s3:List*",
                 "s3:PutBucketAcl",
                 "s3:PutBucketPolicy",
                 "s3:PutBucketRequestPayment",

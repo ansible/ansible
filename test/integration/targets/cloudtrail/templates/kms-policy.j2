@@ -1,0 +1,34 @@
+{
+  "Version": "2012-10-17",
+  "Id": "CloudTrailPolicy",
+  "Statement": [
+    {
+      "Sid": "EncryptLogs",
+      "Effect": "Allow",
+      "Principal": { "Service": "cloudtrail.amazonaws.com" },
+      "Action": "kms:GenerateDataKey*",
+      "Resource": "*",
+      "Condition": {
+        "StringLike": {
+          "kms:EncryptionContext:aws:cloudtrail:arn": [
+            "arn:aws:cloudtrail:*:{{ aws_caller_info.account }}:trail/{{ resource_prefix }}*"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "DescribeKey",
+      "Effect": "Allow",
+      "Principal": { "Service": "cloudtrail.amazonaws.com" },
+      "Action": "kms:DescribeKey",
+      "Resource": "*"
+    },
+    {
+      "Sid": "AnsibleTestManage",
+      "Effect": "Allow",
+      "Principal": { "AWS": "{{ aws_caller_info.arn }}" },
+      "Action": "*",
+      "Resource": "*"
+    }
+  ]
+}
