@@ -99,6 +99,8 @@ class AwsCloudEnvironment(CloudEnvironment):
 
         ansible_vars = dict(
             resource_prefix=self.resource_prefix,
+            resource_shortprefix=self.resource_shortprefix,
+            resource_unique=self.resource_unique,
         )
 
         ansible_vars.update(dict(parser.items('default')))

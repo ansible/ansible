@@ -177,6 +177,8 @@ class CloudBase(ABC):
 
     _CONFIG_PATH = 'config_path'
     _RESOURCE_PREFIX = 'resource_prefix'
+    _RESOURCE_SHORTPREFIX = 'resource_shortprefix'
+    _RESOURCE_UNIQUE = 'resource_unique'
     _MANAGED = 'managed'
     _SETUP_EXECUTED = 'setup_executed'
 
@@ -246,6 +248,34 @@ class CloudBase(ABC):
         self._set_cloud_config(self._RESOURCE_PREFIX, value)
 
     @property
+    def resource_shortprefix(self):
+        """
+        :rtype: str
+        """
+        return self._get_cloud_config(self._RESOURCE_SHORTPREFIX)
+
+    @resource_shortprefix.setter
+    def resource_shortprefix(self, value):
+        """
+        :type value: str
+        """
+        self._set_cloud_config(self._RESOURCE_SHORTPREFIX, value)
+
+    @property
+    def resource_unique(self):
+        """
+        :rtype: str
+        """
+        return self._get_cloud_config(self._RESOURCE_UNIQUE)
+
+    @resource_unique.setter
+    def resource_unique(self, value):
+        """
+        :type value: str
+        """
+        self._set_cloud_config(self._RESOURCE_UNIQUE, value)
+
+    @property
     def managed(self):
         """
         :rtype: bool
@@ -308,7 +338,10 @@ class CloudProvider(CloudBase):
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        self.resource_prefix = self._generate_resource_prefix()
+        prefix, shortprefix, unique = self._generate_resource_prefix()
+        self.resource_prefix = prefix
+        self.resource_shortprefix = shortprefix
+        self.resource_unique = unique
 
         atexit.register(self.cleanup)
 
@@ -390,14 +423,23 @@ class CloudProvider(CloudBase):
         :rtype: str
         """
         if is_shippable():
-            return 'shippable-%s-%s' % (
+            prefix = 'shippable-%s-%s' % (
                 os.environ['SHIPPABLE_BUILD_NUMBER'],
                 os.environ['SHIPPABLE_JOB_NUMBER'],
             )
+            unique = '%s-%s' % (
+                os.environ['SHIPPABLE_BUILD_NUMBER'],
+                os.environ['SHIPPABLE_JOB_NUMBER'],
+            )
+            return prefix, prefix, unique
 
+        resource_random = random.randint(10000000, 99999999)
         node = re.sub(r'[^a-zA-Z0-9]+', '-', platform.node().split('.')[0]).lower()
 
-        return 'ansible-test-%s-%d' % (node, random.randint(10000000, 99999999))
+        prefix = 'ansible-test-%s-%d' % (node, resource_random)
+        short_prefix = 'ansible-test-%d' % (resource_random)
+
+        return prefix, short_prefix, resource_random
 
 
 class CloudEnvironment(CloudBase):
