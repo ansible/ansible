@@ -15,8 +15,8 @@
             - address: dhcp
           - name: GigabitEthernet0/2
             ipv4:
-            - address: 192.168.4.1/24
-            - address: 192.168.4.2/24
+            - address: 198.51.100.1/24
+            - address: 198.51.100.2/24
               secondary: True
         state: overridden
       register: result
