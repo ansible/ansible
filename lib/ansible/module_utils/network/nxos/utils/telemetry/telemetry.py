@@ -223,7 +223,7 @@ def massage_data(have_or_want):
                     for key in ['filter_condition', 'query_condition', 'depth']:
                         if item.get('path').get(key) == 'None':
                             del item['path'][key]
-                    if item.get('path').get('depth') >= 0:
+                    if item.get('path').get('depth') is not None:
                         item['path']['depth'] = str(item['path']['depth'])
                 if item.get('destination_group'):
                     item['destination_group'] = str(item['destination_group'])
