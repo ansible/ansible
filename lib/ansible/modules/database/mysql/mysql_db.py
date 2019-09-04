@@ -129,7 +129,7 @@ EXAMPLES = r'''
   mysql_db:
     state: import
     name: all
-    encoding: "latin1"
+    encoding: latin1
     target: /tmp/dump.sql
 
 - name: Delete database with name 'bobdata'
