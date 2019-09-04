@@ -239,7 +239,7 @@ EXAMPLES = '''
       password: "{{ password }}"
 
   - name: Get system health report
-    redfish_facts:
+    redfish_info:
       category: Systems
       command: GetHealthReport
       baseuri: "{{ baseuri }}"
@@ -247,7 +247,7 @@ EXAMPLES = '''
       password: "{{ password }}"
 
   - name: Get chassis health report
-    redfish_facts:
+    redfish_info:
       category: Chassis
       command: GetHealthReport
       baseuri: "{{ baseuri }}"
@@ -255,7 +255,7 @@ EXAMPLES = '''
       password: "{{ password }}"
 
   - name: Get manager health report
-    redfish_facts:
+    redfish_info:
       category: Manager
       command: GetHealthReport
       baseuri: "{{ baseuri }}"
