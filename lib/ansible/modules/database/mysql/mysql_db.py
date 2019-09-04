@@ -90,7 +90,7 @@ EXAMPLES = r'''
   copy:
     src: dump.sql.bz2
     dest: /tmp
-    
+
 - name: Restore database
   mysql_db:
     name: my_db
@@ -123,13 +123,13 @@ EXAMPLES = r'''
     state: import
     name: all
     target: /tmp/dump.sql
-    
+
 # Import of sql script with encoding option
 - name: Import dump.sql with specific latin1 encoding, similar to mysql -u <username> --default-character-set=latin1 -p <password> < dump.sql
   mysql_db:
     state: import
     name: all
-    encoding: "latin1" 
+    encoding: "latin1"
     target: /tmp/dump.sql
 
 - name: Delete database with name 'bobdata'
