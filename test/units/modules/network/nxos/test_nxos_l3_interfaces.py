@@ -136,16 +136,3 @@ class TestNxosL3InterfacesModule(TestNxosModule):
         # self.execute_module(changed=True, commands=replaced)
 
 
-def build_args(data, type, state=None, check_mode=None):
-    if state is None:
-        state = 'merged'
-    if check_mode is None:
-        check_mode = False
-    args = {
-        'state': state,
-        '_ansible_check_mode': check_mode,
-        'config': {
-            type: data
-        }
-    }
-    return args
