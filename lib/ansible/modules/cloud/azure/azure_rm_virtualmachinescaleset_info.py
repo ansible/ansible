@@ -386,7 +386,7 @@ class AzureRMVirtualMachineScaleSetInfo(AzureRMModuleBase):
 
             # proper result format we want to support in the future
             # dropping 'ansible_facts' and shorter name 'vmss'
-            self.results['vmss'] = result['azure_vmss']
+            self.results['vmss'] = result
 
         return self.results
 
