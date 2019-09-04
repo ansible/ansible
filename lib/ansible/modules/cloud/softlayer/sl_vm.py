@@ -66,7 +66,7 @@ options:
   flavor:
     description:
       - Specify which SoftLayer flavor template to use instead of cpus and memory.
-    version_added: "2.9"
+    version_added: "2.10"
   disks:
     description:
       - List of disk sizes to be assigned to new virtual instance.
