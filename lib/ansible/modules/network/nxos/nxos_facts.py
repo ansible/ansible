@@ -55,20 +55,13 @@ options:
     description:
       - When supplied, this argument will restrict the facts collected
         to a given subset. Possible values for this argument include
-        all and the resources like interfaces, vlans etc.
-        Can specify a list of values to include a larger subset.
-    choices:
-      - all
-      - bfd_interfaces
-      - lag_interfaces
-      - telemetry
-      - vlans
-      - lacp
-      - lacp_interfaces
-      - interfaces
-      - l3_interfaces
-      - l2_interfaces
-      - lldp_global
+        all and the resources like interfaces, vlans etc. Can specify a
+        list of values to include a larger subset. Values can also be
+        used with an initial C(M(!)) to specify that a specific subset
+        should not be collected.
+        Valid subsets are 'all', 'bfd_interfaces', 'lag_interfaces', 'telemetry',
+        'vlans', 'lacp', 'lacp_interfaces', 'interfaces', 'l3_interfaces',
+        'l2_interfaces', 'lldp_global'.
     required: false
     version_added: "2.9"
 """
