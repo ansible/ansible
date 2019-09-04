@@ -103,6 +103,12 @@ def get_interface_type(interface):
         return 'unknown'
 
 
+def sanitize_interface_facts(interfaces):
+    """Exclude reserved interfaces from user management
+    """
+    return [i for i in interfaces if i['name'] != 'mgmt0']
+
+
 def vlan_range_to_list(vlans):
     result = []
     if vlans:
