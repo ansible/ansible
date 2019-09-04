@@ -185,7 +185,7 @@ EXAMPLES = """
 RETURN = """
 commands:
   description: The set of commands that will be pushed to the remote device
-  note: The commands will be returned only for platforms that does not support onbox diff. The C(--diff) option with the playbook will return the difference in configuration for devices that has support for onbox diff.
+  notes: The commands will be returned only for platforms that do not support onbox diff. The C(--diff) option with the playbook will return the difference in configuration for devices that has support for onbox diff.
   returned: always
   type: list
   sample: ['interface Loopback999', 'no shutdown']
@@ -286,12 +286,16 @@ def run(module, device_operations, connection, candidate, running, rollback_id):
             else:
                 candidate = config_diff.splitlines()
 
-            kwargs = {'candidate': candidate, 'commit': commit, 'replace': replace,
-                      'comment': commit_comment}
+            kwargs = {
+                'candidate': candidate,
+                'commit': commit,
+                'replace': replace,
+                'comment': commit_comment
+            }
             if commit:
                 connection.edit_config(**kwargs)
             result['changed'] = True
-            result['commands'] = config_diff.split('\n')            
+            result['commands'] = config_diff.split('\n')
 
         if banner_diff:
             candidate = json.dumps(banner_diff)
