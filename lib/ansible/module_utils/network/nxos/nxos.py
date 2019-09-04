@@ -739,10 +739,9 @@ class NxosCmdRef:
           multiplier: 3
     """
 
-    def __init__(self, module, cmd_ref_str, ref_only=None):
+    def __init__(self, module, cmd_ref_str, **kwargs):
         """Initialize cmd_ref from yaml data."""
-        if ref_only is None:
-            ref_only = False
+        ref_only = kwargs.get('ref_only', False)
 
         self._module = module
         self._check_imports()
@@ -1078,15 +1077,11 @@ class NxosCmdRef:
             [proposed.append(ctx) for ctx in ref[k].get('context', [])]
             proposed.append(cmd)
 
-    def get_proposed(self, save_context=None):
+    def get_proposed(self):
         """Compare playbook values against existing states and create a list
         of proposed commands.
         Return a list of raw cli command strings.
         """
-        if save_context is None:
-            save_context = []
-        if save_context is not None and not isinstance(save_context, list):
-            raise ValueError("save_context argument must be a list of commands")
         cmds = []
         ref = self._ref
         # '_proposed' may be empty list or contain initializations; e.g. ['feature foo']
