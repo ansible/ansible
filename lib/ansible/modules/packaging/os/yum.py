@@ -1157,8 +1157,6 @@ class YumModule(YumDnf):
                 candidates = (
                     # CentOS 7.0-7.6
                     'No Packages marked for removal',
-                    # Fedora 26-31
-                    'Nothing to do.',
                 )
                 for candidate in candidates:
                     if candidate in out:
