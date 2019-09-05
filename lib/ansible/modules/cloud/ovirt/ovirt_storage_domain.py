@@ -640,8 +640,8 @@ class StorageDomainModule(BaseModule):
         if not dc_name:
             # Find the DC, where the storage resides:
             dc_name = self._find_attached_datacenter_name(storage_domain.name)
-        self._service = self._attached_sds_service(storage_domain, dc_name)
-        self._maintenance(self._service, storage_domain)
+        self._service = self._attached_sds_service(dc_name)
+        self._maintenance(storage_domain)
 
     def update_check(self, entity):
         return (
