@@ -22,6 +22,9 @@ version_added: "2.0"
 description:
    - Add, Update or Remove ports from an OpenStack cloud. A I(state) of
      'present' will ensure the port is created or updated if required.
+requirements:
+    - "ordereddict unless python >= 2.7"
+    - "openstacksdk"
 options:
    network:
      description:
@@ -371,7 +374,7 @@ def main():
                            **module_kwargs)
 
     if not HAS_ORDEREDDICT:
-        module.fail_json(msg=missing_required_lib('orederddict'))
+        module.fail_json(msg=missing_required_lib('ordereddict'))
 
     name = module.params['name']
     state = module.params['state']
