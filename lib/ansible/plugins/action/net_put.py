@@ -35,7 +35,6 @@ display = Display()
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
-        changed = True
         socket_path = None
         play_context = copy.deepcopy(self._play_context)
         play_context.network_os = self._get_network_os(task_vars)
@@ -49,7 +48,7 @@ class ActionModule(ActionBase):
             return result
 
         try:
-            src = self._task.args.get('src')
+            src = self._task.args['src']
         except KeyError as exc:
             return {'failed': True, 'msg': 'missing required argument: %s' % exc}
 
@@ -103,12 +102,11 @@ class ActionModule(ActionBase):
         try:
             changed = self._handle_existing_file(conn, output_file, dest, proto, sock_timeout)
             if changed is False:
-                result['changed'] = False
+                result['changed'] = changed
                 result['destination'] = dest
                 return result
         except Exception as exc:
-            result['msg'] = ('Warning: Exc %s idempotency check failed. Check'
-                             'dest' % exc)
+            result['msg'] = ('Warning: %s idempotency check failed. Check dest' % exc)
 
         try:
             conn.copy_file(
@@ -123,7 +121,7 @@ class ActionModule(ActionBase):
                     result['msg'] = 'Warning: iosxr scp server pre close issue. Please check dest'
             else:
                 result['failed'] = True
-                result['msg'] = ('Exception received : %s' % exc)
+                result['msg'] = 'Exception received: %s' % exc
 
         if mode == 'text':
             # Cleanup tmp file expanded wih ansible vars
@@ -134,29 +132,33 @@ class ActionModule(ActionBase):
         return result
 
     def _handle_existing_file(self, conn, source, dest, proto, timeout):
+        """
+        Determines whether the source and destination file match.
+
+        :return: False if source and dest both exist and have matching sha1 sums, True otherwise.
+        """
         cwd = self._loader.get_basedir()
         filename = str(uuid.uuid4())
-        source_file = os.path.join(cwd, filename)
+        tmp_source_file = os.path.join(cwd, filename)
         try:
             conn.get_file(
-                source=dest, destination=source_file,
+                source=dest, destination=tmp_source_file,
                 proto=proto, timeout=timeout
             )
         except ConnectionError as exc:
             error = to_text(exc)
             if error.endswith("No such file or directory"):
-                if os.path.exists(source_file):
-                    os.remove(source_file)
+                if os.path.exists(tmp_source_file):
+                    os.remove(tmp_source_file)
                 return True
-            os.remove(source_file)
 
         try:
             with open(source, 'r') as f:
                 new_content = f.read()
-            with open(source_file, 'r') as f:
+            with open(tmp_source_file, 'r') as f:
                 old_content = f.read()
         except (IOError, OSError):
-            os.remove(source_file)
+            os.remove(tmp_source_file)
             raise
 
         sha1 = hashlib.sha1()
@@ -168,7 +170,7 @@ class ActionModule(ActionBase):
         new_content_b = to_bytes(new_content, errors='surrogate_or_strict')
         sha1.update(new_content_b)
         checksum_new = sha1.digest()
-        os.remove(source_file)
+        os.remove(tmp_source_file)
         if checksum_old == checksum_new:
             return False
         return True
