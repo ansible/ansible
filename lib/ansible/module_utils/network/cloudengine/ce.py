@@ -365,6 +365,8 @@ def get_nc_next(module, xml_str):
                     result.extend(next)
             except ConnectionError:
                 break
+    if result is not None:
+        return etree.tostring(result)
     return result
 
 
