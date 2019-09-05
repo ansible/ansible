@@ -1,0 +1,2 @@
+bugfixes:
+ - default callback - fixed issue causing inaccurate task headers while using host_pinned strategy
