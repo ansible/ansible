@@ -11,7 +11,7 @@ v2.9.0b1
 Release Summary
 ---------------
 
-| Release Date: 2019-08-29
+| Release Date: 2019-09-05
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -527,6 +527,7 @@ Bugfixes
 - SECURITY Fixed the python interpreter detection, added in 2.8.0alpha1, to properly mark the returned data as untemplatable. This prevents a malicious managed machine from running code on the controller via templating.
 - TaskExecutor - Create new instance of the action plugin on each iteration when using until (https://github.com/ansible/ansible/issues/57886)
 - TaskQueueManager - Ensure ``has_dead_workers`` can function, by using the correct reference, and only allow an exit code of 0. (https://github.com/ansible/ansible/issues/29124)
+- To rename CheckPoint to Check_Point due to CP legal reasons. (https://github.com/ansible/ansible/pull/61172).
 - Use async poll default setting for play tasks also, previouslly in only affected adhoc ansible.
 - Use templated loop_var/index_var when looping include_* (https://github.com/ansible/ansible/issues/58820)
 - acme_certificate - Only return challenges in ``challenge_data`` and ``challenge_data_dns`` which are not yet valid.
@@ -536,9 +537,14 @@ Bugfixes
 - allow include_role to work with ansible command
 - allow loading inventory plugins adjacent to playbooks
 - allow python_requirements_facts to report on dependencies containing dashes
+- ansible-galaxy - Fix url building to not truncate the URL (https://github.com/ansible/ansible/issues/61624)
+- ansible-galaxy role - Fix issue where ``--server`` was not being used for certain ``ansible-galaxy role`` actions - https://github.com/ansible/ansible/issues/61609
 - ansible-podman connection plugin - Fix case when mount of podman container fails and files can't be copied to/from container. Also add error handling in case of failed podman commands. (https://github.com/ansible/ansible/issues/57740)
+- ansible-test now correctly enumerates submodules when a collection resides below the repository root
+- ansible-test now creates output directories as needed for powershell coverage output before generating reports
 - ansible-vault - fix error when multiple vault password files are specified (https://github.com/ansible/ansible/issues/57172)
 - ansible.basics - fix core C# recursive call when logging fails (e.g. if insufficient permissions are held) (https://github.com/ansible/ansible/pull/59503)
+- apt - Fixed the issue the cache being updated while auto-installing its dependencies even when ``update_cache`` is set to false.
 - apt - fixed issue where allow_unauthenticated did not apply to dependencies when installing a deb directly
 - apt - strip whitespaces in package names (https://github.com/ansible/ansible/issues/55741)
 - apt_facts - fix performance regression when getting facts about apt packages (https://github.com/ansible/ansible/issues/60450)
@@ -551,7 +557,16 @@ Bugfixes
 - aws_kms - fix exception when only Key ID is passed
 - aws_kms module ensure tag keys have their case preserved by avoiding a second unnecessary format conversion
 - aws_s3 - Improve usability when the execution host lacks MD5 support (e.g. due to FIPS-140-2).
+- aws_s3 - Try to wait for the bucket to exist before setting the access control list.
 - aws_ses_identity module works when region is provided using config or environment variables rather than the region parameter (https://github.com/ansible/ansible/issues/51531)
+- azure_rm_dnsrecordset_info - no longer returns empty ``azure_dnsrecordset`` facts when called as ``_info`` module.
+- azure_rm_networkinterface_info - Fix up instances when ``ansible_facts`` is returned for the older ``_facts`` alias.
+- azure_rm_resourcegroup_info - no longer returns ``azure_resourcegroups`` facts when called as ``_info`` module.
+- azure_rm_securitygroup_info - Fix up instances when ``ansible_facts`` is returned for the older ``_facts`` alias.
+- azure_rm_storageaccount_info - no longer returns empty ``azure_storageaccounts`` facts when called as ``_info`` module.
+- azure_rm_virtualmachineimage_info - no longer returns empty ``azure_vmimages`` facts when called as ``_info`` module.
+- azure_rm_virtualmachinescaleset_info - fix wrongly empty result, or ``ansible_facts`` result, when called as ``_info`` module.
+- azure_rm_virtualnetwork_info - no longer returns empty ``azure_virtualnetworks`` facts when called as ``_info`` module.
 - become - Provide nice error when the shell plugin is incompatible with the configured become plugin (https://github.com/ansible/ansible/issues/57770)
 - ce_acl_interface - Strict regularity can't find anything.
 - ce_dldp - tag named data of a xpath is unnecessay for old sotfware version to find a element from xml tree, but element can not be found with 'data' tag for new version, so remove.
@@ -578,6 +593,7 @@ Bugfixes
 - cowsay - Fix issue with an empty cow_whitelist (https://github.com/ansible/ansible/issues/45631)
 - crypto modules - improve error messages when required Python library is missing.
 - cyberarkpassword - fix result decoding issues with Python 3 (https://github.com/ansible/ansible/issues/52625)
+- digital_ocean_droplet - Fix creation of DigitalOcean droplets using digital_ocean_droplet module (https://github.com/ansible/ansible/pull/61655)
 - display underlying error when reporting an invalid ``tasks:`` block.
 - dnf - fix formatting of module name in error message (https://github.com/ansible/ansible/pull/58647)
 - dnf - fix wildcard matching for state: absent (https://github.com/ansible/ansible/issues/55938)
@@ -756,6 +772,7 @@ Bugfixes
 - uri - always return a value for status even during failure (https://github.com/ansible/ansible/issues/55897)
 - urls - Handle redirects properly for IPv6 address by not splitting on ``:`` and rely on already parsed hostname and port values (https://github.com/ansible/ansible/issues/56258)
 - use versioned link generator to link correct version for seealso
+- user - allow 13 asterisk characters in password field without warning
 - user - create parent directories when the specified home path has parent directiries that do not exist (https://github.com/ansible/ansible/issues/41393)
 - user - do not warn when using ``local: yes`` if user already exists (https://github.com/ansible/ansible/issues/58063)
 - user - omit incompatible options when operating in local mode (https://github.com/ansible/ansible/issues/48722)

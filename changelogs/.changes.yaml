@@ -23,6 +23,7 @@ releases:
     - 49808-docker_container-mounts.yml
     - 49938-vcenter_folder-restrict_folder.yml
     - 50617-vmware_guest-vapp_settings.yml
+    - 51489-apt-not-honor-update-cache.yml
     - 51531-aws_ses_identity-fix-implicit-region.yaml
     - 51561-meraki_ssid-fix.yml
     - 51995-apt_repository-catch-IOError.yaml
@@ -295,6 +296,7 @@ releases:
     - 61090-cloudstack-facts-info.yaml
     - 61091-online-facts-info.yaml
     - 61095-scaleway-facts-info.yaml
+    - 61172-rename-CheckPoint-to-Check_Point.yaml
     - 61182-k8s_rd-ending-with-dashes.yaml
     - 61191-acme_certificate-fix-challenges.yaml
     - 61197-openstack-facts-info.yaml
@@ -306,6 +308,10 @@ releases:
     - 61355-purefa_ra_change_facts_to_ra_info.yaml
     - 61356-purefb_s3user_change_facts_to_s3user_info.yaml
     - 61417-azure-facts-info-rename.yml
+    - 61624-fix-galaxy-url-building.yml
+    - 61655-fix-digital-ocean-droplet-create.yaml
+    - 61735-wait-for-s3-bucket-to-exist-before-modifying.yaml
+    - 61805-azure-facts-info.yml
     - Fix-Expansion-of-vars-win_firewall_rule.yml
     - Make-Win_acl-Ignore-language-diff-in-IDRefs.yml
     - ac_collection_plugin_load.yml
@@ -317,8 +323,12 @@ releases:
     - always_keep_subset.yml
     - ansiballz-imp-deprecation.yaml
     - ansible-adhoc.yaml
+    - ansible-galaxy-role-server.yaml
+    - ansible-test-powershell-coverage-fix.yml
+    - ansible-test-submodules.yml
     - argparse.yaml
     - aws_s3-etags.yaml
+    - azure-fact-fix.yaml
     - backports_ssl_match_hostname_bundle.yml
     - bad_empty_play.yml
     - better_task_error.yml
@@ -394,6 +404,7 @@ releases:
     - mount.yml
     - mysql_user-fix-versions-compatibilities-regression.yml
     - netbox_ip_address-fix-duplicate-ip.yaml
+    - openbsd-disabled-account-no-warning-for-passwd.yaml
     - os_subnet-subnetpool-id-allowed.yaml
     - ovirt_fetch_also_list_of_hrefs.yaml
     - package_facts-performace-regression-fix.yaml
