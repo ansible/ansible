@@ -40,12 +40,13 @@
       rabbitmq_user:
         user: joe
         password: otherpassword
-      register: add_user
+        update_password: always
+      register: change_password
 
-    - name: Check that user adding succeeds without a change
+    - name: Check that user succesfully changed
       assert:
         that:
-          - add_user.changed == false
+          - change_password.changed == true
 
 - name: Test change user permissions in check mode
   block:
