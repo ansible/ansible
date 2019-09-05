@@ -18,7 +18,7 @@ DOCUMENTATION = """
 module: cli_config
 version_added: "2.7"
 author: "Trishna Guha (@trishnaguha)"
-notes: 
+notes:
   - The commands will be returned only for platforms that do not support onbox diff.
     The C(--diff) option with the playbook will return the difference in configuration for devices that has support for onbox diff
 short_description: Push text based configuration to network devices over network_cli
