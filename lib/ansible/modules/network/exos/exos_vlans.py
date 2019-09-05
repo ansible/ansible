@@ -38,7 +38,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: exos_vlans
-version_added: 2.9
+version_added: 2.10
 short_description:  Manage VLANs on Extreme Networks EXOS devices.
 description: This module provides declarative management of VLANs on Extreme Networks EXOS network devices.
 author: Jayalakshmi Viswanathan (@jayalakshmiV)
@@ -181,7 +181,7 @@ EXAMPLES = """
 #        "method": "DELETE",
 #        "path": "/rest/restconf/data/openconfig-vlan:vlans/vlan=20"
 #     },
-#     {  
+#     {
 #	 "data": null,
 #        "method": "DELETE",
 #        "path": "/rest/restconf/data/openconfig-vlan:vlans/vlan=30"
@@ -331,7 +331,7 @@ EXAMPLES = """
 #      }
 #    ]
 #
-# 
+#
 # After state:
 # -------------
 #
@@ -719,23 +719,26 @@ before:
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
+  type: list
 after:
   description: The resulting configuration model invocation.
   returned: when changed
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
-commands:
-  description: The set of commands pushed to the remote device.
+  type: list
+requests:
+  description: The set of requests pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: [{"data": "...", "method": "...", "path": "..."}, {"data": "...", "method": "...", "path": "..."}, {"data": "...", "method": "...", "path": "..."}]
 """
 
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.exos.argspec.vlans.vlans import VlansArgs
 from ansible.module_utils.network.exos.config.vlans.vlans import Vlans
+
 
 def main():
     """
@@ -754,4 +757,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

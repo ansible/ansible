@@ -10,6 +10,8 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 import json
 from copy import deepcopy
@@ -18,6 +20,7 @@ from ansible.module_utils.network.common.utils import to_list, dict_diff
 from ansible.module_utils.network.exos.facts.facts import Facts
 from ansible.module_utils.network.exos.exos import send_requests
 from ansible.module_utils.network.exos.utils.utils import search_obj_in_list
+
 
 class Vlans(ConfigBase):
     """
@@ -40,10 +43,10 @@ class Vlans(ConfigBase):
     }
 
     VLAN_PATCH = {
-        "data": {"openconfig-vlan:vlans":{"vlan": []}},
+        "data": {"openconfig-vlan:vlans": {"vlan": []}},
         "method": "PATCH",
-        "path": "/rest/restconf/data/openconfig-vlan:vlans/" 
-    } 
+        "path": "/rest/restconf/data/openconfig-vlan:vlans/"
+    }
 
     VLAN_DELETE = {
         "method": "DELETE",
@@ -53,8 +56,8 @@ class Vlans(ConfigBase):
     DEL_PATH = "/rest/restconf/data/openconfig-vlan:vlans/vlan="
 
     REQUEST_BODY = {
-        "config": {"name": None , "status": "ACTIVE" , "tpid": "oc-vlan-types:TPID_0x8100", "vlan-id": None }
-        }
+        "config": {"name": None, "status": "ACTIVE", "tpid": "oc-vlan-types:TPID_0x8100", "vlan-id": None}
+    }
 
     def __init__(self, module):
         super(Vlans, self).__init__(module)
@@ -89,7 +92,7 @@ class Vlans(ConfigBase):
                 send_requests(self._module, requests=requests)
             result['changed'] = True
         result['requests'] = requests
-        
+ 
         changed_vlans_facts = self.get_vlans_facts()
 
         result['before'] = existing_vlans_facts
@@ -131,7 +134,7 @@ class Vlans(ConfigBase):
         elif state == 'replaced':
             requests = self._state_replaced(want, have)
         return requests
-        
+
     def _state_replaced(self, want, have):
         """ The command generator when state is replaced
 
@@ -155,14 +158,14 @@ class Vlans(ConfigBase):
                 else:
                     request_post = deepcopy(self.VLAN_POST)
                     request_body = self._update_vlan_config_body(w, request_body)
-                    request_post["data"]["openconfig-vlan:vlans"].append(request_body)            
+                    request_post["data"]["openconfig-vlan:vlans"].append(request_body)
                     request_post["data"] = json.dumps(request_post["data"])
                     requests.append(request_post)
 
         if len(request_patch["data"]["openconfig-vlan:vlans"]["vlan"]):
             request_patch["data"] = json.dumps(request_patch["data"])
             requests.append(request_patch)
-        
+
         return requests
 
     def _state_overridden(self, want, have):
@@ -189,10 +192,10 @@ class Vlans(ConfigBase):
                 else:
                     request_post = deepcopy(self.VLAN_POST)
                     request_body = self._update_vlan_config_body(w, request_body)
-                    request_post["data"]["openconfig-vlan:vlans"].append(request_body)            
+                    request_post["data"]["openconfig-vlan:vlans"].append(request_body)
                     request_post["data"] = json.dumps(request_post["data"])
                     requests.append(request_post)
-        
+
         for h in have:
             request_delete = deepcopy(self.VLAN_DELETE)
             if h not in have_copy and h['vlan_id'] != 1:
@@ -202,7 +205,7 @@ class Vlans(ConfigBase):
         if len(request_patch["data"]["openconfig-vlan:vlans"]["vlan"]):
             request_patch["data"] = json.dumps(request_patch["data"])
             requests.append(request_patch)
-        
+
         return requests
 
     def _state_merged(self, want, have):
@@ -226,7 +229,7 @@ class Vlans(ConfigBase):
                     request_body = self._update_vlan_config_body(w, request_body)
                     request_post["data"]["openconfig-vlan:vlans"].append(request_body)
                     request_post["data"] = json.dumps(request_post["data"])
-                    requests.append(request_post)  
+                    requests.append(request_post)
 
         return requests
 
@@ -266,4 +269,3 @@ class Vlans(ConfigBase):
         request["config"]["status"] = want["state"].upper()
         request["config"]["vlan-id"] = want["vlan_id"]
         return request
-

@@ -25,6 +25,8 @@
 """
 The arg spec for the exos_vlans module
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 class VlansArgs(object):  # pylint: disable=R0903
@@ -35,17 +37,17 @@ class VlansArgs(object):  # pylint: disable=R0903
         pass
 
     argument_spec = {
-            'config': {
-                'elements': 'dict',
-                'options': {
-                    'name': {'type': 'str'},
-                    'state': {
-                        'choices': ['active', 'suspended'],
-                        'default': 'active',
-                        'type': 'str'},
-                    'vlan_id': {'required': True, 'type': 'int'}},
-                'type': 'list'},
-            'state': {
-                'choices': ['merged', 'replaced', 'overridden', 'deleted'],
-                'default': 'merged',
-                'type': 'str'}}  # pylint: disable=C0301
+        'config': {
+            'elements': 'dict',
+            'options': {
+                'name': {'type': 'str'},
+                'state': {
+                    'choices': ['active', 'suspended'],
+                    'default': 'active',
+                    'type': 'str'},
+                'vlan_id': {'required': True, 'type': 'int'}},
+            'type': 'list'},
+        'state': {
+            'choices': ['merged', 'replaced', 'overridden', 'deleted'],
+            'default': 'merged',
+            'type': 'str'}}  # pylint: disable=C0301
