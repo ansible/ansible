@@ -25,6 +25,7 @@ options:
         description:
         - Create or modify an organization.
         - C(org_id) must be specified if multiple organizations of the same name exist.
+        - C(absent) WILL DELETE YOUR ENTIRE ORGANIZATION, AND ALL ASSOCIATED OBJECTS, WITHOUT CONFIRMATION. USE WITH CAUTION.
         choices: ['absent', 'present', 'query']
         default: present
     clone:
