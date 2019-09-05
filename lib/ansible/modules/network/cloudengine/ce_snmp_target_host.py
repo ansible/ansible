@@ -405,7 +405,7 @@ class SnmpTargetHost(object):
 
                 find_flag = False
                 for item in INTERFACE_TYPE:
-                    if item in self.interface_name:
+                    if item in self.interface_name.lower():
                         find_flag = True
                         break
                 if not find_flag:
@@ -629,6 +629,9 @@ class SnmpTargetHost(object):
         if self.host_name:
             self.end_state["target host info"] = self.end_netconf_cfg[
                 "target_host_info"]
+        if self.existing == self.end_state:
+            self.changed = False
+            self.updates_cmd = list()
 
     def config_version_cli(self):
         """ Config version by cli """
@@ -771,7 +774,7 @@ class SnmpTargetHost(object):
         if self.security_model == "v3" and self.security_name_v3:
             cmd += "params securityname %s %s " % (
                 self.security_name_v3, self.security_model)
-            if self.security_level and self.security_level in ["authentication", "privacy "]:
+            if self.security_level and self.security_level in ["authentication", "privacy"]:
                 cmd += "%s" % self.security_level
 
         self.changed = True
@@ -815,8 +818,10 @@ class SnmpTargetHost(object):
         if not self.address:
             cmd = "undo snmp-agent target-host host-name %s " % self.host_name
         else:
-            cmd = "undo snmp-agent target-host trap address udp-domain %s " % self.address
-
+            if self.notify_type == "trap":
+                cmd = "undo snmp-agent target-host trap address udp-domain %s " % self.address
+            else:
+                cmd = "undo snmp-agent target-host inform address udp-domain %s " % self.address
             if self.recv_port:
                 cmd += "udp-port %s " % self.recv_port
             if self.interface_name:
