@@ -148,7 +148,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.network.nxos.nxos import get_interface_type
-from ansible.module_utils.six import string_types
 
 
 PARAM_TO_COMMAND_KEYMAP = {

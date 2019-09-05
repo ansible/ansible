@@ -20,7 +20,7 @@ from ansible.module_utils.network.nxos.argspec.telemetry.telemetry import Teleme
 from ansible.module_utils.network.nxos.cmdref.telemetry.telemetry import TMS_GLOBAL, TMS_DESTGROUP, TMS_SENSORGROUP, TMS_SUBSCRIPTION
 from ansible.module_utils.network.nxos.utils.telemetry.telemetry import get_instance_data, cr_key_lookup
 from ansible.module_utils.network.nxos.utils.telemetry.telemetry import normalize_data
-from ansible.module_utils.network.nxos.nxos import NxosCmdRef, normalize_interface
+from ansible.module_utils.network.nxos.nxos import NxosCmdRef
 
 
 class TelemetryFacts(object):

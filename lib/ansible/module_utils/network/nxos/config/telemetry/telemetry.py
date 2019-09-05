@@ -13,9 +13,6 @@ created
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import re
-from copy import deepcopy
-
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.nxos.facts.facts import Facts

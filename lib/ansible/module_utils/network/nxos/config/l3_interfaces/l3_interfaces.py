@@ -15,9 +15,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import dict_diff, to_list, remove_empties
+from ansible.module_utils.network.common.utils import to_list, remove_empties
 from ansible.module_utils.network.nxos.facts.facts import Facts
-from ansible.module_utils.network.nxos.utils.utils import get_interface_type, normalize_interface, search_obj_in_list, validate_ipv4_addr, validate_ipv6_addr
+from ansible.module_utils.network.nxos.utils.utils import normalize_interface, search_obj_in_list
 
 
 class L3_interfaces(ConfigBase):
