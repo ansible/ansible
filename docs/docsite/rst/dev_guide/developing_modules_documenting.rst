@@ -285,6 +285,11 @@ Documentation fragments
 
 If you're writing multiple related modules, they may share common documentation, such as authentication details, file mode settings, ``notes:`` or ``seealso:`` entries. Rather than duplicate that information in each module's ``DOCUMENTATION`` block, you can save it once as a doc_fragment plugin and use it in each module's documentation. In Ansible, shared documentation fragments are contained in a ``ModuleDocFragment`` class in `lib/ansible/plugins/doc_fragments/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/doc_fragments>`_. To include a documentation fragment, add ``extends_documentation_fragment: FRAGMENT_NAME`` in your module's documentation.
 
+Modules should only use a doc_fragment if it will implement all of the interface documented there in
+a manner that behaves the same as the existing modules which implement that fragment.  The goal is
+that any parameter listed in doc_fragments will behave identically when used in another module
+implementing the doc_fragment.
+
 .. _note:
   * Prior to Ansible 2.8, documentation fragments were kept in ``lib/ansible/utils/module_docs_fragments``.
 
