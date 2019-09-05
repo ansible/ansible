@@ -160,7 +160,7 @@ are transferred to managed machines automatically.
 
 %package -n ansible-test
 Summary: Tool for testing ansible plugin and module code
-Requires: %{name}-%{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 %if 0%{?rhel} >= 8
 # Will use the python3 stdlib venv
 #Requires: python3-virtualenv
