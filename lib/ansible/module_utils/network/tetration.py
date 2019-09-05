@@ -26,7 +26,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 import os
 import json
 from functools import partial
@@ -177,7 +177,7 @@ class TetrationApiModule(TetrationApiBase):
 
     def post(self, target, **kwargs):
         resp = self.rc.post(target, **kwargs)
-        if resp.status_code/100 == 2:
+        if resp.status_code / 100 == 2:
             try:
                 return resp.json()
             except ValueError:
@@ -187,7 +187,7 @@ class TetrationApiModule(TetrationApiBase):
 
     def put(self, target, **kwargs):
         resp = self.rc.put(target, **kwargs)
-        if resp.status_code/100 == 2:
+        if resp.status_code / 100 == 2:
             try:
                 return resp.json()
             except ValueError:
@@ -197,7 +197,7 @@ class TetrationApiModule(TetrationApiBase):
 
     def delete(self, target, **kwargs):
         resp = self.rc.delete(target, **kwargs)
-        if resp.status_code/100 == 2:
+        if resp.status_code / 100 == 2:
             try:
                 return resp.json()
             except ValueError:
@@ -234,6 +234,7 @@ class TetrationApiModule(TetrationApiBase):
     def clear_values(self, obj):
         for k in list(iterkeys(obj)):
             obj[k] = ''
+
 
 TETRATION_API_PROTOCOLS = [
     dict(name='ANY', value=""),
