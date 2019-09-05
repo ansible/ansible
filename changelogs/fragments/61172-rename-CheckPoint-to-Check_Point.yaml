@@ -1,0 +1,3 @@
+bugfixes:
+  - To rename CheckPoint to Check_Point due to CP legal reasons.
+    (https://github.com/ansible/ansible/pull/61172).
