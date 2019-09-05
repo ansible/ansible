@@ -29,7 +29,7 @@ def pct_to_int(value, num_items, min_value=1):
     '''
     if isinstance(value, string_types) and value.endswith('%'):
         value_pct = int(value.replace("%", ""))
-        return int((value_pct / 100.0) * num_items) or min_value
+        return int(round((value_pct / 100.0) * num_items)) or min_value
     else:
         return int(value)
 
