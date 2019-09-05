@@ -257,7 +257,8 @@ def main():
     login_user = module.params["login_user"]
 
     try:
-        cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, None, 'mysql_driver.cursors.DictCursor',
+        cursor = mysql_connect(module, login_user, login_password, config_file,
+                               ssl_cert, ssl_key, ssl_ca, None, cursor_class='DictCursor',
                                connect_timeout=connect_timeout)
     except Exception as e:
         if os.path.exists(config_file):
