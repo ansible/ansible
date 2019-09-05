@@ -63,6 +63,7 @@ Using ``import*`` can also have some limitations when compared to dynamic includ
 
 * As noted above, loops cannot be used with imports at all.
 * When using variables for the target file or role name, variables from inventory sources (host/group vars, etc.) cannot be used.
+* Handlers using ``import*`` will not be triggered when notified by their name, as importing overwrites the handler's named task with the imported task list.
 
 .. note::
     Regarding the use of ``notify`` for dynamic tasks: it is still possible to trigger the dynamic include itself, which would result in all tasks within the include being run.
