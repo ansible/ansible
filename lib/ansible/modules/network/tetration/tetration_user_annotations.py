@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: tetration_user_annotations
-version_added: "2.9"
+version_added: "2.10"
 author: Brandon Beck (@techbeck03)
 description:
 - Enables management of Cisco Tetration user annotations.
@@ -41,7 +41,7 @@ options:
     - Required if I(state=absent)
     - Required if I(state=query)
     type: str
-    version_added: "2.9"
+    version_added: "2.10"
   name:
     description: Name of the tenant
     required: true

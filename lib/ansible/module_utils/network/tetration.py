@@ -25,8 +25,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
 import os
 import json
 from functools import partial
@@ -211,7 +212,7 @@ class TetrationApiModule(TetrationApiBase):
             for k in list(iterkeys(obj1)):
                 if k in list(iterkeys(obj2)):
                     if type(obj1[k]) is dict:
-                        if (lambda a, b: (a > b)-(a < b))(obj1[k], obj2[k]) != 0:
+                        if (lambda a, b: (a > b) - (a < b))(obj1[k], obj2[k]) != 0:
                             changed_flag = True
                     elif obj1[k] != obj2[k]:
                         changed_flag = True
