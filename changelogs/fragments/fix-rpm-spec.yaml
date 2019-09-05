@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - Fix the upstream rpm spec file.  The ansible-test package requirement on
+    the main ansible package was formatted incorrectly.
