@@ -17,7 +17,10 @@
     cli_config:
       config: |
         interface {{ test_int1 }}
+          switchport
           switchport trunk allowed vlan 11
+        interface {{ test_int2 }}
+          switchport
 
   - name: Gather l2_interfaces facts
     nxos_facts: &facts
