@@ -202,9 +202,9 @@ class CallbackModule(CallbackBase):
 
         # Preserve task name, as all vars may not be available for templating
         # when we need it later
-        if self._play.strategy == 'free':
-            # Explicitly set to None for strategy 'free' to account for any cached
-            # task title from a previous non-free play
+        if self._play.strategy in ['free', 'host_pinned']:
+            # Explicitly set to None for strategy 'free' or 'host_pinned' to 
+            # ensure accurate task headers
             self._last_task_name = None
         else:
             self._last_task_name = task.get_name().strip()
