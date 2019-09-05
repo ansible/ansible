@@ -64,12 +64,10 @@ options:
                 description:
                     - Graph width will be set in graph settings.
                 type: int
-                default: None
             graph_height:
                 description:
                     - Graph height will be set in graph settings.
                 type: int
-                default: None
             graphs_in_row:
                 description:
                     - Limit columns of a screen and make multiple rows.
