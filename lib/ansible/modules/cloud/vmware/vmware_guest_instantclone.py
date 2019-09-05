@@ -76,7 +76,7 @@ class PyVmomiHelper(PyVmomi):
         super(PyVmomiHelper, self).__init__(module)
 
     def deploy_instantclone(self, vm):
-        vm_state = gather_vm_facts(self.module.content, vm)
+        vm_state = gather_vm_facts(self.content, vm)
         # An instant clone requires the base VM to be running, fail if it is not
         if vm_state['hw_power_status'] != 'poweredOn':
             self.module.module.fail_json(msg='Unable to instant clone a VM in a "%s" state. It must be powered on.' % vm_state['hw_power_status'])
@@ -99,7 +99,7 @@ class PyVmomiHelper(PyVmomi):
         instantclone_spec = vim.VirtualMachineInstantCloneSpec()
         location_spec = vim.VirtualMachineRelocateSpec()
         instantclone_spec.config = config
-        instantclone_spec.name = self.module.params['name']
+        instantclone_spec.name = self.module.params['clone_name']
 
         if vm_state['instant_clone_frozen'] is False:
             # VM is not frozen, need to do prep work for instant clone
@@ -153,7 +153,7 @@ class PyVmomiHelper(PyVmomi):
 
         if task.info.state == 'error':
             kwargs = {
-                'changed': self.module.change_applied,
+                'changed': False,
                 'failed': True,
                 'msg': task.info.error.msg,
                 'clone_method': 'InstantClone_Task'
@@ -161,9 +161,9 @@ class PyVmomiHelper(PyVmomi):
             return kwargs
 
         clone = task.info.result
-        vm_facts = gather_vm_facts(self.module.content, clone)
+        vm_facts = gather_vm_facts(self.content, clone)
         return {
-            'changed': self.module.change_applied,
+            'changed': True,
             'failed': False,
             'instance': vm_facts,
             'clone_method': 'InstantClone_Task'
