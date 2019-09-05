@@ -1396,6 +1396,18 @@ GALAXY_TOKEN_PATH:
   - {key: token_path, section: galaxy}
   type: path
   version_added: "2.9"
+GALAXY_DISPLAY_PROGRESS:
+  default: ~
+  description:
+  - Some steps in ``ansible-galaxy`` display a progress wheel which can cause issues on certain displays or when
+    outputing the stdout to a file.
+  - This config option controls whether the display wheel is shown or not.
+  - The default is to show the display wheel if stdout has a tty.
+  env: [{name: ANSIBLE_GALAXY_DISPLAY_PROGRESS}]
+  ini:
+  - {key: display_progress, section: galaxy}
+  type: bool
+  version_added: "2.10"
 HOST_KEY_CHECKING:
   name: Check host keys
   default: True

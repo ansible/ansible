@@ -9,6 +9,7 @@ import json
 import operator
 import os
 import shutil
+import sys
 import tarfile
 import tempfile
 import threading
@@ -456,14 +457,18 @@ def _tarfile_extract(tar, member):
 
 @contextmanager
 def _display_progress():
+    config_display = C.GALAXY_DISPLAY_PROGRESS
+    display_wheel = sys.stdout.isatty() if config_display is None else config_display
+
     def progress(display_queue, actual_display):
         actual_display.debug("Starting display_progress display thread")
         t = threading.current_thread()
 
         while True:
             for c in "|/-\\":
-                actual_display.display(c + "\b", newline=False)
-                time.sleep(0.1)
+                if display_wheel:
+                    actual_display.display(c + "\b", newline=False)
+                    time.sleep(0.1)
 
                 # Display a message from the main thread
                 while True:
