@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "iosxr_l3_interfaces - Fixes IOSXR L3 which was having idempotent issue raised in issue #61844, also adding a RTT for iosxr_l3_interfaces resource module"

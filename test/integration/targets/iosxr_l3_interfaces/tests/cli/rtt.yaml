@@ -1,0 +1,38 @@
+---
+- debug:
+    msg: "START iosxr_l3_interfaces round trip integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Round Trip test by applying the provided configuration (base config)
+      iosxr_l3_interfaces:
+        config:
+          - name: GigabitEthernet0/0/0/0
+            ipv4:
+            - address: 198.51.100.1/24
+          - name: GigabitEthernet0/0/0/1
+            ipv6:
+            - address: 2001:db8:0:3::/64
+            ipv4:
+            - address: 192.0.2.1/24
+            - secondary: True
+              address: 192.0.2.2/24
+        state: merged
+      register: base_config
+
+    - name: Gather interfaces facts
+      iosxr_facts:
+        gather_subset:
+          - default
+        gather_network_resources:
+          - l3_interfaces
+      register: l3facts_config
+
+    - name: Apply config from l3_interfaces facts generated (IDEMPOTENT)
+      iosxr_l3_interfaces:
+        config: "{{ l3facts_config['ansible_facts']['ansible_network_resources']['l3_interfaces'] }}"
+        state: merged
+
+  always:
+    - include_tasks: _remove_config.yaml
