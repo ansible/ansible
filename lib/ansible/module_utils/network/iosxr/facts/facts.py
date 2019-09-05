@@ -13,7 +13,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-from ansible.module_utils.network.iosxr.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.iosxr.facts.legacy.base import Default, Hardware, Interfaces, Config
 from ansible.module_utils.network.iosxr.facts.lacp.lacp import LacpFacts
