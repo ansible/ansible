@@ -75,14 +75,6 @@ class PyVmomiHelper(PyVmomi):
     def __init__(self, module):
         super(PyVmomiHelper, self).__init__(module)
 
-    def remove_vm(self, vm):
-        task = vm.Destroy()
-        wait_for_task(task)
-        if task.info.state == 'error':
-            return {'changed': self.module.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'destroy'}
-        else:
-            return {'changed': self.module.change_applied, 'failed': False}
-
     def deploy_instantclone(self, vm):
         vm_state = gather_vm_facts(self.module.content, vm)
         # An instant clone requires the base VM to be running, fail if it is not
@@ -181,14 +173,14 @@ class PyVmomiHelper(PyVmomi):
 def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
-        state=dict(default='present', choices=['present', 'absent']),
         name=dict(type='str'),
+        name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
         moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         datacenter=dict(required=True, type='str'),
-        clone_name=dict(type='str'),
+        clone_name=dict(required=True, type='str'),
         customvalues=dict(type='list', default=[]),
     )
     module = AnsibleModule(
@@ -201,38 +193,29 @@ def main():
 
     result = {'failed': False, 'changed': False}
 
+    if module.params['folder']:
+        # FindByInventoryPath() does not require an absolute path
+        # so we should leave the input folder path unmodified
+        module.params['folder'] = module.params['folder'].rstrip('/')
+
     pyv = PyVmomiHelper(module)
     vm = pyv.get_vm()
 
     if not vm:
         vm_id = (module.params.get('uuid') or module.params.get('name') or module.params.get('moid'))
-        module.fail_json(msg="Unable to manage snapshots for non-existing VM %s" % vm_id)
+        module.fail_json(msg="Unable to find any VM with the identifier: %s" % vm_id)
 
     if not module.params['clone_name']:
-        module.fail_json(msg='Please specify a name for the new clone using the clone_name parameter.')
+        module.fail_json(msg='Please specify a name for the new instant clone using the clone_name parameter.')
 
-    # The clone doesn't exist
-    if not vm:
-        if module.params['state'] == 'present':
-            if module.check_mode:
-                result.update(
-                    changed=True,
-                    desired_operation='instantclone_vm',
-                )
-                module.exit_json(**result)
-            # Create and instant clone
-            result = pyv.deploy_instantclone(vm)
-    # The clone is present
-    else:
-        if module.params['state'] == 'absent':
-            if module.check_mode:
-                result.update(
-                    changed=True,
-                    desired_operation='remove_vm',
-                )
-                module.exit_json(**result)
-            # Delete the clone
-            result = pyv.remove_vm(vm)
+    if module.check_mode:
+        result.update(
+            changed=True,
+            desired_operation='instantclone_vm',
+        )
+        module.exit_json(**result)
+
+    result = pyv.deploy_instantclone(vm)
 
     if result['failed']:
         module.fail_json(**result)
