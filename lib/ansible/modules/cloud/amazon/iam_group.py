@@ -111,56 +111,61 @@ EXAMPLES = '''
 
 '''
 RETURN = '''
-group:
-    description: dictionary containing all the group information
+iam_group:
+    description: dictionary containing all the group information including group membership
     returned: success
     type: complex
     contains:
-        arn:
-            description: the Amazon Resource Name (ARN) specifying the group
-            type: str
-            sample: "arn:aws:iam::1234567890:group/testgroup1"
-        create_date:
-            description: the date and time, in ISO 8601 date-time format, when the group was created
-            type: str
-            sample: "2017-02-08T04:36:28+00:00"
-        group_id:
-            description: the stable and unique string identifying the group
-            type: str
-            sample: AGPAIDBWE12NSFINE55TM
-        group_name:
-            description: the friendly name that identifies the group
-            type: str
-            sample: testgroup1
-        path:
-            description: the path to the group
-            type: str
-            sample: /
-users:
-    description: list containing all the group members
-    returned: success
-    type: complex
-    contains:
-        arn:
-            description: the Amazon Resource Name (ARN) specifying the user
-            type: str
-            sample: "arn:aws:iam::1234567890:user/test_user1"
-        create_date:
-            description: the date and time, in ISO 8601 date-time format, when the user was created
-            type: str
-            sample: "2017-02-08T04:36:28+00:00"
-        user_id:
-            description: the stable and unique string identifying the user
-            type: str
-            sample: AIDAIZTPY123YQRS22YU2
-        user_name:
-            description: the friendly name that identifies the user
-            type: str
-            sample: testgroup1
-        path:
-            description: the path to the user
-            type: str
-            sample: /
+        group:
+            description: dictionary containing all the group information
+            returned: success
+            type: complex
+            contains:
+                arn:
+                    description: the Amazon Resource Name (ARN) specifying the group
+                    type: str
+                    sample: "arn:aws:iam::1234567890:group/testgroup1"
+                create_date:
+                    description: the date and time, in ISO 8601 date-time format, when the group was created
+                    type: str
+                    sample: "2017-02-08T04:36:28+00:00"
+                group_id:
+                    description: the stable and unique string identifying the group
+                    type: str
+                    sample: AGPAIDBWE12NSFINE55TM
+                group_name:
+                    description: the friendly name that identifies the group
+                    type: str
+                    sample: testgroup1
+                path:
+                    description: the path to the group
+                    type: str
+                    sample: /
+        users:
+            description: list containing all the group members
+            returned: success
+            type: complex
+            contains:
+                arn:
+                    description: the Amazon Resource Name (ARN) specifying the user
+                    type: str
+                    sample: "arn:aws:iam::1234567890:user/test_user1"
+                create_date:
+                    description: the date and time, in ISO 8601 date-time format, when the user was created
+                    type: str
+                    sample: "2017-02-08T04:36:28+00:00"
+                user_id:
+                    description: the stable and unique string identifying the user
+                    type: str
+                    sample: AIDAIZTPY123YQRS22YU2
+                user_name:
+                    description: the friendly name that identifies the user
+                    type: str
+                    sample: testgroup1
+                path:
+                    description: the path to the user
+                    type: str
+                    sample: /
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
