@@ -19,15 +19,12 @@ __metaclass__ = type
 
 import copy
 import os
-import time
 import uuid
 import hashlib
-import sys
-import re
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_bytes
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.utils.display import Display
@@ -114,7 +111,7 @@ class ActionModule(ActionBase):
                              'dest' % exc)
 
         try:
-            out = conn.copy_file(
+            conn.copy_file(
                 source=output_file, destination=dest,
                 proto=proto, timeout=sock_timeout
             )
@@ -141,31 +138,26 @@ class ActionModule(ActionBase):
         filename = str(uuid.uuid4())
         source_file = os.path.join(cwd, filename)
         try:
-            out = conn.get_file(
+            conn.get_file(
                 source=dest, destination=source_file,
                 proto=proto, timeout=timeout
             )
-        except Exception as exc:
-            pattern = to_text(exc)
-            not_found_exc = "No such file or directory"
-            if re.search(not_found_exc, pattern, re.I):
+        except ConnectionError as exc:
+            error = to_text(exc)
+            if error.endswith("No such file or directory"):
                 if os.path.exists(source_file):
                     os.remove(source_file)
                 return True
-            else:
-                try:
-                    os.remove(source_file)
-                except OSError as osex:
-                    raise Exception(osex)
+            os.remove(source_file)
 
         try:
             with open(source, 'r') as f:
                 new_content = f.read()
             with open(source_file, 'r') as f:
                 old_content = f.read()
-        except (IOError, OSError) as ioexc:
+        except (IOError, OSError):
             os.remove(source_file)
-            raise IOError(ioexc)
+            raise
 
         sha1 = hashlib.sha1()
         old_content_b = to_bytes(old_content, errors='surrogate_or_strict')
@@ -179,8 +171,7 @@ class ActionModule(ActionBase):
         os.remove(source_file)
         if checksum_old == checksum_new:
             return False
-        else:
-            return True
+        return True
 
     def _get_binary_src_file(self, src):
         working_path = self._get_working_path()
