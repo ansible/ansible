@@ -1,4 +1,5 @@
 shippable/posix/group1
+disabled  # See: https://github.com/ansible/ansible/issues/61815
 skip/osx
 skip/freebsd
 destructive
