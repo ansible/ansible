@@ -51,7 +51,7 @@ extends_documentation_fragment: mso
 
 EXAMPLES = r'''
 - name: Deploy a schema template
-  mso_schema_template:
+  mso_schema_template_deploy:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -61,7 +61,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Undeploy a schema template
-  mso_schema_template:
+  mso_schema_template_deploy:
     host: mso_host
     username: admin
     password: SomeSecretPassword
