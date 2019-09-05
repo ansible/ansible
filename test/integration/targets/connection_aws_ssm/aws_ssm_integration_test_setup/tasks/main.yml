@@ -74,6 +74,8 @@
           Name: "{{resource_prefix}}-integration-test-aws-ssm-windows"
         user_data: |
                     <powershell>
+                    Invoke-WebRequest -Uri "https://amazon-ssm-us-east-1.s3.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe" -OutFile "C:\AmazonSSMAgentSetup.exe"
+                    Start-Process -FilePath C:\AmazonSSMAgentSetup.exe -ArgumentList "/S","/v","/qn" -Wait
                     Restart-Service AmazonSSMAgent
                     </powershell>
         state: present
