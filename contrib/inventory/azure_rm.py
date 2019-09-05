@@ -306,7 +306,7 @@ class AzureRM(object):
         else:
             # try to look up "well-known" values via the name attribute on azure_cloud members
             all_clouds = [x[1] for x in inspect.getmembers(azure_cloud) if isinstance(x[1], azure_cloud.Cloud)]
-            matched_clouds = [x for x in all_clouds if x.name == raw_cloud_env.name]
+            matched_clouds = [x for x in all_clouds if x.name == raw_cloud_env]
             if len(matched_clouds) == 1:
                 self._cloud_environment = matched_clouds[0]
             elif len(matched_clouds) > 1:
