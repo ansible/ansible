@@ -201,14 +201,12 @@
 
   # For bug 61738, verify that the full chain is valid
   - name: Verify that the full chain path can be successfully imported
-    openssl_pkcs12:
-      action: export
-      certificate_path: '{{ example4_cert_path }}'
-      other_certificates: '{{ example4_full_chain_path }}'
-      friendly_name: pkcs12alias
-      path: '{{ example4_p12_path }}'
-      passphrase: pkcs12passphrase
+    command: openssl verify "{{ example4_full_chain_path }}"
+    register: openssl_result
 
+  - assert:
+      that:
+        - openssl_result.stdout_lines[0].endswith(': OK')
 
   always:
     - name: clean-up temporary folder
