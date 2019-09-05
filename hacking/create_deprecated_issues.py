@@ -19,6 +19,7 @@
 
 import argparse
 import os
+import sys
 import time
 
 from collections import defaultdict
@@ -36,70 +37,85 @@ except ImportError:
 
 if not os.getenv('GITHUB_TOKEN'):
     raise SystemExit(
-        'Please set the GITHUB_TOKEN env var with your github oauth token'
-    )
-
-deprecated = defaultdict(list)
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--template', default='deprecated_issue_template.md',
-                    type=argparse.FileType('r'),
-                    help='Path to markdown file template to be used for issue '
-                         'body. Default: %(default)s')
-parser.add_argument('problems', nargs=1, type=argparse.FileType('r'),
-                    help='Path to file containing pylint output for the '
-                         'ansible-deprecated-version check')
-args = parser.parse_args()
-
-
-body_tmpl = args.template.read()
-args.template.close()
-
-text = args.problems[0].read()
-args.problems[0].close()
-
-
-for line in text.splitlines():
-    path = line.split(':')[0]
-    if path.endswith('__init__.py'):
-        component = os.path.basename(os.path.dirname(path))
-    else:
-        component, ext_ = os.path.splitext(os.path.basename(path).lstrip('_'))
-
-    title = (
-        '%s contains deprecated call to be removed in %s' %
-        (component, ansible_major_version)
-    )
-    deprecated[component].append(
-        dict(title=title, path=path, line=line)
+        'Please set the GITHUB_TOKEN env var with your github oauth token with public_repo scope'
     )
 
 
-g = GitHub(token=os.getenv('GITHUB_TOKEN'))
-repo = g.repository('ansible', 'ansible')
+def main():
+    deprecated = defaultdict(list)
 
-# Not enabled by default, this fetches the column of a project,
-# so that we can later add the issue to a project column
-# You will need the project and column IDs for this to work
-# and then update the below lines
-# project = repo.project(2141803)
-# project_column = project.column(4348504)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--template', default='deprecated_issue_template.md',
+                        type=argparse.FileType('r'),
+                        help='Path to markdown file template to be used for issue '
+                             'body. Default: %(default)s')
+    parser.add_argument('--project-name', default='', type=str,
+                        help='Name of a github project to assign all issues to')
+    parser.add_argument('problems', nargs=1, type=argparse.FileType('r'),
+                        help='Path to file containing pylint output for the '
+                             'ansible-deprecated-version check')
+    args = parser.parse_args()
 
-for component, items in deprecated.items():
-    title = items[0]['title']
-    path = '\n'.join(set((i['path']) for i in items))
-    line = '\n'.join(i['line'] for i in items)
-    body = body_tmpl % dict(component=component, path=path,
-                            line=line,
-                            version=ansible_major_version)
+    body_tmpl = args.template.read()
+    args.template.close()
 
-    issue = repo.create_issue(title, body=body, labels=['deprecated'])
-    print(issue)
-    # Sleep a little, so that the API doesn't block us
-    time.sleep(0.5)
-    # Uncomment the next 2 lines if you want to add issues to a project
-    # Needs to be done in combination with the above code for selecting
-    # the project/column
-    # project_column.create_card_with_issue(issue)
-    # time.sleep(0.5)
+    text = args.problems[0].read()
+    args.problems[0].close()
+
+    project_name = args.project_name.strip().lower()
+
+    for line in text.splitlines():
+        path = line.split(':')[0]
+        if path.endswith('__init__.py'):
+            component = os.path.basename(os.path.dirname(path))
+        else:
+            component, dummy = os.path.splitext(os.path.basename(path).lstrip('_'))
+
+        title = (
+            '%s contains deprecated call to be removed in %s' %
+            (component, ansible_major_version)
+        )
+        deprecated[component].append(
+            dict(title=title, path=path, line=line)
+        )
+
+    gh_conn = GitHub(token=os.getenv('GITHUB_TOKEN'))
+    repo = gh_conn.repository('ansible', 'ansible')
+
+    if project_name:
+        project = None
+        for project in repo.projects():
+            if project.name.lower() == project_name:
+                break
+        else:
+            print('%s was an invalid project name' % project_name)
+            sys.exit(1)
+
+        project_column = None
+        for project_column in project.columns():
+            if 'todo' in project_column.name.lower() or 'backlog' in project_column.name.lower():
+                break
+        else:
+            print('unable to determine the todo column in the project.')
+            sys.exit(2)
+
+    for component, items in deprecated.items():
+        title = items[0]['title']
+        path = '\n'.join(set((i['path']) for i in items))
+        line = '\n'.join(i['line'] for i in items)
+        body = body_tmpl % dict(component=component, path=path,
+                                line=line,
+                                version=ansible_major_version)
+
+        issue = repo.create_issue(title, body=body, labels=['deprecated'])
+        print(issue)
+        # Sleep a little, so that the API doesn't block us
+        time.sleep(0.5)
+
+        if project_column:
+            project_column.create_card_with_issue(issue)
+            time.sleep(0.5)
+
+
+if __name__ == '__main__':
+    main()
