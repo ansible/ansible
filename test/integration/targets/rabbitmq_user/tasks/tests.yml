@@ -34,6 +34,19 @@
         that:
           - add_user.changed == false
 
+- name: Test change user password
+  block:
+    - name: Add user
+      rabbitmq_user:
+        user: joe
+        password: otherpassword
+      register: add_user
+
+    - name: Check that user adding succeeds without a change
+      assert:
+        that:
+          - add_user.changed == false
+
 - name: Test change user permissions in check mode
   block:
     - name: Add user with permissions
