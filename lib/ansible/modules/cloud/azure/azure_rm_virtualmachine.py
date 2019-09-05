@@ -1094,7 +1094,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     changed = True
                     vm_dict['properties']['hardwareProfile']['vmSize'] = self.vm_size
 
-                update_tags, vm_dict['tags'] = self.update_tags(vm_dict.get('tags', dict()))
+                update_tags, vm_dict['tags'] = self.update_tags(vm_dict.get('tags', dict()), private_prefix='_own_')
                 if update_tags:
                     differences.append('Tags')
                     changed = True
@@ -1999,10 +1999,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         valid_name = False
         if self.tags is None:
             self.tags = {}
-
-        if self.tags.get('_own_sa_', None):
-            # We previously created one in the same invocation
-            return self.get_storage_account(self.tags['_own_sa_'])
 
         if vm_dict and vm_dict.get('tags', {}).get('_own_sa_', None):
             # We previously created one in a previous invocation

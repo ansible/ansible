@@ -403,13 +403,15 @@ class AzureRMModuleBase(object):
                 if not isinstance(value, str):
                     self.fail("Tags values must be strings. Found {0}:{1}".format(str(key), str(value)))
 
-    def update_tags(self, tags):
+    def update_tags(self, tags, private_prefix=None):
         '''
         Call from the module to update metadata tags. Returns tuple
         with bool indicating if there was a change and dict of new
         tags to assign to the object.
 
         :param tags: metadata tags from the object
+        :param private_prefix: tags starting with this prefix are not removed or updated
+                               based on incoming module arguments
         :return: bool, dict
         '''
         tags = tags or dict()
@@ -420,12 +422,19 @@ class AzureRMModuleBase(object):
         # check add or update
         for key, value in param_tags.items():
             if not new_tags.get(key) or new_tags[key] != value:
-                changed = True
-                new_tags[key] = value
+                if private_prefix is None or (not key.startswith(private_prefix)):
+                    changed = True
+                    new_tags[key] = value
+                else:
+                    self.module.debug(
+                        "Ignoring requested modification of tag '" + key + "' because "
+                        "the tag is managed internally by this module and modifications "
+                        "will lead to unexpected behavior."
+                    )
         # check remove
         if not append_tags:
             for key, value in tags.items():
-                if not param_tags.get(key):
+                if (not param_tags.get(key)) and (private_prefix is None or (not key.startswith(private_prefix))):
                     new_tags.pop(key)
                     changed = True
         return changed, new_tags
