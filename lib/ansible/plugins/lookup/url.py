@@ -29,12 +29,10 @@ options:
   username:
     description: Username to use for HTTP authentication.
     type: string
-    default: None
     version_added: "2.8"
   password:
     description: Password to use for HTTP authentication.
     type: string
-    default: None
     version_added: "2.8"
   headers:
     description: HTTP request headers

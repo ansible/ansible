@@ -64,7 +64,6 @@ DOCUMENTATION = """
     namespace:
       version_added: "2.8"
       description: namespace where secrets reside. requires HVAC 0.7.0+ and Vault 0.11+.
-      default: None
 """
 
 EXAMPLES = """

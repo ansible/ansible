@@ -2405,7 +2405,6 @@ lib/ansible/modules/monitoring/zabbix/zabbix_map.py validate-modules:parameter-t
 lib/ansible/modules/monitoring/zabbix/zabbix_map.py validate-modules:doc-missing-type
 lib/ansible/modules/monitoring/zabbix/zabbix_proxy.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/monitoring/zabbix/zabbix_proxy.py validate-modules:doc-missing-type
-lib/ansible/modules/monitoring/zabbix/zabbix_screen.py validate-modules:doc-default-incompatible-type
 lib/ansible/modules/monitoring/zabbix/zabbix_template.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/monitoring/zabbix/zabbix_template.py validate-modules:doc-missing-type
 lib/ansible/modules/net_tools/basics/get_url.py validate-modules:parameter-type-not-in-doc
