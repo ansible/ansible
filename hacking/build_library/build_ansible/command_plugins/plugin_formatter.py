@@ -422,27 +422,27 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
         if 'options' in doc and doc['options']:
             for (k, v) in iteritems(doc['options']):
                 # Error out if there's no description
-                if 'description' not in doc['options'][k]:
+                if 'description' not in v:
                     raise AnsibleError("Missing required description for parameter '%s' in '%s' " % (k, module))
 
                 # Make sure description is a list of lines for later formatting
-                if isinstance(doc['options'][k]['description'], string_types):
-                    doc['options'][k]['description'] = [doc['options'][k]['description']]
-                elif not isinstance(doc['options'][k]['description'], (list, tuple)):
+                if isinstance(v['description'], string_types):
+                    v['description'] = [v['description']]
+                elif not isinstance(v['description'], (list, tuple)):
                     raise AnsibleError("Invalid type for options['%s']['description']."
                                        " Must be string or list of strings.  Got %s" %
-                                       (k, type(doc['options'][k]['description'])))
+                                       (k, type(v['description'])))
 
                 # Error out if required isn't a boolean (people have been putting
                 # information on when something is required in here.  Those need
                 # to go in the description instead).
-                required_value = doc['options'][k].get('required', False)
+                required_value = v.get('required', False)
                 if not isinstance(required_value, bool):
                     raise AnsibleError("Invalid required value '%s' for parameter '%s' in '%s' (must be truthy)" % (required_value, k, module))
 
                 # Strip old version_added information for options
-                if 'version_added' in doc['options'][k] and too_old(doc['options'][k]['version_added']):
-                    del doc['options'][k]['version_added']
+                if 'version_added' in v and too_old(v['version_added']):
+                    del v['version_added']
 
                 option_names.append(k)
 
