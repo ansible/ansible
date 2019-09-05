@@ -49,5 +49,5 @@ example4_custom_fields:
   email2: sales@ansible.testcertificates.com
   dropdown2: Dropdown 2 Value 1
 example4_cert_expiry: 2020-08-15
-exampel4_full_chain_path: '{{ tmpdir_path }}/issuedcert_2_chain.pem'
+example4_full_chain_path: '{{ tmpdir_path }}/issuedcert_2_chain.pem'
 example4_p12_path: '{{ tmpdir_path }}/issuedcert_2.p12'

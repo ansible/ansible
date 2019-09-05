@@ -206,7 +206,7 @@
 
   - assert:
       that:
-        - openssl_result.stdout_lines[0].endswith(': OK')
+         - "' OK' in openssl_result.stdout_lines[0]"
 
   always:
     - name: clean-up temporary folder
