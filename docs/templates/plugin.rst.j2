@@ -190,8 +190,6 @@ Parameters
             {% if value.suboptions %}
                 {% if value.suboptions.items %}
                     @{ loop(value.suboptions|dictsort) }@
-                {% elif value.suboptions[0].items %}
-                    @{ loop(value.suboptions[0]|dictsort) }@
                 {% endif %}
             {% endif %}
         {% endfor %}

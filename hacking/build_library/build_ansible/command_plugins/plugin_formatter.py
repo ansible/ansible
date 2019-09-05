@@ -374,6 +374,12 @@ def process_options(options):
             if 'version_added' in v and too_old(v['version_added']):
                 del v['version_added']
 
+            if 'suboptions' in v and v['suboptions']:
+                if isinstance(v['suboptions'], dict):
+                    v['suboptions'] = process_options(v['suboptions'])
+                elif isinstance(v['suboptions'][0], dict):
+                    v['suboptions'] = process_options(v['suboptions'][0])
+
             option_names.append(k)
 
     option_names.sort()
