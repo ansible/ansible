@@ -75,7 +75,7 @@ options:
     description:
     - Write a logfile to disk, useful for debugging this module or connection plugins.
     type: str
-    version_added: '2.9'
+    version_added: '2.10'
 seealso:
 - module: win_domain_controller
 - module: win_domain_computer
