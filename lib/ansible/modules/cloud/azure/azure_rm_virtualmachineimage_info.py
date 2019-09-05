@@ -139,7 +139,6 @@ class AzureRMVirtualMachineImageInfo(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_vmimages=[])
         )
 
         self.location = None
@@ -159,6 +158,7 @@ class AzureRMVirtualMachineImageInfo(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         if is_old_facts:
+            self.results['ansible_facts'] = dict()
             if self.location and self.publisher and self.offer and self.sku and self.version:
                 self.results['ansible_facts']['azure_vmimages'] = self.get_item()
             elif self.location and self.publisher and self.offer and self.sku:

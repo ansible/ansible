@@ -280,9 +280,6 @@ class AzureRMVirtualMachineScaleSetInfo(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(
-                azure_vmss=[]
-            )
         )
 
         self.name = None
@@ -308,20 +305,14 @@ class AzureRMVirtualMachineScaleSetInfo(AzureRMModuleBase):
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
 
-        if is_old_facts:
-            if self.name:
-                self.results['ansible_facts']['azure_vmss'] = self.get_item()
-            else:
-                self.results['ansible_facts']['azure_vmss'] = self.list_items()
+        if self.name:
+            result = self.get_item()
         else:
-            if self.name:
-                self.results['vmss'] = self.get_item()
-            else:
-                self.results['vmss'] = self.list_items()
+            result = self.list_items()
 
         if self.format == 'curated':
-            for index in range(len(self.results['ansible_facts']['azure_vmss'])):
-                vmss = self.results['ansible_facts']['azure_vmss'][index]
+            for index in range(len(result)):
+                vmss = result[index]
                 subnet_name = None
                 load_balancer_name = None
                 virtual_network_name = None
@@ -385,13 +376,18 @@ class AzureRMVirtualMachineScaleSetInfo(AzureRMModuleBase):
                     'tags': vmss.get('tags')
                 }
 
-                self.results['ansible_facts']['azure_vmss'][index] = updated
+                result[index] = updated
 
-            # proper result format we want to support in the future
-            # dropping 'ansible_facts' and shorter name 'vmss'
-            self.results['vmss'] = self.results['ansible_facts']['azure_vmss']
-            if not is_old_facts:
-                self.results.pop('ansible_facts', None)
+        if is_old_facts:
+            self.results['ansible_facts'] = {
+                'azure_vmss': result
+            }
+            if self.format == 'curated':
+                # proper result format we want to support in the future
+                # dropping 'ansible_facts' and shorter name 'vmss'
+                self.results['vmss'] = result
+        else:
+            self.results['vmss'] = result
 
         return self.results
 
