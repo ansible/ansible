@@ -19,7 +19,7 @@ module: zabbix_valuemap
 short_description: Create/update/delete Zabbix value maps
 description:
     - This module allows you to create, modify and delete Zabbix value maps.
-version_added: "2.9"
+version_added:'2.10'
 author:
     - "Ruben Tsirunyan (@rubentsirunyan)"
 requirements:
