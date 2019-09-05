@@ -346,6 +346,7 @@ class Connection(NetworkConnectionBase):
         name += "paramiko [%s]" % self._play_context.remote_addr
         return name
 
+    @ensure_connect
     def get_prompt(self):
         """Returns the current prompt from the device"""
         return self._matched_prompt
