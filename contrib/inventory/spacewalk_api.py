@@ -116,6 +116,8 @@ def craft_inventory(group_dict):
             members.append(member['profile_name'])
         # Add a new key with group name, and all it's members as the value
         DYNAMIC_INVENTORY[group['name']] = {'hosts': members, 'vars': {}}
+        # Empty the list for the next group
+        members = []
     # Also add the required _meta key, for holding hostvars
     DYNAMIC_INVENTORY['_meta'] = {'hostvars': {}}
 
