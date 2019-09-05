@@ -101,7 +101,9 @@ options:
         in the system and you want to run pip for the Python 3.3 installation.
         It cannot be specified together with the 'virtualenv' parameter (added in 2.1).
         By default, it will take the appropriate version for the python interpreter
-        use by ansible, e.g. pip3 on python 3, and pip2 or pip on python 2.
+        use by ansible, e.g. pip3 on python 3, and pip2 or pip on python 2. Note that
+        the setuptools requirement is for the Python interpreter used by ansible, not
+        by the version of Python used by the specified executable.
     type: path
     version_added: "1.3"
   umask:
@@ -119,6 +121,8 @@ notes:
      the virtualenv needs to be created.
    - By default, this module will use the appropriate version of pip for the
      interpreter used by ansible (e.g. pip3 when using python 3, pip2 otherwise)
+   - The interpreter used by ansible requires the setuptools package, regardless
+     of the version of pip set with the executable option.
 requirements:
 - pip
 - virtualenv
