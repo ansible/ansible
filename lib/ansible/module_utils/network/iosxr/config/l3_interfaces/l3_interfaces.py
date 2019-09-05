@@ -218,6 +218,34 @@ class L3_Interfaces(ConfigBase):
 
         return commands
 
+    def verify_diff_again(self, want, have):
+        """
+        Verify the IPV4 difference again as sometimes due to
+        change in order of set, set difference may result into change,
+        when there's actually no difference between want and have
+        :param want: want_dict IPV4
+        :param have: have_dict IPV4
+        :return: diff
+        """
+        diff = False
+        for each in want:
+            each_want = dict(each)
+            for every in have:
+                every_have = dict(every)
+                if each_want.get('address') != every_have.get('address') and \
+                        each_want.get('secondary') != every_have.get('secondary') and \
+                        len(each_want.keys()) == len(every_have.keys()):
+                    diff = True
+                    break
+                elif each_want.get('address') != every_have.get('address') and len(each_want.keys()) == len(
+                        every_have.keys()):
+                    diff = True
+                    break
+            if diff:
+                break
+
+        return diff
+
     def _set_config(self, want, have, module):
         # Set the interface config based on the want and have config
         commands = []
@@ -235,11 +263,15 @@ class L3_Interfaces(ConfigBase):
         have_dict = dict_to_set(have)
 
         # To handle L3 IPV4 configuration
-        if dict(want_dict).get('ipv4'):
-            if dict(have_dict).get('ipv4'):
-                diff_ipv4 = set(dict(want_dict).get('ipv4')) - set(dict(have_dict).get('ipv4'))
+        want_ipv4 = dict(want_dict).get('ipv4')
+        have_ipv4 = dict(have_dict).get('ipv4')
+        if want_ipv4:
+            if have_ipv4:
+                diff_ipv4 = set(want_ipv4) - set(dict(have_dict).get('ipv4'))
+                if diff_ipv4:
+                    diff_ipv4 = diff_ipv4 if self.verify_diff_again(want_ipv4, have_ipv4) else ()
             else:
-                diff_ipv4 = set(dict(want_dict).get('ipv4'))
+                diff_ipv4 = set(want_ipv4)
             for each in diff_ipv4:
                 ipv4_dict = dict(each)
                 if ipv4_dict.get('address') != 'dhcp':
@@ -249,11 +281,13 @@ class L3_Interfaces(ConfigBase):
                 add_command_to_config_list(interface, cmd, commands)
 
         # To handle L3 IPV6 configuration
-        if dict(want_dict).get('ipv6'):
-            if dict(have_dict).get('ipv6'):
-                diff_ipv6 = set(dict(want_dict).get('ipv6')) - set(dict(have_dict).get('ipv6'))
+        want_ipv6 = dict(want_dict).get('ipv6')
+        have_ipv6 = dict(have_dict).get('ipv6')
+        if want_ipv6:
+            if have_ipv6:
+                diff_ipv6 = set(want_ipv6) - set(have_ipv6)
             else:
-                diff_ipv6 = set(dict(want_dict).get('ipv6'))
+                diff_ipv6 = set(want_ipv6)
             for each in diff_ipv6:
                 ipv6_dict = dict(each)
                 validate_ipv6(ipv6_dict.get('address'), module)
