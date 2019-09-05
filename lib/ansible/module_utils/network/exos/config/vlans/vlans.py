@@ -92,7 +92,7 @@ class Vlans(ConfigBase):
                 send_requests(self._module, requests=requests)
             result['changed'] = True
         result['requests'] = requests
- 
+
         changed_vlans_facts = self.get_vlans_facts()
 
         result['before'] = existing_vlans_facts
