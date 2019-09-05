@@ -15,10 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: gitlab_user
-short_description: Creates/updates/deletes GitLab Users
+short_description: Creates/updates/deletes/blocks/unblocks GitLab Users
 description:
   - When the user does not exist in GitLab, it will be created.
   - When the user does exists and state=absent, the user will be deleted.
+  - When the user does exists and state=blocked, the user will be blocked.
   - When changes are made to user, the user will be updated.
 version_added: "2.1"
 author:
@@ -98,11 +99,11 @@ options:
     choices: ["guest", "reporter", "developer", "master", "maintainer", "owner"]
   state:
     description:
-      - create or delete group.
-      - Possible values are present and absent.
+      - create, delete or block a user.
+      - Possible values are present, absent, blocked, and unblocked.
     default: present
     type: str
-    choices: ["present", "absent"]
+    choices: ["present", "absent", "blocked", "unblocked"]
   confirm:
     description:
       - Require confirmation.
@@ -148,6 +149,24 @@ EXAMPLES = '''
     state: present
     group: super_group/mon_group
     access_level: owner
+  delegate_to: localhost
+
+- name: "Block GitLab User"
+  gitlab_user:
+    api_url: https://gitlab.example.com/
+    api_token: "{{ access_token }}"
+    validate_certs: False
+    username: myusername
+    state: blocked
+  delegate_to: localhost
+
+- name: "Unblock GitLab User"
+  gitlab_user:
+    api_url: https://gitlab.example.com/
+    api_token: "{{ access_token }}"
+    validate_certs: False
+    username: myusername
+    state: unblocked
   delegate_to: localhost
 '''
 
@@ -399,6 +418,13 @@ class GitLabUser(object):
             return True
         return False
 
+    '''
+    @param username Username of the user
+    '''
+    def isActive(self, username):
+        user = self.findUser(username)
+        return user.attributes['state'] == 'active'
+
     def deleteUser(self):
         if self._module.check_mode:
             return True
@@ -406,6 +432,22 @@ class GitLabUser(object):
         user = self.userObject
 
         return user.delete()
+
+    def blockUser(self):
+        if self._module.check_mode:
+            return True
+
+        user = self.userObject
+
+        return user.block()
+
+    def unblockUser(self):
+        if self._module.check_mode:
+            return True
+
+        user = self.userObject
+
+        return user.unblock()
 
 
 def deprecation_warning(module):
@@ -422,7 +464,7 @@ def main():
         login_password=dict(type='str', no_log=True, removed_in_version="2.10"),
         api_token=dict(type='str', no_log=True, aliases=["login_token"]),
         name=dict(type='str', required=True),
-        state=dict(type='str', default="present", choices=["absent", "present"]),
+        state=dict(type='str', default="present", choices=["absent", "present", "blocked", "unblocked"]),
         username=dict(type='str', required=True),
         password=dict(type='str', required=True, no_log=True),
         email=dict(type='str', required=True),
@@ -500,6 +542,7 @@ def main():
 
     gitlab_user = GitLabUser(module, gitlab_instance)
     user_exists = gitlab_user.existsUser(user_username)
+    user_is_active = gitlab_user.isActive(user_username)
 
     if state == 'absent':
         if user_exists:
@@ -507,6 +550,20 @@ def main():
             module.exit_json(changed=True, msg="Successfully deleted user %s" % user_username)
         else:
             module.exit_json(changed=False, msg="User deleted or does not exists")
+
+    if state == 'blocked':
+        if user_exists and user_is_active:
+            gitlab_user.blockUser()
+            module.exit_json(changed=True, msg="Successfully blocked user %s" % user_username)
+        else:
+            module.exit_json(changed=False, msg="User already blocked or does not exists")
+
+    if state == 'unblocked':
+        if user_exists and not user_is_active:
+            gitlab_user.unblockUser()
+            module.exit_json(changed=True, msg="Successfully unblocked user %s" % user_username)
+        else:
+            module.exit_json(changed=False, msg="User is not blocked or does not exists")
 
     if state == 'present':
         if gitlab_user.createOrUpdateUser(user_username, {
