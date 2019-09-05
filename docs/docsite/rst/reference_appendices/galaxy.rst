@@ -28,7 +28,7 @@ also use it to create a new role, remove roles, or perform tasks on the Galaxy w
 
 The command line tool by default communicates with the Galaxy website API using the server address *https://galaxy.ansible.com*. Since the `Galaxy project <https://github.com/ansible/galaxy>`_
 is an open source project, you may be running your own internal Galaxy server and wish to override the default server address. You can do this using the *--server* option
-or by setting the Galaxy server value in your *ansible.cfg* file. For information on setting the value in *ansible.cfg* visit `Galaxy Settings <./intro_configuration.html#galaxy-settings>`_.
+or by setting the Galaxy server value in your *ansible.cfg* file. For information on setting the value in *ansible.cfg* see :ref:`galaxy_server`.
 
 
 Installing Roles
