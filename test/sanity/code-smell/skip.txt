@@ -1,2 +1,0 @@
-deprecated-config.py  # disabled by default, to be enabled by the release manager after branching
-update-bundled.py  # disabled by default, to be enabled by the release manager after branching
