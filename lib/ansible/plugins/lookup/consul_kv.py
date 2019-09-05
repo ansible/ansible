@@ -32,7 +32,6 @@ DOCUMENTATION = """
         description:
           - If the key has a value with the specified index then this is returned allowing access to historical values.
       datacenter:
-        default: None
         description:
           - Retrieve the key from a consul datatacenter other than the default for the consul host.
         version_added: "2.9"
@@ -71,7 +70,6 @@ DOCUMENTATION = """
             key: validate_certs
         version_added: "2.8"
       client_cert:
-        default: None
         description: The client cert to verify the ssl connection.
         env:
           - name: ANSIBLE_CONSUL_CLIENT_CERT
