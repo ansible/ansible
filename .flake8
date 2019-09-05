@@ -1,0 +1,4 @@
+[flake8]
+show-source = true
+max-line-length = 160
+ignore = E402,W503,W504,E741

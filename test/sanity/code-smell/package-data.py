@@ -61,6 +61,7 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/test-module',
         'hacking/test-module.py',
         '.cherry_picker.toml',
+        '.flake8',
         '.mailmap',
         # Possibly should be included
         'examples/scripts/uptime.py',
