@@ -49,3 +49,14 @@
       that:
         - result is failed
         - result['msg'] == "Could not find imported module support code for test_failure.  Looked for either foo.py or zebra.py"
+
+  - name: Test that alias deprecation works
+    test_alias_deprecation:
+      baz: 'bar'
+    register: result
+
+  - name: Assert that the deprecation message is given correctly
+    assert:
+      that:
+        - result.deprecations[0].msg == "Alias 'baz' is deprecated. See the module docs for more information"
+        - result.deprecations[0].version == '9.99'
