@@ -26,19 +26,25 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import (absolute_import, division, print_function)
 import os
+import json
 from functools import partial
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems, iterkeys
 from ansible.module_utils._text import to_text
-import json
-from requests.packages.urllib3 import disable_warnings
 
 try:
     from tetpyclient import RestClient
     HAS_TETRATION_CLIENT = True
 except ImportError:
     HAS_TETRATION_CLIENT = False
+try:
+    import urllib3
+    # Disable SSL Warnings
+    urllib3.disable_warnings()
+except ImportError:
+    pass
 
 # defining tetration constants
 TETRATION_API_INVENTORY_TAG = '/inventory/tags'
@@ -57,19 +63,17 @@ TETRATION_API_AGENT_CONFIG_INTENTS = '/inventory_config/intents'
 TETRATION_COLUMN_NAMES = '/assets/cmdb/attributenames'
 TETRATION_API_EXT_ORCHESTRATORS = '/orchestrator'
 
-# Disable SSL Warnings
-disable_warnings()
-
 TETRATION_PROVIDER_SPEC = {
-    'server_endpoint': dict(type='str',required=True, aliases=['endpoint','host']),
-    'api_key': dict(type='str',required=True),
-    'api_secret': dict(type='str',required=True,no_log=True),
+    'server_endpoint': dict(type='str', required=True, aliases=['endpoint', 'host']),
+    'api_key': dict(type='str', required=True),
+    'api_secret': dict(type='str', required=True, no_log=True),
     'verify': dict(type='bool', default=False),
     'silent_ssl_warnings': dict(type='bool', default=True),
     'timeout': dict(type='int', default=10),
     'max_retries': dict(type='int', default=3),
     'api_version': dict(type='str', default='v1')
 }
+
 
 class TetrationApiBase(object):
     ''' Base class for implementing Tetration API '''
@@ -108,7 +112,7 @@ class TetrationApiModule(TetrationApiBase):
         self.module = module
         provider = module.params.get('provider') if module.params.get('provider') else dict()
         try:
-            super(TetrationApiModule, self).__init__(provider,module)
+            super(TetrationApiModule, self).__init__(provider, module)
         except Exception as exc:
             self.module.fail_json(msg=to_text(exc))
 
@@ -136,7 +140,7 @@ class TetrationApiModule(TetrationApiBase):
             search_objects = query_result[sub_element] if sub_element and sub_element in query_result else query_result
             for obj in search_objects:
                 match = True
-                for k, v in filter.iteritems():
+                for k, v in iteritems(filter):
                     if obj[k] != v:
                         match = False
                 if match:
@@ -149,17 +153,20 @@ class TetrationApiModule(TetrationApiBase):
             else:
                 return result_array if result_array else None
 
-    def run_method(self, method_name, target, params=None, req_payload=None):
+    def run_method(self, method_name, target, **kwargs):
         methods = {
             'get': self.get,
             'post': self.post,
             'put': self.put,
             'delete': self.delete
         }
-        return methods[method_name.lower()](target, params, req_payload)
+        if 'req_payload' in kwargs:
+            kwargs['json_body'] = json.dumps(kwargs['req_payload'])
+            del kwargs['req_payload']
+        return methods[method_name.lower()](target, **kwargs)
 
-    def get(self, target, params, req_payload):
-        resp = self.rc.get(target, params=params)
+    def get(self, target, **kwargs):
+        resp = self.rc.get(target, **kwargs)
         # import pdb; pdb.set_trace()
         if resp.status_code == 400:
             return None
@@ -168,8 +175,8 @@ class TetrationApiModule(TetrationApiBase):
         else:
             self.handle_exception('get', resp)
 
-    def post(self, target, params, req_payload):
-        resp = self.rc.post(target, json_body=json.dumps(req_payload))
+    def post(self, target, **kwargs):
+        resp = self.rc.post(target, **kwargs)
         if resp.status_code/100 == 2:
             try:
                 return resp.json()
@@ -178,8 +185,8 @@ class TetrationApiModule(TetrationApiBase):
         else:
             self.handle_exception('post', resp)
 
-    def put(self, target, params, req_payload):
-        resp = self.rc.put(target, json_body=json.dumps(req_payload))
+    def put(self, target, **kwargs):
+        resp = self.rc.put(target, **kwargs)
         if resp.status_code/100 == 2:
             try:
                 return resp.json()
@@ -188,8 +195,8 @@ class TetrationApiModule(TetrationApiBase):
         else:
             self.handle_exception('put', resp)
 
-    def delete(self, target, params, req_payload):
-        resp = self.rc.delete(target, json_body=json.dumps(req_payload))
+    def delete(self, target, **kwargs):
+        resp = self.rc.delete(target, **kwargs)
         if resp.status_code/100 == 2:
             try:
                 return resp.json()
@@ -204,7 +211,7 @@ class TetrationApiModule(TetrationApiBase):
             for k in list(iterkeys(obj1)):
                 if k in list(iterkeys(obj2)):
                     if type(obj1[k]) is dict:
-                        if cmp(obj1[k], obj2[k]) != 0:
+                        if (lambda a, b: (a > b)-(a < b))(obj1[k], obj2[k]) != 0:
                             changed_flag = True
                     elif obj1[k] != obj2[k]:
                         changed_flag = True

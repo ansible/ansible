@@ -342,7 +342,7 @@ files:
   $modules/network/slxos/: $team_extreme
   $modules/network/sros/: privateip
   $modules/network/system/: $team_networking
-  $modules/networking/tetration/: &tetration
+  $modules/network/tetration/: &tetration
     labels: [ cisco, tetration ]
     maintainers: $team_tetration
   $modules/network/voss/: $team_extreme
@@ -828,7 +828,7 @@ files:
     maintainers: $team_scaleway
     labels:
       - cloud
-  $module_utils/tetration.py: *tetration
+  $module_utils/network/tetration.py: *tetration
   $module_utils/utm_utils.py:
     maintainers: $team_e_spirit
   $module_utils/vmware: *vmware
