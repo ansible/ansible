@@ -179,7 +179,6 @@ class AzureRMRecordSetInfo(AzureRMModuleBase):
         # store the results of the module operation
         self.results = dict(
             changed=False,
-            ansible_info=dict(azure_dnsrecordset=[])
         )
 
         self.relative_name = None
@@ -221,7 +220,9 @@ class AzureRMRecordSetInfo(AzureRMModuleBase):
             results = self.list_zone()
 
         if is_old_facts:
-            self.results['ansible_facts']['azure_dnsrecordset'] = self.serialize_list(results)
+            self.results['ansible_facts'] = {
+                'azure_dnsrecordset': self.serialize_list(results)
+            }
         self.results['dnsrecordsets'] = self.curated_list(results)
         return self.results
 
