@@ -1253,7 +1253,6 @@ class InfoCenterGlobal(object):
         conf_str = CE_NC_MERGE_LOG_FILE_INFO_HEADER
         if self.logfile_max_num:
             if self.state == "present":
-                if self.cur_logfile_info["maxFileNum"] != self.logfile_max_num:
                     logfile_max_num = self.logfile_max_num
             else:
                 if self.logfile_max_num != "200" and self.cur_logfile_info["maxFileNum"] == self.logfile_max_num:
@@ -1263,7 +1262,6 @@ class InfoCenterGlobal(object):
         if self.logfile_max_size:
             logfile_max_size = "32"
             if self.state == "present":
-                if self.cur_logfile_info["maxFileSize"] != self.logfile_max_size:
                     logfile_max_size = self.logfile_max_size
             else:
                 if self.logfile_max_size != "32" and self.cur_logfile_info["maxFileSize"] == self.logfile_max_size:
