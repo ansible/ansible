@@ -169,6 +169,7 @@
   - name: Test a request with all of the various optional possible fields populated
     ecs_certificate:
       path: '{{ example4_cert_path }}'
+      full_chain_path: '{{ example4_full_chain_path }}'
       csr: '{{ csr_path }}'
       subject_alt_name: '{{ example4_subject_alt_name }}'
       eku: '{{ example4_eku }}'
@@ -197,6 +198,17 @@
         - example4_result.backup_full_chain_file is undefined
         - example4_result.tracking_id > 0
         - example4_result.serial_number is string
+
+  # For bug 61738, verify that the full chain is valid
+  - name: Verify that the full chain path can be successfully imported
+    openssl_pkcs12:
+      action: export
+      certificate_path: '{{ example4_cert_path }}'
+      other_certificates: '{{ example4_full_chain_path }}'
+      friendly_name: pkcs12alias
+      path: '{{ example4_p12_path }}'
+      passphrase: pkcs12passphrase
+
 
   always:
     - name: clean-up temporary folder

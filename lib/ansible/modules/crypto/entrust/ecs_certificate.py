@@ -768,17 +768,23 @@ class EcsCertificate(object):
                     if self.backup:
                         self.backup_file = module.backup_local(self.path)
                     crypto_utils.write_file(module, to_bytes(self.cert_details.get('endEntityCert')))
-                    if self.full_chain_path:
+                    if self.full_chain_path and self.cert_details.get('chainCerts'):
                         if self.backup:
                             self.backup_full_chain_file = module.backup_local(self.full_chain_path)
-                        crypto_utils.write_file(module, to_bytes(self.cert_details.get('chainCerts')), path=self.full_chain_path)
+                        chain_string = ''
+                        for chain_cert in self.cert_details.get('chainCerts'):
+                            chain_string = chain_string + chain_cert + '\n'
+                        crypto_utils.write_file(module, to_bytes(chain_string), path=self.full_chain_path)
                     self.changed = True
         # If there is no certificate present in path but a tracking ID was specified, save it to disk
         elif not os.path.exists(self.path) and self.tracking_id:
             if not module.check_mode:
                 crypto_utils.write_file(module, to_bytes(self.cert_details.get('endEntityCert')))
-                if self.full_chain_path:
-                    crypto_utils.write_file(module, to_bytes(self.cert_details.get('chainCerts')), path=self.full_chain_path)
+                if self.full_chain_path and self.cert_details.get('chainCerts'):
+                    chain_string = ''
+                    for chain_cert in self.cert_details.get('chainCerts'):
+                        chain_string = chain_string + chain_cert + '\n'
+                    crypto_utils.write_file(module, to_bytes(chain_string), path=self.full_chain_path)
             self.changed = True
 
     def dump(self):
