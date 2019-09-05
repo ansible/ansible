@@ -661,7 +661,7 @@ def test_install_collections_from_tar(collection_artifact, monkeypatch):
     assert actual_manifest['collection_info']['version'] == '0.1.0'
 
     # Filter out the progress cursor display calls.
-    display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2]]
+    display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
     assert len(display_msgs) == 3
     assert display_msgs[0] == "Process install dependency map"
     assert display_msgs[1] == "Starting collection install process"
@@ -686,7 +686,7 @@ def test_install_collections_existing_without_force(collection_artifact, monkeyp
     assert actual_files == [b'README.md', b'docs', b'galaxy.yml', b'playbooks', b'plugins', b'roles']
 
     # Filter out the progress cursor display calls.
-    display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2]]
+    display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
     assert len(display_msgs) == 4
     # Msg1 is the warning about not MANIFEST.json, cannot really check message as it has line breaks which varies based
     # on the path size
@@ -724,7 +724,7 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
     assert actual_manifest['collection_info']['version'] == '0.1.0'
 
     # Filter out the progress cursor display calls.
-    display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2]]
+    display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
     assert len(display_msgs) == 3
     assert display_msgs[0] == "Process install dependency map"
     assert display_msgs[1] == "Starting collection install process"
