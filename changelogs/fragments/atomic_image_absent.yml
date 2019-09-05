@@ -1,0 +1,2 @@
+bugfixes:
+    - Run command in absent state in atomic_image module.
