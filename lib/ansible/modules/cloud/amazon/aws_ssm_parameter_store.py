@@ -67,14 +67,13 @@ options:
       - Option to specify the tier of a parameter.
       - String
     required: false
-    version_added: "2.8"
+    version_added: "2.10"
     choices: ['Standard', 'Advanced', 'Intelligent-Tiering']
     default: Standard
 author:
   - Nathan Webster (@nathanwebsterdotme)
   - Bill Wang (@ozbillwang) <ozbillwang@gmail.com>
   - Michael De La Rue (@mikedlr)
-  - Yagmur Guraslan (guraslan at gmail.com)
 extends_documentation_fragment: aws
 requirements: [ botocore, boto3 ]
 '''
