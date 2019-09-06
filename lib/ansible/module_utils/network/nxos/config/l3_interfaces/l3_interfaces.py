@@ -18,7 +18,7 @@ from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import dict_diff, to_list, remove_empties
 from ansible.module_utils.network.nxos.facts.facts import Facts
 from ansible.module_utils.network.nxos.utils.utils import get_interface_type, normalize_interface, search_obj_in_list, validate_ipv4_addr, validate_ipv6_addr
-from ansible.module_utils.network.nxos.utils.utils import sanitize_interface_facts
+from ansible.module_utils.network.nxos.utils.utils import remove_rsvd_interfaces
 
 
 class L3_interfaces(ConfigBase):
@@ -52,7 +52,7 @@ class L3_interfaces(ConfigBase):
 
         if not l3_interfaces_facts:
             return []
-        return sanitize_interface_facts(l3_interfaces_facts)
+        return remove_rsvd_interfaces(l3_interfaces_facts)
 
     def edit_config(self, commands):
         return self._connection.edit_config(commands)

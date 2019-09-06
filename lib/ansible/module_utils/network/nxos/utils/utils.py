@@ -103,7 +103,7 @@ def get_interface_type(interface):
         return 'unknown'
 
 
-def sanitize_interface_facts(interfaces):
+def remove_rsvd_interfaces(interfaces):
     """Exclude reserved interfaces from user management
     """
     return [i for i in interfaces if i['name'] != 'mgmt0']
