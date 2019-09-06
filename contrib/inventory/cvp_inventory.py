@@ -56,6 +56,8 @@ from cvprac.cvp_client import CvpClient
 import sys
 import urllib3
 import argparse
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 urllib3.disable_warnings()
 
@@ -71,7 +73,7 @@ _cvp_to_ansible = [
    ('serialNumber', 'serialnumber'),
    ("modelName", 'modelname'),
    ("version", 'softwareversion')
-   ]
+]
 
 
 def get_cvpinventory():
