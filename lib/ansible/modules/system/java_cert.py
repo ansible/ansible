@@ -5,9 +5,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-from OpenSSL.crypto import load_certificate, FILETYPE_PEM, FILETYPE_ASN1
-import socket
-import ssl
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -192,8 +189,16 @@ cmd:
   sample: "keytool -importcert -noprompt -keystore"
 '''
 
+try:
+    from OpenSSL.crypto import load_certificate, FILETYPE_PEM, FILETYPE_ASN1
+except ImportError:
+    PYOPENSSL_FOUND = False
+else:
+    PYOPENSSL_FOUND = True
 import os
 import re
+import socket
+import ssl
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
@@ -441,6 +446,9 @@ def main():
     executable = module.params.get('executable')
     state = module.params.get('state')
     delete_skip_exit = False
+
+    if not PYOPENSSL_FOUND:
+        module.fail_json(msg="PYOPENSSL is missing. Please install PYOPENSSL.")
 
     if path and not cert_alias:
         module.fail_json(changed=False,
