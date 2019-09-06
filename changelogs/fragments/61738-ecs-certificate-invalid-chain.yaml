@@ -1,2 +1,2 @@
 bugfixes:
-  - ecs_certificate - Fix formatting of contents of full_chain_path.
+  - ecs_certificate - Fix formatting of contents of ``full_chain_path``.
