@@ -12,23 +12,23 @@ cvp_inventory.py -- host <hostname>
 
 examples:
 
-cvp_inventory.py --list 
+cvp_inventory.py --list
 
-{  
-   "cvp":[  
+{
+   "cvp":[
       "sw1",
       "sw2"
    ],
-   "_meta":{  
-      "hostvars":{  
-         "sw1":{  
+   "_meta":{
+      "hostvars":{
+         "sw1":{
             "hostname":"sw1",
             "ansible_host":"192.0.2.1",
             "serialnumber":"123456789",
             "modelname":"DCS-7020TR-48",
             "softwareversion":"4.20.8M"
          },
-         "sw2":{  
+         "sw2":{
             "hostname":"sw2",
             "ansible_host":"192.0.2.2",
             "serialnumber":"987654321",
@@ -41,7 +41,7 @@ cvp_inventory.py --list
 
 cvp_inventory.py --host sw1
 
-{  
+{
    "hostname":"sw1",
    "ipAddress":"192.0.2.1",
    "serialNumber":"123456789",
@@ -65,11 +65,14 @@ CVP_PASS = 'password'
 
 _key = 'cvp'
 
-_cvp_to_ansible = [('hostname', 'hostname'),
-                    ('ipAddress', 'ansible_host'),
-                    ('serialNumber', 'serialnumber'),
-                    ("modelName", 'modelname'),
-                    ("version", 'softwareversion')]
+_cvp_to_ansible = [
+   ('hostname', 'hostname'),
+   ('ipAddress', 'ansible_host'),
+   ('serialNumber', 'serialnumber'),
+   ("modelName", 'modelname'),
+   ("version", 'softwareversion')
+   ]
+
 
 def get_cvpinventory():
     """Pulls inventory from CVP"""
