@@ -51,13 +51,14 @@ cvp_inventory.py --host sw1
 
 '''
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 import json
 from cvprac.cvp_client import CvpClient
 import sys
 import urllib3
 import argparse
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+
 
 urllib3.disable_warnings()
 
@@ -68,11 +69,11 @@ CVP_PASS = 'password'
 _key = 'cvp'
 
 _cvp_to_ansible = [
-   ('hostname', 'hostname'),
-   ('ipAddress', 'ansible_host'),
-   ('serialNumber', 'serialnumber'),
-   ("modelName", 'modelname'),
-   ("version", 'softwareversion')
+    ('hostname', 'hostname'),
+    ('ipAddress', 'ansible_host'),
+    ('serialNumber', 'serialnumber'),
+    ("modelName", 'modelname'),
+    ("version", 'softwareversion')
 ]
 
 
