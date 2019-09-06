@@ -23,7 +23,10 @@ except ImportError:
     import_module = __import__
 
 _SYNTHETIC_PACKAGES = {
-    'ansible_collections.ansible': dict(type='pkg_only'),
+    # these provide fallback package definitions when there are no on-disk paths
+    'ansible_collections': dict(type='pkg_only', allow_external_subpackages=True),
+    'ansible_collections.ansible': dict(type='pkg_only', allow_external_subpackages=True),
+    # these implement the ansible.builtin synthetic collection mapped to the packages inside the ansible distribution
     'ansible_collections.ansible.builtin': dict(type='pkg_only'),
     'ansible_collections.ansible.builtin.plugins': dict(type='map', map='ansible.plugins'),
     'ansible_collections.ansible.builtin.plugins.module_utils': dict(type='map', map='ansible.module_utils', graft=True),
@@ -101,7 +104,7 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
 
     def find_module(self, fullname, path=None):
         # this loader is only concerned with items under the Ansible Collections namespace hierarchy, ignore others
-        if fullname.startswith('ansible_collections.') or fullname == 'ansible_collections':
+        if fullname and fullname.split('.', 1)[0] == 'ansible_collections':
             return self
 
         return None
@@ -109,6 +112,8 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
     def load_module(self, fullname):
         if sys.modules.get(fullname):
             return sys.modules[fullname]
+
+        newmod = None
 
         # this loader implements key functionality for Ansible collections
         # * implicit distributed namespace packages for the root Ansible namespace (no pkgutil.extend_path hackery reqd)
@@ -132,10 +137,13 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
         synpkg_remainder = ''
 
         if not synpkg_def:
-            synpkg_def = _SYNTHETIC_PACKAGES.get(parent_pkg_name)
-            synpkg_remainder = '.' + fullname.rpartition('.')[2]
+            # if the parent is a grafted package, we have some special work to do, otherwise just look for stuff on disk
+            parent_synpkg_def = _SYNTHETIC_PACKAGES.get(parent_pkg_name)
+            if parent_synpkg_def and parent_synpkg_def.get('graft'):
+                synpkg_def = parent_synpkg_def
+                synpkg_remainder = '.' + fullname.rpartition('.')[2]
 
-        # FIXME: collapse as much of this back to on-demand as possible (maybe stub packages that get replaced when actually loaded?)
+        # FUTURE: collapse as much of this back to on-demand as possible (maybe stub packages that get replaced when actually loaded?)
         if synpkg_def:
             pkg_type = synpkg_def.get('type')
             if not pkg_type:
@@ -159,9 +167,13 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
                 newmod.__loader__ = self
                 newmod.__path__ = []
 
-                sys.modules[fullname] = newmod
+                if not synpkg_def.get('allow_external_subpackages'):
+                    # if external subpackages are NOT allowed, we're done
+                    sys.modules[fullname] = newmod
+                    return newmod
 
-                return newmod
+                # if external subpackages ARE allowed, check for on-disk implementations and return a normal
+                # package if we find one, otherwise return the one we created here
 
         if not parent_pkg:  # top-level package, look for NS subpackages on all collection paths
             package_paths = [self._extend_path_with_ns(p, fullname) for p in self.n_collection_paths]
@@ -215,6 +227,11 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
                 # FIXME: decide cases where we don't actually want to exec the code?
                 exec(code_object, newmod.__dict__)
 
+            return newmod
+
+        # even if we didn't find one on disk, fall back to a synthetic package if we have one...
+        if newmod:
+            sys.modules[fullname] = newmod
             return newmod
 
         # FIXME: need to handle the "no dirs present" case for at least the root and synthetic internal collections like ansible.builtin
