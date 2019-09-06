@@ -1,0 +1,2 @@
+minor_changes:
+ - aws_ssm_parameter_store - Add ``tier`` parameter to deal with SSM parameters with ``Advanced`` tier .
