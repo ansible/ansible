@@ -446,11 +446,11 @@ following entries like so:
     password=my_pass
 
     [galaxy_server.release_galaxy]
-    url=https://galaxy.ansible.com/
+    url=https://galaxy.ansible.com/api/
     token=my_token
 
     [galaxy_server.test_galaxy]
-    url=https://galaxy-dev.ansible.com/
+    url=https://galaxy-dev.ansible.com/api/
     token=my_token
 
 .. note::

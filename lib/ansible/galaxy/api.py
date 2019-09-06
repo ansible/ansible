@@ -39,7 +39,7 @@ def g_connect(versions):
 
                 # Determine the type of Galaxy server we are talking to. First try it unauthenticated then with Bearer
                 # auth for Automation Hub.
-                n_url = _urljoin(self.api_server, 'api')
+                n_url = _urljoin(self.api_server, "/")
                 error_context_msg = 'Error when finding available api versions from %s (%s)' % (self.name, n_url)
 
                 try:
