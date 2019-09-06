@@ -37,7 +37,7 @@ CREATE_PAYLOAD = {"name": "New Host 1",
 
 UPDATE_PAYLOAD = {"name": "New Host 1",
                   "ipv4_address": "192.0.2.2",
-                  "color": "green"}
+                  "color": "orange"}
 
 DELETE_PAYLOAD = {'name': 'New Host 1',
                   'state': 'absent'}
