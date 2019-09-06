@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-#
 # Ansible module to manage Check Point Firewall (c) 2019
 #
 # Ansible is free software: you can redistribute it and/or modify
