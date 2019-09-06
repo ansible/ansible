@@ -1,0 +1,2 @@
+bugfixes:
+- purefa_facts - Fix bug which causes module failure when selecting I(admins) or I(all) against an old Purity version
