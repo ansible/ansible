@@ -13,6 +13,9 @@
         - name: vlan_30
           vlan_id: 30
           state: active
+        - vlan_id: 10
+          name: vlan_10
+          state: suspend
       state: merged
     register: result
 

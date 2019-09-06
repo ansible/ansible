@@ -42,7 +42,7 @@ class VlansArgs(object):  # pylint: disable=R0903
             'options': {
                 'name': {'type': 'str'},
                 'state': {
-                    'choices': ['active', 'suspended'],
+                    'choices': ['active', 'suspend'],
                     'default': 'active',
                     'type': 'str'},
                 'vlan_id': {'required': True, 'type': 'int'}},

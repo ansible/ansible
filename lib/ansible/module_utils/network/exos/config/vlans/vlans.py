@@ -143,23 +143,17 @@ class Vlans(ConfigBase):
                   to the desired configuration
         """
         requests = []
-
         request_patch = deepcopy(self.VLAN_PATCH)
-        request_body = deepcopy(self.REQUEST_BODY)
 
         for w in want:
             if w.get('vlan_id'):
                 h = search_obj_in_list(w['vlan_id'], have, 'vlan_id')
                 if h:
                     if dict_diff(w, h):
-                        request_body = deepcopy(self.REQUEST_BODY)
-                        request_body = self._update_vlan_config_body(w, request_body)
+                        request_body = self._update_patch_request(w)
                         request_patch["data"]["openconfig-vlan:vlans"]["vlan"].append(request_body)
                 else:
-                    request_post = deepcopy(self.VLAN_POST)
-                    request_body = self._update_vlan_config_body(w, request_body)
-                    request_post["data"]["openconfig-vlan:vlans"].append(request_body)
-                    request_post["data"] = json.dumps(request_post["data"])
+                    request_post = self._update_post_request(w)
                     requests.append(request_post)
 
         if len(request_patch["data"]["openconfig-vlan:vlans"]["vlan"]):
@@ -176,30 +170,24 @@ class Vlans(ConfigBase):
                   to the desired configuration
         """
         requests = []
-
         request_patch = deepcopy(self.VLAN_PATCH)
-        request_body = deepcopy(self.REQUEST_BODY)
+
         have_copy = []
         for w in want:
             if w.get('vlan_id'):
                 h = search_obj_in_list(w['vlan_id'], have, 'vlan_id')
                 if h:
                     if dict_diff(w, h):
-                        request_body = deepcopy(self.REQUEST_BODY)
-                        request_body = self._update_vlan_config_body(w, request_body)
+                        request_body = self._update_patch_request(w)
                         request_patch["data"]["openconfig-vlan:vlans"]["vlan"].append(request_body)
                     have_copy.append(h)
                 else:
-                    request_post = deepcopy(self.VLAN_POST)
-                    request_body = self._update_vlan_config_body(w, request_body)
-                    request_post["data"]["openconfig-vlan:vlans"].append(request_body)
-                    request_post["data"] = json.dumps(request_post["data"])
+                    request_post = self._update_post_request(w)
                     requests.append(request_post)
 
         for h in have:
-            request_delete = deepcopy(self.VLAN_DELETE)
             if h not in have_copy and h['vlan_id'] != 1:
-                request_delete["path"] = self.DEL_PATH + str(h['vlan_id'])
+                request_delete = self._update_delete_request(h)
                 requests.append(request_delete)
 
         if len(request_patch["data"]["openconfig-vlan:vlans"]["vlan"]):
@@ -217,20 +205,22 @@ class Vlans(ConfigBase):
         """
         requests = []
 
-        request_body = deepcopy(self.REQUEST_BODY)
+        request_patch = deepcopy(self.VLAN_PATCH)
 
         for w in want:
             if w.get('vlan_id'):
                 h = search_obj_in_list(w['vlan_id'], have, 'vlan_id')
                 if h:
-                    continue
+                    if dict_diff(w, h):
+                        request_body = self._update_patch_request(w)
+                        request_patch["data"]["openconfig-vlan:vlans"]["vlan"].append(request_body)
                 else:
-                    request_post = deepcopy(self.VLAN_POST)
-                    request_body = self._update_vlan_config_body(w, request_body)
-                    request_post["data"]["openconfig-vlan:vlans"].append(request_body)
-                    request_post["data"] = json.dumps(request_post["data"])
+                    request_post = self._update_post_request(w)
                     requests.append(request_post)
 
+        if len(request_patch["data"]["openconfig-vlan:vlans"]["vlan"]):
+            request_patch["data"] = json.dumps(request_patch["data"])
+            requests.append(request_patch)
         return requests
 
     def _state_deleted(self, want, have):
@@ -244,28 +234,47 @@ class Vlans(ConfigBase):
 
         if want:
             for w in want:
-                request_delete = deepcopy(self.VLAN_DELETE)
                 if w.get('vlan_id'):
                     h = search_obj_in_list(w['vlan_id'], have, 'vlan_id')
                     if h:
-                        request_delete["path"] = self.DEL_PATH + str(h['vlan_id'])
+                        request_delete = self._update_delete_request(h)
                         requests.append(request_delete)
 
         else:
             if not have:
                 return requests
             for h in have:
-                request_delete = deepcopy(self.VLAN_DELETE)
                 if h['vlan_id'] == 1:
                     continue
                 else:
-                    request_delete["path"] = self.DEL_PATH + str(h['vlan_id'])
+                    request_delete = self._update_delete_request(h)
                     requests.append(request_delete)
 
         return requests
 
     def _update_vlan_config_body(self, want, request):
         request["config"]["name"] = want["name"]
-        request["config"]["status"] = want["state"].upper()
+        if want['state'] == 'suspend':
+            request["config"]["status"] = 'SUSPENDED'
+        else:
+            request["config"]["status"] = want["state"].upper()
         request["config"]["vlan-id"] = want["vlan_id"]
         return request
+
+    def _update_patch_request(self, want):
+        request_body = deepcopy(self.REQUEST_BODY)
+        request_body = self._update_vlan_config_body(want, request_body)
+        return request_body
+
+    def _update_post_request(self, want):
+        request_post = deepcopy(self.VLAN_POST)
+        request_body = deepcopy(self.REQUEST_BODY)
+        request_body = self._update_vlan_config_body(want, request_body)
+        request_post["data"]["openconfig-vlan:vlans"].append(request_body)
+        request_post["data"] = json.dumps(request_post["data"])
+        return request_post
+
+    def _update_delete_request(self, have):
+        request_delete = deepcopy(self.VLAN_DELETE)
+        request_delete["path"] = self.DEL_PATH + str(have['vlan_id'])
+        return request_delete

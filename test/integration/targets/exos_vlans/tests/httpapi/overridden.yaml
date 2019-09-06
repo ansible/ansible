@@ -12,6 +12,7 @@
         config:
           - name: TEST_VLAN10
             vlan_id: 10
+            state: suspend
         state: overridden
       register: result
 

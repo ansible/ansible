@@ -49,7 +49,7 @@ class VlansFacts(object):
 
         if not data:
             request = [{
-                "path": "/rest/restconf/data/openconfig-vlan:vlans/",
+                "path": "/rest/restconf/data/openconfig-vlan:vlans?depth=5",
                 "method": "GET"
             }]
             data = send_requests(self._module, requests=request)
@@ -83,7 +83,10 @@ class VlansFacts(object):
         config = deepcopy(spec)
 
         config["name"] = conf["name"]
-        config["state"] = conf["status"].lower()
+        if conf["status"] == "SUSPENDED":
+            config["state"] = "suspend"
+        else:
+            config["state"] = conf["status"].lower()
         config["vlan_id"] = conf["vlan-id"]
 
         return utils.remove_empties(config)

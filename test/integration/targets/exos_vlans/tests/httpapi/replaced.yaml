@@ -12,6 +12,10 @@
       config:
         - name: Test_VLAN20
           vlan_id: 20
+          state: active
+        - name: vlan_40
+          vlan_id: 40
+          state: suspend
       state: replaced
     register: result
 
