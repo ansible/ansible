@@ -346,7 +346,7 @@ def too_old(added):
     return added_float < TOO_OLD_TO_BE_NOTABLE
 
 
-def process_options(options):
+def process_options(module, options):
     option_names = []
 
     if options:
@@ -376,9 +376,9 @@ def process_options(options):
 
             if 'suboptions' in v and v['suboptions']:
                 if isinstance(v['suboptions'], dict):
-                    v['suboptions'] = process_options(v['suboptions'])
+                    v['suboptions'] = process_options(module, v['suboptions'])
                 elif isinstance(v['suboptions'][0], dict):
-                    v['suboptions'] = process_options(v['suboptions'][0])
+                    v['suboptions'] = process_options(module, v['suboptions'][0])
 
             option_names.append(k)
 
@@ -458,7 +458,7 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
         if too_old(added):
             del doc['version_added']
 
-        doc['option_keys'] = process_options(doc.get('options'))
+        doc['option_keys'] = process_options(module, doc.get('options'))
         doc['filename'] = fname
         doc['source'] = module_map[module]['source']
         doc['docuri'] = doc['module'].replace('_', '-')
