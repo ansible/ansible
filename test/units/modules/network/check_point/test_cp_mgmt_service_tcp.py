@@ -32,28 +32,28 @@ api_call_object = 'service_tcp'
 OBJECT = {
     "name": "New_TCP_Service_1",
     "port": 5669,
-    "keep-connections-open-after-policy-installation": False,
-    "session-timeout": 0,
-    "match-for-any": True,
-    "sync-connections-on-cluster": True,
-    "aggressive-aging": {
+    "keep_connections_open_after_policy_installation": False,
+    "session_timeout": 0,
+    "match_for_any": True,
+    "sync_connections_on_cluster": True,
+    "aggressive_aging": {
         "enable": True,
         "timeout": 360,
-        "use-default-timeout": False
+        "use_default_timeout": False
     }
 }
 
 CREATE_PAYLOAD = {
     "name": "New_TCP_Service_1",
     "port": 5669,
-    "keep-connections-open-after-policy-installation": False,
-    "session-timeout": 0,
-    "match-for-any": True,
-    "sync-connections-on-cluster": True,
-    "aggressive-aging": {
+    "keep_connections_open_after_policy_installation": False,
+    "session_timeout": 0,
+    "match_for_any": True,
+    "sync_connections_on_cluster": True,
+    "aggressive_aging": {
         "enable": True,
         "timeout": 360,
-        "use-default-timeout": False
+        "use_default_timeout": False
     }
 }
 
