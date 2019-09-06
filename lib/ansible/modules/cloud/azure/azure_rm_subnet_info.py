@@ -211,7 +211,7 @@ class AzureRMSubnetInfo(AzureRMModuleBase):
         results = []
         try:
             response = self.network_client.subnets.list(resource_group_name=self.resource_group,
-                                                       virtual_network_name=self.virtual_network_name)
+                                                        virtual_network_name=self.virtual_network_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.fail('Could not get facts for Subnet.')
