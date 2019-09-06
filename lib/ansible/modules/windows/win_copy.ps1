@@ -101,7 +101,7 @@ Function Copy-File($source, $dest) {
         $new_dest_checksum = Get-FileChecksum $dest
         if ( $new_dest_checksum -eq $source_checksum ) {
             # Properly validated that the move was successful.
-            return ,@( diff = $diff; checksum = $new_dest_checksum )
+            return ,@{ diff = $diff; checksum = $new_dest_checksum }
         }
         # Return an error if the file in it's new desitantion turns out to be
         # the previous version and the checksum of the source file isn't the
