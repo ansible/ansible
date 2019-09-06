@@ -67,7 +67,9 @@ class RabbitMqVhost(object):
 
     def _exec(self, args, run_in_check_mode=False):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
-            cmd = [self._rabbitmqctl, '-q', '-n', self.node]
+            cmd = [self._rabbitmqctl, '-q']
+            if self.node is not None:
+                cmd.append(['-n', self.node])
             rc, out, err = self.module.run_command(cmd + args, check_rc=True)
             return out.splitlines()
         return list()
@@ -112,7 +114,7 @@ def main():
         name=dict(required=True, aliases=['vhost']),
         tracing=dict(default='off', aliases=['trace'], type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
-        node=dict(default='rabbit'),
+        node=dict(default=None),
     )
 
     module = AnsibleModule(
