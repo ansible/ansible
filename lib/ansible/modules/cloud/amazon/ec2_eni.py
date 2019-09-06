@@ -118,20 +118,20 @@ options:
         unique within a subnet, then you will need to provide other identifying information such as private_ip_address
         or eni_id.
     required: false
-    version_added: 2.9
+    version_added: 2.10
   tags:
     description:
       - A hash/dictionary of tags to add to the new ENI or to add/remove from an existing one.  Please note that
         the name field sets the "Name" tag.  So if you clear all tags, you will also clear the name.
     required: false
-    version_added: 2.9
+    version_added: 2.10
   purge_tags:
     description:
       - Delete any tags not specified in the task that are on the instance.
         This means you have to specify all the desired tags on each task affecting an instance.
     default: false
     type: bool
-    version_added: 2.9
+    version_added: 2.10
 extends_documentation_fragment:
     - aws
     - ec2
