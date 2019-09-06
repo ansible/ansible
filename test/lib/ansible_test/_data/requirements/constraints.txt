@@ -33,7 +33,7 @@ mock >= 2.0.0 # needed for features backported from Python 3.6 unittest.mock (as
 pytest-mock >= 1.4.0 # needed for mock_use_standalone_module pytest option
 xmltodict < 0.12.0 ; python_version < '2.7' # xmltodict 0.12.0 and later require python 2.7 or later
 lxml < 4.3.0 ; python_version < '2.7' # lxml 4.3.0 and later require python 2.7 or later
-pyvmomi < 6.0.0 ; python_version < '2.7' # pyvmomi 6.0.0 and later require python 2.7 or later
+pyvmomi < 6.7.3 ; python_version < '2.7' # pyvmomi 6.7.3 and later require python 2.7 or later
 pyone == 1.1.9 # newer versions do not pass current integration tests
 botocore >= 1.10.0 # adds support for the following AWS services: secretsmanager, fms, and acm-pca
 
