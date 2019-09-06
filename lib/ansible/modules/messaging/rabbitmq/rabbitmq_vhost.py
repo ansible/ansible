@@ -30,7 +30,6 @@ options:
   node:
     description:
       - erlang node name of the rabbit we wish to configure
-    default: rabbit
     version_added: "1.2"
   tracing:
     description:
