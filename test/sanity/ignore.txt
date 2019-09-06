@@ -5683,6 +5683,7 @@ lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # http
 lib/ansible/playbook/helpers.py pylint:blacklisted-name
 lib/ansible/playbook/role/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/action/aireos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/apconos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/aruba.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/asa.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/bigip.py action-plugin-docs # undocumented action plugin to fix, existed before sanity test was added
