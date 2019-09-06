@@ -16,7 +16,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 import pytest
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleFailJson, AnsibleExitJson
@@ -25,26 +26,26 @@ from ansible.module_utils import basic
 from ansible.module_utils.network.checkpoint.checkpoint import api_call
 from ansible.modules.network.check_point import cp_mgmt_address_range
 
-function_path = 'ansible.modules.network.check_point.cp_mgmt_address_range_facts.api_call'
+function_path = 'ansible.modules.network.check_point.cp_mgmt_address_range.api_call'
 api_call_object = 'address_range'
 
 OBJECT = {
     "name": "New Address Range 1",
-    "ip-address-first": "192.0.2.1",
-    "ip-address-last": "192.0.2.10"
+    "ip_address_first": "192.0.2.1",
+    "ip_address_last": "192.0.2.10"
 }
 
 CREATE_PAYLOAD = {
     "name": "New Address Range 1",
-    "ip-address-first": "192.0.2.1",
-    "ip-address-last": "192.0.2.10"
+    "ip_address_first": "192.0.2.1",
+    "ip_address_last": "192.0.2.10"
 }
 
 UPDATE_PAYLOAD = {
     "name": "New Address Range 1",
-    "color": "green",
-    "ip-address-first": "192.0.2.1",
-    "ip-address-last": "192.0.2.1",
+    "color": "orange",
+    "ip_address_first": "192.0.2.1",
+    "ip_address_last": "192.0.2.1",
     "groups": "New Group 1"
 }
 
