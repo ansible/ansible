@@ -1,0 +1,3 @@
+bugfixes:
+- aws_ec2 - fix idempotency when managing tags
+- aws_ec2 - fix idempotency when metrics are enable
