@@ -62,10 +62,19 @@ options:
     description:
       - region.
     required: false
+  tier:
+    description:
+      - Option to specifier the tier of a parameter.
+      - String
+    required: false
+    version_added: "2.8"
+    choices: ['Standard', 'Advanced', 'Intelligent-Tiering']
+    default: Standard
 author:
   - Nathan Webster (@nathanwebsterdotme)
   - Bill Wang (@ozbillwang) <ozbillwang@gmail.com>
   - Michael De La Rue (@mikedlr)
+  - Yagmur Guraslan (guraslan at gmail.com)
 extends_documentation_fragment: aws
 requirements: [ botocore, boto3 ]
 '''
@@ -104,6 +113,14 @@ EXAMPLES = '''
     string_type: "String"
     value: "Test1234"
     overwrite_value: "always"
+
+- name: Create or update an advanced parameter
+  aws_ssm_parameter_store:
+    name: "advanced_example"
+    description: "This example will always overwrite the value"
+    string_type: "String"
+    value: "advanced_param_value"
+    tier: "Advanced"
 
 - name: recommend to use with aws_ssm lookup plugin
   debug: msg="{{ lookup('aws_ssm', 'hello') }}"
@@ -150,7 +167,8 @@ def create_update_parameter(client, module):
     args = dict(
         Name=module.params.get('name'),
         Value=module.params.get('value'),
-        Type=module.params.get('string_type')
+        Type=module.params.get('string_type'),
+        Tier=module.params.get('tier')
     )
 
     if (module.params.get('overwrite_value') in ("always", "changed")):
@@ -232,6 +250,7 @@ def setup_module_object():
         key_id=dict(default="alias/aws/ssm"),
         overwrite_value=dict(default='changed', choices=['never', 'changed', 'always']),
         region=dict(required=False),
+        tier=dict(default='Standard', choices=['Standard', 'Advanced', 'Intelligent-Tiering']),
     )
 
     return AnsibleAWSModule(
