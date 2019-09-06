@@ -19,14 +19,17 @@
     cli_config:
       config: |
         feature lacp
-        interface port-channel11
-          switchport
         interface port-channel10
-          switchport
           lacp min-links 5
         interface port-channel5
-          switchport
           lacp max-bundle 10
+
+  - name: setup3 - L2 for mode command
+    cli_config:
+      config: |
+        interface port-channel11
+          switchport
+    when: mode is defined
 
   - name: Gather lacp_interfaces facts
     nxos_facts: &facts
