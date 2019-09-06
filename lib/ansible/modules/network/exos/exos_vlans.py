@@ -67,7 +67,7 @@ options:
         type: str
         choices:
           - active
-          - suspended
+          - suspend
         default: active
   state:
     description:
