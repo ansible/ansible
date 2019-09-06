@@ -32,7 +32,6 @@ options:
   settings:
     description:
     - Dictionary of settings to pass to the Set-DedupVolume powershell command.
-    required: no
     type: dict
     suboptions:
       minimum_file_size:
@@ -40,21 +39,17 @@ options:
           - Minimum file size you want to target for deduplication.
           - It will default to 32768 if not defined or if the value is less than 32768.
         type: int
-        required: no
       minimum_file_age_days:
         description:
           - Minimum file age you want to target for deduplication.
         type: int
-        required: no
       no_compress:
         description:
           - Wether you want to enabled filesystem compression or not.
-        required: no
         type: bool
       optimize_in_use_files:
         description:
           - Indicates that the server attempts to optimize currently open files.
-        required: no
         type: bool
       verify:
         description:
@@ -62,7 +57,6 @@ options:
             that optimization creates, rather than relying on a cryptographically strong hash.
           - This option is not recommend.
           - Setting this parameter to True can degrade optimization performance.
-        required: no
         type: bool
 author:
 - rnsc (@rnsc)
