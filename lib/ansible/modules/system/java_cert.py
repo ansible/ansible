@@ -5,6 +5,9 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from OpenSSL.crypto import load_certificate, FILETYPE_PEM, FILETYPE_ASN1
+import socket
+import ssl
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -41,6 +44,13 @@ options:
       - Imported certificate alias.
       - The alias is used when checking for the presence of a certificate in the keystore.
     type: str
+  cert_update:
+    description:
+      - Update a given certificate alias if SHA256 figerprint does not match
+        and needs to be updated.
+    type: bool
+    default: False
+    version_added: "2.10"
   trust_cacert:
     description:
       - Trust imported cert as CAcert.
@@ -112,6 +122,15 @@ EXAMPLES = r'''
     keystore_pass: changeit
     executable: /usr/lib/jvm/jre7/bin/keytool
     state: absent
+
+- name: Update certificate with alias Webserver if needed
+  java_cert:
+    keystore_create: yes
+    keystore_pass: securepass
+    keystore_path: /data/ssl/tomcat_keystore.jks
+    cert_path: /data/ssl/webserver.crt
+    cert_alias: Webserver
+    cert_update: True
 
 - name: Import trusted CA from SSL certificate
   java_cert:
@@ -291,7 +310,7 @@ def import_pkcs12_path(module, executable, path, keystore_path, keystore_pass, p
         module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd)
 
 
-def delete_cert(module, executable, keystore_path, keystore_pass, alias, keystore_type):
+def delete_cert(module, executable, keystore_path, keystore_pass, alias, keystore_type, delete_skip_exit):
     ''' Delete certificate identified with alias from keystore on keystore_path '''
     del_cmd = ("%s -delete -keystore '%s' -storepass '%s' "
                "-alias '%s' %s") % (executable, keystore_path, keystore_pass, alias, get_keystore_type(keystore_type))
@@ -301,9 +320,62 @@ def delete_cert(module, executable, keystore_path, keystore_pass, alias, keystor
 
     diff = {'before': '%s\n' % alias, 'after': None}
 
-    module.exit_json(changed=True, msg=del_out,
-                     rc=del_rc, cmd=del_cmd, stdout=del_out,
-                     error=del_err, diff=diff)
+    if not delete_skip_exit:
+        module.exit_json(changed=True, msg=del_out,
+                         rc=del_rc, cmd=del_cmd, stdout=del_out,
+                         error=del_err, diff=diff)
+
+
+def get_x509_sha256_cert(module, path):
+    ''' Get SHA256 fingerprint from certificate '''
+    x509_cert_file = open(path, "rb").read()
+    certificate = load_certificate(FILETYPE_PEM, x509_cert_file)
+    sha256_fingerprint = certificate.digest("sha256")
+
+    return sha256_fingerprint
+
+
+def get_x509_sha256_url(module, url):
+    ''' Get SHA256 fingerprint from certificate via url '''
+    x509_cert_url = (url,443)
+    conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    conn.connect(x509_cert_url)
+
+    # Create SSL socket without validating remote
+    # certificate. Do not transfer data over
+    # this socket. 
+    ssl_upgrade = ssl.create_default_context()
+    ssl_upgrade.check_hostname = False
+    ssl_upgrade.verify_mode = ssl.CERT_NONE
+    conn = ssl_upgrade.wrap_socket(conn, server_hostname=x509_cert_url[0])
+
+    sha256_fingerprint = conn.getpeercert(True)
+    sha256_fingerprint = load_certificate(FILETYPE_ASN1,sha256_fingerprint)
+    sha256_fingerprint = sha256_fingerprint.digest("sha256")
+
+    return sha256_fingerprint
+
+
+def get_keystore_sha256(module, executable, keystore_path, keystore_pass, path, cert_alias):
+    ''' Get SHA256 fingerprint from JAVA keystore '''
+    list_cmd = ("%s -v -list -keystore '%s' -storepass '%s' "
+               "-alias '%s'") % (executable, keystore_path, keystore_pass, cert_alias)
+
+    # List SHA256 fingerprint von alias certificate from keystore
+    (list_rc, list_out, list_err) = module.run_command(list_cmd, check_rc=True)
+
+    # Split verbose output to list
+    jks_attributes = []
+    jks_attributes = list_out.splitlines()
+
+    # Obtain SHA256 sum for given cert alias
+    sha256_fingerprint = ""
+    for line in jks_attributes:
+        if 'SHA256:' in line:
+            sha256_fingerprint = line
+            sha256_fingerprint = sha256_fingerprint.replace('\t SHA256: ', '')
+
+    return sha256_fingerprint
 
 
 def test_keytool(module, executable):
@@ -330,6 +402,7 @@ def main():
         pkcs12_alias=dict(type='str'),
         cert_alias=dict(type='str'),
         cert_port=dict(type='int', default=443),
+        cert_update=dict(type='bool', default=False),
         keystore_path=dict(type='path'),
         keystore_pass=dict(type='str', required=True, no_log=True),
         trust_cacert=dict(type='bool', default=False),
@@ -358,6 +431,7 @@ def main():
     pkcs12_alias = module.params.get('pkcs12_alias', '1')
 
     cert_alias = module.params.get('cert_alias') or url
+    cert_update = module.params.get('cert_update')
     trust_cacert = module.params.get('trust_cacert')
 
     keystore_path = module.params.get('keystore_path')
@@ -366,6 +440,7 @@ def main():
     keystore_type = module.params.get('keystore_type')
     executable = module.params.get('executable')
     state = module.params.get('state')
+    delete_skip_exit = False
 
     if path and not cert_alias:
         module.fail_json(changed=False,
@@ -384,7 +459,7 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True)
 
-        delete_cert(module, executable, keystore_path, keystore_pass, cert_alias, keystore_type)
+        delete_cert(module, executable, keystore_path, keystore_pass, cert_alias, keystore_type, delete_skip_exit)
 
     elif state == 'present' and not cert_present:
         if module.check_mode:
@@ -401,6 +476,38 @@ def main():
         if url:
             import_cert_url(module, executable, url, port, keystore_path,
                             keystore_pass, cert_alias, keystore_type, trust_cacert)
+
+    elif state == 'present' and cert_present and cert_update:
+        if path:
+            sha256_fp_jks = get_keystore_sha256(module, executable, keystore_path, keystore_pass, path, cert_alias)
+            sha256_fp_x509 = get_x509_sha256_cert(module, path)
+            if not sha256_fp_jks == sha256_fp_x509:
+
+                if module.check_mode:
+                    module.exit_json(changed=True)
+
+                delete_skip_exit = True
+                delete_cert(module, executable, keystore_path, keystore_pass, cert_alias, keystore_type, delete_skip_exit)
+                import_cert_path(module, executable, path, keystore_path,
+                                 keystore_pass, cert_alias, keystore_type, trust_cacert)
+
+        if url:
+            sha256_fp_jks = get_keystore_sha256(module, executable, keystore_path, keystore_pass, path, cert_alias)
+            sha256_fp_x509 = get_x509_sha256_url(module, url)
+            if not sha256_fp_jks == sha256_fp_x509:
+
+                if module.check_mode:
+                    module.exit_json(changed=True)
+
+                delete_skip_exit = True
+                delete_cert(module, executable, keystore_path, keystore_pass, cert_alias, keystore_type, delete_skip_exit)
+                import_cert_url(module, executable, url, port, keystore_path,
+                                keystore_pass, cert_alias, keystore_type, trust_cacert)
+
+        else:
+            if module.check_mode:
+                module.exit_json(changed=False)
+
 
     module.exit_json(changed=False)
 
