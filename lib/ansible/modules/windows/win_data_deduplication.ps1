@@ -3,21 +3,36 @@
 # Copyright: 2019, rnsc(@rnsc) <github@rnsc.be>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
 #AnsibleRequires -OSVersion 6.3
 
-$params = Parse-Args $args -supports_check_mode $true
-
-$drive_letter = Get-AnsibleParam -obj $params -name 'drive_letter' -type 'str' -failifempty $true
-$state = Get-AnsibleParam -obj $params -name 'state' -type 'str' -default 'present'
-$settings = Get-AnsibleParam -obj $params -name 'settings' -type 'dict' -default $null
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type 'bool' -default $false
-
-$result = @{
-  changed = $false
-  reboot_required = $false
-  msg = ""
+$spec = @{
+    options = @{
+				drive_letter = @{ type = "str"; required = $true }
+				state = @{ type = "str"; choices = "absent", "present"; default = "present"; }
+        settings = @{
+            type = "dict"
+            options = @{
+                minimum_file_size = @{ type = "int" }
+                minimum_file_age_days = @{ type = "int" }
+								no_compress = @{ type = "bool" }
+								optimize_in_use_files = @{ type = "bool" }
+								verify = @{ type = "bool" }
+            }
+        }
+				supports_check_mode = $true
+    }
 }
+
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+
+$drive_letter = $module.Params.drive_letter
+$state = $module.Params.state
+$settings = $module.Params.settings
+
+$module.Result.changed = $false
+$module.Result.reboot_required = $false
+$module.Result.msg = ""
 
 function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
 
@@ -38,18 +53,15 @@ function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
   }
 
   if ( $state -ne $current_state ) {
-    if( -not $check_mode) {
+    if( -not $module.CheckMode) {
       if($state -eq 'present') {
         # Enable-DedupVolume -Volume <String>
         Enable-DedupVolume -Volume "$($volume.DriveLetter):"
       } elseif ($state -eq 'absent') {
         Disable-DedupVolume -Volume "$($volume.DriveLetter):"
-      } else {
-        Fail-Json $result "Unsupported state option, it can only be 'present' or 'absent'."
       }
     }
-    $result.msg += " Deduplication on volume: "+$volume.DriveLetter+" set to: $state"
-    $result.changed = $true
+    $module.Result.changed = $true
   }
 
   if ($state -eq 'present') {
@@ -95,9 +107,8 @@ function Set-DataDedupJobSettings ($volume, $settings) {
       if( -not $check_mode) {
         Set-DedupVolume -Volume "$($volume.DriveLetter):" @command_param
       }
-      $result.msg += " Setting DedupVolume settings for $update_key"
 
-      $result.changed = $true
+      $module.Result.changed = $true
     }
   }
 
@@ -105,11 +116,11 @@ function Set-DataDedupJobSettings ($volume, $settings) {
 
 # Install required feature
 $feature_name = "FS-Data-Deduplication"
-if( -not $check_mode) {
+if( -not $module.CheckMode) {
   $feature = Install-WindowsFeature -Name $feature_name
 
   if ($feature.RestartNeeded -eq 'Yes') {
-    $result.reboot_required = $true
+    $module.Result.reboot_required = $true
     Fail-Json $result "$feature_name was installed but requires Windows to be rebooted to work."
   }
 }
