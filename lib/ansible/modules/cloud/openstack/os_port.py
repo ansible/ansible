@@ -22,6 +22,9 @@ version_added: "2.0"
 description:
    - Add, Update or Remove ports from an OpenStack cloud. A I(state) of
      'present' will ensure the port is created or updated if required.
+requirements:
+    - "ordereddict unless python >= 2.7"
+    - "openstacksdk"
 options:
    network:
      description:
@@ -60,11 +63,13 @@ options:
                   - ip_address: ..."
    extra_dhcp_opts:
      description:
-        - "Extra dhcp options to be assigned to this port.  Extra options are
-          supported with dictionary structure.
+        - "Extra dhcp options to be assigned to this port. Extra options are
+          supported with dictionary structure. Note that options cannot be removed
+          only updated.
           e.g.  extra_dhcp_opts:
                   - opt_name: opt name1
                     opt_value: value1
+                    ip_version: 4
                   - opt_name: ..."
    device_owner:
      description:
@@ -213,8 +218,19 @@ port_security_enabled:
     type: bool
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
+
+
+try:
+    from collections import OrderedDict
+    HAS_ORDEREDDICT = True
+except ImportError:
+    try:
+        from ordereddict import OrderedDict
+        HAS_ORDEREDDICT = True
+    except ImportError:
+        HAS_ORDEREDDICT = False
 
 
 def _needs_update(module, port, cloud):
@@ -228,20 +244,34 @@ def _needs_update(module, port, cloud):
                       'device_id',
                       'binding:vnic_type',
                       'port_security_enabled']
-    compare_dict = ['allowed_address_pairs',
-                    'extra_dhcp_opts']
+    compare_list_dict = ['allowed_address_pairs',
+                         'extra_dhcp_opts']
     compare_list = ['security_groups']
 
     for key in compare_simple:
-        if module.params[key] is not None and module.params[key] != port[key]:
-            return True
-    for key in compare_dict:
         if module.params[key] is not None and module.params[key] != port[key]:
             return True
     for key in compare_list:
         if module.params[key] is not None and (set(module.params[key]) !=
                                                set(port[key])):
             return True
+
+    for key in compare_list_dict:
+        if not module.params[key]:
+            if not port[key]:
+                return True
+
+            # sort dicts in list
+            port_ordered = [OrderedDict(sorted(d.items())) for d in port[key]]
+            param_ordered = [OrderedDict(sorted(d.items())) for d in module.params[key]]
+
+            for d in param_ordered:
+                if d not in port_ordered:
+                    return True
+
+            for d in port_ordered:
+                if d not in param_ordered:
+                    return True
 
     # NOTE: if port was created or updated with 'no_security_groups=True',
     # subsequent updates without 'no_security_groups' flag or
@@ -342,6 +372,9 @@ def main():
     module = AnsibleModule(argument_spec,
                            supports_check_mode=True,
                            **module_kwargs)
+
+    if not HAS_ORDEREDDICT:
+        module.fail_json(msg=missing_required_lib('ordereddict'))
 
     name = module.params['name']
     state = module.params['state']
