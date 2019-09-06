@@ -59,6 +59,10 @@
     ecs_domain:
       domain_name: DNS.{{ common_name }}
       verification_method: DNS
+      entrust_api_user: '{{ entrust_api_user }}'
+      entrust_api_key: '{{ entrust_api_key }}'
+      entrust_api_client_cert_path: '{{ entrust_api_cert }}'
+      entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: dns_result
 
   - debug:
@@ -80,6 +84,10 @@
     ecs_domain:
       domain_name: FILE.{{ common_name }}
       verification_method: WEB_SERVER
+      entrust_api_user: '{{ entrust_api_user }}'
+      entrust_api_key: '{{ entrust_api_key }}'
+      entrust_api_client_cert_path: '{{ entrust_api_cert }}'
+      entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: file_result
 
   - debug:
@@ -102,6 +110,10 @@
       domain_name: EMAIL.{{ common_name }}
       verification_method: EMAIL
       verification_email: admin@{{ domain_name }}
+      entrust_api_user: '{{ entrust_api_user }}'
+      entrust_api_key: '{{ entrust_api_key }}'
+      entrust_api_client_cert_path: '{{ entrust_api_cert }}'
+      entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: email_result
 
   - debug:
@@ -123,6 +135,10 @@
     ecs_domain:
       domain_name: MANUAL.{{ common_name }}
       verification_method: MANUAL
+      entrust_api_user: '{{ entrust_api_user }}'
+      entrust_api_key: '{{ entrust_api_key }}'
+      entrust_api_client_cert_path: '{{ entrust_api_cert }}'
+      entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: manual_result
 
   - debug:
@@ -140,90 +156,102 @@
         - manual_result.file_contents is undefined
         - manual_result.emails is undefined
 
-- name: Have ECS request a domain validation via DNS that remains unchanged
-  ecs_domain:
-    domain_name: DNS.{{ common_name }}
-    verification_method: DNS
-  register: dns_result2
+  - name: Have ECS request a domain validation via DNS that remains unchanged
+    ecs_domain:
+      domain_name: DNS.{{ common_name }}
+      verification_method: DNS
+      entrust_api_user: '{{ entrust_api_user }}'
+      entrust_api_key: '{{ entrust_api_key }}'
+      entrust_api_client_cert_path: '{{ entrust_api_cert }}'
+      entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
+    register: dns_result2
 
-- debug:
-    var: dns_result2
+  - debug:
+      var: dns_result2
 
-- assert:
-    that:
-      - dns_result2 is not failed
-      - not dns_result2.changed
-      - dns_result2.verification_method == 'DNS'
-      - dns_result2.dns_location is string
-      - dns_result2.dns_contents is string
-      - dns_result2.dns_resource_type is string
-      - dns_result2.file_location is undefined
-      - dns_result2.file_contents is undefined
-      - dns_result2.emails is undefined
+  - assert:
+      that:
+        - dns_result2 is not failed
+        - not dns_result2.changed
+        - dns_result2.verification_method == 'DNS'
+        - dns_result2.dns_location is string
+        - dns_result2.dns_contents is string
+        - dns_result2.dns_resource_type is string
+        - dns_result2.file_location is undefined
+        - dns_result2.file_contents is undefined
+        - dns_result2.emails is undefined
 
-- name: Have ECS request a domain validation via FILE for DNS, to change verification method
-  ecs_domain:
-    domain_name: DNS.{{ common_name }}
-    verification_method: FILE
-  register: dns_result_now_file
+  - name: Have ECS request a domain validation via FILE for DNS, to change verification method
+    ecs_domain:
+      domain_name: DNS.{{ common_name }}
+      verification_method: FILE
+    register: dns_result_now_file
 
-- debug:
-    var: dns_result_now_file
+  - debug:
+      var: dns_result_now_file
 
-- assert:
-    that:
-      - dns_result_now_file is not failed
-      - dns_result_now_file.changed
-      - dns_result_now_file.verification_method == 'FILE'
-      - dns_result_now_file.dns_location is undefined
-      - dns_result_now_file.dns_contents is undefined
-      - dns_result_now_file.dns_resource_type is undefined
-      - dns_result_now_file.file_location is string
-      - dns_result_now_file.file_contents is string
-      - dns_result_now_file.emails is undefined
+  - assert:
+      that:
+        - dns_result_now_file is not failed
+        - dns_result_now_file.changed
+        - dns_result_now_file.verification_method == 'FILE'
+        - dns_result_now_file.dns_location is undefined
+        - dns_result_now_file.dns_contents is undefined
+        - dns_result_now_file.dns_resource_type is undefined
+        - dns_result_now_file.file_location is string
+        - dns_result_now_file.file_contents is string
+        - dns_result_now_file.emails is undefined
 
   - name: Request revalidation of an approved domain
     ecs_domain:
-      domain_name: {{ existing_domain_common_name }}
+      domain_name: '{{ existing_domain_common_name }}'
       verification_method: FILE
+      entrust_api_user: '{{ entrust_api_user }}'
+      entrust_api_key: '{{ entrust_api_key }}'
+      entrust_api_client_cert_path: '{{ entrust_api_cert }}'
+      entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: file_existing_domain
 
-- debug:
-    var: file_existing_domain
+  - debug:
+      var: file_existing_domain
 
-- assert:
-    that:
-      - file_existing_domain is not failed
-      - not file_existing_domain.changed
-      - file_existing_domain.verification_method is undefined
-      - file_existing_domain.dns_location is undefined
-      - file_existing_domain.dns_contents is undefined
-      - file_existing_domain.dns_resource_type is undefined
-      - file_existing_domain.file_location is undefined
-      - file_existing_domain.file_contents is undefined
-      - file_existing_domain.emails is undefined
+  - assert:
+      that:
+        - file_existing_domain is not failed
+        - not file_existing_domain.changed
+        - file_existing_domain.verification_method is undefined
+        - file_existing_domain.dns_location is undefined
+        - file_existing_domain.dns_contents is undefined
+        - file_existing_domain.dns_resource_type is undefined
+        - file_existing_domain.file_location is undefined
+        - file_existing_domain.file_contents is undefined
+        - file_existing_domain.emails is undefined
 
-- name: Request revalidation of an approved domain
-  ecs_domain:
-    domain_name: {{ existing_domain_common_name }}
-    verification_method: FILE
-    ov_days_remaining: 600
-  register: file_existing_domain_revalidate
+  - name: Request revalidation of an approved domain
+    ecs_domain:
+      domain_name: '{{ existing_domain_common_name }}'
+      verification_method: FILE
+      ov_days_remaining: 600
+      entrust_api_user: '{{ entrust_api_user }}'
+      entrust_api_key: '{{ entrust_api_key }}'
+      entrust_api_client_cert_path: '{{ entrust_api_cert }}'
+      entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
+    register: file_existing_domain_revalidate
 
-- debug:
-    var: file_existing_domain_revalidate
+  - debug:
+      var: file_existing_domain_revalidate
 
-- assert:
-    that:
-      - file_existing_domain_revalidate is not failed
-      - file_existing_domain_revalidate.changed
-      - file_existing_domain_revalidate.verification_method == 'FILE'
-      - file_existing_domain_revalidate.dns_location is undefined
-      - file_existing_domain_revalidate.dns_contents is undefined
-      - file_existing_domain_revalidate.dns_resource_type is undefined
-      - file_existing_domain_revalidate.file_location is string
-      - file_existing_domain_revalidate.file_contents is string
-      - file_existing_domain_revalidate.emails is undefined
+  - assert:
+      that:
+        - file_existing_domain_revalidate is not failed
+        - file_existing_domain_revalidate.changed
+        - file_existing_domain_revalidate.verification_method == 'FILE'
+        - file_existing_domain_revalidate.dns_location is undefined
+        - file_existing_domain_revalidate.dns_contents is undefined
+        - file_existing_domain_revalidate.dns_resource_type is undefined
+        - file_existing_domain_revalidate.file_location is string
+        - file_existing_domain_revalidate.file_contents is string
+        - file_existing_domain_revalidate.emails is undefined
 
 
   always:

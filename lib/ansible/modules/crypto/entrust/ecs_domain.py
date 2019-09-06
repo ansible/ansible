@@ -96,6 +96,10 @@ EXAMPLES = r'''
     client_id: 2
     verification_method: EMAIL
     verification_email: admin@ansible.com
+    entrust_api_user: apiusername
+    entrust_api_key: a^lv*32!cd9LnT
+    entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
+    entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
 
 - name: Request domain validation using DNS. If domain is already valid,
         request revalidation if expires within 90 days
@@ -103,6 +107,10 @@ EXAMPLES = r'''
     domain_name: ansible.com
     verification_method: DNS
     ov_remaining_days: 90
+    entrust_api_user: apiusername
+    entrust_api_key: a^lv*32!cd9LnT
+    entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
+    entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
 
 - name: Request domain validation using web server validation, and revalidate
         if fewer than 60 days remaining of EV eligibility.
@@ -110,11 +118,19 @@ EXAMPLES = r'''
     domain_name: ansible.com
     verification_method: WEB_SERVER
     ev_remaining_days: 60
+    entrust_api_user: apiusername
+    entrust_api_key: a^lv*32!cd9LnT
+    entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
+    entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
 
 - name: Request domain validation using manual validation.
   ecs_domain:
     domain_name: ansible.com
     verification_method: MANUAL
+    entrust_api_user: apiusername
+    entrust_api_key: a^lv*32!cd9LnT
+    entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
+    entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
 '''
 
 RETURN = '''
@@ -240,9 +256,9 @@ class EcsDomain(object):
         self.verification_method = domain_details['verificationMethod']
         self.domain_status = domain_details['status']
         self.ov_eligible = domain_details.get('ovEligible')
-        self.ov_days_remaining = convert_days_remaining(domain_details.get('ovExpiry'))
+        self.ov_days_remaining = calculate_days_remaining(domain_details.get('ovExpiry'))
         self.ev_eligible = domain_details.get('evEligible')
-        self.ev_days_remaining = convert_days_remaining(domain_details.get('evExpiry'))
+        self.ev_days_remaining = calculate_days_remaining(domain_details.get('evExpiry'))
         self.client_id = domain_details['clientId']
 
         if self.verification_method == 'DNS' and domain_details.get('dnsMethod'):
@@ -258,9 +274,10 @@ class EcsDomain(object):
     def check(self, module):
         try:
             domain_details = self.ecs_client.GetDomain(clientId=module.params['client_id'], domain=self.domain_name)
-            set_domain_details(domain_details)
-            if self.domain_status != 'APPROVED' and self.domain_status != 'INITIAL_VERIFICATION' and
-            self.domain_status != 'RE_VERIFICATION' and self.domain_status != 'EXPIRING':
+            self.set_domain_details(domain_details)
+            if (self.domain_status != 'APPROVED' and self.domain_status != 'INITIAL_VERIFICATION' and
+                    self.domain_status != 'RE_VERIFICATION' and self.domain_status != 'EXPIRING'):
+
                 return False
 
             # If domain verification is in process, we want to return the random values and treat it as a valid.
@@ -301,19 +318,19 @@ class EcsDomain(object):
                 result = self.ecs_client.GetDomain(clientId=module.params['client_id'], domain=module.params['domain_name'])
 
                 # It takes a bit of time before the random values are available
-                if module.params['verification_method'] == 'DNS' or module.params['verification_method'] == 'FILE'
-                for i in range(2):
-                    # Check both that random values are now available, and that they're different than were populated by previous 'check'
-                    if module.params['verification_method'] == 'DNS':
-                        if result.get('dnsMethod') and result.get['dnsMethod']['recordValue'] != self.dns_contents:
-                            break
-                    elif module.params['verification_method'] == 'WEB_SERVER':
-                        if result.get('webServerMethod') and result.get['webServerMethod']['fileContents'] != self.file_contents:
-                            break
+                if module.params['verification_method'] == 'DNS' or module.params['verification_method'] == 'FILE':
+                    for i in range(2):
+                        # Check both that random values are now available, and that they're different than were populated by previous 'check'
+                        if module.params['verification_method'] == 'DNS':
+                            if result.get('dnsMethod') and result.get['dnsMethod']['recordValue'] != self.dns_contents:
+                                break
+                        elif module.params['verification_method'] == 'WEB_SERVER':
+                            if result.get('webServerMethod') and result.get['webServerMethod']['fileContents'] != self.file_contents:
+                                break
                     time.sleep(10)
                     result = self.ecs_client.GetDomain(clientId=module.params['client_id'], domain=module.params['domain_name'])
                 self.changed = True
-                set_domain_details(result)
+                self.set_domain_details(result)
             except RestOperationException as e:
                 module.fail_json(msg='Failed to request domain validation from Entrust (ECS) {0}'.format(e.message))
 
@@ -360,9 +377,7 @@ def main():
     ecs_argument_spec.update(ecs_domain_argument_spec())
     module = AnsibleModule(
         argument_spec=ecs_argument_spec,
-        required_if=(
-            ['verification_method', 'EMAIL', ['verification_email']]
-        ),
+        required_if=[('verification_method', 'EMAIL', ['verification_email'])],
         supports_check_mode=False,
     )
 
