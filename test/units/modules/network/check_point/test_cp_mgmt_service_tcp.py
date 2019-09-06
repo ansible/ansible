@@ -26,7 +26,7 @@ from ansible.module_utils import basic
 from ansible.module_utils.network.checkpoint.checkpoint import api_call
 from ansible.modules.network.check_point import cp_mgmt_service_tcp
 
-function_path = 'ansible.modules.network.check_point.cp_mgmt_service_tcp_facts.api_call'
+function_path = 'ansible.modules.network.check_point.cp_mgmt_service_tcp.api_call'
 api_call_object = 'service_tcp'
 
 OBJECT = {
