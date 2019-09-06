@@ -16,7 +16,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 import pytest
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleFailJson, AnsibleExitJson
@@ -25,17 +26,17 @@ from ansible.module_utils import basic
 from ansible.module_utils.network.checkpoint.checkpoint import api_call
 from ansible.modules.network.check_point import cp_mgmt_host
 
-function_path = 'ansible.modules.network.check_point.cp_mgmt_host_facts.api_call'
+function_path = 'ansible.modules.network.check_point.cp_mgmt_host.api_call'
 api_call_object = 'host'
 
 OBJECT = {"name": "New Host 1",
-          "ip-address": "192.0.2.1"}
+          "ip_address": "192.0.2.1"}
 
 CREATE_PAYLOAD = {"name": "New Host 1",
-                  "ip-address": "192.0.2.1"}
+                  "ip_address": "192.0.2.1"}
 
 UPDATE_PAYLOAD = {"name": "New Host 1",
-                  "ipv4-address": "192.0.2.2",
+                  "ipv4_address": "192.0.2.2",
                   "color": "green"}
 
 DELETE_PAYLOAD = {'name': 'New Host 1',
