@@ -337,20 +337,20 @@ def get_x509_sha256_cert(module, path):
 
 def get_x509_sha256_url(module, url):
     ''' Get SHA256 fingerprint from certificate via url '''
-    x509_cert_url = (url,443)
+    x509_cert_url = (url, 443)
     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     conn.connect(x509_cert_url)
 
     # Create SSL socket without validating remote
     # certificate. Do not transfer data over
-    # this socket. 
+    # this socket.
     ssl_upgrade = ssl.create_default_context()
     ssl_upgrade.check_hostname = False
     ssl_upgrade.verify_mode = ssl.CERT_NONE
     conn = ssl_upgrade.wrap_socket(conn, server_hostname=x509_cert_url[0])
 
     sha256_fingerprint = conn.getpeercert(True)
-    sha256_fingerprint = load_certificate(FILETYPE_ASN1,sha256_fingerprint)
+    sha256_fingerprint = load_certificate(FILETYPE_ASN1, sha256_fingerprint)
     sha256_fingerprint = sha256_fingerprint.digest("sha256")
 
     return sha256_fingerprint
@@ -359,7 +359,7 @@ def get_x509_sha256_url(module, url):
 def get_keystore_sha256(module, executable, keystore_path, keystore_pass, path, cert_alias):
     ''' Get SHA256 fingerprint from JAVA keystore '''
     list_cmd = ("%s -v -list -keystore '%s' -storepass '%s' "
-               "-alias '%s'") % (executable, keystore_path, keystore_pass, cert_alias)
+                "-alias '%s'") % (executable, keystore_path, keystore_pass, cert_alias)
 
     # List SHA256 fingerprint von alias certificate from keystore
     (list_rc, list_out, list_err) = module.run_command(list_cmd, check_rc=True)
@@ -507,7 +507,6 @@ def main():
         else:
             if module.check_mode:
                 module.exit_json(changed=False)
-
 
     module.exit_json(changed=False)
 
