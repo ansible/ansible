@@ -376,9 +376,9 @@ def process_options(module, options):
 
             if 'suboptions' in v and v['suboptions']:
                 if isinstance(v['suboptions'], dict):
-                    v['suboptions'] = process_options(module, v['suboptions'])
+                    process_options(module, v['suboptions'])
                 elif isinstance(v['suboptions'][0], dict):
-                    v['suboptions'] = process_options(module, v['suboptions'][0])
+                    process_options(module, v['suboptions'][0])
 
             option_names.append(k)
 
