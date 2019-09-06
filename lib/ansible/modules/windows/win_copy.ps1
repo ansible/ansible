@@ -94,9 +94,26 @@ Function Copy-File($source, $dest) {
         $result.changed = $true
     }
 
-    # ugly but to save us from running the checksum twice, let's return it for
-    # the main code to add it to $result
-    return ,@{ diff = $diff; checksum = $source_checksum }
+    # Evaluate the checksum of the copied file in it's destination, if, and only
+    # if, we know for certain that the file at the destination location has been
+    # updated.
+    if ( $result.changed -eq $true ) {
+        $new_dest_checksum = Get-FileChecksum $dest
+        if ( $new_dest_checksum -eq $source_checksum ) {
+            # Properly validated that the move was successful.
+            return ,@( diff = $diff; checksum = $new_dest_checksum )
+        }
+        # Return an error if the file in it's new desitantion turns out to be
+        # the previous version and the checksum of the source file isn't the
+        # checksum of the destination. (ie: no change, but change was expected.)
+        elseif ( ( $new_dest_checksum -eq $dest_checksum ) -and ( $source_checksum -ne $dest_checksum ) ) {
+            # Properly validated that the move failed.
+            Fail-Json -obj $result -message "could not copy file from '$source' to '$dest': destination is unchanged."
+        }
+    }
+    # Otherwise, return a diff indicating no changea and the checksum of the
+    # source file to the main coded to add it to $result.
+    return ,@{ diff = $diff; checksum = $null }
 }
 
 Function Copy-Folder($source, $dest) {
