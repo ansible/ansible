@@ -1,0 +1,233 @@
+---
+## Verify that integration_config was specified
+- block:
+  - assert:
+      that:
+        - entrust_api_user is defined
+        - entrust_api_key is defined
+        - entrust_api_ip_address is defined
+        - entrust_cloud_ip_address is defined
+        - entrust_api_client_cert_path is defined or entrust_api_client_cert_contents is defined
+        - entrust_api_client_cert_key_path is defined or entrust_api_client_cert_key_contents
+        - cacerts_bundle_path_local is defined
+
+## SET UP TEST ENVIRONMENT ########################################################################
+- name: copy the files needed for verifying test server certificate to the host
+  copy:
+    src: '{{ cacerts_bundle_path_local }}/'
+    dest: '{{ cacerts_bundle_path }}'
+
+- name: Update the CA certificates for our QA certs (collection may need updating if new QA environments used)
+  command: c_rehash {{ cacerts_bundle_path }}
+
+- name: Update hosts file
+  lineinfile:
+    path: /etc/hosts
+    state: present
+    regexp: 'api.entrust.net$'
+    line: '{{ entrust_api_ip_address }} api.entrust.net'
+
+- name: Update hosts file
+  lineinfile:
+    path: /etc/hosts
+    state: present
+    regexp: 'cloud.entrust.net$'
+    line: '{{ entrust_cloud_ip_address }} cloud.entrust.net'
+
+- name: Clear out the temporary directory for storing the API connection information
+  file:
+    path: '{{ tmpdir_path }}'
+    state: absent
+
+- name: Create a directory for storing the API connection Information
+  file:
+    path: '{{ tmpdir_path }}'
+    state: directory
+
+- name: Copy the files needed for the connection to entrust API to the host
+  copy:
+    src: '{{ entrust_api_client_cert_path }}'
+    dest: '{{ entrust_api_cert }}'
+
+- name: Copy the files needed for the connection to entrust API to the host
+  copy:
+    src: '{{ entrust_api_client_cert_key_path }}'
+    dest: '{{ entrust_api_cert_key }}'
+
+- block:
+  - name: Have ECS request a domain validation via DNS
+    ecs_domain:
+      domain_name: DNS.{{ common_name }}
+      verification_method: DNS
+    register: dns_result
+
+  - debug:
+      var: dns_result
+
+  - assert:
+      that:
+        - dns_result is not failed
+        - dns_result.changed
+        - dns_result.verification_method == 'DNS'
+        - dns_result.dns_location is string
+        - dns_result.dns_contents is string
+        - dns_result.dns_resource_type is string
+        - dns_result.file_location is undefined
+        - dns_result.file_contents is undefined
+        - dns_result.emails is undefined
+
+  - name: Have ECS request a domain validation via WEB_SERVER
+    ecs_domain:
+      domain_name: FILE.{{ common_name }}
+      verification_method: WEB_SERVER
+    register: file_result
+
+  - debug:
+      var: file_result
+
+  - assert:
+      that:
+        - file_result is not failed
+        - file_result.changed
+        - file_result.verification_method == 'WEB_SERVER'
+        - file_result.dns_location is undefined
+        - file_result.dns_contents is undefined
+        - file_result.dns_resource_type is undefined
+        - file_result.file_location is string
+        - file_result.file_contents is string
+        - file_result.emails is undefined
+
+  - name: Have ECS request a domain validation via EMAIL
+    ecs_domain:
+      domain_name: EMAIL.{{ common_name }}
+      verification_method: EMAIL
+      verification_email: admin@{{ domain_name }}
+    register: email_result
+
+  - debug:
+      var: email_result
+
+  - assert:
+      that:
+        - email_result is not failed
+        - email_result.changed
+        - email_result.verification_method == 'EMAIL'
+        - email_result.dns_location is undefined
+        - email_result.dns_contents is undefined
+        - email_result.dns_resource_type is undefined
+        - email_result.file_location is undefined
+        - email_result.file_contents is undefined
+        - email_result.emails is list
+
+  - name: Have ECS request a domain validation via MANUAL
+    ecs_domain:
+      domain_name: MANUAL.{{ common_name }}
+      verification_method: MANUAL
+    register: manual_result
+
+  - debug:
+      var: manual_result
+
+  - assert:
+      that:
+        - manual_result is not failed
+        - manual_result.changed
+        - manual_result.verification_method == 'MANUAL'
+        - manual_result.dns_location is undefined
+        - manual_result.dns_contents is undefined
+        - manual_result.dns_resource_type is undefined
+        - manual_result.file_location is undefined
+        - manual_result.file_contents is undefined
+        - manual_result.emails is undefined
+
+- name: Have ECS request a domain validation via DNS that remains unchanged
+  ecs_domain:
+    domain_name: DNS.{{ common_name }}
+    verification_method: DNS
+  register: dns_result2
+
+- debug:
+    var: dns_result2
+
+- assert:
+    that:
+      - dns_result2 is not failed
+      - not dns_result2.changed
+      - dns_result2.verification_method == 'DNS'
+      - dns_result2.dns_location is string
+      - dns_result2.dns_contents is string
+      - dns_result2.dns_resource_type is string
+      - dns_result2.file_location is undefined
+      - dns_result2.file_contents is undefined
+      - dns_result2.emails is undefined
+
+- name: Have ECS request a domain validation via FILE for DNS, to change verification method
+  ecs_domain:
+    domain_name: DNS.{{ common_name }}
+    verification_method: FILE
+  register: dns_result_now_file
+
+- debug:
+    var: dns_result_now_file
+
+- assert:
+    that:
+      - dns_result_now_file is not failed
+      - dns_result_now_file.changed
+      - dns_result_now_file.verification_method == 'FILE'
+      - dns_result_now_file.dns_location is undefined
+      - dns_result_now_file.dns_contents is undefined
+      - dns_result_now_file.dns_resource_type is undefined
+      - dns_result_now_file.file_location is string
+      - dns_result_now_file.file_contents is string
+      - dns_result_now_file.emails is undefined
+
+  - name: Request revalidation of an approved domain
+    ecs_domain:
+      domain_name: {{ existing_domain_common_name }}
+      verification_method: FILE
+    register: file_existing_domain
+
+- debug:
+    var: file_existing_domain
+
+- assert:
+    that:
+      - file_existing_domain is not failed
+      - not file_existing_domain.changed
+      - file_existing_domain.verification_method is undefined
+      - file_existing_domain.dns_location is undefined
+      - file_existing_domain.dns_contents is undefined
+      - file_existing_domain.dns_resource_type is undefined
+      - file_existing_domain.file_location is undefined
+      - file_existing_domain.file_contents is undefined
+      - file_existing_domain.emails is undefined
+
+- name: Request revalidation of an approved domain
+  ecs_domain:
+    domain_name: {{ existing_domain_common_name }}
+    verification_method: FILE
+    ov_days_remaining: 600
+  register: file_existing_domain_revalidate
+
+- debug:
+    var: file_existing_domain_revalidate
+
+- assert:
+    that:
+      - file_existing_domain_revalidate is not failed
+      - file_existing_domain_revalidate.changed
+      - file_existing_domain_revalidate.verification_method == 'FILE'
+      - file_existing_domain_revalidate.dns_location is undefined
+      - file_existing_domain_revalidate.dns_contents is undefined
+      - file_existing_domain_revalidate.dns_resource_type is undefined
+      - file_existing_domain_revalidate.file_location is string
+      - file_existing_domain_revalidate.file_contents is string
+      - file_existing_domain_revalidate.emails is undefined
+
+
+  always:
+    - name: clean-up temporary folder
+      file:
+        path: '{{ tmpdir_path }}'
+        state: absent
