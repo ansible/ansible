@@ -17,7 +17,7 @@
         interface port-channel5
         lacp min-links 5
         interface port-channel10
-        lacp mode delay
+        lacp max-bundle 10
 
   - name: Gather lacp_interfaces facts
     nxos_facts: &facts
@@ -39,7 +39,7 @@
         - "'interface port-channel5' in result.commands"
         - "'no lacp min-links' in result.commands"
         - "'interface port-channel10' in result.commands"
-        - "'no lacp mode delay' in result.commands"
+        - "'no lacp max-bundle' in result.commands"
         - "result.commands|length == 4"
 
   - name: Idempotence - deleted

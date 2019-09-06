@@ -22,7 +22,8 @@
           links:
             min: 5
         - name: port-channel5
-          mode: delay
+          links:
+            max: 10
       state:  merged
     register: result
 
@@ -33,7 +34,7 @@
         - "'interface port-channel10' in result.commands"
         - "'lacp min-links 5' in result.commands"
         - "'interface port-channel5' in result.commands"
-        - "'lacp mode delay' in result.commands"
+        - "'lacp max-bundle 10' in result.commands"
         - "result.commands|length == 4"
 
   - name: Gather lacp_interfaces facts
