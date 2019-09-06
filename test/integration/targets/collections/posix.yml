@@ -22,6 +22,16 @@
       name: testns.testcoll.maskedmodule
     register: maskedmodule_out
 
+  # ensure the ansible ns can have real collections added to it
+  - name: call an external module in the ansible namespace
+    ansible.bullcoll.bullmodule:
+    register: bullmodule_out
+
+  # ensure the ansible ns cannot override ansible.builtin externally
+  - name: call an external module in the ansible.builtin collection (should use the built in module)
+    ansible.builtin.ping:
+    register: builtin_ping_out
+
   # action in a collection subdir
   - name: test subdir action FQ
     testns.testcoll.action_subdir.subdir_ping_action:
@@ -59,6 +69,9 @@
       - systestmodule_out.source == 'sys'
       - contentadjmodule_out.source == 'content_adj'
       - not maskedmodule_out.plugin_path
+      - bullmodule_out.source == 'user_ansible_bullcoll'
+      - builtin_ping_out.source is not defined
+      - builtin_ping_out.ping == 'pong'
       - subdir_ping_action_out is not changed
       - subdir_ping_module_out is not changed
       - granular_out.mu_result == 'thingtocall in leaf'
