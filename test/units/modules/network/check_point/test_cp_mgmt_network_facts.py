@@ -39,8 +39,8 @@ SHOW_SINGLE_PAYLOAD = {'name': 'object_which_not_exist'}
 
 api_call_object = "network"
 api_call_object_plural_version = "networks"
-failure_msg = '''Checkpoint device returned error 404 with message {u'message': u'Requested object [object_which_not_exist] not found', u'code': 
-u'generic_err_object_not_found'}'''
+failure_msg = ('''Checkpoint device returned error 404 with message {u'message': u'Requested object [object_which_not_exist] not found'
+, u'code': u'generic_err_object_not_found'}''')
 
 
 class TestCheckpointNetwork(object):
