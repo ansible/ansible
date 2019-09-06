@@ -33,9 +33,9 @@ OBJECT = {'name': 'test_network', 'nat_settings': {'auto_rule': True,
           'subnet': '192.0.2.1', 'subnet_mask': '255.255.255.0', 'state': 'present'}
 
 PAYLOAD = {
-    "policy-package": "standard",
+    "policy_package": "standard",
     "access": True,
-    "threat-prevention": True,
+    "threat_prevention": True,
     "targets": ["corporate-gateway"]
 }
 
