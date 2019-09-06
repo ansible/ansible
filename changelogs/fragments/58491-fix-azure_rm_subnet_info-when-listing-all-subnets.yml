@@ -1,0 +1,3 @@
+---
+bugfixes:
+- azure_rm_subnet_info - fix listing all subnets.
