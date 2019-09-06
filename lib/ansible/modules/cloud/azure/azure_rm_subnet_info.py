@@ -53,7 +53,6 @@ EXAMPLES = '''
     azure_rm_subnet_info:
       resource_group: myResourceGroup
       virtual_network_name: myVirtualNetwork
-      name: mySubnet
 '''
 
 RETURN = '''
@@ -211,7 +210,7 @@ class AzureRMSubnetInfo(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.network_client.subnets.get(resource_group_name=self.resource_group,
+            response = self.network_client.subnets.list(resource_group_name=self.resource_group,
                                                        virtual_network_name=self.virtual_network_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
@@ -219,22 +218,21 @@ class AzureRMSubnetInfo(AzureRMModuleBase):
 
         if response is not None:
             for item in response:
-                results.append(self.format_item(item))
+                results.append(self.format_response(item))
 
         return results
 
     def format_response(self, item):
-        d = item.as_dict()
         d = {
             'resource_group': self.resource_group,
-            'virtual_network_name': self.parse_resource_to_dict(d.get('id')).get('name'),
-            'name': d.get('name'),
-            'id': d.get('id'),
-            'address_prefix_cidr': d.get('address_prefix'),
-            'route_table': d.get('route_table', {}).get('id'),
-            'security_group': d.get('network_security_group', {}).get('id'),
-            'provisioning_state': d.get('provisioning_state'),
-            'service_endpoints': d.get('service_endpoints')
+            'virtual_network_name': self.virtual_network_name,
+            'name': item.name,
+            'id': item.id,
+            'address_prefix_cidr': item.address_prefix,
+            'route_table': item.route_table,
+            'security_group': item.network_security_group,
+            'provisioning_state': item.provisioning_state,
+            'service_endpoints': item.service_endpoints
         }
         return d
 
