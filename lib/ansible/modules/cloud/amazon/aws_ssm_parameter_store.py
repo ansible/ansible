@@ -64,7 +64,7 @@ options:
     required: false
   tier:
     description:
-      - Option to specifier the tier of a parameter.
+      - Option to specify the tier of a parameter.
       - String
     required: false
     version_added: "2.8"
