@@ -107,7 +107,7 @@ class Vlans(ConfigBase):
             collect the current configuration (as a dict from facts)
 
         :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
+        :returns: the requests necessary to migrate the current configuration
                   to the desired configuration
         """
         want = self._module.params['config']
@@ -121,7 +121,7 @@ class Vlans(ConfigBase):
         :param want: the desired configuration as a dictionary
         :param have: the current configuration as a dictionary
         :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
+        :returns: the requests necessary to migrate the current configuration
                   to the desired configuration
         """
         state = self._module.params['state']
@@ -136,10 +136,10 @@ class Vlans(ConfigBase):
         return requests
 
     def _state_replaced(self, want, have):
-        """ The command generator when state is replaced
+        """ The request generator when state is replaced
 
         :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
+        :returns: the requests necessary to migrate the current configuration
                   to the desired configuration
         """
         requests = []
@@ -163,10 +163,10 @@ class Vlans(ConfigBase):
         return requests
 
     def _state_overridden(self, want, have):
-        """ The command generator when state is overridden
+        """ The request generator when state is overridden
 
         :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
+        :returns: the requests necessary to migrate the current configuration
                   to the desired configuration
         """
         requests = []
@@ -197,10 +197,10 @@ class Vlans(ConfigBase):
         return requests
 
     def _state_merged(self, want, have):
-        """ The command generator when state is merged
+        """ The requests generator when state is merged
 
         :rtype: A list
-        :returns: the commands necessary to merge the provided into
+        :returns: the requests necessary to merge the provided into
                   the current configuration
         """
         requests = []
@@ -224,10 +224,10 @@ class Vlans(ConfigBase):
         return requests
 
     def _state_deleted(self, want, have):
-        """ The command generator when state is deleted
+        """ The requests generator when state is deleted
 
         :rtype: A list
-        :returns: the commands necessary to remove the current configuration
+        :returns: the requests necessary to remove the current configuration
                   of the provided objects
         """
         requests = []
@@ -254,10 +254,7 @@ class Vlans(ConfigBase):
 
     def _update_vlan_config_body(self, want, request):
         request["config"]["name"] = want["name"]
-        if want['state'] == 'suspend':
-            request["config"]["status"] = 'SUSPENDED'
-        else:
-            request["config"]["status"] = want["state"].upper()
+        request["config"]["status"] = "SUSPENDED" if want["state"] == "suspend" else want["state"].upper()
         request["config"]["vlan-id"] = want["vlan_id"]
         return request
 

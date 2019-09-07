@@ -83,10 +83,7 @@ class VlansFacts(object):
         config = deepcopy(spec)
 
         config["name"] = conf["name"]
-        if conf["status"] == "SUSPENDED":
-            config["state"] = "suspend"
-        else:
-            config["state"] = conf["status"].lower()
+        config["state"] = "suspend" if conf["status"] == "SUSPENDED" else conf["status"].lower()
         config["vlan_id"] = conf["vlan-id"]
 
         return utils.remove_empties(config)
