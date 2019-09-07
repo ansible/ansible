@@ -20,7 +20,7 @@ module: json_patch
 author: "Joey Espinosa (@ParticleDecay)"
 short_description: Patch JSON documents
 requirements: []
-version_added: "2.9"
+version_added: "2.10"
 description:
     - Patch JSON documents using JSON Patch standard
     - "RFC 6901: https://tools.ietf.org/html/rfc6901"
