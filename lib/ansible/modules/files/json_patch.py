@@ -30,23 +30,29 @@ options:
         description:
             - The path to the source JSON file
         required: True
+        type: str
     dest:
         description:
             - The path to the destination JSON file
         required: False
+        type: str
     operations:
         description:
             - A list of operations to perform on the JSON document
         required: True
+        type: list
     backup:
         description:
             - Copy the targeted file to a backup prior to patch
+        type: bool
     unsafe_writes:
         description:
             - Allow Ansible to fall back to unsafe methods of writing files (some systems do not support atomic operations)
+        type: bool
     pretty:
         description:
             - Write pretty-print JSON when file is changed
+        type: bool
 '''
 
 
