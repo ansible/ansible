@@ -17,4 +17,4 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 dependencies:
-  - prepare_tests
+  - setup_remote_tmp_dir
