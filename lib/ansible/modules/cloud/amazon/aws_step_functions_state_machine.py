@@ -18,7 +18,7 @@ module: aws_step_functions_state_machine
 
 short_description: Manage AWS Step Functions state machines
 
-version_added: "2.9"
+version_added: "2.10"
 
 description:
     - Create, update and delete state machines in AWS Step Functions.
