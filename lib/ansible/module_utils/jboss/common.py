@@ -27,17 +27,6 @@ import os
 import socket
 import re
 
-import logging.handlers
-
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-# create formatter
-formatter = logging.Formatter('%(asctime)s %(levelname)s: %(module)s.%(funcName)s: %(message)s', "%Y-%m-%d %H:%M:%S")
-path_logfile = os.path.join(os.path.abspath('.'), "autodeploy_wf.log")
-handler = logging.FileHandler(filename=path_logfile)
-handler.setFormatter(formatter)
-log.addHandler(handler)
-
 class OperationError(Exception):
     """Error response from Management API"""
 
@@ -50,11 +39,7 @@ class Client(object):
             port = 9990
         if timeout is None:
             timeout = 90
-        log.info("Class init host - {0}".format(host))
-        log.info("Class init port - {0}".format(port))
-        log.info("Class init timeout - {0}".format(timeout))
         self.url = 'http://{0}:{1}/management'.format(host, port)
-        log.info("Class init url - {0}".format(self.url))
         self.username = username
         self.password = password
         self.timeout = timeout
@@ -62,10 +47,6 @@ class Client(object):
 
     @classmethod
     def from_config(cls, params):
-        log.info("merge config host - {0}".format(params['host']))
-        log.info("merge config port - {0}".format(params['port']))
-        log.info("merge config password - {0}".format(params['password']))
-        log.info("merge config timeout - {0}".format(params['timeout']))
         return cls(params['username'],
                    params['password'],
                    params['host'],
@@ -79,8 +60,6 @@ class Client(object):
         if self.headers['operation-headers'] and not payload['operation'] == 'read-resource':
             payload.update(self.headers)
 
-        log.info("url {0}".format(self.url))
-        log.info("request {0}".format(json.dumps(payload)))
         try:
             response = open_url(
                 self.url,
