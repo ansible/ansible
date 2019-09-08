@@ -1078,12 +1078,18 @@ def parse_port_range(range_or_port, client):
     Returns a list of integers for each port in the list.
     '''
     if '-' in range_or_port:
-        start, end = [int(port) for port in range_or_port.split('-')]
+        try:
+            start, end = [int(port) for port in range_or_port.split('-')]
+        except Exception:
+            client.fail('Invalid port range: "{0}"'.format(range_or_port))
         if end < start:
-            client.fail('Invalid port range: {0}'.format(range_or_port))
+            client.fail('Invalid port range: "{0}"'.format(range_or_port))
         return list(range(start, end + 1))
     else:
-        return [int(range_or_port)]
+        try:
+            return [int(range_or_port)]
+        except Exception:
+            client.fail('Invalid port: "{0}"'.format(range_or_port))
 
 
 def split_colon_ipv6(text, client):
