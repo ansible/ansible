@@ -61,8 +61,8 @@ UPDATE_PAYLOAD = {
     "name": "New_TCP_Service_1",
     "color": "green",
     "port": 5656,
-    "aggressive-aging": {
-        "default-timeout": 3600
+    "aggressive_aging": {
+        "default_timeout": 3600
     }
 }
 
