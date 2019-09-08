@@ -59,7 +59,7 @@ CREATE_PAYLOAD = {
 
 UPDATE_PAYLOAD = {
     "name": "New_TCP_Service_1",
-    "color": "green",
+    "color": "orange",
     "port": 5656,
     "aggressive_aging": {
         "default_timeout": 3600
