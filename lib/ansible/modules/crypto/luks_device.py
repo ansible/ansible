@@ -107,6 +107,7 @@ options:
               label on later usages."
             - "Will only be used on container creation, or when I(device) is
               not specified."
+            - "This cannot be specified if I(type) is set to C(luks1)."
         type: str
         version_added: "2.10"
     uuid:
@@ -118,9 +119,7 @@ options:
     type:
         description:
             - "This option allow the user explicit define the format of LUKS
-              container that wants to work with. Options are 'luks1' or 'luks2'"
-            - "Will use per default 'luks2' if I(label) is specified, and the
-              option defined by user if I(label) is not specified."
+              container that wants to work with. Options are C(luks1) or C(luks2)"
         type: str
         choices: [luks1, luks2]
         version_added: "2.10"
@@ -334,16 +333,17 @@ class CryptHandler(Handler):
 
     def run_luks_create(self, device, keyfile, keysize):
         # create a new luks container; use batch mode to auto confirm
-        type = self._module.params['type']
+        luks_type = self._module.params['type']
         label = self._module.params['label']
 
         options = []
         if keysize is not None:
             options.append('--key-size=' + str(keysize))
         if label is not None:
-            options.extend(['--type', 'luks2', '--label', label])
-        elif type is not None:
-            options.extend(['--type', type])
+            options.extend(['--label', label])
+            luks_type = 'luks2'
+        if luks_type is not None:
+            options.extend(['--type', luks_type])
 
         args = [self._cryptsetup_bin, 'luksFormat']
         args.extend(options)
@@ -586,6 +586,10 @@ def run_module():
 
     crypt = CryptHandler(module)
     conditions = ConditionsHandler(module, crypt)
+
+    # conditions not allowed to run
+    if module.params['label'] is not None and module.params['type'] == 'luks1':
+        module.fail_json(msg='You cannot combine type luks1 with the label option.')
 
     # The conditions are in order to allow more operations in one run.
     # (e.g. create luks and add a key to it)
