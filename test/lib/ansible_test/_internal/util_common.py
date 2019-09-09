@@ -204,22 +204,7 @@ def get_python_path(args, interpreter):
     else:
         display.info('Injecting "%s" as a execv wrapper for the "%s" interpreter.' % (injected_interpreter, interpreter), verbosity=1)
 
-        code = textwrap.dedent('''
-        #!%s
-
-        from __future__ import absolute_import
-
-        from os import execv
-        from sys import argv
-
-        python = '%s'
-
-        execv(python, [python] + argv[1:])
-        ''' % (interpreter, interpreter)).lstrip()
-
-        write_text_file(injected_interpreter, code)
-
-        os.chmod(injected_interpreter, MODE_FILE_EXECUTE)
+        create_interpreter_wrapper(interpreter, injected_interpreter)
 
     os.chmod(python_path, MODE_DIRECTORY)
 
@@ -229,6 +214,26 @@ def get_python_path(args, interpreter):
     PYTHON_PATHS[interpreter] = python_path
 
     return python_path
+
+
+def create_interpreter_wrapper(interpreter, injected_interpreter):  # type: (str, str) -> None
+    """Create a wrapper for the given Python interpreter at the specified path."""
+    code = textwrap.dedent('''
+    #!%s
+
+    from __future__ import absolute_import
+
+    from os import execv
+    from sys import argv
+
+    python = '%s'
+
+    execv(python, [python] + argv[1:])
+    ''' % (interpreter, interpreter)).lstrip()
+
+    write_text_file(injected_interpreter, code)
+
+    os.chmod(injected_interpreter, MODE_FILE_EXECUTE)
 
 
 def cleanup_python_paths():

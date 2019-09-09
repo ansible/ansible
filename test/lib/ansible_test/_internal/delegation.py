@@ -54,6 +54,7 @@ from .util import (
 from .util_common import (
     run_command,
     ResultType,
+    create_interpreter_wrapper,
 )
 
 from .docker_util import (
@@ -244,7 +245,7 @@ def delegate_venv(args,  # type: EnvironmentConfig
 
     with tempdir() as inject_path:
         for version, path in venvs.items():
-            os.symlink(os.path.join(path, 'bin', 'python'), os.path.join(inject_path, 'python%s' % version))
+            create_interpreter_wrapper(os.path.join(path, 'bin', 'python'), os.path.join(inject_path, 'python%s' % version))
 
         python_interpreter = os.path.join(inject_path, 'python%s' % args.python_version)
 
