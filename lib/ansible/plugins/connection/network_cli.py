@@ -332,10 +332,6 @@ class Connection(NetworkConnectionBase):
         self.cliconf = None
         self._paramiko_conn = None
 
-        # Managing prompt context
-        self._check_prompt = False
-        self._task_uuid = to_text(kwargs.get('task_uuid', ''))
-
         if self._play_context.verbosity > 3:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
 
@@ -357,6 +353,13 @@ class Connection(NetworkConnectionBase):
                 'manually configure ansible_network_os value for this host'
             )
         self.queue_message('log', 'network_os is set to %s' % self._network_os)
+
+    @property
+    def paramiko_conn(self):
+        if self._paramiko_conn is None:
+            self._paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
+            self._paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
+        return self._paramiko_conn
 
     def _get_log_channel(self):
         name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
@@ -431,9 +434,7 @@ class Connection(NetworkConnectionBase):
         Connects to the remote device and starts the terminal
         '''
         if not self.connected:
-            self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
             self.paramiko_conn._set_log_channel(self._get_log_channel())
-            self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
             self.paramiko_conn.force_persistence = self.force_persistence
 
             command_timeout = self.get_option('persistent_command_timeout')
@@ -500,7 +501,7 @@ class Connection(NetworkConnectionBase):
                 self.queue_message('debug', "cli session is now closed")
 
                 self.paramiko_conn.close()
-                self.paramiko_conn = None
+                self._paramiko_conn = None
                 self.queue_message('debug', "ssh connection has been closed successfully")
         super(Connection, self).close()
 

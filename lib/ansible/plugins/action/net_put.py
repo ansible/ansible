@@ -19,15 +19,12 @@ __metaclass__ = type
 
 import copy
 import os
-import time
 import uuid
 import hashlib
-import sys
-import re
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_bytes
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.utils.display import Display
@@ -38,7 +35,6 @@ display = Display()
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
-        changed = True
         socket_path = None
         network_os = self._get_network_os(task_vars).split('.')[-1]
         persistent_connection = self._play_context.connection.split('.')[-1]
@@ -53,7 +49,7 @@ class ActionModule(ActionBase):
             return result
 
         try:
-            src = self._task.args.get('src')
+            src = self._task.args['src']
         except KeyError as exc:
             return {'failed': True, 'msg': 'missing required argument: %s' % exc}
 
@@ -107,15 +103,14 @@ class ActionModule(ActionBase):
         try:
             changed = self._handle_existing_file(conn, output_file, dest, proto, sock_timeout)
             if changed is False:
-                result['changed'] = False
+                result['changed'] = changed
                 result['destination'] = dest
                 return result
         except Exception as exc:
-            result['msg'] = ('Warning: Exc %s idempotency check failed. Check'
-                             'dest' % exc)
+            result['msg'] = ('Warning: %s idempotency check failed. Check dest' % exc)
 
         try:
-            out = conn.copy_file(
+            conn.copy_file(
                 source=output_file, destination=dest,
                 proto=proto, timeout=sock_timeout
             )
@@ -127,7 +122,7 @@ class ActionModule(ActionBase):
                     result['msg'] = 'Warning: iosxr scp server pre close issue. Please check dest'
             else:
                 result['failed'] = True
-                result['msg'] = ('Exception received : %s' % exc)
+                result['msg'] = 'Exception received: %s' % exc
 
         if mode == 'text':
             # Cleanup tmp file expanded wih ansible vars
@@ -138,35 +133,34 @@ class ActionModule(ActionBase):
         return result
 
     def _handle_existing_file(self, conn, source, dest, proto, timeout):
+        """
+        Determines whether the source and destination file match.
+
+        :return: False if source and dest both exist and have matching sha1 sums, True otherwise.
+        """
         cwd = self._loader.get_basedir()
         filename = str(uuid.uuid4())
-        source_file = os.path.join(cwd, filename)
+        tmp_source_file = os.path.join(cwd, filename)
         try:
-            out = conn.get_file(
-                source=dest, destination=source_file,
+            conn.get_file(
+                source=dest, destination=tmp_source_file,
                 proto=proto, timeout=timeout
             )
-        except Exception as exc:
-            pattern = to_text(exc)
-            not_found_exc = "No such file or directory"
-            if re.search(not_found_exc, pattern, re.I):
-                if os.path.exists(source_file):
-                    os.remove(source_file)
+        except ConnectionError as exc:
+            error = to_text(exc)
+            if error.endswith("No such file or directory"):
+                if os.path.exists(tmp_source_file):
+                    os.remove(tmp_source_file)
                 return True
-            else:
-                try:
-                    os.remove(source_file)
-                except OSError as osex:
-                    raise Exception(osex)
 
         try:
             with open(source, 'r') as f:
                 new_content = f.read()
-            with open(source_file, 'r') as f:
+            with open(tmp_source_file, 'r') as f:
                 old_content = f.read()
-        except (IOError, OSError) as ioexc:
-            os.remove(source_file)
-            raise IOError(ioexc)
+        except (IOError, OSError):
+            os.remove(tmp_source_file)
+            raise
 
         sha1 = hashlib.sha1()
         old_content_b = to_bytes(old_content, errors='surrogate_or_strict')
@@ -177,11 +171,10 @@ class ActionModule(ActionBase):
         new_content_b = to_bytes(new_content, errors='surrogate_or_strict')
         sha1.update(new_content_b)
         checksum_new = sha1.digest()
-        os.remove(source_file)
+        os.remove(tmp_source_file)
         if checksum_old == checksum_new:
             return False
-        else:
-            return True
+        return True
 
     def _get_binary_src_file(self, src):
         working_path = self._get_working_path()
