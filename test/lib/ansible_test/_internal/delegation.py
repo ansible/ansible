@@ -48,7 +48,10 @@ from .util import (
     display,
     ANSIBLE_BIN_PATH,
     ANSIBLE_TEST_DATA_ROOT,
+    ANSIBLE_LIB_ROOT,
+    ANSIBLE_TEST_ROOT,
     tempdir,
+    make_dirs,
 )
 
 from .util_common import (
@@ -256,11 +259,18 @@ def delegate_venv(args,  # type: EnvironmentConfig
                 cmd += ['--coverage-label', 'venv']
 
         env = common_environment()
-        env.update(
-            PATH=inject_path + os.pathsep + env['PATH'],
-        )
 
-        run_command(args, cmd, env=env)
+        with tempdir() as library_path:
+            # expose ansible and ansible_test to the virtual environment (only required when running from an install)
+            os.symlink(ANSIBLE_LIB_ROOT, os.path.join(library_path, 'ansible'))
+            os.symlink(ANSIBLE_TEST_ROOT, os.path.join(library_path, 'ansible_test'))
+
+            env.update(
+                PATH=inject_path + os.pathsep + env['PATH'],
+                PYTHONPATH=library_path,
+            )
+
+            run_command(args, cmd, env=env)
 
 
 def delegate_docker(args, exclude, require, integration_targets):
