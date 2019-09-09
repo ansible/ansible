@@ -35,7 +35,6 @@ OBJECT = {
         "SMTP",
         "AOL"
     ],
-    "color": "orange"
 }
 
 CREATE_PAYLOAD = {
@@ -46,7 +45,6 @@ CREATE_PAYLOAD = {
         "SMTP",
         "AOL"
     ],
-    "color": "orange"
 }
 
 UPDATE_PAYLOAD = {
@@ -57,7 +55,6 @@ UPDATE_PAYLOAD = {
         "limit": "Upload_1Gbps",
         "enable_identity_captive_portal": True
     },
-    "color": "blue"
 }
 
 DELETE_PAYLOAD = {
