@@ -12,16 +12,17 @@ $spec = @{
 				state = @{ type = "str"; choices = "absent", "present"; default = "present"; }
         settings = @{
             type = "dict"
+						required = $false
             options = @{
-                minimum_file_size = @{ type = "int" }
-                minimum_file_age_days = @{ type = "int" }
-								no_compress = @{ type = "bool" }
-								optimize_in_use_files = @{ type = "bool" }
-								verify = @{ type = "bool" }
+                minimum_file_size = @{ type = "int"; default = 32768 }
+                minimum_file_age_days = @{ type = "int"; default = 2 }
+								no_compress = @{ type = "bool"; required = $false; default = $false }
+								optimize_in_use_files = @{ type = "bool"; required = $false; default = $false }
+								verify = @{ type = "bool"; required = $false; default = $false }
             }
         }
-				supports_check_mode = $true
     }
+	  supports_check_mode = $true
 }
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
@@ -38,17 +39,11 @@ function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
 
   $current_state = 'absent'
 
-  try {
-    $dedup_info = Get-DedupVolume -Volume "$($volume.DriveLetter):"
-  } catch {
-    $dedup_info = $null
-  }
+  $dedup_info = Get-DedupVolume -Volume "$($volume.DriveLetter):"
 
-  if($null -ne $dedup_info) {
-    if ($dedup_info.Enabled) {
-      $current_state = 'present'
-    }
-  }
+	if ($dedup_info.Enabled) {
+		$current_state = 'present'
+	}
 
   if ( $state -ne $current_state ) {
     if( -not $module.CheckMode) {
@@ -71,11 +66,7 @@ function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
 
 function Set-DataDedupJobSettings ($volume, $settings) {
 
-  try {
-    $dedup_info = Get-DedupVolume -Volume "$($volume.DriveLetter):"
-  } catch {
-    $dedup_info = $null
-  }
+  $dedup_info = Get-DedupVolume -Volume "$($volume.DriveLetter):"
 
   ForEach ($key in $settings.keys) {
 
@@ -119,7 +110,7 @@ if( -not $module.CheckMode) {
 
   if ($feature.RestartNeeded -eq 'Yes') {
     $module.Result.reboot_required = $true
-    Fail-Json $result "$feature_name was installed but requires Windows to be rebooted to work."
+    $module.FailJson("$feature_name was installed but requires Windows to be rebooted to work.")
   }
 }
 
@@ -127,4 +118,4 @@ $volume = Get-Volume -DriveLetter $drive_letter
 
 Set-DataDeduplication -volume $volume -state $state -settings $settings -dedup_job $dedup_job
 
-Exit-Json -obj $result
+$module.ExitJson()
