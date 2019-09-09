@@ -406,7 +406,7 @@ def ensure_vgw_present(client, module):
                     # detach the existing vpc from the virtual gateway
                     vpc_to_detach = current_vpc_attachments[0]['VpcId']
                     detach_vgw(client, module, vpn_gateway_id, vpc_to_detach)
-                    get_waiter(client, 'vgw_detached').wait(VpnGatewayIds=[vpn_gateway_id])
+                    get_waiter(client, 'vpn_gateway_detached').wait(VpnGatewayIds=[vpn_gateway_id])
                     attached_vgw = attach_vgw(client, module, vpn_gateway_id)
                     changed = True
             else:

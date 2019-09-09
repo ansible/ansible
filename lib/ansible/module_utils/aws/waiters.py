@@ -330,8 +330,8 @@ waiters_by_name = {
         core_waiter.NormalizedOperationMethod(
             ec2.describe_vpn_gateways
         )),
-    ('EC2', 'vgw_detached'): lambda ec2: core_waiter.Waiter(
-        'vgw_detached',
+    ('EC2', 'vpn_gateway_detached'): lambda ec2: core_waiter.Waiter(
+        'vpn_gateway_detached',
         ec2_model('VpnGatewayDetached'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_vpn_gateways
