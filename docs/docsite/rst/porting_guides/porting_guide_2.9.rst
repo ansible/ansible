@@ -123,6 +123,18 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * digital_ocean_sshkey_facts use :ref:`digital_ocean_sshkey_info <digital_ocean_sshkey_info_module>` instead.
 
+* eos_interface use :ref:`eos_interfaces <eos_interfaces_module>` instead.
+
+* eos_l2_interface use :ref:`eos_l2_interfaces <eos_l2_interfaces_module>` instead.
+
+* eos_l3_interface use :ref:`eos_l3_interfaces <eos_l3_interfaces_module>` instead.
+
+* eos_linkagg use :ref:`eos_lag_interfaces <eos_lag_interfaces_module>` instead.
+
+* eos_lldp_interface use :ref:`eos_lldp_interfaces <eos_lldp_interfaces_module>` instead.
+
+* eos_vlan use :ref:`eos_vlans <eos_vlans_module>` instead.
+
 * junos_interface use :ref:`junos_interfaces <junos_interfaces_module>` instead.
 
 * junos_l2_interface use :ref:`junos_l2_interfaces <junos_l2_interfaces_module>` instead.
