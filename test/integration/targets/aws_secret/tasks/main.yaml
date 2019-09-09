@@ -1,37 +1,35 @@
 ---
-- block:
-  - name: set connection information for all tasks
-    set_fact:
-      aws_connection_info: &aws_connection_info
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        region: "{{ aws_region }}"
-        security_token: "{{ security_token }}"
-    no_log: true
-
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  block:
   - name: retrieve caller facts
     aws_caller_info:
-      <<: *aws_connection_info
     register: test_caller_facts
 
   - name: ensure IAM role exists
     iam_role:
-      <<: *aws_connection_info
-      name: "test-secrets-manager-role"
+      name: "{{ secret_manager_role }}"
       assume_role_policy_document: "{{ lookup('file','secretsmanager-trust-policy.json') }}"
       state: present
       create_instance_profile: no
       managed_policy:
         - 'arn:aws:iam::aws:policy/SecretsManagerReadWrite'
-    register: iam_role_output
+    register: iam_role
     ignore_errors: yes
+
+  - name: wait 10 seconds for role to become available
+    pause:
+      seconds: 10
+    when: iam_role.changed
 
   # CI does not remove the role and comparing policies has a bug on Python3; fall back to use iam_role_info
   - name: get IAM role
     iam_role_info:
-      <<: *aws_connection_info
-      name: "test-secrets-manager-role"
-    when: iam_role_output is failed
+      name: "{{ secret_manager_role }}"
     register: iam_role_info
 
   - name: set iam_role_output
@@ -51,8 +49,7 @@
 
   - name: dummy lambda for testing
     lambda:
-      <<: *aws_connection_info
-      name: "hello-world-{{ resource_prefix }}"
+      name: "{{ lambda_name }}"
       state: present
       zip_file: "{{ tmp.path }}/hello_world.zip"
       runtime: 'python2.7'
@@ -86,8 +83,7 @@
   # ============================================================
   - name: add secret to AWS Secrets Manager
     aws_secret:
-      <<: *aws_connection_info
-      name: "test-secret-string-{{ resource_prefix }}"
+      name: "{{ secret_name }}"
       state: present
       secret_type: 'string'
       secret: "{{ super_secret_string }}"
@@ -104,8 +100,7 @@
 
   - name: no changes to secret
     aws_secret:
-      <<: *aws_connection_info
-      name: "test-secret-string-{{ resource_prefix }}"
+      name: "{{ secret_name }}"
       state: present
       secret_type: 'string'
       secret: "{{ super_secret_string }}"
@@ -119,8 +114,7 @@
 
   - name: make change to secret
     aws_secret:
-      <<: *aws_connection_info
-      name: "test-secret-string-{{ resource_prefix }}"
+      name: "{{ secret_name }}"
       description: 'this is a change to this secret'
       state: present
       secret_type: 'string'
@@ -141,8 +135,7 @@
 
   - name: add tags to secret
     aws_secret:
-      <<: *aws_connection_info
-      name: "test-secret-string-{{ resource_prefix }}"
+      name: "{{ secret_name }}"
       description: 'this is a change to this secret'
       state: present
       secret_type: 'string'
@@ -159,8 +152,7 @@
 
   - name: remove tags from secret
     aws_secret:
-      <<: *aws_connection_info
-      name: "test-secret-string-{{ resource_prefix }}"
+      name: "{{ secret_name }}"
       description: 'this is a change to this secret'
       state: present
       secret_type: 'string'
@@ -174,22 +166,20 @@
 
   - name: lambda policy for secrets manager
     lambda_policy:
-      <<: *aws_connection_info
       state: present
-      function_name: "hello-world-{{ resource_prefix }}"
+      function_name: "{{ lambda_name }}"
       statement_id: LambdaSecretsManagerTestPolicy
       action: 'lambda:InvokeFunction'
       principal: "secretsmanager.amazonaws.com"
 
   - name: add rotation lambda to secret
     aws_secret:
-      <<: *aws_connection_info
-      name: "test-secret-string-{{ resource_prefix }}"
+      name: "{{ secret_name }}"
       description: 'this is a change to this secret'
       state: present
       secret_type: 'string'
       secret: "{{ super_secret_string }}"
-      rotation_lambda: "arn:aws:lambda:{{ aws_region }}:{{ test_caller_facts.account }}:function:hello-world-{{ resource_prefix }}"
+      rotation_lambda: "arn:aws:lambda:{{ aws_region }}:{{ test_caller_facts.account }}:function:{{ lambda_name }}"
     register: result
     retries: 100
     delay: 5
@@ -202,8 +192,7 @@
 
   - name: remove rotation lambda from secret
     aws_secret:
-      <<: *aws_connection_info
-      name: "test-secret-string-{{ resource_prefix }}"
+      name: "{{ secret_name }}"
       description: 'this is a change to this secret'
       state: present
       secret_type: 'string'
@@ -218,8 +207,7 @@
   always:
   - name: remove secret
     aws_secret:
-      <<: *aws_connection_info
-      name: "test-secret-string-{{ resource_prefix }}"
+      name: "{{ secret_name }}"
       state: absent
       secret_type: 'string'
       secret: "{{ super_secret_string }}"
@@ -228,9 +216,8 @@
 
   - name: remove lambda policy
     lambda_policy:
-      <<: *aws_connection_info
       state: absent
-      function_name: "hello-world-{{ resource_prefix }}"
+      function_name: "{{ lambda_name }}"
       statement_id: lambda-secretsmanager-test-policy
       action: lambda:InvokeFunction
       principal: secretsmanager.amazonaws.com
@@ -238,20 +225,18 @@
 
   - name: remove dummy lambda
     lambda:
-      <<: *aws_connection_info
-      name: "hello-world-{{ resource_prefix }}"
+      name: "{{ lambda_name }}"
       state: absent
       zip_file: "{{ tmp.path }}/hello_world.zip"
       runtime: 'python2.7'
-      role: "test-secrets-manager-role"
+      role: "{{ secret_manager_role }}"
       handler: 'hello_world.lambda_handler'
     ignore_errors: yes
 
   # CI does not remove the IAM role
   - name: remove IAM role
     iam_role:
-      <<: *aws_connection_info
-      name: "test-secrets-manager-role"
+      name: "{{ secret_manager_role }}"
       assume_role_policy_document: "{{ lookup('file','secretsmanager-trust-policy.json') }}"
       state: absent
       create_instance_profile: no
