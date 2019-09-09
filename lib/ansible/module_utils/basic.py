@@ -54,7 +54,6 @@ import time
 import traceback
 import types
 
-import ansible.module_utils.common.warnings as warnings
 
 from collections import deque
 from itertools import chain, repeat
@@ -82,6 +81,7 @@ except ImportError:
 NoneType = type(None)
 
 from ._text import to_native, to_bytes, to_text
+from ansible.module_utils.common import warnings
 from ansible.module_utils.common.text.converters import (
     jsonify,
     container_to_bytes as json_dict_unicode_to_bytes,
@@ -1403,7 +1403,7 @@ class AnsibleModule(object):
         alias_warnings = []
         alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings=alias_warnings)
         for option, alias in alias_warnings:
-            self._warnings.append('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
+            warnings._global_warnings.append('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
 
         deprecated_aliases = []
         for i in spec.keys():
