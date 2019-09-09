@@ -23,7 +23,7 @@ description:
 version_added: "2.5"
 options:
   state:
-    choices: ['planned', 'present', 'absent']
+    choices: ['planned', 'present', 'absent', 'import']
     description:
       - Goal state of given stage/project
     required: false
@@ -104,6 +104,16 @@ options:
       - A group of key-values to provide at init stage to the -backend-config parameter.
     required: false
     version_added: 2.7
+  addr:
+    description:
+      - The address to import resource to. Required when C(state) is set to C(import).
+    required: false
+    version_added: "2.10"
+  id:
+    description:
+      - The resource ID to be imported. Required when C(state) is set to C(import).
+    required: false
+    version_added: "2.10"
 notes:
    - To just run a `terraform plan`, use check mode.
 requirements: [ "terraform" ]
@@ -125,6 +135,13 @@ EXAMPLES = """
       region: "eu-west-1"
       bucket: "some-bucket"
       key: "random.tfstate"
+
+# Import some resource
+- terraform:
+    project_path: '{{ project_dir }}'
+    state: import
+    addr: aws_instance.web
+    id: i-12345678
 """
 
 RETURN = """
@@ -275,7 +292,7 @@ def main():
             binary_path=dict(type='path'),
             workspace=dict(required=False, type='str', default='default'),
             purge_workspace=dict(type='bool', default=False),
-            state=dict(default='present', choices=['present', 'absent', 'planned']),
+            state=dict(default='present', choices=['present', 'absent', 'planned', 'import']),
             variables=dict(type='dict'),
             variables_file=dict(type='path'),
             plan_file=dict(type='path'),
@@ -285,8 +302,13 @@ def main():
             lock_timeout=dict(type='int',),
             force_init=dict(type='bool', default=False),
             backend_config=dict(type='dict', default=None),
+            addr=dict(),
+            id=dict(),
         ),
-        required_if=[('state', 'planned', ['plan_file'])],
+        required_if=[
+            ('state', 'planned', ['plan_file']),
+            ('state', 'import', ['addr', 'id']),
+        ],
         supports_check_mode=True,
     )
 
@@ -301,6 +323,8 @@ def main():
     state_file = module.params.get('state_file')
     force_init = module.params.get('force_init')
     backend_config = module.params.get('backend_config')
+    import_addr = module.params.get('addr')
+    import_id = module.params.get('id')
 
     if bin_path is not None:
         command = [bin_path]
@@ -321,6 +345,8 @@ def main():
         command.extend(APPLY_ARGS)
     elif state == 'absent':
         command.extend(DESTROY_ARGS)
+    elif state == 'import':
+        command.extend(['import', '-no-color'])
 
     variables_args = []
     for k, v in variables.items():
@@ -354,6 +380,10 @@ def main():
             command.append(plan_file)
         else:
             module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
+    elif state == 'import':
+        command.extend(variables_args)
+        command.extend([import_addr, import_id])
+        needs_application = False
     else:
         plan_file, needs_application, out, err, command = build_plan(command, project_path, variables_args, state_file,
                                                                      module.params.get('targets'), state, plan_file)
@@ -370,6 +400,18 @@ def main():
                 msg="Failure when executing Terraform command. Exited {0}.\nstdout: {1}\nstderr: {2}".format(rc, out, err),
                 command=' '.join(command)
             )
+    elif state == 'import':
+        check_command = [command[0], 'state', 'show', '-no-color', import_addr]
+        rc, out, err = module.run_command(check_command, cwd=project_path)
+        if rc != 0 and 'No instance found for the given address' in err:
+            changed = True
+            if not module.check_mode:
+                rc, out, err = module.run_command(command, cwd=project_path)
+                if rc != 0:
+                    module.fail_json(
+                        msg="Failure when executing Terraform command. Exited {0}.\nstdout: {1}\nstderr: {2}".format(rc, out, err),
+                        command=' '.join(command)
+                    )
 
     outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(state_file)
     rc, outputs_text, outputs_err = module.run_command(outputs_command, cwd=project_path)
