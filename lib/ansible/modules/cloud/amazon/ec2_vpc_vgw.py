@@ -171,7 +171,13 @@ def attach_vgw(client, module, vpn_gateway_id):
     params['VpcId'] = module.params.get('vpc_id')
 
     try:
-        response = AWSRetry.jittered_backoff()(client.attach_vpn_gateway)(VpnGatewayId=vpn_gateway_id, VpcId=params['VpcId'])
+        # Immediately after a detachment, the EC2 API sometimes will report the VpnGateways[0].State
+        # as available several seconds before actually permitting a new attachment.
+        # So we catch and retry that error.  See https://github.com/ansible/ansible/issues/53185
+        response = AWSRetry.jittered_backoff(retries=5,
+                                             catch_extra_error_codes=['InvalidParameterValue']
+                                             )(client.attach_vpn_gateway)(VpnGatewayId=vpn_gateway_id,
+                                                                          VpcId=params['VpcId'])
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -400,7 +406,7 @@ def ensure_vgw_present(client, module):
                     # detach the existing vpc from the virtual gateway
                     vpc_to_detach = current_vpc_attachments[0]['VpcId']
                     detach_vgw(client, module, vpn_gateway_id, vpc_to_detach)
-                    time.sleep(5)
+                    get_waiter(client, 'vpn_gateway_detached').wait(VpnGatewayIds=[vpn_gateway_id])
                     attached_vgw = attach_vgw(client, module, vpn_gateway_id)
                     changed = True
             else:
