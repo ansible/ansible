@@ -63,7 +63,15 @@ No notable changes
 Plugins
 =======
 
-No notable changes
+httpapi Plugins Migrated to Collections
+---------------------------------------
+* ``splunk`` is now part of the upstream Collection `splunk.enterprise_security
+  <https://github.com/ansible-security/splunk_enterprise_security>`_, please use
+  as provided by the Collection.
+* ``qradar`` is now part of the upstream Collection `ibm.qradar
+  <https://github.com/ansible-security/ibm_qradar>`_, please use as provided
+  by the Collection.
+
 
 
 Porting custom scripts
