@@ -282,21 +282,46 @@ namespace Ansible.Become
             if (lpCurrentDirectory == "")
                 lpCurrentDirectory = null;
 
-            using (Process.SafeMemoryBuffer lpEnvironment = ProcessUtil.CreateEnvironmentPointer(environment))
-            using (SafeNativeHandle hToken = GetUserToken(username, password, logonType))
+            // A user may have 2 tokens, 1 limited and 1 elevated. GetUserTokens will return both token to ensure
+            // we don't close one of the pairs while the process is still running. If the process tries to retrieve
+            // one of the pairs and the token handle is closed then it will fail with ERROR_NO_SUCH_LOGON_SESSION.
+            List<SafeNativeHandle> userTokens = GetUserTokens(username, password, logonType);
+            try
             {
-                StringBuilder commandLine = new StringBuilder(lpCommandLine);
-                if (!NativeMethods.CreateProcessWithTokenW(hToken, logonFlags, lpApplicationName, commandLine,
-                    creationFlags, lpEnvironment, lpCurrentDirectory, si, out pi))
+                using (Process.SafeMemoryBuffer lpEnvironment = ProcessUtil.CreateEnvironmentPointer(environment))
                 {
-                    throw new Process.Win32Exception("CreateProcessWithTokenW() failed");
+                    bool launchSuccess = false;
+                    StringBuilder commandLine = new StringBuilder(lpCommandLine);
+                    foreach (SafeNativeHandle token in userTokens)
+                    {
+                        // GetUserTokens could return null if an elevated token could not be retrieved.
+                        if (token == null)
+                            continue;
+
+                        if (NativeMethods.CreateProcessWithTokenW(token, logonFlags, lpApplicationName,
+                                commandLine, creationFlags, lpEnvironment, lpCurrentDirectory, si, out pi))
+                        {
+                            launchSuccess = true;
+                            break;
+                        }
+                    }
+
+                    if (!launchSuccess)
+                        throw new Process.Win32Exception("CreateProcessWithTokenW() failed");
                 }
+                return ProcessUtil.WaitProcess(stdoutRead, stdoutWrite, stderrRead, stderrWrite, stdinStream, stdin,
+                    pi.hProcess);
             }
-            return ProcessUtil.WaitProcess(stdoutRead, stdoutWrite, stderrRead, stderrWrite, stdinStream, stdin, pi.hProcess);
+            finally
+            {
+                userTokens.Where(t => t != null).ToList().ForEach(t => t.Dispose());
+            }
         }
 
-        private static SafeNativeHandle GetUserToken(string username, string password, LogonType logonType)
+        private static List<SafeNativeHandle> GetUserTokens(string username, string password, LogonType logonType)
         {
+            List<SafeNativeHandle> userTokens = new List<SafeNativeHandle>();
+
             SafeNativeHandle systemToken = null;
             bool impersonated = false;
             string becomeSid = username;
@@ -322,7 +347,7 @@ namespace Ansible.Become
                         TokenUtil.ImpersonateToken(systemToken);
                         impersonated = true;
                     }
-                    catch (Process.Win32Exception) {}  // We tried, just rely on current user's permissions.
+                    catch (Process.Win32Exception) { }  // We tried, just rely on current user's permissions.
                 }
             }
 
@@ -333,7 +358,7 @@ namespace Ansible.Become
             try
             {
                 if (becomeSid == "S-1-5-18")
-                    return systemToken;
+                    userTokens.Add(systemToken);
                 // Cannot use String.IsEmptyOrNull() as an empty string is an account that doesn't have a pass.
                 // We only use S4U if no password was defined or it was null
                 else if (!SERVICE_SIDS.Contains(becomeSid) && password == null && logonType != LogonType.NewCredentials)
@@ -343,9 +368,16 @@ namespace Ansible.Become
                     SecurityIdentifier sid = new SecurityIdentifier(becomeSid);
                     SafeNativeHandle becomeToken = GetPrimaryTokenForUser(sid);
                     if (becomeToken != null)
-                        return GetElevatedToken(becomeToken);
+                    {
+                        userTokens.Add(GetElevatedToken(becomeToken));
+                        userTokens.Add(becomeToken);
+                    }
                     else
-                        return GetS4UTokenForUser(sid, logonType);
+                    {
+                        becomeToken = GetS4UTokenForUser(sid, logonType);
+                        userTokens.Add(null);
+                        userTokens.Add(becomeToken);
+                    }
                 }
                 else
                 {
@@ -380,9 +412,8 @@ namespace Ansible.Become
 
                     // Get the elevated token for a local/domain accounts only
                     if (!SERVICE_SIDS.Contains(becomeSid))
-                        return GetElevatedToken(hToken);
-                    else
-                        return hToken;
+                        userTokens.Add(GetElevatedToken(hToken));
+                    userTokens.Add(hToken);
                 }
             }
             finally
@@ -390,6 +421,8 @@ namespace Ansible.Become
                 if (impersonated)
                     TokenUtil.RevertToSelf();
             }
+
+            return userTokens;
         }
 
         private static SafeNativeHandle GetPrimaryTokenForUser(SecurityIdentifier sid, List<string> requiredPrivileges = null)
@@ -530,9 +563,9 @@ namespace Ansible.Become
         private static SafeNativeHandle GetElevatedToken(SafeNativeHandle hToken)
         {
             TokenElevationType tet = TokenUtil.GetTokenElevationType(hToken);
-            // We already have the best token we can get, just use it
+            // We already have the best token we can get, no linked token is really available.
             if (tet != TokenElevationType.Limited)
-                return hToken;
+                return null;
 
             SafeNativeHandle linkedToken = TokenUtil.GetTokenLinkedToken(hToken);
             TokenStatistics tokenStats = TokenUtil.GetTokenStatistics(linkedToken);
@@ -541,7 +574,7 @@ namespace Ansible.Become
             if (tokenStats.TokenType == TokenType.Primary)
                 return linkedToken;
             else
-                return hToken;
+                return null;
         }
 
         private static NativeHelpers.SECURITY_LOGON_TYPE GetTokenLogonType(SafeNativeHandle hToken)
