@@ -14,6 +14,8 @@
 # Module to execute apconos Commands on Apcon Switches.
 # Apcon Networking
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -23,18 +25,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: apconos_command
-version_added: ""
-author: ""
+version_added: "2.9.0"
+author: "David Lee (@davidlee-ap)"
 short_description: Run arbitrary commands on APCON devices
 description:
   - Sends arbitrary commands to an apcon device and returns the results
     read from the device. The module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
-extends_documentation_fragment: apconos
+notes:
+  - tested against apcon iis+ii
 options:
   commands:
-    version_added: ""
     description:
       - List of commands to send to the remote device over the
         configured provider. The resulting output from the command
@@ -43,7 +45,6 @@ options:
         the number of retires as expired.
     required: true
   wait_for:
-    version_added: ""
     description:
       - List of conditions to evaluate against the output of the
         command. The task will wait for each condition to be true
@@ -51,7 +52,6 @@ options:
         within the configured number of retries, the task fails.
         See examples.
   match:
-    version_added: ""
     description:
       - The I(match) argument is used in conjunction with the
         I(wait_for) argument to specify the match policy.  Valid
@@ -62,7 +62,6 @@ options:
     default: all
     choices: ['any', 'all']
   retries:
-    version_added: ""
     description:
       - Specifies the number of retries a command should by tried
         before it is considered failed. The command is run on the
@@ -70,7 +69,6 @@ options:
         I(wait_for) conditions.
     default: 10
   interval:
-    version_added: ""
     description:
       - Configures the interval in seconds to wait between retries
         of the command. If the command does not pass the specified
@@ -80,7 +78,6 @@ options:
 """
 
 EXAMPLES = """
----
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -89,7 +86,6 @@ vars:
     password: admin
     timeout: 30
 
----
 - name: test contains operator
   apconos_command:
     commands:

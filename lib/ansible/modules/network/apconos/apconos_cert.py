@@ -1,17 +1,31 @@
 #!/usr/bin/python
+#
+# Copyright (C) 2018 Apcon.
+#
+# GNU General Public License v3.0+
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# Module to execute apconos Commands on Apcon Switches.
+# Apcon Networking
 
-# (c) 2019, Ansible by Red Hat, inc
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
 module: apconos_cert
-version_added: ""
-author: ""
+version_added: "2.9.0"
+author: "David Lee (@davidlee-ap)"
 short_description: install ssl ipv4 certificate on apcon network devices
 description:
   - import and install ssl ipv4 certificate with specifying remote filename
@@ -59,7 +73,7 @@ options:
 
 EXAMPLES = """
 - name: Install SSL Certificate
-    update_cert:
+    apconos_cert:
       ipaddress: 10.0.0.100
       filename:  remoteSSLCert.pem
 """
@@ -71,13 +85,12 @@ import re
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.apconos.apconos import load_config, run_commands 
+from ansible.module_utils.network.apconos.apconos import load_config, run_commands
 from ansible.module_utils.network.apconos.apconos import apconos_argument_spec, check_args
 from ansible.module_utils.six import string_types
-from ansible.utils.display import Display
 
-display = Display()
 
 def to_lines(stdout):
     for item in stdout:
@@ -85,17 +98,18 @@ def to_lines(stdout):
             item = str(item).split('\n')
         yield item
 
+
 def construct_update_command(module):
     """construct update command
     """
-    #command = ['update']
     command = module.params['command']
     ipaddress = module.params['ipaddress']
     filename = module.params['filename']
-    command[0] = 'tftp put ssl ipv4 ' + ipaddress[0] + ' ' + filename[0]+time.strftime("%d_%b+%H:%M:%S", time.gmtime())
+    command[0] = 'tftp put ssl ipv4 ' + ipaddress[0] + ' ' + filename[0] + time.strftime("%d_%b+%H:%M:%S", time.gmtime())
     command.append('tftp get ssl ipv4 ' + ipaddress[0] + ' ' + filename[0])
 
-    return command 
+    return command
+
 
 def main():
     """ main entry point for module execution
@@ -122,7 +136,6 @@ def main():
     retries = module.params['retries']
     interval = module.params['interval']
     match = module.params['match']
-
 
     while retries > 0:
         responses = run_commands(module, construct_update_command(module))
