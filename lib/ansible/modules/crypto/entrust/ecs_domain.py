@@ -67,11 +67,11 @@ options:
     verification_email:
         description:
             - Email address to be used to verify domain ownership.
-            - Email address must be either an email address present in the WHOIS data for I(domain_name), or one of the following constructed emails:
-              admin@I(domain_name)), administrator@I(domain_name), webmaster@I(domain_name), hostmaster@I(domain_name), postmaster@I(domain_name)'
-            - Note that if I(domain_name) includes subdomains, the top level domain should be used. For example, if requesting validation of
+            - 'Email address must be either an email address present in the WHOIS data for I(domain_name), or one of the following constructed emails:
+              admin@I(domain_name), administrator@I(domain_name), webmaster@I(domain_name), hostmaster@I(domain_name), postmaster@I(domain_name)'
+            - 'Note that if I(domain_name) includes subdomains, the top level domain should be used. For example, if requesting validation of
               example1.ansible.com, or test.example2.ansible.com, and you want to use the "admin" preconstructed name, the email address should be
-              admin@ansible.com.
+              admin@ansible.com.'
             - If using the email values from the WHOIS data for the domain or it's top level namespace, they must be exact matches.
             - If C(verification_method=EMAIL) but I(verification_email) is not provided, the first email address found in WHOIS data for the domain will be
               used.
@@ -212,6 +212,7 @@ from ansible.module_utils.ecs.api import (
 import datetime
 import time
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def calculate_days_remaining(expiry_date):

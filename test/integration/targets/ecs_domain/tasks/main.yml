@@ -65,9 +65,6 @@
       entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: dns_result
 
-  - debug:
-      var: dns_result
-
   - assert:
       that:
         - dns_result is not failed
@@ -89,9 +86,6 @@
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
       entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: file_result
-
-  - debug:
-      var: file_result
 
   - assert:
       that:
@@ -116,9 +110,6 @@
       entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: email_result
 
-  - debug:
-      var: email_result
-
   - assert:
       that:
         - email_result is not failed
@@ -140,9 +131,6 @@
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
       entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: email_result2
-
-  - debug:
-      var: email_result2
 
   - assert:
       that:
@@ -166,9 +154,6 @@
       entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: manual_result
 
-  - debug:
-      var: manual_result
-
   - assert:
       that:
         - manual_result is not failed
@@ -190,9 +175,6 @@
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
       entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: dns_result2
-
-  - debug:
-      var: dns_result2
 
   - assert:
       that:
@@ -216,9 +198,6 @@
       entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: dns_result_now_file
 
-  - debug:
-      var: dns_result_now_file
-
   - assert:
       that:
         - dns_result_now_file is not failed
@@ -241,9 +220,6 @@
       entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: manual_existing_domain
 
-  - debug:
-      var: manual_existing_domain
-
   - assert:
       that:
         - manual_existing_domain is not failed
@@ -264,9 +240,6 @@
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
       entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: file_existing_domain_revalidate
-
-  - debug:
-      var: file_existing_domain_revalidate
 
   - assert:
       that:
