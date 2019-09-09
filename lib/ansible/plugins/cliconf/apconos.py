@@ -1,5 +1,5 @@
 # (C) 2018 Red Hat Inc.
-# Copyright (C) 2018 APCON.
+# Copyright (C) 2019 APCON.
 #
 # GNU General Public License v3.0+
 #
@@ -18,7 +18,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
 ---
-author: "David Lee (@davidlee-ap)"
+author: "David Li (@davidlee-ap)"
 cliconf: apconos
 short_description: Use apconos cliconf to run command on APCON network devices
 description:

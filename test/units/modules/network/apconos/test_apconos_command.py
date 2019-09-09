@@ -103,18 +103,6 @@ class TestApconosCommandModule(TestApconosModule):
         set_module_args(dict(commands=commands, wait_for=wait_for, match='all'))
         self.execute_module(failed=True)
 
-    def test_apcon_command_checkmode_warning(self):
-        commands = ['enable ssh']
-        set_module_args({
-            'commands': commands,
-            '_ansible_check_mode': True,
-        })
-        result = self.execute_module()
-        self.assertEqual(
-            result['warnings'],
-            ['Only show commands are supported when using check mode, not executing enable ssh'],
-        )
-
     def test_apcon_command_checkmode_not_warning(self):
         commands = ['enable ssh']
         set_module_args(dict(commands=commands, _ansible_check_mode=False))

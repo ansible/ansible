@@ -44,66 +44,7 @@ options:
         module is not returned until the condition is satisfied or
         the number of retires as expired.
     required: true
-  provider:
-    description:
-      - Please use connetcion network_cli.
-  auth_pass:
-    description:
-      - Specifies the password to use if required to enter privileged mode
-        on the remote device.  If I(authorize) is false, then this argument
-        does nothing. If the value is not specified in the task, the value of
-        environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
-    type: str
-  authorize:
-    description:
-      - Instructs the module to enter privileged mode on the remote device
-        before sending any commands.  If not specified, the device will
-        attempt to execute all commands in non-privileged mode. If the value
-        is not specified in the task, the value of environment variable
-        C(ANSIBLE_NET_AUTHORIZE) will be used instead.
-    type: bool
-    default: no
-  host:
-    description:
-      - Specifies the DNS host name or address for connecting to the remote
-        device over the specified transport.  The value of host is used as
-        the destination address for the transport.
-    type: str
-    required: true
-  port:
-    description:
-      - Specifies the port to use when building the connection to the remote device.
-    type: int
-    default: 22
-  username:
-    description:
-      - Configures the username to use to authenticate the connection to
-        the remote device.  This value is used to authenticate
-        the SSH session. If the value is not specified in the task, the
-        value of environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
-    type: str
-  password:
-    description:
-      - Specifies the password to use to authenticate the connection to
-        the remote device.   This value is used to authenticate
-        the SSH session. If the value is not specified in the task, the
-        value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
-    type: str
-  timeout:
-    description:
-      - Specifies the timeout in seconds for communicating with the network device
-        for either connecting or sending commands.  If the timeout is
-        exceeded before the operation is completed, the module will error.
-    type: int
-    default: 10
-  ssh_keyfile:
-    description:
-      - Specifies the SSH key to use to authenticate the connection to
-        the remote device.   This value is the path to the
-        key used to authenticate the SSH session. If the value is not specified
-        in the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
-        will be used instead.
-    type: path
+    type: list
   wait_for:
     description:
       - List of conditions to evaluate against the output of the
@@ -111,6 +52,7 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
+    type: list
   match:
     description:
       - The I(match) argument is used in conjunction with the
@@ -121,6 +63,7 @@ options:
         satisfied.
     default: all
     choices: ['any', 'all']
+    type: str
   retries:
     description:
       - Specifies the number of retries a command should by tried
@@ -128,6 +71,7 @@ options:
         target device every retry and evaluated against the
         I(wait_for) conditions.
     default: 10
+    type: int
   interval:
     description:
       - Configures the interval in seconds to wait between retries
@@ -135,6 +79,7 @@ options:
         conditions, the interval indicates how long to wait before
         trying the command again.
     default: 1
+    type: int
 """
 
 EXAMPLES = """
@@ -157,11 +102,9 @@ RETURN = """
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.utils import transform_commands, to_lines
-from ansible.module_utils.network.apconos.apconos import run_commands, check_args
-from ansible.module_utils.network.apconos.apconos import apconos_argument_spec
+from ansible.module_utils.network.common.utils import to_lines
+from ansible.module_utils.network.apconos.apconos import run_commands
 from ansible.module_utils.network.common.parsing import Conditional
-from ansible.module_utils.six import string_types
 
 
 def parse_commands(module, warnings):
@@ -191,9 +134,7 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    spec.update(apconos_argument_spec)
-
-    module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
+    module = AnsibleModule(argument_spec=spec, supports_check_mode=False)
     warnings = list()
     result = {'changed': False, 'warnings': warnings}
 

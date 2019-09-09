@@ -34,57 +34,18 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import time
-import socket
-import re
-from distutils.cmd import Command
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback
-from ansible.module_utils.network.common.utils import to_list, EntityCollection
+from ansible.module_utils.network.common.utils import EntityCollection
 from ansible.module_utils.connection import Connection, exec_command
 from ansible.module_utils.connection import ConnectionError
 
 _DEVICE_CONFIGS = {}
 _CONNECTION = None
 
-apconos_provider_spec = {
-    'host': dict(),
-    'port': dict(type='int'),
-    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
-    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
-    'timeout': dict(type='int'),
-    'context': dict(),
-    'passwords': dict()
-}
-
-apconos_argument_spec = {
-    'host': dict(),
-    'port': dict(type='int'),
-    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
-    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
-    'timeout': dict(type='int'),
-    'context': dict(),
-    'passwords': dict(),
-    'provider': dict(type='dict', options=apconos_provider_spec),
-}
 
 command_spec = {
     'command': dict(key=True),
-    'prompt': dict(),
-    'answer': dict(),
-    'check_all': dict()
 }
-
-
-def get_provider_argspec():
-    return apconos_provider_spec
-
 
 def check_args(module, warnings):
     pass
