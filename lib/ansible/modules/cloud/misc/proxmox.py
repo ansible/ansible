@@ -368,6 +368,23 @@ def create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, sw
         time.sleep(1)
     return False
 
+def update_instance(module, proxmox, vmid, node, **kwargs):
+    proxmox_node = proxmox.nodes(node)
+    kwargs = dict((k, v) for k, v in kwargs.items() if v is not None)
+    if VZ_TYPE == 'lxc':
+        vm = proxmox_node.lxc(vmid)
+        config = vm.config.get()
+        updateable_configs = dict()
+        for k in kwargs:
+            if k == 'netif':
+                for net in kwargs['netif']:
+                    updateable_configs[net] = kwargs['netif'][net]
+            elif kwargs[k]:
+                if k not in config or kwargs[k] != config[k]:
+                    updateable_configs[k] = kwargs[k]
+
+        if updateable_configs:
+            vm.config.put(**updateable_configs)
 
 def start_instance(module, proxmox, vm, vmid, timeout):
     taskid = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.start.post()
@@ -501,6 +518,14 @@ def main():
     if state == 'present':
         try:
             if get_instance(proxmox, vmid) and not module.params['force']:
+                update_instance(module, proxmox, vmid, node,
+                                memory=module.params['memory'],
+                                swap=module.params['swap'],
+                                cores=module.params['cores'],
+                                hostname=module.params['hostname'],
+                                netif=module.params['netif'],
+                                onboot=int(module.params['onboot']),
+                                cpuunits=module.params['cpuunits'])
                 module.exit_json(changed=False, msg="VM with vmid = %s is already exists" % vmid)
             # If no vmid was passed, there cannot be another VM named 'hostname'
             if not module.params['vmid'] and get_vmid(proxmox, hostname) and not module.params['force']:
