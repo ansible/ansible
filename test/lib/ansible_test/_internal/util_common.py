@@ -7,6 +7,7 @@ import contextlib
 import json
 import os
 import shutil
+import sys
 import tempfile
 import textwrap
 
@@ -218,6 +219,10 @@ def get_python_path(args, interpreter):
 
 def create_interpreter_wrapper(interpreter, injected_interpreter):  # type: (str, str) -> None
     """Create a wrapper for the given Python interpreter at the specified path."""
+    # sys.executable is used for the shebang to guarantee it is a binary instead of a script
+    # injected_interpreter could be a script from the system or our own wrapper created for the --venv option
+    shebang_interpreter = sys.executable
+
     code = textwrap.dedent('''
     #!%s
 
@@ -229,7 +234,7 @@ def create_interpreter_wrapper(interpreter, injected_interpreter):  # type: (str
     python = '%s'
 
     execv(python, [python] + argv[1:])
-    ''' % (interpreter, interpreter)).lstrip()
+    ''' % (shebang_interpreter, interpreter)).lstrip()
 
     write_text_file(injected_interpreter, code)
 
