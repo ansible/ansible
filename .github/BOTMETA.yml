@@ -1324,7 +1324,7 @@ files:
     maintainers: wisotzky $team_networking
     labels: networking
   $plugins/netconf/ce.py:
-    maintainers: $team_huawei_switch
+    maintainers: $team_huawei
     labels: networking
 ###############################
 # plugins/shell
