@@ -48,8 +48,6 @@ function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
     if ($dedup_info.Enabled) {
       $current_state = 'present'
     }
-  } else {
-    $current_state = $null
   }
 
   if ( $state -ne $current_state ) {
