@@ -448,7 +448,8 @@ def main():
                 if diff:
                     if commit:
                         kwargs = {
-                            'comment': module.params['comment']
+                            'comment': module.params['comment'],
+                            'check': module.params['check_commit']
                         }
 
                         confirm = module.params['confirm']
