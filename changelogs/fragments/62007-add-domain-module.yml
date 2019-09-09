@@ -1,0 +1,2 @@
+minor_changes:
+  - ecs_domain - Addition of ``ecs_domain `` module (https://github.com/ansible/ansible/pull/60883).
