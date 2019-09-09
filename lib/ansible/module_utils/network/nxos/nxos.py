@@ -41,7 +41,7 @@ from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.config import CustomNetworkConfig
-from ansible.module_utils.six import iteritems, string_types, PY2, PY3
+from ansible.module_utils.six import iteritems, PY2, PY3
 from ansible.module_utils.urls import fetch_url
 
 try:
