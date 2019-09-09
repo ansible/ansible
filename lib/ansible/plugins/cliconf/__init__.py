@@ -365,8 +365,12 @@ class CliconfBase(AnsiblePlugin):
         if proto == 'scp':
             if not HAS_SCP:
                 raise AnsibleError("Required library scp is not installed.  Please install it using `pip install scp`")
-            with SCPClient(ssh.get_transport(), socket_timeout=timeout) as scp:
-                scp.get(source, destination)
+            try:
+                with SCPClient(ssh.get_transport(), socket_timeout=timeout) as scp:
+                    scp.get(source, destination)
+            except EOFError:
+                # This appears to be benign.
+                pass
         elif proto == 'sftp':
             with ssh.open_sftp() as sftp:
                 sftp.get(source, destination)
