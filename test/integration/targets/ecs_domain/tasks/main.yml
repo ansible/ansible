@@ -69,6 +69,7 @@
       that:
         - dns_result is not failed
         - dns_result.changed
+        - dns_result.domain_status == 'INITIAL_VERIFICATION'
         - dns_result.verification_method == 'DNS'
         - dns_result.dns_location is string
         - dns_result.dns_contents is string
@@ -91,6 +92,7 @@
       that:
         - file_result is not failed
         - file_result.changed
+        - file_result.domain_status == 'INITIAL_VERIFICATION'
         - file_result.verification_method == 'WEB_SERVER'
         - file_result.dns_location is undefined
         - file_result.dns_contents is undefined
@@ -114,6 +116,7 @@
       that:
         - email_result is not failed
         - email_result.changed
+        - email_result.domain_status == 'INITIAL_VERIFICATION'
         - email_result.verification_method == 'EMAIL'
         - email_result.dns_location is undefined
         - email_result.dns_contents is undefined
@@ -136,6 +139,7 @@
       that:
         - email_result2 is not failed
         - email_result2.changed
+        - email_result2.domain_status == 'INITIAL_VERIFICATION'
         - email_result2.verification_method == 'EMAIL'
         - email_result2.dns_location is undefined
         - email_result2.dns_contents is undefined
@@ -158,6 +162,7 @@
       that:
         - manual_result is not failed
         - manual_result.changed
+        - manual_result.domain_status == 'INITIAL_VERIFICATION'
         - manual_result.verification_method == 'MANUAL'
         - manual_result.dns_location is undefined
         - manual_result.dns_contents is undefined
@@ -180,6 +185,7 @@
       that:
         - dns_result2 is not failed
         - not dns_result2.changed
+        - dns_result2.domain_status == 'INITIAL_VERIFICATION'
         - dns_result2.verification_method == 'DNS'
         - dns_result2.dns_location is string
         - dns_result2.dns_contents is string
@@ -202,6 +208,7 @@
       that:
         - dns_result_now_file is not failed
         - dns_result_now_file.changed
+        - dns_result_now_file.domain_status == 'INITIAL_VERIFICATION'
         - dns_result_now_file.verification_method == 'WEB_SERVER'
         - dns_result_now_file.dns_location is undefined
         - dns_result_now_file.dns_contents is undefined
@@ -224,6 +231,7 @@
       that:
         - manual_existing_domain is not failed
         - not manual_existing_domain.changed
+        - manual_existing_domain.domain_status == 'RE_VERIFICATION'
         - manual_existing_domain.dns_location is undefined
         - manual_existing_domain.dns_contents is undefined
         - manual_existing_domain.dns_resource_type is undefined
@@ -245,7 +253,7 @@
       that:
         - file_existing_domain_revalidate is not failed
         - file_existing_domain_revalidate.changed
-        - file_existing_domain_revalidate.verification_method == 'RE_VERIFICATION'
+        - file_existing_domain_revalidate.domain_status == 'RE_VERIFICATION'
         - file_existing_domain_revalidate.verification_method == 'WEB_SERVER'
         - file_existing_domain_revalidate.dns_location is undefined
         - file_existing_domain_revalidate.dns_contents is undefined
