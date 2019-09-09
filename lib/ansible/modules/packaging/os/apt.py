@@ -31,8 +31,9 @@ options:
     description:
       - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies
         are installed. C(fixed) attempt to correct a system with broken dependencies in place.
-    default: present
     choices: [ absent, build-dep, latest, present, fixed ]
+    type: str
+    default: present
   update_cache:
     description:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step.
@@ -93,9 +94,10 @@ options:
       - If dist, performs an apt-get dist-upgrade.
       - 'Note: This does not upgrade a specific package, use state=latest for that.'
       - 'Note: Since 2.4, apt-get is used as a fall-back if aptitude is not present.'
-    version_added: "1.1"
+    type: str
     choices: [ dist, full, 'no', safe, 'yes' ]
     default: 'no'
+    version_added: "1.1"
   dpkg_options:
     description:
       - Add dpkg options to apt command. Defaults to '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
