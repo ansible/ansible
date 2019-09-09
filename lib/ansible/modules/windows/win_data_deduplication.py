@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: win_data_deduplication
-version_added: "2.9"
+version_added: "2.10"
 short_description: Module to enable Data Deduplication on a volume.
 description:
 - This module can be used to enable Data Deduplication on a Windows volume.
