@@ -44,12 +44,15 @@ options:
        - Perform the given action. The lock and unlock actions always return
          changed as the servers API does not provide lock status.
      choices: [stop, start, pause, unpause, lock, unlock, suspend, resume,
-               rebuild]
+               rebuild, resize]
      default: present
    image:
      description:
        - Image the server should be rebuilt with
      version_added: "2.3"
+   flavor:
+     description:
+       - Flavor to resize the serve
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
@@ -82,7 +85,8 @@ _action_map = {'stop': 'SHUTOFF',
                'unlock': 'ACTIVE',
                'suspend': 'SUSPENDED',
                'resume': 'ACTIVE',
-               'rebuild': 'ACTIVE'}
+               'rebuild': 'ACTIVE',
+               'resize': 'RESIZE_VERIFY'}
 
 _admin_actions = ['pause', 'unpause', 'suspend', 'resume', 'lock', 'unlock']
 
@@ -121,19 +125,22 @@ def main():
         server=dict(required=True),
         action=dict(required=True, choices=['stop', 'start', 'pause', 'unpause',
                                             'lock', 'unlock', 'suspend', 'resume',
-                                            'rebuild']),
+                                            'rebuild', 'resize']),
         image=dict(required=False),
+        flavor=dict(required=False),
     )
 
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, supports_check_mode=True,
-                           required_if=[('action', 'rebuild', ['image'])],
+                           required_if=[('action', 'rebuild', ['image']),
+                                        ('action', 'resize', ['flavor'])],
                            **module_kwargs)
 
     action = module.params['action']
     wait = module.params['wait']
     timeout = module.params['timeout']
     image = module.params['image']
+    flavor = module.params['flavor']
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
@@ -237,6 +244,39 @@ def main():
                 json={'rebuild': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
+            module.exit_json(changed=True)
+
+        elif action == 'resize':
+            if server.status not in ['ACTIVE', 'SHUTOFF']:
+                module.exit_json(changed=False, debug='You cannot resize servers in %s' % server.status)
+
+            flavor = cloud.get_flavor(flavor)
+            if flavor is None:
+                module.fail_json(msg="Flavor does not exist")
+            if flavor.id == server.flavor.id:
+                module.exit_json(changed=False, debug='Same flavor as the server')
+
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'resize': {'flavorRef': flavor.id}})
+            # Waiting is not conditional as we need to do a second task
+            for count in sdk.utils.iterate_timeout(
+                    timeout,
+                    "Timeout waiting for server to complete %s" % action):
+                try:
+                    server = cloud.get_server(server.id)
+                except Exception:
+                    continue
+                if server.status == 'ERROR':
+                    cloud.compute.post(
+                        _action_url(server.id),
+                        json={'revertResize': None})
+                    module.exit_json(changed=False, debug='Error when resizing, reverted.')
+                elif server.status == 'VERIFY_RESIZE':
+                    cloud.compute.post(
+                        _action_url(server.id),
+                        json={'confirmResize': None})
+                    module.exit_json(changed=True)
             module.exit_json(changed=True)
 
     except sdk.exceptions.OpenStackCloudException as e:
