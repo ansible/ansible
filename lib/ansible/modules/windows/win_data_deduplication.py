@@ -39,22 +39,22 @@ options:
           - Minimum file size you want to target for deduplication.
           - It will default to 32768 if not defined or if the value is less than 32768.
         type: int
-				default: 32768
+        default: 32768
       minimum_file_age_days:
         description:
           - Minimum file age you want to target for deduplication.
         type: int
-				default: 2
+        default: 2
       no_compress:
         description:
           - Wether you want to enabled filesystem compression or not.
         type: bool
-				default: no
+        default: no
       optimize_in_use_files:
         description:
           - Indicates that the server attempts to optimize currently open files.
         type: bool
-				default: no
+        default: no
       verify:
         description:
           - Indicates whether the deduplication engine performs a byte-for-byte verification for each duplicate chunk
@@ -62,7 +62,7 @@ options:
           - This option is not recommend.
           - Setting this parameter to True can degrade optimization performance.
         type: bool
-				default: no
+        default: no
 author:
 - rnsc (@rnsc)
 '''

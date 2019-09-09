@@ -8,21 +8,21 @@
 
 $spec = @{
     options = @{
-				drive_letter = @{ type = "str"; required = $true }
-				state = @{ type = "str"; choices = "absent", "present"; default = "present"; }
+        drive_letter = @{ type = "str"; required = $true }
+        state = @{ type = "str"; choices = "absent", "present"; default = "present"; }
         settings = @{
             type = "dict"
-						required = $false
+            required = $false
             options = @{
                 minimum_file_size = @{ type = "int"; default = 32768 }
                 minimum_file_age_days = @{ type = "int"; default = 2 }
-								no_compress = @{ type = "bool"; required = $false; default = $false }
-								optimize_in_use_files = @{ type = "bool"; required = $false; default = $false }
-								verify = @{ type = "bool"; required = $false; default = $false }
+                no_compress = @{ type = "bool"; required = $false; default = $false }
+                optimize_in_use_files = @{ type = "bool"; required = $false; default = $false }
+                verify = @{ type = "bool"; required = $false; default = $false }
             }
         }
     }
-	  supports_check_mode = $true
+    supports_check_mode = $true
 }
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
@@ -41,9 +41,9 @@ function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
 
   $dedup_info = Get-DedupVolume -Volume "$($volume.DriveLetter):"
 
-	if ($dedup_info.Enabled) {
-		$current_state = 'present'
-	}
+  if ($dedup_info.Enabled) {
+    $current_state = 'present'
+  }
 
   if ( $state -ne $current_state ) {
     if( -not $module.CheckMode) {
