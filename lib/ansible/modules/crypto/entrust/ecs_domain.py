@@ -19,12 +19,21 @@ module: ecs_domain
 author:
     - Chris Trufan (@ctrufan)
 version_added: '2.10'
-short_description: Request validation of a domain with the Entrust Certificate Services (ECS) API.
+short_description: Request validation of a domain with the Entrust Certificate Services (ECS) API
 description:
     - Request validation or re-validation of a domain with the Entrust Certificate Services (ECS) API.
     - Requires credentials for the L(Entrust Certificate Services,https://www.entrustdatacard.com/products/categories/ssl-certificates) (ECS) API.
-    - In the case of validation modes that require action on returned data (C(FILE) and C(DNS)) module will return the data needed to validate.
-    - For C(validation_method=DNS), the returned DNS value must be present at the location specified by return parameter I(location).
+    - If the domain is already in the validation process, no new validation will be requested, but the validation data (if applicable) will be returned.
+    - If the domain is already in the validation process but the verification_method specified is different than the current verification_method,
+      the verification_method will be updated and validation data (if applicable) will be returned.
+    - If the domain is an active, validated domain, the return value of I(changed) will be false, unless C(domain_status=EXPIRED), in which case a re-validation
+      will be performed.
+    - If C(verification_method=DNS), details about the required DNS entry will be specified in the return parameters I(dns_contents), I(dns_location), and
+      I(dns_resource_type).
+    - If C(verification_method=WEB_SERVER), details about the required file details will be specified in the return parameters I(file_contents) and
+      I(file_location).
+    - If C(verification_method=EMAIL), the email address(es) that the validation email(s) were sent to will be in the return parameter I(emails). This is
+      purely informational. For domains requested using this module, this will always be a list of size 1.
 notes:
     - There is a small delay (typically about 5 seconds, but as long as 30) before obtaining the random values when requesting a validation.
       Be aware of that if doing bulk domain requests.
@@ -35,12 +44,6 @@ options:
             - If no client ID is specified, the domain will be added under the primary client with ID of 1.
         type: int
         default: 1
-    force:
-        description:
-            - Force a reverification regardless of state of current domain.
-            - This can be used to change the state of an in process verification.
-        type: bool
-        default: false
     domain_name:
         description:
             - The domain name to be verified or reverified.
@@ -75,17 +78,6 @@ options:
             - To verify domain ownership, domain owner must follow the instructions in the email they receive.
             - Only allowed if C(verification_method=EMAIL)
         type: str
-    ov_remaining_days:
-        description:
-            - The number of days the domain must have left being valid for OV eligibility, if it is already a validated domain. I(ov_days_remaining) is
-              less than I(ov_remaining_days), a new validation will be requested using I(validation_method).
-        type: int
-        default: 60
-    ev_remaining_days:
-        description:
-            - The number of days the domain must have left being valid for EV eligibility, if it is already a validated domain. I(ev_days_remaining) is
-              less than I(ev_remaining_days), a new validation will be requested using I(validation_method).
-        type: int
 seealso:
     - module: openssl_certificate
       description: Can be used to request certificates from ECS, with C(provider=ECS).
@@ -112,7 +104,6 @@ EXAMPLES = r'''
   ecs_domain:
     domain_name: ansible.com
     verification_method: DNS
-    ov_remaining_days: 90
     entrust_api_user: apiusername
     entrust_api_key: a^lv*32!cd9LnT
     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
@@ -123,7 +114,6 @@ EXAMPLES = r'''
   ecs_domain:
     domain_name: ansible.com
     verification_method: WEB_SERVER
-    ev_remaining_days: 60
     entrust_api_user: apiusername
     entrust_api_key: a^lv*32!cd9LnT
     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
@@ -256,8 +246,6 @@ class EcsDomain(object):
         # one, in case the verification method has changed.
         self.verification_method = None
 
-        self.force = module.params['force']
-
         self.ecs_client = None
         # Instantiate the ECS client and then try a no-op connection to verify credentials are valid
         try:
@@ -299,9 +287,7 @@ class EcsDomain(object):
         try:
             domain_details = self.ecs_client.GetDomain(clientId=module.params['client_id'], domain=module.params['domain_name'])
             self.set_domain_details(domain_details)
-            if (self.domain_status != 'APPROVED' and self.domain_status != 'INITIAL_VERIFICATION' and
-                    self.domain_status != 'RE_VERIFICATION' and self.domain_status != 'EXPIRING'):
-
+            if self.domain_status != 'APPROVED' and self.domain_status != 'INITIAL_VERIFICATION' and self.domain_status != 'RE_VERIFICATION':
                 return False
 
             # If domain verification is in process, we want to return the random values and treat it as a valid.
@@ -309,21 +295,16 @@ class EcsDomain(object):
                 # Unless the verification method has changed, in which case we need to do a reverify request.
                 if self.verification_method != module.params['verification_method']:
                     return False
-            # We only check expiry if verification is not in process.
-            else:
-                # Need to check if module value is not none, because 0 is a valid input. Then, if no ev_value present, means it's expired for EV.
-                if module.params['ev_remaining_days'] is not None and (
-                        not self.ev_days_remaining or self.ev_days_remaining < module.params['ev_remaining_days']):
-                    return False
-                if not self.ov_days_remaining or self.ov_days_remaining < module.params['ov_remaining_days']:
-                    return False
+
+            if self.domain_status == 'EXPIRING':
+                return False
 
             return True
         except RestOperationException as dummy:
             return False
 
     def request_domain(self, module):
-        if not self.check(module) or self.force:
+        if not self.check(module):
             body = {}
 
             body['verificationMethod'] = module.params['verification_method']
@@ -403,9 +384,6 @@ def ecs_domain_argument_spec():
         domain_name=dict(type='str', required=True),
         verification_method=dict(type='str', choices=['DNS', 'EMAIL', 'MANUAL', 'WEB_SERVER']),
         verification_email=dict(type='str'),
-        ov_remaining_days=dict(type='int', default=60),
-        ev_remaining_days=dict(type='int'),
-        force=dict(type='bool', default=False),
     )
 
 

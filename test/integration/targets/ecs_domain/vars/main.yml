@@ -7,7 +7,7 @@
 cacerts_bundle_path: /etc/pki/tls/certs
 
 common_name: '{{ ansible_date_time.epoch }}.testcertificates.com'
-existing_domain_common_name: 'testcertificates275818065839.local'
+existing_domain_common_name: 'testcertificates.com'
 
 tmpdir_path: /tmp/ecs_cert_test/{{ ansible_date_time.epoch }}
 

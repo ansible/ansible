@@ -234,33 +234,31 @@
   - name: Request revalidation of an approved domain
     ecs_domain:
       domain_name: '{{ existing_domain_common_name }}'
-      verification_method: WEB_SERVER
+      verification_method: MANUAL
       entrust_api_user: '{{ entrust_api_user }}'
       entrust_api_key: '{{ entrust_api_key }}'
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
       entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
-    register: file_existing_domain
+    register: manual_existing_domain
 
   - debug:
-      var: file_existing_domain
+      var: manual_existing_domain
 
   - assert:
       that:
-        - file_existing_domain is not failed
-        - not file_existing_domain.changed
-        - file_existing_domain.verification_method is undefined
-        - file_existing_domain.dns_location is undefined
-        - file_existing_domain.dns_contents is undefined
-        - file_existing_domain.dns_resource_type is undefined
-        - file_existing_domain.file_location is undefined
-        - file_existing_domain.file_contents is undefined
-        - file_existing_domain.emails is undefined
+        - manual_existing_domain is not failed
+        - not manual_existing_domain.changed
+        - manual_existing_domain.dns_location is undefined
+        - manual_existing_domain.dns_contents is undefined
+        - manual_existing_domain.dns_resource_type is undefined
+        - manual_existing_domain.file_location is undefined
+        - manual_existing_domain.file_contents is undefined
+        - manual_existing_domain.emails is undefined
 
   - name: Request revalidation of an approved domain
     ecs_domain:
       domain_name: '{{ existing_domain_common_name }}'
       verification_method: WEB_SERVER
-      ov_remaining_days: 600
       entrust_api_user: '{{ entrust_api_user }}'
       entrust_api_key: '{{ entrust_api_key }}'
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
@@ -274,6 +272,7 @@
       that:
         - file_existing_domain_revalidate is not failed
         - file_existing_domain_revalidate.changed
+        - file_existing_domain_revalidate.verification_method == 'RE_VERIFICATION'
         - file_existing_domain_revalidate.verification_method == 'WEB_SERVER'
         - file_existing_domain_revalidate.dns_location is undefined
         - file_existing_domain_revalidate.dns_contents is undefined
