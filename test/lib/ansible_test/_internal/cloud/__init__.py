@@ -265,6 +265,8 @@ class CloudBase(ABC):
         :type default: str | int | bool | None
         :rtype: str | int | bool
         """
+        from pprint import pprint
+        pprint(self.args.metadata.cloud_config)
         if default is not None:
             return self.args.metadata.cloud_config[self.platform].get(key, default)
 
