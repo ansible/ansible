@@ -1060,6 +1060,7 @@ def start_connection(play_context, variables):
     for dirname in candidate_paths:
         ansible_connection = os.path.join(dirname, 'ansible-connection')
         if os.path.isfile(ansible_connection):
+            display.vvvv("Found ansible-connection at path {0}".format(ansible_connection))
             break
     else:
         raise AnsibleError("Unable to find location of 'ansible-connection'. "
