@@ -143,9 +143,9 @@ Parameters
                                     {% set choice = 'no' %}
                                 {% endif %}
                                 {% if (value.default is not list and value.default == choice) or (value.default is list and choice in value.default) %}
-                                    <li><div style="color: blue"><b>@{ choice | escape }@</b>&nbsp;&larr;</div></li>
+                                    <li><div style="color: blue"><b>@{ (choice|tojson if value.type == 'str' else choice) | escape }@</b>&nbsp;&larr;</div></li>
                                 {% else %}
-                                    <li>@{ choice | escape }@</li>
+                                    <li>@{ (choice|tojson if value.type == 'str' else choice) | escape }@</li>
                                 {% endif %}
                             {% endfor %}
                         </ul>
