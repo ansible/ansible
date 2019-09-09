@@ -49,10 +49,11 @@ options:
     verification_method:
         description:
             - The verification method to be used to prove control of the domain.
-            - If C(verification_method=EMAIL), the value I(verification_email) is required, and no values are returned for I(verification_content) and
-              I(verification_location). An email will be sent to the address in I(verification_email) with instructions on how to verify control of the domain.
-            - If C(verification_method=DNS), the value I(DNS_contents) must be stored in location I(DNS_location), with a DNS record type of
-              I(verification_DNS_record_type). To prove domain ownership, update your DNS records so the text string returned by I(DNS_contents) is available at
+            - If C(verification_method=EMAIL) and the value I(verification_email) is specified, that value is used for the email validation. If
+              I(verification_email) is not provided, the first value present in WHOIS data will be used. An email will be sent to the address in
+              I(verification_email) with instructions on how to verify control of the domain.
+            - If C(verification_method=DNS), the value I(dns_contents) must be stored in location I(dns_location), with a DNS record type of
+              I(verification_DNS_record_type). To prove domain ownership, update your DNS records so the text string returned by I(dns_contents) is available at
               I(DNS_location).
             - If C(verification_method=WEB_SERVER), the contents of return value I(file_contents) must be made available on a web server accessible at location
               I(file_location).
@@ -62,11 +63,16 @@ options:
         required: true
     verification_email:
         description:
-            - email address to be used to verify domain ownership.
-            - 'email address must be either an email address present in the WHOIS data for I(domain_name), or one of the following constructed emails:
+            - Email address to be used to verify domain ownership.
+            - Email address must be either an email address present in the WHOIS data for I(domain_name), or one of the following constructed emails:
               admin@I(domain_name)), administrator@I(domain_name), webmaster@I(domain_name), hostmaster@I(domain_name), postmaster@I(domain_name)'
+            - Note that if I(domain_name) includes subdomains, the top level domain should be used. For example, if requesting validation of
+              example1.ansible.com, or test.example2.ansible.com, and you want to use the "admin" preconstructed name, the email address should be
+              admin@ansible.com.
+            - If using the email values from the WHOIS data for the domain or it's top level namespace, they must be exact matches.
+            - If C(verification_method=EMAIL) but I(verification_email) is not provided, the first email address found in WHOIS data for the domain will be
+              used.
             - To verify domain ownership, domain owner must follow the instructions in the email they receive.
-            - Required if C(verification_method=EMAIL)
             - Only allowed if C(verification_method=EMAIL)
         type: str
     ov_remaining_days:
@@ -252,9 +258,27 @@ class EcsDomain(object):
 
         self.force = module.params['force']
 
+        self.ecs_client = None
+        # Instantiate the ECS client and then try a no-op connection to verify credentials are valid
+        try:
+            self.ecs_client = ECSClient(
+                entrust_api_user=module.params['entrust_api_user'],
+                entrust_api_key=module.params['entrust_api_key'],
+                entrust_api_cert=module.params['entrust_api_client_cert_path'],
+                entrust_api_cert_key=module.params['entrust_api_client_cert_key_path'],
+                entrust_api_specification_path=module.params['entrust_api_specification_path']
+            )
+        except SessionConfigurationException as e:
+            module.fail_json(msg='Failed to initialize Entrust Provider: {0}'.format(to_native(e)))
+        try:
+            self.ecs_client.GetAppVersion()
+        except RestOperationException as e:
+            module.fail_json(msg='Please verify credential information. Received exception when testing ECS connection: {0}'.format(to_native(e.message)))
+
     def set_domain_details(self, domain_details):
-        self.verification_method = domain_details['verificationMethod']
-        self.domain_status = domain_details['status']
+        if domain_details.get('verificationMethod'):
+            self.verification_method = domain_details['verificationMethod']
+        self.domain_status = domain_details['verificationStatus']
         self.ov_eligible = domain_details.get('ovEligible')
         self.ov_days_remaining = calculate_days_remaining(domain_details.get('ovExpiry'))
         self.ev_eligible = domain_details.get('evEligible')
@@ -273,7 +297,7 @@ class EcsDomain(object):
 
     def check(self, module):
         try:
-            domain_details = self.ecs_client.GetDomain(clientId=module.params['client_id'], domain=self.domain_name)
+            domain_details = self.ecs_client.GetDomain(clientId=module.params['client_id'], domain=module.params['domain_name'])
             self.set_domain_details(domain_details)
             if (self.domain_status != 'APPROVED' and self.domain_status != 'INITIAL_VERIFICATION' and
                     self.domain_status != 'RE_VERIFICATION' and self.domain_status != 'EXPIRING'):
@@ -285,16 +309,18 @@ class EcsDomain(object):
                 # Unless the verification method has changed, in which case we need to do a reverify request.
                 if self.verification_method != module.params['verification_method']:
                     return False
-
-            # Need to check if value is not none, because 0 is a valid input
-            if module.params['ev_remaining_days'] is not None and self.ev_days_remaining < module.params['ev_remaining_days']:
-                return False
-            if self.ov_days_remaining < module.params['ov_remaining_days']:
-                return False
+            # We only check expiry if verification is not in process.
+            else:
+                # Need to check if module value is not none, because 0 is a valid input. Then, if no ev_value present, means it's expired for EV.
+                if module.params['ev_remaining_days'] is not None and (
+                        not self.ev_days_remaining or self.ev_days_remaining < module.params['ev_remaining_days']):
+                    return False
+                if not self.ov_days_remaining or self.ov_days_remaining < module.params['ov_remaining_days']:
+                    return False
 
             return True
-        except RestOperationException as e:
-            module.fail_json('Failed to get domain details for domain. Likely does not exist.')
+        except RestOperationException as dummy:
+            return False
 
     def request_domain(self, module):
         if not self.check(module) or self.force:
@@ -303,16 +329,20 @@ class EcsDomain(object):
             body['verificationMethod'] = module.params['verification_method']
             if module.params['verification_method'] == 'EMAIL':
                 emailMethod = {}
-                emailMethod['emailSource'] = 'SPECIFIED'
-                emailMethod['email'] = module.params['verification_email']
+                if module.params['verification_email']:
+                    emailMethod['emailSource'] = 'SPECIFIED'
+                    emailMethod['email'] = module.params['verification_email']
+                else:
+                    emailMethod['emailSource'] = 'INCLUDE_WHOIS'
+                body['emailMethod'] = emailMethod
             # Only populate domain name in body if it is not an existing domain
             if not self.domain_status:
                 body['domainName'] = module.params['domain_name']
             try:
                 if not self.domain_status:
-                    self.ecs_client.AddDomainRequest(clientId=module.params['client_id'], Body=body)
+                    self.ecs_client.AddDomain(clientId=module.params['client_id'], Body=body)
                 else:
-                    self.ecs_client.ReverifyDomainRequest(clientId=module.params['client_id'], domain=module.params['domain_name'], Body=body)
+                    self.ecs_client.ReverifyDomain(clientId=module.params['client_id'], domain=module.params['domain_name'], Body=body)
 
                 time.sleep(5)
                 result = self.ecs_client.GetDomain(clientId=module.params['client_id'], domain=module.params['domain_name'])
@@ -322,10 +352,10 @@ class EcsDomain(object):
                     for i in range(2):
                         # Check both that random values are now available, and that they're different than were populated by previous 'check'
                         if module.params['verification_method'] == 'DNS':
-                            if result.get('dnsMethod') and result.get['dnsMethod']['recordValue'] != self.dns_contents:
+                            if result.get('dnsMethod') and result['dnsMethod']['recordValue'] != self.dns_contents:
                                 break
                         elif module.params['verification_method'] == 'WEB_SERVER':
-                            if result.get('webServerMethod') and result.get['webServerMethod']['fileContents'] != self.file_contents:
+                            if result.get('webServerMethod') and result['webServerMethod']['fileContents'] != self.file_contents:
                                 break
                     time.sleep(10)
                     result = self.ecs_client.GetDomain(clientId=module.params['client_id'], domain=module.params['domain_name'])
@@ -339,19 +369,26 @@ class EcsDomain(object):
             'changed': self.changed,
             'client_id': self.client_id,
             'domain_status': self.domain_status,
-            'verification_method': self.verification_method,
-            'ov_eligible': self.ov_eligible,
-            'ov_days_remaining': self.ov_days_remaining,
-            'ev_eligible': self.ev_eligible,
-            'ev_days_remaining': self.ev_days_remaining,
-            'emails': self.emails,
         }
+
+        if self.verification_method:
+            result['verification_method'] = self.verification_method
+        if self.ov_eligible:
+            result['ov_eligible'] = self.ov_eligible
+        if self.ov_days_remaining:
+            result['ov_days_remaining'] = self.ov_days_remaining
+        if self.ev_eligible:
+            result['ev_eligible'] = self.ev_eligible
+        if self.ev_days_remaining:
+            result['ov_days_remaining'] = self.ev_days_remaining
+        if self.emails:
+            result['emails'] = self.emails
 
         if self.verification_method == 'DNS':
             result['dns_location'] = self.dns_location
             result['dns_contents'] = self.dns_contents
             result['dns_resource_type'] = self.dns_resource_type
-        elif self.verification_method == 'FILE':
+        elif self.verification_method == 'WEB_SERVER':
             result['file_location'] = self.file_location
             result['file_contents'] = self.file_contents
         elif self.verification_method == 'EMAIL':
@@ -377,7 +414,6 @@ def main():
     ecs_argument_spec.update(ecs_domain_argument_spec())
     module = AnsibleModule(
         argument_spec=ecs_argument_spec,
-        required_if=[('verification_method', 'EMAIL', ['verification_email'])],
         supports_check_mode=False,
     )
 
@@ -385,7 +421,7 @@ def main():
         module.fail_json(msg='The verification_email field is invalid when verification_method="{0}".'.format(module.params['verification_method']))
 
     domain = EcsDomain(module)
-    domain.request_validation(module)
+    domain.request_domain(module)
     result = domain.dump()
     module.exit_json(**result)
 

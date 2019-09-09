@@ -109,7 +109,7 @@
     ecs_domain:
       domain_name: EMAIL.{{ common_name }}
       verification_method: EMAIL
-      verification_email: admin@{{ domain_name }}
+      verification_email: admin@testcertificates.com
       entrust_api_user: '{{ entrust_api_user }}'
       entrust_api_key: '{{ entrust_api_key }}'
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
@@ -129,7 +129,32 @@
         - email_result.dns_resource_type is undefined
         - email_result.file_location is undefined
         - email_result.file_contents is undefined
-        - email_result.emails is list
+        - email_result.emails[0] == 'admin@testcertificates.com'
+
+  - name: Have ECS request a domain validation via EMAIL with no address provided
+    ecs_domain:
+      domain_name: EMAIL2.{{ common_name }}
+      verification_method: EMAIL
+      entrust_api_user: '{{ entrust_api_user }}'
+      entrust_api_key: '{{ entrust_api_key }}'
+      entrust_api_client_cert_path: '{{ entrust_api_cert }}'
+      entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
+    register: email_result2
+
+  - debug:
+      var: email_result2
+
+  - assert:
+      that:
+        - email_result2 is not failed
+        - email_result2.changed
+        - email_result2.verification_method == 'EMAIL'
+        - email_result2.dns_location is undefined
+        - email_result2.dns_contents is undefined
+        - email_result2.dns_resource_type is undefined
+        - email_result2.file_location is undefined
+        - email_result2.file_contents is undefined
+        - email_result2.emails is defined
 
   - name: Have ECS request a domain validation via MANUAL
     ecs_domain:
@@ -184,7 +209,11 @@
   - name: Have ECS request a domain validation via FILE for DNS, to change verification method
     ecs_domain:
       domain_name: DNS.{{ common_name }}
-      verification_method: FILE
+      verification_method: WEB_SERVER
+      entrust_api_user: '{{ entrust_api_user }}'
+      entrust_api_key: '{{ entrust_api_key }}'
+      entrust_api_client_cert_path: '{{ entrust_api_cert }}'
+      entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
     register: dns_result_now_file
 
   - debug:
@@ -194,7 +223,7 @@
       that:
         - dns_result_now_file is not failed
         - dns_result_now_file.changed
-        - dns_result_now_file.verification_method == 'FILE'
+        - dns_result_now_file.verification_method == 'WEB_SERVER'
         - dns_result_now_file.dns_location is undefined
         - dns_result_now_file.dns_contents is undefined
         - dns_result_now_file.dns_resource_type is undefined
@@ -205,7 +234,7 @@
   - name: Request revalidation of an approved domain
     ecs_domain:
       domain_name: '{{ existing_domain_common_name }}'
-      verification_method: FILE
+      verification_method: WEB_SERVER
       entrust_api_user: '{{ entrust_api_user }}'
       entrust_api_key: '{{ entrust_api_key }}'
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
@@ -230,8 +259,8 @@
   - name: Request revalidation of an approved domain
     ecs_domain:
       domain_name: '{{ existing_domain_common_name }}'
-      verification_method: FILE
-      ov_days_remaining: 600
+      verification_method: WEB_SERVER
+      ov_remaining_days: 600
       entrust_api_user: '{{ entrust_api_user }}'
       entrust_api_key: '{{ entrust_api_key }}'
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
@@ -245,7 +274,7 @@
       that:
         - file_existing_domain_revalidate is not failed
         - file_existing_domain_revalidate.changed
-        - file_existing_domain_revalidate.verification_method == 'FILE'
+        - file_existing_domain_revalidate.verification_method == 'WEB_SERVER'
         - file_existing_domain_revalidate.dns_location is undefined
         - file_existing_domain_revalidate.dns_contents is undefined
         - file_existing_domain_revalidate.dns_resource_type is undefined
