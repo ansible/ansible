@@ -681,4 +681,71 @@ No notable changes
 Networking
 ==========
 
-No notable changes
+Network resource modules
+------------------------
+
+Ansible 2.9 introduced the first batch of network resource modules. These modules improve the usability of Ansible network modules. The older modules are deprecated in Ansible 2.9 and will be removed in Ansible 2.12. You should scan the list of deprecated modules above and replace them with the new network resource modules in your playbooks.
+
+Top-level connection arguments removed in 2.9
+---------------------------------------------
+
+Top-level connection arguments like ``username``, ``host``, and ``password`` are  removed in version 2.9.
+
+**OLD** In Ansible < 2.4
+
+.. code-block:: yaml
+
+    - name: example of using top-level options for connection properties
+      ios_command:
+        commands: show version
+        host: "{{ inventory_hostname }}"
+        username: cisco
+        password: cisco
+        authorize: yes
+        auth_pass: cisco
+
+
+Change your playbooks to the connection types ``network_cli`` and ``netconf`` using standard Ansible connection properties, and setting those properties in inventory by group. As you update your playbooks and inventory files, you can easily make the change to ``become`` for privilege escalation (on platforms that support it). For more information, see the :ref:`using become with network modules<become_network>` guide and the :ref:`platform documentation<platform_options>`.
+
+Using persistent connection types ``network_cli`` and ``netconf``
+------------------------------------------------------------------
+
+Ansible 2.5 introduced two top-level persistent connection types, ``network_cli`` and ``netconf``. With ``connection: local``, each task passed the connection parameters, which had to be stored in your playbooks. With ``network_cli`` and ``netconf`` the playbook passes the connection parameters once, so you can pass them at the command line if you prefer. We recommend you use ``network_cli`` and ``netconf`` whenever possible.
+Note that eAPI and NX-API still require ``local`` connections with ``provider`` dictionaries. See the :ref:`platform documentation<platform_options>` for more information. Unless you need a ``local`` connection, update your playbooks to use ``network_cli`` or ``netconf`` and to specify your connection variables with standard Ansible connection variables:
+
+**OLD** Must be updated for 2.9
+
+.. code-block:: yaml
+
+   ---
+   vars:
+       cli:
+          host: "{{ inventory_hostname }}"
+          username: operator
+          password: secret
+          transport: cli
+
+   tasks:
+   - nxos_config:
+       src: config.j2
+       provider: "{{ cli }}"
+       username: admin
+       password: admin
+
+**NEW** In Ansible 2.5 and later
+
+.. code-block:: ini
+
+   [nxos:vars]
+   ansible_connection=network_cli
+   ansible_network_os=nxos
+   ansible_user=operator
+   ansible_password=secret
+
+.. code-block:: yaml
+
+   tasks:
+   - nxos_config:
+       src: config.j2
+
+Using a provider dictionary with either ``network_cli`` or ``netconf`` will result in a warning.
