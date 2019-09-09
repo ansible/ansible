@@ -1323,6 +1323,9 @@ files:
   $plugins/netconf/sros.py:
     maintainers: wisotzky $team_networking
     labels: networking
+  $plugins/netconf/ce.py:
+    maintainers: $team_huawei_switch
+    labels: networking
 ###############################
 # plugins/shell
   $plugins/shell/:
