@@ -39,7 +39,7 @@ CREATE_PAYLOAD = {
 
 UPDATE_PAYLOAD = {
     "name": "New Layer 1",
-    "data-awareness": True,
+    "data_awareness": True,
     "applications_and_url_filtering": False,
     "color": "blue"
 }
