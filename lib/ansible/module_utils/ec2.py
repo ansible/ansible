@@ -554,6 +554,12 @@ def _hashable_policy(policy, policy_list):
          ('Version', (u'2012-10-17',)))]
 
     """
+    # Amazon will automatically convert bool and int to strings for us
+    if isinstance(policy, bool):
+        return tuple([str(policy).lower()])
+    elif isinstance(policy, int):
+        return tuple([str(policy)])
+
     if isinstance(policy, list):
         for each in policy:
             tupleified = _hashable_policy(each, [])
