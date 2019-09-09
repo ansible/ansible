@@ -14,9 +14,9 @@ __metaclass__ = type
 
 import re
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import dict_diff, to_list, remove_empties
+from ansible.module_utils.network.common.utils import dict_diff, to_list
 from ansible.module_utils.network.nxos.facts.facts import Facts
-from ansible.module_utils.network.nxos.utils.utils import flatten_dict, get_interface_type, normalize_interface, search_obj_in_list, vlan_range_to_list
+from ansible.module_utils.network.nxos.utils.utils import flatten_dict, search_obj_in_list
 
 
 class Bfd_interfaces(ConfigBase):

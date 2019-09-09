@@ -21,21 +21,13 @@ import copy
 import hashlib
 import os
 import re
-import sys
-import time
-import traceback
-import uuid
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.connection import Connection
 from ansible.plugins.action import ActionBase
-from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.utils.display import Display
 from ansible.module_utils.compat.paramiko import paramiko
-from ansible.module_utils.network.nxos.nxos import run_commands
-from ansible.module_utils._text import to_native, to_text, to_bytes
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils import six
 
 try:

@@ -31,9 +31,6 @@ class TestNxosEvpnVniModule(TestNxosModule):
     def setUp(self):
         super(TestNxosEvpnVniModule, self).setUp()
 
-        self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_evpn_vni.run_commands')
-        self.run_commands = self.mock_run_commands.start()
-
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_evpn_vni.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -42,7 +39,6 @@ class TestNxosEvpnVniModule(TestNxosModule):
 
     def tearDown(self):
         super(TestNxosEvpnVniModule, self).tearDown()
-        self.mock_run_commands.stop()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 

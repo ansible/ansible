@@ -179,7 +179,6 @@ from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import normalize_interface, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 from ansible.module_utils.network.common.utils import remove_default_spec
 

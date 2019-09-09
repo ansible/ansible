@@ -139,12 +139,10 @@ cmds:
 '''
 
 
-import re
 from ansible.module_utils.network.nxos.nxos import NxosCmdRef
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
-from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import load_config
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 BFD_CMD_REF = """
 # The cmd_ref is a yaml formatted list of module commands.
