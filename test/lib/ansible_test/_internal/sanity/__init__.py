@@ -89,8 +89,6 @@ def command_sanity(args):
     if args.delegate:
         raise Delegate(require=changes, exclude=args.exclude)
 
-    install_command_requirements(args)
-
     tests = sanity_get_tests()
 
     if args.test:
@@ -107,6 +105,8 @@ def command_sanity(args):
 
     total = 0
     failed = []
+
+    requirements_installed = set()  # type: t.Set[str]
 
     for test in tests:
         if args.list_tests:
@@ -180,6 +180,10 @@ def command_sanity(args):
                 sanity_targets = SanityTargets(tuple(all_targets), tuple(usable_targets))
 
                 if usable_targets or test.no_targets:
+                    if version not in requirements_installed:
+                        requirements_installed.add(version)
+                        install_command_requirements(args, version)
+
                     if isinstance(test, SanityCodeSmellTest):
                         result = test.test(args, sanity_targets, version)
                     elif isinstance(test, SanityMultipleVersion):
