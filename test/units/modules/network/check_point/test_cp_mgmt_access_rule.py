@@ -21,11 +21,7 @@ import pytest
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleFailJson, AnsibleExitJson
 
 from ansible.module_utils import basic
-from ansible.module_utils.network.checkpoint.checkpoint import api_call
 from ansible.modules.network.check_point import cp_mgmt_access_rule
-
-function_path = 'ansible.modules.network.check_point.cp_mgmt_access_rule.api_call'
-api_call_object = 'access_rule'
 
 OBJECT = {
     "layer": "Network",
@@ -34,7 +30,7 @@ OBJECT = {
     "service": [
         "SMTP",
         "AOL"
-    ],
+    ]
 }
 
 CREATE_PAYLOAD = {
@@ -44,7 +40,7 @@ CREATE_PAYLOAD = {
     "service": [
         "SMTP",
         "AOL"
-    ],
+    ]
 }
 
 UPDATE_PAYLOAD = {
@@ -54,13 +50,16 @@ UPDATE_PAYLOAD = {
     "action_settings": {
         "limit": "Upload_1Gbps",
         "enable_identity_captive_portal": True
-    },
+    }
 }
 
 DELETE_PAYLOAD = {
     "name": "Rule 1",
     "state": "absent"
 }
+
+function_path = 'ansible.modules.network.check_point.cp_mgmt_access_rule.api_call'
+api_call_object = 'access_rule'
 
 
 class TestCheckpointAccessRule(object):
@@ -102,7 +101,7 @@ class TestCheckpointAccessRule(object):
 
     def test_update_idempotent(self, mocker, connection_mock):
         mock_function = mocker.patch(function_path)
-        mock_function.return_value = {'changed': True, api_call_object: OBJECT}
+        mock_function.return_value = {'changed': False, api_call_object: OBJECT}
         connection_mock.send_request.return_value = (200, OBJECT)
         result = self._run_module(UPDATE_PAYLOAD)
 
