@@ -22,7 +22,15 @@ module: hwc_vpc_security_group_rule
 description:
     - vpc security group management.
 short_description: Creates a resource of Vpc/SecurityGroupRule in Huawei Cloud
-version_added: '2.9'
+notes:
+  - If I(id) option is provided, it takes precedence over
+    I(enterprise_project_id) for security group rule selection.
+  - I(security_group_id) is used for security group rule selection. If more
+    than one security group rule with this options exists, execution is
+    aborted.
+  - No parameter support updating. If one of option is changed, the module
+    will create a new resource.
+version_added: '2.10'
 author: Huawei Inc. (@huaweicloud)
 requirements:
     - keystoneauth1 >= 3.6.0
@@ -33,13 +41,6 @@ options:
         type: str
         choices: ['present', 'absent']
         default: 'present'
-    filters:
-        description:
-            - A list of filters to apply when deciding whether existing
-              resources match and should be altered. The item of filters
-              is the name of input options.
-        type: list
-        required: true
     direction:
         description:
             - Specifies the direction of access control. The value can be
@@ -110,8 +111,6 @@ EXAMPLES = '''
 - name: create a security group
   hwc_vpc_security_group:
     name: "ansible_network_security_group_test"
-    filters:
-      - "name"
   register: sg
 - name: create a security group rule
   hwc_vpc_security_group_rule:
@@ -121,8 +120,6 @@ EXAMPLES = '''
     port_range_max: 22
     security_group_id: "{{ sg.id }}"
     port_range_min: 22
-    filters:
-      - "security_group_id"
     remote_ip_prefix: "0.0.0.0/0"
 '''
 
@@ -201,7 +198,6 @@ def build_module():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'],
                        type='str'),
-            filters=dict(required=True, type='list', elements='str'),
             direction=dict(type='str', required=True),
             security_group_id=dict(type='str', required=True),
             description=dict(type='str'),
@@ -229,7 +225,7 @@ def main():
         else:
             v = search_resource(config)
             if len(v) > 1:
-                raise Exception("find more than one resources(%s)" % ", ".join([
+                raise Exception("Found more than one resource(%s)" % ", ".join([
                                 navigate_value(i, ["id"]) for i in v]))
 
             if len(v) == 1:
@@ -244,6 +240,12 @@ def main():
                     create(config)
                 changed = True
 
+            current = read_resource(config, exclude_output=True)
+            expect = user_input_parameters(module)
+            if are_different_dicts(expect, current):
+                raise Exception(
+                    "Cannot change option from (%s) to (%s) for an"
+                    " existing security group(%s)." % (current, expect, module.params.get('id')))
             result = read_resource(config)
             result['id'] = module.params.get('id')
         else:
@@ -316,7 +318,7 @@ def search_resource(config):
     module = config.module
     client = config.client(get_region(module), "vpc", "project")
     opts = user_input_parameters(module)
-    identity_obj = _build_identity_object(module, opts)
+    identity_obj = _build_identity_object(opts)
     query_link = _build_query_link(opts)
     link = "security-group-rules" + query_link
 
@@ -501,43 +503,38 @@ def send_list_request(module, client, url):
     return navigate_value(r, ["security_group_rules"], None)
 
 
-def _build_identity_object(module, all_opts):
-    filters = module.params.get("filters")
-    opts = dict()
-    for k, v in all_opts.items():
-        opts[k] = v if k in filters else None
-
+def _build_identity_object(all_opts):
     result = dict()
 
-    v = navigate_value(opts, ["description"], None)
+    v = navigate_value(all_opts, ["description"], None)
     result["description"] = v
 
-    v = navigate_value(opts, ["direction"], None)
+    v = navigate_value(all_opts, ["direction"], None)
     result["direction"] = v
 
-    v = navigate_value(opts, ["ethertype"], None)
+    v = navigate_value(all_opts, ["ethertype"], None)
     result["ethertype"] = v
 
     result["id"] = None
 
-    v = navigate_value(opts, ["port_range_max"], None)
+    v = navigate_value(all_opts, ["port_range_max"], None)
     result["port_range_max"] = v
 
-    v = navigate_value(opts, ["port_range_min"], None)
+    v = navigate_value(all_opts, ["port_range_min"], None)
     result["port_range_min"] = v
 
-    v = navigate_value(opts, ["protocol"], None)
+    v = navigate_value(all_opts, ["protocol"], None)
     result["protocol"] = v
 
     result["remote_address_group_id"] = None
 
-    v = navigate_value(opts, ["remote_group_id"], None)
+    v = navigate_value(all_opts, ["remote_group_id"], None)
     result["remote_group_id"] = v
 
-    v = navigate_value(opts, ["remote_ip_prefix"], None)
+    v = navigate_value(all_opts, ["remote_ip_prefix"], None)
     result["remote_ip_prefix"] = v
 
-    v = navigate_value(opts, ["security_group_id"], None)
+    v = navigate_value(all_opts, ["security_group_id"], None)
     result["security_group_id"] = v
 
     return result
