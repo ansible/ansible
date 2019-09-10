@@ -23,7 +23,7 @@ module: hwc_vpc_peering_connect
 description:
     - vpc peering management.
 short_description: Creates a resource of Vpc/PeeringConnect in Huawei Cloud
-version_added: '2.9'
+version_added: '2.10'
 author: Huawei Inc. (@huaweicloud)
 requirements:
     - keystoneauth1 >= 3.6.0
@@ -34,13 +34,6 @@ options:
         type: str
         choices: ['present', 'absent']
         default: 'present'
-    filters:
-        description:
-            - A list of filters to apply when deciding whether existing
-              resources match and should be altered. The item of filters
-              is the name of input options.
-        type: list
-        required: true
     timeouts:
         description:
             - The timeouts for each operations.
@@ -103,8 +96,6 @@ EXAMPLES = '''
   hwc_vpc_peering_connect:
     local_vpc_id: "{{ vpc1.id }}"
     name: "ansible_network_peering_test"
-    filters:
-      - "name"
     peering_vpc:
       vpc_id: "{{ vpc2.id }}"
 '''
@@ -156,7 +147,6 @@ def build_module():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'],
                        type='str'),
-            filters=dict(required=True, type='list', elements='str'),
             timeouts=dict(type='dict', options=dict(
                 create=dict(default='15m', type='str'),
             ), default=dict()),
@@ -185,7 +175,7 @@ def main():
         else:
             v = search_resource(config)
             if len(v) > 1:
-                raise Exception("find more than one resources(%s)" % ", ".join([
+                raise Exception("Found more than one resource(%s)" % ", ".join([
                                 navigate_value(i, ["id"]) for i in v]))
 
             if len(v) == 1:
@@ -316,7 +306,7 @@ def search_resource(config):
     module = config.module
     client = config.client(get_region(module), "network", "project")
     opts = user_input_parameters(module)
-    identity_obj = _build_identity_object(module, opts)
+    identity_obj = _build_identity_object(opts)
     query_link = _build_query_link(opts)
     link = "v2.0/vpc/peerings" + query_link
 
@@ -602,26 +592,21 @@ def send_list_request(module, client, url):
     return navigate_value(r, ["peerings"], None)
 
 
-def _build_identity_object(module, all_opts):
-    filters = module.params.get("filters")
-    opts = dict()
-    for k, v in all_opts.items():
-        opts[k] = v if k in filters else None
-
+def _build_identity_object(all_opts):
     result = dict()
 
-    v = expand_list_accept_vpc_info(opts, None)
+    v = expand_list_accept_vpc_info(all_opts, None)
     result["accept_vpc_info"] = v
 
-    v = navigate_value(opts, ["description"], None)
+    v = navigate_value(all_opts, ["description"], None)
     result["description"] = v
 
     result["id"] = None
 
-    v = navigate_value(opts, ["name"], None)
+    v = navigate_value(all_opts, ["name"], None)
     result["name"] = v
 
-    v = expand_list_request_vpc_info(opts, None)
+    v = expand_list_request_vpc_info(all_opts, None)
     result["request_vpc_info"] = v
 
     result["status"] = None
