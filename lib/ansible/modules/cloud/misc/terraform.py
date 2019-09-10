@@ -104,6 +104,12 @@ options:
       - A group of key-values to provide at init stage to the -backend-config parameter.
     required: false
     version_added: 2.7
+  destroy:
+    description:
+      - Create a destroy plan, used when C(state) is C(planned)
+    required: false
+    version_added: "2.10"
+    type: bool
 notes:
    - To just run a `terraform plan`, use check mode.
 requirements: [ "terraform" ]
@@ -241,11 +247,13 @@ def remove_workspace(bin_path, project_path, workspace):
     _workspace_cmd(bin_path, project_path, 'delete', workspace)
 
 
-def build_plan(command, project_path, variables_args, state_file, targets, state, plan_path=None):
+def build_plan(command, project_path, variables_args, state_file, targets, state, plan_path=None, destroy=False):
     if plan_path is None:
         f, plan_path = tempfile.mkstemp(suffix='.tfplan')
 
     plan_command = [command[0], 'plan', '-input=false', '-no-color', '-detailed-exitcode', '-out', plan_path]
+    if destroy:
+        plan_command.append('-destroy')
 
     for t in (module.params.get('targets') or []):
         plan_command.extend(['-target', t])
@@ -285,6 +293,7 @@ def main():
             lock_timeout=dict(type='int',),
             force_init=dict(type='bool', default=False),
             backend_config=dict(type='dict', default=None),
+            destroy=dict(type='bool', default=False)
         ),
         required_if=[('state', 'planned', ['plan_file'])],
         supports_check_mode=True,
@@ -301,6 +310,7 @@ def main():
     state_file = module.params.get('state_file')
     force_init = module.params.get('force_init')
     backend_config = module.params.get('backend_config')
+    destroy = module.params.get('destroy')
 
     if bin_path is not None:
         command = [bin_path]
@@ -356,7 +366,8 @@ def main():
             module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
     else:
         plan_file, needs_application, out, err, command = build_plan(command, project_path, variables_args, state_file,
-                                                                     module.params.get('targets'), state, plan_file)
+                                                                     module.params.get('targets'), state, plan_file,
+                                                                     destroy)
         command.append(plan_file)
 
     out, err = '', ''
