@@ -99,7 +99,7 @@ def setvariable(cursor, mysqlvar, value, persist):
     should be passed as numeric literals.
 
     """
-    persist_keyword = persist ? "PERSIST" : "GLOBAL"
+    persist_keyword = "PERSIST" if persist else "GLOBAL"
     query = "SET %s %s = " % (persist_keyword, mysql_quote_identifier(mysqlvar, 'vars'))
     try:
         cursor.execute(query + "%s", (value,))
