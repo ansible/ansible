@@ -24,7 +24,7 @@ requirements:
   - python >= 2.7
   - linode_api4 >= 2.0.0
 author:
-  - Luke Murphy (@lwm)
+  - Luke Murphy (@decentral1se)
 notes:
   - No Linode resizing is currently implemented. This module will, in time,
     replace the current Linode module which uses deprecated API bindings on the
