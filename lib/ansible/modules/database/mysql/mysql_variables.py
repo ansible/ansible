@@ -32,6 +32,11 @@ options:
         description:
             - If set, then sets variable value to this
         type: str
+    persist:
+        description:
+            - If true, sets variable persistently (will survive mysql restarts)
+        type: bool
+        default: False
 extends_documentation_fragment:
 - mysql
 '''
@@ -44,6 +49,12 @@ EXAMPLES = r'''
 - mysql_variables:
     variable: read_only
     value: 1
+
+- name: Set read_only variable persistently
+- mysql_variables:
+    variable: read_only
+    value: 1
+    persist: yes
 '''
 
 import os
