@@ -91,7 +91,7 @@ def getvariable(cursor, mysqlvar):
         return None
 
 
-def setvariable(cursor, mysqlvar, value):
+def setvariable(cursor, mysqlvar, value, persist):
     """ Set a global mysql variable to a given value
 
     The DB driver will handle quoting of the given value based on its
@@ -99,7 +99,8 @@ def setvariable(cursor, mysqlvar, value):
     should be passed as numeric literals.
 
     """
-    query = "SET GLOBAL %s = " % mysql_quote_identifier(mysqlvar, 'vars')
+    persist_keyword = persist ? "PERSIST" : "GLOBAL"
+    query = "SET %s %s = " % (persist_keyword, mysql_quote_identifier(mysqlvar, 'vars'))
     try:
         cursor.execute(query + "%s", (value,))
         cursor.fetchall()
@@ -118,6 +119,7 @@ def main():
             login_port=dict(type='int', default=3306),
             login_unix_socket=dict(type='str'),
             variable=dict(type='str'),
+            persist=dict(type='bool', default=False),
             value=dict(type='str'),
             client_cert=dict(type='path', aliases=['ssl_cert']),
             client_key=dict(type='path', aliases=['ssl_key']),
@@ -137,6 +139,7 @@ def main():
 
     mysqlvar = module.params["variable"]
     value = module.params["value"]
+    persist = module.params["persist"]
     if mysqlvar is None:
         module.fail_json(msg="Cannot run without variable to operate with")
     if match('^[0-9a-z_]+$', mysqlvar) is None:
@@ -168,7 +171,7 @@ def main():
         if value_wanted == value_actual:
             module.exit_json(msg="Variable already set to requested value", changed=False)
         try:
-            result = setvariable(cursor, mysqlvar, value_wanted)
+            result = setvariable(cursor, mysqlvar, value_wanted, persist)
         except SQLParseError as e:
             result = to_native(e)
 
