@@ -91,15 +91,15 @@ options:
   cafile:
     description:
       - CA file used during connection to the RabbitMQ server over SSL.
-    version_added: 2.10
+    version_added: '2.10'
   certfile:
     description:
       - Client certificate to establish SSL connection.
-    version_added: 2.10
+    version_added: '2.10'
   keyfile:
     description:
       - Client key to establish SSL connection.
-    version_added: 2.10
+    version_added: '2.10'
 
 
 
