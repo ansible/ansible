@@ -26,7 +26,8 @@
     acme_version: 2
     acme_directory: https://{{ acme_host }}:14000/dir
     validate_certs: no
-    account_key: "{{ output_dir }}/{{ account_key }}.pem"
+    account_key: "{{ (output_dir ~ '/' ~ account_key ~ '.pem') if account_key_content is not defined else omit }}"
+    account_key_content: "{{ account_key_content | default(omit) }}"
     modify_account: "{{ modify_account }}"
     csr: "{{ output_dir }}/{{ certificate_name }}.csr"
     dest: "{{ output_dir }}/{{ certificate_name }}.pem"
@@ -39,31 +40,6 @@
     terms_agreed: "{{ terms_agreed }}"
     account_email: "{{ account_email }}"
   register: challenge_data
-  when: account_key_content is not defined
-- name: ({{ certgen_title }}) Obtain cert, step 1 (using account key data)
-  acme_certificate:
-    select_crypto_backend: "{{ select_crypto_backend }}"
-    acme_version: 2
-    acme_directory: https://{{ acme_host }}:14000/dir
-    validate_certs: no
-    account_key_content: "{{ account_key_content }}"
-    modify_account: "{{ modify_account }}"
-    csr: "{{ output_dir }}/{{ certificate_name }}.csr"
-    dest: "{{ output_dir }}/{{ certificate_name }}.pem"
-    fullchain_dest: "{{ output_dir }}/{{ certificate_name }}-fullchain.pem"
-    chain_dest: "{{ output_dir }}/{{ certificate_name }}-chain.pem"
-    challenge: "{{ challenge }}"
-    deactivate_authzs: "{{ deactivate_authzs }}"
-    force: "{{ force }}"
-    remaining_days: "{{ remaining_days }}"
-    terms_agreed: "{{ terms_agreed }}"
-    account_email: "{{ account_email }}"
-  register: challenge_data_content
-  when: account_key_content is defined
-- name: ({{ certgen_title }}) Copy challenge data (when using account key data)
-  set_fact:
-    challenge_data: "{{ challenge_data_content }}"
-  when: account_key_content is defined
 - name: ({{ certgen_title }}) Print challenge data
   debug:
     var: challenge_data
@@ -120,7 +96,8 @@
     acme_version: 2
     acme_directory: https://{{ acme_host }}:14000/dir
     validate_certs: no
-    account_key: "{{ output_dir }}/{{ account_key }}.pem"
+    account_key: "{{ (output_dir ~ '/' ~ account_key ~ '.pem') if account_key_content is not defined else omit }}"
+    account_key_content: "{{ account_key_content | default(omit) }}"
     account_uri: "{{ challenge_data.account_uri }}"
     modify_account: "{{ modify_account }}"
     csr: "{{ output_dir }}/{{ certificate_name }}.csr"
@@ -134,28 +111,9 @@
     terms_agreed: "{{ terms_agreed }}"
     account_email: "{{ account_email }}"
     data: "{{ challenge_data }}"
-  when: challenge_data is changed and account_key_content is not defined
-- name: ({{ certgen_title }}) Obtain cert, step 2 (using account key data)
-  acme_certificate:
-    select_crypto_backend: "{{ select_crypto_backend }}"
-    acme_version: 2
-    acme_directory: https://{{ acme_host }}:14000/dir
-    validate_certs: no
-    account_key_content: "{{ account_key_content }}"
-    account_uri: "{{ challenge_data.account_uri }}"
-    modify_account: "{{ modify_account }}"
-    csr: "{{ output_dir }}/{{ certificate_name }}.csr"
-    dest: "{{ output_dir }}/{{ certificate_name }}.pem"
-    fullchain_dest: "{{ output_dir }}/{{ certificate_name }}-fullchain.pem"
-    chain_dest: "{{ output_dir }}/{{ certificate_name }}-chain.pem"
-    challenge: "{{ challenge }}"
-    deactivate_authzs: "{{ deactivate_authzs }}"
-    force: "{{ force }}"
-    remaining_days: "{{ remaining_days }}"
-    terms_agreed: "{{ terms_agreed }}"
-    account_email: "{{ account_email }}"
-    data: "{{ challenge_data }}"
-  when: challenge_data is changed and account_key_content is defined
+    retrieve_all_alternates: "{{ retrieve_all_alternates | default(omit) }}"
+  register: certificate_obtain_result
+  when: challenge_data is changed
 - name: ({{ certgen_title }}) Deleting HTTP challenges
   uri:
     url: "http://{{ acme_host }}:5000/http/{{ item.key }}/{{ item.value['http-01'].resource[('.well-known/acme-challenge/'|length):] }}"
@@ -176,6 +134,6 @@
   when: "challenge_data is changed and challenge == 'tls-alpn-01'"
 - name: ({{ certgen_title }}) Get root certificate
   get_url:
-    url: "http://{{ acme_host }}:5000/root-certificate-for-ca"
+    url: "http://{{ acme_host }}:5000/root-certificate-for-ca/0"
     dest: "{{ output_dir }}/{{ certificate_name }}-root.pem"
 ###############################################################################################

@@ -13,6 +13,7 @@ import time
 import yaml
 
 from jinja2 import BaseLoader, Environment, FileSystemLoader
+from yaml.error import YAMLError
 
 import ansible.constants as C
 from ansible import context
@@ -21,15 +22,15 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
-from ansible.galaxy.collection import build_collection, install_collections, parse_collections_requirements_file, \
-    publish_collection
+from ansible.galaxy.collection import build_collection, install_collections, publish_collection, \
+    validate_collection_name
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
-from ansible.galaxy.token import GalaxyToken
+from ansible.galaxy.token import GalaxyToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.playbook.role.requirement import RoleRequirement
-from ansible.utils.collection_loader import is_collection_ref
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
 
@@ -45,9 +46,11 @@ class GalaxyCLI(CLI):
         # Inject role into sys.argv[1] as a backwards compatibility step
         if len(args) > 1 and args[1] not in ['-h', '--help'] and 'role' not in args and 'collection' not in args:
             # TODO: Should we add a warning here and eventually deprecate the implicit role subcommand choice
-            args.insert(1, 'role')
+            # Remove this in Ansible 2.13 when we also remove -v as an option on the root parser for ansible-galaxy.
+            idx = 2 if args[1].startswith('-v') else 1
+            args.insert(idx, 'role')
 
-        self.api = None
+        self.api_servers = []
         self.galaxy = None
         super(GalaxyCLI, self).__init__(args)
 
@@ -55,20 +58,27 @@ class GalaxyCLI(CLI):
         ''' create an options parser for bin/ansible '''
 
         super(GalaxyCLI, self).init_parser(
-            desc="Perform various Role related operations.",
+            desc="Perform various Role and Collection related operations.",
         )
 
-        # common
+        # Common arguments that apply to more than 1 action
         common = opt_help.argparse.ArgumentParser(add_help=False)
-        common.add_argument('-s', '--server', dest='api_server', default=C.GALAXY_SERVER, help='The API server destination')
-        common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=C.GALAXY_IGNORE_CERTS,
-                            help='Ignore SSL certificate validation errors.')
+        common.add_argument('-s', '--server', dest='api_server', help='The Galaxy API server URL')
+        common.add_argument('--api-key', dest='api_key',
+                            help='The Ansible Galaxy API key which can be found at '
+                                 'https://galaxy.ansible.com/me/preferences. You can also use ansible-galaxy login to '
+                                 'retrieve this key or set the token for the GALAXY_SERVER_LIST entry.')
+        common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs',
+                            default=C.GALAXY_IGNORE_CERTS, help='Ignore SSL certificate validation errors.')
         opt_help.add_verbosity_options(common)
 
-        # options that apply to more than one action
-        user_repo = opt_help.argparse.ArgumentParser(add_help=False)
-        user_repo.add_argument('github_user', help='GitHub username')
-        user_repo.add_argument('github_repo', help='GitHub repository')
+        force = opt_help.argparse.ArgumentParser(add_help=False)
+        force.add_argument('-f', '--force', dest='force', action='store_true', default=False,
+                           help='Force overwriting an existing role or collection')
+
+        github = opt_help.argparse.ArgumentParser(add_help=False)
+        github.add_argument('github_user', help='GitHub username')
+        github.add_argument('github_repo', help='GitHub repository')
 
         offline = opt_help.argparse.ArgumentParser(add_help=False)
         offline.add_argument('--offline', dest='offline', default=False, action='store_true',
@@ -78,181 +88,205 @@ class GalaxyCLI(CLI):
         roles_path = opt_help.argparse.ArgumentParser(add_help=False)
         roles_path.add_argument('-p', '--roles-path', dest='roles_path', type=opt_help.unfrack_path(pathsep=True),
                                 default=C.DEFAULT_ROLES_PATH, action=opt_help.PrependListAction,
-                                help='The path to the directory containing your roles. The default is the first writable one'
-                                     'configured via DEFAULT_ROLES_PATH: %s ' % default_roles_path)
-
-        force = opt_help.argparse.ArgumentParser(add_help=False)
-        force.add_argument('-f', '--force', dest='force', action='store_true', default=False,
-                           help='Force overwriting an existing role or collection')
+                                help='The path to the directory containing your roles. The default is the first '
+                                     'writable one configured via DEFAULT_ROLES_PATH: %s ' % default_roles_path)
 
         # Add sub parser for the Galaxy role type (role or collection)
         type_parser = self.parser.add_subparsers(metavar='TYPE', dest='type')
         type_parser.required = True
 
-        # Define the actions for the collection object type
-        collection = type_parser.add_parser('collection',
-                                            parents=[common],
-                                            help='Manage an Ansible Galaxy collection.')
-
-        collection_parser = collection.add_subparsers(metavar='ACTION', dest='collection')
+        # Add sub parser for the Galaxy collection actions
+        collection = type_parser.add_parser('collection', help='Manage an Ansible Galaxy collection.')
+        collection_parser = collection.add_subparsers(metavar='COLLECTION_ACTION', dest='action')
         collection_parser.required = True
+        self.add_init_options(collection_parser, parents=[common, force])
+        self.add_build_options(collection_parser, parents=[common, force])
+        self.add_publish_options(collection_parser, parents=[common])
+        self.add_install_options(collection_parser, parents=[common, force])
 
-        build_parser = collection_parser.add_parser(
-            'build', help='Build an Ansible collection artifact that can be published to Ansible Galaxy.',
-            parents=[common, force])
-        build_parser.set_defaults(func=self.execute_build)
-        build_parser.add_argument(
-            'args', metavar='collection', nargs='*', default=('./',),
-            help='Path to the collection(s) directory to build. This should be the directory that contains the '
-                 'galaxy.yml file. The default is the current working directory.')
-
-        build_parser.add_argument(
-            '--output-path', dest='output_path', default='./',
-            help='The path in which the collection is built to. The default is the current working directory.')
-
-        self.add_init_parser(collection_parser, [common, force])
-
-        cinstall_parser = collection_parser.add_parser('install', help='Install collection from Ansible Galaxy',
-                                                       parents=[force, common])
-        cinstall_parser.set_defaults(func=self.execute_install)
-        cinstall_parser.add_argument('args', metavar='collection_name', nargs='*',
-                                     help='The collection(s) name or path/url to a tar.gz collection artifact. This '
-                                          'is mutually exclusive with --requirements-file.')
-        cinstall_parser.add_argument('-p', '--collections-path', dest='collections_path', required=True,
-                                     help='The path to the directory containing your collections.')
-        cinstall_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
-                                     help='Ignore errors during installation and continue with the next specified '
-                                          'collection. This will not ignore dependency conflict errors.')
-        cinstall_parser.add_argument('-r', '--requirements-file', dest='requirements',
-                                     help='A file containing a list of collections to be installed.')
-
-        cinstall_exclusive = cinstall_parser.add_mutually_exclusive_group()
-        cinstall_exclusive.add_argument('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
-                                        help="Don't download collections listed as dependencies")
-        cinstall_exclusive.add_argument('--force-with-deps', dest='force_with_deps', action='store_true', default=False,
-                                        help="Force overwriting an existing collection and its dependencies")
-
-        publish_parser = collection_parser.add_parser(
-            'publish', help='Publish a collection artifact to Ansible Galaxy.',
-            parents=[common])
-        publish_parser.set_defaults(func=self.execute_publish)
-        publish_parser.add_argument(
-            'args', metavar='collection_path', help='The path to the collection tarball to publish.')
-        publish_parser.add_argument(
-            '--api-key', dest='api_key',
-            help='The Ansible Galaxy API key which can be found at https://galaxy.ansible.com/me/preferences. '
-                 'You can also use ansible-galaxy login to retrieve this key.')
-        publish_parser.add_argument(
-            '--no-wait', dest='wait', action='store_false', default=True,
-            help="Don't wait for import validation results.")
-
-        # Define the actions for the role object type
-        role = type_parser.add_parser('role',
-                                      parents=[common],
-                                      help='Manage an Ansible Galaxy role.')
-        role_parser = role.add_subparsers(metavar='ACTION', dest='role')
+        # Add sub parser for the Galaxy role actions
+        role = type_parser.add_parser('role', help='Manage an Ansible Galaxy role.')
+        role_parser = role.add_subparsers(metavar='ROLE_ACTION', dest='action')
         role_parser.required = True
+        self.add_init_options(role_parser, parents=[common, force, offline])
+        self.add_remove_options(role_parser, parents=[common, roles_path])
+        self.add_delete_options(role_parser, parents=[common, github])
+        self.add_list_options(role_parser, parents=[common, roles_path])
+        self.add_search_options(role_parser, parents=[common])
+        self.add_import_options(role_parser, parents=[common, github])
+        self.add_setup_options(role_parser, parents=[common, roles_path])
+        self.add_login_options(role_parser, parents=[common])
+        self.add_info_options(role_parser, parents=[common, roles_path, offline])
+        self.add_install_options(role_parser, parents=[common, force, roles_path])
 
-        delete_parser = role_parser.add_parser('delete', parents=[user_repo, common],
-                                               help='Removes the role from Galaxy. It does not remove or alter the actual GitHub repository.')
-        delete_parser.set_defaults(func=self.execute_delete)
+    def add_init_options(self, parser, parents=None):
+        galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
 
-        import_parser = role_parser.add_parser('import', help='Import a role', parents=[user_repo, common])
-        import_parser.set_defaults(func=self.execute_import)
-        import_parser.add_argument('--no-wait', dest='wait', action='store_false', default=True, help="Don't wait for import results.")
-        import_parser.add_argument('--branch', dest='reference',
-                                   help='The name of a branch to import. Defaults to the repository\'s default branch (usually master)')
-        import_parser.add_argument('--role-name', dest='role_name', help='The name the role should have, if different than the repo name')
-        import_parser.add_argument('--status', dest='check_status', action='store_true', default=False,
-                                   help='Check the status of the most recent import request for given github_user/github_repo.')
+        init_parser = parser.add_parser('init', parents=parents,
+                                        help='Initialize new {0} with the base structure of a '
+                                             '{0}.'.format(galaxy_type))
+        init_parser.set_defaults(func=self.execute_init)
 
-        info_parser = role_parser.add_parser('info', help='View more details about a specific role.',
-                                             parents=[offline, common, roles_path])
-        info_parser.set_defaults(func=self.execute_info)
-        info_parser.add_argument('args', nargs='+', help='role', metavar='role_name[,version]')
+        init_parser.add_argument('--init-path', dest='init_path', default='./',
+                                 help='The path in which the skeleton {0} will be created. The default is the '
+                                      'current working directory.'.format(galaxy_type))
+        init_parser.add_argument('--{0}-skeleton'.format(galaxy_type), dest='{0}_skeleton'.format(galaxy_type),
+                                 default=C.GALAXY_ROLE_SKELETON,
+                                 help='The path to a {0} skeleton that the new {0} should be based '
+                                      'upon.'.format(galaxy_type))
 
-        rinit_parser = self.add_init_parser(role_parser, [offline, force, common])
-        rinit_parser.add_argument('--type',
-                                  dest='role_type',
-                                  action='store',
-                                  default='default',
-                                  help="Initialize using an alternate role type. Valid types include: 'container', 'apb' and 'network'.")
+        obj_name_kwargs = {}
+        if galaxy_type == 'collection':
+            obj_name_kwargs['type'] = validate_collection_name
+        init_parser.add_argument('{0}_name'.format(galaxy_type), help='{0} name'.format(galaxy_type.capitalize()),
+                                 **obj_name_kwargs)
 
-        install_parser = role_parser.add_parser('install', help='Install Roles from file(s), URL(s) or tar file(s)',
-                                                parents=[force, common, roles_path])
-        install_parser.set_defaults(func=self.execute_install)
-        install_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
-                                    help='Ignore errors and continue with the next specified role.')
-        install_parser.add_argument('-r', '--role-file', dest='role_file', help='A file containing a list of roles to be imported')
-        install_parser.add_argument('-g', '--keep-scm-meta', dest='keep_scm_meta', action='store_true',
-                                    default=False, help='Use tar instead of the scm archive option when packaging the role')
-        install_parser.add_argument('args', help='Role name, URL or tar file', metavar='role', nargs='*')
-        install_exclusive = install_parser.add_mutually_exclusive_group()
-        install_exclusive.add_argument('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
-                                       help="Don't download roles listed as dependencies")
-        install_exclusive.add_argument('--force-with-deps', dest='force_with_deps', action='store_true', default=False,
-                                       help="Force overwriting an existing role and it's dependencies")
+        if galaxy_type == 'role':
+            init_parser.add_argument('--type', dest='role_type', action='store', default='default',
+                                     help="Initialize using an alternate role type. Valid types include: 'container', "
+                                          "'apb' and 'network'.")
 
-        remove_parser = role_parser.add_parser('remove', help='Delete roles from roles_path.', parents=[common, roles_path])
+    def add_remove_options(self, parser, parents=None):
+        remove_parser = parser.add_parser('remove', parents=parents, help='Delete roles from roles_path.')
         remove_parser.set_defaults(func=self.execute_remove)
+
         remove_parser.add_argument('args', help='Role(s)', metavar='role', nargs='+')
 
-        list_parser = role_parser.add_parser('list', help='Show the name and version of each role installed in the roles_path.',
-                                             parents=[common, roles_path])
+    def add_delete_options(self, parser, parents=None):
+        delete_parser = parser.add_parser('delete', parents=parents,
+                                          help='Removes the role from Galaxy. It does not remove or alter the actual '
+                                               'GitHub repository.')
+        delete_parser.set_defaults(func=self.execute_delete)
+
+    def add_list_options(self, parser, parents=None):
+        list_parser = parser.add_parser('list', parents=parents,
+                                        help='Show the name and version of each role installed in the roles_path.')
         list_parser.set_defaults(func=self.execute_list)
+
         list_parser.add_argument('role', help='Role', nargs='?', metavar='role')
 
-        login_parser = role_parser.add_parser('login', parents=[common],
-                                              help="Login to api.github.com server in order to use ansible-galaxy role "
-                                                   "sub command such as 'import', 'delete', 'publish', and 'setup'")
-        login_parser.set_defaults(func=self.execute_login)
-        login_parser.add_argument('--github-token', dest='token', default=None,
-                                  help='Identify with github token rather than username and password.')
-
-        search_parser = role_parser.add_parser('search', help='Search the Galaxy database by tags, platforms, author and multiple keywords.',
-                                               parents=[common])
+    def add_search_options(self, parser, parents=None):
+        search_parser = parser.add_parser('search', parents=parents,
+                                          help='Search the Galaxy database by tags, platforms, author and multiple '
+                                               'keywords.')
         search_parser.set_defaults(func=self.execute_search)
+
         search_parser.add_argument('--platforms', dest='platforms', help='list of OS platforms to filter by')
         search_parser.add_argument('--galaxy-tags', dest='galaxy_tags', help='list of galaxy tags to filter by')
         search_parser.add_argument('--author', dest='author', help='GitHub username')
         search_parser.add_argument('args', help='Search terms', metavar='searchterm', nargs='*')
 
-        setup_parser = role_parser.add_parser('setup', help='Manage the integration between Galaxy and the given source.',
-                                              parents=[roles_path, common])
+    def add_import_options(self, parser, parents=None):
+        import_parser = parser.add_parser('import', parents=parents, help='Import a role')
+        import_parser.set_defaults(func=self.execute_import)
+
+        import_parser.add_argument('--no-wait', dest='wait', action='store_false', default=True,
+                                   help="Don't wait for import results.")
+        import_parser.add_argument('--branch', dest='reference',
+                                   help='The name of a branch to import. Defaults to the repository\'s default branch '
+                                        '(usually master)')
+        import_parser.add_argument('--role-name', dest='role_name',
+                                   help='The name the role should have, if different than the repo name')
+        import_parser.add_argument('--status', dest='check_status', action='store_true', default=False,
+                                   help='Check the status of the most recent import request for given github_'
+                                        'user/github_repo.')
+
+    def add_setup_options(self, parser, parents=None):
+        setup_parser = parser.add_parser('setup', parents=parents,
+                                         help='Manage the integration between Galaxy and the given source.')
         setup_parser.set_defaults(func=self.execute_setup)
+
         setup_parser.add_argument('--remove', dest='remove_id', default=None,
-                                  help='Remove the integration matching the provided ID value. Use --list to see ID values.')
-        setup_parser.add_argument('--list', dest="setup_list", action='store_true', default=False, help='List all of your integrations.')
+                                  help='Remove the integration matching the provided ID value. Use --list to see '
+                                       'ID values.')
+        setup_parser.add_argument('--list', dest="setup_list", action='store_true', default=False,
+                                  help='List all of your integrations.')
         setup_parser.add_argument('source', help='Source')
         setup_parser.add_argument('github_user', help='GitHub username')
         setup_parser.add_argument('github_repo', help='GitHub repository')
         setup_parser.add_argument('secret', help='Secret')
 
-    def add_init_parser(self, parser, parents):
-        galaxy_type = parser.dest
+    def add_login_options(self, parser, parents=None):
+        login_parser = parser.add_parser('login', parents=parents,
+                                         help="Login to api.github.com server in order to use ansible-galaxy role sub "
+                                              "command such as 'import', 'delete', 'publish', and 'setup'")
+        login_parser.set_defaults(func=self.execute_login)
 
-        obj_name_kwargs = {}
+        login_parser.add_argument('--github-token', dest='token', default=None,
+                                  help='Identify with github token rather than username and password.')
+
+    def add_info_options(self, parser, parents=None):
+        info_parser = parser.add_parser('info', parents=parents, help='View more details about a specific role.')
+        info_parser.set_defaults(func=self.execute_info)
+
+        info_parser.add_argument('args', nargs='+', help='role', metavar='role_name[,version]')
+
+    def add_install_options(self, parser, parents=None):
+        galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
+
+        args_kwargs = {}
         if galaxy_type == 'collection':
-            obj_name_kwargs['type'] = GalaxyCLI._validate_collection_name
+            args_kwargs['help'] = 'The collection(s) name or path/url to a tar.gz collection artifact. This is ' \
+                                  'mutually exclusive with --requirements-file.'
+            ignore_errors_help = 'Ignore errors during installation and continue with the next specified ' \
+                                 'collection. This will not ignore dependency conflict errors.'
+        else:
+            args_kwargs['help'] = 'Role name, URL or tar file'
+            ignore_errors_help = 'Ignore errors and continue with the next specified role.'
 
-        init_parser = parser.add_parser('init',
-                                        help='Initialize new {0} with the base structure of a {0}.'.format(galaxy_type),
-                                        parents=parents)
-        init_parser.set_defaults(func=self.execute_init)
+        install_parser = parser.add_parser('install', parents=parents,
+                                           help='Install {0}(s) from file(s), URL(s) or Ansible '
+                                                'Galaxy'.format(galaxy_type))
+        install_parser.set_defaults(func=self.execute_install)
 
-        init_parser.add_argument('--init-path',
-                                 dest='init_path',
-                                 default='./',
-                                 help='The path in which the skeleton {0} will be created. The default is the current working directory.'.format(galaxy_type))
-        init_parser.add_argument('--{0}-skeleton'.format(galaxy_type),
-                                 dest='{0}_skeleton'.format(galaxy_type),
-                                 default=C.GALAXY_ROLE_SKELETON,
-                                 help='The path to a {0} skeleton that the new {0} should be based upon.'.format(galaxy_type))
-        init_parser.add_argument('{0}_name'.format(galaxy_type),
-                                 help='{0} name'.format(galaxy_type.capitalize()),
-                                 **obj_name_kwargs)
+        install_parser.add_argument('args', metavar='{0}_name'.format(galaxy_type), nargs='*', **args_kwargs)
+        install_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
+                                    help=ignore_errors_help)
 
-        return init_parser
+        install_exclusive = install_parser.add_mutually_exclusive_group()
+        install_exclusive.add_argument('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
+                                       help="Don't download {0}s listed as dependencies.".format(galaxy_type))
+        install_exclusive.add_argument('--force-with-deps', dest='force_with_deps', action='store_true', default=False,
+                                       help="Force overwriting an existing {0} and its "
+                                            "dependencies.".format(galaxy_type))
+
+        if galaxy_type == 'collection':
+            install_parser.add_argument('-p', '--collections-path', dest='collections_path', required=True,
+                                        help='The path to the directory containing your collections.')
+            install_parser.add_argument('-r', '--requirements-file', dest='requirements',
+                                        help='A file containing a list of collections to be installed.')
+        else:
+            install_parser.add_argument('-r', '--role-file', dest='role_file',
+                                        help='A file containing a list of roles to be imported.')
+            install_parser.add_argument('-g', '--keep-scm-meta', dest='keep_scm_meta', action='store_true',
+                                        default=False,
+                                        help='Use tar instead of the scm archive option when packaging the role.')
+
+    def add_build_options(self, parser, parents=None):
+        build_parser = parser.add_parser('build', parents=parents,
+                                         help='Build an Ansible collection artifact that can be publish to Ansible '
+                                              'Galaxy.')
+        build_parser.set_defaults(func=self.execute_build)
+
+        build_parser.add_argument('args', metavar='collection', nargs='*', default=('.',),
+                                  help='Path to the collection(s) directory to build. This should be the directory '
+                                       'that contains the galaxy.yml file. The default is the current working '
+                                       'directory.')
+        build_parser.add_argument('--output-path', dest='output_path', default='./',
+                                  help='The path in which the collection is built to. The default is the current '
+                                       'working directory.')
+
+    def add_publish_options(self, parser, parents=None):
+        publish_parser = parser.add_parser('publish', parents=parents,
+                                           help='Publish a collection artifact to Ansible Galaxy.')
+        publish_parser.set_defaults(func=self.execute_publish)
+
+        publish_parser.add_argument('args', metavar='collection_path',
+                                    help='The path to the collection tarball to publish.')
+        publish_parser.add_argument('--no-wait', dest='wait', action='store_false', default=True,
+                                    help="Don't wait for import validation results.")
+        publish_parser.add_argument('--import-timeout', dest='import_timeout', type=int, default=0,
+                                    help="The time to wait for the collection import process to finish.")
 
     def post_process_args(self, options):
         options = super(GalaxyCLI, self).post_process_args(options)
@@ -265,8 +299,165 @@ class GalaxyCLI(CLI):
 
         self.galaxy = Galaxy()
 
-        self.api = GalaxyAPI(self.galaxy)
+        def server_config_def(section, key, required):
+            return {
+                'description': 'The %s of the %s Galaxy server' % (key, section),
+                'ini': [
+                    {
+                        'section': 'galaxy_server.%s' % section,
+                        'key': key,
+                    }
+                ],
+                'env': [
+                    {'name': 'ANSIBLE_GALAXY_SERVER_%s_%s' % (section.upper(), key.upper())},
+                ],
+                'required': required,
+            }
+        server_def = [('url', True), ('username', False), ('password', False), ('token', False)]
+
+        config_servers = []
+        for server_key in (C.GALAXY_SERVER_LIST or []):
+            # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
+            # section [galaxy_server.<server>] for the values url, username, password, and token.
+            config_dict = dict((k, server_config_def(server_key, k, req)) for k, req in server_def)
+            defs = AnsibleLoader(yaml.safe_dump(config_dict)).get_single_data()
+            C.config.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
+
+            server_options = C.config.get_plugin_options('galaxy_server', server_key)
+            token_val = server_options['token'] or NoTokenSentinel
+            server_options['token'] = GalaxyToken(token=token_val)
+            config_servers.append(GalaxyAPI(self.galaxy, server_key, **server_options))
+
+        cmd_server = context.CLIARGS['api_server']
+        cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
+        if cmd_server:
+            # Cmd args take precedence over the config entry but fist check if the arg was a name and use that config
+            # entry, otherwise create a new API entry for the server specified.
+            config_server = next((s for s in config_servers if s.name == cmd_server), None)
+            if config_server:
+                self.api_servers.append(config_server)
+            else:
+                self.api_servers.append(GalaxyAPI(self.galaxy, 'cmd_arg', cmd_server, token=cmd_token))
+        else:
+            self.api_servers = config_servers
+
+        # Default to C.GALAXY_SERVER if no servers were defined
+        if len(self.api_servers) == 0:
+            self.api_servers.append(GalaxyAPI(self.galaxy, 'default', C.GALAXY_SERVER, token=cmd_token))
+
         context.CLIARGS['func']()
+
+    @property
+    def api(self):
+        return self.api_servers[0]
+
+    def _parse_requirements_file(self, requirements_file, allow_old_format=True):
+        """
+        Parses an Ansible requirement.yml file and returns all the roles and/or collections defined in it. There are 2
+        requirements file format:
+
+            # v1 (roles only)
+            - src: The source of the role, required if include is not set. Can be Galaxy role name, URL to a SCM repo or tarball.
+              name: Downloads the role to the specified name, defaults to Galaxy name from Galaxy or name of repo if src is a URL.
+              scm: If src is a URL, specify the SCM. Only git or hd are supported and defaults ot git.
+              version: The version of the role to download. Can also be tag, commit, or branch name and defaults to master.
+              include: Path to additional requirements.yml files.
+
+            # v2 (roles and collections)
+            ---
+            roles:
+            # Same as v1 format just under the roles key
+
+            collections:
+            - namespace.collection
+            - name: namespace.collection
+              version: version identifier, multiple identifiers are separated by ','
+              source: the URL or a predefined source name that relates to C.GALAXY_SERVER_LIST
+
+        :param requirements_file: The path to the requirements file.
+        :param allow_old_format: Will fail if a v1 requirements file is found and this is set to False.
+        :return: a dict containing roles and collections to found in the requirements file.
+        """
+        requirements = {
+            'roles': [],
+            'collections': [],
+        }
+
+        b_requirements_file = to_bytes(requirements_file, errors='surrogate_or_strict')
+        if not os.path.exists(b_requirements_file):
+            raise AnsibleError("The requirements file '%s' does not exist." % to_native(requirements_file))
+
+        display.vvv("Reading requirement file at '%s'" % requirements_file)
+        with open(b_requirements_file, 'rb') as req_obj:
+            try:
+                file_requirements = yaml.safe_load(req_obj)
+            except YAMLError as err:
+                raise AnsibleError(
+                    "Failed to parse the requirements yml at '%s' with the following error:\n%s"
+                    % (to_native(requirements_file), to_native(err)))
+
+        if requirements_file is None:
+            raise AnsibleError("No requirements found in file '%s'" % to_native(requirements_file))
+
+        def parse_role_req(requirement):
+            if "include" not in requirement:
+                role = RoleRequirement.role_yaml_parse(requirement)
+                display.vvv("found role %s in yaml file" % to_text(role))
+                if "name" not in role and "src" not in role:
+                    raise AnsibleError("Must specify name or src for role")
+                return [GalaxyRole(self.galaxy, self.api, **role)]
+            else:
+                b_include_path = to_bytes(requirement["include"], errors="surrogate_or_strict")
+                if not os.path.isfile(b_include_path):
+                    raise AnsibleError("Failed to find include requirements file '%s' in '%s'"
+                                       % (to_native(b_include_path), to_native(requirements_file)))
+
+                with open(b_include_path, 'rb') as f_include:
+                    try:
+                        return [GalaxyRole(self.galaxy, self.api, **r) for r in
+                                (RoleRequirement.role_yaml_parse(i) for i in yaml.safe_load(f_include))]
+                    except Exception as e:
+                        raise AnsibleError("Unable to load data from include requirements file: %s %s"
+                                           % (to_native(requirements_file), to_native(e)))
+
+        if isinstance(file_requirements, list):
+            # Older format that contains only roles
+            if not allow_old_format:
+                raise AnsibleError("Expecting requirements file to be a dict with the key 'collections' that contains "
+                                   "a list of collections to install")
+
+            for role_req in file_requirements:
+                requirements['roles'] += parse_role_req(role_req)
+
+        else:
+            # Newer format with a collections and/or roles key
+            extra_keys = set(file_requirements.keys()).difference(set(['roles', 'collections']))
+            if extra_keys:
+                raise AnsibleError("Expecting only 'roles' and/or 'collections' as base keys in the requirements "
+                                   "file. Found: %s" % (to_native(", ".join(extra_keys))))
+
+            for role_req in file_requirements.get('roles', []):
+                requirements['roles'] += parse_role_req(role_req)
+
+            for collection_req in file_requirements.get('collections', []):
+                if isinstance(collection_req, dict):
+                    req_name = collection_req.get('name', None)
+                    if req_name is None:
+                        raise AnsibleError("Collections requirement entry should contain the key name.")
+
+                    req_version = collection_req.get('version', '*')
+                    req_source = collection_req.get('source', None)
+                    if req_source:
+                        # Try and match up the requirement source with our list of Galaxy API servers defined in the
+                        # config, otherwise create a server with that URL without any auth.
+                        req_source = next(iter([a for a in self.api_servers if req_source in [a.name, a.api_server]]),
+                                          GalaxyAPI(self.galaxy, "explicit_requirement_%s" % req_name, req_source))
+
+                    requirements['collections'].append((req_name, req_version, req_source))
+                else:
+                    requirements['collections'].append((collection_req, '*', None))
+
+        return requirements
 
     @staticmethod
     def exit_without_ignore(rc=1):
@@ -302,13 +493,6 @@ class GalaxyCLI(CLI):
     @staticmethod
     def _resolve_path(path):
         return os.path.abspath(os.path.expanduser(os.path.expandvars(path)))
-
-    @staticmethod
-    def _validate_collection_name(name):
-        if is_collection_ref('ansible_collections.{0}'.format(name)):
-            return name
-
-        raise AnsibleError("Invalid collection name, must be in the format <namespace>.<collection>")
 
     @staticmethod
     def _get_skeleton_galaxy_yml(template_path, inject_data):
@@ -413,7 +597,7 @@ class GalaxyCLI(CLI):
         obj_name = context.CLIARGS['{0}_name'.format(galaxy_type)]
 
         inject_data = dict(
-            description='your description',
+            description='your {0} description'.format(galaxy_type),
             ansible_plugin_list_dir=get_versioned_doclink('plugins/plugins.html'),
         )
         if galaxy_type == 'role':
@@ -525,7 +709,7 @@ class GalaxyCLI(CLI):
                 if not os.path.exists(b_dir_path):
                     os.makedirs(b_dir_path)
 
-        display.display("- %s was created successfully" % obj_name)
+        display.display("- %s %s was created successfully" % (galaxy_type.title(), obj_name))
 
     def execute_info(self):
         """
@@ -538,7 +722,7 @@ class GalaxyCLI(CLI):
         for role in context.CLIARGS['args']:
 
             role_info = {'path': roles_path}
-            gr = GalaxyRole(self.galaxy, role)
+            gr = GalaxyRole(self.galaxy, self.api, role)
 
             install_info = gr.install_info
             if install_info:
@@ -581,8 +765,6 @@ class GalaxyCLI(CLI):
             collections = context.CLIARGS['args']
             force = context.CLIARGS['force']
             output_path = context.CLIARGS['collections_path']
-            # TODO: use a list of server that have been configured in ~/.ansible_galaxy
-            servers = [context.CLIARGS['api_server']]
             ignore_certs = context.CLIARGS['ignore_certs']
             ignore_errors = context.CLIARGS['ignore_errors']
             requirements_file = context.CLIARGS['requirements']
@@ -596,12 +778,12 @@ class GalaxyCLI(CLI):
 
             if requirements_file:
                 requirements_file = GalaxyCLI._resolve_path(requirements_file)
-                collection_requirements = parse_collections_requirements_file(requirements_file)
+                requirements = self._parse_requirements_file(requirements_file, allow_old_format=False)['collections']
             else:
-                collection_requirements = []
+                requirements = []
                 for collection_input in collections:
                     name, dummy, requirement = collection_input.partition(':')
-                    collection_requirements.append((name, requirement or '*', None))
+                    requirements.append((name, requirement or '*', None))
 
             output_path = GalaxyCLI._resolve_path(output_path)
             collections_path = C.COLLECTIONS_PATHS
@@ -618,7 +800,7 @@ class GalaxyCLI(CLI):
             if not os.path.exists(b_output_path):
                 os.makedirs(b_output_path)
 
-            install_collections(collection_requirements, output_path, servers, (not ignore_certs), ignore_errors,
+            install_collections(requirements, output_path, self.api_servers, (not ignore_certs), ignore_errors,
                                 no_deps, force, force_deps)
 
             return 0
@@ -636,47 +818,16 @@ class GalaxyCLI(CLI):
 
         roles_left = []
         if role_file:
-            try:
-                f = open(role_file, 'r')
-                if role_file.endswith('.yaml') or role_file.endswith('.yml'):
-                    try:
-                        required_roles = yaml.safe_load(f.read())
-                    except Exception as e:
-                        raise AnsibleError(
-                            "Unable to load data from the requirements file (%s): %s" % (role_file, to_native(e))
-                        )
+            if not (role_file.endswith('.yaml') or role_file.endswith('.yml')):
+                raise AnsibleError("Invalid role requirements file, it must end with a .yml or .yaml extension")
 
-                    if required_roles is None:
-                        raise AnsibleError("No roles found in file: %s" % role_file)
-
-                    for role in required_roles:
-                        if "include" not in role:
-                            role = RoleRequirement.role_yaml_parse(role)
-                            display.vvv("found role %s in yaml file" % str(role))
-                            if "name" not in role and "scm" not in role:
-                                raise AnsibleError("Must specify name or src for role")
-                            roles_left.append(GalaxyRole(self.galaxy, **role))
-                        else:
-                            with open(role["include"]) as f_include:
-                                try:
-                                    roles_left += [
-                                        GalaxyRole(self.galaxy, **r) for r in
-                                        (RoleRequirement.role_yaml_parse(i) for i in yaml.safe_load(f_include))
-                                    ]
-                                except Exception as e:
-                                    msg = "Unable to load data from the include requirements file: %s %s"
-                                    raise AnsibleError(msg % (role_file, e))
-                else:
-                    raise AnsibleError("Invalid role requirements file")
-                f.close()
-            except (IOError, OSError) as e:
-                raise AnsibleError('Unable to open %s: %s' % (role_file, to_native(e)))
+            roles_left = self._parse_requirements_file(role_file)['roles']
         else:
             # roles were specified directly, so we'll just go out grab them
             # (and their dependencies, unless the user doesn't want us to).
             for rname in context.CLIARGS['args']:
                 role = RoleRequirement.role_yaml_parse(rname.strip())
-                roles_left.append(GalaxyRole(self.galaxy, **role))
+                roles_left.append(GalaxyRole(self.galaxy, self.api, **role))
 
         for role in roles_left:
             # only process roles in roles files when names matches if given
@@ -720,7 +871,7 @@ class GalaxyCLI(CLI):
                         display.debug('Installing dep %s' % dep)
                         dep_req = RoleRequirement()
                         dep_info = dep_req.role_yaml_parse(dep)
-                        dep_role = GalaxyRole(self.galaxy, **dep_info)
+                        dep_role = GalaxyRole(self.galaxy, self.api, **dep_info)
                         if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
                             # we know we can skip this, as it's not going to
                             # be found on galaxy.ansible.com
@@ -762,7 +913,7 @@ class GalaxyCLI(CLI):
             raise AnsibleOptionsError('- you must specify at least one role to remove.')
 
         for role_name in context.CLIARGS['args']:
-            role = GalaxyRole(self.galaxy, role_name)
+            role = GalaxyRole(self.galaxy, self.api, role_name)
             try:
                 if role.remove():
                     display.display('- successfully removed %s' % role_name)
@@ -790,7 +941,7 @@ class GalaxyCLI(CLI):
         if context.CLIARGS['role']:
             # show the requested role, if it exists
             name = context.CLIARGS['role']
-            gr = GalaxyRole(self.galaxy, name)
+            gr = GalaxyRole(self.galaxy, self.api, name)
             if gr.metadata:
                 display.display('# %s' % os.path.dirname(gr.path))
                 _display_role(gr)
@@ -813,7 +964,7 @@ class GalaxyCLI(CLI):
                 path_files = os.listdir(role_path)
                 path_found = True
                 for path_file in path_files:
-                    gr = GalaxyRole(self.galaxy, path_file, path=path)
+                    gr = GalaxyRole(self.galaxy, self.api, path_file, path=path)
                     if gr.metadata:
                         _display_role(gr)
             for w in warnings:
@@ -826,13 +977,11 @@ class GalaxyCLI(CLI):
         """
         Publish a collection into Ansible Galaxy. Requires the path to the collection tarball to publish.
         """
-        api_key = context.CLIARGS['api_key'] or GalaxyToken().get()
-        api_server = context.CLIARGS['api_server']
         collection_path = GalaxyCLI._resolve_path(context.CLIARGS['args'])
-        ignore_certs = context.CLIARGS['ignore_certs']
         wait = context.CLIARGS['wait']
+        timeout = context.CLIARGS['import_timeout']
 
-        publish_collection(collection_path, api_server, api_key, ignore_certs, wait)
+        publish_collection(collection_path, self.api, wait, timeout)
 
     def execute_search(self):
         ''' searches for roles on the Ansible Galaxy server'''
@@ -913,11 +1062,8 @@ class GalaxyCLI(CLI):
             'FAILED': C.COLOR_ERROR,
         }
 
-        if len(context.CLIARGS['args']) < 2:
-            raise AnsibleError("Expected a github_username and github_repository. Use --help.")
-
-        github_user = to_text(context.CLIARGS['args'][0], errors='surrogate_or_strict')
-        github_repo = to_text(context.CLIARGS['args'][1], errors='surrogate_or_strict')
+        github_user = to_text(context.CLIARGS['github_user'], errors='surrogate_or_strict')
+        github_repo = to_text(context.CLIARGS['github_repo'], errors='surrogate_or_strict')
 
         if context.CLIARGS['check_status']:
             task = self.api.get_import_task(github_user=github_user, github_repo=github_repo)

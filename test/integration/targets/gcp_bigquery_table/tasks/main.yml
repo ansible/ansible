@@ -53,9 +53,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'bigquery#table'"
 - name: verify that table was created
-  gcp_bigquery_table_facts:
+  gcp_bigquery_table_info:
       dataset: example_dataset
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -85,7 +84,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'bigquery#table'"
 #----------------------------------------------------------
 - name: delete a table
   gcp_bigquery_table:
@@ -105,7 +103,7 @@
     that:
       - result.changed == true
 - name: verify that table was deleted
-  gcp_bigquery_table_facts:
+  gcp_bigquery_table_info:
       dataset: example_dataset
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"

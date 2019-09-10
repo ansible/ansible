@@ -35,6 +35,7 @@ try:
 except ImportError:
     try:
         import MySQLdb as mysql_driver
+        import MySQLdb.cursors
         _mysql_cursor_param = 'cursorclass'
     except ImportError:
         mysql_driver = None
@@ -83,7 +84,7 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
     except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % to_native(e))
 
-    if cursor_class is not None:
+    if cursor_class == 'DictCursor':
         return db_connection.cursor(**{_mysql_cursor_param: mysql_driver.cursors.DictCursor})
     else:
         return db_connection.cursor()

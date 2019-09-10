@@ -63,6 +63,7 @@ VM_COMMON_ARG_SPEC = {
     'merge_type': {'type': 'list', 'choices': ['json', 'merge', 'strategic-merge']},
     'wait': {'type': 'bool', 'default': True},
     'wait_timeout': {'type': 'int', 'default': 120},
+    'wait_sleep': {'type': 'int', 'default': 5},
 }
 VM_COMMON_ARG_SPEC.update(VM_SPEC_DEF_ARG_SPEC)
 

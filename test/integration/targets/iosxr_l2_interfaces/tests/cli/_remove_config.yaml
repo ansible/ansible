@@ -1,0 +1,13 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      interface GigabitEthernet 0/0/0/1
+      no dot1q native vlan
+      no l2transport
+      no interface GigabitEthernet 0/0/0/2
+      no interface GigabitEthernet 0/0/0/3
+      no interface GigabitEthernet 0/0/0/3.900
+      no interface GigabitEthernet 0/0/0/4

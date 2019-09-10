@@ -254,7 +254,8 @@ def search_by_attributes(service, list_params=None, **kwargs):
     # Check if 'list' method support search(look for search parameter):
     if 'search' in inspect.getargspec(service.list)[0]:
         res = service.list(
-            search=' and '.join('{0}={1}'.format(k, v) for k, v in kwargs.items()),
+            # There must be double quotes around name, because some oVirt resources it's possible to create then with space in name.
+            search=' and '.join('{0}="{1}"'.format(k, v) for k, v in kwargs.items()),
             **list_params
         )
     else:
@@ -281,7 +282,8 @@ def search_by_name(service, name, **kwargs):
     # Check if 'list' method support search(look for search parameter):
     if 'search' in inspect.getargspec(service.list)[0]:
         res = service.list(
-            search="name={name}".format(name=name)
+            # There must be double quotes around name, because some oVirt resources it's possible to create then with space in name.
+            search='name="{name}"'.format(name=name)
         )
     else:
         res = [e for e in service.list() if e.name == name]
@@ -391,10 +393,10 @@ def __get_auth_dict():
     return auth
 
 
-def ovirt_facts_full_argument_spec(**kwargs):
+def ovirt_info_full_argument_spec(**kwargs):
     """
-    Extend parameters of facts module with parameters which are common to all
-    oVirt facts modules.
+    Extend parameters of info module with parameters which are common to all
+    oVirt info modules.
 
     :param kwargs: kwargs to be extended
     :return: extended dictionary with common parameters
@@ -406,6 +408,17 @@ def ovirt_facts_full_argument_spec(**kwargs):
     )
     spec.update(kwargs)
     return spec
+
+
+# Left for third-party module compatibility
+def ovirt_facts_full_argument_spec(**kwargs):
+    """
+    This is deprecated. Please use ovirt_info_full_argument_spec instead!
+
+    :param kwargs: kwargs to be extended
+    :return: extended dictionary with common parameters
+    """
+    return ovirt_info_full_argument_spec(**kwargs)
 
 
 def ovirt_full_argument_spec(**kwargs):

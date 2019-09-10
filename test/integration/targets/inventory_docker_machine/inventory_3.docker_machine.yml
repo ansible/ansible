@@ -1,0 +1,2 @@
+plugin: docker_machine
+daemon_env: optional

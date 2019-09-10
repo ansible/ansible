@@ -48,6 +48,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - A mutable string of at most 1024 characters associated with this resource for

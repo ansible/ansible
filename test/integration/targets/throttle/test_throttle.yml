@@ -1,0 +1,59 @@
+---
+- hosts: localhosts
+  gather_facts: false
+  vars:
+    throttledir: "{{ lookup('env', 'OUTPUT_DIR') }}/throttle.dir/"
+  tasks:
+    - name: Clean throttledir '{{ throttledir }}'
+      file:
+        state: absent
+        path: '{{ throttledir }}'
+      ignore_errors: yes
+      run_once: yes
+    - name: Create throttledir '{{ throttledir }}'
+      file:
+        state: directory
+        path: '{{ throttledir }}'
+      run_once: yes
+    - block:
+      - name: "Test 1 (max throttle: 3)"
+        script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 3"
+      throttle: 3
+    - block:
+      - name: "Test 2 (max throttle: 5)"
+        script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 5"
+        throttle: 5
+      - block:
+        - name: "Test 3 (max throttle: 8)"
+          script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 8"
+          throttle: 8
+        throttle: 6
+      - block:
+        - block:
+          - name: "Test 4 (max throttle: 8)"
+            script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 8"
+            throttle: 8
+          throttle: 6
+        throttle: 12
+      throttle: 15
+    - block:
+      - name: "Test 1 (max throttle: 3)"
+        script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 3"
+      throttle: 3
+    - block:
+      - name: "Test 2 (max throttle: 5)"
+        script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 5"
+        throttle: 5
+      - block:
+        - name: "Test 3 (max throttle: 6)"
+          script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 6"
+          throttle: 6
+        throttle: 3
+      - block:
+        - block:
+          - name: "Test 4 (max throttle: 8)"
+            script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 8"
+            throttle: 8
+          throttle: 6
+        throttle: 4
+      throttle: 2

@@ -29,8 +29,11 @@
 
 import json
 import os
+import random
+import mimetypes
 
 from pprint import pformat
+from ansible.module_utils import six
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils.urls import open_url
@@ -128,6 +131,16 @@ def ontap_sf_host_argument_spec():
         hostname=dict(required=True, type='str'),
         username=dict(required=True, type='str', aliases=['user']),
         password=dict(required=True, type='str', aliases=['pass'], no_log=True)
+    )
+
+
+def aws_cvs_host_argument_spec():
+
+    return dict(
+        api_url=dict(required=True, type='str'),
+        validate_certs=dict(required=False, type='bool', default=True),
+        api_key=dict(required=True, type='str'),
+        secret_key=dict(required=True, type='str')
     )
 
 
@@ -245,7 +258,8 @@ class NetAppESeriesModule(object):
     """
     DEFAULT_TIMEOUT = 60
     DEFAULT_SECURE_PORT = "8443"
-    DEFAULT_REST_API_PATH = "devmgr/v2"
+    DEFAULT_REST_API_PATH = "devmgr/v2/"
+    DEFAULT_REST_API_ABOUT_PATH = "devmgr/utils/about"
     DEFAULT_HEADERS = {"Content-Type": "application/json", "Accept": "application/json",
                        "netapp-client-type": "Ansible-%s" % ansible_version}
     HTTP_AGENT = "Ansible / %s" % ansible_version
@@ -264,122 +278,65 @@ class NetAppESeriesModule(object):
 
         args = self.module.params
         self.web_services_version = web_services_version if web_services_version else "02.00.0000.0000"
-        self.url = args["api_url"]
         self.ssid = args["ssid"]
+        self.url = args["api_url"]
+        self.log_requests = log_requests
         self.creds = dict(url_username=args["api_username"],
                           url_password=args["api_password"],
                           validate_certs=args["validate_certs"])
-        self.log_requests = log_requests
+
+        if not self.url.endswith("/"):
+            self.url += "/"
 
         self.is_embedded_mode = None
-        self.web_services_validate = None
+        self.is_web_services_valid_cache = None
 
-        self._tweak_url()
-
-    @property
-    def _about_url(self):
-        """Generates the about url based on the supplied web services rest api url.
-
-        :raise AnsibleFailJson: raised when supplied web services rest api is an invalid url.
-        :return: proxy or embedded about url.
-        """
-        about = list(urlparse(self.url))
-        about[2] = "devmgr/utils/about"
-        return urlunparse(about)
-
-    def _force_secure_url(self):
-        """Modifies supplied web services rest api to use secure https.
-
-        raise: AnsibleFailJson: raised when the url already utilizes the secure protocol
-        """
-        url_parts = list(urlparse(self.url))
-        if "https://" in self.url and ":8443" in self.url:
-            self.module.fail_json(msg="Secure HTTP protocol already used. URL path [%s]" % self.url)
-
-        url_parts[0] = "https"
-        url_parts[1] = "%s:8443" % url_parts[1].split(":")[0]
-
-        self.url = urlunparse(url_parts)
-        if not self.url.endswith("/"):
-            self.url += "/"
-
-        self.module.warn("forced use of the secure protocol: %s" % self.url)
-
-    def _tweak_url(self):
-        """Adjust the rest api url is necessary.
-
-        :raise AnsibleFailJson: raised when self.url fails to have a hostname or ipv4 address.
-        """
-        # ensure the protocol is either http or https
-        if self.url.split("://")[0] not in ["https", "http"]:
-
-            self.url = self.url.split("://")[1] if "://" in self.url else self.url
-
-            if ":8080" in self.url:
-                self.url = "http://%s" % self.url
-            else:
-                self.url = "https://%s" % self.url
-
-        # parse url and verify protocol, port and path are consistent with required web services rest api url.
-        url_parts = list(urlparse(self.url))
-        if url_parts[1] == "":
-            self.module.fail_json(msg="Failed to provide a valid hostname or IP address. URL [%s]." % self.url)
-
-        split_hostname = url_parts[1].split(":")
-        if url_parts[0] not in ["https", "http"] or (len(split_hostname) == 2 and split_hostname[1] != "8080"):
-            if len(split_hostname) == 2 and split_hostname[1] == "8080":
-                url_parts[0] = "http"
-                url_parts[1] = "%s:8080" % split_hostname[0]
-            else:
-                url_parts[0] = "https"
-                url_parts[1] = "%s:8443" % split_hostname[0]
-        elif len(split_hostname) == 1:
-            if url_parts[0] == "https":
-                url_parts[1] = "%s:8443" % split_hostname[0]
-            elif url_parts[0] == "http":
-                url_parts[1] = "%s:8080" % split_hostname[0]
-
-        if url_parts[2] == "" or url_parts[2] != self.DEFAULT_REST_API_PATH:
-            url_parts[2] = self.DEFAULT_REST_API_PATH
-
-        self.url = urlunparse(url_parts)
-        if not self.url.endswith("/"):
-            self.url += "/"
-
-        self.module.log("valid url: %s" % self.url)
-
-    def _is_web_services_valid(self):
+    def _check_web_services_version(self):
         """Verify proxy or embedded web services meets minimum version required for module.
 
         The minimum required web services version is evaluated against version supplied through the web services rest
         api. AnsibleFailJson exception will be raised when the minimum is not met or exceeded.
 
+        This helper function will update the supplied api url if secure http is not used for embedded web services
+
         :raise AnsibleFailJson: raised when the contacted api service does not meet the minimum required version.
         """
-        if not self.web_services_validate:
-            self.is_embedded()
-            try:
-                rc, data = request(self._about_url, timeout=self.DEFAULT_TIMEOUT,
-                                   headers=self.DEFAULT_HEADERS, **self.creds)
-                major, minor, other, revision = data["version"].split(".")
-                minimum_major, minimum_minor, other, minimum_revision = self.web_services_version.split(".")
+        if not self.is_web_services_valid_cache:
 
-                if not (major > minimum_major or
-                        (major == minimum_major and minor > minimum_minor) or
-                        (major == minimum_major and minor == minimum_minor and revision >= minimum_revision)):
-                    self.module.fail_json(
-                        msg="Web services version does not meet minimum version required. Current version: [%s]."
-                            " Version required: [%s]." % (data["version"], self.web_services_version))
-            except Exception as error:
-                self.module.fail_json(msg="Failed to retrieve the webservices about information! Array Id [%s]."
-                                          " Error [%s]." % (self.ssid, to_native(error)))
+            url_parts = urlparse(self.url)
+            if not url_parts.scheme or not url_parts.netloc:
+                self.module.fail_json(msg="Failed to provide valid API URL. Example: https://192.168.1.100:8443/devmgr/v2. URL [%s]." % self.url)
 
-            self.module.warn("Web services rest api version met the minimum required version.")
-            self.web_services_validate = True
+            if url_parts.scheme not in ["http", "https"]:
+                self.module.fail_json(msg="Protocol must be http or https. URL [%s]." % self.url)
 
-        return self.web_services_validate
+            self.url = "%s://%s/" % (url_parts.scheme, url_parts.netloc)
+            about_url = self.url + self.DEFAULT_REST_API_ABOUT_PATH
+            rc, data = request(about_url, timeout=self.DEFAULT_TIMEOUT, headers=self.DEFAULT_HEADERS, ignore_errors=True, **self.creds)
 
-    def is_embedded(self, retry=True):
+            if rc != 200:
+                self.module.warn("Failed to retrieve web services about information! Retrying with secure ports. Array Id [%s]." % self.ssid)
+                self.url = "https://%s:8443/" % url_parts.netloc.split(":")[0]
+                about_url = self.url + self.DEFAULT_REST_API_ABOUT_PATH
+                try:
+                    rc, data = request(about_url, timeout=self.DEFAULT_TIMEOUT, headers=self.DEFAULT_HEADERS, **self.creds)
+                except Exception as error:
+                    self.module.fail_json(msg="Failed to retrieve the webservices about information! Array Id [%s]. Error [%s]."
+                                              % (self.ssid, to_native(error)))
+
+            major, minor, other, revision = data["version"].split(".")
+            minimum_major, minimum_minor, other, minimum_revision = self.web_services_version.split(".")
+
+            if not (major > minimum_major or
+                    (major == minimum_major and minor > minimum_minor) or
+                    (major == minimum_major and minor == minimum_minor and revision >= minimum_revision)):
+                self.module.fail_json(msg="Web services version does not meet minimum version required. Current version: [%s]."
+                                          " Version required: [%s]." % (data["version"], self.web_services_version))
+
+            self.module.log("Web services rest api version met the minimum required version.")
+            self.is_web_services_valid_cache = True
+
+    def is_embedded(self):
         """Determine whether web services server is the embedded web services.
 
         If web services about endpoint fails based on an URLError then the request will be attempted again using
@@ -388,59 +345,106 @@ class NetAppESeriesModule(object):
         :raise AnsibleFailJson: raised when web services about endpoint failed to be contacted.
         :return bool: whether contacted web services is running from storage array (embedded) or from a proxy.
         """
+        self._check_web_services_version()
+
         if self.is_embedded_mode is None:
+            about_url = self.url + self.DEFAULT_REST_API_ABOUT_PATH
             try:
-                rc, data = request(self._about_url, timeout=self.DEFAULT_TIMEOUT,
-                                   headers=self.DEFAULT_HEADERS, **self.creds)
+                rc, data = request(about_url, timeout=self.DEFAULT_TIMEOUT, headers=self.DEFAULT_HEADERS, **self.creds)
                 self.is_embedded_mode = not data["runningAsProxy"]
-            except URLError as error:
-                if not retry:
-                    self.module.fail_json(msg="Failed to retrieve the webservices about information! Array Id [%s]."
-                                              " Error [%s]." % (self.ssid, to_native(error)))
-                self.module.warn("Failed to retrieve the webservices about information! Will retry using secure"
-                                 " http. Array Id [%s]." % self.ssid)
-                self._force_secure_url()
-                return self.is_embedded(retry=False)
             except Exception as error:
-                self.module.fail_json(msg="Failed to retrieve the webservices about information! Array Id [%s]."
-                                          " Error [%s]." % (self.ssid, to_native(error)))
+                self.module.fail_json(msg="Failed to retrieve the webservices about information! Array Id [%s]. Error [%s]."
+                                          % (self.ssid, to_native(error)))
 
         return self.is_embedded_mode
 
-    def request(self, path, data=None, method='GET', ignore_errors=False):
+    def request(self, path, data=None, method='GET', headers=None, ignore_errors=False):
         """Issue an HTTP request to a url, retrieving an optional JSON response.
 
         :param str path: web services rest api endpoint path (Example: storage-systems/1/graph). Note that when the
         full url path is specified then that will be used without supplying the protocol, hostname, port and rest path.
         :param data: data required for the request (data may be json or any python structured data)
         :param str method: request method such as GET, POST, DELETE.
+        :param dict headers: dictionary containing request headers.
         :param bool ignore_errors: forces the request to ignore any raised exceptions.
         """
-        if self._is_web_services_valid():
-            url = list(urlparse(path.strip("/")))
-            if url[2] == "":
-                self.module.fail_json(msg="Web services rest api endpoint path must be specified. Path [%s]." % path)
+        self._check_web_services_version()
 
-            # if either the protocol or hostname/port are missing then add them.
-            if url[0] == "" or url[1] == "":
-                url[0], url[1] = list(urlparse(self.url))[:2]
+        if headers is None:
+            headers = self.DEFAULT_HEADERS
 
-            # add rest api path if the supplied path does not begin with it.
-            if not all([word in url[2].split("/")[:2] for word in self.DEFAULT_REST_API_PATH.split("/")]):
-                if not url[2].startswith("/"):
-                    url[2] = "/" + url[2]
-                url[2] = self.DEFAULT_REST_API_PATH + url[2]
+        if not isinstance(data, str) and headers["Content-Type"] == "application/json":
+            data = json.dumps(data)
 
-            # ensure data is json formatted
-            if not isinstance(data, str):
-                data = json.dumps(data)
+        if path.startswith("/"):
+            path = path[1:]
+        request_url = self.url + self.DEFAULT_REST_API_PATH + path
 
-            if self.log_requests:
-                self.module.log(pformat(dict(url=urlunparse(url), data=data, method=method)))
+        if self.log_requests or True:
+            self.module.log(pformat(dict(url=request_url, data=data, method=method)))
 
-            return request(url=urlunparse(url), data=data, method=method, headers=self.DEFAULT_HEADERS, use_proxy=True,
-                           force=False, last_mod_time=None, timeout=self.DEFAULT_TIMEOUT, http_agent=self.HTTP_AGENT,
-                           force_basic_auth=True, ignore_errors=ignore_errors, **self.creds)
+        return request(url=request_url, data=data, method=method, headers=headers, use_proxy=True, force=False, last_mod_time=None,
+                       timeout=self.DEFAULT_TIMEOUT, http_agent=self.HTTP_AGENT, force_basic_auth=True, ignore_errors=ignore_errors, **self.creds)
+
+
+def create_multipart_formdata(files, fields=None, send_8kb=False):
+    """Create the data for a multipart/form request.
+
+    :param list(list) files: list of lists each containing (name, filename, path).
+    :param list(list) fields: list of lists each containing (key, value).
+    :param bool send_8kb: only sends the first 8kb of the files (default: False).
+    """
+    boundary = "---------------------------" + "".join([str(random.randint(0, 9)) for x in range(27)])
+    data_parts = list()
+    data = None
+
+    if six.PY2:  # Generate payload for Python 2
+        newline = "\r\n"
+        if fields is not None:
+            for key, value in fields:
+                data_parts.extend(["--%s" % boundary,
+                                   'Content-Disposition: form-data; name="%s"' % key,
+                                   "",
+                                   value])
+
+        for name, filename, path in files:
+            with open(path, "rb") as fh:
+                value = fh.read(8192) if send_8kb else fh.read()
+
+                data_parts.extend(["--%s" % boundary,
+                                   'Content-Disposition: form-data; name="%s"; filename="%s"' % (name, filename),
+                                   "Content-Type: %s" % (mimetypes.guess_type(path)[0] or "application/octet-stream"),
+                                   "",
+                                   value])
+        data_parts.extend(["--%s--" % boundary, ""])
+        data = newline.join(data_parts)
+
+    else:
+        newline = six.b("\r\n")
+        if fields is not None:
+            for key, value in fields:
+                data_parts.extend([six.b("--%s" % boundary),
+                                   six.b('Content-Disposition: form-data; name="%s"' % key),
+                                   six.b(""),
+                                   six.b(value)])
+
+        for name, filename, path in files:
+            with open(path, "rb") as fh:
+                value = fh.read(8192) if send_8kb else fh.read()
+
+                data_parts.extend([six.b("--%s" % boundary),
+                                   six.b('Content-Disposition: form-data; name="%s"; filename="%s"' % (name, filename)),
+                                   six.b("Content-Type: %s" % (mimetypes.guess_type(path)[0] or "application/octet-stream")),
+                                   six.b(""),
+                                   value])
+        data_parts.extend([six.b("--%s--" % boundary), b""])
+        data = newline.join(data_parts)
+
+    headers = {
+        "Content-Type": "multipart/form-data; boundary=%s" % boundary,
+        "Content-Length": str(len(data))}
+
+    return headers, data
 
 
 def request(url, data=None, headers=None, method='GET', use_proxy=True,
@@ -581,7 +585,7 @@ class OntapRestAPI(object):
             response.raise_for_status()
             json_dict, json_error = get_json(response)
         except requests.exceptions.HTTPError as err:
-            junk, json_error = get_json(response)
+            __, json_error = get_json(response)
             if json_error is None:
                 self.log_error(status_code, 'HTTP error: %s' % err)
                 error_details = str(err)
@@ -616,17 +620,30 @@ class OntapRestAPI(object):
         method = 'DELETE'
         return self.send_request(method, api, params, json=data)
 
-    def is_rest(self):
+    def _is_rest(self, used_unsupported_rest_properties=None):
         if self.use_rest == "Always":
-            return True
-        if self.use_rest == 'Never':
-            return False
+            if used_unsupported_rest_properties:
+                error = "REST API currently does not support '%s'" % \
+                        ', '.join(used_unsupported_rest_properties)
+                return True, error
+            else:
+                return True, None
+        if self.use_rest == 'Never' or used_unsupported_rest_properties:
+            # force ZAPI if requested or if some parameter requires it
+            return False, None
         method = 'HEAD'
         api = 'cluster/software'
-        status_code, junk = self.send_request(method, api, params=None, return_status_code=True)
+        status_code, __ = self.send_request(method, api, params=None, return_status_code=True)
         if status_code == 200:
-            return True
-        return False
+            return True, None
+        return False, None
+
+    def is_rest(self, used_unsupported_rest_properties=None):
+        ''' only return error if there is a reason to '''
+        use_rest, error = self._is_rest(used_unsupported_rest_properties)
+        if used_unsupported_rest_properties is None:
+            return use_rest
+        return use_rest, error
 
     def log_error(self, status_code, message):
         self.errors.append(message)
@@ -634,3 +651,94 @@ class OntapRestAPI(object):
 
     def log_debug(self, status_code, content):
         self.debug_logs.append((status_code, content))
+
+
+class AwsCvsRestAPI(object):
+    def __init__(self, module, timeout=60):
+        self.module = module
+        self.api_key = self.module.params['api_key']
+        self.secret_key = self.module.params['secret_key']
+        self.api_url = self.module.params['api_url']
+        self.verify = self.module.params['validate_certs']
+        self.timeout = timeout
+        self.url = 'https://' + self.api_url + '/v1/'
+        self.check_required_library()
+
+    def check_required_library(self):
+        if not HAS_REQUESTS:
+            self.module.fail_json(msg=missing_required_lib('requests'))
+
+    def send_request(self, method, api, params, json=None):
+        ''' send http request and process reponse, including error conditions '''
+        url = self.url + api
+        status_code = None
+        content = None
+        json_dict = None
+        json_error = None
+        error_details = None
+        headers = {
+            'Content-type': "application/json",
+            'api-key': self.api_key,
+            'secret-key': self.secret_key,
+            'Cache-Control': "no-cache",
+        }
+
+        def get_json(response):
+            ''' extract json, and error message if present '''
+            try:
+                json = response.json()
+
+            except ValueError:
+                return None, None
+            success_code = [200, 201, 202]
+            if response.status_code not in success_code:
+                error = json.get('message')
+            else:
+                error = None
+            return json, error
+        try:
+            response = requests.request(method, url, headers=headers, timeout=self.timeout, json=json)
+            status_code = response.status_code
+            # If the response was successful, no Exception will be raised
+            json_dict, json_error = get_json(response)
+        except requests.exceptions.HTTPError as err:
+            __, json_error = get_json(response)
+            if json_error is None:
+                error_details = str(err)
+        except requests.exceptions.ConnectionError as err:
+            error_details = str(err)
+        except Exception as err:
+            error_details = str(err)
+        if json_error is not None:
+            error_details = json_error
+
+        return json_dict, error_details
+
+    # If an error was reported in the json payload, it is handled below
+    def get(self, api, params=None):
+        method = 'GET'
+        return self.send_request(method, api, params)
+
+    def post(self, api, data, params=None):
+        method = 'POST'
+        return self.send_request(method, api, params, json=data)
+
+    def patch(self, api, data, params=None):
+        method = 'PATCH'
+        return self.send_request(method, api, params, json=data)
+
+    def put(self, api, data, params=None):
+        method = 'PUT'
+        return self.send_request(method, api, params, json=data)
+
+    def delete(self, api, data, params=None):
+        method = 'DELETE'
+        return self.send_request(method, api, params, json=data)
+
+    def get_state(self, jobId):
+        """ Method to get the state of the job """
+        method = 'GET'
+        response, status_code = self.get('Jobs/%s' % jobId)
+        while str(response['state']) not in 'done':
+            response, status_code = self.get('Jobs/%s' % jobId)
+        return 'done'

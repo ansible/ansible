@@ -1,0 +1,36 @@
+---
+- include_tasks: reset_config.yml
+
+- set_fact:
+    config:
+      - name: Ethernet1
+    expected_config:
+      - name: Ethernet2
+        transmit: False
+
+- eos_facts:
+    gather_network_resources: lldp_interfaces
+  become: yes
+
+- name: Returns interface lldp parameterss to default parameters
+  eos_lldp_interfaces:
+    config: "{{ config }}"
+    state: deleted
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lldp_interfaces|symmetric_difference(result.before) == []"
+
+- eos_facts:
+    gather_network_resources: lldp_interfaces
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lldp_interfaces|symmetric_difference(result.after) == []"
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lldp_interfaces == expected_config"

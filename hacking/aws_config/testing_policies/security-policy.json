@@ -108,6 +108,7 @@
                 "kms:GenerateRandom",
                 "kms:Get*",
                 "kms:List*",
+                "kms:PutKeyPolicy",
                 "kms:RetireGrant",
                 "kms:ScheduleKeyDeletion",
                 "kms:TagResource",
@@ -121,10 +122,39 @@
             "Sid": "AllowAccessToServerCertificates",
             "Effect": "Allow",
             "Action": [
-                "iam:ListServerCertificates",
-                "iam:UploadServerCertificate"
+                "iam:*ServerCertificates",
+                "iam:*ServerCertificate"
             ],
             "Resource": "*"
+        },
+        {
+            "Sid": "AllowAccessToSecrets",
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:*"
+            ],
+            "Resource": "arn:aws:secretsmanager:{{aws_region}}:{{aws_account}}:secret:ansible-test*"
+        },
+        {
+            "Sid": "AllowAccessToManagePasswordPolicy",
+            "Effect": "Allow",
+            "Action": [
+                "iam:*AccountPasswordPolicy"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowAccessToManageUsersAndGroups",
+            "Effect": "Allow",
+            "Action": [
+                "iam:*Group",
+                "iam:*User",
+                "iam:ListAttachedGroupPolicies"
+            ],
+            "Resource": [
+                "arn:aws:iam::{{ aws_account }}:user/ansible-test*",
+                "arn:aws:iam::{{ aws_account }}:group/ansible-test*"
+            ]
         }
     ]
 }

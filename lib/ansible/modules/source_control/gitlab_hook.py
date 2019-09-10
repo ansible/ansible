@@ -32,7 +32,7 @@ extends_documentation_fragment:
 options:
   api_token:
     description:
-      - Gitlab token for logging in.
+      - GitLab token for logging in.
     version_added: "2.8"
     type: str
     aliases:
@@ -40,7 +40,7 @@ options:
       - access_token
   project:
     description:
-      - Id or Full path of the project in the form of group/name
+      - Id or Full path of the project in the form of group/name.
     required: true
     type: str
   hook_url:
@@ -50,54 +50,55 @@ options:
     type: str
   state:
     description:
-      - When C(present) the hook will be updated to match the input or created if it doesn't exist. When C(absent) it will be deleted if it exists.
+      - When C(present) the hook will be updated to match the input or created if it doesn't exist.
+      - When C(absent) hook will be deleted if it exists.
     required: true
     default: present
     type: str
     choices: [ "present", "absent" ]
   push_events:
     description:
-      - Trigger hook on push events
+      - Trigger hook on push events.
     type: bool
     default: yes
   issues_events:
     description:
-      - Trigger hook on issues events
+      - Trigger hook on issues events.
     type: bool
     default: no
   merge_requests_events:
     description:
-      - Trigger hook on merge requests events
+      - Trigger hook on merge requests events.
     type: bool
     default: no
   tag_push_events:
     description:
-      - Trigger hook on tag push events
+      - Trigger hook on tag push events.
     type: bool
     default: no
   note_events:
     description:
-      - Trigger hook on note events
+      - Trigger hook on note events or when someone adds a comment.
     type: bool
     default: no
   job_events:
     description:
-      - Trigger hook on job events
+      - Trigger hook on job events.
     type: bool
     default: no
   pipeline_events:
     description:
-      - Trigger hook on pipeline events
+      - Trigger hook on pipeline events.
     type: bool
     default: no
   wiki_page_events:
     description:
-      - Trigger hook on wiki events
+      - Trigger hook on wiki events.
     type: bool
     default: no
   hook_validate_certs:
     description:
-      - Whether GitLab will do SSL verification when triggering the hook
+      - Whether GitLab will do SSL verification when triggering the hook.
     type: bool
     default: no
     aliases: [ enable_ssl_verification ]
@@ -105,7 +106,7 @@ options:
     description:
       - Secret token to validate hook messages at the receiver.
       - If this is present it will always result in a change as it cannot be retrieved from GitLab.
-      - Will show up in the X-Gitlab-Token HTTP request header
+      - Will show up in the X-GitLab-Token HTTP request header.
     required: false
     type: str
 '''
@@ -153,7 +154,7 @@ result:
   type: dict
 
 error:
-  description: the error message returned by the Gitlab API
+  description: the error message returned by the GitLab API
   returned: failed
   type: str
   sample: "400: path is already in use"
@@ -365,10 +366,10 @@ def main():
                                         private_token=gitlab_token, api_version=4)
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
-            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s. \
+            GitLab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
 
     gitlab_hook = GitLabHook(module, gitlab_instance)
 

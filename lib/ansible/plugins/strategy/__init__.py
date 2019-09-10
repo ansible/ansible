@@ -155,10 +155,15 @@ class StrategyBase:
     code useful to all strategies like running handlers, cleanup actions, etc.
     '''
 
+    # by default, strategies should support throttling but we allow individual
+    # strategies to disable this and either forego supporting it or managing
+    # the throttling internally (as `free` does)
+    ALLOW_BASE_THROTTLING = True
+
     def __init__(self, tqm):
         self._tqm = tqm
         self._inventory = tqm.get_inventory()
-        self._workers = tqm.get_workers()
+        self._workers = tqm._workers
         self._variable_manager = tqm.get_variable_manager()
         self._loader = tqm.get_loader()
         self._final_q = tqm._final_q
@@ -310,6 +315,14 @@ class StrategyBase:
             display.debug('Creating lock for %s' % task.action)
             action_write_locks.action_write_locks[task.action] = Lock()
 
+        # create a templar and template things we need later for the queuing process
+        templar = Templar(loader=self._loader, variables=task_vars)
+
+        try:
+            throttle = int(templar.template(task.throttle))
+        except Exception as e:
+            raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
+
         # and then queue the new task
         try:
             queued = False
@@ -330,9 +343,25 @@ class StrategyBase:
                     worker_prc.start()
                     display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True
+
                 self._cur_worker += 1
-                if self._cur_worker >= len(self._workers):
+
+                # Determine the "rewind point" of the worker list. This means we start
+                # iterating over the list of workers until the end of the list is found.
+                # Normally, that is simply the length of the workers list (as determined
+                # by the forks or serial setting), however a task/block/play may "throttle"
+                # that limit down.
+                rewind_point = len(self._workers)
+                if throttle > 0 and self.ALLOW_BASE_THROTTLING:
+                    if task.run_once:
+                        display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
+                    else:
+                        if throttle <= rewind_point:
+                            display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
+                            rewind_point = throttle
+                if self._cur_worker >= rewind_point:
                     self._cur_worker = 0
+
                 if queued:
                     break
                 elif self._cur_worker == starting_worker:
@@ -356,12 +385,6 @@ class StrategyBase:
         host_name = result.get('_ansible_delegated_vars', {}).get('ansible_delegated_host', None)
         return [host_name or task.delegate_to]
 
-    def get_handler_templar(self, handler_task, iterator):
-        handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task,
-                                                       _hosts=self._hosts_cache,
-                                                       _hosts_all=self._hosts_cache_all)
-        return Templar(loader=self._loader, variables=handler_vars)
-
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         '''
@@ -370,6 +393,7 @@ class StrategyBase:
         '''
 
         ret_results = []
+        handler_templar = Templar(self._loader)
 
         def get_original_host(host_name):
             # FIXME: this should not need x2 _inventory
@@ -385,8 +409,12 @@ class StrategyBase:
                 for handler_task in handler_block.block:
                     if handler_task.name:
                         if not handler_task.cached_name:
-                            templar = self.get_handler_templar(handler_task, iterator)
-                            handler_task.name = templar.template(handler_task.name)
+                            if handler_templar.is_template(handler_task.name):
+                                handler_templar.available_variables = self._variable_manager.get_vars(play=iterator._play,
+                                                                                                      task=handler_task,
+                                                                                                      _hosts=self._hosts_cache,
+                                                                                                      _hosts_all=self._hosts_cache_all)
+                                handler_task.name = handler_templar.template(handler_task.name)
                             handler_task.cached_name = True
 
                         try:
@@ -541,9 +569,11 @@ class StrategyBase:
                                 for listening_handler_block in iterator._play.handlers:
                                     for listening_handler in listening_handler_block.block:
                                         listeners = getattr(listening_handler, 'listen', []) or []
-                                        templar = self.get_handler_templar(listening_handler, iterator)
+                                        if not listeners:
+                                            continue
+
                                         listeners = listening_handler.get_validated_value(
-                                            'listen', listening_handler._valid_attrs['listen'], listeners, templar
+                                            'listen', listening_handler._valid_attrs['listen'], listeners, handler_templar
                                         )
                                         if handler_name not in listeners:
                                             continue

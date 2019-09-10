@@ -35,9 +35,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#targetPool'"
 - name: verify that target_pool was created
-  gcp_compute_target_pool_facts:
+  gcp_compute_target_pool_info:
       filters:
          - name = {{ resource_name }}
       region: us-west1
@@ -65,7 +64,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#targetPool'"
 #----------------------------------------------------------
 - name: delete a target pool
   gcp_compute_target_pool:
@@ -81,7 +79,7 @@
     that:
       - result.changed == true
 - name: verify that target_pool was deleted
-  gcp_compute_target_pool_facts:
+  gcp_compute_target_pool_info:
       filters:
          - name = {{ resource_name }}
       region: us-west1

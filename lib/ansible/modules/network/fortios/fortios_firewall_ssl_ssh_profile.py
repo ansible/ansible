@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_firewall_ssl_ssh_profile
 short_description: Configure SSL/SSH protocol options in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure firewall feature and ssl_ssh_profile category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify firewall feature and ssl_ssh_profile category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,82 +41,117 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip adress.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     firewall_ssl_ssh_profile:
         description:
             - Configure SSL/SSH protocol options.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
             caname:
                 description:
                     - CA certificate used by SSL Inspection. Source vpn.certificate.local.name.
+                type: str
             comment:
                 description:
                     - Optional comments.
+                type: str
             ftps:
                 description:
                     - Configure FTPS options.
+                type: dict
                 suboptions:
-                    allow-invalid-server-cert:
+                    allow_invalid_server_cert:
                         description:
                             - When enabled, allows SSL sessions whose server certificate validation failed.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    client-cert-request:
+                    client_cert_request:
                         description:
                             - Action based on client certificate request.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
                     ports:
                         description:
-                            - Ports to use for scanning (1 - 65535, default = 443).
+                            - Ports to use for scanning (1 - 65535).
+                        type: int
                     status:
                         description:
                             - Configure protocol inspection status.
+                        type: str
                         choices:
                             - disable
                             - deep-inspection
-                    unsupported-ssl:
+                    unsupported_ssl:
                         description:
                             - Action based on the SSL encryption used being unsupported.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
-                    untrusted-cert:
+                    untrusted_cert:
                         description:
                             - Allow, ignore, or block the untrusted SSL session server certificate.
+                        type: str
                         choices:
                             - allow
                             - block
@@ -127,40 +159,47 @@ options:
             https:
                 description:
                     - Configure HTTPS options.
+                type: dict
                 suboptions:
-                    allow-invalid-server-cert:
+                    allow_invalid_server_cert:
                         description:
                             - When enabled, allows SSL sessions whose server certificate validation failed.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    client-cert-request:
+                    client_cert_request:
                         description:
                             - Action based on client certificate request.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
                     ports:
                         description:
-                            - Ports to use for scanning (1 - 65535, default = 443).
+                            - Ports to use for scanning (1 - 65535).
+                        type: int
                     status:
                         description:
                             - Configure protocol inspection status.
+                        type: str
                         choices:
                             - disable
                             - certificate-inspection
                             - deep-inspection
-                    unsupported-ssl:
+                    unsupported_ssl:
                         description:
                             - Action based on the SSL encryption used being unsupported.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
-                    untrusted-cert:
+                    untrusted_cert:
                         description:
                             - Allow, ignore, or block the untrusted SSL session server certificate.
+                        type: str
                         choices:
                             - allow
                             - block
@@ -168,46 +207,54 @@ options:
             imaps:
                 description:
                     - Configure IMAPS options.
+                type: dict
                 suboptions:
-                    allow-invalid-server-cert:
+                    allow_invalid_server_cert:
                         description:
                             - When enabled, allows SSL sessions whose server certificate validation failed.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    client-cert-request:
+                    client_cert_request:
                         description:
                             - Action based on client certificate request.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
                     ports:
                         description:
-                            - Ports to use for scanning (1 - 65535, default = 443).
+                            - Ports to use for scanning (1 - 65535).
+                        type: int
                     status:
                         description:
                             - Configure protocol inspection status.
+                        type: str
                         choices:
                             - disable
                             - deep-inspection
-                    unsupported-ssl:
+                    unsupported_ssl:
                         description:
                             - Action based on the SSL encryption used being unsupported.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
-                    untrusted-cert:
+                    untrusted_cert:
                         description:
                             - Allow, ignore, or block the untrusted SSL session server certificate.
+                        type: str
                         choices:
                             - allow
                             - block
                             - ignore
-            mapi-over-https:
+            mapi_over_https:
                 description:
                     - Enable/disable inspection of MAPI over HTTPS.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -215,97 +262,115 @@ options:
                 description:
                     - Name.
                 required: true
+                type: str
             pop3s:
                 description:
                     - Configure POP3S options.
+                type: dict
                 suboptions:
-                    allow-invalid-server-cert:
+                    allow_invalid_server_cert:
                         description:
                             - When enabled, allows SSL sessions whose server certificate validation failed.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    client-cert-request:
+                    client_cert_request:
                         description:
                             - Action based on client certificate request.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
                     ports:
                         description:
-                            - Ports to use for scanning (1 - 65535, default = 443).
+                            - Ports to use for scanning (1 - 65535).
+                        type: int
                     status:
                         description:
                             - Configure protocol inspection status.
+                        type: str
                         choices:
                             - disable
                             - deep-inspection
-                    unsupported-ssl:
+                    unsupported_ssl:
                         description:
                             - Action based on the SSL encryption used being unsupported.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
-                    untrusted-cert:
+                    untrusted_cert:
                         description:
                             - Allow, ignore, or block the untrusted SSL session server certificate.
+                        type: str
                         choices:
                             - allow
                             - block
                             - ignore
-            rpc-over-https:
+            rpc_over_https:
                 description:
                     - Enable/disable inspection of RPC over HTTPS.
+                type: str
                 choices:
                     - enable
                     - disable
-            server-cert:
+            server_cert:
                 description:
                     - Certificate used by SSL Inspection to replace server certificate. Source vpn.certificate.local.name.
-            server-cert-mode:
+                type: str
+            server_cert_mode:
                 description:
                     - Re-sign or replace the server's certificate.
+                type: str
                 choices:
                     - re-sign
                     - replace
             smtps:
                 description:
                     - Configure SMTPS options.
+                type: dict
                 suboptions:
-                    allow-invalid-server-cert:
+                    allow_invalid_server_cert:
                         description:
                             - When enabled, allows SSL sessions whose server certificate validation failed.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    client-cert-request:
+                    client_cert_request:
                         description:
                             - Action based on client certificate request.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
                     ports:
                         description:
-                            - Ports to use for scanning (1 - 65535, default = 443).
+                            - Ports to use for scanning (1 - 65535).
+                        type: int
                     status:
                         description:
                             - Configure protocol inspection status.
+                        type: str
                         choices:
                             - disable
                             - deep-inspection
-                    unsupported-ssl:
+                    unsupported_ssl:
                         description:
                             - Action based on the SSL encryption used being unsupported.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
-                    untrusted-cert:
+                    untrusted_cert:
                         description:
                             - Allow, ignore, or block the untrusted SSL session server certificate.
+                        type: str
                         choices:
                             - allow
                             - block
@@ -313,142 +378,169 @@ options:
             ssh:
                 description:
                     - Configure SSH options.
+                type: dict
                 suboptions:
-                    inspect-all:
+                    inspect_all:
                         description:
                             - Level of SSL inspection.
+                        type: str
                         choices:
                             - disable
                             - deep-inspection
                     ports:
                         description:
-                            - Ports to use for scanning (1 - 65535, default = 443).
-                    ssh-algorithm:
+                            - Ports to use for scanning (1 - 65535).
+                        type: int
+                    ssh_algorithm:
                         description:
                             - Relative strength of encryption algorithms accepted during negotiation.
+                        type: str
                         choices:
                             - compatible
                             - high-encryption
-                    ssh-policy-check:
+                    ssh_policy_check:
                         description:
                             - Enable/disable SSH policy check.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    ssh-tun-policy-check:
+                    ssh_tun_policy_check:
                         description:
                             - Enable/disable SSH tunnel policy check.
+                        type: str
                         choices:
                             - disable
                             - enable
                     status:
                         description:
                             - Configure protocol inspection status.
+                        type: str
                         choices:
                             - disable
                             - deep-inspection
-                    unsupported-version:
+                    unsupported_version:
                         description:
                             - Action based on SSH version being unsupported.
+                        type: str
                         choices:
                             - bypass
                             - block
             ssl:
                 description:
                     - Configure SSL options.
+                type: dict
                 suboptions:
-                    allow-invalid-server-cert:
+                    allow_invalid_server_cert:
                         description:
                             - When enabled, allows SSL sessions whose server certificate validation failed.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    client-cert-request:
+                    client_cert_request:
                         description:
                             - Action based on client certificate request.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
-                    inspect-all:
+                    inspect_all:
                         description:
                             - Level of SSL inspection.
+                        type: str
                         choices:
                             - disable
                             - certificate-inspection
                             - deep-inspection
-                    unsupported-ssl:
+                    unsupported_ssl:
                         description:
                             - Action based on the SSL encryption used being unsupported.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
-                    untrusted-cert:
+                    untrusted_cert:
                         description:
                             - Allow, ignore, or block the untrusted SSL session server certificate.
+                        type: str
                         choices:
                             - allow
                             - block
                             - ignore
-            ssl-anomalies-log:
+            ssl_anomalies_log:
                 description:
                     - Enable/disable logging SSL anomalies.
+                type: str
                 choices:
                     - disable
                     - enable
-            ssl-exempt:
+            ssl_exempt:
                 description:
                     - Servers to exempt from SSL inspection.
+                type: list
                 suboptions:
                     address:
                         description:
                             - IPv4 address object. Source firewall.address.name firewall.addrgrp.name.
+                        type: str
                     address6:
                         description:
                             - IPv6 address object. Source firewall.address6.name firewall.addrgrp6.name.
-                    fortiguard-category:
+                        type: str
+                    fortiguard_category:
                         description:
                             - FortiGuard category ID.
+                        type: int
                     id:
                         description:
                             - ID number.
                         required: true
+                        type: int
                     regex:
                         description:
                             - Exempt servers by regular expression.
+                        type: str
                     type:
                         description:
                             - Type of address object (IPv4 or IPv6) or FortiGuard category.
+                        type: str
                         choices:
                             - fortiguard-category
                             - address
                             - address6
                             - wildcard-fqdn
                             - regex
-                    wildcard-fqdn:
+                    wildcard_fqdn:
                         description:
                             - Exempt servers by wildcard FQDN. Source firewall.wildcard-fqdn.custom.name firewall.wildcard-fqdn.group.name.
-            ssl-exemptions-log:
+                        type: str
+            ssl_exemptions_log:
                 description:
                     - Enable/disable logging SSL exemptions.
+                type: str
                 choices:
                     - disable
                     - enable
-            ssl-server:
+            ssl_server:
                 description:
                     - SSL servers.
+                type: list
                 suboptions:
-                    ftps-client-cert-request:
+                    ftps_client_cert_request:
                         description:
                             - Action based on client certificate request during the FTPS handshake.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
-                    https-client-cert-request:
+                    https_client_cert_request:
                         description:
                             - Action based on client certificate request during the HTTPS handshake.
+                        type: str
                         choices:
                             - bypass
                             - inspect
@@ -457,9 +549,11 @@ options:
                         description:
                             - SSL server ID.
                         required: true
-                    imaps-client-cert-request:
+                        type: int
+                    imaps_client_cert_request:
                         description:
                             - Action based on client certificate request during the IMAPS handshake.
+                        type: str
                         choices:
                             - bypass
                             - inspect
@@ -467,39 +561,46 @@ options:
                     ip:
                         description:
                             - IPv4 address of the SSL server.
-                    pop3s-client-cert-request:
+                        type: str
+                    pop3s_client_cert_request:
                         description:
                             - Action based on client certificate request during the POP3S handshake.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
-                    smtps-client-cert-request:
+                    smtps_client_cert_request:
                         description:
                             - Action based on client certificate request during the SMTPS handshake.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
-                    ssl-other-client-cert-request:
+                    ssl_other_client_cert_request:
                         description:
                             - Action based on client certificate request during an SSL protocol handshake.
+                        type: str
                         choices:
                             - bypass
                             - inspect
                             - block
-            untrusted-caname:
+            untrusted_caname:
                 description:
                     - Untrusted CA certificate used by SSL Inspection. Source vpn.certificate.local.name.
-            use-ssl-server:
+                type: str
+            use_ssl_server:
                 description:
                     - Enable/disable the use of SSL server table for SSL offloading.
+                type: str
                 choices:
                     - disable
                     - enable
             whitelist:
                 description:
                     - Enable/disable exempting servers by FortiGuard whitelist.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -512,6 +613,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure SSL/SSH protocol options.
     fortios_firewall_ssl_ssh_profile:
@@ -520,87 +622,87 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       firewall_ssl_ssh_profile:
-        state: "present"
         caname: "<your_own_value> (source vpn.certificate.local.name)"
         comment: "Optional comments."
         ftps:
-            allow-invalid-server-cert: "enable"
-            client-cert-request: "bypass"
+            allow_invalid_server_cert: "enable"
+            client_cert_request: "bypass"
             ports: "8"
             status: "disable"
-            unsupported-ssl: "bypass"
-            untrusted-cert: "allow"
+            unsupported_ssl: "bypass"
+            untrusted_cert: "allow"
         https:
-            allow-invalid-server-cert: "enable"
-            client-cert-request: "bypass"
+            allow_invalid_server_cert: "enable"
+            client_cert_request: "bypass"
             ports: "15"
             status: "disable"
-            unsupported-ssl: "bypass"
-            untrusted-cert: "allow"
+            unsupported_ssl: "bypass"
+            untrusted_cert: "allow"
         imaps:
-            allow-invalid-server-cert: "enable"
-            client-cert-request: "bypass"
+            allow_invalid_server_cert: "enable"
+            client_cert_request: "bypass"
             ports: "22"
             status: "disable"
-            unsupported-ssl: "bypass"
-            untrusted-cert: "allow"
-        mapi-over-https: "enable"
+            unsupported_ssl: "bypass"
+            untrusted_cert: "allow"
+        mapi_over_https: "enable"
         name: "default_name_27"
         pop3s:
-            allow-invalid-server-cert: "enable"
-            client-cert-request: "bypass"
+            allow_invalid_server_cert: "enable"
+            client_cert_request: "bypass"
             ports: "31"
             status: "disable"
-            unsupported-ssl: "bypass"
-            untrusted-cert: "allow"
-        rpc-over-https: "enable"
-        server-cert: "<your_own_value> (source vpn.certificate.local.name)"
-        server-cert-mode: "re-sign"
+            unsupported_ssl: "bypass"
+            untrusted_cert: "allow"
+        rpc_over_https: "enable"
+        server_cert: "<your_own_value> (source vpn.certificate.local.name)"
+        server_cert_mode: "re-sign"
         smtps:
-            allow-invalid-server-cert: "enable"
-            client-cert-request: "bypass"
+            allow_invalid_server_cert: "enable"
+            client_cert_request: "bypass"
             ports: "41"
             status: "disable"
-            unsupported-ssl: "bypass"
-            untrusted-cert: "allow"
+            unsupported_ssl: "bypass"
+            untrusted_cert: "allow"
         ssh:
-            inspect-all: "disable"
+            inspect_all: "disable"
             ports: "47"
-            ssh-algorithm: "compatible"
-            ssh-policy-check: "disable"
-            ssh-tun-policy-check: "disable"
+            ssh_algorithm: "compatible"
+            ssh_policy_check: "disable"
+            ssh_tun_policy_check: "disable"
             status: "disable"
-            unsupported-version: "bypass"
+            unsupported_version: "bypass"
         ssl:
-            allow-invalid-server-cert: "enable"
-            client-cert-request: "bypass"
-            inspect-all: "disable"
-            unsupported-ssl: "bypass"
-            untrusted-cert: "allow"
-        ssl-anomalies-log: "disable"
-        ssl-exempt:
+            allow_invalid_server_cert: "enable"
+            client_cert_request: "bypass"
+            inspect_all: "disable"
+            unsupported_ssl: "bypass"
+            untrusted_cert: "allow"
+        ssl_anomalies_log: "disable"
+        ssl_exempt:
          -
             address: "<your_own_value> (source firewall.address.name firewall.addrgrp.name)"
             address6: "<your_own_value> (source firewall.address6.name firewall.addrgrp6.name)"
-            fortiguard-category: "63"
+            fortiguard_category: "63"
             id:  "64"
             regex: "<your_own_value>"
             type: "fortiguard-category"
-            wildcard-fqdn: "<your_own_value> (source firewall.wildcard-fqdn.custom.name firewall.wildcard-fqdn.group.name)"
-        ssl-exemptions-log: "disable"
-        ssl-server:
+            wildcard_fqdn: "<your_own_value> (source firewall.wildcard-fqdn.custom.name firewall.wildcard-fqdn.group.name)"
+        ssl_exemptions_log: "disable"
+        ssl_server:
          -
-            ftps-client-cert-request: "bypass"
-            https-client-cert-request: "bypass"
+            ftps_client_cert_request: "bypass"
+            https_client_cert_request: "bypass"
             id:  "72"
-            imaps-client-cert-request: "bypass"
+            imaps_client_cert_request: "bypass"
             ip: "<your_own_value>"
-            pop3s-client-cert-request: "bypass"
-            smtps-client-cert-request: "bypass"
-            ssl-other-client-cert-request: "bypass"
-        untrusted-caname: "<your_own_value> (source vpn.certificate.local.name)"
-        use-ssl-server: "disable"
+            pop3s_client_cert_request: "bypass"
+            smtps_client_cert_request: "bypass"
+            ssl_other_client_cert_request: "bypass"
+        untrusted_caname: "<your_own_value> (source vpn.certificate.local.name)"
+        use_ssl_server: "disable"
         whitelist: "enable"
 '''
 
@@ -664,14 +766,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -679,17 +783,17 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_firewall_ssl_ssh_profile_data(json):
     option_list = ['caname', 'comment', 'ftps',
-                   'https', 'imaps', 'mapi-over-https',
-                   'name', 'pop3s', 'rpc-over-https',
-                   'server-cert', 'server-cert-mode', 'smtps',
-                   'ssh', 'ssl', 'ssl-anomalies-log',
-                   'ssl-exempt', 'ssl-exemptions-log', 'ssl-server',
-                   'untrusted-caname', 'use-ssl-server', 'whitelist']
+                   'https', 'imaps', 'mapi_over_https',
+                   'name', 'pop3s', 'rpc_over_https',
+                   'server_cert', 'server_cert_mode', 'smtps',
+                   'ssh', 'ssl', 'ssl_anomalies_log',
+                   'ssl_exempt', 'ssl_exemptions_log', 'ssl_server',
+                   'untrusted_caname', 'use_ssl_server', 'whitelist']
     dictionary = {}
 
     for attribute in option_list:
@@ -699,192 +803,217 @@ def filter_firewall_ssl_ssh_profile_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def firewall_ssl_ssh_profile(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_ssl_ssh_profile'] and data['firewall_ssl_ssh_profile']:
+        state = data['firewall_ssl_ssh_profile']['state']
+    else:
+        state = True
     firewall_ssl_ssh_profile_data = data['firewall_ssl_ssh_profile']
-    filtered_data = filter_firewall_ssl_ssh_profile_data(firewall_ssl_ssh_profile_data)
-    if firewall_ssl_ssh_profile_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_firewall_ssl_ssh_profile_data(firewall_ssl_ssh_profile_data))
+
+    if state == "present":
         return fos.set('firewall',
                        'ssl-ssh-profile',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif firewall_ssl_ssh_profile_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('firewall',
                           'ssl-ssh-profile',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_firewall(data, fos):
-    login(data)
 
-    methodlist = ['firewall_ssl_ssh_profile']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['firewall_ssl_ssh_profile']:
+        resp = firewall_ssl_ssh_profile(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "firewall_ssl_ssh_profile": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "caname": {"required": False, "type": "str"},
                 "comment": {"required": False, "type": "str"},
                 "ftps": {"required": False, "type": "dict",
                          "options": {
-                             "allow-invalid-server-cert": {"required": False, "type": "str",
+                             "allow_invalid_server_cert": {"required": False, "type": "str",
                                                            "choices": ["enable", "disable"]},
-                             "client-cert-request": {"required": False, "type": "str",
+                             "client_cert_request": {"required": False, "type": "str",
                                                      "choices": ["bypass", "inspect", "block"]},
                              "ports": {"required": False, "type": "int"},
                              "status": {"required": False, "type": "str",
                                         "choices": ["disable", "deep-inspection"]},
-                             "unsupported-ssl": {"required": False, "type": "str",
+                             "unsupported_ssl": {"required": False, "type": "str",
                                                  "choices": ["bypass", "inspect", "block"]},
-                             "untrusted-cert": {"required": False, "type": "str",
+                             "untrusted_cert": {"required": False, "type": "str",
                                                 "choices": ["allow", "block", "ignore"]}
                          }},
                 "https": {"required": False, "type": "dict",
                           "options": {
-                              "allow-invalid-server-cert": {"required": False, "type": "str",
+                              "allow_invalid_server_cert": {"required": False, "type": "str",
                                                             "choices": ["enable", "disable"]},
-                              "client-cert-request": {"required": False, "type": "str",
+                              "client_cert_request": {"required": False, "type": "str",
                                                       "choices": ["bypass", "inspect", "block"]},
                               "ports": {"required": False, "type": "int"},
                               "status": {"required": False, "type": "str",
                                          "choices": ["disable", "certificate-inspection", "deep-inspection"]},
-                              "unsupported-ssl": {"required": False, "type": "str",
+                              "unsupported_ssl": {"required": False, "type": "str",
                                                   "choices": ["bypass", "inspect", "block"]},
-                              "untrusted-cert": {"required": False, "type": "str",
+                              "untrusted_cert": {"required": False, "type": "str",
                                                  "choices": ["allow", "block", "ignore"]}
                           }},
                 "imaps": {"required": False, "type": "dict",
                           "options": {
-                              "allow-invalid-server-cert": {"required": False, "type": "str",
+                              "allow_invalid_server_cert": {"required": False, "type": "str",
                                                             "choices": ["enable", "disable"]},
-                              "client-cert-request": {"required": False, "type": "str",
+                              "client_cert_request": {"required": False, "type": "str",
                                                       "choices": ["bypass", "inspect", "block"]},
                               "ports": {"required": False, "type": "int"},
                               "status": {"required": False, "type": "str",
                                          "choices": ["disable", "deep-inspection"]},
-                              "unsupported-ssl": {"required": False, "type": "str",
+                              "unsupported_ssl": {"required": False, "type": "str",
                                                   "choices": ["bypass", "inspect", "block"]},
-                              "untrusted-cert": {"required": False, "type": "str",
+                              "untrusted_cert": {"required": False, "type": "str",
                                                  "choices": ["allow", "block", "ignore"]}
                           }},
-                "mapi-over-https": {"required": False, "type": "str",
+                "mapi_over_https": {"required": False, "type": "str",
                                     "choices": ["enable", "disable"]},
                 "name": {"required": True, "type": "str"},
                 "pop3s": {"required": False, "type": "dict",
                           "options": {
-                              "allow-invalid-server-cert": {"required": False, "type": "str",
+                              "allow_invalid_server_cert": {"required": False, "type": "str",
                                                             "choices": ["enable", "disable"]},
-                              "client-cert-request": {"required": False, "type": "str",
+                              "client_cert_request": {"required": False, "type": "str",
                                                       "choices": ["bypass", "inspect", "block"]},
                               "ports": {"required": False, "type": "int"},
                               "status": {"required": False, "type": "str",
                                          "choices": ["disable", "deep-inspection"]},
-                              "unsupported-ssl": {"required": False, "type": "str",
+                              "unsupported_ssl": {"required": False, "type": "str",
                                                   "choices": ["bypass", "inspect", "block"]},
-                              "untrusted-cert": {"required": False, "type": "str",
+                              "untrusted_cert": {"required": False, "type": "str",
                                                  "choices": ["allow", "block", "ignore"]}
                           }},
-                "rpc-over-https": {"required": False, "type": "str",
+                "rpc_over_https": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
-                "server-cert": {"required": False, "type": "str"},
-                "server-cert-mode": {"required": False, "type": "str",
+                "server_cert": {"required": False, "type": "str"},
+                "server_cert_mode": {"required": False, "type": "str",
                                      "choices": ["re-sign", "replace"]},
                 "smtps": {"required": False, "type": "dict",
                           "options": {
-                              "allow-invalid-server-cert": {"required": False, "type": "str",
+                              "allow_invalid_server_cert": {"required": False, "type": "str",
                                                             "choices": ["enable", "disable"]},
-                              "client-cert-request": {"required": False, "type": "str",
+                              "client_cert_request": {"required": False, "type": "str",
                                                       "choices": ["bypass", "inspect", "block"]},
                               "ports": {"required": False, "type": "int"},
                               "status": {"required": False, "type": "str",
                                          "choices": ["disable", "deep-inspection"]},
-                              "unsupported-ssl": {"required": False, "type": "str",
+                              "unsupported_ssl": {"required": False, "type": "str",
                                                   "choices": ["bypass", "inspect", "block"]},
-                              "untrusted-cert": {"required": False, "type": "str",
+                              "untrusted_cert": {"required": False, "type": "str",
                                                  "choices": ["allow", "block", "ignore"]}
                           }},
                 "ssh": {"required": False, "type": "dict",
                         "options": {
-                            "inspect-all": {"required": False, "type": "str",
+                            "inspect_all": {"required": False, "type": "str",
                                             "choices": ["disable", "deep-inspection"]},
                             "ports": {"required": False, "type": "int"},
-                            "ssh-algorithm": {"required": False, "type": "str",
+                            "ssh_algorithm": {"required": False, "type": "str",
                                               "choices": ["compatible", "high-encryption"]},
-                            "ssh-policy-check": {"required": False, "type": "str",
+                            "ssh_policy_check": {"required": False, "type": "str",
                                                  "choices": ["disable", "enable"]},
-                            "ssh-tun-policy-check": {"required": False, "type": "str",
+                            "ssh_tun_policy_check": {"required": False, "type": "str",
                                                      "choices": ["disable", "enable"]},
                             "status": {"required": False, "type": "str",
                                        "choices": ["disable", "deep-inspection"]},
-                            "unsupported-version": {"required": False, "type": "str",
+                            "unsupported_version": {"required": False, "type": "str",
                                                     "choices": ["bypass", "block"]}
                         }},
                 "ssl": {"required": False, "type": "dict",
                         "options": {
-                            "allow-invalid-server-cert": {"required": False, "type": "str",
+                            "allow_invalid_server_cert": {"required": False, "type": "str",
                                                           "choices": ["enable", "disable"]},
-                            "client-cert-request": {"required": False, "type": "str",
+                            "client_cert_request": {"required": False, "type": "str",
                                                     "choices": ["bypass", "inspect", "block"]},
-                            "inspect-all": {"required": False, "type": "str",
+                            "inspect_all": {"required": False, "type": "str",
                                             "choices": ["disable", "certificate-inspection", "deep-inspection"]},
-                            "unsupported-ssl": {"required": False, "type": "str",
+                            "unsupported_ssl": {"required": False, "type": "str",
                                                 "choices": ["bypass", "inspect", "block"]},
-                            "untrusted-cert": {"required": False, "type": "str",
+                            "untrusted_cert": {"required": False, "type": "str",
                                                "choices": ["allow", "block", "ignore"]}
                         }},
-                "ssl-anomalies-log": {"required": False, "type": "str",
+                "ssl_anomalies_log": {"required": False, "type": "str",
                                       "choices": ["disable", "enable"]},
-                "ssl-exempt": {"required": False, "type": "list",
+                "ssl_exempt": {"required": False, "type": "list",
                                "options": {
                                    "address": {"required": False, "type": "str"},
                                    "address6": {"required": False, "type": "str"},
-                                   "fortiguard-category": {"required": False, "type": "int"},
+                                   "fortiguard_category": {"required": False, "type": "int"},
                                    "id": {"required": True, "type": "int"},
                                    "regex": {"required": False, "type": "str"},
                                    "type": {"required": False, "type": "str",
                                             "choices": ["fortiguard-category", "address", "address6",
                                                         "wildcard-fqdn", "regex"]},
-                                   "wildcard-fqdn": {"required": False, "type": "str"}
+                                   "wildcard_fqdn": {"required": False, "type": "str"}
                                }},
-                "ssl-exemptions-log": {"required": False, "type": "str",
+                "ssl_exemptions_log": {"required": False, "type": "str",
                                        "choices": ["disable", "enable"]},
-                "ssl-server": {"required": False, "type": "list",
+                "ssl_server": {"required": False, "type": "list",
                                "options": {
-                                   "ftps-client-cert-request": {"required": False, "type": "str",
+                                   "ftps_client_cert_request": {"required": False, "type": "str",
                                                                 "choices": ["bypass", "inspect", "block"]},
-                                   "https-client-cert-request": {"required": False, "type": "str",
+                                   "https_client_cert_request": {"required": False, "type": "str",
                                                                  "choices": ["bypass", "inspect", "block"]},
                                    "id": {"required": True, "type": "int"},
-                                   "imaps-client-cert-request": {"required": False, "type": "str",
+                                   "imaps_client_cert_request": {"required": False, "type": "str",
                                                                  "choices": ["bypass", "inspect", "block"]},
                                    "ip": {"required": False, "type": "str"},
-                                   "pop3s-client-cert-request": {"required": False, "type": "str",
+                                   "pop3s_client_cert_request": {"required": False, "type": "str",
                                                                  "choices": ["bypass", "inspect", "block"]},
-                                   "smtps-client-cert-request": {"required": False, "type": "str",
+                                   "smtps_client_cert_request": {"required": False, "type": "str",
                                                                  "choices": ["bypass", "inspect", "block"]},
-                                   "ssl-other-client-cert-request": {"required": False, "type": "str",
+                                   "ssl_other_client_cert_request": {"required": False, "type": "str",
                                                                      "choices": ["bypass", "inspect", "block"]}
                                }},
-                "untrusted-caname": {"required": False, "type": "str"},
-                "use-ssl-server": {"required": False, "type": "str",
+                "untrusted_caname": {"required": False, "type": "str"},
+                "use_ssl_server": {"required": False, "type": "str",
                                    "choices": ["disable", "enable"]},
                 "whitelist": {"required": False, "type": "str",
                               "choices": ["enable", "disable"]}
@@ -895,15 +1024,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_firewall(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_firewall(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_firewall(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

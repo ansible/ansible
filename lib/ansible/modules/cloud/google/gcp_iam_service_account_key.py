@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   private_key_type:
     description:
     - Output format for the service account key.

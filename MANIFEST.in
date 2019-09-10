@@ -2,28 +2,38 @@ include README.rst
 include COPYING
 include SYMLINK_CACHE.json
 include requirements.txt
-include .coveragerc
 include shippable.yml
-include tox.ini
-include bin/ansible-test
+recursive-include docs *
+exclude docs/docsite/rst_warnings
+recursive-exclude docs/docsite/_build *
+recursive-exclude docs/docsite/_extensions *.pyc *.pyo
 include examples/hosts
 include examples/ansible.cfg
 include examples/scripts/ConfigureRemotingForAnsible.ps1
 include examples/scripts/upgrade_to_ps3.ps1
-recursive-include lib/ansible/executor/powershell *
-recursive-include lib/ansible/module_utils/csharp *
-recursive-include lib/ansible/module_utils/powershell *
-recursive-include lib/ansible/modules *
-recursive-include lib/ansible/galaxy/data *
-recursive-include docs *
-recursive-include licenses *
+recursive-include lib/ansible/executor/powershell *.ps1
+recursive-include lib/ansible/module_utils/csharp *.cs
+recursive-include lib/ansible/module_utils/powershell *.psm1
+recursive-include lib/ansible/modules/windows *.ps1
+recursive-include lib/ansible/galaxy/data *.yml *.j2 README.md ansible.cfg inventory .git_keep
+recursive-include lib/ansible/config *.yml
+recursive-include licenses *.txt
 recursive-include packaging *
-recursive-include test *
+recursive-include test/ansible_test *.py Makefile
+recursive-include test/cache .keep
+recursive-include test/integration *
+recursive-include test/lib/ansible_test/config *.template
+recursive-include test/lib/ansible_test/_data *.cfg *.ini *.json *.ps1 *.psd1 *.py *.sh *.txt *.yml coveragerc inventory
+recursive-include test/lib/ansible_test/_data/injector ansible ansible-config ansible-connection ansible-console ansible-doc ansible-galaxy ansible-playbook ansible-pull ansible-test ansible-vault pytest
+recursive-include test/lib/ansible_test/_data/sanity/validate-modules validate-modules
+recursive-include test/results .keep
+recursive-include test/sanity *.json *.py *.txt
+exclude test/sanity/code-smell/botmeta.*
+recursive-include test/units *
 include Makefile
 include MANIFEST.in
 include changelogs/CHANGELOG*.rst
 include contrib/README.md
-recursive-include contrib/inventory *
-exclude test/sanity/code-smell/botmeta.*
+recursive-include contrib/inventory *.py *.ini *.yml *.yaml
 recursive-include hacking/build_library *.py
 include hacking/build-ansible.py

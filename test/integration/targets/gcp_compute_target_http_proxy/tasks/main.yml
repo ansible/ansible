@@ -22,7 +22,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: instancegroup
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-targethttpproxy
     healthy_threshold: 10
@@ -47,7 +47,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: backendservice
-- name: create a url map
+- name: create a URL map
   gcp_compute_url_map:
     name: urlmap-targethttpproxy
     default_service: "{{ backendservice }}"
@@ -56,7 +56,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: urlmap
-- name: delete a target http proxy
+- name: delete a target HTTP proxy
   gcp_compute_target_http_proxy:
     name: "{{ resource_name }}"
     url_map: "{{ urlmap }}"
@@ -65,7 +65,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: absent
 #----------------------------------------------------------
-- name: create a target http proxy
+- name: create a target HTTP proxy
   gcp_compute_target_http_proxy:
     name: "{{ resource_name }}"
     url_map: "{{ urlmap }}"
@@ -78,9 +78,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#targetHttpProxy'"
 - name: verify that target_http_proxy was created
-  gcp_compute_target_http_proxy_facts:
+  gcp_compute_target_http_proxy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -94,7 +93,7 @@
     that:
       - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
-- name: create a target http proxy that already exists
+- name: create a target HTTP proxy that already exists
   gcp_compute_target_http_proxy:
     name: "{{ resource_name }}"
     url_map: "{{ urlmap }}"
@@ -107,9 +106,8 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#targetHttpProxy'"
 #----------------------------------------------------------
-- name: delete a target http proxy
+- name: delete a target HTTP proxy
   gcp_compute_target_http_proxy:
     name: "{{ resource_name }}"
     url_map: "{{ urlmap }}"
@@ -123,7 +121,7 @@
     that:
       - result.changed == true
 - name: verify that target_http_proxy was deleted
-  gcp_compute_target_http_proxy_facts:
+  gcp_compute_target_http_proxy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -137,7 +135,7 @@
     that:
       - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
-- name: delete a target http proxy that does not exist
+- name: delete a target HTTP proxy that does not exist
   gcp_compute_target_http_proxy:
     name: "{{ resource_name }}"
     url_map: "{{ urlmap }}"
@@ -153,7 +151,7 @@
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!
-- name: delete a url map
+- name: delete a URL map
   gcp_compute_url_map:
     name: urlmap-targethttpproxy
     default_service: "{{ backendservice }}"
@@ -177,7 +175,7 @@
     state: absent
   register: backendservice
   ignore_errors: true
-- name: delete a http health check
+- name: delete a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-targethttpproxy
     healthy_threshold: 10

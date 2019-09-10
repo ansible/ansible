@@ -28,6 +28,21 @@ notes:
    - "The M(acme_account) module allows to modify, create and delete ACME accounts."
    - "This module was called C(acme_account_facts) before Ansible 2.8. The usage
       did not change."
+options:
+  retrieve_orders:
+    description:
+      - "Whether to retrieve the list of order URLs or order objects, if provided
+         by the ACME server."
+      - "A value of C(ignore) will not fetch the list of orders."
+      - "Currently, Let's Encrypt does not return orders, so the C(orders) result
+         will always be empty."
+    type: str
+    choices:
+      - ignore
+      - url_list
+      - object_list
+    default: ignore
+    version_added: "2.9"
 seealso:
   - module: acme_account
     description: Allows to create, modify or delete an ACME account.
@@ -90,7 +105,10 @@ account:
       choices: ['valid', 'deactivated', 'revoked']
       sample: valid
     orders:
-      description: a URL where a list of orders can be retrieved for this account
+      description:
+        - A URL where a list of orders can be retrieved for this account.
+        - Use the I(retrieve_orders) option to query this URL and retrieve the
+          complete list of orders.
       returned: always
       type: str
       sample: https://example.ca/account/1/orders
@@ -99,13 +117,124 @@ account:
       returned: always
       type: str
       sample: https://example.ca/account/1/orders
+
+orders:
+  description:
+    - "The list of orders."
+    - "If I(retrieve_orders) is C(url_list), this will be a list of URLs."
+    - "If I(retrieve_orders) is C(object_list), this will be a list of objects."
+  type: list
+  returned: if account exists, I(retrieve_orders) is not C(ignore), and server supports order listing
+  contains:
+    status:
+      description: The order's status.
+      type: str
+      choices:
+        - pending
+        - ready
+        - processing
+        - valid
+        - invalid
+    expires:
+      description:
+        - When the order expires.
+        - Timestamp should be formatted as described in RFC3339.
+        - Only required to be included in result when I(status) is C(pending) or C(valid).
+      type: str
+      returned: when server gives expiry date
+    identifiers:
+      description:
+        - List of identifiers this order is for.
+      type: list
+      contains:
+        type:
+          description: Type of identifier. C(dns) or C(ip).
+          type: str
+        value:
+          description: Name of identifier. Hostname or IP address.
+          type: str
+        wildcard:
+          description: "Whether I(value) is actually a wildcard. The wildcard
+                        prefix C(*.) is not included in I(value) if this is C(true)."
+          type: bool
+          returned: required to be included if the identifier is wildcarded
+    notBefore:
+      description:
+        - The requested value of the C(notBefore) field in the certificate.
+        - Date should be formatted as described in RFC3339.
+        - Server is not required to return this.
+      type: str
+      returned: when server returns this
+    notAfter:
+      description:
+        - The requested value of the C(notAfter) field in the certificate.
+        - Date should be formatted as described in RFC3339.
+        - Server is not required to return this.
+      type: str
+      returned: when server returns this
+    error:
+      description:
+        - In case an error occured during processing, this contains information about the error.
+        - The field is structured as a problem document (RFC7807).
+      type: complex
+      returned: when an error occurred
+    authorizations:
+      description:
+        - A list of URLs for authorizations for this order.
+      type: list
+    finalize:
+      description:
+        - A URL used for finalizing an ACME order.
+      type: str
+    certificate:
+      description:
+        - The URL for retrieving the certificate.
+      type: str
+      returned: when certificate was issued
 '''
 
 from ansible.module_utils.acme import (
-    ModuleFailException, ACMEAccount, set_crypto_backend,
+    ModuleFailException, ACMEAccount, set_crypto_backend, process_links,
 )
 
 from ansible.module_utils.basic import AnsibleModule
+
+
+def get_orders_list(module, account, orders_url):
+    '''
+    Retrieves orders list (handles pagination).
+    '''
+    orders = []
+    while orders_url:
+        # Get part of orders list
+        res, info = account.get_request(orders_url, parse_json_result=True, fail_on_error=True)
+        if not res.get('orders'):
+            if orders:
+                module.warn('When retrieving orders list part {0}, got empty result list'.format(orders_url))
+            break
+        # Add order URLs to result list
+        orders.extend(res['orders'])
+        # Extract URL of next part of results list
+        new_orders_url = []
+
+        def f(link, relation):
+            if relation == 'next':
+                new_orders_url.append(link)
+
+        process_links(info, f)
+        new_orders_url.append(None)
+        previous_orders_url, orders_url = orders_url, new_orders_url.pop(0)
+        if orders_url == previous_orders_url:
+            # Prevent infinite loop
+            orders_url = None
+    return orders
+
+
+def get_order(account, order_url):
+    '''
+    Retrieve order data.
+    '''
+    return account.get_request(order_url, parse_json_result=True, fail_on_error=True)[0]
 
 
 def main():
@@ -118,6 +247,7 @@ def main():
             acme_version=dict(type='int', default=1, choices=[1, 2]),
             validate_certs=dict(type='bool', default=True),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
+            retrieve_orders=dict(type='str', default='ignore', choices=['ignore', 'url_list', 'object_list']),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content'],
@@ -159,6 +289,13 @@ def main():
                 account_data['contact'] = []
             account_data['public_account_key'] = account.key_data['jwk']
             result['account'] = account_data
+            # Retrieve orders list
+            if account_data.get('orders') and module.params['retrieve_orders'] != 'ignore':
+                orders = get_orders_list(module, account, account_data['orders'])
+                if module.params['retrieve_orders'] == 'url_list':
+                    result['orders'] = orders
+                else:
+                    result['orders'] = [get_order(account, order) for order in orders]
         module.exit_json(**result)
     except ModuleFailException as e:
         e.do_fail(module)

@@ -61,9 +61,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#forwardingRule'"
 - name: verify that forwarding_rule was created
-  gcp_compute_forwarding_rule_facts:
+  gcp_compute_forwarding_rule_info:
       filters:
          - name = {{ resource_name }}
       region: us-west1
@@ -95,7 +94,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#forwardingRule'"
 #----------------------------------------------------------
 - name: delete a forwarding rule
   gcp_compute_forwarding_rule:
@@ -115,7 +113,7 @@
     that:
       - result.changed == true
 - name: verify that forwarding_rule was deleted
-  gcp_compute_forwarding_rule_facts:
+  gcp_compute_forwarding_rule_info:
       filters:
          - name = {{ resource_name }}
       region: us-west1

@@ -61,9 +61,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#router'"
 - name: verify that router was created
-  gcp_compute_router_facts:
+  gcp_compute_router_info:
       filters:
          - name = {{ resource_name }}
       region: us-central1
@@ -100,7 +99,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#router'"
 #----------------------------------------------------------
 - name: delete a router
   gcp_compute_router:
@@ -125,7 +123,7 @@
     that:
       - result.changed == true
 - name: verify that router was deleted
-  gcp_compute_router_facts:
+  gcp_compute_router_info:
       filters:
          - name = {{ resource_name }}
       region: us-central1

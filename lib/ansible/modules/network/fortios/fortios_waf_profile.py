@@ -26,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_waf_profile
 short_description: Web application firewall configuration in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify waf feature and profile category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -41,61 +41,92 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     waf_profile:
         description:
             - Web application firewall configuration.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            address-list:
+            address_list:
                 description:
                     - Black address list and white address list.
+                type: dict
                 suboptions:
-                    blocked-address:
+                    blocked_address:
                         description:
                             - Blocked address.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Address name. Source firewall.address.name firewall.addrgrp.name.
                                 required: true
-                    blocked-log:
+                                type: str
+                    blocked_log:
                         description:
                             - Enable/disable logging on blocked addresses.
+                        type: str
                         choices:
                             - enable
                             - disable
                     severity:
                         description:
                             - Severity.
+                        type: str
                         choices:
                             - high
                             - medium
@@ -103,46 +134,56 @@ options:
                     status:
                         description:
                             - Status.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    trusted-address:
+                    trusted_address:
                         description:
                             - Trusted address.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Address name. Source firewall.address.name firewall.addrgrp.name.
                                 required: true
+                                type: str
             comment:
                 description:
                     - Comment.
+                type: str
             constraint:
                 description:
                     - WAF HTTP protocol restrictions.
+                type: dict
                 suboptions:
-                    content-length:
+                    content_length:
                         description:
                             - HTTP content length in request.
+                        type: dict
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
                             length:
                                 description:
                                     - Length of HTTP content in bytes (0 to 2147483647).
+                                type: int
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -150,31 +191,37 @@ options:
                             status:
                                 description:
                                     - Enable/disable the constraint.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                     exception:
                         description:
                             - HTTP constraint exception.
+                        type: list
                         suboptions:
                             address:
                                 description:
                                     - Host address. Source firewall.address.name firewall.addrgrp.name.
-                            content-length:
+                                type: str
+                            content_length:
                                 description:
                                     - HTTP content length in request.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                            header-length:
+                            header_length:
                                 description:
                                     - HTTP header length in request.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             hostname:
                                 description:
                                     - Enable/disable hostname check.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
@@ -182,97 +229,115 @@ options:
                                 description:
                                     - Exception ID.
                                 required: true
-                            line-length:
+                                type: int
+                            line_length:
                                 description:
                                     - HTTP line length in request.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             malformed:
                                 description:
                                     - Enable/disable malformed HTTP request check.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                            max-cookie:
+                            max_cookie:
                                 description:
                                     - Maximum number of cookies in HTTP request.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                            max-header-line:
+                            max_header_line:
                                 description:
                                     - Maximum number of HTTP header line.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                            max-range-segment:
+                            max_range_segment:
                                 description:
                                     - Maximum number of range segments in HTTP range line.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                            max-url-param:
+                            max_url_param:
                                 description:
                                     - Maximum number of parameters in URL.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             method:
                                 description:
                                     - Enable/disable HTTP method check.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                            param-length:
+                            param_length:
                                 description:
                                     - Maximum length of parameter in URL, HTTP POST request or HTTP body.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             pattern:
                                 description:
                                     - URL pattern.
+                                type: str
                             regex:
                                 description:
                                     - Enable/disable regular expression based pattern match.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                            url-param-length:
+                            url_param_length:
                                 description:
                                     - Maximum length of parameter in URL.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             version:
                                 description:
                                     - Enable/disable HTTP version check.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                    header-length:
+                    header_length:
                         description:
                             - HTTP header length in request.
+                        type: dict
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
                             length:
                                 description:
                                     - Length of HTTP header in bytes (0 to 2147483647).
+                                type: int
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -280,28 +345,33 @@ options:
                             status:
                                 description:
                                     - Enable/disable the constraint.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                     hostname:
                         description:
                             - Enable/disable hostname check.
+                        type: dict
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -309,31 +379,37 @@ options:
                             status:
                                 description:
                                     - Enable/disable the constraint.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                    line-length:
+                    line_length:
                         description:
                             - HTTP line length in request.
+                        type: dict
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
                             length:
                                 description:
                                     - Length of HTTP line in bytes (0 to 2147483647).
+                                type: int
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -341,28 +417,33 @@ options:
                             status:
                                 description:
                                     - Enable/disable the constraint.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                     malformed:
                         description:
                             - Enable/disable malformed HTTP request check.
+                        type: dict
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -370,31 +451,37 @@ options:
                             status:
                                 description:
                                     - Enable/disable the constraint.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                    max-cookie:
+                    max_cookie:
                         description:
                             - Maximum number of cookies in HTTP request.
+                        type: dict
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                            max-cookie:
+                            max_cookie:
                                 description:
                                     - Maximum number of cookies in HTTP request (0 to 2147483647).
+                                type: int
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -402,31 +489,37 @@ options:
                             status:
                                 description:
                                     - Enable/disable the constraint.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                    max-header-line:
+                    max_header_line:
                         description:
                             - Maximum number of HTTP header line.
+                        type: dict
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                            max-header-line:
+                            max_header_line:
                                 description:
                                     - Maximum number HTTP header lines (0 to 2147483647).
+                                type: int
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -434,31 +527,37 @@ options:
                             status:
                                 description:
                                     - Enable/disable the constraint.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                    max-range-segment:
+                    max_range_segment:
                         description:
                             - Maximum number of range segments in HTTP range line.
+                        type: dict
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                            max-range-segment:
+                            max_range_segment:
                                 description:
                                     - Maximum number of range segments in HTTP range line (0 to 2147483647).
+                                type: int
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -466,31 +565,37 @@ options:
                             status:
                                 description:
                                     - Enable/disable the constraint.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                    max-url-param:
+                    max_url_param:
                         description:
                             - Maximum number of parameters in URL.
+                        type: dict
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                            max-url-param:
+                            max_url_param:
                                 description:
                                     - Maximum number of parameters in URL (0 to 2147483647).
+                                type: int
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -498,28 +603,33 @@ options:
                             status:
                                 description:
                                     - Enable/disable the constraint.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                     method:
                         description:
                             - Enable/disable HTTP method check.
+                        type: dict
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -527,31 +637,37 @@ options:
                             status:
                                 description:
                                     - Enable/disable the constraint.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                    param-length:
+                    param_length:
                         description:
                             - Maximum length of parameter in URL, HTTP POST request or HTTP body.
+                        type: dict
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
                             length:
                                 description:
                                     - Maximum length of parameter in URL, HTTP POST request or HTTP body in bytes (0 to 2147483647).
+                                type: int
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -559,31 +675,37 @@ options:
                             status:
                                 description:
                                     - Enable/disable the constraint.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                    url-param-length:
+                    url_param_length:
                         description:
                             - Maximum length of parameter in URL.
+                        type: dict
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
                             length:
                                 description:
                                     - Maximum length of URL parameter in bytes (0 to 2147483647).
+                                type: int
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -591,28 +713,33 @@ options:
                             status:
                                 description:
                                     - Enable/disable the constraint.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                     version:
                         description:
                             - Enable/disable HTTP version check.
+                        type: dict
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -620,28 +747,33 @@ options:
                             status:
                                 description:
                                     - Enable/disable the constraint.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-            extended-log:
+            extended_log:
                 description:
                     - Enable/disable extended logging.
+                type: str
                 choices:
                     - enable
                     - disable
             external:
                 description:
                     - Disable/Enable external HTTP Inspection.
+                type: str
                 choices:
                     - disable
                     - enable
             method:
                 description:
                     - Method restriction.
+                type: dict
                 suboptions:
-                    default-allowed-methods:
+                    default_allowed_methods:
                         description:
                             - Methods.
+                        type: str
                         choices:
                             - get
                             - post
@@ -655,19 +787,23 @@ options:
                     log:
                         description:
                             - Enable/disable logging.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    method-policy:
+                    method_policy:
                         description:
                             - HTTP method policy.
+                        type: list
                         suboptions:
                             address:
                                 description:
                                     - Host address. Source firewall.address.name firewall.addrgrp.name.
-                            allowed-methods:
+                                type: str
+                            allowed_methods:
                                 description:
                                     - Allowed Methods.
+                                type: str
                                 choices:
                                     - get
                                     - post
@@ -682,18 +818,22 @@ options:
                                 description:
                                     - HTTP method policy ID.
                                 required: true
+                                type: int
                             pattern:
                                 description:
                                     - URL pattern.
+                                type: str
                             regex:
                                 description:
                                     - Enable/disable regular expression based pattern match.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                     severity:
                         description:
                             - Severity.
+                        type: str
                         choices:
                             - high
                             - medium
@@ -701,6 +841,7 @@ options:
                     status:
                         description:
                             - Status.
+                        type: str
                         choices:
                             - enable
                             - disable
@@ -708,39 +849,47 @@ options:
                 description:
                     - WAF Profile name.
                 required: true
+                type: str
             signature:
                 description:
                     - WAF signatures.
+                type: dict
                 suboptions:
-                    credit-card-detection-threshold:
+                    credit_card_detection_threshold:
                         description:
                             - The minimum number of Credit cards to detect violation.
-                    custom-signature:
+                        type: int
+                    custom_signature:
                         description:
                             - Custom signature.
+                        type: list
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
                                     - erase
-                            case-sensitivity:
+                            case_sensitivity:
                                 description:
                                     - Case sensitivity in pattern.
+                                type: str
                                 choices:
                                     - disable
                                     - enable
                             direction:
                                 description:
                                     - Traffic direction.
+                                type: str
                                 choices:
                                     - request
                                     - response
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
@@ -748,12 +897,15 @@ options:
                                 description:
                                     - Signature name.
                                 required: true
+                                type: str
                             pattern:
                                 description:
                                     - Match pattern.
+                                type: str
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -761,12 +913,14 @@ options:
                             status:
                                 description:
                                     - Status.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             target:
                                 description:
                                     - Match HTTP target.
+                                type: str
                                 choices:
                                     - arg
                                     - arg-name
@@ -781,29 +935,35 @@ options:
                                     - resp-body
                                     - resp-hdr
                                     - resp-status
-                    disabled-signature:
+                    disabled_signature:
                         description:
                             - Disabled signatures
+                        type: list
                         suboptions:
                             id:
                                 description:
                                     - Signature ID. Source waf.signature.id.
                                 required: true
-                    disabled-sub-class:
+                                type: int
+                    disabled_sub_class:
                         description:
                             - Disabled signature subclasses.
+                        type: list
                         suboptions:
                             id:
                                 description:
                                     - Signature subclass ID. Source waf.sub-class.id.
                                 required: true
-                    main-class:
+                                type: int
+                    main_class:
                         description:
                             - Main signature class.
+                        type: list
                         suboptions:
                             action:
                                 description:
                                     - Action.
+                                type: str
                                 choices:
                                     - allow
                                     - block
@@ -812,15 +972,18 @@ options:
                                 description:
                                     - Main signature class ID. Source waf.main-class.id.
                                 required: true
+                                type: int
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             severity:
                                 description:
                                     - Severity.
+                                type: str
                                 choices:
                                     - high
                                     - medium
@@ -828,42 +991,51 @@ options:
                             status:
                                 description:
                                     - Status.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-            url-access:
+            url_access:
                 description:
                     - URL access list
+                type: list
                 suboptions:
-                    access-pattern:
+                    access_pattern:
                         description:
                             - URL access pattern.
+                        type: list
                         suboptions:
                             id:
                                 description:
                                     - URL access pattern ID.
                                 required: true
+                                type: int
                             negate:
                                 description:
                                     - Enable/disable match negation.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             pattern:
                                 description:
                                     - URL pattern.
+                                type: str
                             regex:
                                 description:
                                     - Enable/disable regular expression based pattern match.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             srcaddr:
                                 description:
                                     - Source address. Source firewall.address.name firewall.addrgrp.name.
+                                type: str
                     action:
                         description:
                             - Action.
+                        type: str
                         choices:
                             - bypass
                             - permit
@@ -871,19 +1043,23 @@ options:
                     address:
                         description:
                             - Host address. Source firewall.address.name firewall.addrgrp.name.
+                        type: str
                     id:
                         description:
                             - URL access ID.
                         required: true
+                        type: int
                     log:
                         description:
                             - Enable/disable logging.
+                        type: str
                         choices:
                             - enable
                             - disable
                     severity:
                         description:
                             - Severity.
+                        type: str
                         choices:
                             - high
                             - medium
@@ -897,6 +1073,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Web application firewall configuration.
     fortios_waf_profile:
@@ -905,21 +1082,21 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       waf_profile:
-        state: "present"
-        address-list:
-            blocked-address:
+        address_list:
+            blocked_address:
              -
                 name: "default_name_5 (source firewall.address.name firewall.addrgrp.name)"
-            blocked-log: "enable"
+            blocked_log: "enable"
             severity: "high"
             status: "enable"
-            trusted-address:
+            trusted_address:
              -
                 name: "default_name_10 (source firewall.address.name firewall.addrgrp.name)"
         comment: "Comment."
         constraint:
-            content-length:
+            content_length:
                 action: "allow"
                 length: "15"
                 log: "enable"
@@ -928,23 +1105,23 @@ EXAMPLES = '''
             exception:
              -
                 address: "<your_own_value> (source firewall.address.name firewall.addrgrp.name)"
-                content-length: "enable"
-                header-length: "enable"
+                content_length: "enable"
+                header_length: "enable"
                 hostname: "enable"
                 id:  "24"
-                line-length: "enable"
+                line_length: "enable"
                 malformed: "enable"
-                max-cookie: "enable"
-                max-header-line: "enable"
-                max-range-segment: "enable"
-                max-url-param: "enable"
+                max_cookie: "enable"
+                max_header_line: "enable"
+                max_range_segment: "enable"
+                max_url_param: "enable"
                 method: "enable"
-                param-length: "enable"
+                param_length: "enable"
                 pattern: "<your_own_value>"
                 regex: "enable"
-                url-param-length: "enable"
+                url_param_length: "enable"
                 version: "enable"
-            header-length:
+            header_length:
                 action: "allow"
                 length: "39"
                 log: "enable"
@@ -955,7 +1132,7 @@ EXAMPLES = '''
                 log: "enable"
                 severity: "high"
                 status: "enable"
-            line-length:
+            line_length:
                 action: "allow"
                 length: "50"
                 log: "enable"
@@ -966,28 +1143,28 @@ EXAMPLES = '''
                 log: "enable"
                 severity: "high"
                 status: "enable"
-            max-cookie:
+            max_cookie:
                 action: "allow"
                 log: "enable"
-                max-cookie: "62"
+                max_cookie: "62"
                 severity: "high"
                 status: "enable"
-            max-header-line:
+            max_header_line:
                 action: "allow"
                 log: "enable"
-                max-header-line: "68"
+                max_header_line: "68"
                 severity: "high"
                 status: "enable"
-            max-range-segment:
+            max_range_segment:
                 action: "allow"
                 log: "enable"
-                max-range-segment: "74"
+                max_range_segment: "74"
                 severity: "high"
                 status: "enable"
-            max-url-param:
+            max_url_param:
                 action: "allow"
                 log: "enable"
-                max-url-param: "80"
+                max_url_param: "80"
                 severity: "high"
                 status: "enable"
             method:
@@ -995,13 +1172,13 @@ EXAMPLES = '''
                 log: "enable"
                 severity: "high"
                 status: "enable"
-            param-length:
+            param_length:
                 action: "allow"
                 length: "90"
                 log: "enable"
                 severity: "high"
                 status: "enable"
-            url-param-length:
+            url_param_length:
                 action: "allow"
                 length: "96"
                 log: "enable"
@@ -1012,15 +1189,15 @@ EXAMPLES = '''
                 log: "enable"
                 severity: "high"
                 status: "enable"
-        extended-log: "enable"
+        extended_log: "enable"
         external: "disable"
         method:
-            default-allowed-methods: "get"
+            default_allowed_methods: "get"
             log: "enable"
-            method-policy:
+            method_policy:
              -
                 address: "<your_own_value> (source firewall.address.name firewall.addrgrp.name)"
-                allowed-methods: "get"
+                allowed_methods: "get"
                 id:  "113"
                 pattern: "<your_own_value>"
                 regex: "enable"
@@ -1028,11 +1205,11 @@ EXAMPLES = '''
             status: "enable"
         name: "default_name_118"
         signature:
-            credit-card-detection-threshold: "120"
-            custom-signature:
+            credit_card_detection_threshold: "120"
+            custom_signature:
              -
                 action: "allow"
-                case-sensitivity: "disable"
+                case_sensitivity: "disable"
                 direction: "request"
                 log: "enable"
                 name: "default_name_126"
@@ -1040,22 +1217,22 @@ EXAMPLES = '''
                 severity: "high"
                 status: "enable"
                 target: "arg"
-            disabled-signature:
+            disabled_signature:
              -
                 id:  "132 (source waf.signature.id)"
-            disabled-sub-class:
+            disabled_sub_class:
              -
                 id:  "134 (source waf.sub-class.id)"
-            main-class:
+            main_class:
              -
                 action: "allow"
                 id:  "137 (source waf.main-class.id)"
                 log: "enable"
                 severity: "high"
                 status: "enable"
-        url-access:
+        url_access:
          -
-            access-pattern:
+            access_pattern:
              -
                 id:  "143"
                 negate: "enable"
@@ -1129,12 +1306,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
 
 def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -1142,13 +1323,13 @@ def login(data, fos):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_waf_profile_data(json):
-    option_list = ['address-list', 'comment', 'constraint',
-                   'extended-log', 'external', 'method',
-                   'name', 'signature', 'url-access']
+    option_list = ['address_list', 'comment', 'constraint',
+                   'extended_log', 'external', 'method',
+                   'name', 'signature', 'url_access']
     dictionary = {}
 
     for attribute in option_list:
@@ -1158,59 +1339,86 @@ def filter_waf_profile_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def waf_profile(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['waf_profile'] and data['waf_profile']:
+        state = data['waf_profile']['state']
+    else:
+        state = True
     waf_profile_data = data['waf_profile']
-    filtered_data = filter_waf_profile_data(waf_profile_data)
+    filtered_data = underscore_to_hyphen(filter_waf_profile_data(waf_profile_data))
 
-    if waf_profile_data['state'] == "present":
+    if state == "present":
         return fos.set('waf',
                        'profile',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif waf_profile_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('waf',
                           'profile',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_waf(data, fos):
-    login(data, fos)
 
     if data['waf_profile']:
         resp = waf_profile(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "waf_profile": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "address-list": {"required": False, "type": "dict",
+                "address_list": {"required": False, "type": "dict",
                                  "options": {
-                                     "blocked-address": {"required": False, "type": "list",
+                                     "blocked_address": {"required": False, "type": "list",
                                                          "options": {
                                                              "name": {"required": True, "type": "str"}
                                                          }},
-                                     "blocked-log": {"required": False, "type": "str",
+                                     "blocked_log": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]},
                                      "severity": {"required": False, "type": "str",
                                                   "choices": ["high", "medium", "low"]},
                                      "status": {"required": False, "type": "str",
                                                 "choices": ["enable", "disable"]},
-                                     "trusted-address": {"required": False, "type": "list",
+                                     "trusted_address": {"required": False, "type": "list",
                                                          "options": {
                                                              "name": {"required": True, "type": "str"}
                                                          }}
@@ -1218,7 +1426,7 @@ def main():
                 "comment": {"required": False, "type": "str"},
                 "constraint": {"required": False, "type": "dict",
                                "options": {
-                                   "content-length": {"required": False, "type": "dict",
+                                   "content_length": {"required": False, "type": "dict",
                                                       "options": {
                                                           "action": {"required": False, "type": "str",
                                                                      "choices": ["allow", "block"]},
@@ -1233,38 +1441,38 @@ def main():
                                    "exception": {"required": False, "type": "list",
                                                  "options": {
                                                      "address": {"required": False, "type": "str"},
-                                                     "content-length": {"required": False, "type": "str",
+                                                     "content_length": {"required": False, "type": "str",
                                                                         "choices": ["enable", "disable"]},
-                                                     "header-length": {"required": False, "type": "str",
+                                                     "header_length": {"required": False, "type": "str",
                                                                        "choices": ["enable", "disable"]},
                                                      "hostname": {"required": False, "type": "str",
                                                                   "choices": ["enable", "disable"]},
                                                      "id": {"required": True, "type": "int"},
-                                                     "line-length": {"required": False, "type": "str",
+                                                     "line_length": {"required": False, "type": "str",
                                                                      "choices": ["enable", "disable"]},
                                                      "malformed": {"required": False, "type": "str",
                                                                    "choices": ["enable", "disable"]},
-                                                     "max-cookie": {"required": False, "type": "str",
+                                                     "max_cookie": {"required": False, "type": "str",
                                                                     "choices": ["enable", "disable"]},
-                                                     "max-header-line": {"required": False, "type": "str",
+                                                     "max_header_line": {"required": False, "type": "str",
                                                                          "choices": ["enable", "disable"]},
-                                                     "max-range-segment": {"required": False, "type": "str",
+                                                     "max_range_segment": {"required": False, "type": "str",
                                                                            "choices": ["enable", "disable"]},
-                                                     "max-url-param": {"required": False, "type": "str",
+                                                     "max_url_param": {"required": False, "type": "str",
                                                                        "choices": ["enable", "disable"]},
                                                      "method": {"required": False, "type": "str",
                                                                 "choices": ["enable", "disable"]},
-                                                     "param-length": {"required": False, "type": "str",
+                                                     "param_length": {"required": False, "type": "str",
                                                                       "choices": ["enable", "disable"]},
                                                      "pattern": {"required": False, "type": "str"},
                                                      "regex": {"required": False, "type": "str",
                                                                "choices": ["enable", "disable"]},
-                                                     "url-param-length": {"required": False, "type": "str",
+                                                     "url_param_length": {"required": False, "type": "str",
                                                                           "choices": ["enable", "disable"]},
                                                      "version": {"required": False, "type": "str",
                                                                  "choices": ["enable", "disable"]}
                                                  }},
-                                   "header-length": {"required": False, "type": "dict",
+                                   "header_length": {"required": False, "type": "dict",
                                                      "options": {
                                                          "action": {"required": False, "type": "str",
                                                                     "choices": ["allow", "block"]},
@@ -1287,7 +1495,7 @@ def main():
                                                     "status": {"required": False, "type": "str",
                                                                "choices": ["enable", "disable"]}
                                                 }},
-                                   "line-length": {"required": False, "type": "dict",
+                                   "line_length": {"required": False, "type": "dict",
                                                    "options": {
                                                        "action": {"required": False, "type": "str",
                                                                   "choices": ["allow", "block"]},
@@ -1310,49 +1518,49 @@ def main():
                                                      "status": {"required": False, "type": "str",
                                                                 "choices": ["enable", "disable"]}
                                                  }},
-                                   "max-cookie": {"required": False, "type": "dict",
+                                   "max_cookie": {"required": False, "type": "dict",
                                                   "options": {
                                                       "action": {"required": False, "type": "str",
                                                                  "choices": ["allow", "block"]},
                                                       "log": {"required": False, "type": "str",
                                                               "choices": ["enable", "disable"]},
-                                                      "max-cookie": {"required": False, "type": "int"},
+                                                      "max_cookie": {"required": False, "type": "int"},
                                                       "severity": {"required": False, "type": "str",
                                                                    "choices": ["high", "medium", "low"]},
                                                       "status": {"required": False, "type": "str",
                                                                  "choices": ["enable", "disable"]}
                                                   }},
-                                   "max-header-line": {"required": False, "type": "dict",
+                                   "max_header_line": {"required": False, "type": "dict",
                                                        "options": {
                                                            "action": {"required": False, "type": "str",
                                                                       "choices": ["allow", "block"]},
                                                            "log": {"required": False, "type": "str",
                                                                    "choices": ["enable", "disable"]},
-                                                           "max-header-line": {"required": False, "type": "int"},
+                                                           "max_header_line": {"required": False, "type": "int"},
                                                            "severity": {"required": False, "type": "str",
                                                                         "choices": ["high", "medium", "low"]},
                                                            "status": {"required": False, "type": "str",
                                                                       "choices": ["enable", "disable"]}
                                                        }},
-                                   "max-range-segment": {"required": False, "type": "dict",
+                                   "max_range_segment": {"required": False, "type": "dict",
                                                          "options": {
                                                              "action": {"required": False, "type": "str",
                                                                         "choices": ["allow", "block"]},
                                                              "log": {"required": False, "type": "str",
                                                                      "choices": ["enable", "disable"]},
-                                                             "max-range-segment": {"required": False, "type": "int"},
+                                                             "max_range_segment": {"required": False, "type": "int"},
                                                              "severity": {"required": False, "type": "str",
                                                                           "choices": ["high", "medium", "low"]},
                                                              "status": {"required": False, "type": "str",
                                                                         "choices": ["enable", "disable"]}
                                                          }},
-                                   "max-url-param": {"required": False, "type": "dict",
+                                   "max_url_param": {"required": False, "type": "dict",
                                                      "options": {
                                                          "action": {"required": False, "type": "str",
                                                                     "choices": ["allow", "block"]},
                                                          "log": {"required": False, "type": "str",
                                                                  "choices": ["enable", "disable"]},
-                                                         "max-url-param": {"required": False, "type": "int"},
+                                                         "max_url_param": {"required": False, "type": "int"},
                                                          "severity": {"required": False, "type": "str",
                                                                       "choices": ["high", "medium", "low"]},
                                                          "status": {"required": False, "type": "str",
@@ -1369,7 +1577,7 @@ def main():
                                                   "status": {"required": False, "type": "str",
                                                              "choices": ["enable", "disable"]}
                                               }},
-                                   "param-length": {"required": False, "type": "dict",
+                                   "param_length": {"required": False, "type": "dict",
                                                     "options": {
                                                         "action": {"required": False, "type": "str",
                                                                    "choices": ["allow", "block"]},
@@ -1381,7 +1589,7 @@ def main():
                                                         "status": {"required": False, "type": "str",
                                                                    "choices": ["enable", "disable"]}
                                                     }},
-                                   "url-param-length": {"required": False, "type": "dict",
+                                   "url_param_length": {"required": False, "type": "dict",
                                                         "options": {
                                                             "action": {"required": False, "type": "str",
                                                                        "choices": ["allow", "block"]},
@@ -1405,22 +1613,22 @@ def main():
                                                               "choices": ["enable", "disable"]}
                                                }}
                                }},
-                "extended-log": {"required": False, "type": "str",
+                "extended_log": {"required": False, "type": "str",
                                  "choices": ["enable", "disable"]},
                 "external": {"required": False, "type": "str",
                              "choices": ["disable", "enable"]},
                 "method": {"required": False, "type": "dict",
                            "options": {
-                               "default-allowed-methods": {"required": False, "type": "str",
+                               "default_allowed_methods": {"required": False, "type": "str",
                                                            "choices": ["get", "post", "put",
                                                                        "head", "connect", "trace",
                                                                        "options", "delete", "others"]},
                                "log": {"required": False, "type": "str",
                                        "choices": ["enable", "disable"]},
-                               "method-policy": {"required": False, "type": "list",
+                               "method_policy": {"required": False, "type": "list",
                                                  "options": {
                                                      "address": {"required": False, "type": "str"},
-                                                     "allowed-methods": {"required": False, "type": "str",
+                                                     "allowed_methods": {"required": False, "type": "str",
                                                                          "choices": ["get", "post", "put",
                                                                                      "head", "connect", "trace",
                                                                                      "options", "delete", "others"]},
@@ -1437,12 +1645,12 @@ def main():
                 "name": {"required": True, "type": "str"},
                 "signature": {"required": False, "type": "dict",
                               "options": {
-                                  "credit-card-detection-threshold": {"required": False, "type": "int"},
-                                  "custom-signature": {"required": False, "type": "list",
+                                  "credit_card_detection_threshold": {"required": False, "type": "int"},
+                                  "custom_signature": {"required": False, "type": "list",
                                                        "options": {
                                                            "action": {"required": False, "type": "str",
                                                                       "choices": ["allow", "block", "erase"]},
-                                                           "case-sensitivity": {"required": False, "type": "str",
+                                                           "case_sensitivity": {"required": False, "type": "str",
                                                                                 "choices": ["disable", "enable"]},
                                                            "direction": {"required": False, "type": "str",
                                                                          "choices": ["request", "response"]},
@@ -1461,15 +1669,15 @@ def main():
                                                                                   "req-uri", "resp-body", "resp-hdr",
                                                                                   "resp-status"]}
                                                        }},
-                                  "disabled-signature": {"required": False, "type": "list",
+                                  "disabled_signature": {"required": False, "type": "list",
                                                          "options": {
                                                              "id": {"required": True, "type": "int"}
                                                          }},
-                                  "disabled-sub-class": {"required": False, "type": "list",
+                                  "disabled_sub_class": {"required": False, "type": "list",
                                                          "options": {
                                                              "id": {"required": True, "type": "int"}
                                                          }},
-                                  "main-class": {"required": False, "type": "list",
+                                  "main_class": {"required": False, "type": "list",
                                                  "options": {
                                                      "action": {"required": False, "type": "str",
                                                                 "choices": ["allow", "block", "erase"]},
@@ -1482,9 +1690,9 @@ def main():
                                                                 "choices": ["enable", "disable"]}
                                                  }}
                               }},
-                "url-access": {"required": False, "type": "list",
+                "url_access": {"required": False, "type": "list",
                                "options": {
-                                   "access-pattern": {"required": False, "type": "list",
+                                   "access_pattern": {"required": False, "type": "list",
                                                       "options": {
                                                           "id": {"required": True, "type": "int"},
                                                           "negate": {"required": False, "type": "str",
@@ -1510,14 +1718,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_waf(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_waf(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_waf(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

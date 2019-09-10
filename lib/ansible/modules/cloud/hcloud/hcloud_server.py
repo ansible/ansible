@@ -91,6 +91,11 @@ options:
             - User Data to be passed to the server on creation.
             - Only used if server does not exists.
         type: str
+    rescue_mode:
+        description:
+            - Add the Hetzner rescue system type you want the server to be booted into.
+        type: str
+        version_added: 2.9
     labels:
         description:
             - User-defined labels (key-value pairs).
@@ -149,6 +154,12 @@ EXAMPLES = """
     name: my-server
     state: restarted
 
+- name: Ensure the server is will be booted in rescue mode and therefore restarted
+  hcloud_server:
+    name: my-server
+    rescue_mode: linux64
+    state: restarted
+
 - name: Ensure the server is rebuild
   hcloud_server:
     name: my-server
@@ -160,21 +171,62 @@ RETURN = """
 hcloud_server:
     description: The server instance
     returned: Always
-    type: dict
-    sample: {
-        "backup_window": null,
-        "datacenter": "nbg1-dc3",
-        "id": 1937415,
-        "image": "ubuntu-18.04",
-        "ipv4_address": "116.203.104.109",
-        "ipv6": "2a01:4f8:1c1c:c140::/64",
-        "labels": {},
-        "location": "nbg1",
-        "name": "mein-server-2",
-        "rescue_enabled": false,
-        "server_type": "cx11",
-        "status": "running"
-    }
+    type: complex
+    contains:
+        id:
+            description: Numeric identifier of the server
+            returned: always
+            type: int
+            sample: 1937415
+        name:
+            description: Name of the server
+            returned: always
+            type: str
+            sample: my-server
+        status:
+            description: Status of the server
+            returned: always
+            type: str
+            sample: running
+        server_type:
+            description: Name of the server type of the server
+            returned: always
+            type: str
+            sample: cx11
+        ipv4_address:
+            description: Public IPv4 address of the server
+            returned: always
+            type: str
+            sample: 116.203.104.109
+        ipv6:
+            description: IPv6 network of the server
+            returned: always
+            type: str
+            sample: 2a01:4f8:1c1c:c140::/64
+        location:
+            description: Name of the location of the server
+            returned: always
+            type: str
+            sample: fsn1
+        datacenter:
+            description: Name of the datacenter of the server
+            returned: always
+            type: str
+            sample: fsn1-dc14
+        rescue_enabled:
+            description: True if rescue mode is enabled, Server will then boot into rescue system on next reboot
+            returned: always
+            type: bool
+            sample: false
+        backup_window:
+            description: Time window (UTC) in which the backup will run, or null if the backups are not enabled
+            returned: always
+            type: bool
+            sample: 22-02
+        labels:
+            description: User-defined labels (key-value pairs)
+            returned: always
+            type: dict
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -272,10 +324,26 @@ class AnsibleHcloudServer(Hcloud):
             self.result["root_password"] = resp.root_password
             resp.action.wait_until_finished(max_retries=1000)
             [action.wait_until_finished() for action in resp.next_actions]
+
+            rescue_mode = self.module.params.get("rescue_mode")
+            if rescue_mode:
+                self._get_server()
+                self._set_rescue_mode(rescue_mode)
+
         self._mark_as_changed()
         self._get_server()
 
     def _update_server(self):
+        rescue_mode = self.module.params.get("rescue_mode")
+        if rescue_mode and self.hcloud_server.rescue_enabled is False:
+            if not self.module.check_mode:
+                self._set_rescue_mode(rescue_mode)
+            self._mark_as_changed()
+        elif not rescue_mode and self.hcloud_server.rescue_enabled is True:
+            if not self.module.check_mode:
+                self.hcloud_server.disable_rescue().wait_until_finished()
+            self._mark_as_changed()
+
         if self.module.params.get("backups") and self.hcloud_server.backup_window is None:
             if not self.module.check_mode:
                 self.hcloud_server.enable_backup().wait_until_finished()
@@ -320,6 +388,18 @@ class AnsibleHcloudServer(Hcloud):
             self._mark_as_changed()
         self._get_server()
 
+    def _set_rescue_mode(self, rescue_mode):
+        if self.module.params.get("ssh_keys"):
+            resp = self.hcloud_server.enable_rescue(type=rescue_mode,
+                                                    ssh_keys=[self.client.ssh_keys.get_by_name(ssh_key_name).id
+                                                              for
+                                                              ssh_key_name in
+                                                              self.module.params.get("ssh_keys")])
+        else:
+            resp = self.hcloud_server.enable_rescue(type=rescue_mode)
+        resp.action.wait_until_finished()
+        self.result["root_password"] = resp.root_password
+
     def start_server(self):
         if self.hcloud_server.status != Server.STATUS_RUNNING:
             if not self.module.check_mode:
@@ -339,7 +419,8 @@ class AnsibleHcloudServer(Hcloud):
             required_params=["image"]
         )
         if not self.module.check_mode:
-            self.client.servers.rebuild(self.hcloud_server, self.client.images.get_by_name(self.module.params.get("image"))).wait_until_finished()
+            self.client.servers.rebuild(self.hcloud_server, self.client.images.get_by_name(
+                self.module.params.get("image"))).wait_until_finished()
         self._mark_as_changed()
 
         self._get_server()
@@ -376,6 +457,7 @@ class AnsibleHcloudServer(Hcloud):
                 backups={"type": "bool", "default": False},
                 upgrade_disk={"type": "bool", "default": False},
                 force_upgrade={"type": "bool", "default": False},
+                rescue_mode={"type": "str"},
                 state={
                     "choices": ["absent", "present", "restarted", "started", "stopped", "rebuild"],
                     "default": "present",

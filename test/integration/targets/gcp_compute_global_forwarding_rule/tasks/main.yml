@@ -30,7 +30,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: instancegroup
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-globalforwardingrule
     healthy_threshold: 10
@@ -55,7 +55,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: backendservice
-- name: create a url map
+- name: create a URL map
   gcp_compute_url_map:
     name: urlmap-globalforwardingrule
     default_service: "{{ backendservice }}"
@@ -64,7 +64,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: urlmap
-- name: create a target http proxy
+- name: create a target HTTP proxy
   gcp_compute_target_http_proxy:
     name: targethttpproxy-globalforwardingrule
     url_map: "{{ urlmap }}"
@@ -101,9 +101,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#forwardingRule'"
 - name: verify that global_forwarding_rule was created
-  gcp_compute_global_forwarding_rule_facts:
+  gcp_compute_global_forwarding_rule_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -133,7 +132,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#forwardingRule'"
 #----------------------------------------------------------
 - name: delete a global forwarding rule
   gcp_compute_global_forwarding_rule:
@@ -152,7 +150,7 @@
     that:
       - result.changed == true
 - name: verify that global_forwarding_rule was deleted
-  gcp_compute_global_forwarding_rule_facts:
+  gcp_compute_global_forwarding_rule_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -185,7 +183,7 @@
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!
-- name: delete a target http proxy
+- name: delete a target HTTP proxy
   gcp_compute_target_http_proxy:
     name: targethttpproxy-globalforwardingrule
     url_map: "{{ urlmap }}"
@@ -195,7 +193,7 @@
     state: absent
   register: httpproxy
   ignore_errors: true
-- name: delete a url map
+- name: delete a URL map
   gcp_compute_url_map:
     name: urlmap-globalforwardingrule
     default_service: "{{ backendservice }}"
@@ -219,7 +217,7 @@
     state: absent
   register: backendservice
   ignore_errors: true
-- name: delete a http health check
+- name: delete a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-globalforwardingrule
     healthy_threshold: 10

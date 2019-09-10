@@ -1,0 +1,53 @@
+- block:
+
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  - name: register dummy OIDC config
+    set_fact:
+        AuthenticateOidcActionConfig:
+            AuthorizationEndpoint: "https://www.example.com/auth"
+            ClientId: "eeeeeeeeeeeeeeeeeeeeeeeeee"
+            ClientSecret: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            Issuer: "https://www.example.com/issuer"
+            OnUnauthenticatedRequest: "authenticate"
+            Scope: "openid"
+            SessionCookieName: "AWSELBAuthSessionCookie"
+            SessionTimeout: 604800
+            TokenEndpoint: "https://www.example.com/token"
+            UserInfoEndpoint: "https://www.example.com/userinfo"
+
+  - name: create ALB with multiple DefaultActions
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      listeners:
+        - Protocol: HTTPS
+          Port: 443
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+              Order: 2
+            - Type: authenticate-oidc
+              AuthenticateOidcConfig: "{{ AuthenticateOidcActionConfig }}"
+              Order: 1
+          Certificates:
+              - CertificateArn: "{{ cert_arn }}"
+          SslPolicy: ELBSecurityPolicy-2016-08
+      <<: *aws_connection_info
+    register: alb
+    ignore_errors: yes
+
+  - name: check for a graceful failure message
+    assert:
+      that:
+        - alb.failed
+        - 'alb.msg == "installed version of botocore does not support multiple actions, please upgrade botocore to version 1.10.30 or higher"'

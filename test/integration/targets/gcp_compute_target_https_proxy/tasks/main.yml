@@ -22,7 +22,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: instancegroup
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-targethttpsproxy
     healthy_threshold: 10
@@ -47,7 +47,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: backendservice
-- name: create a url map
+- name: create a URL map
   gcp_compute_url_map:
     name: urlmap-targethttpsproxy
     default_service: "{{ backendservice }}"
@@ -56,7 +56,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: urlmap
-- name: create a ssl certificate
+- name: create a SSL certificate
   gcp_compute_ssl_certificate:
     name: sslcert-targethttpsproxy
     description: A certificate for testing. Do not use this certificate in production
@@ -89,7 +89,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: sslcert
-- name: delete a target https proxy
+- name: delete a target HTTPS proxy
   gcp_compute_target_https_proxy:
     name: "{{ resource_name }}"
     ssl_certificates:
@@ -100,7 +100,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: absent
 #----------------------------------------------------------
-- name: create a target https proxy
+- name: create a target HTTPS proxy
   gcp_compute_target_https_proxy:
     name: "{{ resource_name }}"
     ssl_certificates:
@@ -115,9 +115,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#targetHttpsProxy'"
 - name: verify that target_https_proxy was created
-  gcp_compute_target_https_proxy_facts:
+  gcp_compute_target_https_proxy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -131,7 +130,7 @@
     that:
       - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
-- name: create a target https proxy that already exists
+- name: create a target HTTPS proxy that already exists
   gcp_compute_target_https_proxy:
     name: "{{ resource_name }}"
     ssl_certificates:
@@ -146,9 +145,8 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#targetHttpsProxy'"
 #----------------------------------------------------------
-- name: delete a target https proxy
+- name: delete a target HTTPS proxy
   gcp_compute_target_https_proxy:
     name: "{{ resource_name }}"
     ssl_certificates:
@@ -164,7 +162,7 @@
     that:
       - result.changed == true
 - name: verify that target_https_proxy was deleted
-  gcp_compute_target_https_proxy_facts:
+  gcp_compute_target_https_proxy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -178,7 +176,7 @@
     that:
       - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
-- name: delete a target https proxy that does not exist
+- name: delete a target HTTPS proxy that does not exist
   gcp_compute_target_https_proxy:
     name: "{{ resource_name }}"
     ssl_certificates:
@@ -196,7 +194,7 @@
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!
-- name: delete a ssl certificate
+- name: delete a SSL certificate
   gcp_compute_ssl_certificate:
     name: sslcert-targethttpsproxy
     description: A certificate for testing. Do not use this certificate in production
@@ -230,7 +228,7 @@
     state: absent
   register: sslcert
   ignore_errors: true
-- name: delete a url map
+- name: delete a URL map
   gcp_compute_url_map:
     name: urlmap-targethttpsproxy
     default_service: "{{ backendservice }}"
@@ -254,7 +252,7 @@
     state: absent
   register: backendservice
   ignore_errors: true
-- name: delete a http health check
+- name: delete a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-targethttpsproxy
     healthy_threshold: 10

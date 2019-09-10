@@ -1,20 +1,10 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+# Copyright 2019 Red Hat
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -25,17 +15,17 @@ DOCUMENTATION = """
 ---
 module: eos_facts
 version_added: "2.2"
-author: "Peter Sprygada (@privateip)"
+author:
+  - "Peter Sprygada (@privateip)"
+  - "Nathaniel Case (@Qalthos)"
 short_description: Collect facts from remote devices running Arista EOS
 description:
-  - Collects a base set of device facts from a remote device that
-    is running eos.  This module prepends all of the
-    base network fact keys with C(ansible_net_<fact>).  The facts
-    module will always collect a base set of facts from the device
-    and can enable or disable collection of additional facts.
+  - Collects facts from Arista devices running the EOS operating
+    system. This module places the facts gathered in the fact tree keyed by the
+    respective resource name.  The facts module will always collect a
+    base set of facts from the device and can enable or disable
+    collection of additional facts.
 extends_documentation_fragment: eos
-notes:
-  - Tested against EOS 4.15
 options:
   gather_subset:
     description:
@@ -46,29 +36,69 @@ options:
         with an initial C(M(!)) to specify that a specific subset should
         not be collected.
     required: false
+    type: list
     default: '!config'
+  gather_network_resources:
+    description:
+      - When supplied, this argument will restrict the facts collected
+        to a given subset. Possible values for this argument include
+        all and the resources like interfaces, vlans etc.
+        Can specify a list of values to include a larger subset. Values
+        can also be used with an initial C(M(!)) to specify that a
+        specific subset should not be collected. Values can also be used
+        with an initial C(M(!)) to specify that a specific subset should
+        not be collected.
+        Valid subsets are 'all', 'interfaces', 'l2_interfaces', 'l3_interfaces',
+        'lacp', 'lacp_interfaces', 'lag_interfaces', 'lldp_global', 'lldp_interfaces',
+        'vlans'.
+    required: false
+    type: list
+    version_added: "2.9"
 """
 
 EXAMPLES = """
-# Collect all facts from the device
+- name: Gather all legacy facts
 - eos_facts:
     gather_subset: all
 
-# Collect only the config and default facts
-- eos_facts:
+- name: Gather only the config and default facts
+  eos_facts:
     gather_subset:
       - config
 
-# Do not collect hardware facts
-- eos_facts:
+- name: Do not gather hardware facts
+  eos_facts:
     gather_subset:
       - "!hardware"
+
+- name: Gather legacy and resource facts
+  eos_facts:
+    gather_subset: all
+    gather_network_resources: all
+
+- name: Gather only the interfaces resource facts and no legacy facts
+- eos_facts:
+    gather_subset:
+      - '!all'
+      - '!min'
+    gather_network_resources:
+      - interfaces
+
+- name: Gather all resource facts and minimal legacy facts
+  eos_facts:
+    gather_subset: min
+    gather_network_resources: all
 """
 
 RETURN = """
 ansible_net_gather_subset:
   description: The list of fact subsets collected from the device
   returned: always
+  type: list
+
+ansible_net_gather_network_resources:
+  description: The list of fact for network resource subsets collected from the device
+  returned: when the resource is configured
   type: list
 
 # default
@@ -144,257 +174,30 @@ ansible_net_neighbors:
   type: dict
 """
 
-import platform
-import re
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.network.eos.eos import run_commands, get_capabilities
-from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
-
-
-class FactsBase(object):
-
-    COMMANDS = frozenset()
-
-    def __init__(self, module):
-        self.module = module
-        self.facts = dict()
-        self.responses = None
-
-    def populate(self):
-        self.responses = run_commands(self.module, list(self.COMMANDS), check_rc=False)
-
-
-class Default(FactsBase):
-
-    SYSTEM_MAP = {
-        'serialNumber': 'serialnum',
-    }
-
-    COMMANDS = [
-        'show version | json',
-        'show hostname | json',
-    ]
-
-    def populate(self):
-        super(Default, self).populate()
-        data = self.responses[0]
-        for key, value in iteritems(self.SYSTEM_MAP):
-            if key in data:
-                self.facts[value] = data[key]
-
-        self.facts.update(self.responses[1])
-        self.facts.update(self.platform_facts())
-
-    def platform_facts(self):
-        platform_facts = {}
-
-        resp = get_capabilities(self.module)
-        device_info = resp['device_info']
-
-        platform_facts['system'] = device_info['network_os']
-
-        for item in ('model', 'image', 'version', 'platform', 'hostname'):
-            val = device_info.get('network_os_%s' % item)
-            if val:
-                platform_facts[item] = val
-
-        platform_facts['api'] = resp['network_api']
-        platform_facts['python_version'] = platform.python_version()
-
-        return platform_facts
-
-
-class Hardware(FactsBase):
-
-    COMMANDS = [
-        'dir all-filesystems',
-        'show version | json'
-    ]
-
-    def populate(self):
-        super(Hardware, self).populate()
-        self.facts.update(self.populate_filesystems())
-        self.facts.update(self.populate_memory())
-
-    def populate_filesystems(self):
-        data = self.responses[0]
-
-        if isinstance(data, dict):
-            data = data['messages'][0]
-
-        fs = re.findall(r'^Directory of (.+)/', data, re.M)
-        return dict(filesystems=fs)
-
-    def populate_memory(self):
-        values = self.responses[1]
-        return dict(
-            memfree_mb=int(values['memFree']) / 1024,
-            memtotal_mb=int(values['memTotal']) / 1024
-        )
-
-
-class Config(FactsBase):
-
-    COMMANDS = ['show running-config']
-
-    def populate(self):
-        super(Config, self).populate()
-        self.facts['config'] = self.responses[0]
-
-
-class Interfaces(FactsBase):
-
-    INTERFACE_MAP = {
-        'description': 'description',
-        'physicalAddress': 'macaddress',
-        'mtu': 'mtu',
-        'bandwidth': 'bandwidth',
-        'duplex': 'duplex',
-        'lineProtocolStatus': 'lineprotocol',
-        'interfaceStatus': 'operstatus',
-        'forwardingModel': 'type'
-    }
-
-    COMMANDS = [
-        'show interfaces | json',
-        'show lldp neighbors | json'
-    ]
-
-    def populate(self):
-        super(Interfaces, self).populate()
-
-        self.facts['all_ipv4_addresses'] = list()
-        self.facts['all_ipv6_addresses'] = list()
-
-        data = self.responses[0]
-        self.facts['interfaces'] = self.populate_interfaces(data)
-
-        data = self.responses[1]
-        if data:
-            self.facts['neighbors'] = self.populate_neighbors(data['lldpNeighbors'])
-
-    def populate_interfaces(self, data):
-        facts = dict()
-        for key, value in iteritems(data['interfaces']):
-            intf = dict()
-
-            for remote, local in iteritems(self.INTERFACE_MAP):
-                if remote in value:
-                    intf[local] = value[remote]
-
-            if 'interfaceAddress' in value:
-                intf['ipv4'] = dict()
-                for entry in value['interfaceAddress']:
-                    intf['ipv4']['address'] = entry['primaryIp']['address']
-                    intf['ipv4']['masklen'] = entry['primaryIp']['maskLen']
-                    self.add_ip_address(entry['primaryIp']['address'], 'ipv4')
-
-            if 'interfaceAddressIp6' in value:
-                intf['ipv6'] = dict()
-                for entry in value['interfaceAddressIp6']['globalUnicastIp6s']:
-                    intf['ipv6']['address'] = entry['address']
-                    intf['ipv6']['subnet'] = entry['subnet']
-                    self.add_ip_address(entry['address'], 'ipv6')
-
-            facts[key] = intf
-
-        return facts
-
-    def add_ip_address(self, address, family):
-        if family == 'ipv4':
-            self.facts['all_ipv4_addresses'].append(address)
-        else:
-            self.facts['all_ipv6_addresses'].append(address)
-
-    def populate_neighbors(self, neighbors):
-        facts = dict()
-        for value in neighbors:
-            port = value['port']
-            if port not in facts:
-                facts[port] = list()
-            lldp = dict()
-            lldp['host'] = value['neighborDevice']
-            lldp['port'] = value['neighborPort']
-            facts[port].append(lldp)
-        return facts
-
-
-FACT_SUBSETS = dict(
-    default=Default,
-    hardware=Hardware,
-    interfaces=Interfaces,
-    config=Config
-)
-
-VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
+from ansible.module_utils.network.eos.argspec.facts.facts import FactsArgs
+from ansible.module_utils.network.eos.facts.facts import Facts
+from ansible.module_utils.network.eos.eos import eos_argument_spec
 
 
 def main():
-    """main entry point for module execution
-    """
-    argument_spec = dict(
-        gather_subset=dict(default=['!config'], type='list')
-    )
+    """ Main entry point for module execution
 
+    :returns: ansible_facts
+    """
+    argument_spec = FactsArgs.argument_spec
     argument_spec.update(eos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    warnings = list()
-    check_args(module, warnings)
+    warnings = ['default value for `gather_subset` '
+                'will be changed to `min` from `!config` v2.11 onwards']
 
-    gather_subset = module.params['gather_subset']
+    result = Facts(module).get_facts()
 
-    runable_subsets = set()
-    exclude_subsets = set()
-
-    for subset in gather_subset:
-        if subset == 'all':
-            runable_subsets.update(VALID_SUBSETS)
-            continue
-
-        if subset.startswith('!'):
-            subset = subset[1:]
-            if subset == 'all':
-                exclude_subsets.update(VALID_SUBSETS)
-                continue
-            exclude = True
-        else:
-            exclude = False
-
-        if subset not in VALID_SUBSETS:
-            module.fail_json(msg='Subset must be one of [%s], got %s' %
-                             (', '.join(VALID_SUBSETS), subset))
-
-        if exclude:
-            exclude_subsets.add(subset)
-        else:
-            runable_subsets.add(subset)
-
-    if not runable_subsets:
-        runable_subsets.update(VALID_SUBSETS)
-
-    runable_subsets.difference_update(exclude_subsets)
-    runable_subsets.add('default')
-
-    facts = dict()
-    facts['gather_subset'] = list(runable_subsets)
-
-    instances = list()
-    for key in runable_subsets:
-        instances.append(FACT_SUBSETS[key](module))
-
-    for inst in instances:
-        inst.populate()
-        facts.update(inst.facts)
-
-    ansible_facts = dict()
-    for key, value in iteritems(facts):
-        key = 'ansible_net_%s' % key
-        ansible_facts[key] = value
+    ansible_facts, additional_warnings = result
+    warnings.extend(additional_warnings)
 
     module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 

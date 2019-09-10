@@ -32,6 +32,11 @@ options:
             - The amount of time in seconds the module should wait for the resource to get into desired state.
         type: int
         default: 120
+    wait_sleep:
+        description:
+            - Number of seconds to sleep between checks.
+        default: 5
+        version_added: '2.10'
     memory:
         description:
             - The amount of memory to be requested by virtual machine.

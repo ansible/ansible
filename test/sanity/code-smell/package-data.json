@@ -1,5 +1,5 @@
 {
     "disabled": true,
-    "always": true,
+    "all_targets": true,
     "output": "path-message"
 }

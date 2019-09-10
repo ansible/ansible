@@ -34,6 +34,11 @@ options:
     - The port on which InfluxDB server is listening
     type: int
     default: 8086
+  path:
+    description:
+    - The path on which InfluxDB server is accessible
+    type: str
+    version_added: "2.10"
   validate_certs:
     description:
     - If set to C(no), the SSL certificates will not be validated.

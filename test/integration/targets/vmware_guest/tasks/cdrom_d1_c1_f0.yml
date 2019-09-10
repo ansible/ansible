@@ -4,7 +4,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: "vm"
+    folder: vm
     name: test_vm1
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
@@ -28,7 +28,6 @@
 - name: assert the VM was created
   assert:
     that:
-      - "cdrom_vm.failed == false"
       - "cdrom_vm.changed == true"
 
 - name: Update CDROM to iso for the new VM
@@ -40,6 +39,7 @@
     folder: "vm"
     name: test_vm1
     datastore: "{{ ds2 }}"
+    datacenter: "{{ dc1 }}"
     cdrom:
       type: iso
       iso_path: "[{{ ds1 }}] fedora.iso"
@@ -51,7 +51,6 @@
 - name: assert the VM was changed
   assert:
     that:
-      - "cdrom_vm.failed == false"
       - "cdrom_vm.changed == true"
 
 - name: Update CDROM to client for the new VM
@@ -73,8 +72,20 @@
 - name: assert the VM was changed
   assert:
     that:
-      - "cdrom_vm.failed == false"
       - "cdrom_vm.changed == true"
+
+- name: clone vm
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm2
+    template: test_vm1
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    folder: vm
+    convert: thin
 
 - name: Update CDROM to none for the new VM
   vmware_guest:
@@ -83,7 +94,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: vm
-    name: test_vm1
+    name: test_vm2
     datacenter: "{{ dc1 }}"
     cdrom:
       type: none
@@ -95,7 +106,6 @@
 - name: assert the VM was changed
   assert:
     that:
-      - "cdrom_vm.failed == false"
       - "cdrom_vm.changed == true"
 
 - name: Create VM with multiple disks and a CDROM - GitHub issue 38679
@@ -105,7 +115,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: vm
-    name: test_vm2
+    name: test_vm3
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
     resource_pool: Resources
@@ -134,7 +144,88 @@
 - name: assert the VM was created
   assert:
     that:
-      - "cdrom_vm.failed == false"
+      - "cdrom_vm.changed == true"
+
+- name: Create VM with multiple CDROMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: vm
+    name: test_vm1
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
+    resource_pool: Resources
+    guest_id: centos64Guest
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+      scsi: paravirtual
+    disk:
+    - size_mb: 128
+      type: thin
+      datastore: "{{ ds2 }}"
+    cdrom:
+    - controller_type: ide
+      controller_number: 0
+      unit_number: 0
+      type: iso
+      iso_path: "[{{ ds1 }}] centos.iso"
+    - controller_type: ide
+      controller_number: 0
+      unit_number: 1
+      type: client
+    - controller_number: 1
+      unit_number: 0
+      type: none
+    - controller_number: 1
+      unit_number: 1
+      type: client
+  register: cdrom_vm
+
+- debug: var=cdrom_vm
+
+- name: assert the VM was created
+  assert:
+    that:
+      - "cdrom_vm.changed == true"
+
+- name: Remove the last 2 CDROMs and update the first 2 for the new VM
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: vm
+    name: test_vm1
+    datacenter: "{{ dc1 }}"
+    cdrom:
+    - controller_type: ide
+      controller_number: 0
+      unit_number: 0
+      type: client
+    - controller_type: ide
+      controller_number: 0
+      unit_number: 1
+      type: iso
+      iso_path: "[{{ ds1 }}] fedora.iso"
+    - controller_type: ide
+      controller_number: 1
+      unit_number: 0
+      state: absent
+    - controller_type: ide
+      controller_number: 1
+      unit_number: 1
+      state: absent
+    state: present
+  register: cdrom_vm
+
+- debug: var=cdrom_vm
+
+- name: assert the VM was changed
+  assert:
+    that:
       - "cdrom_vm.changed == true"
 
 # VCSIM fails with invalidspec exception but real vCenter PASS testcase
@@ -148,7 +239,7 @@
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
         folder: "{{ f0 }}"
-        name: test_vm2
+        name: test_vm3
         datacenter: "{{ dc1 }}"
         cluster: "{{ ccr1 }}"
         resource_pool: Resources

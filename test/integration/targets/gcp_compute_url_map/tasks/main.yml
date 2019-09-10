@@ -22,7 +22,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: instancegroup
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-urlmap
     healthy_threshold: 10
@@ -47,7 +47,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: backendservice
-- name: delete a url map
+- name: delete a URL map
   gcp_compute_url_map:
     name: "{{ resource_name }}"
     default_service: "{{ backendservice }}"
@@ -56,7 +56,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: absent
 #----------------------------------------------------------
-- name: create a url map
+- name: create a URL map
   gcp_compute_url_map:
     name: "{{ resource_name }}"
     default_service: "{{ backendservice }}"
@@ -69,9 +69,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#urlMap'"
 - name: verify that url_map was created
-  gcp_compute_url_map_facts:
+  gcp_compute_url_map_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -85,7 +84,7 @@
     that:
       - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
-- name: create a url map that already exists
+- name: create a URL map that already exists
   gcp_compute_url_map:
     name: "{{ resource_name }}"
     default_service: "{{ backendservice }}"
@@ -98,9 +97,8 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#urlMap'"
 #----------------------------------------------------------
-- name: delete a url map
+- name: delete a URL map
   gcp_compute_url_map:
     name: "{{ resource_name }}"
     default_service: "{{ backendservice }}"
@@ -114,7 +112,7 @@
     that:
       - result.changed == true
 - name: verify that url_map was deleted
-  gcp_compute_url_map_facts:
+  gcp_compute_url_map_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -128,7 +126,7 @@
     that:
       - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
-- name: delete a url map that does not exist
+- name: delete a URL map that does not exist
   gcp_compute_url_map:
     name: "{{ resource_name }}"
     default_service: "{{ backendservice }}"
@@ -158,7 +156,7 @@
     state: absent
   register: backendservice
   ignore_errors: true
-- name: delete a http health check
+- name: delete a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-urlmap
     healthy_threshold: 10

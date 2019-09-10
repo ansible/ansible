@@ -148,6 +148,7 @@ class NetAppOntapQosPolicyGroup(object):
         policy_group_get_iter = netapp_utils.zapi.NaElement('qos-policy-group-get-iter')
         policy_group_info = netapp_utils.zapi.NaElement('qos-policy-group-info')
         policy_group_info.add_new_child('policy-group', policy_group_name)
+        policy_group_info.add_new_child('vserver', self.parameters['vserver'])
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(policy_group_info)
         policy_group_get_iter.add_child_elem(query)

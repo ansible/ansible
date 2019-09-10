@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_endpoint_control_profile
 short_description: Configure FortiClient endpoint control profiles in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure endpoint_control feature and profile category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify endpoint_control feature and profile category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,83 +41,119 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
-        default: false
+        default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     endpoint_control_profile:
         description:
             - Configure FortiClient endpoint control profiles.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
             description:
                 description:
                     - Description.
-            device-groups:
+                type: str
+            device_groups:
                 description:
                     - Device groups.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Device group object from available options. Source user.device-group.name user.device-category.name.
                         required: true
-            forticlient-android-settings:
+                        type: str
+            forticlient_android_settings:
                 description:
                     - FortiClient settings for Android platform.
+                type: dict
                 suboptions:
-                    disable-wf-when-protected:
+                    disable_wf_when_protected:
                         description:
                             - Enable/disable FortiClient web category filtering when protected by FortiGate.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-advanced-vpn:
+                    forticlient_advanced_vpn:
                         description:
                             - Enable/disable advanced FortiClient VPN configuration.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-advanced-vpn-buffer:
+                    forticlient_advanced_vpn_buffer:
                         description:
                             - Advanced FortiClient VPN configuration.
-                    forticlient-vpn-provisioning:
+                        type: str
+                    forticlient_vpn_provisioning:
                         description:
                             - Enable/disable FortiClient VPN provisioning.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-vpn-settings:
+                    forticlient_vpn_settings:
                         description:
                             - FortiClient VPN settings.
+                        type: list
                         suboptions:
-                            auth-method:
+                            auth_method:
                                 description:
                                     - Authentication method.
+                                type: str
                                 choices:
                                     - psk
                                     - certificate
@@ -128,53 +161,65 @@ options:
                                 description:
                                     - VPN name.
                                 required: true
-                            preshared-key:
+                                type: str
+                            preshared_key:
                                 description:
                                     - Pre-shared secret for PSK authentication.
-                            remote-gw:
+                                type: str
+                            remote_gw:
                                 description:
                                     - IP address or FQDN of the remote VPN gateway.
-                            sslvpn-access-port:
+                                type: str
+                            sslvpn_access_port:
                                 description:
                                     - SSL VPN access port (1 - 65535).
-                            sslvpn-require-certificate:
+                                type: int
+                            sslvpn_require_certificate:
                                 description:
                                     - Enable/disable requiring SSL VPN client certificate.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             type:
                                 description:
                                     - VPN type (IPsec or SSL VPN).
+                                type: str
                                 choices:
                                     - ipsec
                                     - ssl
-                    forticlient-wf:
+                    forticlient_wf:
                         description:
                             - Enable/disable FortiClient web filtering.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-wf-profile:
+                    forticlient_wf_profile:
                         description:
                             - The FortiClient web filter profile to apply. Source webfilter.profile.name.
-            forticlient-ios-settings:
+                        type: str
+            forticlient_ios_settings:
                 description:
                     - FortiClient settings for iOS platform.
+                type: dict
                 suboptions:
-                    client-vpn-provisioning:
+                    client_vpn_provisioning:
                         description:
                             - FortiClient VPN provisioning.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    client-vpn-settings:
+                    client_vpn_settings:
                         description:
                             - FortiClient VPN settings.
+                        type: list
                         suboptions:
-                            auth-method:
+                            auth_method:
                                 description:
                                     - Authentication method.
+                                type: str
                                 choices:
                                     - psk
                                     - certificate
@@ -182,153 +227,187 @@ options:
                                 description:
                                     - VPN name.
                                 required: true
-                            preshared-key:
+                                type: str
+                            preshared_key:
                                 description:
                                     - Pre-shared secret for PSK authentication.
-                            remote-gw:
+                                type: str
+                            remote_gw:
                                 description:
                                     - IP address or FQDN of the remote VPN gateway.
-                            sslvpn-access-port:
+                                type: str
+                            sslvpn_access_port:
                                 description:
                                     - SSL VPN access port (1 - 65535).
-                            sslvpn-require-certificate:
+                                type: int
+                            sslvpn_require_certificate:
                                 description:
                                     - Enable/disable requiring SSL VPN client certificate.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             type:
                                 description:
                                     - VPN type (IPsec or SSL VPN).
+                                type: str
                                 choices:
                                     - ipsec
                                     - ssl
-                            vpn-configuration-content:
+                            vpn_configuration_content:
                                 description:
                                     - Content of VPN configuration.
-                            vpn-configuration-name:
+                                type: str
+                            vpn_configuration_name:
                                 description:
                                     - Name of VPN configuration.
-                    configuration-content:
+                                type: str
+                    configuration_content:
                         description:
                             - Content of configuration profile.
-                    configuration-name:
+                        type: str
+                    configuration_name:
                         description:
                             - Name of configuration profile.
-                    disable-wf-when-protected:
+                        type: str
+                    disable_wf_when_protected:
                         description:
                             - Enable/disable FortiClient web category filtering when protected by FortiGate.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    distribute-configuration-profile:
+                    distribute_configuration_profile:
                         description:
                             - Enable/disable configuration profile (.mobileconfig file) distribution.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-wf:
+                    forticlient_wf:
                         description:
                             - Enable/disable FortiClient web filtering.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-wf-profile:
+                    forticlient_wf_profile:
                         description:
                             - The FortiClient web filter profile to apply. Source webfilter.profile.name.
-            forticlient-winmac-settings:
+                        type: str
+            forticlient_winmac_settings:
                 description:
                     - FortiClient settings for Windows/Mac platform.
+                type: dict
                 suboptions:
-                    av-realtime-protection:
+                    av_realtime_protection:
                         description:
                             - Enable/disable FortiClient AntiVirus real-time protection.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    av-signature-up-to-date:
+                    av_signature_up_to_date:
                         description:
                             - Enable/disable FortiClient AV signature updates.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-application-firewall:
+                    forticlient_application_firewall:
                         description:
                             - Enable/disable the FortiClient application firewall.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-application-firewall-list:
+                    forticlient_application_firewall_list:
                         description:
                             - FortiClient application firewall rule list. Source application.list.name.
-                    forticlient-av:
+                        type: str
+                    forticlient_av:
                         description:
                             - Enable/disable FortiClient AntiVirus scanning.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-ems-compliance:
+                    forticlient_ems_compliance:
                         description:
                             - Enable/disable FortiClient Enterprise Management Server (EMS) compliance.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-ems-compliance-action:
+                    forticlient_ems_compliance_action:
                         description:
                             - FortiClient EMS compliance action.
+                        type: str
                         choices:
                             - block
                             - warning
-                    forticlient-ems-entries:
+                    forticlient_ems_entries:
                         description:
                             - FortiClient EMS entries.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - FortiClient EMS name. Source endpoint-control.forticlient-ems.name.
                                 required: true
-                    forticlient-linux-ver:
+                                type: str
+                    forticlient_linux_ver:
                         description:
                             - Minimum FortiClient Linux version.
-                    forticlient-log-upload:
+                        type: str
+                    forticlient_log_upload:
                         description:
                             - Enable/disable uploading FortiClient logs.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-log-upload-level:
+                    forticlient_log_upload_level:
                         description:
                             - Select the FortiClient logs to upload.
+                        type: str
                         choices:
                             - traffic
                             - vulnerability
                             - event
-                    forticlient-log-upload-server:
+                    forticlient_log_upload_server:
                         description:
                             - IP address or FQDN of the server to which to upload FortiClient logs.
-                    forticlient-mac-ver:
+                        type: str
+                    forticlient_mac_ver:
                         description:
                             - Minimum FortiClient Mac OS version.
-                    forticlient-minimum-software-version:
+                        type: str
+                    forticlient_minimum_software_version:
                         description:
                             - Enable/disable requiring clients to run FortiClient with a minimum software version number.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-operating-system:
+                    forticlient_operating_system:
                         description:
                             - FortiClient operating system.
+                        type: list
                         suboptions:
                             id:
                                 description:
                                     - Operating system entry ID.
                                 required: true
-                            os-name:
+                                type: int
+                            os_name:
                                 description:
                                     - "Customize operating system name or Mac OS format:x.x.x"
-                            os-type:
+                                type: str
+                            os_type:
                                 description:
                                     - Operating system type.
+                                type: str
                                 choices:
                                     - custom
                                     - mac-os
@@ -352,56 +431,70 @@ options:
                                     - centos-linux
                                     - redhat-linux
                                     - fedora-linux
-                    forticlient-own-file:
+                    forticlient_own_file:
                         description:
                             - Checking the path and filename of the FortiClient application.
+                        type: list
                         suboptions:
                             file:
                                 description:
                                     - File path and name.
+                                type: str
                             id:
                                 description:
                                     - File ID.
                                 required: true
-                    forticlient-registration-compliance-action:
+                                type: int
+                    forticlient_registration_compliance_action:
                         description:
                             - FortiClient registration compliance action.
+                        type: str
                         choices:
                             - block
                             - warning
-                    forticlient-registry-entry:
+                    forticlient_registry_entry:
                         description:
                             - FortiClient registry entry.
+                        type: list
                         suboptions:
                             id:
                                 description:
                                     - Registry entry ID.
                                 required: true
-                            registry-entry:
+                                type: int
+                            registry_entry:
                                 description:
                                     - Registry entry.
-                    forticlient-running-app:
+                                type: str
+                    forticlient_running_app:
                         description:
                             - Use FortiClient to verify if the listed applications are running on the client.
+                        type: list
                         suboptions:
-                            app-name:
+                            app_name:
                                 description:
                                     - Application name.
-                            app-sha256-signature:
+                                type: str
+                            app_sha256_signature:
                                 description:
                                     - App's SHA256 signature.
-                            app-sha256-signature2:
+                                type: str
+                            app_sha256_signature2:
                                 description:
                                     - App's SHA256 Signature.
-                            app-sha256-signature3:
+                                type: str
+                            app_sha256_signature3:
                                 description:
                                     - App's SHA256 Signature.
-                            app-sha256-signature4:
+                                type: str
+                            app_sha256_signature4:
                                 description:
                                     - App's SHA256 Signature.
-                            application-check-rule:
+                                type: str
+                            application_check_rule:
                                 description:
                                     - Application check rule.
+                                type: str
                                 choices:
                                     - present
                                     - absent
@@ -409,138 +502,167 @@ options:
                                 description:
                                     - Application ID.
                                 required: true
-                            process-name:
+                                type: int
+                            process_name:
                                 description:
                                     - Process name.
-                            process-name2:
+                                type: str
+                            process_name2:
                                 description:
                                     - Process name.
-                            process-name3:
+                                type: str
+                            process_name3:
                                 description:
                                     - Process name.
-                            process-name4:
+                                type: str
+                            process_name4:
                                 description:
                                     - Process name.
-                    forticlient-security-posture:
+                                type: str
+                    forticlient_security_posture:
                         description:
                             - Enable/disable FortiClient security posture check options.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-security-posture-compliance-action:
+                    forticlient_security_posture_compliance_action:
                         description:
                             - FortiClient security posture compliance action.
+                        type: str
                         choices:
                             - block
                             - warning
-                    forticlient-system-compliance:
+                    forticlient_system_compliance:
                         description:
                             - Enable/disable enforcement of FortiClient system compliance.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-system-compliance-action:
+                    forticlient_system_compliance_action:
                         description:
                             - Block or warn clients not compliant with FortiClient requirements.
+                        type: str
                         choices:
                             - block
                             - warning
-                    forticlient-vuln-scan:
+                    forticlient_vuln_scan:
                         description:
                             - Enable/disable FortiClient vulnerability scanning.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-vuln-scan-compliance-action:
+                    forticlient_vuln_scan_compliance_action:
                         description:
                             - FortiClient vulnerability compliance action.
+                        type: str
                         choices:
                             - block
                             - warning
-                    forticlient-vuln-scan-enforce:
+                    forticlient_vuln_scan_enforce:
                         description:
                             - Configure the level of the vulnerability found that causes a FortiClient vulnerability compliance action.
+                        type: str
                         choices:
                             - critical
                             - high
                             - medium
                             - low
                             - info
-                    forticlient-vuln-scan-enforce-grace:
+                    forticlient_vuln_scan_enforce_grace:
                         description:
-                            - FortiClient vulnerability scan enforcement grace period (0 - 30 days, default = 1).
-                    forticlient-vuln-scan-exempt:
+                            - FortiClient vulnerability scan enforcement grace period (0 - 30 days).
+                        type: int
+                    forticlient_vuln_scan_exempt:
                         description:
                             - Enable/disable compliance exemption for vulnerabilities that cannot be patched automatically.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-wf:
+                    forticlient_wf:
                         description:
                             - Enable/disable FortiClient web filtering.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    forticlient-wf-profile:
+                    forticlient_wf_profile:
                         description:
                             - The FortiClient web filter profile to apply. Source webfilter.profile.name.
-                    forticlient-win-ver:
+                        type: str
+                    forticlient_win_ver:
                         description:
                             - Minimum FortiClient Windows version.
-                    os-av-software-installed:
+                        type: str
+                    os_av_software_installed:
                         description:
                             - Enable/disable checking for OS recognized AntiVirus software.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    sandbox-address:
+                    sandbox_address:
                         description:
                             - FortiSandbox address.
-                    sandbox-analysis:
+                        type: str
+                    sandbox_analysis:
                         description:
                             - Enable/disable sending files to FortiSandbox for analysis.
+                        type: str
                         choices:
                             - enable
                             - disable
-            on-net-addr:
+            on_net_addr:
                 description:
                     - Addresses for on-net detection.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Address object from available options. Source firewall.address.name firewall.addrgrp.name.
                         required: true
-            profile-name:
+                        type: str
+            profile_name:
                 description:
                     - Profile name.
-                required: true
-            replacemsg-override-group:
+                type: str
+            replacemsg_override_group:
                 description:
                     - Select an endpoint control replacement message override group from available options. Source system.replacemsg-group.name.
-            src-addr:
+                type: str
+            src_addr:
                 description:
                     - Source addresses.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Address object from available options. Source firewall.address.name firewall.addrgrp.name.
                         required: true
-            user-groups:
+                        type: str
+            user_groups:
                 description:
                     - User groups.
+                type: list
                 suboptions:
                     name:
                         description:
                             - User group name. Source user.group.name.
                         required: true
+                        type: str
             users:
                 description:
                     - Users.
+                type: list
                 suboptions:
                     name:
                         description:
                             - User name. Source user.local.name.
                         required: true
+                        type: str
 '''
 
 EXAMPLES = '''
@@ -550,6 +672,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure FortiClient endpoint control profiles.
     fortios_endpoint_control_profile:
@@ -557,115 +680,116 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
+      https: "False"
+      state: "present"
       endpoint_control_profile:
-        state: "present"
         description: "<your_own_value>"
-        device-groups:
+        device_groups:
          -
             name: "default_name_5 (source user.device-group.name user.device-category.name)"
-        forticlient-android-settings:
-            disable-wf-when-protected: "enable"
-            forticlient-advanced-vpn: "enable"
-            forticlient-advanced-vpn-buffer: "<your_own_value>"
-            forticlient-vpn-provisioning: "enable"
-            forticlient-vpn-settings:
+        forticlient_android_settings:
+            disable_wf_when_protected: "enable"
+            forticlient_advanced_vpn: "enable"
+            forticlient_advanced_vpn_buffer: "<your_own_value>"
+            forticlient_vpn_provisioning: "enable"
+            forticlient_vpn_settings:
              -
-                auth-method: "psk"
+                auth_method: "psk"
                 name: "default_name_13"
-                preshared-key: "<your_own_value>"
-                remote-gw: "<your_own_value>"
-                sslvpn-access-port: "16"
-                sslvpn-require-certificate: "enable"
+                preshared_key: "<your_own_value>"
+                remote_gw: "<your_own_value>"
+                sslvpn_access_port: "16"
+                sslvpn_require_certificate: "enable"
                 type: "ipsec"
-            forticlient-wf: "enable"
-            forticlient-wf-profile: "<your_own_value> (source webfilter.profile.name)"
-        forticlient-ios-settings:
-            client-vpn-provisioning: "enable"
-            client-vpn-settings:
+            forticlient_wf: "enable"
+            forticlient_wf_profile: "<your_own_value> (source webfilter.profile.name)"
+        forticlient_ios_settings:
+            client_vpn_provisioning: "enable"
+            client_vpn_settings:
              -
-                auth-method: "psk"
+                auth_method: "psk"
                 name: "default_name_25"
-                preshared-key: "<your_own_value>"
-                remote-gw: "<your_own_value>"
-                sslvpn-access-port: "28"
-                sslvpn-require-certificate: "enable"
+                preshared_key: "<your_own_value>"
+                remote_gw: "<your_own_value>"
+                sslvpn_access_port: "28"
+                sslvpn_require_certificate: "enable"
                 type: "ipsec"
-                vpn-configuration-content: "<your_own_value>"
-                vpn-configuration-name: "<your_own_value>"
-            configuration-content: "<your_own_value>"
-            configuration-name: "<your_own_value>"
-            disable-wf-when-protected: "enable"
-            distribute-configuration-profile: "enable"
-            forticlient-wf: "enable"
-            forticlient-wf-profile: "<your_own_value> (source webfilter.profile.name)"
-        forticlient-winmac-settings:
-            av-realtime-protection: "enable"
-            av-signature-up-to-date: "enable"
-            forticlient-application-firewall: "enable"
-            forticlient-application-firewall-list: "<your_own_value> (source application.list.name)"
-            forticlient-av: "enable"
-            forticlient-ems-compliance: "enable"
-            forticlient-ems-compliance-action: "block"
-            forticlient-ems-entries:
+                vpn_configuration_content: "<your_own_value>"
+                vpn_configuration_name: "<your_own_value>"
+            configuration_content: "<your_own_value>"
+            configuration_name: "<your_own_value>"
+            disable_wf_when_protected: "enable"
+            distribute_configuration_profile: "enable"
+            forticlient_wf: "enable"
+            forticlient_wf_profile: "<your_own_value> (source webfilter.profile.name)"
+        forticlient_winmac_settings:
+            av_realtime_protection: "enable"
+            av_signature_up_to_date: "enable"
+            forticlient_application_firewall: "enable"
+            forticlient_application_firewall_list: "<your_own_value> (source application.list.name)"
+            forticlient_av: "enable"
+            forticlient_ems_compliance: "enable"
+            forticlient_ems_compliance_action: "block"
+            forticlient_ems_entries:
              -
                 name: "default_name_48 (source endpoint-control.forticlient-ems.name)"
-            forticlient-linux-ver: "<your_own_value>"
-            forticlient-log-upload: "enable"
-            forticlient-log-upload-level: "traffic"
-            forticlient-log-upload-server: "<your_own_value>"
-            forticlient-mac-ver: "<your_own_value>"
-            forticlient-minimum-software-version: "enable"
-            forticlient-operating-system:
+            forticlient_linux_ver: "<your_own_value>"
+            forticlient_log_upload: "enable"
+            forticlient_log_upload_level: "traffic"
+            forticlient_log_upload_server: "<your_own_value>"
+            forticlient_mac_ver: "<your_own_value>"
+            forticlient_minimum_software_version: "enable"
+            forticlient_operating_system:
              -
                 id:  "56"
-                os-name: "<your_own_value>"
-                os-type: "custom"
-            forticlient-own-file:
+                os_name: "<your_own_value>"
+                os_type: "custom"
+            forticlient_own_file:
              -
                 file: "<your_own_value>"
                 id:  "61"
-            forticlient-registration-compliance-action: "block"
-            forticlient-registry-entry:
+            forticlient_registration_compliance_action: "block"
+            forticlient_registry_entry:
              -
                 id:  "64"
-                registry-entry: "<your_own_value>"
-            forticlient-running-app:
+                registry_entry: "<your_own_value>"
+            forticlient_running_app:
              -
-                app-name: "<your_own_value>"
-                app-sha256-signature: "<your_own_value>"
-                app-sha256-signature2: "<your_own_value>"
-                app-sha256-signature3: "<your_own_value>"
-                app-sha256-signature4: "<your_own_value>"
-                application-check-rule: "present"
+                app_name: "<your_own_value>"
+                app_sha256_signature: "<your_own_value>"
+                app_sha256_signature2: "<your_own_value>"
+                app_sha256_signature3: "<your_own_value>"
+                app_sha256_signature4: "<your_own_value>"
+                application_check_rule: "present"
                 id:  "73"
-                process-name: "<your_own_value>"
-                process-name2: "<your_own_value>"
-                process-name3: "<your_own_value>"
-                process-name4: "<your_own_value>"
-            forticlient-security-posture: "enable"
-            forticlient-security-posture-compliance-action: "block"
-            forticlient-system-compliance: "enable"
-            forticlient-system-compliance-action: "block"
-            forticlient-vuln-scan: "enable"
-            forticlient-vuln-scan-compliance-action: "block"
-            forticlient-vuln-scan-enforce: "critical"
-            forticlient-vuln-scan-enforce-grace: "85"
-            forticlient-vuln-scan-exempt: "enable"
-            forticlient-wf: "enable"
-            forticlient-wf-profile: "<your_own_value> (source webfilter.profile.name)"
-            forticlient-win-ver: "<your_own_value>"
-            os-av-software-installed: "enable"
-            sandbox-address: "<your_own_value>"
-            sandbox-analysis: "enable"
-        on-net-addr:
+                process_name: "<your_own_value>"
+                process_name2: "<your_own_value>"
+                process_name3: "<your_own_value>"
+                process_name4: "<your_own_value>"
+            forticlient_security_posture: "enable"
+            forticlient_security_posture_compliance_action: "block"
+            forticlient_system_compliance: "enable"
+            forticlient_system_compliance_action: "block"
+            forticlient_vuln_scan: "enable"
+            forticlient_vuln_scan_compliance_action: "block"
+            forticlient_vuln_scan_enforce: "critical"
+            forticlient_vuln_scan_enforce_grace: "85"
+            forticlient_vuln_scan_exempt: "enable"
+            forticlient_wf: "enable"
+            forticlient_wf_profile: "<your_own_value> (source webfilter.profile.name)"
+            forticlient_win_ver: "<your_own_value>"
+            os_av_software_installed: "enable"
+            sandbox_address: "<your_own_value>"
+            sandbox_analysis: "enable"
+        on_net_addr:
          -
             name: "default_name_94 (source firewall.address.name firewall.addrgrp.name)"
-        profile-name: "<your_own_value>"
-        replacemsg-override-group: "<your_own_value> (source system.replacemsg-group.name)"
-        src-addr:
+        profile_name: "<your_own_value>"
+        replacemsg_override_group: "<your_own_value> (source system.replacemsg-group.name)"
+        src_addr:
          -
             name: "default_name_98 (source firewall.address.name firewall.addrgrp.name)"
-        user-groups:
+        user_groups:
          -
             name: "default_name_100 (source user.group.name)"
         users:
@@ -733,14 +857,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -748,14 +874,14 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_endpoint_control_profile_data(json):
-    option_list = ['description', 'device-groups', 'forticlient-android-settings',
-                   'forticlient-ios-settings', 'forticlient-winmac-settings', 'on-net-addr',
-                   'profile-name', 'replacemsg-override-group', 'src-addr',
-                   'user-groups', 'users']
+    option_list = ['description', 'device_groups', 'forticlient_android_settings',
+                   'forticlient_ios_settings', 'forticlient_winmac_settings', 'on_net_addr',
+                   'profile_name', 'replacemsg_override_group', 'src_addr',
+                   'user_groups', 'users']
     dictionary = {}
 
     for attribute in option_list:
@@ -765,141 +891,166 @@ def filter_endpoint_control_profile_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def endpoint_control_profile(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['endpoint_control_profile'] and data['endpoint_control_profile']:
+        state = data['endpoint_control_profile']['state']
+    else:
+        state = True
     endpoint_control_profile_data = data['endpoint_control_profile']
-    filtered_data = filter_endpoint_control_profile_data(endpoint_control_profile_data)
-    if endpoint_control_profile_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_endpoint_control_profile_data(endpoint_control_profile_data))
+
+    if state == "present":
         return fos.set('endpoint-control',
                        'profile',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif endpoint_control_profile_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('endpoint-control',
                           'profile',
                           mkey=filtered_data['profile-name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_endpoint_control(data, fos):
-    login(data)
 
-    methodlist = ['endpoint_control_profile']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['endpoint_control_profile']:
+        resp = endpoint_control_profile(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
-        "https": {"required": False, "type": "bool", "default": "False"},
+        "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "endpoint_control_profile": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "description": {"required": False, "type": "str"},
-                "device-groups": {"required": False, "type": "list",
+                "device_groups": {"required": False, "type": "list",
                                   "options": {
                                       "name": {"required": True, "type": "str"}
                                   }},
-                "forticlient-android-settings": {"required": False, "type": "dict",
+                "forticlient_android_settings": {"required": False, "type": "dict",
                                                  "options": {
-                                                     "disable-wf-when-protected": {"required": False, "type": "str",
+                                                     "disable_wf_when_protected": {"required": False, "type": "str",
                                                                                    "choices": ["enable", "disable"]},
-                                                     "forticlient-advanced-vpn": {"required": False, "type": "str",
+                                                     "forticlient_advanced_vpn": {"required": False, "type": "str",
                                                                                   "choices": ["enable", "disable"]},
-                                                     "forticlient-advanced-vpn-buffer": {"required": False, "type": "str"},
-                                                     "forticlient-vpn-provisioning": {"required": False, "type": "str",
+                                                     "forticlient_advanced_vpn_buffer": {"required": False, "type": "str"},
+                                                     "forticlient_vpn_provisioning": {"required": False, "type": "str",
                                                                                       "choices": ["enable", "disable"]},
-                                                     "forticlient-vpn-settings": {"required": False, "type": "list",
+                                                     "forticlient_vpn_settings": {"required": False, "type": "list",
                                                                                   "options": {
-                                                                                      "auth-method": {"required": False, "type": "str",
+                                                                                      "auth_method": {"required": False, "type": "str",
                                                                                                       "choices": ["psk", "certificate"]},
                                                                                       "name": {"required": True, "type": "str"},
-                                                                                      "preshared-key": {"required": False, "type": "str"},
-                                                                                      "remote-gw": {"required": False, "type": "str"},
-                                                                                      "sslvpn-access-port": {"required": False, "type": "int"},
-                                                                                      "sslvpn-require-certificate": {"required": False, "type": "str",
+                                                                                      "preshared_key": {"required": False, "type": "str"},
+                                                                                      "remote_gw": {"required": False, "type": "str"},
+                                                                                      "sslvpn_access_port": {"required": False, "type": "int"},
+                                                                                      "sslvpn_require_certificate": {"required": False, "type": "str",
                                                                                                                      "choices": ["enable", "disable"]},
                                                                                       "type": {"required": False, "type": "str",
                                                                                                "choices": ["ipsec", "ssl"]}
                                                                                   }},
-                                                     "forticlient-wf": {"required": False, "type": "str",
+                                                     "forticlient_wf": {"required": False, "type": "str",
                                                                         "choices": ["enable", "disable"]},
-                                                     "forticlient-wf-profile": {"required": False, "type": "str"}
+                                                     "forticlient_wf_profile": {"required": False, "type": "str"}
                                                  }},
-                "forticlient-ios-settings": {"required": False, "type": "dict",
+                "forticlient_ios_settings": {"required": False, "type": "dict",
                                              "options": {
-                                                 "client-vpn-provisioning": {"required": False, "type": "str",
+                                                 "client_vpn_provisioning": {"required": False, "type": "str",
                                                                              "choices": ["enable", "disable"]},
-                                                 "client-vpn-settings": {"required": False, "type": "list",
+                                                 "client_vpn_settings": {"required": False, "type": "list",
                                                                          "options": {
-                                                                             "auth-method": {"required": False, "type": "str",
+                                                                             "auth_method": {"required": False, "type": "str",
                                                                                              "choices": ["psk", "certificate"]},
                                                                              "name": {"required": True, "type": "str"},
-                                                                             "preshared-key": {"required": False, "type": "str"},
-                                                                             "remote-gw": {"required": False, "type": "str"},
-                                                                             "sslvpn-access-port": {"required": False, "type": "int"},
-                                                                             "sslvpn-require-certificate": {"required": False, "type": "str",
+                                                                             "preshared_key": {"required": False, "type": "str"},
+                                                                             "remote_gw": {"required": False, "type": "str"},
+                                                                             "sslvpn_access_port": {"required": False, "type": "int"},
+                                                                             "sslvpn_require_certificate": {"required": False, "type": "str",
                                                                                                             "choices": ["enable", "disable"]},
                                                                              "type": {"required": False, "type": "str",
                                                                                       "choices": ["ipsec", "ssl"]},
-                                                                             "vpn-configuration-content": {"required": False, "type": "str"},
-                                                                             "vpn-configuration-name": {"required": False, "type": "str"}
+                                                                             "vpn_configuration_content": {"required": False, "type": "str"},
+                                                                             "vpn_configuration_name": {"required": False, "type": "str"}
                                                                          }},
-                                                 "configuration-content": {"required": False, "type": "str"},
-                                                 "configuration-name": {"required": False, "type": "str"},
-                                                 "disable-wf-when-protected": {"required": False, "type": "str",
+                                                 "configuration_content": {"required": False, "type": "str"},
+                                                 "configuration_name": {"required": False, "type": "str"},
+                                                 "disable_wf_when_protected": {"required": False, "type": "str",
                                                                                "choices": ["enable", "disable"]},
-                                                 "distribute-configuration-profile": {"required": False, "type": "str",
+                                                 "distribute_configuration_profile": {"required": False, "type": "str",
                                                                                       "choices": ["enable", "disable"]},
-                                                 "forticlient-wf": {"required": False, "type": "str",
+                                                 "forticlient_wf": {"required": False, "type": "str",
                                                                     "choices": ["enable", "disable"]},
-                                                 "forticlient-wf-profile": {"required": False, "type": "str"}
+                                                 "forticlient_wf_profile": {"required": False, "type": "str"}
                                              }},
-                "forticlient-winmac-settings": {"required": False, "type": "dict",
+                "forticlient_winmac_settings": {"required": False, "type": "dict",
                                                 "options": {
-                                                    "av-realtime-protection": {"required": False, "type": "str",
+                                                    "av_realtime_protection": {"required": False, "type": "str",
                                                                                "choices": ["enable", "disable"]},
-                                                    "av-signature-up-to-date": {"required": False, "type": "str",
+                                                    "av_signature_up_to_date": {"required": False, "type": "str",
                                                                                 "choices": ["enable", "disable"]},
-                                                    "forticlient-application-firewall": {"required": False, "type": "str",
+                                                    "forticlient_application_firewall": {"required": False, "type": "str",
                                                                                          "choices": ["enable", "disable"]},
-                                                    "forticlient-application-firewall-list": {"required": False, "type": "str"},
-                                                    "forticlient-av": {"required": False, "type": "str",
+                                                    "forticlient_application_firewall_list": {"required": False, "type": "str"},
+                                                    "forticlient_av": {"required": False, "type": "str",
                                                                        "choices": ["enable", "disable"]},
-                                                    "forticlient-ems-compliance": {"required": False, "type": "str",
+                                                    "forticlient_ems_compliance": {"required": False, "type": "str",
                                                                                    "choices": ["enable", "disable"]},
-                                                    "forticlient-ems-compliance-action": {"required": False, "type": "str",
+                                                    "forticlient_ems_compliance_action": {"required": False, "type": "str",
                                                                                           "choices": ["block", "warning"]},
-                                                    "forticlient-ems-entries": {"required": False, "type": "list",
+                                                    "forticlient_ems_entries": {"required": False, "type": "list",
                                                                                 "options": {
                                                                                     "name": {"required": True, "type": "str"}
                                                                                 }},
-                                                    "forticlient-linux-ver": {"required": False, "type": "str"},
-                                                    "forticlient-log-upload": {"required": False, "type": "str",
+                                                    "forticlient_linux_ver": {"required": False, "type": "str"},
+                                                    "forticlient_log_upload": {"required": False, "type": "str",
                                                                                "choices": ["enable", "disable"]},
-                                                    "forticlient-log-upload-level": {"required": False, "type": "str",
+                                                    "forticlient_log_upload_level": {"required": False, "type": "str",
                                                                                      "choices": ["traffic", "vulnerability", "event"]},
-                                                    "forticlient-log-upload-server": {"required": False, "type": "str"},
-                                                    "forticlient-mac-ver": {"required": False, "type": "str"},
-                                                    "forticlient-minimum-software-version": {"required": False, "type": "str",
+                                                    "forticlient_log_upload_server": {"required": False, "type": "str"},
+                                                    "forticlient_mac_ver": {"required": False, "type": "str"},
+                                                    "forticlient_minimum_software_version": {"required": False, "type": "str",
                                                                                              "choices": ["enable", "disable"]},
-                                                    "forticlient-operating-system": {"required": False, "type": "list",
+                                                    "forticlient_operating_system": {"required": False, "type": "list",
                                                                                      "options": {
                                                                                          "id": {"required": True, "type": "int"},
-                                                                                         "os-name": {"required": False, "type": "str"},
-                                                                                         "os-type": {"required": False, "type": "str",
+                                                                                         "os_name": {"required": False, "type": "str"},
+                                                                                         "os_type": {"required": False, "type": "str",
                                                                                                      "choices": ["custom", "mac-os", "win-7",
                                                                                                                  "win-80", "win-81", "win-10",
                                                                                                                  "win-2000", "win-home-svr", "win-svr-10",
@@ -910,72 +1061,72 @@ def main():
                                                                                                                  "ubuntu-linux", "centos-linux", "redhat-linux",
                                                                                                                  "fedora-linux"]}
                                                                                      }},
-                                                    "forticlient-own-file": {"required": False, "type": "list",
+                                                    "forticlient_own_file": {"required": False, "type": "list",
                                                                              "options": {
                                                                                  "file": {"required": False, "type": "str"},
                                                                                  "id": {"required": True, "type": "int"}
                                                                              }},
-                                                    "forticlient-registration-compliance-action": {"required": False, "type": "str",
+                                                    "forticlient_registration_compliance_action": {"required": False, "type": "str",
                                                                                                    "choices": ["block", "warning"]},
-                                                    "forticlient-registry-entry": {"required": False, "type": "list",
+                                                    "forticlient_registry_entry": {"required": False, "type": "list",
                                                                                    "options": {
                                                                                        "id": {"required": True, "type": "int"},
-                                                                                       "registry-entry": {"required": False, "type": "str"}
+                                                                                       "registry_entry": {"required": False, "type": "str"}
                                                                                    }},
-                                                    "forticlient-running-app": {"required": False, "type": "list",
+                                                    "forticlient_running_app": {"required": False, "type": "list",
                                                                                 "options": {
-                                                                                    "app-name": {"required": False, "type": "str"},
-                                                                                    "app-sha256-signature": {"required": False, "type": "str"},
-                                                                                    "app-sha256-signature2": {"required": False, "type": "str"},
-                                                                                    "app-sha256-signature3": {"required": False, "type": "str"},
-                                                                                    "app-sha256-signature4": {"required": False, "type": "str"},
-                                                                                    "application-check-rule": {"required": False, "type": "str",
+                                                                                    "app_name": {"required": False, "type": "str"},
+                                                                                    "app_sha256_signature": {"required": False, "type": "str"},
+                                                                                    "app_sha256_signature2": {"required": False, "type": "str"},
+                                                                                    "app_sha256_signature3": {"required": False, "type": "str"},
+                                                                                    "app_sha256_signature4": {"required": False, "type": "str"},
+                                                                                    "application_check_rule": {"required": False, "type": "str",
                                                                                                                "choices": ["present", "absent"]},
                                                                                     "id": {"required": True, "type": "int"},
-                                                                                    "process-name": {"required": False, "type": "str"},
-                                                                                    "process-name2": {"required": False, "type": "str"},
-                                                                                    "process-name3": {"required": False, "type": "str"},
-                                                                                    "process-name4": {"required": False, "type": "str"}
+                                                                                    "process_name": {"required": False, "type": "str"},
+                                                                                    "process_name2": {"required": False, "type": "str"},
+                                                                                    "process_name3": {"required": False, "type": "str"},
+                                                                                    "process_name4": {"required": False, "type": "str"}
                                                                                 }},
-                                                    "forticlient-security-posture": {"required": False, "type": "str",
+                                                    "forticlient_security_posture": {"required": False, "type": "str",
                                                                                      "choices": ["enable", "disable"]},
-                                                    "forticlient-security-posture-compliance-action": {"required": False, "type": "str",
+                                                    "forticlient_security_posture_compliance_action": {"required": False, "type": "str",
                                                                                                        "choices": ["block", "warning"]},
-                                                    "forticlient-system-compliance": {"required": False, "type": "str",
+                                                    "forticlient_system_compliance": {"required": False, "type": "str",
                                                                                       "choices": ["enable", "disable"]},
-                                                    "forticlient-system-compliance-action": {"required": False, "type": "str",
+                                                    "forticlient_system_compliance_action": {"required": False, "type": "str",
                                                                                              "choices": ["block", "warning"]},
-                                                    "forticlient-vuln-scan": {"required": False, "type": "str",
+                                                    "forticlient_vuln_scan": {"required": False, "type": "str",
                                                                               "choices": ["enable", "disable"]},
-                                                    "forticlient-vuln-scan-compliance-action": {"required": False, "type": "str",
+                                                    "forticlient_vuln_scan_compliance_action": {"required": False, "type": "str",
                                                                                                 "choices": ["block", "warning"]},
-                                                    "forticlient-vuln-scan-enforce": {"required": False, "type": "str",
+                                                    "forticlient_vuln_scan_enforce": {"required": False, "type": "str",
                                                                                       "choices": ["critical", "high", "medium",
                                                                                                   "low", "info"]},
-                                                    "forticlient-vuln-scan-enforce-grace": {"required": False, "type": "int"},
-                                                    "forticlient-vuln-scan-exempt": {"required": False, "type": "str",
+                                                    "forticlient_vuln_scan_enforce_grace": {"required": False, "type": "int"},
+                                                    "forticlient_vuln_scan_exempt": {"required": False, "type": "str",
                                                                                      "choices": ["enable", "disable"]},
-                                                    "forticlient-wf": {"required": False, "type": "str",
+                                                    "forticlient_wf": {"required": False, "type": "str",
                                                                        "choices": ["enable", "disable"]},
-                                                    "forticlient-wf-profile": {"required": False, "type": "str"},
-                                                    "forticlient-win-ver": {"required": False, "type": "str"},
-                                                    "os-av-software-installed": {"required": False, "type": "str",
+                                                    "forticlient_wf_profile": {"required": False, "type": "str"},
+                                                    "forticlient_win_ver": {"required": False, "type": "str"},
+                                                    "os_av_software_installed": {"required": False, "type": "str",
                                                                                  "choices": ["enable", "disable"]},
-                                                    "sandbox-address": {"required": False, "type": "str"},
-                                                    "sandbox-analysis": {"required": False, "type": "str",
+                                                    "sandbox_address": {"required": False, "type": "str"},
+                                                    "sandbox_analysis": {"required": False, "type": "str",
                                                                          "choices": ["enable", "disable"]}
                                                 }},
-                "on-net-addr": {"required": False, "type": "list",
+                "on_net_addr": {"required": False, "type": "list",
                                 "options": {
                                     "name": {"required": True, "type": "str"}
                                 }},
-                "profile-name": {"required": True, "type": "str"},
-                "replacemsg-override-group": {"required": False, "type": "str"},
-                "src-addr": {"required": False, "type": "list",
+                "profile_name": {"required": False, "type": "str"},
+                "replacemsg_override_group": {"required": False, "type": "str"},
+                "src_addr": {"required": False, "type": "list",
                              "options": {
                                  "name": {"required": True, "type": "str"}
                              }},
-                "user-groups": {"required": False, "type": "list",
+                "user_groups": {"required": False, "type": "list",
                                 "options": {
                                     "name": {"required": True, "type": "str"}
                                 }},
@@ -990,15 +1141,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_endpoint_control(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_endpoint_control(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_endpoint_control(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

@@ -13,7 +13,7 @@
 #
 # ----------------------------------------------------------------------------
 # Pre-test setup
-- name: delete a ssl policy
+- name: delete a SSL policy
   gcp_compute_ssl_policy:
     name: "{{ resource_name }}"
     profile: CUSTOM
@@ -26,7 +26,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: absent
 #----------------------------------------------------------
-- name: create a ssl policy
+- name: create a SSL policy
   gcp_compute_ssl_policy:
     name: "{{ resource_name }}"
     profile: CUSTOM
@@ -43,9 +43,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#sslPolicy'"
 - name: verify that ssl_policy was created
-  gcp_compute_ssl_policy_facts:
+  gcp_compute_ssl_policy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -59,7 +58,7 @@
     that:
       - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
-- name: create a ssl policy that already exists
+- name: create a SSL policy that already exists
   gcp_compute_ssl_policy:
     name: "{{ resource_name }}"
     profile: CUSTOM
@@ -76,9 +75,8 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#sslPolicy'"
 #----------------------------------------------------------
-- name: delete a ssl policy
+- name: delete a SSL policy
   gcp_compute_ssl_policy:
     name: "{{ resource_name }}"
     profile: CUSTOM
@@ -96,7 +94,7 @@
     that:
       - result.changed == true
 - name: verify that ssl_policy was deleted
-  gcp_compute_ssl_policy_facts:
+  gcp_compute_ssl_policy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -110,7 +108,7 @@
     that:
       - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
-- name: delete a ssl policy that does not exist
+- name: delete a SSL policy that does not exist
   gcp_compute_ssl_policy:
     name: "{{ resource_name }}"
     profile: CUSTOM

@@ -77,9 +77,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#vpnTunnel'"
 - name: verify that vpn_tunnel was created
-  gcp_compute_vpn_tunnel_facts:
+  gcp_compute_vpn_tunnel_info:
       filters:
          - name = {{ resource_name }}
       region: us-west1
@@ -110,7 +109,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#vpnTunnel'"
 #----------------------------------------------------------
 - name: delete a vpn tunnel
   gcp_compute_vpn_tunnel:
@@ -129,7 +127,7 @@
     that:
       - result.changed == true
 - name: verify that vpn_tunnel was deleted
-  gcp_compute_vpn_tunnel_facts:
+  gcp_compute_vpn_tunnel_info:
       filters:
          - name = {{ resource_name }}
       region: us-west1

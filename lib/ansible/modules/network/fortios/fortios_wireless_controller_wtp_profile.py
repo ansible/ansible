@@ -26,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_wireless_controller_wtp_profile
 short_description: Configure WTP profiles or FortiAP profiles that define radio settings for manageable FortiAP platforms in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify wireless_controller feature and wtp_profile category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -41,51 +41,79 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     wireless_controller_wtp_profile:
         description:
             - Configure WTP profiles or FortiAP profiles that define radio settings for manageable FortiAP platforms.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
             allowaccess:
                 description:
                     - Control management access to the managed WTP, FortiAP, or AP. Separate entries with a space.
+                type: str
                 choices:
                     - telnet
                     - http
                     - https
                     - ssh
-            ap-country:
+            ap_country:
                 description:
-                    - Country in which this WTP, FortiAP or AP will operate (default = US).
+                    - Country in which this WTP, FortiAP or AP will operate .
+                type: str
                 choices:
                     - NA
                     - AL
@@ -215,15 +243,18 @@ options:
                     - ZW
                     - JP
                     - CA
-            ble-profile:
+            ble_profile:
                 description:
                     - Bluetooth Low Energy profile name. Source wireless-controller.ble-profile.name.
+                type: str
             comment:
                 description:
                     - Comment.
-            control-message-offload:
+                type: str
+            control_message_offload:
                 description:
                     - Enable/disable CAPWAP control message data channel offload.
+                type: str
                 choices:
                     - ebp-frame
                     - aeroscout-tag
@@ -232,306 +263,367 @@ options:
                     - sta-cap-list
                     - stats
                     - aeroscout-mu
-            deny-mac-list:
+            deny_mac_list:
                 description:
                     - List of MAC addresses that are denied access to this WTP, FortiAP, or AP.
+                type: list
                 suboptions:
                     id:
                         description:
                             - ID.
                         required: true
+                        type: int
                     mac:
                         description:
                             - A WiFi device with this MAC address is denied access to this WTP, FortiAP or AP.
-            dtls-in-kernel:
+                        type: str
+            dtls_in_kernel:
                 description:
                     - Enable/disable data channel DTLS in kernel.
+                type: str
                 choices:
                     - enable
                     - disable
-            dtls-policy:
+            dtls_policy:
                 description:
-                    - WTP data channel DTLS policy (default = clear-text).
+                    - WTP data channel DTLS policy .
+                type: str
                 choices:
                     - clear-text
                     - dtls-enabled
                     - ipsec-vpn
-            energy-efficient-ethernet:
+            energy_efficient_ethernet:
                 description:
                     - Enable/disable use of energy efficient Ethernet on WTP.
+                type: str
                 choices:
                     - enable
                     - disable
-            ext-info-enable:
+            ext_info_enable:
                 description:
                     - Enable/disable station/VAP/radio extension information.
+                type: str
                 choices:
                     - enable
                     - disable
-            handoff-roaming:
+            handoff_roaming:
                 description:
-                    - Enable/disable client load balancing during roaming to avoid roaming delay (default = disable).
+                    - Enable/disable client load balancing during roaming to avoid roaming delay .
+                type: str
                 choices:
                     - enable
                     - disable
-            handoff-rssi:
+            handoff_rssi:
                 description:
-                    - Minimum received signal strength indicator (RSSI) value for handoff (20 - 30, default = 25).
-            handoff-sta-thresh:
+                    - Minimum received signal strength indicator (RSSI) value for handoff (20 - 30).
+                type: int
+            handoff_sta_thresh:
                 description:
-                    - Threshold value for AP handoff (5 - 35, default = 30).
-            ip-fragment-preventing:
+                    - Threshold value for AP handoff.
+                type: int
+            ip_fragment_preventing:
                 description:
-                    - Select how to prevent IP fragmentation for CAPWAP tunneled control and data packets (default = tcp-mss-adjust).
+                    - Select how to prevent IP fragmentation for CAPWAP tunneled control and data packets .
+                type: str
                 choices:
                     - tcp-mss-adjust
                     - icmp-unreachable
             lan:
                 description:
                     - WTP LAN port mapping.
+                type: dict
                 suboptions:
-                    port-mode:
+                    port_mode:
                         description:
                             - LAN port mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port-ssid:
+                    port_ssid:
                         description:
                             - Bridge LAN port to SSID. Source wireless-controller.vap.name.
-                    port1-mode:
+                        type: str
+                    port1_mode:
                         description:
                             - LAN port 1 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port1-ssid:
+                    port1_ssid:
                         description:
                             - Bridge LAN port 1 to SSID. Source wireless-controller.vap.name.
-                    port2-mode:
+                        type: str
+                    port2_mode:
                         description:
                             - LAN port 2 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port2-ssid:
+                    port2_ssid:
                         description:
                             - Bridge LAN port 2 to SSID. Source wireless-controller.vap.name.
-                    port3-mode:
+                        type: str
+                    port3_mode:
                         description:
                             - LAN port 3 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port3-ssid:
+                    port3_ssid:
                         description:
                             - Bridge LAN port 3 to SSID. Source wireless-controller.vap.name.
-                    port4-mode:
+                        type: str
+                    port4_mode:
                         description:
                             - LAN port 4 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port4-ssid:
+                    port4_ssid:
                         description:
                             - Bridge LAN port 4 to SSID. Source wireless-controller.vap.name.
-                    port5-mode:
+                        type: str
+                    port5_mode:
                         description:
                             - LAN port 5 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port5-ssid:
+                    port5_ssid:
                         description:
                             - Bridge LAN port 5 to SSID. Source wireless-controller.vap.name.
-                    port6-mode:
+                        type: str
+                    port6_mode:
                         description:
                             - LAN port 6 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port6-ssid:
+                    port6_ssid:
                         description:
                             - Bridge LAN port 6 to SSID. Source wireless-controller.vap.name.
-                    port7-mode:
+                        type: str
+                    port7_mode:
                         description:
                             - LAN port 7 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port7-ssid:
+                    port7_ssid:
                         description:
                             - Bridge LAN port 7 to SSID. Source wireless-controller.vap.name.
-                    port8-mode:
+                        type: str
+                    port8_mode:
                         description:
                             - LAN port 8 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port8-ssid:
+                    port8_ssid:
                         description:
                             - Bridge LAN port 8 to SSID. Source wireless-controller.vap.name.
+                        type: str
             lbs:
                 description:
                     - Set various location based service (LBS) options.
+                type: dict
                 suboptions:
                     aeroscout:
                         description:
-                            - Enable/disable AeroScout Real Time Location Service (RTLS) support.
+                            - Enable/disable AeroScout Real Time Location Service (RTLS) support .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    aeroscout-ap-mac:
+                    aeroscout_ap_mac:
                         description:
-                            - Use BSSID or board MAC address as AP MAC address in the Aeroscout AP message.
+                            - Use BSSID or board MAC address as AP MAC address in AeroScout AP messages .
+                        type: str
                         choices:
                             - bssid
                             - board-mac
-                    aeroscout-mmu-report:
+                    aeroscout_mmu_report:
                         description:
-                            - Enable/disable MU compounded report.
+                            - Enable/disable compounded AeroScout tag and MU report .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    aeroscout-mu:
+                    aeroscout_mu:
                         description:
-                            - Enable/disable AeroScout support.
+                            - Enable/disable AeroScout Mobile Unit (MU) support .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    aeroscout-mu-factor:
+                    aeroscout_mu_factor:
                         description:
-                            - AeroScout Mobile Unit (MU) mode dilution factor (default = 20).
-                    aeroscout-mu-timeout:
+                            - AeroScout MU mode dilution factor .
+                        type: int
+                    aeroscout_mu_timeout:
                         description:
-                            - AeroScout MU mode timeout (0 - 65535 sec, default = 5).
-                    aeroscout-server-ip:
+                            - AeroScout MU mode timeout (0 - 65535 sec).
+                        type: int
+                    aeroscout_server_ip:
                         description:
                             - IP address of AeroScout server.
-                    aeroscout-server-port:
+                        type: str
+                    aeroscout_server_port:
                         description:
                             - AeroScout server UDP listening port.
-                    ekahau-blink-mode:
+                        type: int
+                    ekahau_blink_mode:
                         description:
-                            - Enable/disable Ekahua blink mode (also called AiRISTA Flow Blink Mode) to find the location of devices connected to a wireless
-                               LAN (default = disable).
+                            - Enable/disable Ekahau blink mode (now known as AiRISTA Flow) to track and locate WiFi tags .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    ekahau-tag:
+                    ekahau_tag:
                         description:
                             - WiFi frame MAC address or WiFi Tag.
-                    erc-server-ip:
+                        type: str
+                    erc_server_ip:
                         description:
-                            - IP address of Ekahua RTLS Controller (ERC).
-                    erc-server-port:
+                            - IP address of Ekahau RTLS Controller (ERC).
+                        type: str
+                    erc_server_port:
                         description:
-                            - Ekahua RTLS Controller (ERC) UDP listening port.
+                            - Ekahau RTLS Controller (ERC) UDP listening port.
+                        type: int
                     fortipresence:
                         description:
                             - Enable/disable FortiPresence to monitor the location and activity of WiFi clients even if they don't connect to this WiFi
-                               network (default = disable).
+                               network .
+                        type: str
                         choices:
                             - foreign
                             - both
                             - disable
-                    fortipresence-frequency:
+                    fortipresence_frequency:
                         description:
-                            - FortiPresence report transmit frequency (5 - 65535 sec, default = 30).
-                    fortipresence-port:
+                            - FortiPresence report transmit frequency (5 - 65535 sec).
+                        type: int
+                    fortipresence_port:
                         description:
-                            - FortiPresence server UDP listening port (default = 3000).
-                    fortipresence-project:
+                            - FortiPresence server UDP listening port .
+                        type: int
+                    fortipresence_project:
                         description:
-                            - FortiPresence project name (max. 16 characters, default = fortipresence).
-                    fortipresence-rogue:
+                            - FortiPresence project name (max. 16 characters).
+                        type: str
+                    fortipresence_rogue:
                         description:
                             - Enable/disable FortiPresence finding and reporting rogue APs.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    fortipresence-secret:
+                    fortipresence_secret:
                         description:
                             - FortiPresence secret password (max. 16 characters).
-                    fortipresence-server:
+                        type: str
+                    fortipresence_server:
                         description:
                             - FortiPresence server IP address.
-                    fortipresence-unassoc:
+                        type: str
+                    fortipresence_unassoc:
                         description:
                             - Enable/disable FortiPresence finding and reporting unassociated stations.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    station-locate:
+                    station_locate:
                         description:
-                            - Enable/disable client station locating services for all clients, whether associated or not (default = disable).
+                            - Enable/disable client station locating services for all clients, whether associated or not .
+                        type: str
                         choices:
                             - enable
                             - disable
-            led-schedules:
+            led_schedules:
                 description:
                     - Recurring firewall schedules for illuminating LEDs on the FortiAP. If led-state is enabled, LEDs will be visible when at least one of
                        the schedules is valid. Separate multiple schedule names with a space.
+                type: list
                 suboptions:
                     name:
                         description:
                             - LED schedule name. Source firewall.schedule.group.name firewall.schedule.recurring.name.
                         required: true
-            led-state:
+                        type: str
+            led_state:
                 description:
-                    - Enable/disable use of LEDs on WTP (default = disable).
+                    - Enable/disable use of LEDs on WTP .
+                type: str
                 choices:
                     - enable
                     - disable
             lldp:
                 description:
-                    - Enable/disable Link Layer Discovery Protocol (LLDP) for the WTP, FortiAP, or AP (default = disable).
+                    - Enable/disable Link Layer Discovery Protocol (LLDP) for the WTP, FortiAP, or AP .
+                type: str
                 choices:
                     - enable
                     - disable
-            login-passwd:
+            login_passwd:
                 description:
                     - Set the managed WTP, FortiAP, or AP's administrator password.
-            login-passwd-change:
+                type: str
+            login_passwd_change:
                 description:
-                    - Change or reset the administrator password of a managed WTP, FortiAP or AP (yes, default, or no, default = no).
+                    - Change or reset the administrator password of a managed WTP, FortiAP or AP (yes, default, or no).
+                type: str
                 choices:
                     - yes
                     - default
                     - no
-            max-clients:
+            max_clients:
                 description:
-                    - Maximum number of stations (STAs) supported by the WTP (default = 0, meaning no client limitation).
+                    - Maximum number of stations (STAs) supported by the WTP .
+                type: int
             name:
                 description:
                     - WTP (or FortiAP or AP) profile name.
                 required: true
+                type: str
             platform:
                 description:
                     - WTP, FortiAP, or AP platform.
+                type: dict
                 suboptions:
                     type:
                         description:
                             - WTP, FortiAP or AP platform type. There are built-in WTP profiles for all supported FortiAP models. You can select a built-in
                                profile and customize it or create a new profile.
+                        type: str
                         choices:
                             - AP-11N
                             - 220B
@@ -585,84 +677,100 @@ options:
                             - U24JEV
                             - U321EV
                             - U323EV
-            poe-mode:
+            poe_mode:
                 description:
                     - Set the WTP, FortiAP, or AP's PoE mode.
+                type: str
                 choices:
                     - auto
                     - 8023af
                     - 8023at
                     - power-adapter
-            radio-1:
+            radio_1:
                 description:
                     - Configuration options for radio 1.
+                type: dict
                 suboptions:
                     amsdu:
                         description:
-                            - Enable/disable 802.11n AMSDU support. AMSDU can improve performance if supported by your WiFi clients (default = enable).
+                            - Enable/disable 802.11n AMSDU support. AMSDU can improve performance if supported by your WiFi clients .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    ap-handoff:
+                    ap_handoff:
                         description:
-                            - Enable/disable AP handoff of clients to other APs (default = disable).
+                            - Enable/disable AP handoff of clients to other APs .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    ap-sniffer-addr:
+                    ap_sniffer_addr:
                         description:
                             - MAC address to monitor.
-                    ap-sniffer-bufsize:
+                        type: str
+                    ap_sniffer_bufsize:
                         description:
-                            - Sniffer buffer size (1 - 32 MB, default = 16).
-                    ap-sniffer-chan:
+                            - Sniffer buffer size (1 - 32 MB).
+                        type: int
+                    ap_sniffer_chan:
                         description:
-                            - Channel on which to operate the sniffer (default = 6).
-                    ap-sniffer-ctl:
+                            - Channel on which to operate the sniffer .
+                        type: int
+                    ap_sniffer_ctl:
                         description:
-                            - Enable/disable sniffer on WiFi control frame (default = enable).
+                            - Enable/disable sniffer on WiFi control frame .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    ap-sniffer-data:
+                    ap_sniffer_data:
                         description:
-                            - Enable/disable sniffer on WiFi data frame (default = enable).
+                            - Enable/disable sniffer on WiFi data frame .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    ap-sniffer-mgmt-beacon:
+                    ap_sniffer_mgmt_beacon:
                         description:
-                            - Enable/disable sniffer on WiFi management Beacon frames (default = enable).
+                            - Enable/disable sniffer on WiFi management Beacon frames .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    ap-sniffer-mgmt-other:
+                    ap_sniffer_mgmt_other:
                         description:
-                            - Enable/disable sniffer on WiFi management other frames  (default = enable).
+                            - Enable/disable sniffer on WiFi management other frames  .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    ap-sniffer-mgmt-probe:
+                    ap_sniffer_mgmt_probe:
                         description:
-                            - Enable/disable sniffer on WiFi management probe frames (default = enable).
+                            - Enable/disable sniffer on WiFi management probe frames .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    auto-power-high:
+                    auto_power_high:
                         description:
                             - Automatic transmit power high limit in dBm (the actual range of transmit power depends on the AP platform type).
-                    auto-power-level:
+                        type: int
+                    auto_power_level:
                         description:
-                            - Enable/disable automatic power-level adjustment to prevent co-channel interference (default = disable).
+                            - Enable/disable automatic power-level adjustment to prevent co-channel interference .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    auto-power-low:
+                    auto_power_low:
                         description:
                             - Automatic transmission power low limit in dBm (the actual range of transmit power depends on the AP platform type).
+                        type: int
                     band:
                         description:
                             - WiFi band that Radio 1 operates on.
+                        type: str
                         choices:
                             - 802.11a
                             - 802.11b
@@ -676,226 +784,268 @@ options:
                             - 802.11n-5G-only
                             - 802.11ac,n-only
                             - 802.11ac-only
-                    bandwidth-admission-control:
+                    bandwidth_admission_control:
                         description:
                             - Enable/disable WiFi multimedia (WMM) bandwidth admission control to optimize WiFi bandwidth use. A request to join the wireless
                                network is only allowed if the access point has enough bandwidth to support it.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    bandwidth-capacity:
+                    bandwidth_capacity:
                         description:
-                            - Maximum bandwidth capacity allowed (1 - 600000 Kbps, default = 2000).
-                    beacon-interval:
+                            - Maximum bandwidth capacity allowed (1 - 600000 Kbps).
+                        type: int
+                    beacon_interval:
                         description:
-                            - Beacon interval. The time between beacon frames in msec (the actual range of beacon interval depends on the AP platform type,
-                               default = 100).
-                    call-admission-control:
+                            - Beacon interval. The time between beacon frames in msec (the actual range of beacon interval depends on the AP platform type).
+                        type: int
+                    call_admission_control:
                         description:
                             - Enable/disable WiFi multimedia (WMM) call admission control to optimize WiFi bandwidth use for VoIP calls. New VoIP calls are
                                only accepted if there is enough bandwidth available to support them.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    call-capacity:
+                    call_capacity:
                         description:
-                            - Maximum number of Voice over WLAN (VoWLAN) phones supported by the radio (0 - 60, default = 10).
+                            - Maximum number of Voice over WLAN (VoWLAN) phones supported by the radio (0 - 60).
+                        type: int
                     channel:
                         description:
                             - Selected list of wireless radio channels.
+                        type: list
                         suboptions:
                             chan:
                                 description:
                                     - Channel number.
                                 required: true
-                    channel-bonding:
+                                type: str
+                    channel_bonding:
                         description:
                             - "Channel bandwidth: 80, 40, or 20MHz. Channels may use both 20 and 40 by enabling coexistence."
+                        type: str
                         choices:
                             - 80MHz
                             - 40MHz
                             - 20MHz
-                    channel-utilization:
+                    channel_utilization:
                         description:
                             - Enable/disable measuring channel utilization.
+                        type: str
                         choices:
                             - enable
                             - disable
                     coexistence:
                         description:
-                            - Enable/disable allowing both HT20 and HT40 on the same radio (default = enable).
+                            - Enable/disable allowing both HT20 and HT40 on the same radio .
+                        type: str
                         choices:
                             - enable
                             - disable
                     darrp:
                         description:
                             - Enable/disable Distributed Automatic Radio Resource Provisioning (DARRP) to make sure the radio is always using the most optimal
-                               channel (default = disable).
+                               channel .
+                        type: str
                         choices:
                             - enable
                             - disable
                     dtim:
                         description:
-                            - DTIM interval. The frequency to transmit Delivery Traffic Indication Message (or Map) (DTIM) messages (1 - 255, default = 1).
-                               Set higher to save client battery life.
-                    frag-threshold:
+                            - DTIM interval. The frequency to transmit Delivery Traffic Indication Message (or Map) (DTIM) messages (1 - 255). Set higher to
+                               save client battery life.
+                        type: int
+                    frag_threshold:
                         description:
-                            - Maximum packet size that can be sent without fragmentation (800 - 2346 bytes, default = 2346).
-                    frequency-handoff:
+                            - Maximum packet size that can be sent without fragmentation (800 - 2346 bytes).
+                        type: int
+                    frequency_handoff:
                         description:
-                            - Enable/disable frequency handoff of clients to other channels (default = disable).
+                            - Enable/disable frequency handoff of clients to other channels .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    max-clients:
+                    max_clients:
                         description:
                             - Maximum number of stations (STAs) or WiFi clients supported by the radio. Range depends on the hardware.
-                    max-distance:
+                        type: int
+                    max_distance:
                         description:
-                            - Maximum expected distance between the AP and clients (0 - 54000 m, default = 0).
+                            - Maximum expected distance between the AP and clients (0 - 54000 m).
+                        type: int
                     mode:
                         description:
                             - Mode of radio 1. Radio 1 can be disabled, configured as an access point, a rogue AP monitor, or a sniffer.
+                        type: str
                         choices:
                             - disabled
                             - ap
                             - monitor
                             - sniffer
-                    power-level:
+                    power_level:
                         description:
-                            - Radio power level as a percentage of the maximum transmit power (0 - 100, default = 100).
-                    powersave-optimize:
+                            - Radio power level as a percentage of the maximum transmit power (0 - 100).
+                        type: int
+                    powersave_optimize:
                         description:
                             - Enable client power-saving features such as TIM, AC VO, and OBSS etc.
+                        type: str
                         choices:
                             - tim
                             - ac-vo
                             - no-obss-scan
                             - no-11b-rate
                             - client-rate-follow
-                    protection-mode:
+                    protection_mode:
                         description:
                             - Enable/disable 802.11g protection modes to support backwards compatibility with older clients (rtscts, ctsonly, disable).
+                        type: str
                         choices:
                             - rtscts
                             - ctsonly
                             - disable
-                    radio-id:
+                    radio_id:
                         description:
                             - radio-id
-                    rts-threshold:
+                        type: int
+                    rts_threshold:
                         description:
-                            - Maximum packet size for RTS transmissions, specifying the maximum size of a data packet before RTS/CTS (256 - 2346 bytes,
-                               default = 2346).
-                    short-guard-interval:
+                            - Maximum packet size for RTS transmissions, specifying the maximum size of a data packet before RTS/CTS (256 - 2346 bytes).
+                        type: int
+                    short_guard_interval:
                         description:
                             - Use either the short guard interval (Short GI) of 400 ns or the long guard interval (Long GI) of 800 ns.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    spectrum-analysis:
+                    spectrum_analysis:
                         description:
                             - Enable/disable spectrum analysis to find interference that would negatively impact wireless performance.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    transmit-optimize:
+                    transmit_optimize:
                         description:
                             - Packet transmission optimization options including power saving, aggregation limiting, retry limiting, etc. All are enabled by
                                default.
+                        type: str
                         choices:
                             - disable
                             - power-save
                             - aggr-limit
                             - retry-limit
                             - send-bar
-                    vap-all:
+                    vap_all:
                         description:
-                            - Enable/disable the automatic inheritance of all Virtual Access Points (VAPs) (default = enable).
+                            - Enable/disable the automatic inheritance of all Virtual Access Points (VAPs) .
+                        type: str
                         choices:
                             - enable
                             - disable
                     vaps:
                         description:
                             - Manually selected list of Virtual Access Points (VAPs).
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Virtual Access Point (VAP) name. Source wireless-controller.vap-group.name wireless-controller.vap.name.
                                 required: true
-                    wids-profile:
+                                type: str
+                    wids_profile:
                         description:
                             - Wireless Intrusion Detection System (WIDS) profile name to assign to the radio. Source wireless-controller.wids-profile.name.
-            radio-2:
+                        type: str
+            radio_2:
                 description:
                     - Configuration options for radio 2.
+                type: dict
                 suboptions:
                     amsdu:
                         description:
-                            - Enable/disable 802.11n AMSDU support. AMSDU can improve performance if supported by your WiFi clients (default = enable).
+                            - Enable/disable 802.11n AMSDU support. AMSDU can improve performance if supported by your WiFi clients .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    ap-handoff:
+                    ap_handoff:
                         description:
-                            - Enable/disable AP handoff of clients to other APs (default = disable).
+                            - Enable/disable AP handoff of clients to other APs .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    ap-sniffer-addr:
+                    ap_sniffer_addr:
                         description:
                             - MAC address to monitor.
-                    ap-sniffer-bufsize:
+                        type: str
+                    ap_sniffer_bufsize:
                         description:
-                            - Sniffer buffer size (1 - 32 MB, default = 16).
-                    ap-sniffer-chan:
+                            - Sniffer buffer size (1 - 32 MB).
+                        type: int
+                    ap_sniffer_chan:
                         description:
-                            - Channel on which to operate the sniffer (default = 6).
-                    ap-sniffer-ctl:
+                            - Channel on which to operate the sniffer .
+                        type: int
+                    ap_sniffer_ctl:
                         description:
-                            - Enable/disable sniffer on WiFi control frame (default = enable).
+                            - Enable/disable sniffer on WiFi control frame .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    ap-sniffer-data:
+                    ap_sniffer_data:
                         description:
-                            - Enable/disable sniffer on WiFi data frame (default = enable).
+                            - Enable/disable sniffer on WiFi data frame .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    ap-sniffer-mgmt-beacon:
+                    ap_sniffer_mgmt_beacon:
                         description:
-                            - Enable/disable sniffer on WiFi management Beacon frames (default = enable).
+                            - Enable/disable sniffer on WiFi management Beacon frames .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    ap-sniffer-mgmt-other:
+                    ap_sniffer_mgmt_other:
                         description:
-                            - Enable/disable sniffer on WiFi management other frames  (default = enable).
+                            - Enable/disable sniffer on WiFi management other frames  .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    ap-sniffer-mgmt-probe:
+                    ap_sniffer_mgmt_probe:
                         description:
-                            - Enable/disable sniffer on WiFi management probe frames (default = enable).
+                            - Enable/disable sniffer on WiFi management probe frames .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    auto-power-high:
+                    auto_power_high:
                         description:
                             - Automatic transmit power high limit in dBm (the actual range of transmit power depends on the AP platform type).
-                    auto-power-level:
+                        type: int
+                    auto_power_level:
                         description:
-                            - Enable/disable automatic power-level adjustment to prevent co-channel interference (default = disable).
+                            - Enable/disable automatic power-level adjustment to prevent co-channel interference .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    auto-power-low:
+                    auto_power_low:
                         description:
                             - Automatic transmission power low limit in dBm (the actual range of transmit power depends on the AP platform type).
+                        type: int
                     band:
                         description:
                             - WiFi band that Radio 2 operates on.
+                        type: str
                         choices:
                             - 802.11a
                             - 802.11b
@@ -909,188 +1059,223 @@ options:
                             - 802.11n-5G-only
                             - 802.11ac,n-only
                             - 802.11ac-only
-                    bandwidth-admission-control:
+                    bandwidth_admission_control:
                         description:
                             - Enable/disable WiFi multimedia (WMM) bandwidth admission control to optimize WiFi bandwidth use. A request to join the wireless
                                network is only allowed if the access point has enough bandwidth to support it.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    bandwidth-capacity:
+                    bandwidth_capacity:
                         description:
-                            - Maximum bandwidth capacity allowed (1 - 600000 Kbps, default = 2000).
-                    beacon-interval:
+                            - Maximum bandwidth capacity allowed (1 - 600000 Kbps).
+                        type: int
+                    beacon_interval:
                         description:
-                            - Beacon interval. The time between beacon frames in msec (the actual range of beacon interval depends on the AP platform type,
-                               default = 100).
-                    call-admission-control:
+                            - Beacon interval. The time between beacon frames in msec (the actual range of beacon interval depends on the AP platform type).
+                        type: int
+                    call_admission_control:
                         description:
                             - Enable/disable WiFi multimedia (WMM) call admission control to optimize WiFi bandwidth use for VoIP calls. New VoIP calls are
                                only accepted if there is enough bandwidth available to support them.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    call-capacity:
+                    call_capacity:
                         description:
-                            - Maximum number of Voice over WLAN (VoWLAN) phones supported by the radio (0 - 60, default = 10).
+                            - Maximum number of Voice over WLAN (VoWLAN) phones supported by the radio (0 - 60).
+                        type: int
                     channel:
                         description:
                             - Selected list of wireless radio channels.
+                        type: list
                         suboptions:
                             chan:
                                 description:
                                     - Channel number.
                                 required: true
-                    channel-bonding:
+                                type: str
+                    channel_bonding:
                         description:
                             - "Channel bandwidth: 80, 40, or 20MHz. Channels may use both 20 and 40 by enabling coexistence."
+                        type: str
                         choices:
                             - 80MHz
                             - 40MHz
                             - 20MHz
-                    channel-utilization:
+                    channel_utilization:
                         description:
                             - Enable/disable measuring channel utilization.
+                        type: str
                         choices:
                             - enable
                             - disable
                     coexistence:
                         description:
-                            - Enable/disable allowing both HT20 and HT40 on the same radio (default = enable).
+                            - Enable/disable allowing both HT20 and HT40 on the same radio .
+                        type: str
                         choices:
                             - enable
                             - disable
                     darrp:
                         description:
                             - Enable/disable Distributed Automatic Radio Resource Provisioning (DARRP) to make sure the radio is always using the most optimal
-                               channel (default = disable).
+                               channel .
+                        type: str
                         choices:
                             - enable
                             - disable
                     dtim:
                         description:
-                            - DTIM interval. The frequency to transmit Delivery Traffic Indication Message (or Map) (DTIM) messages (1 - 255, default = 1).
-                               Set higher to save client battery life.
-                    frag-threshold:
+                            - DTIM interval. The frequency to transmit Delivery Traffic Indication Message (or Map) (DTIM) messages (1 - 255). Set higher to
+                               save client battery life.
+                        type: int
+                    frag_threshold:
                         description:
-                            - Maximum packet size that can be sent without fragmentation (800 - 2346 bytes, default = 2346).
-                    frequency-handoff:
+                            - Maximum packet size that can be sent without fragmentation (800 - 2346 bytes).
+                        type: int
+                    frequency_handoff:
                         description:
-                            - Enable/disable frequency handoff of clients to other channels (default = disable).
+                            - Enable/disable frequency handoff of clients to other channels .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    max-clients:
+                    max_clients:
                         description:
                             - Maximum number of stations (STAs) or WiFi clients supported by the radio. Range depends on the hardware.
-                    max-distance:
+                        type: int
+                    max_distance:
                         description:
-                            - Maximum expected distance between the AP and clients (0 - 54000 m, default = 0).
+                            - Maximum expected distance between the AP and clients (0 - 54000 m).
+                        type: int
                     mode:
                         description:
                             - Mode of radio 2. Radio 2 can be disabled, configured as an access point, a rogue AP monitor, or a sniffer.
+                        type: str
                         choices:
                             - disabled
                             - ap
                             - monitor
                             - sniffer
-                    power-level:
+                    power_level:
                         description:
-                            - Radio power level as a percentage of the maximum transmit power (0 - 100, default = 100).
-                    powersave-optimize:
+                            - Radio power level as a percentage of the maximum transmit power (0 - 100).
+                        type: int
+                    powersave_optimize:
                         description:
                             - Enable client power-saving features such as TIM, AC VO, and OBSS etc.
+                        type: str
                         choices:
                             - tim
                             - ac-vo
                             - no-obss-scan
                             - no-11b-rate
                             - client-rate-follow
-                    protection-mode:
+                    protection_mode:
                         description:
                             - Enable/disable 802.11g protection modes to support backwards compatibility with older clients (rtscts, ctsonly, disable).
+                        type: str
                         choices:
                             - rtscts
                             - ctsonly
                             - disable
-                    radio-id:
+                    radio_id:
                         description:
                             - radio-id
-                    rts-threshold:
+                        type: int
+                    rts_threshold:
                         description:
-                            - Maximum packet size for RTS transmissions, specifying the maximum size of a data packet before RTS/CTS (256 - 2346 bytes,
-                               default = 2346).
-                    short-guard-interval:
+                            - Maximum packet size for RTS transmissions, specifying the maximum size of a data packet before RTS/CTS (256 - 2346 bytes).
+                        type: int
+                    short_guard_interval:
                         description:
                             - Use either the short guard interval (Short GI) of 400 ns or the long guard interval (Long GI) of 800 ns.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    spectrum-analysis:
+                    spectrum_analysis:
                         description:
                             - Enable/disable spectrum analysis to find interference that would negatively impact wireless performance.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    transmit-optimize:
+                    transmit_optimize:
                         description:
                             - Packet transmission optimization options including power saving, aggregation limiting, retry limiting, etc. All are enabled by
                                default.
+                        type: str
                         choices:
                             - disable
                             - power-save
                             - aggr-limit
                             - retry-limit
                             - send-bar
-                    vap-all:
+                    vap_all:
                         description:
-                            - Enable/disable the automatic inheritance of all Virtual Access Points (VAPs) (default = enable).
+                            - Enable/disable the automatic inheritance of all Virtual Access Points (VAPs) .
+                        type: str
                         choices:
                             - enable
                             - disable
                     vaps:
                         description:
                             - Manually selected list of Virtual Access Points (VAPs).
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Virtual Access Point (VAP) name. Source wireless-controller.vap-group.name wireless-controller.vap.name.
                                 required: true
-                    wids-profile:
+                                type: str
+                    wids_profile:
                         description:
                             - Wireless Intrusion Detection System (WIDS) profile name to assign to the radio. Source wireless-controller.wids-profile.name.
-            split-tunneling-acl:
+                        type: str
+            split_tunneling_acl:
                 description:
                     - Split tunneling ACL filter list.
+                type: list
                 suboptions:
-                    dest-ip:
+                    dest_ip:
                         description:
                             - Destination IP and mask for the split-tunneling subnet.
+                        type: str
                     id:
                         description:
                             - ID.
                         required: true
-            split-tunneling-acl-local-ap-subnet:
+                        type: int
+            split_tunneling_acl_local_ap_subnet:
                 description:
-                    - Enable/disable automatically adding local subnetwork of FortiAP to split-tunneling ACL (default = disable).
+                    - Enable/disable automatically adding local subnetwork of FortiAP to split-tunneling ACL .
+                type: str
                 choices:
                     - enable
                     - disable
-            split-tunneling-acl-path:
+            split_tunneling_acl_path:
                 description:
                     - Split tunneling ACL path is local/tunnel.
+                type: str
                 choices:
                     - tunnel
                     - local
-            tun-mtu-downlink:
+            tun_mtu_downlink:
                 description:
-                    - Downlink CAPWAP tunnel MTU (0, 576, or 1500 bytes, default = 0).
-            tun-mtu-uplink:
+                    - Downlink CAPWAP tunnel MTU (0, 576, or 1500 bytes).
+                type: int
+            tun_mtu_uplink:
                 description:
-                    - Uplink CAPWAP tunnel MTU (0, 576, or 1500 bytes, default = 0).
-            wan-port-mode:
+                    - Uplink CAPWAP tunnel MTU (0, 576, or 1500 bytes).
+                type: int
+            wan_port_mode:
                 description:
                     - Enable/disable using a WAN port as a LAN port.
+                type: str
                 choices:
                     - wan-lan
                     - wan-only
@@ -1103,6 +1288,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure WTP profiles or FortiAP profiles that define radio settings for manageable FortiAP platforms.
     fortios_wireless_controller_wtp_profile:
@@ -1111,179 +1297,179 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       wireless_controller_wtp_profile:
-        state: "present"
         allowaccess: "telnet"
-        ap-country: "NA"
-        ble-profile: "<your_own_value> (source wireless-controller.ble-profile.name)"
+        ap_country: "NA"
+        ble_profile: "<your_own_value> (source wireless-controller.ble-profile.name)"
         comment: "Comment."
-        control-message-offload: "ebp-frame"
-        deny-mac-list:
+        control_message_offload: "ebp-frame"
+        deny_mac_list:
          -
             id:  "9"
             mac: "<your_own_value>"
-        dtls-in-kernel: "enable"
-        dtls-policy: "clear-text"
-        energy-efficient-ethernet: "enable"
-        ext-info-enable: "enable"
-        handoff-roaming: "enable"
-        handoff-rssi: "16"
-        handoff-sta-thresh: "17"
-        ip-fragment-preventing: "tcp-mss-adjust"
+        dtls_in_kernel: "enable"
+        dtls_policy: "clear-text"
+        energy_efficient_ethernet: "enable"
+        ext_info_enable: "enable"
+        handoff_roaming: "enable"
+        handoff_rssi: "16"
+        handoff_sta_thresh: "17"
+        ip_fragment_preventing: "tcp-mss-adjust"
         lan:
-            port-mode: "offline"
-            port-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port1-mode: "offline"
-            port1-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port2-mode: "offline"
-            port2-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port3-mode: "offline"
-            port3-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port4-mode: "offline"
-            port4-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port5-mode: "offline"
-            port5-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port6-mode: "offline"
-            port6-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port7-mode: "offline"
-            port7-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port8-mode: "offline"
-            port8-ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port_mode: "offline"
+            port_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port1_mode: "offline"
+            port1_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port2_mode: "offline"
+            port2_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port3_mode: "offline"
+            port3_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port4_mode: "offline"
+            port4_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port5_mode: "offline"
+            port5_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port6_mode: "offline"
+            port6_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port7_mode: "offline"
+            port7_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port8_mode: "offline"
+            port8_ssid: "<your_own_value> (source wireless-controller.vap.name)"
         lbs:
             aeroscout: "enable"
-            aeroscout-ap-mac: "bssid"
-            aeroscout-mmu-report: "enable"
-            aeroscout-mu: "enable"
-            aeroscout-mu-factor: "43"
-            aeroscout-mu-timeout: "44"
-            aeroscout-server-ip: "<your_own_value>"
-            aeroscout-server-port: "46"
-            ekahau-blink-mode: "enable"
-            ekahau-tag: "<your_own_value>"
-            erc-server-ip: "<your_own_value>"
-            erc-server-port: "50"
+            aeroscout_ap_mac: "bssid"
+            aeroscout_mmu_report: "enable"
+            aeroscout_mu: "enable"
+            aeroscout_mu_factor: "43"
+            aeroscout_mu_timeout: "44"
+            aeroscout_server_ip: "<your_own_value>"
+            aeroscout_server_port: "46"
+            ekahau_blink_mode: "enable"
+            ekahau_tag: "<your_own_value>"
+            erc_server_ip: "<your_own_value>"
+            erc_server_port: "50"
             fortipresence: "foreign"
-            fortipresence-frequency: "52"
-            fortipresence-port: "53"
-            fortipresence-project: "<your_own_value>"
-            fortipresence-rogue: "enable"
-            fortipresence-secret: "<your_own_value>"
-            fortipresence-server: "<your_own_value>"
-            fortipresence-unassoc: "enable"
-            station-locate: "enable"
-        led-schedules:
+            fortipresence_frequency: "52"
+            fortipresence_port: "53"
+            fortipresence_project: "<your_own_value>"
+            fortipresence_rogue: "enable"
+            fortipresence_secret: "<your_own_value>"
+            fortipresence_server: "<your_own_value>"
+            fortipresence_unassoc: "enable"
+            station_locate: "enable"
+        led_schedules:
          -
             name: "default_name_61 (source firewall.schedule.group.name firewall.schedule.recurring.name)"
-        led-state: "enable"
+        led_state: "enable"
         lldp: "enable"
-        login-passwd: "<your_own_value>"
-        login-passwd-change: "yes"
-        max-clients: "66"
+        login_passwd: "<your_own_value>"
+        login_passwd_change: "yes"
+        max_clients: "66"
         name: "default_name_67"
         platform:
             type: "AP-11N"
-        poe-mode: "auto"
-        radio-1:
+        poe_mode: "auto"
+        radio_1:
             amsdu: "enable"
-            ap-handoff: "enable"
-            ap-sniffer-addr: "<your_own_value>"
-            ap-sniffer-bufsize: "75"
-            ap-sniffer-chan: "76"
-            ap-sniffer-ctl: "enable"
-            ap-sniffer-data: "enable"
-            ap-sniffer-mgmt-beacon: "enable"
-            ap-sniffer-mgmt-other: "enable"
-            ap-sniffer-mgmt-probe: "enable"
-            auto-power-high: "82"
-            auto-power-level: "enable"
-            auto-power-low: "84"
+            ap_handoff: "enable"
+            ap_sniffer_addr: "<your_own_value>"
+            ap_sniffer_bufsize: "75"
+            ap_sniffer_chan: "76"
+            ap_sniffer_ctl: "enable"
+            ap_sniffer_data: "enable"
+            ap_sniffer_mgmt_beacon: "enable"
+            ap_sniffer_mgmt_other: "enable"
+            ap_sniffer_mgmt_probe: "enable"
+            auto_power_high: "82"
+            auto_power_level: "enable"
+            auto_power_low: "84"
             band: "802.11a"
-            bandwidth-admission-control: "enable"
-            bandwidth-capacity: "87"
-            beacon-interval: "88"
-            call-admission-control: "enable"
-            call-capacity: "90"
+            bandwidth_admission_control: "enable"
+            bandwidth_capacity: "87"
+            beacon_interval: "88"
+            call_admission_control: "enable"
+            call_capacity: "90"
             channel:
              -
                 chan: "<your_own_value>"
-            channel-bonding: "80MHz"
-            channel-utilization: "enable"
+            channel_bonding: "80MHz"
+            channel_utilization: "enable"
             coexistence: "enable"
             darrp: "enable"
             dtim: "97"
-            frag-threshold: "98"
-            frequency-handoff: "enable"
-            max-clients: "100"
-            max-distance: "101"
+            frag_threshold: "98"
+            frequency_handoff: "enable"
+            max_clients: "100"
+            max_distance: "101"
             mode: "disabled"
-            power-level: "103"
-            powersave-optimize: "tim"
-            protection-mode: "rtscts"
-            radio-id: "106"
-            rts-threshold: "107"
-            short-guard-interval: "enable"
-            spectrum-analysis: "enable"
-            transmit-optimize: "disable"
-            vap-all: "enable"
+            power_level: "103"
+            powersave_optimize: "tim"
+            protection_mode: "rtscts"
+            radio_id: "106"
+            rts_threshold: "107"
+            short_guard_interval: "enable"
+            spectrum_analysis: "enable"
+            transmit_optimize: "disable"
+            vap_all: "enable"
             vaps:
              -
                 name: "default_name_113 (source wireless-controller.vap-group.name wireless-controller.vap.name)"
-            wids-profile: "<your_own_value> (source wireless-controller.wids-profile.name)"
-        radio-2:
+            wids_profile: "<your_own_value> (source wireless-controller.wids-profile.name)"
+        radio_2:
             amsdu: "enable"
-            ap-handoff: "enable"
-            ap-sniffer-addr: "<your_own_value>"
-            ap-sniffer-bufsize: "119"
-            ap-sniffer-chan: "120"
-            ap-sniffer-ctl: "enable"
-            ap-sniffer-data: "enable"
-            ap-sniffer-mgmt-beacon: "enable"
-            ap-sniffer-mgmt-other: "enable"
-            ap-sniffer-mgmt-probe: "enable"
-            auto-power-high: "126"
-            auto-power-level: "enable"
-            auto-power-low: "128"
+            ap_handoff: "enable"
+            ap_sniffer_addr: "<your_own_value>"
+            ap_sniffer_bufsize: "119"
+            ap_sniffer_chan: "120"
+            ap_sniffer_ctl: "enable"
+            ap_sniffer_data: "enable"
+            ap_sniffer_mgmt_beacon: "enable"
+            ap_sniffer_mgmt_other: "enable"
+            ap_sniffer_mgmt_probe: "enable"
+            auto_power_high: "126"
+            auto_power_level: "enable"
+            auto_power_low: "128"
             band: "802.11a"
-            bandwidth-admission-control: "enable"
-            bandwidth-capacity: "131"
-            beacon-interval: "132"
-            call-admission-control: "enable"
-            call-capacity: "134"
+            bandwidth_admission_control: "enable"
+            bandwidth_capacity: "131"
+            beacon_interval: "132"
+            call_admission_control: "enable"
+            call_capacity: "134"
             channel:
              -
                 chan: "<your_own_value>"
-            channel-bonding: "80MHz"
-            channel-utilization: "enable"
+            channel_bonding: "80MHz"
+            channel_utilization: "enable"
             coexistence: "enable"
             darrp: "enable"
             dtim: "141"
-            frag-threshold: "142"
-            frequency-handoff: "enable"
-            max-clients: "144"
-            max-distance: "145"
+            frag_threshold: "142"
+            frequency_handoff: "enable"
+            max_clients: "144"
+            max_distance: "145"
             mode: "disabled"
-            power-level: "147"
-            powersave-optimize: "tim"
-            protection-mode: "rtscts"
-            radio-id: "150"
-            rts-threshold: "151"
-            short-guard-interval: "enable"
-            spectrum-analysis: "enable"
-            transmit-optimize: "disable"
-            vap-all: "enable"
+            power_level: "147"
+            powersave_optimize: "tim"
+            protection_mode: "rtscts"
+            radio_id: "150"
+            rts_threshold: "151"
+            short_guard_interval: "enable"
+            spectrum_analysis: "enable"
+            transmit_optimize: "disable"
+            vap_all: "enable"
             vaps:
              -
                 name: "default_name_157 (source wireless-controller.vap-group.name wireless-controller.vap.name)"
-            wids-profile: "<your_own_value> (source wireless-controller.wids-profile.name)"
-        split-tunneling-acl:
+            wids_profile: "<your_own_value> (source wireless-controller.wids-profile.name)"
+        split_tunneling_acl:
          -
-            dest-ip: "<your_own_value>"
+            dest_ip: "<your_own_value>"
             id:  "161"
-        split-tunneling-acl-local-ap-subnet: "enable"
-        split-tunneling-acl-path: "tunnel"
-        tun-mtu-downlink: "164"
-        tun-mtu-uplink: "165"
-        wan-port-mode: "wan-lan"
+        split_tunneling_acl_local_ap_subnet: "enable"
+        split_tunneling_acl_path: "tunnel"
+        tun_mtu_downlink: "164"
+        tun_mtu_uplink: "165"
+        wan_port_mode: "wan-lan"
 '''
 
 RETURN = '''
@@ -1346,12 +1532,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
 
 def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -1359,21 +1549,21 @@ def login(data, fos):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_wireless_controller_wtp_profile_data(json):
-    option_list = ['allowaccess', 'ap-country', 'ble-profile',
-                   'comment', 'control-message-offload', 'deny-mac-list',
-                   'dtls-in-kernel', 'dtls-policy', 'energy-efficient-ethernet',
-                   'ext-info-enable', 'handoff-roaming', 'handoff-rssi',
-                   'handoff-sta-thresh', 'ip-fragment-preventing', 'lan',
-                   'lbs', 'led-schedules', 'led-state',
-                   'lldp', 'login-passwd', 'login-passwd-change',
-                   'max-clients', 'name', 'platform',
-                   'poe-mode', 'radio-1', 'radio-2',
-                   'split-tunneling-acl', 'split-tunneling-acl-local-ap-subnet', 'split-tunneling-acl-path',
-                   'tun-mtu-downlink', 'tun-mtu-uplink', 'wan-port-mode']
+    option_list = ['allowaccess', 'ap_country', 'ble_profile',
+                   'comment', 'control_message_offload', 'deny_mac_list',
+                   'dtls_in_kernel', 'dtls_policy', 'energy_efficient_ethernet',
+                   'ext_info_enable', 'handoff_roaming', 'handoff_rssi',
+                   'handoff_sta_thresh', 'ip_fragment_preventing', 'lan',
+                   'lbs', 'led_schedules', 'led_state',
+                   'lldp', 'login_passwd', 'login_passwd_change',
+                   'max_clients', 'name', 'platform',
+                   'poe_mode', 'radio_1', 'radio_2',
+                   'split_tunneling_acl', 'split_tunneling_acl_local_ap_subnet', 'split_tunneling_acl_path',
+                   'tun_mtu_downlink', 'tun_mtu_uplink', 'wan_port_mode']
     dictionary = {}
 
     for attribute in option_list:
@@ -1383,50 +1573,77 @@ def filter_wireless_controller_wtp_profile_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def wireless_controller_wtp_profile(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['wireless_controller_wtp_profile'] and data['wireless_controller_wtp_profile']:
+        state = data['wireless_controller_wtp_profile']['state']
+    else:
+        state = True
     wireless_controller_wtp_profile_data = data['wireless_controller_wtp_profile']
-    filtered_data = filter_wireless_controller_wtp_profile_data(wireless_controller_wtp_profile_data)
+    filtered_data = underscore_to_hyphen(filter_wireless_controller_wtp_profile_data(wireless_controller_wtp_profile_data))
 
-    if wireless_controller_wtp_profile_data['state'] == "present":
+    if state == "present":
         return fos.set('wireless-controller',
                        'wtp-profile',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif wireless_controller_wtp_profile_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('wireless-controller',
                           'wtp-profile',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_wireless_controller(data, fos):
-    login(data, fos)
 
     if data['wireless_controller_wtp_profile']:
         resp = wireless_controller_wtp_profile(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "wireless_controller_wtp_profile": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "allowaccess": {"required": False, "type": "str",
                                 "choices": ["telnet", "http", "https",
                                             "ssh"]},
-                "ap-country": {"required": False, "type": "str",
+                "ap_country": {"required": False, "type": "str",
                                "choices": ["NA", "AL", "DZ",
                                            "AO", "AR", "AM",
                                            "AU", "AT", "AZ",
@@ -1470,115 +1687,115 @@ def main():
                                            "UZ", "VE", "VN",
                                            "YE", "ZB", "ZW",
                                            "JP", "CA"]},
-                "ble-profile": {"required": False, "type": "str"},
+                "ble_profile": {"required": False, "type": "str"},
                 "comment": {"required": False, "type": "str"},
-                "control-message-offload": {"required": False, "type": "str",
+                "control_message_offload": {"required": False, "type": "str",
                                             "choices": ["ebp-frame", "aeroscout-tag", "ap-list",
                                                         "sta-list", "sta-cap-list", "stats",
                                                         "aeroscout-mu"]},
-                "deny-mac-list": {"required": False, "type": "list",
+                "deny_mac_list": {"required": False, "type": "list",
                                   "options": {
                                       "id": {"required": True, "type": "int"},
                                       "mac": {"required": False, "type": "str"}
                                   }},
-                "dtls-in-kernel": {"required": False, "type": "str",
+                "dtls_in_kernel": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
-                "dtls-policy": {"required": False, "type": "str",
+                "dtls_policy": {"required": False, "type": "str",
                                 "choices": ["clear-text", "dtls-enabled", "ipsec-vpn"]},
-                "energy-efficient-ethernet": {"required": False, "type": "str",
+                "energy_efficient_ethernet": {"required": False, "type": "str",
                                               "choices": ["enable", "disable"]},
-                "ext-info-enable": {"required": False, "type": "str",
+                "ext_info_enable": {"required": False, "type": "str",
                                     "choices": ["enable", "disable"]},
-                "handoff-roaming": {"required": False, "type": "str",
+                "handoff_roaming": {"required": False, "type": "str",
                                     "choices": ["enable", "disable"]},
-                "handoff-rssi": {"required": False, "type": "int"},
-                "handoff-sta-thresh": {"required": False, "type": "int"},
-                "ip-fragment-preventing": {"required": False, "type": "str",
+                "handoff_rssi": {"required": False, "type": "int"},
+                "handoff_sta_thresh": {"required": False, "type": "int"},
+                "ip_fragment_preventing": {"required": False, "type": "str",
                                            "choices": ["tcp-mss-adjust", "icmp-unreachable"]},
                 "lan": {"required": False, "type": "dict",
                         "options": {
-                            "port-mode": {"required": False, "type": "str",
+                            "port_mode": {"required": False, "type": "str",
                                           "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                       "bridge-to-ssid"]},
-                            "port-ssid": {"required": False, "type": "str"},
-                            "port1-mode": {"required": False, "type": "str",
+                            "port_ssid": {"required": False, "type": "str"},
+                            "port1_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port1-ssid": {"required": False, "type": "str"},
-                            "port2-mode": {"required": False, "type": "str",
+                            "port1_ssid": {"required": False, "type": "str"},
+                            "port2_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port2-ssid": {"required": False, "type": "str"},
-                            "port3-mode": {"required": False, "type": "str",
+                            "port2_ssid": {"required": False, "type": "str"},
+                            "port3_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port3-ssid": {"required": False, "type": "str"},
-                            "port4-mode": {"required": False, "type": "str",
+                            "port3_ssid": {"required": False, "type": "str"},
+                            "port4_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port4-ssid": {"required": False, "type": "str"},
-                            "port5-mode": {"required": False, "type": "str",
+                            "port4_ssid": {"required": False, "type": "str"},
+                            "port5_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port5-ssid": {"required": False, "type": "str"},
-                            "port6-mode": {"required": False, "type": "str",
+                            "port5_ssid": {"required": False, "type": "str"},
+                            "port6_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port6-ssid": {"required": False, "type": "str"},
-                            "port7-mode": {"required": False, "type": "str",
+                            "port6_ssid": {"required": False, "type": "str"},
+                            "port7_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port7-ssid": {"required": False, "type": "str"},
-                            "port8-mode": {"required": False, "type": "str",
+                            "port7_ssid": {"required": False, "type": "str"},
+                            "port8_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port8-ssid": {"required": False, "type": "str"}
+                            "port8_ssid": {"required": False, "type": "str"}
                         }},
                 "lbs": {"required": False, "type": "dict",
                         "options": {
                             "aeroscout": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                            "aeroscout-ap-mac": {"required": False, "type": "str",
+                            "aeroscout_ap_mac": {"required": False, "type": "str",
                                                  "choices": ["bssid", "board-mac"]},
-                            "aeroscout-mmu-report": {"required": False, "type": "str",
+                            "aeroscout_mmu_report": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]},
-                            "aeroscout-mu": {"required": False, "type": "str",
+                            "aeroscout_mu": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
-                            "aeroscout-mu-factor": {"required": False, "type": "int"},
-                            "aeroscout-mu-timeout": {"required": False, "type": "int"},
-                            "aeroscout-server-ip": {"required": False, "type": "str"},
-                            "aeroscout-server-port": {"required": False, "type": "int"},
-                            "ekahau-blink-mode": {"required": False, "type": "str",
+                            "aeroscout_mu_factor": {"required": False, "type": "int"},
+                            "aeroscout_mu_timeout": {"required": False, "type": "int"},
+                            "aeroscout_server_ip": {"required": False, "type": "str"},
+                            "aeroscout_server_port": {"required": False, "type": "int"},
+                            "ekahau_blink_mode": {"required": False, "type": "str",
                                                   "choices": ["enable", "disable"]},
-                            "ekahau-tag": {"required": False, "type": "str"},
-                            "erc-server-ip": {"required": False, "type": "str"},
-                            "erc-server-port": {"required": False, "type": "int"},
+                            "ekahau_tag": {"required": False, "type": "str"},
+                            "erc_server_ip": {"required": False, "type": "str"},
+                            "erc_server_port": {"required": False, "type": "int"},
                             "fortipresence": {"required": False, "type": "str",
                                               "choices": ["foreign", "both", "disable"]},
-                            "fortipresence-frequency": {"required": False, "type": "int"},
-                            "fortipresence-port": {"required": False, "type": "int"},
-                            "fortipresence-project": {"required": False, "type": "str"},
-                            "fortipresence-rogue": {"required": False, "type": "str",
+                            "fortipresence_frequency": {"required": False, "type": "int"},
+                            "fortipresence_port": {"required": False, "type": "int"},
+                            "fortipresence_project": {"required": False, "type": "str"},
+                            "fortipresence_rogue": {"required": False, "type": "str",
                                                     "choices": ["enable", "disable"]},
-                            "fortipresence-secret": {"required": False, "type": "str"},
-                            "fortipresence-server": {"required": False, "type": "str"},
-                            "fortipresence-unassoc": {"required": False, "type": "str",
+                            "fortipresence_secret": {"required": False, "type": "str"},
+                            "fortipresence_server": {"required": False, "type": "str"},
+                            "fortipresence_unassoc": {"required": False, "type": "str",
                                                       "choices": ["enable", "disable"]},
-                            "station-locate": {"required": False, "type": "str",
+                            "station_locate": {"required": False, "type": "str",
                                                "choices": ["enable", "disable"]}
                         }},
-                "led-schedules": {"required": False, "type": "list",
+                "led_schedules": {"required": False, "type": "list",
                                   "options": {
                                       "name": {"required": True, "type": "str"}
                                   }},
-                "led-state": {"required": False, "type": "str",
+                "led_state": {"required": False, "type": "str",
                               "choices": ["enable", "disable"]},
                 "lldp": {"required": False, "type": "str",
                          "choices": ["enable", "disable"]},
-                "login-passwd": {"required": False, "type": "str"},
-                "login-passwd-change": {"required": False, "type": "str",
+                "login_passwd": {"required": False, "type": "str"},
+                "login_passwd_change": {"required": False, "type": "str",
                                         "choices": ["yes", "default", "no"]},
-                "max-clients": {"required": False, "type": "int"},
+                "max_clients": {"required": False, "type": "int"},
                 "name": {"required": True, "type": "str"},
                 "platform": {"required": False, "type": "dict",
                              "options": {
@@ -1602,179 +1819,179 @@ def main():
                                                       "U223EV", "U24JEV", "U321EV",
                                                       "U323EV"]}
                              }},
-                "poe-mode": {"required": False, "type": "str",
+                "poe_mode": {"required": False, "type": "str",
                              "choices": ["auto", "8023af", "8023at",
                                          "power-adapter"]},
-                "radio-1": {"required": False, "type": "dict",
+                "radio_1": {"required": False, "type": "dict",
                             "options": {
                                 "amsdu": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                                "ap-handoff": {"required": False, "type": "str",
+                                "ap_handoff": {"required": False, "type": "str",
                                                "choices": ["enable", "disable"]},
-                                "ap-sniffer-addr": {"required": False, "type": "str"},
-                                "ap-sniffer-bufsize": {"required": False, "type": "int"},
-                                "ap-sniffer-chan": {"required": False, "type": "int"},
-                                "ap-sniffer-ctl": {"required": False, "type": "str",
+                                "ap_sniffer_addr": {"required": False, "type": "str"},
+                                "ap_sniffer_bufsize": {"required": False, "type": "int"},
+                                "ap_sniffer_chan": {"required": False, "type": "int"},
+                                "ap_sniffer_ctl": {"required": False, "type": "str",
                                                    "choices": ["enable", "disable"]},
-                                "ap-sniffer-data": {"required": False, "type": "str",
+                                "ap_sniffer_data": {"required": False, "type": "str",
                                                     "choices": ["enable", "disable"]},
-                                "ap-sniffer-mgmt-beacon": {"required": False, "type": "str",
+                                "ap_sniffer_mgmt_beacon": {"required": False, "type": "str",
                                                            "choices": ["enable", "disable"]},
-                                "ap-sniffer-mgmt-other": {"required": False, "type": "str",
+                                "ap_sniffer_mgmt_other": {"required": False, "type": "str",
                                                           "choices": ["enable", "disable"]},
-                                "ap-sniffer-mgmt-probe": {"required": False, "type": "str",
+                                "ap_sniffer_mgmt_probe": {"required": False, "type": "str",
                                                           "choices": ["enable", "disable"]},
-                                "auto-power-high": {"required": False, "type": "int"},
-                                "auto-power-level": {"required": False, "type": "str",
+                                "auto_power_high": {"required": False, "type": "int"},
+                                "auto_power_level": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]},
-                                "auto-power-low": {"required": False, "type": "int"},
+                                "auto_power_low": {"required": False, "type": "int"},
                                 "band": {"required": False, "type": "str",
                                          "choices": ["802.11a", "802.11b", "802.11g",
                                                      "802.11n", "802.11n-5G", "802.11ac",
                                                      "802.11n,g-only", "802.11g-only", "802.11n-only",
                                                      "802.11n-5G-only", "802.11ac,n-only", "802.11ac-only"]},
-                                "bandwidth-admission-control": {"required": False, "type": "str",
+                                "bandwidth_admission_control": {"required": False, "type": "str",
                                                                 "choices": ["enable", "disable"]},
-                                "bandwidth-capacity": {"required": False, "type": "int"},
-                                "beacon-interval": {"required": False, "type": "int"},
-                                "call-admission-control": {"required": False, "type": "str",
+                                "bandwidth_capacity": {"required": False, "type": "int"},
+                                "beacon_interval": {"required": False, "type": "int"},
+                                "call_admission_control": {"required": False, "type": "str",
                                                            "choices": ["enable", "disable"]},
-                                "call-capacity": {"required": False, "type": "int"},
+                                "call_capacity": {"required": False, "type": "int"},
                                 "channel": {"required": False, "type": "list",
                                             "options": {
                                                 "chan": {"required": True, "type": "str"}
                                             }},
-                                "channel-bonding": {"required": False, "type": "str",
+                                "channel_bonding": {"required": False, "type": "str",
                                                     "choices": ["80MHz", "40MHz", "20MHz"]},
-                                "channel-utilization": {"required": False, "type": "str",
+                                "channel_utilization": {"required": False, "type": "str",
                                                         "choices": ["enable", "disable"]},
                                 "coexistence": {"required": False, "type": "str",
                                                 "choices": ["enable", "disable"]},
                                 "darrp": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
                                 "dtim": {"required": False, "type": "int"},
-                                "frag-threshold": {"required": False, "type": "int"},
-                                "frequency-handoff": {"required": False, "type": "str",
+                                "frag_threshold": {"required": False, "type": "int"},
+                                "frequency_handoff": {"required": False, "type": "str",
                                                       "choices": ["enable", "disable"]},
-                                "max-clients": {"required": False, "type": "int"},
-                                "max-distance": {"required": False, "type": "int"},
+                                "max_clients": {"required": False, "type": "int"},
+                                "max_distance": {"required": False, "type": "int"},
                                 "mode": {"required": False, "type": "str",
                                          "choices": ["disabled", "ap", "monitor",
                                                      "sniffer"]},
-                                "power-level": {"required": False, "type": "int"},
-                                "powersave-optimize": {"required": False, "type": "str",
+                                "power_level": {"required": False, "type": "int"},
+                                "powersave_optimize": {"required": False, "type": "str",
                                                        "choices": ["tim", "ac-vo", "no-obss-scan",
                                                                    "no-11b-rate", "client-rate-follow"]},
-                                "protection-mode": {"required": False, "type": "str",
+                                "protection_mode": {"required": False, "type": "str",
                                                     "choices": ["rtscts", "ctsonly", "disable"]},
-                                "radio-id": {"required": False, "type": "int"},
-                                "rts-threshold": {"required": False, "type": "int"},
-                                "short-guard-interval": {"required": False, "type": "str",
+                                "radio_id": {"required": False, "type": "int"},
+                                "rts_threshold": {"required": False, "type": "int"},
+                                "short_guard_interval": {"required": False, "type": "str",
                                                          "choices": ["enable", "disable"]},
-                                "spectrum-analysis": {"required": False, "type": "str",
+                                "spectrum_analysis": {"required": False, "type": "str",
                                                       "choices": ["enable", "disable"]},
-                                "transmit-optimize": {"required": False, "type": "str",
+                                "transmit_optimize": {"required": False, "type": "str",
                                                       "choices": ["disable", "power-save", "aggr-limit",
                                                                   "retry-limit", "send-bar"]},
-                                "vap-all": {"required": False, "type": "str",
+                                "vap_all": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
                                 "vaps": {"required": False, "type": "list",
                                          "options": {
                                              "name": {"required": True, "type": "str"}
                                          }},
-                                "wids-profile": {"required": False, "type": "str"}
+                                "wids_profile": {"required": False, "type": "str"}
                             }},
-                "radio-2": {"required": False, "type": "dict",
+                "radio_2": {"required": False, "type": "dict",
                             "options": {
                                 "amsdu": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                                "ap-handoff": {"required": False, "type": "str",
+                                "ap_handoff": {"required": False, "type": "str",
                                                "choices": ["enable", "disable"]},
-                                "ap-sniffer-addr": {"required": False, "type": "str"},
-                                "ap-sniffer-bufsize": {"required": False, "type": "int"},
-                                "ap-sniffer-chan": {"required": False, "type": "int"},
-                                "ap-sniffer-ctl": {"required": False, "type": "str",
+                                "ap_sniffer_addr": {"required": False, "type": "str"},
+                                "ap_sniffer_bufsize": {"required": False, "type": "int"},
+                                "ap_sniffer_chan": {"required": False, "type": "int"},
+                                "ap_sniffer_ctl": {"required": False, "type": "str",
                                                    "choices": ["enable", "disable"]},
-                                "ap-sniffer-data": {"required": False, "type": "str",
+                                "ap_sniffer_data": {"required": False, "type": "str",
                                                     "choices": ["enable", "disable"]},
-                                "ap-sniffer-mgmt-beacon": {"required": False, "type": "str",
+                                "ap_sniffer_mgmt_beacon": {"required": False, "type": "str",
                                                            "choices": ["enable", "disable"]},
-                                "ap-sniffer-mgmt-other": {"required": False, "type": "str",
+                                "ap_sniffer_mgmt_other": {"required": False, "type": "str",
                                                           "choices": ["enable", "disable"]},
-                                "ap-sniffer-mgmt-probe": {"required": False, "type": "str",
+                                "ap_sniffer_mgmt_probe": {"required": False, "type": "str",
                                                           "choices": ["enable", "disable"]},
-                                "auto-power-high": {"required": False, "type": "int"},
-                                "auto-power-level": {"required": False, "type": "str",
+                                "auto_power_high": {"required": False, "type": "int"},
+                                "auto_power_level": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]},
-                                "auto-power-low": {"required": False, "type": "int"},
+                                "auto_power_low": {"required": False, "type": "int"},
                                 "band": {"required": False, "type": "str",
                                          "choices": ["802.11a", "802.11b", "802.11g",
                                                      "802.11n", "802.11n-5G", "802.11ac",
                                                      "802.11n,g-only", "802.11g-only", "802.11n-only",
                                                      "802.11n-5G-only", "802.11ac,n-only", "802.11ac-only"]},
-                                "bandwidth-admission-control": {"required": False, "type": "str",
+                                "bandwidth_admission_control": {"required": False, "type": "str",
                                                                 "choices": ["enable", "disable"]},
-                                "bandwidth-capacity": {"required": False, "type": "int"},
-                                "beacon-interval": {"required": False, "type": "int"},
-                                "call-admission-control": {"required": False, "type": "str",
+                                "bandwidth_capacity": {"required": False, "type": "int"},
+                                "beacon_interval": {"required": False, "type": "int"},
+                                "call_admission_control": {"required": False, "type": "str",
                                                            "choices": ["enable", "disable"]},
-                                "call-capacity": {"required": False, "type": "int"},
+                                "call_capacity": {"required": False, "type": "int"},
                                 "channel": {"required": False, "type": "list",
                                             "options": {
                                                 "chan": {"required": True, "type": "str"}
                                             }},
-                                "channel-bonding": {"required": False, "type": "str",
+                                "channel_bonding": {"required": False, "type": "str",
                                                     "choices": ["80MHz", "40MHz", "20MHz"]},
-                                "channel-utilization": {"required": False, "type": "str",
+                                "channel_utilization": {"required": False, "type": "str",
                                                         "choices": ["enable", "disable"]},
                                 "coexistence": {"required": False, "type": "str",
                                                 "choices": ["enable", "disable"]},
                                 "darrp": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
                                 "dtim": {"required": False, "type": "int"},
-                                "frag-threshold": {"required": False, "type": "int"},
-                                "frequency-handoff": {"required": False, "type": "str",
+                                "frag_threshold": {"required": False, "type": "int"},
+                                "frequency_handoff": {"required": False, "type": "str",
                                                       "choices": ["enable", "disable"]},
-                                "max-clients": {"required": False, "type": "int"},
-                                "max-distance": {"required": False, "type": "int"},
+                                "max_clients": {"required": False, "type": "int"},
+                                "max_distance": {"required": False, "type": "int"},
                                 "mode": {"required": False, "type": "str",
                                          "choices": ["disabled", "ap", "monitor",
                                                      "sniffer"]},
-                                "power-level": {"required": False, "type": "int"},
-                                "powersave-optimize": {"required": False, "type": "str",
+                                "power_level": {"required": False, "type": "int"},
+                                "powersave_optimize": {"required": False, "type": "str",
                                                        "choices": ["tim", "ac-vo", "no-obss-scan",
                                                                    "no-11b-rate", "client-rate-follow"]},
-                                "protection-mode": {"required": False, "type": "str",
+                                "protection_mode": {"required": False, "type": "str",
                                                     "choices": ["rtscts", "ctsonly", "disable"]},
-                                "radio-id": {"required": False, "type": "int"},
-                                "rts-threshold": {"required": False, "type": "int"},
-                                "short-guard-interval": {"required": False, "type": "str",
+                                "radio_id": {"required": False, "type": "int"},
+                                "rts_threshold": {"required": False, "type": "int"},
+                                "short_guard_interval": {"required": False, "type": "str",
                                                          "choices": ["enable", "disable"]},
-                                "spectrum-analysis": {"required": False, "type": "str",
+                                "spectrum_analysis": {"required": False, "type": "str",
                                                       "choices": ["enable", "disable"]},
-                                "transmit-optimize": {"required": False, "type": "str",
+                                "transmit_optimize": {"required": False, "type": "str",
                                                       "choices": ["disable", "power-save", "aggr-limit",
                                                                   "retry-limit", "send-bar"]},
-                                "vap-all": {"required": False, "type": "str",
+                                "vap_all": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
                                 "vaps": {"required": False, "type": "list",
                                          "options": {
                                              "name": {"required": True, "type": "str"}
                                          }},
-                                "wids-profile": {"required": False, "type": "str"}
+                                "wids_profile": {"required": False, "type": "str"}
                             }},
-                "split-tunneling-acl": {"required": False, "type": "list",
+                "split_tunneling_acl": {"required": False, "type": "list",
                                         "options": {
-                                            "dest-ip": {"required": False, "type": "str"},
+                                            "dest_ip": {"required": False, "type": "str"},
                                             "id": {"required": True, "type": "int"}
                                         }},
-                "split-tunneling-acl-local-ap-subnet": {"required": False, "type": "str",
+                "split_tunneling_acl_local_ap_subnet": {"required": False, "type": "str",
                                                         "choices": ["enable", "disable"]},
-                "split-tunneling-acl-path": {"required": False, "type": "str",
+                "split_tunneling_acl_path": {"required": False, "type": "str",
                                              "choices": ["tunnel", "local"]},
-                "tun-mtu-downlink": {"required": False, "type": "int"},
-                "tun-mtu-uplink": {"required": False, "type": "int"},
-                "wan-port-mode": {"required": False, "type": "str",
+                "tun_mtu_downlink": {"required": False, "type": "int"},
+                "tun_mtu_uplink": {"required": False, "type": "int"},
+                "wan_port_mode": {"required": False, "type": "str",
                                   "choices": ["wan-lan", "wan-only"]}
 
             }
@@ -1783,14 +2000,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_wireless_controller(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_wireless_controller(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_wireless_controller(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

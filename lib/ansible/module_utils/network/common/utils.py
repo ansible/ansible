@@ -348,6 +348,26 @@ def dict_merge(base, other):
     return combined
 
 
+def param_list_to_dict(param_list, unique_key="name", remove_key=True):
+    """Rotates a list of dictionaries to be a dictionary of dictionaries.
+
+    :param param_list: The aforementioned list of dictionaries
+    :param unique_key: The name of a key which is present and unique in all of param_list's dictionaries. The value
+    behind this key will be the key each dictionary can be found at in the new root dictionary
+    :param remove_key: If True, remove unique_key from the individual dictionaries before returning.
+    """
+    param_dict = {}
+    for params in param_list:
+        params = params.copy()
+        if remove_key:
+            name = params.pop(unique_key)
+        else:
+            name = params.get(unique_key)
+        param_dict[name] = params
+
+    return param_dict
+
+
 def conditional(expr, val, cast=None):
     match = re.match(r'^(.+)\((.+)\)$', str(expr), re.I)
     if match:
@@ -572,6 +592,13 @@ def validate_config(spec, data):
     validated_data = basic.AnsibleModule(spec).params
     basic._ANSIBLE_ARGS = params
     return validated_data
+
+
+def search_obj_in_list(name, lst, key='name'):
+    for item in lst:
+        if item[key] == name:
+            return item
+    return None
 
 
 class Template:

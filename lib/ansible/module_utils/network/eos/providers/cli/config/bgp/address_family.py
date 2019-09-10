@@ -8,7 +8,6 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.eos.providers.providers import CliProvider
 from ansible.module_utils.network.eos.providers.cli.config.bgp.neighbors import AFNeighbors
-from ansible.module_utils.common.network import to_netmask
 
 
 class AddressFamily(CliProvider):

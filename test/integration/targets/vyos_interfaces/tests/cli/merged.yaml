@@ -1,0 +1,59 @@
+---
+- debug:
+      msg: "START vyos_interfaces merged integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Merge the provided configuration with the exisiting running configuration
+      vyos_interfaces: &merged
+        config:
+          - name: eth1
+            description: "Configured by Ansible - Interface 1"
+            mtu: 1500
+            speed: auto
+            duplex: auto
+            vifs:
+              - vlan_id: 100
+                description: "Eth1 - VIF 100"
+                mtu: 400
+
+              - vlan_id: 101
+                description: "Eth1 - VIF 101"
+
+          - name: eth2
+            description: "Configured by Ansible - Interface 2 (ADMIN DOWN)"
+            mtu: 600
+            enabled: false
+        state: merged
+      register: result
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that: "{{ merged['before'] | symmetric_difference(result['before']) |length == 0 }}"
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that after dicts was correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+      vyos_interfaces: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['before']) |length == 0 }}"
+  always:
+      - include_tasks: _remove_config.yaml

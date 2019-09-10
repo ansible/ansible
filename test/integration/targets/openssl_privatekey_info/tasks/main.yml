@@ -65,6 +65,7 @@
   - name: Compare results
     assert:
       that:
-      - pyopenssl_info_results[item] == cryptography_info_results[item]
+      - '  (pyopenssl_info_results[item] | dict2items | rejectattr("key", "equalto", "deprecations") | list | items2dict)
+        == (cryptography_info_results[item] | dict2items | rejectattr("key", "equalto", "deprecations") | list | items2dict)'
     loop: "{{ pyopenssl_info_results.keys() | intersect(cryptography_info_results.keys()) | list }}"
   when: pyopenssl_version.stdout is version('0.15', '>=') and cryptography_version.stdout is version('1.2.3', '>=')

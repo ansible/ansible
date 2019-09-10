@@ -1,4 +1,4 @@
-- hosts: testhost
+- hosts: localhost
   gather_facts: yes
   roles:
     - { role: filters }

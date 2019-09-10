@@ -79,6 +79,7 @@ options:
             - The patterns retrict the list of files or folders to be returned based on the filenames.
             - For a file to be matched it only has to match with one pattern in a list provided.
         type: list
+        aliases: [ "regex", "regexp" ]
     recurse:
         description:
             - Will recursively descend into the directory looking for files or folders.
@@ -239,6 +240,11 @@ files:
             returned: success, path exists, path is a file
             type: str
             sample: ".ps1"
+        filename:
+            description: The name of the file.
+            returned: success, path exists
+            type: str
+            sample: temp
         isarchive:
             description: If the path is ready for archiving or not.
             returned: success, path exists

@@ -17,13 +17,13 @@
             "Sid": "AllowAutoscaling",
             "Effect": "Allow",
             "Action": [
-                "autoscaling:CreateLaunchConfiguration",
-                "autoscaling:CreateAutoScalingGroup",
-                "autoscaling:UpdateAutoScalingGroup",
-                "autoscaling:DeleteAutoScalingGroup",
-                "autoscaling:DeleteLaunchConfiguration",
+                "autoscaling:*LaunchConfiguration",
+                "autoscaling:*LoadBalancers",
+                "autoscaling:*AutoScalingGroup",
+                "autoscaling:*MetricsCollection",
                 "autoscaling:PutScalingPolicy",
-                "autoscaling:DeletePolicy"
+                "autoscaling:DeletePolicy",
+                "autoscaling:*Tags"
             ],
             "Resource": [
                 "arn:aws:autoscaling:{{aws_region}}:{{aws_account}}:*"
@@ -35,6 +35,9 @@
             "Sid": "AllowUnspecifiedEC2Resource",
             "Effect": "Allow",
             "Action": [
+                "ec2:*LaunchTemplate",
+                "ec2:*LaunchTemplateVersion",
+                "ec2:*LaunchTemplateVersions",
                 "ec2:AllocateAddress",
                 "ec2:AssociateAddress",
                 "ec2:AssociateDhcpOptions",
@@ -127,24 +130,22 @@
             "Sid": "AllowLoadBalancerOperations",
             "Effect": "Allow",
             "Action": [
+                "elasticloadbalancing:*LoadBalancer",
+                "elasticloadbalancing:*LoadBalancers",
+                "elasticloadbalancing:*LoadBalancerListeners",
+                "elasticloadbalancing:*TargetGroup",
                 "elasticloadbalancing:AddTags",
                 "elasticloadbalancing:ConfigureHealthCheck",
                 "elasticloadbalancing:CreateListener",
-                "elasticloadbalancing:CreateLoadBalancer",
-                "elasticloadbalancing:CreateLoadBalancerListeners",
-                "elasticloadbalancing:CreateTargetGroup",
+                "elasticloadbalancing:CreateRule",
                 "elasticloadbalancing:DeleteListener",
-                "elasticloadbalancing:DeleteLoadBalancer",
-                "elasticloadbalancing:DeleteLoadBalancerListeners",
-                "elasticloadbalancing:DeleteTargetGroup",
-                "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                "elasticloadbalancing:DeleteRule",
                 "elasticloadbalancing:DescribeInstanceHealth",
                 "elasticloadbalancing:DescribeLoadBalancer*",
                 "elasticloadbalancing:DescribeTags",
-                "elasticloadbalancing:DisableAvailabilityZonesForLoadBalancer",
-                "elasticloadbalancing:EnableAvailabilityZonesForLoadBalancer",
+                "elasticloadbalancing:ModifyListener",
                 "elasticloadbalancing:ModifyLoadBalancerAttributes",
-                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                "elasticloadbalancing:ModifyRule",
                 "elasticloadbalancing:RemoveTags"
             ],
             "Resource": "*"
@@ -266,6 +267,23 @@
             ],
             "Resource": [
               "*"
+            ]
+        },
+        {
+            "Sid": "AllowStepFunctionsStateMachine",
+            "Effect": "Allow",
+            "Action": [
+              "states:CreateStateMachine",
+              "states:DeleteStateMachine",
+              "states:DescribeStateMachine",
+              "states:ListStateMachines",
+              "states:ListTagsForResource",
+              "states:TagResource",
+              "states:UntagResource",
+              "states:UpdateStateMachine"
+            ],
+            "Resource": [
+              "arn:aws:states:*"
             ]
         }
     ]

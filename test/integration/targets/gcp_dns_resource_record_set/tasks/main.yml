@@ -55,9 +55,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'dns#resourceRecordSet'"
 - name: verify that resource_record_set was created
-  gcp_dns_resource_record_set_facts:
+  gcp_dns_resource_record_set_info:
       managed_zone: "{{ managed_zone }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -88,7 +87,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'dns#resourceRecordSet'"
 #----------------------------------------------------------
 - name: delete a resource record set
   gcp_dns_resource_record_set:
@@ -109,7 +107,7 @@
     that:
       - result.changed == true
 - name: verify that resource_record_set was deleted
-  gcp_dns_resource_record_set_facts:
+  gcp_dns_resource_record_set_info:
       managed_zone: "{{ managed_zone }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"

@@ -38,7 +38,7 @@
         name: "{{ resource_prefix }}-asg"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
+        security_token: "{{ security_token | default(omit) }}"
       ignore_errors: yes
       register: result
 
@@ -59,7 +59,7 @@
       ec2_asg:
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
+        security_token: "{{ security_token | default(omit) }}"
       ignore_errors: yes
       register: result
 
@@ -70,34 +70,46 @@
 
 - name: Run ec2_asg integration tests.
 
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+
   block:
 
     # ============================================================
 
-    # Set up the testing dependencies: VPC, subnet, security group, and two launch configurations
+    - name: Find AMI to use
+      ec2_ami_info:
+        owners: 'amazon'
+        filters:
+          name: '{{ ec2_ami_name }}'
+      register: ec2_amis
+    - set_fact:
+        ec2_ami_image: '{{ ec2_amis.images[0].image_id }}'
 
-    - name: set connection information for all tasks
+    - name: load balancer name has to be less than 32 characters
+      # the 8 digit identifier at the end of resource_prefix helps determine during which test something
+      # was created
       set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: yes
+        load_balancer_name: "{{ item }}-lb"
+      with_items: "{{ resource_prefix | regex_findall('.{8}$') }}"
+
+    # Set up the testing dependencies: VPC, subnet, security group, and two launch configurations
 
     - name: Create VPC for use in testing
       ec2_vpc_net:
         name: "{{ resource_prefix }}-vpc"
         cidr_block: 10.55.77.0/24
         tenancy: default
-        <<: *aws_connection_info
       register: testing_vpc
 
     - name: Create internet gateway for use in testing
       ec2_vpc_igw:
         vpc_id: "{{ testing_vpc.vpc.id }}"
         state: present
-        <<: *aws_connection_info
       register: igw
 
     - name: Create subnet for use in testing
@@ -108,7 +120,6 @@
         az: "{{ aws_region }}a"
         resource_tags:
           Name: "{{ resource_prefix }}-subnet"
-        <<: *aws_connection_info
       register: testing_subnet
 
     - name: create routing rules
@@ -121,7 +132,6 @@
             gateway_id: "{{ igw.gateway_id }}"
         subnets:
           - "{{ testing_subnet.subnet.id }}"
-        <<: *aws_connection_info
 
     - name: create a security group with the vpc created in the ec2_setup
       ec2_group:
@@ -137,14 +147,13 @@
             from_port: 80
             to_port: 80
             cidr_ip: 0.0.0.0/0
-        <<: *aws_connection_info
       register: sg
 
     - name: ensure launch configs exist
       ec2_lc:
         name: "{{ item }}"
         assign_public_ip: true
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         user_data: |
           #cloud-config
           package_upgrade: true
@@ -154,8 +163,7 @@
           runcmd:
             - "service httpd start"
         security_groups: "{{ sg.group_id }}"
-        instance_type: t2.micro
-        <<: *aws_connection_info
+        instance_type: t3.micro
       with_items:
         - "{{ resource_prefix }}-lc"
         - "{{ resource_prefix }}-lc-2"
@@ -172,12 +180,107 @@
         vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
         state: present
         wait_for_instances: yes
-        <<: *aws_connection_info
       register: output
 
     - assert:
         that:
           - "output.viable_instances == 1"
+
+    - name: Tag asg
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        tags:
+        - tag_a: 'value 1'
+          propagate_at_launch: no
+        - tag_b: 'value 2'
+          propagate_at_launch: yes
+      register: output
+
+    - assert:
+        that:
+          - "output.tags | length == 2"
+          - output is changed
+
+    - name: Re-Tag asg (different order)
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        tags:
+        - tag_b: 'value 2'
+          propagate_at_launch: yes
+        - tag_a: 'value 1'
+          propagate_at_launch: no
+      register: output
+
+    - assert:
+        that:
+          - "output.tags | length == 2"
+          - output is not changed
+
+    - name: Re-Tag asg new tags
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        tags:
+        - tag_c: 'value 3'
+          propagate_at_launch: no
+      register: output
+
+    - assert:
+        that:
+          - "output.tags | length == 1"
+          - output is changed
+
+    - name: Re-Tag asg update propagate_at_launch
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        tags:
+        - tag_c: 'value 3'
+          propagate_at_launch: yes
+      register: output
+
+    - assert:
+        that:
+          - "output.tags | length == 1"
+          - output is changed
+
+    - name: Enable metrics collection
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        metrics_collection: yes
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+
+    - name: Enable metrics collection (check idempotency)
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        metrics_collection: yes
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+
+    - name: Disable metrics collection
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        metrics_collection: no
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+
+    - name: Disable metrics collection (check idempotency)
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        metrics_collection: no
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
 
     # - name: pause for a bit to make sure that the group can't be trivially deleted
     #   pause: seconds=30
@@ -185,9 +288,8 @@
       ec2_asg:
         name: "{{ resource_prefix }}-asg"
         state: absent
-        wait_timeout: 700
-        <<: *aws_connection_info
-      async: 300
+        wait_timeout: 800
+      async: 400
 
     # ============================================================
 
@@ -201,7 +303,6 @@
         vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
         wait_for_instances: no
         state: present
-        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -212,8 +313,9 @@
       ec2_asg:
         name: "{{ resource_prefix }}-asg"
         state: absent
-        <<: *aws_connection_info
-      async: 300
+        wait_timeout: 800
+      async: 400
+
     # ============================================================
 
     - name: create asg with asg metrics enabled
@@ -226,7 +328,6 @@
         max_size: 0
         vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
         state: present
-        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -237,17 +338,10 @@
       ec2_asg:
         name: "{{ resource_prefix }}-asg"
         state: absent
-        <<: *aws_connection_info
-      async: 300
+        wait_timeout: 800
+      async: 400
 
     # ============================================================
-
-    - name: load balancer name has to be less than 32 characters
-      # the 8 digit identifier at the end of resource_prefix helps determine during which test something
-      # was created
-      set_fact:
-        load_balancer_name: "{{ item }}-lb"
-      with_items: "{{ resource_prefix | regex_findall('.{8}$') }}"
 
     - name: launch load balancer
       ec2_elb_lb:
@@ -269,7 +363,6 @@
             interval: 10
             unhealthy_threshold: 4
             healthy_threshold: 2
-        <<: *aws_connection_info
       register: load_balancer
 
     - name: launch asg and wait for instances to be deemed healthy (ELB)
@@ -286,7 +379,6 @@
         wait_for_instances: yes
         wait_timeout: 900
         state: present
-        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -311,7 +403,6 @@
         wait_for_instances: yes
         wait_timeout: 1200
         state: present
-        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -337,7 +428,6 @@
         replace_all_instances: yes
         wait_timeout: 1800
         state: present
-        <<: *aws_connection_info
       register: output
 
     # ensure that all instances have new launch config
@@ -370,7 +460,6 @@
         replace_all_instances: yes
         wait_timeout: 1800
         state: present
-        <<: *aws_connection_info
       register: output
 
     # ensure that all instances have new launch config
@@ -409,7 +498,6 @@
         lc_check: false
         wait_timeout: 1800
         state: present
-        <<: *aws_connection_info
       async: 1800
       poll: 0
       register: asg_job
@@ -417,7 +505,6 @@
     - name: get ec2_asg facts for 3 minutes
       ec2_asg_info:
         name: "{{ resource_prefix }}-asg"
-        <<: *aws_connection_info
       register: output
       loop_control:
           pause: 15
@@ -445,8 +532,8 @@
       ec2_asg:
         name: "{{ resource_prefix }}-asg"
         state: absent
-        <<: *aws_connection_info
-      async: 300
+        wait_timeout: 800
+      async: 400
 
     # Create new asg with replace_all_instances and lc_check:false
 
@@ -470,7 +557,6 @@
         lc_check: false
         wait_timeout: 1800
         state: present
-        <<: *aws_connection_info
       async: 1800
       poll: 0
       register: asg_job
@@ -479,7 +565,6 @@
     - name: get ec2_asg information
       ec2_asg_info:
         name: "{{ resource_prefix }}-asg"
-        <<: *aws_connection_info
       register: output
       loop_control:
           pause: 15
@@ -509,7 +594,6 @@
       ec2_asg:
         name: "{{ resource_prefix }}-asg"
         state: absent
-        <<: *aws_connection_info
       register: removed
       until: removed is not failed
       ignore_errors: yes
@@ -538,7 +622,6 @@
             interval: 10
             unhealthy_threshold: 4
             healthy_threshold: 2
-        <<: *aws_connection_info
       register: removed
       until: removed is not failed
       ignore_errors: yes
@@ -548,7 +631,6 @@
       ec2_lc:
         name: "{{ resource_prefix }}-lc"
         state: absent
-        <<: *aws_connection_info
       register: removed
       until: removed is not failed
       ignore_errors: yes
@@ -563,7 +645,6 @@
         description: a security group for ansible tests
         vpc_id: "{{ testing_vpc.vpc.id }}"
         state: absent
-        <<: *aws_connection_info
       register: removed
       until: removed is not failed
       ignore_errors: yes
@@ -580,7 +661,6 @@
             gateway_id: "{{ igw.gateway_id }}"
         subnets:
           - "{{ testing_subnet.subnet.id }}"
-        <<: *aws_connection_info
       register: removed
       until: removed is not failed
       ignore_errors: yes
@@ -590,7 +670,6 @@
       ec2_vpc_igw:
         vpc_id: "{{ testing_vpc.vpc.id }}"
         state: absent
-        <<: *aws_connection_info
       register: removed
       until: removed is not failed
       ignore_errors: yes
@@ -601,7 +680,6 @@
         state: absent
         vpc_id: "{{ testing_vpc.vpc.id }}"
         cidr: 10.55.77.0/24
-        <<: *aws_connection_info
       register: removed
       until: removed is not failed
       ignore_errors: yes
@@ -612,7 +690,6 @@
         name: "{{ resource_prefix }}-vpc"
         cidr_block: 10.55.77.0/24
         state: absent
-        <<: *aws_connection_info
       register: removed
       until: removed is not failed
       ignore_errors: yes

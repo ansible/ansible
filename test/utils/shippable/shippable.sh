@@ -30,7 +30,7 @@ command -v pip
 pip --version
 pip list --disable-pip-version-check
 
-export PATH="test/runner:${PATH}"
+export PATH="${PWD}/bin:${PATH}"
 export PYTHONIOENCODING='utf-8'
 
 if [ "${JOB_TRIGGERED_BY_NAME:-}" == "nightly-trigger" ]; then
@@ -73,54 +73,64 @@ find lib/ansible/modules -type d -empty -print -delete
 
 function cleanup
 {
-    if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
-        # for complete on-demand coverage generate a report for all files with no coverage on the "other" job so we only have one copy
-        if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ] && [ "${test}" == "sanity/1" ]; then
-            stub="--stub"
-        else
-            stub=""
-        fi
+    if [ -d test/results/coverage/ ]; then
+        if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
+            # for complete on-demand coverage generate a report for all files with no coverage on the "other" job so we only have one copy
+            if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ] && [ "${test}" == "sanity/1" ]; then
+                stub="--stub"
+            else
+                stub=""
+            fi
 
-        # use python 3.7 for coverage to avoid running out of memory during coverage xml processing
-        # only use it for coverage to avoid the additional overhead of setting up a virtual environment for a potential no-op job
-        virtualenv --python /usr/bin/python3.7 ~/ansible-venv
-        set +ux
-        . ~/ansible-venv/bin/activate
-        set -ux
+            # use python 3.7 for coverage to avoid running out of memory during coverage xml processing
+            # only use it for coverage to avoid the additional overhead of setting up a virtual environment for a potential no-op job
+            virtualenv --python /usr/bin/python3.7 ~/ansible-venv
+            set +ux
+            . ~/ansible-venv/bin/activate
+            set -ux
 
-        # shellcheck disable=SC2086
-        ansible-test coverage xml --color -v --requirements --group-by command --group-by version ${stub:+"$stub"}
-        cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
+            # shellcheck disable=SC2086
+            ansible-test coverage xml --color -v --requirements --group-by command --group-by version ${stub:+"$stub"}
+            cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
 
-        # upload coverage report to codecov.io only when using complete on-demand coverage
-        if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ]; then
-            for file in test/results/reports/coverage=*.xml; do
-                flags="${file##*/coverage=}"
-                flags="${flags%.xml}"
-                # remove numbered component from stub files when converting to tags
-                flags="${flags//stub-[0-9]*/stub}"
-                flags="${flags//=/,}"
-                flags="${flags//[^a-zA-Z0-9_,]/_}"
+            # upload coverage report to codecov.io only when using complete on-demand coverage
+            if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ]; then
+                for file in test/results/reports/coverage=*.xml; do
+                    flags="${file##*/coverage=}"
+                    flags="${flags%-powershell.xml}"
+                    flags="${flags%.xml}"
+                    # remove numbered component from stub files when converting to tags
+                    flags="${flags//stub-[0-9]*/stub}"
+                    flags="${flags//=/,}"
+                    flags="${flags//[^a-zA-Z0-9_,]/_}"
 
-                bash <(curl -s https://codecov.io/bash) \
-                    -f "${file}" \
-                    -F "${flags}" \
-                    -n "${test}" \
-                    -t 83cd8957-dc76-488c-9ada-210dcea51633 \
-                    -X coveragepy \
-                    -X gcov \
-                    -X fix \
-                    -X search \
-                    -X xcode \
-                || echo "Failed to upload code coverage report to codecov.io: ${file}"
-            done
+                    bash <(curl -s https://codecov.io/bash) \
+                        -f "${file}" \
+                        -F "${flags}" \
+                        -n "${test}" \
+                        -t 83cd8957-dc76-488c-9ada-210dcea51633 \
+                        -X coveragepy \
+                        -X gcov \
+                        -X fix \
+                        -X search \
+                        -X xcode \
+                    || echo "Failed to upload code coverage report to codecov.io: ${file}"
+                done
+            fi
         fi
     fi
 
-    rmdir shippable/testresults/
-    cp -a test/results/junit/ shippable/testresults/
-    cp -a test/results/data/ shippable/testresults/
-    cp -aT test/results/bot/ shippable/testresults/
+    if [ -d  test/results/junit/ ]; then
+      cp -aT test/results/junit/ shippable/testresults/
+    fi
+
+    if [ -d test/results/data/ ]; then
+      cp -a test/results/data/ shippable/testresults/
+    fi
+
+    if [ -d  test/results/bot/ ]; then
+      cp -aT test/results/bot/ shippable/testresults/
+    fi
 }
 
 trap cleanup EXIT
@@ -133,4 +143,5 @@ fi
 
 ansible-test env --dump --show --timeout "${timeout}" --color -v
 
+"test/utils/shippable/check_matrix.py"
 "test/utils/shippable/${script}.sh" "${test}"

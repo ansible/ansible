@@ -375,6 +375,86 @@ options:
         - Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
         - If not set, the value will be remain the same if container exists and will be inherited from the host machine if it is (re-)created.
     type: int
+  mounts:
+    version_added: "2.9"
+    type: list
+    description:
+      - 'Specification for mounts to be added to the container. More powerful alternative to I(volumes).'
+    suboptions:
+      target:
+        description:
+          - Path inside the container.
+        type: str
+        required: true
+      source:
+        description:
+          - Mount source (e.g. a volume name or a host path).
+        type: str
+      type:
+        description:
+          - The mount type.
+          - Note that C(npipe) is only supported by Docker for Windows.
+        type: str
+        choices:
+          - 'bind'
+          - 'volume'
+          - 'tmpfs'
+          - 'npipe'
+        default: volume
+      read_only:
+        description:
+          - 'Whether the mount should be read-only.'
+        type: bool
+      consistency:
+        description:
+          - 'The consistency requirement for the mount.'
+        type: str
+        choices:
+          - 'default'
+          - 'consistent'
+          - 'cached'
+          - 'delegated'
+      propagation:
+        description:
+          - Propagation mode. Only valid for the C(bind) type.
+        type: str
+        choices:
+          - 'private'
+          - 'rprivate'
+          - 'shared'
+          - 'rshared'
+          - 'slave'
+          - 'rslave'
+      no_copy:
+        description:
+          - False if the volume should be populated with the data from the target. Only valid for the C(volume) type.
+          - The default value is C(false).
+        type: bool
+      labels:
+        description:
+          - User-defined name and labels for the volume. Only valid for the C(volume) type.
+        type: dict
+      volume_driver:
+        description:
+          - Specify the volume driver. Only valid for the C(volume) type.
+          - See L(here,https://docs.docker.com/storage/volumes/#use-a-volume-driver) for details.
+        type: str
+      volume_options:
+        description:
+          - Dictionary of options specific to the chosen volume_driver. See L(here,https://docs.docker.com/storage/volumes/#use-a-volume-driver)
+            for details.
+        type: dict
+      tmpfs_size:
+        description:
+          - "The size for the tmpfs mount in bytes. Format: <number>[<unit>]"
+          - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+             C(T) (tebibyte), or C(P) (pebibyte)"
+          - "Omitting the unit defaults to bytes."
+        type: str
+      tmpfs_mode:
+        description:
+          - The permission mode for the tmpfs mount.
+        type: str
   name:
     description:
       - Assign a name to a new container or match an existing container.
@@ -953,6 +1033,8 @@ from ansible.module_utils.docker.common import (
     compare_generic,
     is_image_name_id,
     sanitize_result,
+    clean_dict_booleans_for_docker_api,
+    omit_none_from_dict,
     parse_healthcheck,
     DOCKER_COMMON_ARGS,
     RequestException,
@@ -964,6 +1046,7 @@ try:
     from ansible.module_utils.docker.common import docker_version
     if LooseVersion(docker_version) >= LooseVersion('1.10.0'):
         from docker.types import Ulimit, LogConfig
+        from docker import types as docker_types
     else:
         from docker.utils.types import Ulimit, LogConfig
     from docker.errors import DockerException, APIError, NotFound
@@ -981,8 +1064,8 @@ REQUIRES_CONVERSION_TO_BYTES = [
 ]
 
 
-def is_volume_permissions(input):
-    for part in input.split(','):
+def is_volume_permissions(mode):
+    for part in mode.split(','):
         if part not in ('rw', 'ro', 'z', 'Z', 'consistent', 'delegated', 'cached', 'rprivate', 'private', 'rshared', 'shared', 'rslave', 'slave', 'nocopy'):
             return False
     return True
@@ -995,38 +1078,44 @@ def parse_port_range(range_or_port, client):
     Returns a list of integers for each port in the list.
     '''
     if '-' in range_or_port:
-        start, end = [int(port) for port in range_or_port.split('-')]
+        try:
+            start, end = [int(port) for port in range_or_port.split('-')]
+        except Exception:
+            client.fail('Invalid port range: "{0}"'.format(range_or_port))
         if end < start:
-            client.fail('Invalid port range: {0}'.format(range_or_port))
+            client.fail('Invalid port range: "{0}"'.format(range_or_port))
         return list(range(start, end + 1))
     else:
-        return [int(range_or_port)]
+        try:
+            return [int(range_or_port)]
+        except Exception:
+            client.fail('Invalid port: "{0}"'.format(range_or_port))
 
 
-def split_colon_ipv6(input, client):
+def split_colon_ipv6(text, client):
     '''
     Split string by ':', while keeping IPv6 addresses in square brackets in one component.
     '''
-    if '[' not in input:
-        return input.split(':')
+    if '[' not in text:
+        return text.split(':')
     start = 0
     result = []
-    while start < len(input):
-        i = input.find('[', start)
+    while start < len(text):
+        i = text.find('[', start)
         if i < 0:
-            result.extend(input[start:].split(':'))
+            result.extend(text[start:].split(':'))
             break
-        j = input.find(']', i)
+        j = text.find(']', i)
         if j < 0:
-            client.fail('Cannot find closing "]" in input "{0}" for opening "[" at index {1}!'.format(input, i + 1))
-        result.extend(input[start:i].split(':'))
-        k = input.find(':', j)
+            client.fail('Cannot find closing "]" in input "{0}" for opening "[" at index {1}!'.format(text, i + 1))
+        result.extend(text[start:i].split(':'))
+        k = text.find(':', j)
         if k < 0:
-            result[-1] += input[i:]
-            start = len(input)
+            result[-1] += text[i:]
+            start = len(text)
         else:
-            result[-1] += input[i:k]
-            if k == len(input):
+            result[-1] += text[i:k]
+            if k == len(text):
                 result.append('')
                 break
             start = k + 1
@@ -1091,6 +1180,7 @@ class TaskParameters(DockerBaseClass):
         self.memory_reservation = None
         self.memory_swap = None
         self.memory_swappiness = None
+        self.mounts = None
         self.name = None
         self.network_mode = None
         self.userns_mode = None
@@ -1203,6 +1293,10 @@ class TaskParameters(DockerBaseClass):
             # convert from list to str
             if isinstance(self.command, list):
                 self.command = ' '.join([str(x) for x in self.command])
+
+        self.mounts_opt, self.expected_mounts = self._process_mounts()
+
+        self._check_mount_target_collisions()
 
         for param_name in ["device_read_bps", "device_write_bps"]:
             if client.module.params.get(param_name):
@@ -1323,7 +1417,7 @@ class TaskParameters(DockerBaseClass):
             for vol in self.volumes:
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
-                        host, container, dummy = vol.split(':')
+                        dummy, container, dummy = vol.split(':')
                         result.append(container)
                         continue
                     if len(vol.split(':')) == 2:
@@ -1381,6 +1475,7 @@ class TaskParameters(DockerBaseClass):
             device_read_iops='device_read_iops',
             device_write_iops='device_write_iops',
             pids_limit='pids_limit',
+            mounts='mounts',
         )
 
         if self.client.docker_py_version >= LooseVersion('1.9') and self.client.docker_api_version >= LooseVersion('1.22'):
@@ -1403,6 +1498,9 @@ class TaskParameters(DockerBaseClass):
             params['restart_policy'] = dict(Name=self.restart_policy,
                                             MaximumRetryCount=self.restart_retries)
 
+        if 'mounts' in params:
+            params['mounts'] = self.mounts_opt
+
         return self.client.create_host_config(**params)
 
     @property
@@ -1418,9 +1516,9 @@ class TaskParameters(DockerBaseClass):
                        network.get('Options', {}).get('com.docker.network.bridge.host_binding_ipv4'):
                         ip = network['Options']['com.docker.network.bridge.host_binding_ipv4']
                         break
-                except NotFound as e:
+                except NotFound as nfe:
                     self.client.fail(
-                        "Cannot inspect the network '{0}' to determine the default IP: {1}".format(net['name'], e),
+                        "Cannot inspect the network '{0}' to determine the default IP: {1}".format(net['name'], nfe),
                         exception=traceback.format_exc()
                     )
         return ip
@@ -1453,13 +1551,16 @@ class TaskParameters(DockerBaseClass):
                 port_binds = [(default_ip, port) for port in parse_port_range(parts[0], self.client)]
             elif p_len == 3:
                 # We only allow IPv4 and IPv6 addresses for the bind address
-                if not re.match(r'^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$', parts[0]) and not re.match(r'^\[[0-9a-fA-F:]+\]$', parts[0]):
+                ipaddr = parts[0]
+                if not re.match(r'^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$', parts[0]) and not re.match(r'^\[[0-9a-fA-F:]+\]$', ipaddr):
                     self.fail(('Bind addresses for published ports must be IPv4 or IPv6 addresses, not hostnames. '
-                               'Use the dig lookup to resolve hostnames. (Found hostname: {0})').format(parts[0]))
+                               'Use the dig lookup to resolve hostnames. (Found hostname: {0})').format(ipaddr))
+                if re.match(r'^\[[0-9a-fA-F:]+\]$', ipaddr):
+                    ipaddr = ipaddr[1:-1]
                 if parts[1]:
-                    port_binds = [(parts[0], port) for port in parse_port_range(parts[1], self.client)]
+                    port_binds = [(ipaddr, port) for port in parse_port_range(parts[1], self.client)]
                 else:
-                    port_binds = len(container_ports) * [(parts[0],)]
+                    port_binds = len(container_ports) * [(ipaddr,)]
 
             for bind, container_port in zip(port_binds, container_ports):
                 idx = '{0}/{1}'.format(container_port, protocol) if protocol else container_port
@@ -1484,12 +1585,12 @@ class TaskParameters(DockerBaseClass):
             for vol in volumes:
                 host = None
                 if ':' in vol:
-                    if len(vol.split(':')) == 3:
-                        host, container, mode = vol.split(':')
+                    parts = vol.split(':')
+                    if len(parts) == 3:
+                        host, container, mode = parts
                         if not is_volume_permissions(mode):
                             self.fail('Found invalid volumes mode: {0}'.format(mode))
-                    if len(vol.split(':')) == 2:
-                        parts = vol.split(':')
+                    elif len(parts) == 2:
                         if not is_volume_permissions(parts[1]):
                             host, container, mode = (vol.split(':') + ['rw'])
                 if host is not None:
@@ -1656,6 +1757,58 @@ class TaskParameters(DockerBaseClass):
             self.fail("Error getting network id for %s - %s" % (network_name, str(exc)))
         return network_id
 
+    def _process_mounts(self):
+        if self.mounts is None:
+            return None, None
+        mounts_list = []
+        mounts_expected = []
+        for mount in self.mounts:
+            target = mount['target']
+            datatype = mount['type']
+            mount_dict = dict(mount)
+            # Sanity checks (so we don't wait for docker-py to barf on input)
+            if mount_dict.get('source') is None and datatype != 'tmpfs':
+                self.client.fail('source must be specified for mount "{0}" of type "{1}"'.format(target, datatype))
+            mount_option_types = dict(
+                volume_driver='volume',
+                volume_options='volume',
+                propagation='bind',
+                no_copy='volume',
+                labels='volume',
+                tmpfs_size='tmpfs',
+                tmpfs_mode='tmpfs',
+            )
+            for option, req_datatype in mount_option_types.items():
+                if mount_dict.get(option) is not None and datatype != req_datatype:
+                    self.client.fail('{0} cannot be specified for mount "{1}" of type "{2}" (needs type "{3}")'.format(option, target, datatype, req_datatype))
+            # Handle volume_driver and volume_options
+            volume_driver = mount_dict.pop('volume_driver')
+            volume_options = mount_dict.pop('volume_options')
+            if volume_driver:
+                if volume_options:
+                    volume_options = clean_dict_booleans_for_docker_api(volume_options)
+                mount_dict['driver_config'] = docker_types.DriverConfig(name=volume_driver, options=volume_options)
+            if mount_dict['labels']:
+                mount_dict['labels'] = clean_dict_booleans_for_docker_api(mount_dict['labels'])
+            if mount_dict.get('tmpfs_size') is not None:
+                try:
+                    mount_dict['tmpfs_size'] = human_to_bytes(mount_dict['tmpfs_size'])
+                except ValueError as exc:
+                    self.fail('Failed to convert tmpfs_size of mount "{0}" to bytes: {1}'.format(target, exc))
+            if mount_dict.get('tmpfs_mode') is not None:
+                try:
+                    mount_dict['tmpfs_mode'] = int(mount_dict['tmpfs_mode'], 8)
+                except Exception as dummy:
+                    self.client.fail('tmp_fs mode of mount "{0}" is not an octal string!'.format(target))
+            # Fill expected mount dict
+            mount_expected = dict(mount)
+            mount_expected['tmpfs_size'] = mount_dict['tmpfs_size']
+            mount_expected['tmpfs_mode'] = mount_dict['tmpfs_mode']
+            # Add result to lists
+            mounts_list.append(docker_types.Mount(**mount_dict))
+            mounts_expected.append(omit_none_from_dict(mount_expected))
+        return mounts_list, mounts_expected
+
     def _process_rate_bps(self, option):
         """
         Format device_read_bps and device_write_bps option
@@ -1697,6 +1850,25 @@ class TaskParameters(DockerBaseClass):
             return mode
         return 'container:{0}'.format(container['Id'])
 
+    def _check_mount_target_collisions(self):
+        last = dict()
+
+        def f(t, name):
+            if t in last:
+                if name == last[t]:
+                    self.client.fail('The mount point "{0}" appears twice in the {1} option'.format(t, name))
+                else:
+                    self.client.fail('The mount point "{0}" appears both in the {1} and {2} option'.format(t, name, last[t]))
+            last[t] = name
+
+        if self.expected_mounts:
+            for t in [m['target'] for m in self.expected_mounts]:
+                f(t, 'mounts')
+        if self.volumes:
+            for v in self.volumes:
+                vs = v.split(':')
+                f(vs[0 if len(vs) == 1 else 1], 'volumes')
+
 
 class Container(DockerBaseClass):
 
@@ -1732,6 +1904,7 @@ class Container(DockerBaseClass):
         self.parameters_map['expected_cmd'] = 'command'
         self.parameters_map['expected_devices'] = 'devices'
         self.parameters_map['expected_healthcheck'] = 'healthcheck'
+        self.parameters_map['expected_mounts'] = 'mounts'
 
     def fail(self, msg):
         self.parameters.client.fail(msg)
@@ -1758,6 +1931,28 @@ class Container(DockerBaseClass):
         Compare values a and b as described in compare.
         '''
         return compare_generic(a, b, compare['comparison'], compare['type'])
+
+    def _decode_mounts(self, mounts):
+        if not mounts:
+            return mounts
+        result = []
+        empty_dict = dict()
+        for mount in mounts:
+            res = dict()
+            res['type'] = mount.get('Type')
+            res['source'] = mount.get('Source')
+            res['target'] = mount.get('Target')
+            res['read_only'] = mount.get('ReadOnly', False)  # golang's omitempty for bool returns None for False
+            res['consistency'] = mount.get('Consistency')
+            res['propagation'] = mount.get('BindOptions', empty_dict).get('Propagation')
+            res['no_copy'] = mount.get('VolumeOptions', empty_dict).get('NoCopy', False)
+            res['labels'] = mount.get('VolumeOptions', empty_dict).get('Labels', empty_dict)
+            res['volume_driver'] = mount.get('VolumeOptions', empty_dict).get('DriverConfig', empty_dict).get('Name')
+            res['volume_options'] = mount.get('VolumeOptions', empty_dict).get('DriverConfig', empty_dict).get('Options', empty_dict)
+            res['tmpfs_size'] = mount.get('TmpfsOptions', empty_dict).get('SizeBytes')
+            res['tmpfs_mode'] = mount.get('TmpfsOptions', empty_dict).get('Mode')
+            result.append(res)
+        return result
 
     def has_different_configuration(self, image):
         '''
@@ -1857,6 +2052,11 @@ class Container(DockerBaseClass):
             device_read_iops=host_config.get('BlkioDeviceReadIOps'),
             device_write_iops=host_config.get('BlkioDeviceWriteIOps'),
             pids_limit=host_config.get('PidsLimit'),
+            # According to https://github.com/moby/moby/, support for HostConfig.Mounts
+            # has been included at least since v17.03.0-ce, which has API version 1.26.
+            # The previous tag, v1.9.1, has API version 1.21 and does not have
+            # HostConfig.Mounts. I have no idea what about API 1.25...
+            expected_mounts=self._decode_mounts(host_config.get('Mounts')),
         )
         # Options which don't make sense without their accompanying option
         if self.parameters.restart_policy:
@@ -1917,11 +2117,18 @@ class Container(DockerBaseClass):
                             c = sorted(c)
                     elif compare['type'] == 'set(dict)':
                         # Since the order does not matter, sort so that the diff output is better.
-                        # We sort the list of dictionaries by using the sorted items of a dict as its key.
+                        if key == 'expected_mounts':
+                            # For selected values, use one entry as key
+                            def sort_key_fn(x):
+                                return x['target']
+                        else:
+                            # We sort the list of dictionaries by using the sorted items of a dict as its key.
+                            def sort_key_fn(x):
+                                return sorted((a, str(b)) for a, b in x.items())
                         if p is not None:
-                            p = sorted(p, key=lambda x: sorted(x.items()))
+                            p = sorted(p, key=sort_key_fn)
                         if c is not None:
-                            c = sorted(c, key=lambda x: sorted(x.items()))
+                            c = sorted(c, key=sort_key_fn)
                     differences.add(key, parameter=p, active=c)
 
         has_differences = not differences.empty
@@ -2165,13 +2372,13 @@ class Container(DockerBaseClass):
                 container = None
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
-                        host, container, mode = vol.split(':')
+                        dummy, container, mode = vol.split(':')
                         if not is_volume_permissions(mode):
                             self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
                         if not is_volume_permissions(parts[1]):
-                            host, container, mode = vol.split(':') + ['rw']
+                            dummy, container, mode = vol.split(':') + ['rw']
                 new_vol = dict()
                 if container:
                     new_vol[container] = dict()
@@ -2562,7 +2769,7 @@ class ContainerManager(DockerBaseClass):
                     config = self.client.inspect_container(container_id)
                     logging_driver = config['HostConfig']['LogConfig']['Type']
 
-                    if logging_driver == 'json-file' or logging_driver == 'journald':
+                    if logging_driver in ('json-file', 'journald'):
                         output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
                         if self.parameters.output_logs:
                             self._output_logs(msg=output)
@@ -2726,6 +2933,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             env='set',
             entrypoint='list',
             etc_hosts='set',
+            mounts='set(dict)',
             networks='set(dict)',
             ulimits='set(dict)',
             device_read_bps='set(dict)',
@@ -2746,21 +2954,21 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
                 continue
             # Determine option type
             if option in explicit_types:
-                type = explicit_types[option]
+                datatype = explicit_types[option]
             elif data['type'] == 'list':
-                type = 'set'
+                datatype = 'set'
             elif data['type'] == 'dict':
-                type = 'dict'
+                datatype = 'dict'
             else:
-                type = 'value'
+                datatype = 'value'
             # Determine comparison type
             if option in default_values:
                 comparison = default_values[option]
-            elif type in ('list', 'value'):
+            elif datatype in ('list', 'value'):
                 comparison = 'strict'
             else:
                 comparison = 'allow_more_present'
-            comparisons[option] = dict(type=type, comparison=comparison, name=option)
+            comparisons[option] = dict(type=datatype, comparison=comparison, name=option)
             # Keep track of aliases
             comp_aliases[option] = option
             for alias in data.get('aliases', []):
@@ -2871,6 +3079,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             userns_mode=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
             uts=dict(docker_py_version='3.5.0', docker_api_version='1.25'),
             pids_limit=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
+            mounts=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
             # specials
             ipvX_address_supported=dict(docker_py_version='1.9.0', detect_usage=detect_ipvX_address_usage,
                                         usage_msg='ipv4_address or ipv6_address in networks'),
@@ -2959,6 +3168,20 @@ def main():
         memory_reservation=dict(type='str'),
         memory_swap=dict(type='str'),
         memory_swappiness=dict(type='int'),
+        mounts=dict(type='list', elements='dict', options=dict(
+            target=dict(type='str', required=True),
+            source=dict(type='str'),
+            type=dict(type='str', choices=['bind', 'volume', 'tmpfs', 'npipe'], default='volume'),
+            read_only=dict(type='bool'),
+            consistency=dict(type='str', choices=['default', 'consistent', 'cached', 'delegated']),
+            propagation=dict(type='str', choices=['private', 'rprivate', 'shared', 'rshared', 'slave', 'rslave']),
+            no_copy=dict(type='bool'),
+            labels=dict(type='dict'),
+            volume_driver=dict(type='str'),
+            volume_options=dict(type='dict'),
+            tmpfs_size=dict(type='str'),
+            tmpfs_mode=dict(type='str'),
+        )),
         name=dict(type='str', required=True),
         network_mode=dict(type='str'),
         networks=dict(type='list', elements='dict', options=dict(

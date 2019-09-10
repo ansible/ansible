@@ -110,6 +110,7 @@ ansible_facts:
         "ansible_distribution_build": "4887370",
         "ansible_distribution_version": "6.5.0",
         "ansible_hostname": "10.76.33.100",
+        "ansible_in_maintenance_mode": true,
         "ansible_interfaces": [
             "vmk0"
         ],
@@ -123,6 +124,7 @@ ansible_facts:
         "ansible_product_name": "KVM",
         "ansible_product_serial": "NA",
         "ansible_system_vendor": "Red Hat",
+        "ansible_uptime": 1791680,
         "ansible_vmk0": {
             "device": "vmk0",
             "ipv4": {
@@ -157,10 +159,6 @@ except ImportError:
     pass
 
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
-try:
-    from com.vmware.vapi.std_client import DynamicID
-except ImportError:
-    pass
 
 
 class VMwareHostFactManager(PyVmomi):
@@ -190,7 +188,12 @@ class VMwareHostFactManager(PyVmomi):
         ansible_facts.update(self.get_vsan_facts())
         ansible_facts.update(self.get_cluster_facts())
         if self.params.get('show_tag'):
-            ansible_facts.update(self.get_tag_facts())
+            vmware_client = VmwareRestClient(self.module)
+            tag_info = {
+                'tags': vmware_client.get_tags_for_hostsystem(hostsystem_mid=self.host._moId)
+            }
+            ansible_facts.update(tag_info)
+
         self.module.exit_json(changed=False, ansible_facts=ansible_facts)
 
     def get_cluster_facts(self):
@@ -277,40 +280,10 @@ class VMwareHostFactManager(PyVmomi):
             'ansible_product_serial': sn,
             'ansible_bios_date': self.host.hardware.biosInfo.releaseDate,
             'ansible_bios_version': self.host.hardware.biosInfo.biosVersion,
+            'ansible_uptime': self.host.summary.quickStats.uptime,
+            'ansible_in_maintenance_mode': self.host.runtime.inMaintenanceMode,
         }
         return facts
-
-    def get_tag_facts(self):
-        vmware_client = VmwareRestClient(self.module)
-
-        host_dynamic_obj = DynamicID(type='HostSystem', id=self.host._moId)
-        self.tag_service = vmware_client.api_client.tagging.Tag
-        self.tag_association_svc = vmware_client.api_client.tagging.TagAssociation
-        self.category_service = vmware_client.api_client.tagging.Category
-        facts = {
-            'tags': self.get_tags_for_object(host_dynamic_obj)
-        }
-        return facts
-
-    def get_tags_for_object(self, dobj):
-        """
-        Return tags associated with an object
-        Args:
-            dobj: Dynamic object
-        Returns: List of tags associated with the given object
-        """
-        tag_ids = self.tag_association_svc.list_attached_tags(dobj)
-        tags = []
-        for tag_id in tag_ids:
-            tag_obj = self.tag_service.get(tag_id)
-            tags.append({
-                'id': tag_obj.id,
-                'category_name': self.category_service.get(tag_obj.category_id).name,
-                'name': tag_obj.name,
-                'description': tag_obj.description,
-                'category_id': tag_obj.category_id,
-            })
-        return tags
 
 
 def main():

@@ -37,9 +37,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'dns#managedZone'"
 - name: verify that managed_zone was created
-  gcp_dns_managed_zone_facts:
+  gcp_dns_managed_zone_info:
       dns_name: test.somewild2.example.com.
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -66,7 +65,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'dns#managedZone'"
 #----------------------------------------------------------
 - name: delete a managed zone
   gcp_dns_managed_zone:
@@ -83,7 +81,7 @@
     that:
       - result.changed == true
 - name: verify that managed_zone was deleted
-  gcp_dns_managed_zone_facts:
+  gcp_dns_managed_zone_info:
       dns_name: test.somewild2.example.com.
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"

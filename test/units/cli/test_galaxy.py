@@ -32,8 +32,9 @@ import yaml
 import ansible.constants as C
 from ansible import context
 from ansible.cli.galaxy import GalaxyCLI
+from ansible.galaxy.api import GalaxyAPI
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils import context_objects as co
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
@@ -461,6 +462,28 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
         self.assertEquals(self.role_skeleton_path, context.CLIARGS['role_skeleton'], msg='Skeleton path was not parsed properly from the command line')
 
 
+@pytest.mark.parametrize('cli_args, expected', [
+    (['ansible-galaxy', 'collection', 'init', 'abc.def'], 0),
+    (['ansible-galaxy', 'collection', 'init', 'abc.def', '-vvv'], 3),
+    (['ansible-galaxy', '-vv', 'collection', 'init', 'abc.def'], 2),
+    # Due to our manual parsing we want to verify that -v set in the sub parser takes precedence. This behaviour is
+    # deprecated and tests should be removed when the code that handles it is removed
+    (['ansible-galaxy', '-vv', 'collection', 'init', 'abc.def', '-v'], 1),
+    (['ansible-galaxy', '-vv', 'collection', 'init', 'abc.def', '-vvvv'], 4),
+    (['ansible-galaxy', '-vvv', 'init', 'name'], 3),
+    (['ansible-galaxy', '-vvvvv', 'init', '-v', 'name'], 1),
+])
+def test_verbosity_arguments(cli_args, expected, monkeypatch):
+    # Mock out the functions so we don't actually execute anything
+    for func_name in [f for f in dir(GalaxyCLI) if f.startswith("execute_")]:
+        monkeypatch.setattr(GalaxyCLI, func_name, MagicMock())
+
+    cli = GalaxyCLI(args=cli_args)
+    cli.run()
+
+    assert context.CLIARGS['verbosity'] == expected
+
+
 @pytest.fixture()
 def collection_skeleton(request, tmp_path_factory):
     name, skeleton_path = request.param
@@ -494,7 +517,7 @@ def test_collection_default(collection_skeleton):
     assert metadata['authors'] == ['your name <example@domain.com>']
     assert metadata['readme'] == 'README.md'
     assert metadata['version'] == '1.0.0'
-    assert metadata['description'] == 'your description'
+    assert metadata['description'] == 'your collection description'
     assert metadata['license'] == ['GPL-2.0-or-later']
     assert metadata['tags'] == []
     assert metadata['dependencies'] == {}
@@ -586,10 +609,27 @@ def test_invalid_skeleton_path():
     "ns.hyphen-collection",
     "ns.collection.weird",
 ])
-def test_invalid_collection_name(name):
-    expected = "Invalid collection name, must be in the format <namespace>.<collection>"
+def test_invalid_collection_name_init(name):
+    expected = "Invalid collection name '%s', name must be in the format <namespace>.<collection>" % name
 
     gc = GalaxyCLI(args=['ansible-galaxy', 'collection', 'init', name])
+    with pytest.raises(AnsibleError, match=expected):
+        gc.run()
+
+
+@pytest.mark.parametrize("name, expected", [
+    ("", ""),
+    ("invalid", "invalid"),
+    ("invalid:1.0.0", "invalid"),
+    ("hypen-ns.collection", "hypen-ns.collection"),
+    ("ns.hyphen-collection", "ns.hyphen-collection"),
+    ("ns.collection.weird", "ns.collection.weird"),
+])
+def test_invalid_collection_name_install(name, expected, tmp_path_factory):
+    install_path = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections'))
+    expected = "Invalid collection name '%s', name must be in the format <namespace>.<collection>" % expected
+
+    gc = GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', name, '-p', os.path.join(install_path, 'install')])
     with pytest.raises(AnsibleError, match=expected):
         gc.run()
 
@@ -637,7 +677,7 @@ def test_collection_build(collection_artifact):
         assert coll_info['authors'] == ['your name <example@domain.com>']
         assert coll_info['readme'] == 'README.md'
         assert coll_info['tags'] == []
-        assert coll_info['description'] == 'your description'
+        assert coll_info['description'] == 'your collection description'
         assert coll_info['license'] == ['GPL-2.0-or-later']
         assert coll_info['license_file'] is None
         assert coll_info['dependencies'] == {}
@@ -715,7 +755,9 @@ def test_collection_install_with_names(collection_install):
     assert mock_install.call_args[0][0] == [('namespace.collection', '*', None),
                                             ('namespace2.collection', '1.0.1', None)]
     assert mock_install.call_args[0][1] == collection_path
-    assert mock_install.call_args[0][2] == ['https://galaxy.ansible.com']
+    assert len(mock_install.call_args[0][2]) == 1
+    assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
+    assert mock_install.call_args[0][2][0].validate_certs is True
     assert mock_install.call_args[0][3] is True
     assert mock_install.call_args[0][4] is False
     assert mock_install.call_args[0][5] is False
@@ -750,7 +792,9 @@ collections:
     assert mock_install.call_args[0][0] == [('namespace.coll', '*', None),
                                             ('namespace2.coll', '>2.0.1', None)]
     assert mock_install.call_args[0][1] == collection_path
-    assert mock_install.call_args[0][2] == ['https://galaxy.ansible.com']
+    assert len(mock_install.call_args[0][2]) == 1
+    assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
+    assert mock_install.call_args[0][2][0].validate_certs is True
     assert mock_install.call_args[0][3] is True
     assert mock_install.call_args[0][4] is False
     assert mock_install.call_args[0][5] is False
@@ -762,8 +806,8 @@ def test_collection_install_with_relative_path(collection_install, monkeypatch):
     mock_install = collection_install[0]
 
     mock_req = MagicMock()
-    mock_req.return_value = [('namespace.coll', '*', None)]
-    monkeypatch.setattr(ansible.cli.galaxy, 'parse_collections_requirements_file', mock_req)
+    mock_req.return_value = {'collections': [('namespace.coll', '*', None)]}
+    monkeypatch.setattr(ansible.cli.galaxy.GalaxyCLI, '_parse_requirements_file', mock_req)
 
     monkeypatch.setattr(os, 'makedirs', MagicMock())
 
@@ -776,7 +820,9 @@ def test_collection_install_with_relative_path(collection_install, monkeypatch):
     assert mock_install.call_count == 1
     assert mock_install.call_args[0][0] == [('namespace.coll', '*', None)]
     assert mock_install.call_args[0][1] == os.path.abspath(collections_path)
-    assert mock_install.call_args[0][2] == ['https://galaxy.ansible.com']
+    assert len(mock_install.call_args[0][2]) == 1
+    assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
+    assert mock_install.call_args[0][2][0].validate_certs is True
     assert mock_install.call_args[0][3] is True
     assert mock_install.call_args[0][4] is False
     assert mock_install.call_args[0][5] is False
@@ -791,8 +837,8 @@ def test_collection_install_with_unexpanded_path(collection_install, monkeypatch
     mock_install = collection_install[0]
 
     mock_req = MagicMock()
-    mock_req.return_value = [('namespace.coll', '*', None)]
-    monkeypatch.setattr(ansible.cli.galaxy, 'parse_collections_requirements_file', mock_req)
+    mock_req.return_value = {'collections': [('namespace.coll', '*', None)]}
+    monkeypatch.setattr(ansible.cli.galaxy.GalaxyCLI, '_parse_requirements_file', mock_req)
 
     monkeypatch.setattr(os, 'makedirs', MagicMock())
 
@@ -805,7 +851,9 @@ def test_collection_install_with_unexpanded_path(collection_install, monkeypatch
     assert mock_install.call_count == 1
     assert mock_install.call_args[0][0] == [('namespace.coll', '*', None)]
     assert mock_install.call_args[0][1] == os.path.expanduser(os.path.expandvars(collections_path))
-    assert mock_install.call_args[0][2] == ['https://galaxy.ansible.com']
+    assert len(mock_install.call_args[0][2]) == 1
+    assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
+    assert mock_install.call_args[0][2][0].validate_certs is True
     assert mock_install.call_args[0][3] is True
     assert mock_install.call_args[0][4] is False
     assert mock_install.call_args[0][5] is False
@@ -831,7 +879,9 @@ def test_collection_install_in_collection_dir(collection_install, monkeypatch):
     assert mock_install.call_args[0][0] == [('namespace.collection', '*', None),
                                             ('namespace2.collection', '1.0.1', None)]
     assert mock_install.call_args[0][1] == os.path.join(collections_path, 'ansible_collections')
-    assert mock_install.call_args[0][2] == ['https://galaxy.ansible.com']
+    assert len(mock_install.call_args[0][2]) == 1
+    assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
+    assert mock_install.call_args[0][2][0].validate_certs is True
     assert mock_install.call_args[0][3] is True
     assert mock_install.call_args[0][4] is False
     assert mock_install.call_args[0][5] is False
@@ -875,7 +925,9 @@ def test_collection_install_path_with_ansible_collections(collection_install):
     assert mock_install.call_args[0][0] == [('namespace.collection', '*', None),
                                             ('namespace2.collection', '1.0.1', None)]
     assert mock_install.call_args[0][1] == collection_path
-    assert mock_install.call_args[0][2] == ['https://galaxy.ansible.com']
+    assert len(mock_install.call_args[0][2]) == 1
+    assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
+    assert mock_install.call_args[0][2][0].validate_certs is True
     assert mock_install.call_args[0][3] is True
     assert mock_install.call_args[0][4] is False
     assert mock_install.call_args[0][5] is False
@@ -940,4 +992,191 @@ def test_collection_install_custom_server(collection_install):
                    '--server', 'https://galaxy-dev.ansible.com']
     GalaxyCLI(args=galaxy_args).run()
 
-    assert mock_install.call_args[0][2] == ['https://galaxy-dev.ansible.com']
+    assert len(mock_install.call_args[0][2]) == 1
+    assert mock_install.call_args[0][2][0].api_server == 'https://galaxy-dev.ansible.com'
+    assert mock_install.call_args[0][2][0].validate_certs is True
+
+
+@pytest.fixture()
+def requirements_file(request, tmp_path_factory):
+    content = request.param
+
+    test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Requirements'))
+    requirements_file = os.path.join(test_dir, 'requirements.yml')
+
+    if content:
+        with open(requirements_file, 'wb') as req_obj:
+            req_obj.write(to_bytes(content))
+
+    yield requirements_file
+
+
+@pytest.fixture()
+def requirements_cli(monkeypatch):
+    monkeypatch.setattr(GalaxyCLI, 'execute_install', MagicMock())
+    cli = GalaxyCLI(args=['ansible-galaxy', 'install'])
+    cli.run()
+    return cli
+
+
+@pytest.mark.parametrize('requirements_file', [None], indirect=True)
+def test_parse_requirements_file_that_doesnt_exist(requirements_cli, requirements_file):
+    expected = "The requirements file '%s' does not exist." % to_native(requirements_file)
+    with pytest.raises(AnsibleError, match=expected):
+        requirements_cli._parse_requirements_file(requirements_file)
+
+
+@pytest.mark.parametrize('requirements_file', ['not a valid yml file: hi: world'], indirect=True)
+def test_parse_requirements_file_that_isnt_yaml(requirements_cli, requirements_file):
+    expected = "Failed to parse the requirements yml at '%s' with the following error" % to_native(requirements_file)
+    with pytest.raises(AnsibleError, match=expected):
+        requirements_cli._parse_requirements_file(requirements_file)
+
+
+@pytest.mark.parametrize('requirements_file', [('''
+# Older role based requirements.yml
+- galaxy.role
+- anotherrole
+''')], indirect=True)
+def test_parse_requirements_in_older_format_illega(requirements_cli, requirements_file):
+    expected = "Expecting requirements file to be a dict with the key 'collections' that contains a list of " \
+               "collections to install"
+
+    with pytest.raises(AnsibleError, match=expected):
+        requirements_cli._parse_requirements_file(requirements_file, allow_old_format=False)
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+collections:
+- version: 1.0.0
+'''], indirect=True)
+def test_parse_requirements_without_mandatory_name_key(requirements_cli, requirements_file):
+    expected = "Collections requirement entry should contain the key name."
+    with pytest.raises(AnsibleError, match=expected):
+        requirements_cli._parse_requirements_file(requirements_file)
+
+
+@pytest.mark.parametrize('requirements_file', [('''
+collections:
+- namespace.collection1
+- namespace.collection2
+'''), ('''
+collections:
+- name: namespace.collection1
+- name: namespace.collection2
+''')], indirect=True)
+def test_parse_requirements(requirements_cli, requirements_file):
+    expected = {
+        'roles': [],
+        'collections': [('namespace.collection1', '*', None), ('namespace.collection2', '*', None)]
+    }
+    actual = requirements_cli._parse_requirements_file(requirements_file)
+
+    assert actual == expected
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+collections:
+- name: namespace.collection1
+  version: ">=1.0.0,<=2.0.0"
+  source: https://galaxy-dev.ansible.com
+- namespace.collection2'''], indirect=True)
+def test_parse_requirements_with_extra_info(requirements_cli, requirements_file):
+    actual = requirements_cli._parse_requirements_file(requirements_file)
+
+    assert len(actual['roles']) == 0
+    assert len(actual['collections']) == 2
+    assert actual['collections'][0][0] == 'namespace.collection1'
+    assert actual['collections'][0][1] == '>=1.0.0,<=2.0.0'
+    assert actual['collections'][0][2].api_server == 'https://galaxy-dev.ansible.com'
+    assert actual['collections'][0][2].name == 'explicit_requirement_namespace.collection1'
+    assert actual['collections'][0][2].token is None
+    assert actual['collections'][0][2].username is None
+    assert actual['collections'][0][2].password is None
+    assert actual['collections'][0][2].validate_certs is True
+
+    assert actual['collections'][1] == ('namespace.collection2', '*', None)
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+roles:
+- username.role_name
+- src: username2.role_name2
+- src: ssh://github.com/user/repo
+  scm: git
+
+collections:
+- namespace.collection2
+'''], indirect=True)
+def test_parse_requirements_with_roles_and_collections(requirements_cli, requirements_file):
+    actual = requirements_cli._parse_requirements_file(requirements_file)
+
+    assert len(actual['roles']) == 3
+    assert actual['roles'][0].name == 'username.role_name'
+    assert actual['roles'][1].name == 'username2.role_name2'
+    assert actual['roles'][2].name == 'repo'
+    assert actual['roles'][2].src == 'ssh://github.com/user/repo'
+
+    assert len(actual['collections']) == 1
+    assert actual['collections'][0] == ('namespace.collection2', '*', None)
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+collections:
+- name: namespace.collection
+- name: namespace2.collection2
+  source: https://galaxy-dev.ansible.com/
+- name: namespace3.collection3
+  source: server
+'''], indirect=True)
+def test_parse_requirements_with_collection_source(requirements_cli, requirements_file):
+    galaxy_api = GalaxyAPI(requirements_cli.api, 'server', 'https://config-server')
+    requirements_cli.api_servers.append(galaxy_api)
+
+    actual = requirements_cli._parse_requirements_file(requirements_file)
+
+    assert actual['roles'] == []
+    assert len(actual['collections']) == 3
+    assert actual['collections'][0] == ('namespace.collection', '*', None)
+
+    assert actual['collections'][1][0] == 'namespace2.collection2'
+    assert actual['collections'][1][1] == '*'
+    assert actual['collections'][1][2].api_server == 'https://galaxy-dev.ansible.com/'
+    assert actual['collections'][1][2].name == 'explicit_requirement_namespace2.collection2'
+    assert actual['collections'][1][2].token is None
+
+    assert actual['collections'][2] == ('namespace3.collection3', '*', galaxy_api)
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+- username.included_role
+- src: https://github.com/user/repo
+'''], indirect=True)
+def test_parse_requirements_roles_with_include(requirements_cli, requirements_file):
+    reqs = [
+        'ansible.role',
+        {'include': requirements_file},
+    ]
+    parent_requirements = os.path.join(os.path.dirname(requirements_file), 'parent.yaml')
+    with open(to_bytes(parent_requirements), 'wb') as req_fd:
+        req_fd.write(to_bytes(yaml.safe_dump(reqs)))
+
+    actual = requirements_cli._parse_requirements_file(parent_requirements)
+
+    assert len(actual['roles']) == 3
+    assert actual['collections'] == []
+    assert actual['roles'][0].name == 'ansible.role'
+    assert actual['roles'][1].name == 'username.included_role'
+    assert actual['roles'][2].name == 'repo'
+    assert actual['roles'][2].src == 'https://github.com/user/repo'
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+- username.role
+- include: missing.yml
+'''], indirect=True)
+def test_parse_requirements_roles_with_include_missing(requirements_cli, requirements_file):
+    expected = "Failed to find include requirements file 'missing.yml' in '%s'" % to_native(requirements_file)
+
+    with pytest.raises(AnsibleError, match=expected):
+        requirements_cli._parse_requirements_file(requirements_file)

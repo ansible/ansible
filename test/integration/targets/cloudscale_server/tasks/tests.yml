@@ -12,6 +12,10 @@
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
     server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags:
+      project: ansible-test
+      stage: production
+      sla: 24-7
   register: server
   check_mode: yes
 - name: Verify create a running server in check mode
@@ -27,6 +31,10 @@
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
     server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags:
+      project: ansible-test
+      stage: production
+      sla: 24-7
   register: server
 - name: Verify create a running server
   assert:
@@ -34,6 +42,9 @@
       - server is changed
       - server.state == 'running'
       - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - server.tags.project == 'ansible-test'
+      - server.tags.stage == 'production'
+      - server.tags.sla == '24-7'
 
 - name: Test create a running server idempotence
   cloudscale_server:
@@ -42,6 +53,10 @@
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
     server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags:
+      project: ansible-test
+      stage: production
+      sla: 24-7
   register: server
 - name: Verify create a running server idempotence
   assert:
@@ -49,6 +64,128 @@
       - server is not changed
       - server.state == 'running'
       - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - server.tags.project == 'ansible-test'
+      - server.tags.stage == 'production'
+      - server.tags.sla == '24-7'
+
+- name: Test update tags in check mode
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags:
+      project: ansible-test
+      stage: staging
+      sla: 8-5
+  register: server
+  check_mode: yes
+- name: Verify update tags in check mode
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - server.tags.project == 'ansible-test'
+      - server.tags.stage == 'production'
+      - server.tags.sla == '24-7'
+
+- name: Test update tags
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags:
+      project: ansible-test
+      stage: staging
+      sla: 8-5
+  register: server
+- name: Verify update tags
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - server.tags.project == 'ansible-test'
+      - server.tags.stage == 'staging'
+      - server.tags.sla == '8-5'
+
+- name: Test update tags idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags:
+      project: ansible-test
+      stage: staging
+      sla: 8-5
+  register: server
+- name: Verify update tags idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - server.tags.project == 'ansible-test'
+      - server.tags.stage == 'staging'
+      - server.tags.sla == '8-5'
+
+- name: Test omit tags idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+  register: server
+- name: Verify update tags idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - server.tags.project == 'ansible-test'
+      - server.tags.stage == 'staging'
+      - server.tags.sla == '8-5'
+
+- name: Test delete tags
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags: {}
+  register: server
+- name: Verify delete tags
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - not server.tags
+
+- name: Test delete tags idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags: {}
+  register: server
+- name: Verify delete tags idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - not server.tags
 
 - name: Test update flavor of a running server without force in check mode
   cloudscale_server:

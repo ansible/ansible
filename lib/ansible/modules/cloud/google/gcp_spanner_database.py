@@ -158,6 +158,9 @@ def main():
     fetch = fetch_resource(module, self_link(module))
     changed = False
 
+    if 'instance' in module.params and 'name' in module.params['instance']:
+        module.params['instance']['name'] = module.params['instance']['name'].split('/')[-1]
+
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
@@ -186,8 +189,7 @@ def create(module, link):
 
 
 def update(module, link):
-    delete(module, self_link(module))
-    create(module, collection(module))
+    module.fail_json(msg="Spanner objects can't be updated to ensure data safety")
 
 
 def delete(module, link):

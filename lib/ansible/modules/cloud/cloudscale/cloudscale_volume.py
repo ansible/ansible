@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2018, Gaudenz Steinlin <gaudenz.steinlin@cloudscale.ch>
+# Copyright (c) 2018, Gaudenz Steinlin <gaudenz.steinlin@cloudscale.ch>
+# Copyright (c) 2019, René Moser <mail@renemoser.net>
+
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,43 +18,56 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cloudscale_volume
-short_description: Manages volumes on the cloudscale.ch IaaS service
+short_description: Manages volumes on the cloudscale.ch IaaS service.
 description:
-  - Create, attach/detach and delete volumes on the cloudscale.ch IaaS service.
+  - Create, attach/detach, update and delete volumes on the cloudscale.ch IaaS service.
 notes:
   - To create a new volume at least the I(name) and I(size_gb) options
     are required.
   - A volume can be created and attached to a server in the same task.
-version_added: 2.8
-author: "Gaudenz Steinlin (@gaudenz)"
+version_added: '2.8'
+author:
+  - Gaudenz Steinlin (@gaudenz)
+  - René Moser (@resmo)
 options:
   state:
     description:
       - State of the volume.
     default: present
     choices: [ present, absent ]
+    type: str
   name:
     description:
       - Name of the volume. Either name or UUID must be present to change an
         existing volume.
+    type: str
   uuid:
     description:
       - UUID of the volume. Either name or UUID must be present to change an
         existing volume.
+    type: str
   size_gb:
     description:
       - Size of the volume in GB.
+    type: int
   type:
     description:
       - Type of the volume. Cannot be changed after creating the volume.
-        Defaults to ssd on volume creation.
+        Defaults to C(ssd) on volume creation.
     choices: [ ssd, bulk ]
+    type: str
   server_uuids:
     description:
-      - UUIDs of the servers this volume is attached to. Set this to [] to
+      - UUIDs of the servers this volume is attached to. Set this to C([]) to
         detach the volume. Currently a volume can only be attached to a
         single server.
     aliases: [ server_uuid ]
+    type: list
+  tags:
+    description:
+      - Tags assosiated with the volume. Set this to C({}) to clear any tags.
+    type: dict
+    version_added: '2.9'
 extends_documentation_fragment: cloudscale
 '''
 
@@ -100,33 +115,32 @@ EXAMPLES = '''
 RETURN = '''
 href:
   description: The API URL to get details about this volume.
-  returned: success when state == present
+  returned: state == present
   type: str
   sample: https://api.cloudscale.ch/v1/volumes/2db69ba3-1864-4608-853a-0771b6885a3a
 uuid:
   description: The unique identifier for this volume.
-  returned: success when state == present
+  returned: state == present
   type: str
   sample: 2db69ba3-1864-4608-853a-0771b6885a3a
 name:
   description: The display name of the volume.
-  returned: success when state == present
+  returned: state == present
   type: str
   sample: my_ssd_volume
 size_gb:
   description: The size of the volume in GB.
-  returned: success when state == present
+  returned: state == present
   type: str
   sample: 50
 type:
-  description: "The type of the volume. There are currently two options:
-                ssd (default) or bulk."
-  returned: success when state == present
+  description: The type of the volume.
+  returned: state == present
   type: str
   sample: bulk
 server_uuids:
   description: The UUIDs of the servers this volume is attached to.
-  returned: success when state == present
+  returned: state == present
   type: list
   sample: ['47cec963-fcd2-482f-bdb6-24461b2d47b1']
 state:
@@ -134,6 +148,12 @@ state:
   returned: success
   type: str
   sample: present
+tags:
+  description: Tags assosiated with the volume.
+  returned: state == present
+  type: dict
+  sample: { 'project': 'my project' }
+  version_added: '2.9'
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -146,77 +166,94 @@ class AnsibleCloudscaleVolume(AnsibleCloudscaleBase):
 
     def __init__(self, module):
         super(AnsibleCloudscaleVolume, self).__init__(module)
-        params = self._module.params
-        self.info = {
-            'name': params['name'],
-            'uuid': params['uuid'],
+        self._info = {}
+
+    def _init_container(self):
+        return {
+            'uuid': self._module.params.get('uuid') or self._info.get('uuid'),
+            'name': self._module.params.get('name') or self._info.get('name'),
             'state': 'absent',
         }
-        self.changed = False
-        if params['uuid'] is not None:
-            vol = self._get('volumes/%s' % params['uuid'])
-            if vol is None and params['state'] == 'present':
-                self._module.fail_json(
-                    msg='Volume with UUID %s does not exist. Can\'t create a '
-                        'volume with a predefined UUID.' % params['uuid'],
-                )
-            elif vol is not None:
-                self.info = vol
-                self.info['state'] = 'present'
-        else:
-            resp = self._get('volumes')
-            volumes = [vol for vol in resp if vol['name'] == params['name']]
-            if len(volumes) == 1:
-                self.info = volumes[0]
-                self.info['state'] = 'present'
-            elif len(volumes) > 1:
-                self._module.fail_json(
-                    msg='More than 1 volume with name "%s" exists.'
-                        % params['name'],
-                )
 
-    def create(self):
-        params = self._module.params
+    def _create(self, volume):
+        # Fail when missing params for creation
+        self._module.fail_on_missing_params(['name', 'size_gb'])
 
-        # check for required parameters to create a volume
-        missing_parameters = []
-        for p in ('name', 'size_gb'):
-            if p not in params or not params[p]:
-                missing_parameters.append(p)
+        # Fail if a user uses a UUID and state=present but the volume was not found.
+        if self._module.params.get('uuid'):
+            self._module.fail_json(msg="The volume with UUID '%s' was not found "
+                                   "and we would create a new one with different UUID, "
+                                   "this is probaly not want you have asked for." % self._module.params.get('uuid'))
 
-        if len(missing_parameters) > 0:
-            self._module.fail_json(
-                msg='Missing required parameter(s) to create a volume: %s.'
-                    % ' '.join(missing_parameters),
-            )
-
+        self._result['changed'] = True
         data = {
-            'name': params['name'],
-            'size_gb': params['size_gb'],
-            'type': params['type'] or 'ssd',
-            'server_uuids': params['server_uuids'] or [],
+            'name': self._module.params.get('name'),
+            'type': self._module.params.get('type'),
+            'size_gb': self._module.params.get('size_gb') or 'ssd',
+            'server_uuids': self._module.params.get('server_uuids') or [],
+            'tags': self._module.params.get('tags'),
         }
+        if not self._module.check_mode:
+            volume = self._post('volumes', data)
+        return volume
 
-        self.info = self._post('volumes', data)
-        self.info['state'] = 'present'
-        self.changed = True
-
-    def delete(self):
-        self._delete('volumes/%s' % self.info['uuid'])
-        self.info = {
-            'name': self.info['name'],
-            'uuid': self.info['uuid'],
-            'state': 'absent',
-        }
-        self.changed = True
-
-    def update(self, param):
-        self._patch(
-            'volumes/%s' % self.info['uuid'],
-            {param: self._module.params[param]},
+    def _update(self, volume):
+        update_params = (
+            'name',
+            'size_gb',
+            'server_uuids',
+            'tags',
         )
-        self.info[param] = self._module.params[param]
-        self.changed = True
+        updated = False
+        for param in update_params:
+            updated = self._param_updated(param, volume) or updated
+
+        # Refresh if resource was updated in live mode
+        if updated and not self._module.check_mode:
+            volume = self.get_volume()
+        return volume
+
+    def get_volume(self):
+        self._info = self._init_container()
+
+        uuid = self._info.get('uuid')
+        if uuid is not None:
+            volume = self._get('volumes/%s' % uuid)
+            if volume:
+                self._info.update(volume)
+                self._info['state'] = 'present'
+
+        else:
+            name = self._info.get('name')
+            matching_volumes = []
+            for volume in self._get('volumes'):
+                if volume['name'] == name:
+                    matching_volumes.append(volume)
+
+            if len(matching_volumes) > 1:
+                self._module.fail_json(msg="More than one volume with name exists: '%s'. "
+                                       "Use the 'uuid' parameter to identify the volume." % name)
+            elif len(matching_volumes) == 1:
+                self._info.update(matching_volumes[0])
+                self._info['state'] = 'present'
+        return self._info
+
+    def present(self):
+        volume = self.get_volume()
+        if volume.get('state') == 'absent':
+            volume = self._create(volume)
+        else:
+            volume = self._update(volume)
+        return volume
+
+    def absent(self):
+        volume = self.get_volume()
+        if volume.get('state') != 'absent':
+            self._result['changed'] = True
+            if not self._module.check_mode:
+                volume['state'] = "absent"
+                self._delete('volumes/%s' % volume['uuid'])
+        return volume
 
 
 def main():
@@ -228,52 +265,24 @@ def main():
         size_gb=dict(type='int'),
         type=dict(choices=('ssd', 'bulk')),
         server_uuids=dict(type='list', aliases=['server_uuid']),
+        tags=dict(type='dict'),
     ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_one_of=(('name', 'uuid'),),
-        mutually_exclusive=(('name', 'uuid'),),
         supports_check_mode=True,
     )
 
-    volume = AnsibleCloudscaleVolume(module)
-    if module.check_mode:
-        changed = False
-        for param, conv in (('state', str),
-                            ('server_uuids', set),
-                            ('size_gb', int)):
-            if module.params[param] is None:
-                continue
+    cloudscale_volume = AnsibleCloudscaleVolume(module)
 
-            if conv(volume.info[param]) != conv(module.params[param]):
-                changed = True
-                break
+    if module.params['state'] == 'absent':
+        server_group = cloudscale_volume.absent()
+    else:
+        server_group = cloudscale_volume.present()
 
-        module.exit_json(changed=changed,
-                         **volume.info)
-
-    if (volume.info['state'] == 'absent'
-       and module.params['state'] == 'present'):
-        volume.create()
-    elif (volume.info['state'] == 'present'
-          and module.params['state'] == 'absent'):
-        volume.delete()
-
-    if module.params['state'] == 'present':
-        if (module.params['type'] is not None
-           and volume.info['type'] != module.params['type']):
-            module.fail_json(
-                msg='Cannot change type of an existing volume.',
-            )
-
-        for param, conv in (('server_uuids', set), ('size_gb', int)):
-            if module.params[param] is None:
-                continue
-            if conv(volume.info[param]) != conv(module.params[param]):
-                volume.update(param)
-
-    module.exit_json(changed=volume.changed, **volume.info)
+    result = cloudscale_volume.get_result(server_group)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

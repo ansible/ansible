@@ -51,7 +51,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: backendservice
-- name: create a ssl certificate
+- name: create a SSL certificate
   gcp_compute_ssl_certificate:
     name: sslcert-targetsslproxy
     description: A certificate for testing. Do not use this certificate in production
@@ -84,7 +84,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: sslcert
-- name: delete a target ssl proxy
+- name: delete a target SSL proxy
   gcp_compute_target_ssl_proxy:
     name: "{{ resource_name }}"
     ssl_certificates:
@@ -95,7 +95,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: absent
 #----------------------------------------------------------
-- name: create a target ssl proxy
+- name: create a target SSL proxy
   gcp_compute_target_ssl_proxy:
     name: "{{ resource_name }}"
     ssl_certificates:
@@ -110,9 +110,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#targetSslProxy'"
 - name: verify that target_ssl_proxy was created
-  gcp_compute_target_ssl_proxy_facts:
+  gcp_compute_target_ssl_proxy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -126,7 +125,7 @@
     that:
       - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
-- name: create a target ssl proxy that already exists
+- name: create a target SSL proxy that already exists
   gcp_compute_target_ssl_proxy:
     name: "{{ resource_name }}"
     ssl_certificates:
@@ -141,9 +140,8 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#targetSslProxy'"
 #----------------------------------------------------------
-- name: delete a target ssl proxy
+- name: delete a target SSL proxy
   gcp_compute_target_ssl_proxy:
     name: "{{ resource_name }}"
     ssl_certificates:
@@ -159,7 +157,7 @@
     that:
       - result.changed == true
 - name: verify that target_ssl_proxy was deleted
-  gcp_compute_target_ssl_proxy_facts:
+  gcp_compute_target_ssl_proxy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -173,7 +171,7 @@
     that:
       - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
-- name: delete a target ssl proxy that does not exist
+- name: delete a target SSL proxy that does not exist
   gcp_compute_target_ssl_proxy:
     name: "{{ resource_name }}"
     ssl_certificates:
@@ -191,7 +189,7 @@
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!
-- name: delete a ssl certificate
+- name: delete a SSL certificate
   gcp_compute_ssl_certificate:
     name: sslcert-targetsslproxy
     description: A certificate for testing. Do not use this certificate in production

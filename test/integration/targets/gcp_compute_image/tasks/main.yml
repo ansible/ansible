@@ -44,9 +44,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#image'"
 - name: verify that image was created
-  gcp_compute_image_facts:
+  gcp_compute_image_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -73,7 +72,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#image'"
 #----------------------------------------------------------
 - name: delete a image
   gcp_compute_image:
@@ -89,7 +87,7 @@
     that:
       - result.changed == true
 - name: verify that image was deleted
-  gcp_compute_image_facts:
+  gcp_compute_image_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"

@@ -266,21 +266,25 @@
 
 - name: check what would be removed if folder state was absent and diff is enabled
   file: 
-    path: "{{ output_dir }}"
+    path: "{{ item }}"
     state: absent
   check_mode: yes
   diff: yes
+  with_items:
+    - "{{ output_dir }}"
+    - "{{ output_dir }}/foobar/fileA"
   register: folder_absent_result
 
-- name: assert that the absent check lists expected files and folders
+- name: 'assert that the "absent" state lists expected files and folders for only directories'
   assert:
     that:
-      - folder_absent_result.diff.before.path_content is defined
-      - test_folder in folder_absent_result.diff.before.path_content.directories
-      - test_file in folder_absent_result.diff.before.path_content.files
+      - folder_absent_result.results[0].diff.before.path_content is defined
+      - folder_absent_result.results[1].diff.before.path_content is not defined
+      - test_folder in folder_absent_result.results[0].diff.before.path_content.directories
+      - test_file in folder_absent_result.results[0].diff.before.path_content.files
   vars:
-    test_folder: "{{ folder_absent_result.path }}/foobar"
-    test_file: "{{ folder_absent_result.path }}/foobar/fileA"
+    test_folder: "{{ folder_absent_result.results[0].path }}/foobar"
+    test_file: "{{ folder_absent_result.results[0].path }}/foobar/fileA"
 
 - name: Change ownership of a directory with recurse=no(default)
   file: path={{output_dir}}/foobar owner=1234

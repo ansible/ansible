@@ -50,13 +50,9 @@ Synopsis
 --------
 {% if description -%}
 
-{%   if description is string -%}
-- @{ description | rst_ify }@
-{%   else %}
-{%     for desc in description %}
+{%   for desc in description %}
 - @{ desc | rst_ify }@
-{%     endfor %}
-{%   endif %}
+{%   endfor %}
 
 {% endif %}
 
@@ -120,6 +116,7 @@ Parameters
                     <b>@{ key }@</b>
                     <div style="font-size: small">
                         <span style="color: purple">@{ value.type | documented_type }@</span>
+                        {% if value.get('elements') %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
                         {% if value.get('required', False) %} / <span style="color: red">required</span>{% endif %}
                     </div>
                     {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
@@ -182,13 +179,9 @@ Parameters
                 {% endif %}
                 {# description #}
                 <td>
-                    {% if value.description is string %}
-                        <div>@{ value.description | replace('\n', '\n    ') | html_ify }@</div>
-                    {% else %}
-                        {% for desc in value.description %}
-                            <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
-                        {% endfor %}
-                    {% endif %}
+                    {% for desc in value.description %}
+                        <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+                    {% endfor %}
                     {% if 'aliases' in value and value.aliases %}
                         <div style="font-size: small; color: darkgreen"><br/>aliases: @{ value.aliases|join(', ') }@</div>
                     {% endif %}
@@ -456,7 +449,7 @@ Authors
 
 .. hint::
 {%   if plugin_type == 'module' %}
-    If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/modules/@{ source }@?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr>`_ to improve it.
+    If you notice any issues in this documentation, you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/modules/@{ source }@?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr>`_ to improve it.
 {% else %}
-    If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/plugins/@{ plugin_type }@/@{ source }@?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr>`_ to improve it.
+    If you notice any issues in this documentation, you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/plugins/@{ plugin_type }@/@{ source }@?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr>`_ to improve it.
 {% endif %}

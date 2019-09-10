@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_firewall_multicast_policy
 short_description: Configure multicast NAT policies in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure firewall feature and multicast_policy category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify firewall feature and multicast_policy category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,102 +41,144 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     firewall_multicast_policy:
         description:
             - Configure multicast NAT policies.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
             action:
                 description:
                     - Accept or deny traffic matching the policy.
+                type: str
                 choices:
                     - accept
                     - deny
             dnat:
                 description:
                     - IPv4 DNAT address used for multicast destination addresses.
+                type: str
             dstaddr:
                 description:
                     - Destination address objects.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Destination address objects. Source firewall.multicast-address.name.
                         required: true
+                        type: str
             dstintf:
                 description:
                     - Destination interface name. Source system.interface.name system.zone.name.
-            end-port:
+                type: str
+            end_port:
                 description:
-                    -  Integer value for ending TCP/UDP/SCTP destination port in range (1 - 65535, default = 1).
+                    -  Integer value for ending TCP/UDP/SCTP destination port in range (1 - 65535).
+                type: int
             id:
                 description:
                     - Policy ID.
                 required: true
+                type: int
             logtraffic:
                 description:
                     - Enable/disable logging traffic accepted by this policy.
+                type: str
                 choices:
                     - enable
                     - disable
             protocol:
                 description:
-                    - Integer value for the protocol type as defined by IANA (0 - 255, default = 0).
+                    - Integer value for the protocol type as defined by IANA (0 - 255).
+                type: int
             snat:
                 description:
                     - Enable/disable substitution of the outgoing interface IP address for the original source IP address (called source NAT or SNAT).
+                type: str
                 choices:
                     - enable
                     - disable
-            snat-ip:
+            snat_ip:
                 description:
                     - IPv4 address to be used as the source address for NATed traffic.
+                type: str
             srcaddr:
                 description:
                     - Source address objects.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Source address objects. Source firewall.address.name firewall.addrgrp.name.
                         required: true
+                        type: str
             srcintf:
                 description:
                     - Source interface name. Source system.interface.name system.zone.name.
-            start-port:
+                type: str
+            start_port:
                 description:
-                    - Integer value for starting TCP/UDP/SCTP destination port in range (1 - 65535, default = 1).
+                    - Integer value for starting TCP/UDP/SCTP destination port in range (1 - 65535).
+                type: int
             status:
                 description:
                     - Enable/disable this policy.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -152,6 +191,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure multicast NAT policies.
     fortios_firewall_multicast_policy:
@@ -160,25 +200,25 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       firewall_multicast_policy:
-        state: "present"
         action: "accept"
         dnat: "<your_own_value>"
         dstaddr:
          -
             name: "default_name_6 (source firewall.multicast-address.name)"
         dstintf: "<your_own_value> (source system.interface.name system.zone.name)"
-        end-port: "8"
+        end_port: "8"
         id:  "9"
         logtraffic: "enable"
         protocol: "11"
         snat: "enable"
-        snat-ip: "<your_own_value>"
+        snat_ip: "<your_own_value>"
         srcaddr:
          -
             name: "default_name_15 (source firewall.address.name firewall.addrgrp.name)"
         srcintf: "<your_own_value> (source system.interface.name system.zone.name)"
-        start-port: "17"
+        start_port: "17"
         status: "enable"
 '''
 
@@ -242,14 +282,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -257,15 +299,15 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_firewall_multicast_policy_data(json):
     option_list = ['action', 'dnat', 'dstaddr',
-                   'dstintf', 'end-port', 'id',
+                   'dstintf', 'end_port', 'id',
                    'logtraffic', 'protocol', 'snat',
-                   'snat-ip', 'srcaddr', 'srcintf',
-                   'start-port', 'status']
+                   'snat_ip', 'srcaddr', 'srcintf',
+                   'start_port', 'status']
     dictionary = {}
 
     for attribute in option_list:
@@ -275,47 +317,72 @@ def filter_firewall_multicast_policy_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def firewall_multicast_policy(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_multicast_policy'] and data['firewall_multicast_policy']:
+        state = data['firewall_multicast_policy']['state']
+    else:
+        state = True
     firewall_multicast_policy_data = data['firewall_multicast_policy']
-    filtered_data = filter_firewall_multicast_policy_data(firewall_multicast_policy_data)
-    if firewall_multicast_policy_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_firewall_multicast_policy_data(firewall_multicast_policy_data))
+
+    if state == "present":
         return fos.set('firewall',
                        'multicast-policy',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif firewall_multicast_policy_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('firewall',
                           'multicast-policy',
                           mkey=filtered_data['id'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_firewall(data, fos):
-    login(data)
 
-    methodlist = ['firewall_multicast_policy']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['firewall_multicast_policy']:
+        resp = firewall_multicast_policy(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "firewall_multicast_policy": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "action": {"required": False, "type": "str",
                            "choices": ["accept", "deny"]},
@@ -325,20 +392,20 @@ def main():
                                 "name": {"required": True, "type": "str"}
                             }},
                 "dstintf": {"required": False, "type": "str"},
-                "end-port": {"required": False, "type": "int"},
+                "end_port": {"required": False, "type": "int"},
                 "id": {"required": True, "type": "int"},
                 "logtraffic": {"required": False, "type": "str",
                                "choices": ["enable", "disable"]},
                 "protocol": {"required": False, "type": "int"},
                 "snat": {"required": False, "type": "str",
                          "choices": ["enable", "disable"]},
-                "snat-ip": {"required": False, "type": "str"},
+                "snat_ip": {"required": False, "type": "str"},
                 "srcaddr": {"required": False, "type": "list",
                             "options": {
                                 "name": {"required": True, "type": "str"}
                             }},
                 "srcintf": {"required": False, "type": "str"},
-                "start-port": {"required": False, "type": "int"},
+                "start_port": {"required": False, "type": "int"},
                 "status": {"required": False, "type": "str",
                            "choices": ["enable", "disable"]}
 
@@ -348,15 +415,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_firewall(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_firewall(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_firewall(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

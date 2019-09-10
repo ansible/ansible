@@ -115,6 +115,15 @@ class ModuleArgsParser:
             raise AnsibleAssertionError("the type of 'task_ds' should be a dict, but is a %s" % type(task_ds))
         self._task_ds = task_ds
         self._collection_list = collection_list
+        # delayed local imports to prevent circular import
+        from ansible.playbook.task import Task
+        from ansible.playbook.handler import Handler
+        # store the valid Task/Handler attrs for quick access
+        self._task_attrs = set(Task._valid_attrs.keys())
+        self._task_attrs.update(set(Handler._valid_attrs.keys()))
+        # HACK: why are these not FieldAttributes on task with a post-validate to check usage?
+        self._task_attrs.update(['local_action', 'static'])
+        self._task_attrs = frozenset(self._task_attrs)
 
     def _split_module_string(self, module_string):
         '''
@@ -250,7 +259,7 @@ class ModuleArgsParser:
 
         return (action, args)
 
-    def parse(self):
+    def parse(self, skip_action_validation=False):
         '''
         Given a task in one of the supported forms, parses and returns
         returns the action, arguments, and delegate_to values for the
@@ -286,9 +295,12 @@ class ModuleArgsParser:
 
         # module: <stuff> is the more new-style invocation
 
-        # walk the input dictionary to see we recognize a module name
-        for (item, value) in iteritems(self._task_ds):
-            if item in BUILTIN_TASKS or action_loader.has_plugin(item, collection_list=self._collection_list) or \
+        # filter out task attributes so we're only querying unrecognized keys as actions/modules
+        non_task_ds = dict((k, v) for k, v in iteritems(self._task_ds) if (k not in self._task_attrs) and (not k.startswith('with_')))
+
+        # walk the filtered input dictionary to see if we recognize a module name
+        for item, value in iteritems(non_task_ds):
+            if item in BUILTIN_TASKS or skip_action_validation or action_loader.has_plugin(item, collection_list=self._collection_list) or \
                     module_loader.has_plugin(item, collection_list=self._collection_list):
                 # finding more than one module name is a problem
                 if action is not None:
@@ -299,14 +311,13 @@ class ModuleArgsParser:
 
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
-            if 'ping' not in module_loader:
-                raise AnsibleParserError("The requested action was not found in configured module paths. "
-                                         "Additionally, core modules are missing. If this is a checkout, "
-                                         "run 'git pull --rebase' to correct this problem.",
+            if non_task_ds:  # there was one non-task action, but we couldn't find it
+                bad_action = list(non_task_ds.keys())[0]
+                raise AnsibleParserError("couldn't resolve module/action '{0}'. This often indicates a "
+                                         "misspelling, missing collection, or incorrect module path.".format(bad_action),
                                          obj=self._task_ds)
-
             else:
-                raise AnsibleParserError("no action detected in task. This often indicates a misspelled module name, or incorrect module path.",
+                raise AnsibleParserError("no module/action detected in task.",
                                          obj=self._task_ds)
         elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
             templar = Templar(loader=None)

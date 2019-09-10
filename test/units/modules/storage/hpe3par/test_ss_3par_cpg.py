@@ -4,14 +4,12 @@
 
 
 import mock
-import pytest
 import sys
 sys.modules['hpe3par_sdk'] = mock.Mock()
 sys.modules['hpe3par_sdk.client'] = mock.Mock()
 sys.modules['hpe3parclient'] = mock.Mock()
 sys.modules['hpe3parclient.exceptions'] = mock.Mock()
 from ansible.modules.storage.hpe3par import ss_3par_cpg
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.storage.hpe3par import hpe3par
 
 

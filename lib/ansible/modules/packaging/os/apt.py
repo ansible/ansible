@@ -38,6 +38,18 @@ options:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step.
     type: bool
     default: 'no'
+  update_cache_retries:
+    description:
+      - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
+    type: int
+    default: 5
+    version_added: '2.10'
+  update_cache_retry_max_delay:
+    description:
+      - Use an exponential backoff delay for each retry (see I(update_cache_retries)) up to this max delay in seconds.
+    type: int
+    default: 12
+    version_added: '2.10'
   cache_valid_time:
     description:
       - Update the apt cache if its older than the I(cache_valid_time). This option is set in seconds.
@@ -271,6 +283,8 @@ import shutil
 import re
 import sys
 import tempfile
+import time
+import random
 import time
 
 from ansible.module_utils.basic import AnsibleModule
@@ -1003,6 +1017,8 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'build-dep', 'fixed', 'latest', 'present']),
             update_cache=dict(type='bool', aliases=['update-cache']),
+            update_cache_retries=dict(type='int', default=5),
+            update_cache_retry_max_delay=dict(type='int', default=12),
             cache_valid_time=dict(type='int', default=0),
             purge=dict(type='bool', default=False),
             package=dict(type='list', aliases=['pkg', 'name']),
@@ -1031,8 +1047,14 @@ def main():
             module.fail_json(msg="%s must be installed to use check mode. "
                                  "If run normally this module can auto-install it." % PYTHON_APT)
         try:
-            module.warn("Updating cache and auto-installing missing dependency: %s" % PYTHON_APT)
-            module.run_command(['apt-get', 'update'], check_rc=True)
+            # We skip cache update in auto install the dependency if the
+            # user explicitly declared it with update_cache=no.
+            if module.params.get('update_cache') is False:
+                module.warn("Auto-installing missing dependency without updating cache: %s" % PYTHON_APT)
+            else:
+                module.warn("Updating cache and auto-installing missing dependency: %s" % PYTHON_APT)
+                module.run_command(['apt-get', 'update'], check_rc=True)
+
             module.run_command(['apt-get', 'install', '--no-install-recommends', PYTHON_APT, '-y', '-q'], check_rc=True)
             global apt, apt_pkg
             import apt
@@ -1086,16 +1108,27 @@ def main():
             now = datetime.datetime.now()
             tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
             if not mtimestamp + tdelta >= now:
-                # Retry to update the cache up to 3 times
+                # Retry to update the cache with exponential backoff
                 err = ''
-                for retry in range(3):
+                update_cache_retries = module.params.get('update_cache_retries')
+                update_cache_retry_max_delay = module.params.get('update_cache_retry_max_delay')
+                randomize = random.randint(0, 1000) / 1000.0
+
+                for retry in range(update_cache_retries):
                     try:
                         cache.update()
                         break
                     except apt.cache.FetchFailedException as e:
                         err = to_native(e)
+
+                    # Use exponential backoff plus a little bit of randomness
+                    delay = 2 ** retry + randomize
+                    if delay > update_cache_retry_max_delay:
+                        delay = update_cache_retry_max_delay + randomize
+                    time.sleep(delay)
                 else:
-                    module.fail_json(msg='Failed to update apt cache: %s' % err)
+                    module.fail_json(msg='Failed to update apt cache: %s' % (err if err else 'unknown reason'))
+
                 cache.open(progress=None)
                 mtimestamp, post_cache_update_time = get_updated_cache_time()
                 if updated_cache_time != post_cache_update_time:

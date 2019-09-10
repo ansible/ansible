@@ -57,10 +57,10 @@ options:
     default: 'no'
   username:
     description:
-      - The username to authenticate with.
+      - The username to authenticate with. Should not be set when using personal access token
   password:
     description:
-      - The password to authenticate with. A personal access token can be used here in place of a password.
+      - The password to authenticate with. Alternatively, a personal access token can be used instead of I(username) and I(password) combination.
   token:
     description:
       - The OAuth2 token or personal access token to authenticate with. Mutually exclusive with I(password).

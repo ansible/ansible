@@ -24,7 +24,9 @@ options:
     state:
         description:
         - Create or modify an organization.
-        choices: ['present', 'query']
+        - C(org_id) must be specified if multiple organizations of the same name exist.
+        - C(absent) WILL DELETE YOUR ENTIRE ORGANIZATION, AND ALL ASSOCIATED OBJECTS, WITHOUT CONFIRMATION. USE WITH CAUTION.
+        choices: ['absent', 'present', 'query']
         default: present
     clone:
         description:
@@ -50,6 +52,13 @@ EXAMPLES = r'''
     auth_key: abc12345
     org_name: YourOrg
     state: present
+  delegate_to: localhost
+
+- name: Delete an organization named YourOrg
+  meraki_organization:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: absent
   delegate_to: localhost
 
 - name: Query information about all organizations associated to the user
@@ -123,7 +132,7 @@ def main():
     # the module
     argument_spec = meraki_argument_spec()
     argument_spec.update(clone=dict(type='str'),
-                         state=dict(type='str', choices=['present', 'query'], default='present'),
+                         state=dict(type='str', choices=['absent', 'present', 'query'], default='present'),
                          org_name=dict(type='str', aliases=['name', 'organization']),
                          org_id=dict(type='str', aliases=['id']),
                          )
@@ -147,27 +156,17 @@ def main():
 
     meraki.params['follow_redirects'] = 'all'
 
-    create_urls = {'organizations': '/organizations',
-                   }
-    update_urls = {'organizations': '/organizations/{org_id}',
-                   }
-    clone_urls = {'organizations': '/organizations/{org_id}/clone',
-                  }
+    create_urls = {'organizations': '/organizations'}
+    update_urls = {'organizations': '/organizations/{org_id}'}
+    delete_urls = {'organizations': '/organizations/{org_id}'}
+    clone_urls = {'organizations': '/organizations/{org_id}/clone'}
 
     meraki.url_catalog['create'] = create_urls
     meraki.url_catalog['update'] = update_urls
     meraki.url_catalog['clone'] = clone_urls
+    meraki.url_catalog['delete'] = delete_urls
 
     payload = None
-
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    # FIXME: Work with Meraki so they can implement a check mode
-    if module.check_mode:
-        meraki.exit_json(**meraki.result)
-
-    # execute checks for argument completeness
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
@@ -221,6 +220,20 @@ def main():
                 meraki.result['changed'] = True
             else:
                 meraki.result['data'] = original
+    elif meraki.params['state'] == 'absent':
+        if meraki.params['org_name'] is not None:
+            org_id = meraki.get_org_id(meraki.params['org_name'])
+        elif meraki.params['org_id'] is not None:
+            org_id = meraki.params['org_id']
+        if meraki.check_mode is True:
+            meraki.result['data'] = {}
+            meraki.result['changed'] = True
+            meraki.exit_json(**meraki.result)
+        path = meraki.construct_path('delete', org_id=org_id)
+        response = meraki.request(path, method='DELETE')
+        if meraki.status == 204:
+            meraki.result['data'] = {}
+            meraki.result['changed'] = True
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

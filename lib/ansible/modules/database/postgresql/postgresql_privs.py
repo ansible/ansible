@@ -45,7 +45,7 @@ options:
   type:
     description:
     - Type of database object to set privileges on.
-    - The `default_prives` choice is available starting at version 2.7.
+    - The `default_privs` choice is available starting at version 2.7.
     - The 'foreign_data_wrapper' and 'foreign_server' object types are available from Ansible version '2.8'.
     type: str
     default: table
@@ -171,6 +171,20 @@ notes:
   specified via I(login). If R has been granted the same privileges by
   another user also, R can still access database objects via these privileges.
 - When revoking privileges, C(RESTRICT) is assumed (see PostgreSQL docs).
+
+seealso:
+- module: postgresql_user
+- module: postgresql_owner
+- module: postgresql_membership
+- name: PostgreSQL privileges
+  description: General information about PostgreSQL privileges.
+  link: https://www.postgresql.org/docs/current/ddl-priv.html
+- name: PostgreSQL GRANT command reference
+  description: Complete reference of the PostgreSQL GRANT command documentation.
+  link: https://www.postgresql.org/docs/current/sql-grant.html
+- name: PostgreSQL REVOKE command reference
+  description: Complete reference of the PostgreSQL REVOKE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-revoke.html
 
 extends_documentation_fragment:
 - postgres

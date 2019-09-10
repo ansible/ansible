@@ -47,8 +47,9 @@ from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
+from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
-from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
+from ansible.utils.unsafe_proxy import wrap_var
 
 # HACK: keep Python 2.6 controller tests happy in CI until they're properly split
 try:
@@ -250,7 +251,7 @@ class AnsibleContext(Context):
     A custom context, which intercepts resolve() calls and sets a flag
     internally if any variable lookup returns an AnsibleUnsafe value. This
     flag is checked post-templating, and (when set) will result in the
-    final templated result being wrapped via UnsafeProxy.
+    final templated result being wrapped in AnsibleUnsafe.
     '''
     def __init__(self, *args, **kwargs):
         super(AnsibleContext, self).__init__(*args, **kwargs)
@@ -325,20 +326,21 @@ class JinjaPluginIntercept(MutableMapping):
         if func:
             return func
 
-        components = key.split('.')
+        acr = AnsibleCollectionRef.try_parse_fqcr(key, self._dirname)
 
-        if len(components) != 3:
+        if not acr:
             raise KeyError('invalid plugin name: {0}'.format(key))
-
-        collection_name = '.'.join(components[0:2])
-        collection_pkg = 'ansible_collections.{0}.plugins.{1}'.format(collection_name, self._dirname)
 
         # FIXME: error handling for bogus plugin name, bogus impl, bogus filter/test
 
-        # FIXME: move this capability into the Jinja plugin loader
-        pkg = import_module(collection_pkg)
+        pkg = import_module(acr.n_python_package_name)
 
-        for dummy, module_name, ispkg in pkgutil.iter_modules(pkg.__path__, prefix=collection_name + '.'):
+        parent_prefix = acr.collection
+
+        if acr.subdirs:
+            parent_prefix = '{0}.{1}'.format(parent_prefix, acr.subdirs)
+
+        for dummy, module_name, ispkg in pkgutil.iter_modules(pkg.__path__, prefix=parent_prefix + '.'):
             if ispkg:
                 continue
 
@@ -347,7 +349,7 @@ class JinjaPluginIntercept(MutableMapping):
             method_map = getattr(plugin_impl, self._method_map_name)
 
             for f in iteritems(method_map()):
-                fq_name = '.'.join((collection_name, f[0]))
+                fq_name = '.'.join((parent_prefix, f[0]))
                 self._collection_jinja_func_cache[fq_name] = f[1]
 
             function_impl = self._collection_jinja_func_cache[key]
@@ -744,7 +746,7 @@ class Templar:
                     ran = wrap_var(ran)
                 else:
                     try:
-                        ran = UnsafeProxy(",".join(ran))
+                        ran = wrap_var(",".join(ran))
                     except TypeError:
                         # Lookup Plugins should always return lists.  Throw an error if that's not
                         # the case:

@@ -22,7 +22,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: instancegroup
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-backendservice
     healthy_threshold: 10
@@ -64,9 +64,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#backendService'"
 - name: verify that backend_service was created
-  gcp_compute_backend_service_facts:
+  gcp_compute_backend_service_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -97,7 +96,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#backendService'"
 #----------------------------------------------------------
 - name: delete a backend service
   gcp_compute_backend_service:
@@ -117,7 +115,7 @@
     that:
       - result.changed == true
 - name: verify that backend_service was deleted
-  gcp_compute_backend_service_facts:
+  gcp_compute_backend_service_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -151,7 +149,7 @@
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!
-- name: delete a http health check
+- name: delete a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-backendservice
     healthy_threshold: 10

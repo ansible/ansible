@@ -50,6 +50,7 @@
       register: vpc_result
     #TODO(ryansb): Update CI for VPC peering permissions
     #- include: ./multi_account.yml
+    - include: ./diff_mode.yml
     - include: ./numeric_protos.yml
     - include: ./rule_group_create.yml
     - include: ./egress_tests.yml

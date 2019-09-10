@@ -48,9 +48,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#subnetwork'"
 - name: verify that subnetwork was created
-  gcp_compute_subnetwork_facts:
+  gcp_compute_subnetwork_info:
       filters:
          - name = ansiblenet
       region: us-west1
@@ -80,7 +79,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#subnetwork'"
 #----------------------------------------------------------
 - name: delete a subnetwork
   gcp_compute_subnetwork:
@@ -98,7 +96,7 @@
     that:
       - result.changed == true
 - name: verify that subnetwork was deleted
-  gcp_compute_subnetwork_facts:
+  gcp_compute_subnetwork_info:
       filters:
          - name = ansiblenet
       region: us-west1

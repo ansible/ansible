@@ -26,7 +26,8 @@ description:
     - It uses the pyOpenSSL or cryptography python library to interact with OpenSSL. If both the
       cryptography and PyOpenSSL libraries are available (and meet the minimum version requirements)
       cryptography will be preferred as a backend over PyOpenSSL (unless the backend is forced with
-      C(select_crypto_backend))
+      C(select_crypto_backend)). Please note that the PyOpenSSL backend was deprecated in Ansible 2.9
+      and will be removed in Ansible 2.13.
 requirements:
     - PyOpenSSL >= 0.15 or cryptography >= 1.2.3
 author:
@@ -57,6 +58,8 @@ options:
             - The default choice is C(auto), which tries to use C(cryptography) if available, and falls back to C(pyopenssl).
             - If set to C(pyopenssl), will try to use the L(pyOpenSSL,https://pypi.org/project/pyOpenSSL/) library.
             - If set to C(cryptography), will try to use the L(cryptography,https://cryptography.io/) library.
+            - Please note that the C(pyopenssl) backend has been deprecated in Ansible 2.9, and will be removed in Ansible 2.13.
+              From that point on, only the C(cryptography) backend will be available.
         type: str
         default: auto
         choices: [ auto, cryptography, pyopenssl ]
@@ -440,11 +443,11 @@ class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
         '''Convert OpenSSL BIGINT to Python integer'''
         if bn == OpenSSL._util.ffi.NULL:
             return None
+        hexstr = OpenSSL._util.lib.BN_bn2hex(bn)
         try:
-            hex = OpenSSL._util.lib.BN_bn2hex(bn)
-            return int(OpenSSL._util.ffi.string(hex), 16)
+            return int(OpenSSL._util.ffi.string(hexstr), 16)
         finally:
-            OpenSSL._util.lib.OPENSSL_free(hex)
+            OpenSSL._util.lib.OPENSSL_free(hexstr)
 
     def _get_key_info(self):
         key_public_data = dict()
@@ -612,6 +615,7 @@ def main():
             if not PYOPENSSL_FOUND:
                 module.fail_json(msg=missing_required_lib('pyOpenSSL >= {0}'.format(MINIMAL_PYOPENSSL_VERSION)),
                                  exception=PYOPENSSL_IMP_ERR)
+            module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated', version='2.13')
             privatekey = PrivateKeyInfoPyOpenSSL(module)
         elif backend == 'cryptography':
             if not CRYPTOGRAPHY_FOUND:

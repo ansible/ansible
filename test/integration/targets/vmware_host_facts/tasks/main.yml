@@ -18,6 +18,8 @@
         that:
           - "'ansible_hostname' in facts['ansible_facts']"
           - "'ansible_processor' in facts['ansible_facts']"
+          - "'ansible_in_maintenance_mode' in facts['ansible_facts']"
+          - "'ansible_uptime' in facts['ansible_facts']"
 
     - name: get host facts through from a host
       vmware_host_facts:
@@ -32,3 +34,5 @@
         that:
           - "'ansible_hostname' in facts['ansible_facts']"
           - "'ansible_processor' in facts['ansible_facts']"
+          - "'ansible_in_maintenance_mode' in facts['ansible_facts']"
+          - "'ansible_uptime' in facts['ansible_facts']"

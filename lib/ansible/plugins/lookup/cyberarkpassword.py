@@ -72,7 +72,7 @@ from subprocess import Popen
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.parsing.splitter import parse_kv
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.utils.display import Display
 
 display = Display()
@@ -108,7 +108,7 @@ class CyberarkPassword:
             # output 'keys' will be in lowercase.
             self.output = self.output.lower()
 
-        self.delimiter = "@#@"  # Known delimiter to split output results
+        self.b_delimiter = b"@#@"  # Known delimiter to split output results
 
     def get(self):
 
@@ -124,29 +124,30 @@ class CyberarkPassword:
                 '-d', self.delimiter]
             all_parms.extend(self.extra_parms)
 
-            credential = ""
-            tmp_output, tmp_error = Popen(all_parms, stdout=PIPE, stderr=PIPE, stdin=PIPE).communicate()
+            b_credential = b""
+            b_all_params = [to_bytes(v) for v in all_parms]
+            tmp_output, tmp_error = Popen(b_all_params, stdout=PIPE, stderr=PIPE, stdin=PIPE).communicate()
 
             if tmp_output:
-                credential = tmp_output
+                b_credential = to_bytes(tmp_output)
 
             if tmp_error:
                 raise AnsibleError("ERROR => %s " % (tmp_error))
 
-            if credential and credential.endswith(b'\n'):
-                credential = credential[:-1]
+            if b_credential and b_credential.endswith(b'\n'):
+                b_credential = b_credential[:-1]
 
             output_names = self.output.split(",")
-            output_values = credential.split(self.delimiter)
+            output_values = b_credential.split(self.b_delimiter)
 
             for i in range(len(output_names)):
                 if output_names[i].startswith("passprops."):
                     if "passprops" not in result_dict:
                         result_dict["passprops"] = {}
                     output_prop_name = output_names[i][10:]
-                    result_dict["passprops"][output_prop_name] = output_values[i]
+                    result_dict["passprops"][output_prop_name] = to_native(output_values[i])
                 else:
-                    result_dict[output_names[i]] = output_values[i]
+                    result_dict[output_names[i]] = to_native(output_values[i])
 
         except subprocess.CalledProcessError as e:
             raise AnsibleError(e.output)

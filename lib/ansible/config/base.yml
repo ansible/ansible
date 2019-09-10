@@ -217,6 +217,7 @@ CACHE_PLUGIN_TIMEOUT:
   yaml: {key: facts.cache.timeout}
 COLLECTIONS_PATHS:
   name: ordered list of root paths for loading installed Ansible collections content
+  description: Colon separated paths in which Ansible will search for collections content.
   default: ~/.ansible/collections:/usr/share/ansible/collections
   type: pathspec
   env:
@@ -341,6 +342,31 @@ CONDITIONAL_BARE_VARS:
   ini:
   - {key: conditional_bare_variables, section: defaults}
   version_added: "2.8"
+COVERAGE_REMOTE_OUTPUT:
+  name: Sets the output directory and filename prefix to generate coverage run info.
+  description:
+    - Sets the output directory on the remote host to generate coverage reports to.
+    - Currently only used for remote coverage on PowerShell modules.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_COVERAGE_REMOTE_OUTPUT}
+  vars:
+  - {name: _ansible_coverage_remote_output}
+  type: str
+  version_added: '2.9'
+COVERAGE_REMOTE_WHITELIST:
+  name: Sets the list of paths to run coverage for.
+  description:
+  - A list of paths for files on the Ansible controller to run coverage for when executing on the remote host.
+  - Only files that match the path glob will have its coverage collected.
+  - Multiple path globs can be specified and are separated by ``:``.
+  - Currently only used for remote coverage on PowerShell modules.
+  - This is for internal use only.
+  default: '*'
+  env:
+  - {name: _ANSIBLE_COVERAGE_REMOTE_WHITELIST}
+  type: str
+  version_added: '2.9'
 ACTION_WARNINGS:
   name: Toggle action warnings
   default: True
@@ -955,12 +981,14 @@ DEFAULT_SCP_IF_SSH:
   - {key: scp_if_ssh, section: ssh_connection}
 DEFAULT_SELINUX_SPECIAL_FS:
   name: Problematic file systems
-  default: fuse, nfs, vboxsf, ramfs, 9p
+  default: fuse, nfs, vboxsf, ramfs, 9p, vfat
   description:
     - "Some filesystems do not support safe operations and/or return inconsistent errors,
        this setting makes Ansible 'tolerate' those in the list w/o causing fatal errors."
     - Data corruption may occur and writes are not always verified when a filesystem is in the list.
-  env: []
+  env:
+  - name: ANSIBLE_SELINUX_SPECIAL_FS
+    version_added: "2.9"
   ini:
   - {key: special_context_filesystems, section: selinux}
   type: list
@@ -1341,6 +1369,18 @@ GALAXY_SERVER:
   ini:
   - {key: server, section: galaxy}
   yaml: {key: galaxy.server}
+GALAXY_SERVER_LIST:
+  description:
+  - A list of Galaxy servers to use when installing a collection.
+  - The value corresponds to the config ini header ``[galaxy_server.{{item}}]`` which defines the server details.
+  - 'See :ref:`galaxy_server_config` for more details on how to define a Galaxy server.'
+  - The order of servers in this list is used to as the order in which a collection is resolved.
+  - Setting this config option will ignore the :ref:`galaxy_server` config option.
+  env: [{name: ANSIBLE_GALAXY_SERVER_LIST}]
+  ini:
+  - {key: server_list, section: galaxy}
+  type: list
+  version_added: "2.9"
 GALAXY_TOKEN:
   default: null
   description: "GitHub personal access token"
@@ -1348,6 +1388,14 @@ GALAXY_TOKEN:
   ini:
   - {key: token, section: galaxy}
   yaml: {key: galaxy.token}
+GALAXY_TOKEN_PATH:
+  default: ~/.ansible/galaxy_token
+  description: "Local path to galaxy access token file"
+  env: [{name: ANSIBLE_GALAXY_TOKEN_PATH}]
+  ini:
+  - {key: token_path, section: galaxy}
+  type: path
+  version_added: "2.9"
 HOST_KEY_CHECKING:
   name: Check host keys
   default: True
@@ -1420,13 +1468,14 @@ TRANSFORM_INVALID_GROUP_CHARS:
   description:
     - Make ansible transform invalid characters in group names supplied by inventory sources.
     - If 'never' it will allow for the group name but warn about the issue.
+    - When 'ignore', it does the same as 'never', without issuing a warning.
     - When 'always' it will replace any invalid charachters with '_' (underscore) and warn the user
-    - When 'silently', it does the same as 'always' sans the warnings.
+    - When 'silently', it does the same as 'always', without issuing a warning.
   env: [{name: ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS}]
   ini:
   - {key: force_valid_group_names, section: defaults}
   type: string
-  choices: ['always', 'never', 'silently']
+  choices: ['always', 'never', 'ignore', 'silently']
   version_added: '2.8'
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings

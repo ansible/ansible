@@ -1,9 +1,0 @@
-azure-requirements.py
-botmeta.py
-changelog.py
-configure-remoting-ps1.py
-deprecated-config.py
-docs-build.py
-test-constraints.py
-update-bundled.py
-package-data.py

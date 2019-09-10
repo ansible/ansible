@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_icap_server
 short_description: Configure ICAP servers in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure icap feature and server category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify icap feature and server category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,62 +41,94 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip adress.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     icap_server:
         description:
             - Configure ICAP servers.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            ip-address:
+            ip_address:
                 description:
                     - IPv4 address of the ICAP server.
-            ip-version:
+                type: str
+            ip_version:
                 description:
                     - IP version.
+                type: str
                 choices:
                     - 4
                     - 6
-            ip6-address:
+            ip6_address:
                 description:
                     - IPv6 address of the ICAP server.
-            max-connections:
+                type: str
+            max_connections:
                 description:
                     - Maximum number of concurrent connections to ICAP server.
+                type: int
             name:
                 description:
                     - Server name.
                 required: true
+                type: str
             port:
                 description:
                     - ICAP server port.
+                type: int
 '''
 
 EXAMPLES = '''
@@ -109,6 +138,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure ICAP servers.
     fortios_icap_server:
@@ -117,12 +147,12 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       icap_server:
-        state: "present"
-        ip-address: "<your_own_value>"
-        ip-version: "4"
-        ip6-address: "<your_own_value>"
-        max-connections: "6"
+        ip_address: "<your_own_value>"
+        ip_version: "4"
+        ip6_address: "<your_own_value>"
+        max_connections: "6"
         name: "default_name_7"
         port: "8"
 '''
@@ -187,14 +217,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -202,12 +234,12 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_icap_server_data(json):
-    option_list = ['ip-address', 'ip-version', 'ip6-address',
-                   'max-connections', 'name', 'port']
+    option_list = ['ip_address', 'ip_version', 'ip6_address',
+                   'max_connections', 'name', 'port']
     dictionary = {}
 
     for attribute in option_list:
@@ -217,53 +249,78 @@ def filter_icap_server_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def icap_server(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['icap_server'] and data['icap_server']:
+        state = data['icap_server']['state']
+    else:
+        state = True
     icap_server_data = data['icap_server']
-    filtered_data = filter_icap_server_data(icap_server_data)
-    if icap_server_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_icap_server_data(icap_server_data))
+
+    if state == "present":
         return fos.set('icap',
                        'server',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif icap_server_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('icap',
                           'server',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_icap(data, fos):
-    login(data)
 
-    methodlist = ['icap_server']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['icap_server']:
+        resp = icap_server(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "icap_server": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "ip-address": {"required": False, "type": "str"},
-                "ip-version": {"required": False, "type": "str",
+                "ip_address": {"required": False, "type": "str"},
+                "ip_version": {"required": False, "type": "str",
                                "choices": ["4", "6"]},
-                "ip6-address": {"required": False, "type": "str"},
-                "max-connections": {"required": False, "type": "int"},
+                "ip6_address": {"required": False, "type": "str"},
+                "max_connections": {"required": False, "type": "int"},
                 "name": {"required": True, "type": "str"},
                 "port": {"required": False, "type": "int"}
 
@@ -273,15 +330,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_icap(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_icap(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_icap(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

@@ -41,9 +41,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#disk'"
 - name: verify that disk was created
-  gcp_compute_disk_facts:
+  gcp_compute_disk_info:
       filters:
          - name = {{ resource_name }}
       zone: us-central1-a
@@ -74,7 +73,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#disk'"
 #----------------------------------------------------------
 - name: delete a disk
   gcp_compute_disk:
@@ -93,7 +91,7 @@
     that:
       - result.changed == true
 - name: verify that disk was deleted
-  gcp_compute_disk_facts:
+  gcp_compute_disk_info:
       filters:
          - name = {{ resource_name }}
       zone: us-central1-a

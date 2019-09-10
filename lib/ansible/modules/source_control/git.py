@@ -561,6 +561,8 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
     tag = False
     if remote == module.params['repo']:
         cloning = True
+    elif remote == 'file://' + os.path.expanduser(module.params['repo']):
+        cloning = True
     else:
         cwd = dest
     if version == 'HEAD':
@@ -1105,8 +1107,8 @@ def main():
 
     # Certain features such as depth require a file:/// protocol for path based urls
     # so force a protocol here ...
-    if repo.startswith('/'):
-        repo = 'file://' + repo
+    if os.path.expanduser(repo).startswith('/'):
+        repo = 'file://' + os.path.expanduser(repo)
 
     # We screenscrape a huge amount of git commands so use C locale anytime we
     # call run_command()

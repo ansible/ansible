@@ -1,0 +1,26 @@
+---
+- name: Setup Bundle-Ether10
+  iosxr_config:
+    lines:
+      - lacp churn logging actor
+      - lacp switchover suppress-flaps 500
+      - lacp collector-max-delay 100
+    parents: interface Bundle-Ether10
+
+- name: Setup Bundle-Ether11
+  iosxr_config:
+    lines:
+      - lacp system mac 00c2.4c00.bd15
+    parents: interface Bundle-Ether11
+
+- name: Setup GigE0
+  iosxr_config:
+    lines:
+      - lacp period 100
+    parents: interface GigabitEthernet0/0/0/0
+
+- name: Setup GigE1
+  iosxr_config:
+    lines:
+      - lacp period 200
+    parents: interface GigabitEthernet0/0/0/1

@@ -16,7 +16,7 @@ For information on how to run these tests, see :ref:\`sanity testing guide <test
 .. toctree::
    :maxdepth: 1
 
-$(for test in $(../../test/runner/ansible-test sanity --list-tests --allow-disabled); do echo "   ${test}"; done)
+$(for test in $(../../bin/ansible-test sanity --list-tests --allow-disabled); do echo "   ${test}"; done)
 
 EOF
 

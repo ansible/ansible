@@ -2,21 +2,6 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>, Tim Steinbach <tim@nequissimus.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Create dvswitch
-  vmware_dvswitch:
-    validate_certs: False
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    datacenter_name: "{{ (vm1 | basename).split('_')[0] }}"
-    switch_name: dvSwitch
-    uplink_quantity: 2
-    discovery_proto: lldp
-    discovery_operation: both
-    mtu: 9000
-    state: present
-  register: dvswitch
-
 - name: Add portgroup
   vmware_dvs_portgroup:
     validate_certs: False
@@ -24,33 +9,34 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     portgroup_name: "portgroup_network"
-    switch_name: "{{ dvswitch.switch_name }}"
+    switch_name: "{{ dvswitch1 }}"
     vlan_id: "1"
     num_ports: 2
     portgroup_type: earlyBinding
     state: present
   register: dvsportgroup
-
+- debug: var=dvsportgroup
 - name: create new VMs with portgroup
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: new_vm_pg
+    name: test_vm1
     guest_id: centos64Guest
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     disk:
       - size: 3mb
         type: thin
         autoselect_datastore: yes
     networks:
-      - name: "{{ dvsportgroup.portgroup_name }}"
+      - name: portgroup_network
+        switch_name: "{{ dvswitch1 }}"
     hardware:
         num_cpus: 1
         memory_mb: 512
     state: poweredoff
-    folder: "{{ vm1 | dirname }}"
+    folder: "{{ f0 }}"
   register: vm_with_portgroup
   ignore_errors: no
 
@@ -58,4 +44,4 @@
 
 - assert:
     that:
-      - "vm_with_portgroup.changed"
+      - vm_with_portgroup is changed

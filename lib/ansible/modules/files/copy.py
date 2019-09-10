@@ -60,6 +60,7 @@ options:
     - Influence whether the remote file must always be replaced.
     - If C(yes), the remote file will be replaced when contents are different than the source.
     - If C(no), the file will only be transferred if the destination does not exist.
+    - Alias C(thirsty) has been deprecated and will be removed in 2.13.
     type: bool
     default: yes
     aliases: [ thirsty ]
@@ -168,14 +169,14 @@ EXAMPLES = r'''
   copy:
     src: /mine/sudoers
     dest: /etc/sudoers
-    validate: /usr/sbin/visudo -cf %s
+    validate: /usr/sbin/visudo -csf %s
 
 - name: Copy a "sudoers" file on the remote machine for editing
   copy:
     src: /etc/sudoers
     dest: /etc/sudoers.edit
     remote_src: yes
-    validate: /usr/sbin/visudo -cf %s
+    validate: /usr/sbin/visudo -csf %s
 
 - name: Copy using inline content
   copy:
@@ -509,6 +510,9 @@ def main():
         add_file_common_args=True,
         supports_check_mode=True,
     )
+
+    if module.params.get('thirsty'):
+        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
 
     src = module.params['src']
     b_src = to_bytes(src, errors='surrogate_or_strict')

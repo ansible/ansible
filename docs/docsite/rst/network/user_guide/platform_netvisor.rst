@@ -12,27 +12,28 @@ This page offers details on how to use ``network_cli`` on NETVISOR in Ansible.
 Connections Available
 ================================================================================
 
-+---------------------------+-----------------------------------------------+
-|..                         | CLI                                           |
-+===========================+===============================================+
-| **Protocol**              |  SSH                                          |
-+---------------------------+-----------------------------------------------+
-| | **Credentials**         | | uses SSH keys / SSH-agent if present        |
-| |                         | | accepts ``-u myuser -k`` if using password  |
-+---------------------------+-----------------------------------------------+
-| **Indirect Access**       | via a bastion (jump host)                     |
-+---------------------------+-----------------------------------------------+
-| | **Connection Settings** | | ``ansible_connection: network_cli``         |
-| |                         | |                                             |
-| |                         | |                                             |
-| |                         | |                                             |
-| |                         | |                                             |
-+---------------------------+-----------------------------------------------+
-| | **Enable Mode**         | | not supported by NETVISOR                   |
-| | (Privilege Escalation)  | |                                             |
-+---------------------------+-----------------------------------------------+
-| **Returned Data Format**  | ``stdout[0].``                                |
-+---------------------------+-----------------------------------------------+
+.. table::
+    :class: documentation-table
+
+    ====================  ==========================================
+    ..                    CLI
+    ====================  ==========================================
+    Protocol              SSH
+
+    Credentials           uses SSH keys / SSH-agent if present
+
+                          accepts ``-u myuser -k`` if using password
+
+    Indirect Access       via a bastion (jump host)
+
+    Connection Settings   ``ansible_connection: network_cli``
+
+    |enable_mode|         not supported by NETVISOR
+
+    Returned Data Format  ``stdout[0].``
+    ====================  ==========================================
+
+.. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
 
 Pluribus NETVISOR does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli``.
 

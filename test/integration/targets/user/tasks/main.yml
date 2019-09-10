@@ -105,11 +105,18 @@
         password: '*'
       register: test_user_encrypt4
 
-    - name: there should be no warnings when setting the password to '!' and '*'
+    - name: change password to '*************'
+      user:
+        name: ansibulluser
+        password: '*************'
+      register: test_user_encrypt5
+
+    - name: there should be no warnings when setting the password to '!',  '*' or '*************'
       assert:
         that:
           - "'warnings' not in test_user_encrypt3"
           - "'warnings' not in test_user_encrypt4"
+          - "'warnings' not in test_user_encrypt5"
   when: ansible_facts.system != 'Darwin'
 
 
@@ -195,6 +202,22 @@
   file:
     path: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/"
     state: absent
+
+
+# https://github.com/ansible/ansible/issues/60307
+# Make sure we can create a user when the home directory is missing
+- name: Create user with home path that does not exist
+  user:
+    name: ansibulluser3
+    state: present
+    home: "{{ user_home_prefix[ansible_facts.system] }}/nosuchdir"
+    createhome: no
+
+- name: Cleanup test account
+  user:
+    name: ansibulluser3
+    state: absent
+    remove: yes
 
 
 ## user check
@@ -872,6 +895,14 @@
   tags:
     - user_test_local_mode
 
+- name: Create local account that already exists to check for warning
+  user:
+    name: root
+    local: yes
+  register: local_existing
+  tags:
+    - user_test_local_mode
+
 - name: Create local_ansibulluser
   user:
     name: local_ansibulluser
@@ -952,10 +983,12 @@
   tags:
     - user_test_local_mode
 
-- name: Ensure warnings were displayed
+- name: Ensure warnings were displayed properly
   assert:
     that:
       - local_user_test_1['warnings'] | length > 0
-      - "'user was not found in /etc/passwd. The local user account may already exist if the local account
-        database exists somewhere other than /etc/passwd.' in local_user_test_1['warnings'][0]"
+      - local_user_test_1['warnings'] | first is search('The local user account may already exist')
+      - local_existing['warnings'] is not defined
   when: ansible_facts.system in ['Linux']
+  tags:
+    - user_test_local_mode

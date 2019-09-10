@@ -175,7 +175,7 @@ options:
             - Path to a SQL dump file in Google Cloud Storage from which the slave
               instance is to be created. The URI is in the form gs://bucketName/fileName.
               Compressed gzip files (.gz) are also supported. Dumps should have the
-              binlog co-ordinates from which replication should begin. This can be
+              binlog coordinates from which replication should begin. This can be
               accomplished by setting --master-data to 1 when using mysqldump.
             required: false
             type: str
@@ -495,7 +495,7 @@ replicaConfiguration:
           description:
           - Path to a SQL dump file in Google Cloud Storage from which the slave instance
             is to be created. The URI is in the form gs://bucketName/fileName. Compressed
-            gzip files (.gz) are also supported. Dumps should have the binlog co-ordinates
+            gzip files (.gz) are also supported. Dumps should have the binlog coordinates
             from which replication should begin. This can be accomplished by setting
             --master-data to 1 when using mysqldump.
           returned: success
@@ -763,8 +763,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    auth = GcpSession(module, 'sql')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    module.fail_json(msg="SQL objects can't be updated to ensure data safety")
 
 
 def delete(module, link, kind, fetch):

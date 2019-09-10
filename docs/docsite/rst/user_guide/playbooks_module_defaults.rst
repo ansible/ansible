@@ -111,8 +111,8 @@ In a playbook, you can set module defaults for whole groups of modules, such as 
         group/aws:
           region: us-west-2
       tasks:
-      - aws_s3_bucket_facts:
-      # now the region is shared between both facts modules
+      - aws_s3_bucket_info:
+      # now the region is shared between both info modules
       - ec2_ami_info:
           filters:
             name: 'RHEL*7.5*'

@@ -141,7 +141,7 @@
     failed_when:
     - '"Failed to become user " + become_test_username not in become_invalid_pass.msg'
     - '"LogonUser failed" not in become_invalid_pass.msg'
-    - '"Win32ErrorCode 1326)" not in become_invalid_pass.msg'
+    - '"Win32ErrorCode 1326 - 0x0000052E)" not in become_invalid_pass.msg'
 
   - name: test become + async
     vars: *become_vars
@@ -195,7 +195,7 @@
     raw: |
       $dt=[datetime]"{{ test_starttime.stdout|trim }}"
       (Get-WinEvent -LogName Microsoft-Windows-Powershell/Operational |
-      ? { $_.TimeCreated -ge $dt -and $_.Message -match "{{ gen_pw }}|whoami" }).Count
+      ? { $_.TimeCreated -ge $dt -and $_.Message -match "{{ gen_pw }}" }).Count
     register: ps_log_count
 
   - name: assert no PS events contain password or module args

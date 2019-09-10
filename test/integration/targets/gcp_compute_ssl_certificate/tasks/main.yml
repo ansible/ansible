@@ -13,7 +13,7 @@
 #
 # ----------------------------------------------------------------------------
 # Pre-test setup
-- name: delete a ssl certificate
+- name: delete a SSL certificate
   gcp_compute_ssl_certificate:
     name: "{{ resource_name }}"
     description: A certificate for testing. Do not use this certificate in production
@@ -46,7 +46,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: absent
 #----------------------------------------------------------
-- name: create a ssl certificate
+- name: create a SSL certificate
   gcp_compute_ssl_certificate:
     name: "{{ resource_name }}"
     description: A certificate for testing. Do not use this certificate in production
@@ -83,9 +83,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#sslCertificate'"
 - name: verify that ssl_certificate was created
-  gcp_compute_ssl_certificate_facts:
+  gcp_compute_ssl_certificate_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -99,7 +98,7 @@
     that:
       - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
-- name: create a ssl certificate that already exists
+- name: create a SSL certificate that already exists
   gcp_compute_ssl_certificate:
     name: "{{ resource_name }}"
     description: A certificate for testing. Do not use this certificate in production
@@ -136,9 +135,8 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#sslCertificate'"
 #----------------------------------------------------------
-- name: delete a ssl certificate
+- name: delete a SSL certificate
   gcp_compute_ssl_certificate:
     name: "{{ resource_name }}"
     description: A certificate for testing. Do not use this certificate in production
@@ -176,7 +174,7 @@
     that:
       - result.changed == true
 - name: verify that ssl_certificate was deleted
-  gcp_compute_ssl_certificate_facts:
+  gcp_compute_ssl_certificate_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -190,7 +188,7 @@
     that:
       - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
-- name: delete a ssl certificate that does not exist
+- name: delete a SSL certificate that does not exist
   gcp_compute_ssl_certificate:
     name: "{{ resource_name }}"
     description: A certificate for testing. Do not use this certificate in production

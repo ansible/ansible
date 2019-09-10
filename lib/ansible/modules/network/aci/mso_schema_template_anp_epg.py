@@ -68,6 +68,26 @@ options:
         description:
         - The template that defines the referenced BD.
         type: str
+  vrf:
+    version_added: '2.9'
+    description:
+    - The VRF associated to this ANP.
+    type: dict
+    suboptions:
+      name:
+        description:
+        - The name of the VRF to associate with.
+        required: true
+        type: str
+      schema:
+        description:
+        - The schema that defines the referenced VRF.
+        - If this parameter is unspecified, it defaults to the current schema.
+        type: str
+      template:
+        description:
+        - The template that defines the referenced VRF.
+        type: str
   subnets:
     description:
     - The subnets associated to this ANP.
@@ -114,6 +134,12 @@ options:
     - Whether intersite multicase source is enabled.
     - When not specified, this parameter defaults to C(no).
     type: bool
+  preferred_group:
+    description:
+    - Whether this EPG is added to preferred group or not.
+    - When not specified, this parameter defaults to C(no).
+    type: bool
+    version_added: 2.9
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -139,7 +165,24 @@ EXAMPLES = r'''
     template: Template 1
     anp: ANP 1
     epg: EPG 1
+    bd:
+     name: bd1
+    vrf:
+     name: vrf1
     state: present
+  delegate_to: localhost
+
+- name: Add a new EPG with preferred group.
+  mso_schema_template_anp_epg:
+    host: mso_host
+    username: admin
+    password: SomeSecretPassword
+    schema: Schema 1
+    template: Template 1
+    anp: ANP 1
+    epg: EPG 1
+    state: present
+    preferred_group: yes
   delegate_to: localhost
 
 - name: Remove an EPG
@@ -151,6 +194,10 @@ EXAMPLES = r'''
     template: Template 1
     anp: ANP 1
     epg: EPG 1
+    bd:
+     name: bd1
+    vrf:
+     name: vrf1
     state: absent
   delegate_to: localhost
 
@@ -163,6 +210,10 @@ EXAMPLES = r'''
     template: Template 1
     anp: ANP 1
     epg: EPG 1
+    bd:
+     name: bd1
+    vrf:
+     name: vrf1
     state: query
   delegate_to: localhost
   register: query_result
@@ -175,6 +226,11 @@ EXAMPLES = r'''
     schema: Schema 1
     template: Template 1
     anp: ANP 1
+    epg: EPG 1
+    bd:
+     name: bd1
+    vrf:
+     name: vrf1
     state: query
   delegate_to: localhost
   register: query_result
@@ -195,12 +251,14 @@ def main():
         anp=dict(type='str', required=True),
         epg=dict(type='str', aliases=['name']),  # This parameter is not required for querying all objects
         bd=dict(type='dict', options=mso_reference_spec()),
+        vrf=dict(type='dict', options=mso_reference_spec()),
         display_name=dict(type='str'),
         useg_epg=dict(type='bool'),
         intra_epg_isolation=dict(type='str', choices=['enforced', 'unenforced']),
         intersite_multicaste_source=dict(type='bool'),
         subnets=dict(type='list', options=mso_subnet_spec()),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        preferred_group=dict(type='bool'),
     )
 
     module = AnsibleModule(
@@ -218,11 +276,13 @@ def main():
     epg = module.params['epg']
     display_name = module.params['display_name']
     bd = module.params['bd']
+    vrf = module.params['vrf']
     useg_epg = module.params['useg_epg']
     intra_epg_isolation = module.params['intra_epg_isolation']
     intersite_multicaste_source = module.params['intersite_multicaste_source']
     subnets = module.params['subnets']
     state = module.params['state']
+    preferred_group = module.params['preferred_group']
 
     mso = MSOModule(module)
 
@@ -272,6 +332,7 @@ def main():
 
     elif state == 'present':
         bd_ref = mso.make_reference(bd, 'bd', schema_id, template)
+        vrf_ref = mso.make_reference(vrf, 'vrf', schema_id, template)
         subnets = mso.make_subnets(subnets)
 
         if display_name is None and not mso.existing:
@@ -288,6 +349,8 @@ def main():
             contractRelationships=[],
             subnets=subnets,
             bdRef=bd_ref,
+            preferredGroup=preferred_group,
+            vrfRef=vrf_ref,
         )
 
         mso.sanitize(payload, collate=True)

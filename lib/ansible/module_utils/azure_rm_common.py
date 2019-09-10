@@ -70,7 +70,8 @@ AZURE_API_PROFILES = {
         'WebSiteManagementClient': '2018-02-01',
         'PostgreSQLManagementClient': '2017-12-01',
         'MySQLManagementClient': '2017-12-01',
-        'MariaDBManagementClient': '2019-03-01'
+        'MariaDBManagementClient': '2019-03-01',
+        'ManagementLockClient': '2016-09-01'
     },
 
     '2017-03-09-profile': {
@@ -170,9 +171,28 @@ try:
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
     from azure.mgmt.loganalytics import LogAnalyticsManagementClient
     import azure.mgmt.loganalytics.models as LogAnalyticsModels
+    from azure.mgmt.automation import AutomationClient
+    import azure.mgmt.automation.models as AutomationModel
+    from azure.mgmt.iothub import IotHubClient
+    from azure.mgmt.iothub import models as IoTHubModels
+    from msrest.service_client import ServiceClient
+    from msrestazure import AzureConfiguration
+    from msrest.authentication import Authentication
+    from azure.mgmt.resource.locks import ManagementLockClient
 except ImportError as exc:
+    Authentication = object
     HAS_AZURE_EXC = traceback.format_exc()
     HAS_AZURE = False
+
+from base64 import b64encode, b64decode
+from hashlib import sha256
+from hmac import HMAC
+from time import time
+
+try:
+    from urllib import (urlencode, quote_plus)
+except ImportError:
+    from urllib.parse import (urlencode, quote_plus)
 
 try:
     from azure.cli.core.util import CLIError
@@ -308,6 +328,9 @@ class AzureRMModuleBase(object):
         self._resource = None
         self._log_analytics_client = None
         self._servicebus_client = None
+        self._automation_client = None
+        self._IoThub_client = None
+        self._lock_client = None
 
         self.check_mode = self.module.check_mode
         self.api_profile = self.module.params.get('api_profile')
@@ -333,7 +356,7 @@ class AzureRMModuleBase(object):
             try:
                 client_module = importlib.import_module(client_type.__module__)
                 client_version = client_module.VERSION
-            except RuntimeError:
+            except (RuntimeError, AttributeError):
                 # can't get at the module version for some reason, just fail silently...
                 return
             expected_version = package_version.get('expected_version')
@@ -768,19 +791,48 @@ class AzureRMModuleBase(object):
             setattr(client, '_ansible_models', importlib.import_module(client_type.__module__).models)
             client.models = types.MethodType(_ansible_get_models, client)
 
-        # Add user agent for Ansible
-        client.config.add_user_agent(ANSIBLE_USER_AGENT)
-        # Add user agent when running from Cloud Shell
-        if CLOUDSHELL_USER_AGENT_KEY in os.environ:
-            client.config.add_user_agent(os.environ[CLOUDSHELL_USER_AGENT_KEY])
-        # Add user agent when running from VSCode extension
-        if VSCODEEXT_USER_AGENT_KEY in os.environ:
-            client.config.add_user_agent(os.environ[VSCODEEXT_USER_AGENT_KEY])
+        client.config = self.add_user_agent(client.config)
 
         if self.azure_auth._cert_validation_mode == 'ignore':
             client.config.session_configuration_callback = self._validation_ignore_callback
 
         return client
+
+    def add_user_agent(self, config):
+        # Add user agent for Ansible
+        config.add_user_agent(ANSIBLE_USER_AGENT)
+        # Add user agent when running from Cloud Shell
+        if CLOUDSHELL_USER_AGENT_KEY in os.environ:
+            config.add_user_agent(os.environ[CLOUDSHELL_USER_AGENT_KEY])
+        # Add user agent when running from VSCode extension
+        if VSCODEEXT_USER_AGENT_KEY in os.environ:
+            config.add_user_agent(os.environ[VSCODEEXT_USER_AGENT_KEY])
+        return config
+
+    def generate_sas_token(self, **kwags):
+        base_url = kwags.get('base_url', None)
+        expiry = kwags.get('expiry', time() + 3600)
+        key = kwags.get('key', None)
+        policy = kwags.get('policy', None)
+        url = quote_plus(base_url)
+        ttl = int(expiry)
+        sign_key = '{0}\n{1}'.format(url, ttl)
+        signature = b64encode(HMAC(b64decode(key), sign_key.encode('utf-8'), sha256).digest())
+        result = {
+            'sr': url,
+            'sig': signature,
+            'se': str(ttl),
+        }
+        if policy:
+            result['skn'] = policy
+        return 'SharedAccessSignature ' + urlencode(result)
+
+    def get_data_svc_client(self, **kwags):
+        url = kwags.get('base_url', None)
+        config = AzureConfiguration(base_url='https://{0}'.format(url))
+        config.credentials = AzureSASAuthentication(token=self.generate_sas_token(**kwags))
+        config = self.add_user_agent(config)
+        return ServiceClient(creds=config.credentials, config=config)
 
     # passthru methods to AzureAuth instance for backcompat
     @property
@@ -1004,6 +1056,72 @@ class AzureRMModuleBase(object):
     @property
     def servicebus_models(self):
         return ServicebusModel
+
+    @property
+    def automation_client(self):
+        self.log('Getting automation client')
+        if not self._automation_client:
+            self._automation_client = self.get_mgmt_svc_client(AutomationClient,
+                                                               base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._automation_client
+
+    @property
+    def automation_models(self):
+        return AutomationModel
+
+    @property
+    def IoThub_client(self):
+        self.log('Getting iothub client')
+        if not self._IoThub_client:
+            self._IoThub_client = self.get_mgmt_svc_client(IotHubClient,
+                                                           base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._IoThub_client
+
+    @property
+    def IoThub_models(self):
+        return IoTHubModels
+
+    @property
+    def automation_client(self):
+        self.log('Getting automation client')
+        if not self._automation_client:
+            self._automation_client = self.get_mgmt_svc_client(AutomationClient,
+                                                               base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._automation_client
+
+    @property
+    def automation_models(self):
+        return AutomationModel
+
+    @property
+    def lock_client(self):
+        self.log('Getting lock client')
+        if not self._lock_client:
+            self._lock_client = self.get_mgmt_svc_client(ManagementLockClient,
+                                                         base_url=self._cloud_environment.endpoints.resource_manager,
+                                                         api_version='2016-09-01')
+        return self._lock_client
+
+    @property
+    def lock_models(self):
+        self.log("Getting lock models")
+        return ManagementLockClient.models('2016-09-01')
+
+
+class AzureSASAuthentication(Authentication):
+    """Simple SAS Authentication.
+    An implementation of Authentication in
+    https://github.com/Azure/msrest-for-python/blob/0732bc90bdb290e5f58c675ffdd7dbfa9acefc93/msrest/authentication.py
+
+    :param str token: SAS token
+    """
+    def __init__(self, token):
+        self.token = token
+
+    def signed_session(self):
+        session = super(AzureSASAuthentication, self).signed_session()
+        session.headers['Authorization'] = self.token
+        return session
 
 
 class AzureRMAuthException(Exception):

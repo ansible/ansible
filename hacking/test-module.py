@@ -28,6 +28,7 @@
 #    ./hacking/test-module.py -m lib/ansible/modules/files/lineinfile.py -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
 #    ./hacking/test-module.py -m lib/ansible/modules/commands/command.py -a "echo hello" -n -o "test_hello"
 
+import glob
 import optparse
 import os
 import subprocess
@@ -193,8 +194,19 @@ def ansiballz_setup(modfile, modname, interpreters):
         sys.exit(err)
     debug_dir = lines[1].strip()
 
+    # All the directories in an AnsiBallZ that modules can live
+    core_dirs = glob.glob(os.path.join(debug_dir, 'ansible/modules'))
+    collection_dirs = glob.glob(os.path.join(debug_dir, 'ansible_collections/*/*/plugins/modules'))
+
+    # There's only one module in an AnsiBallZ payload so look for the first module and then exit
+    for module_dir in core_dirs + collection_dirs:
+        for dirname, directories, filenames in os.walk(module_dir):
+            for filename in filenames:
+                if filename == modname + '.py':
+                    modfile = os.path.join(dirname, filename)
+                    break
+
     argsfile = os.path.join(debug_dir, 'args')
-    modfile = os.path.join(debug_dir, '__main__.py')
 
     print("* ansiballz module detected; extracted module source to: %s" % debug_dir)
     return modfile, argsfile

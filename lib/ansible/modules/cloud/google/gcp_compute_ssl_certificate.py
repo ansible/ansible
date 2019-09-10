@@ -84,7 +84,7 @@ notes:
 '''
 
 EXAMPLES = '''
-- name: create a ssl certificate
+- name: create a SSL certificate
   gcp_compute_ssl_certificate:
     name: test_object
     description: A certificate for testing. Do not use this certificate in production

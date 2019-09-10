@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_firewall_DoS_policy
 short_description: Configure IPv4 DoS policies in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure firewall feature and DoS_policy category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify firewall feature and DoS_policy category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,53 +41,82 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
-        default: false
+        default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     firewall_DoS_policy:
         description:
             - Configure IPv4 DoS policies.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
             anomaly:
                 description:
                     - Anomaly name.
+                type: list
                 suboptions:
                     action:
                         description:
                             - Action taken when the threshold is reached.
+                        type: str
                         choices:
                             - pass
                             - block
                     log:
                         description:
                             - Enable/disable anomaly logging.
+                        type: str
                         choices:
                             - enable
                             - disable
@@ -98,71 +124,88 @@ options:
                         description:
                             - Anomaly name.
                         required: true
+                        type: str
                     quarantine:
                         description:
                             - Quarantine method.
+                        type: str
                         choices:
                             - none
                             - attacker
-                    quarantine-expiry:
+                    quarantine_expiry:
                         description:
-                            - Duration of quarantine. (Format ###d##h##m, minimum 1m, maximum 364d23h59m, default = 5m). Requires quarantine set to attacker.
-                    quarantine-log:
+                            - Duration of quarantine. (Format ###d##h##m, minimum 1m, maximum 364d23h59m). Requires quarantine set to attacker.
+                        type: str
+                    quarantine_log:
                         description:
                             - Enable/disable quarantine logging.
+                        type: str
                         choices:
                             - disable
                             - enable
                     status:
                         description:
                             - Enable/disable this anomaly.
+                        type: str
                         choices:
                             - disable
                             - enable
                     threshold:
                         description:
                             - Anomaly threshold. Number of detected instances per minute that triggers the anomaly action.
+                        type: int
                     threshold(default):
                         description:
-                            - Number of detected instances per minute which triggers action (1 - 2147483647, default = 1000). Note that each anomaly has a
-                               different threshold value assigned to it.
+                            - Number of detected instances per minute which triggers action (1 - 2147483647). Note that each anomaly has a different threshold
+                               value assigned to it.
+                        type: int
             comments:
                 description:
                     - Comment.
+                type: str
             dstaddr:
                 description:
                     - Destination address name from available addresses.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Address name. Source firewall.address.name firewall.addrgrp.name.
                         required: true
+                        type: str
             interface:
                 description:
                     - Incoming interface name from available interfaces. Source system.zone.name system.interface.name.
+                type: str
             policyid:
                 description:
                     - Policy ID.
                 required: true
+                type: int
             service:
                 description:
                     - Service object from available options.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Service name. Source firewall.service.custom.name firewall.service.group.name.
                         required: true
+                        type: str
             srcaddr:
                 description:
                     - Source address name from available addresses.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Service name. Source firewall.address.name firewall.addrgrp.name.
                         required: true
+                        type: str
             status:
                 description:
                     - Enable/disable this policy.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -175,6 +218,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure IPv4 DoS policies.
     fortios_firewall_DoS_policy:
@@ -182,16 +226,17 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
+      https: "False"
+      state: "present"
       firewall_DoS_policy:
-        state: "present"
         anomaly:
          -
             action: "pass"
             log: "enable"
             name: "default_name_6"
             quarantine: "none"
-            quarantine-expiry: "<your_own_value>"
-            quarantine-log: "disable"
+            quarantine_expiry: "<your_own_value>"
+            quarantine_log: "disable"
             status: "disable"
             threshold: "11"
             threshold(default): "12"
@@ -270,14 +315,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -285,7 +332,7 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_firewall_DoS_policy_data(json):
@@ -301,47 +348,72 @@ def filter_firewall_DoS_policy_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def firewall_DoS_policy(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_DoS_policy'] and data['firewall_DoS_policy']:
+        state = data['firewall_DoS_policy']['state']
+    else:
+        state = True
     firewall_DoS_policy_data = data['firewall_DoS_policy']
-    filtered_data = filter_firewall_DoS_policy_data(firewall_DoS_policy_data)
-    if firewall_DoS_policy_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_firewall_DoS_policy_data(firewall_DoS_policy_data))
+
+    if state == "present":
         return fos.set('firewall',
                        'DoS-policy',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif firewall_DoS_policy_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('firewall',
                           'DoS-policy',
                           mkey=filtered_data['policyid'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_firewall(data, fos):
-    login(data)
 
-    methodlist = ['firewall_DoS_policy']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['firewall_DoS_policy']:
+        resp = firewall_DoS_policy(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
-        "https": {"required": False, "type": "bool", "default": "False"},
+        "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "firewall_DoS_policy": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "anomaly": {"required": False, "type": "list",
                             "options": {
@@ -352,8 +424,8 @@ def main():
                                 "name": {"required": True, "type": "str"},
                                 "quarantine": {"required": False, "type": "str",
                                                "choices": ["none", "attacker"]},
-                                "quarantine-expiry": {"required": False, "type": "str"},
-                                "quarantine-log": {"required": False, "type": "str",
+                                "quarantine_expiry": {"required": False, "type": "str"},
+                                "quarantine_log": {"required": False, "type": "str",
                                                    "choices": ["disable", "enable"]},
                                 "status": {"required": False, "type": "str",
                                            "choices": ["disable", "enable"]},
@@ -384,15 +456,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_firewall(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_firewall(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_firewall(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

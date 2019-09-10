@@ -397,6 +397,7 @@ class NoSSLError(SSLValidationError):
 CustomHTTPSConnection = None
 CustomHTTPSHandler = None
 HTTPSClientAuthHandler = None
+UnixHTTPSConnection = None
 if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler'):
     class CustomHTTPSConnection(httplib.HTTPSConnection):
         def __init__(self, *args, **kwargs):
@@ -478,32 +479,34 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
                 return UnixHTTPSConnection(self._unix_socket)(host, **kwargs)
             return httplib.HTTPSConnection(host, **kwargs)
 
+    @contextmanager
+    def unix_socket_patch_httpconnection_connect():
+        '''Monkey patch ``httplib.HTTPConnection.connect`` to be ``UnixHTTPConnection.connect``
+        so that when calling ``super(UnixHTTPSConnection, self).connect()`` we get the
+        correct behavior of creating self.sock for the unix socket
+        '''
+        _connect = httplib.HTTPConnection.connect
+        httplib.HTTPConnection.connect = UnixHTTPConnection.connect
+        yield
+        httplib.HTTPConnection.connect = _connect
 
-@contextmanager
-def unix_socket_patch_httpconnection_connect():
-    '''Monkey patch ``httplib.HTTPConnection.connect`` to be ``UnixHTTPConnection.connect``
-    so that when calling ``super(UnixHTTPSConnection, self).connect()`` we get the
-    correct behavior of creating self.sock for the unix socket
-    '''
-    _connect = httplib.HTTPConnection.connect
-    httplib.HTTPConnection.connect = UnixHTTPConnection.connect
-    yield
-    httplib.HTTPConnection.connect = _connect
+    class UnixHTTPSConnection(httplib.HTTPSConnection):
+        def __init__(self, unix_socket):
+            self._unix_socket = unix_socket
 
+        def connect(self):
+            # This method exists simply to ensure we monkeypatch
+            # httplib.HTTPConnection.connect to call UnixHTTPConnection.connect
+            with unix_socket_patch_httpconnection_connect():
+                # Disable pylint check for the super() call. It complains about UnixHTTPSConnection
+                # being a NoneType because of the initial definition above, but it won't actually
+                # be a NoneType when this code runs
+                # pylint: disable=bad-super-call
+                super(UnixHTTPSConnection, self).connect()
 
-class UnixHTTPSConnection(httplib.HTTPSConnection):
-    def __init__(self, unix_socket):
-        self._unix_socket = unix_socket
-
-    def connect(self):
-        # This method exists simply to ensure we monkeypatch
-        # httplib.HTTPConnection.connect to call UnixHTTPConnection.connect
-        with unix_socket_patch_httpconnection_connect():
-            super(UnixHTTPSConnection, self).connect()
-
-    def __call__(self, *args, **kwargs):
-        httplib.HTTPSConnection.__init__(self, *args, **kwargs)
-        return self
+        def __call__(self, *args, **kwargs):
+            httplib.HTTPSConnection.__init__(self, *args, **kwargs)
+            return self
 
 
 class UnixHTTPConnection(httplib.HTTPConnection):
@@ -870,7 +873,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                                                 to_native(b_cert, errors='surrogate_or_strict')
                                             )
                                         )
-                                    except ValueError:
+                                    except Exception:
                                         continue
                                 else:
                                     os.write(tmp_fd, b_cert)
@@ -1082,7 +1085,7 @@ class Request:
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=None, follow_redirects=None,
              client_cert=None, client_key=None, cookies=None, use_gssapi=False,
-             unix_socket=None, ca_path=None):
+             unix_socket=None, ca_path=None, unredirected_headers=None):
         """
         Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1120,7 +1123,8 @@ class Request:
         :kwarg unix_socket: (optional) String of file system path to unix socket file to use when establishing
             connection to the provided url
         :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
-        :returns: HTTPResponse
+        :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
+        :returns: HTTPResponse. Added in Ansible 2.9
         """
 
         method = method.upper()
@@ -1274,8 +1278,12 @@ class Request:
             request.add_header('If-Modified-Since', tstamp)
 
         # user defined headers now, which may override things we've set above
+        unredirected_headers = unredirected_headers or []
         for header in headers:
-            request.add_header(header, headers[header])
+            if header in unredirected_headers:
+                request.add_unredirected_header(header, headers[header])
+            else:
+                request.add_header(header, headers[header])
 
         urlopen_args = [request, None]
         if sys.version_info >= (2, 6, 0):
@@ -1365,7 +1373,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=False, follow_redirects='urllib2',
              client_cert=None, client_key=None, cookies=None,
-             use_gssapi=False, unix_socket=None, ca_path=None):
+             use_gssapi=False, unix_socket=None, ca_path=None,
+             unredirected_headers=None):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1377,7 +1386,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                           url_username=url_username, url_password=url_password, http_agent=http_agent,
                           force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
                           client_cert=client_cert, client_key=client_key, cookies=cookies,
-                          use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path)
+                          use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path,
+                          unredirected_headers=unredirected_headers)
 
 
 #
@@ -1399,7 +1409,7 @@ def url_argument_spec():
     '''
     return dict(
         url=dict(type='str'),
-        force=dict(type='bool', default=False, aliases=['thirsty']),
+        force=dict(type='bool', default=False, aliases=['thirsty'], deprecated_aliases=[dict(name='thirsty', version='2.13')]),
         http_agent=dict(type='str', default='ansible-httpget'),
         use_proxy=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),

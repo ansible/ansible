@@ -51,7 +51,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: backendservice
-- name: delete a target tcp proxy
+- name: delete a target TCP proxy
   gcp_compute_target_tcp_proxy:
     name: "{{ resource_name }}"
     proxy_header: PROXY_V1
@@ -61,7 +61,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: absent
 #----------------------------------------------------------
-- name: create a target tcp proxy
+- name: create a target TCP proxy
   gcp_compute_target_tcp_proxy:
     name: "{{ resource_name }}"
     proxy_header: PROXY_V1
@@ -75,9 +75,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#targetTcpProxy'"
 - name: verify that target_tcp_proxy was created
-  gcp_compute_target_tcp_proxy_facts:
+  gcp_compute_target_tcp_proxy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -91,7 +90,7 @@
     that:
       - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
-- name: create a target tcp proxy that already exists
+- name: create a target TCP proxy that already exists
   gcp_compute_target_tcp_proxy:
     name: "{{ resource_name }}"
     proxy_header: PROXY_V1
@@ -105,9 +104,8 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#targetTcpProxy'"
 #----------------------------------------------------------
-- name: delete a target tcp proxy
+- name: delete a target TCP proxy
   gcp_compute_target_tcp_proxy:
     name: "{{ resource_name }}"
     proxy_header: PROXY_V1
@@ -122,7 +120,7 @@
     that:
       - result.changed == true
 - name: verify that target_tcp_proxy was deleted
-  gcp_compute_target_tcp_proxy_facts:
+  gcp_compute_target_tcp_proxy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -136,7 +134,7 @@
     that:
       - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
-- name: delete a target tcp proxy that does not exist
+- name: delete a target TCP proxy that does not exist
   gcp_compute_target_tcp_proxy:
     name: "{{ resource_name }}"
     proxy_header: PROXY_V1

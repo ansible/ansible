@@ -28,6 +28,9 @@ description:
     respective resource name.  The facts module will always collect a
     base set of facts from the device and can enable or disable
     collection of additional facts.
+notes:
+  - Tested against IOS-XR 6.1.3.
+  - This module works with connection C(network_cli). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
 author:
   - Ricardo Carrillo Cruz (@rcarrillocruz)
   - Nilashish Chakraborty (@Nilashishc)
@@ -50,8 +53,10 @@ options:
         Can specify a list of values to include a larger subset. Values
         can also be used with an initial C(M(!)) to specify that a
         specific subset should not be collected.
+        Valid subsets are 'all', 'lacp', 'lacp_interfaces', 'lldp_global',
+        'lldp_interfaces', 'interfaces', 'l2_interfaces', 'l3_interfaces',
+        'lag_interfaces'.
     required: false
-    choices: ['all', 'lacp']
     version_added: "2.9"
 """
 
@@ -71,7 +76,7 @@ EXAMPLES = """
     gather_subset:
       - "!hardware"
 
-# Collect only the lag_interfaces facts
+# Collect only the lacp facts
 - iosxr_facts:
     gather_subset:
       - "!all"
@@ -79,15 +84,24 @@ EXAMPLES = """
     gather_network_resources:
       - lacp
 
-# Do not collect lag_interfaces facts
+# Do not collect lacp_interfaces facts
 - iosxr_facts:
     gather_network_resources:
-      - "!lacp"
+      - "!lacp_interfaces"
 
-# Collect lag_interfaces and minimal default facts
+# Collect lacp and minimal default facts
 - iosxr_facts:
     gather_subset: min
     gather_network_resources: lacp
+
+# Collect only the interfaces facts
+- iosxr_facts:
+    gather_subset:
+      - "!all"
+      - "!min"
+    gather_network_resources:
+      - interfaces
+      - l2_interfaces
 """
 
 RETURN = """

@@ -2,7 +2,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import pytest
+import re
 import sys
+
+from ansible.utils.collection_loader import AnsibleCollectionRef
 
 
 def test_import_from_collection(monkeypatch):
@@ -127,3 +131,85 @@ def test_import_from_collection(monkeypatch):
     # verify that the filename and line number reported by the trace is correct
     # this makes sure that collection loading preserves file paths and line numbers
     assert trace_log == expected_trace_log
+
+
+@pytest.mark.parametrize(
+    'ref,ref_type,expected_collection,expected_subdirs,expected_resource,expected_python_pkg_name',
+    [
+        ('ns.coll.myaction', 'action', 'ns.coll', '', 'myaction', 'ansible_collections.ns.coll.plugins.action'),
+        ('ns.coll.subdir1.subdir2.myaction', 'action', 'ns.coll', 'subdir1.subdir2', 'myaction', 'ansible_collections.ns.coll.plugins.action.subdir1.subdir2'),
+        ('ns.coll.myrole', 'role', 'ns.coll', '', 'myrole', 'ansible_collections.ns.coll.roles.myrole'),
+        ('ns.coll.subdir1.subdir2.myrole', 'role', 'ns.coll', 'subdir1.subdir2', 'myrole', 'ansible_collections.ns.coll.roles.subdir1.subdir2.myrole'),
+    ])
+def test_fqcr_parsing_valid(ref, ref_type, expected_collection,
+                            expected_subdirs, expected_resource, expected_python_pkg_name):
+    assert AnsibleCollectionRef.is_valid_fqcr(ref, ref_type)
+
+    r = AnsibleCollectionRef.from_fqcr(ref, ref_type)
+    assert r.collection == expected_collection
+    assert r.subdirs == expected_subdirs
+    assert r.resource == expected_resource
+    assert r.n_python_package_name == expected_python_pkg_name
+
+    r = AnsibleCollectionRef.try_parse_fqcr(ref, ref_type)
+    assert r.collection == expected_collection
+    assert r.subdirs == expected_subdirs
+    assert r.resource == expected_resource
+    assert r.n_python_package_name == expected_python_pkg_name
+
+
+@pytest.mark.parametrize(
+    'ref,ref_type,expected_error_type,expected_error_expression',
+    [
+        ('no_dots_at_all_action', 'action', ValueError, 'is not a valid collection reference'),
+        ('no_nscoll.myaction', 'action', ValueError, 'is not a valid collection reference'),
+        ('ns.coll.myaction', 'bogus', ValueError, 'invalid collection ref_type'),
+    ])
+def test_fqcr_parsing_invalid(ref, ref_type, expected_error_type, expected_error_expression):
+    assert not AnsibleCollectionRef.is_valid_fqcr(ref, ref_type)
+
+    with pytest.raises(expected_error_type) as curerr:
+        AnsibleCollectionRef.from_fqcr(ref, ref_type)
+
+    assert re.search(expected_error_expression, str(curerr.value))
+
+    r = AnsibleCollectionRef.try_parse_fqcr(ref, ref_type)
+    assert r is None
+
+
+@pytest.mark.parametrize(
+    'name,subdirs,resource,ref_type,python_pkg_name',
+    [
+        ('ns.coll', None, 'res', 'doc_fragments', 'ansible_collections.ns.coll.plugins.doc_fragments'),
+        ('ns.coll', 'subdir1', 'res', 'doc_fragments', 'ansible_collections.ns.coll.plugins.doc_fragments.subdir1'),
+        ('ns.coll', 'subdir1.subdir2', 'res', 'action', 'ansible_collections.ns.coll.plugins.action.subdir1.subdir2'),
+    ])
+def test_collectionref_components_valid(name, subdirs, resource, ref_type, python_pkg_name):
+    x = AnsibleCollectionRef(name, subdirs, resource, ref_type)
+
+    assert x.collection == name
+    if subdirs:
+        assert x.subdirs == subdirs
+    else:
+        assert x.subdirs == ''
+
+    assert x.resource == resource
+    assert x.ref_type == ref_type
+    assert x.n_python_package_name == python_pkg_name
+
+
+@pytest.mark.parametrize(
+    'name,subdirs,resource,ref_type,expected_error_type,expected_error_expression',
+    [
+        ('bad_ns', '', 'resource', 'action', ValueError, 'invalid collection name'),
+        ('ns.coll.', '', 'resource', 'action', ValueError, 'invalid collection name'),
+        ('ns.coll', 'badsubdir#', 'resource', 'action', ValueError, 'invalid subdirs entry'),
+        ('ns.coll', 'badsubdir.', 'resource', 'action', ValueError, 'invalid subdirs entry'),
+        ('ns.coll', '.badsubdir', 'resource', 'action', ValueError, 'invalid subdirs entry'),
+        ('ns.coll', '', 'resource', 'bogus', ValueError, 'invalid collection ref_type'),
+    ])
+def test_collectionref_components_invalid(name, subdirs, resource, ref_type, expected_error_type, expected_error_expression):
+    with pytest.raises(expected_error_type) as curerr:
+        AnsibleCollectionRef(name, subdirs, resource, ref_type)
+
+    assert re.search(expected_error_expression, str(curerr.value))

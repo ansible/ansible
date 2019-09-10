@@ -63,6 +63,16 @@ class MockONTAPConnection(object):
         self.xml_in = xml
         if self.type == 'policy':
             xml = self.build_snapshot_policy_info()
+        elif self.type == 'snapshot_policy_info_policy_disabled':
+            xml = self.build_snapshot_policy_info_policy_disabled()
+        elif self.type == 'snapshot_policy_info_comment_modified':
+            xml = self.build_snapshot_policy_info_comment_modified()
+        elif self.type == 'snapshot_policy_info_schedules_added':
+            xml = self.build_snapshot_policy_info_schedules_added()
+        elif self.type == 'snapshot_policy_info_schedules_deleted':
+            xml = self.build_snapshot_policy_info_schedules_deleted()
+        elif self.type == 'snapshot_policy_info_modified_schedule_counts':
+            xml = self.build_snapshot_policy_info_modified_schedule_counts()
         elif self.type == 'policy_fail':
             raise netapp_utils.zapi.NaApiError(code='TEST', message="This exception is from the unit test")
         self.xml_out = xml
@@ -77,7 +87,170 @@ class MockONTAPConnection(object):
         ''' build xml data for snapshot-policy-info '''
         xml = netapp_utils.zapi.NaElement('xml')
         data = {'num-records': 1,
-                'attributes-list': {'snapshot-policy-info': {'policy': 'ansible'}}}
+                'attributes-list': {
+                    'snapshot-policy-info': {
+                        'comment': 'new comment',
+                        'enabled': 'true',
+                        'policy': 'ansible',
+                        'snapshot-policy-schedules': {
+                            'snapshot-schedule-info': {
+                                'count': 100,
+                                'schedule': 'hourly',
+                                'snapmirror-label': ''
+                            }
+                        },
+                        'vserver-name': 'hostname'
+                    }
+                }}
+        xml.translate_struct(data)
+        return xml
+
+    @staticmethod
+    def build_snapshot_policy_info_comment_modified():
+        ''' build xml data for snapshot-policy-info '''
+        xml = netapp_utils.zapi.NaElement('xml')
+        data = {'num-records': 1,
+                'attributes-list': {
+                    'snapshot-policy-info': {
+                        'comment': 'modified comment',
+                        'enabled': 'true',
+                        'policy': 'ansible',
+                        'snapshot-policy-schedules': {
+                            'snapshot-schedule-info': {
+                                'count': 100,
+                                'schedule': 'hourly',
+                                'snapmirror-label': ''
+                            }
+                        },
+                        'vserver-name': 'hostname'
+                    }
+                }}
+        xml.translate_struct(data)
+        return xml
+
+    @staticmethod
+    def build_snapshot_policy_info_policy_disabled():
+        ''' build xml data for snapshot-policy-info '''
+        xml = netapp_utils.zapi.NaElement('xml')
+        data = {'num-records': 1,
+                'attributes-list': {
+                    'snapshot-policy-info': {
+                        'comment': 'new comment',
+                        'enabled': 'false',
+                        'policy': 'ansible',
+                        'snapshot-policy-schedules': {
+                            'snapshot-schedule-info': {
+                                'count': 100,
+                                'schedule': 'hourly',
+                                'snapmirror-label': ''
+                            }
+                        },
+                        'vserver-name': 'hostname'
+                    }
+                }}
+        xml.translate_struct(data)
+        return xml
+
+    @staticmethod
+    def build_snapshot_policy_info_schedules_added():
+        ''' build xml data for snapshot-policy-info '''
+        xml = netapp_utils.zapi.NaElement('xml')
+        data = {'num-records': 1,
+                'attributes-list': {
+                    'snapshot-policy-info': {
+                        'comment': 'new comment',
+                        'enabled': 'true',
+                        'policy': 'ansible',
+                        'snapshot-policy-schedules': [
+                            {
+                                'snapshot-schedule-info': {
+                                    'count': 100,
+                                    'schedule': 'hourly',
+                                    'snapmirror-label': ''
+                                }
+                            },
+                            {
+                                'snapshot-schedule-info': {
+                                    'count': 5,
+                                    'schedule': 'daily',
+                                    'snapmirror-label': 'daily'
+                                }
+                            },
+                            {
+                                'snapshot-schedule-info': {
+                                    'count': 10,
+                                    'schedule': 'weekly',
+                                    'snapmirror-label': ''
+                                }
+                            }
+                        ],
+                        'vserver-name': 'hostname'
+                    }
+                }}
+        xml.translate_struct(data)
+        return xml
+
+    @staticmethod
+    def build_snapshot_policy_info_schedules_deleted():
+        ''' build xml data for snapshot-policy-info '''
+        xml = netapp_utils.zapi.NaElement('xml')
+        data = {'num-records': 1,
+                'attributes-list': {
+                    'snapshot-policy-info': {
+                        'comment': 'new comment',
+                        'enabled': 'true',
+                        'policy': 'ansible',
+                        'snapshot-policy-schedules': [
+                            {
+                                'snapshot-schedule-info': {
+                                    'schedule': 'daily',
+                                    'count': 5,
+                                    'snapmirror-label': 'daily'
+                                }
+                            }
+                        ],
+                        'vserver-name': 'hostname'
+                    }
+                }}
+        xml.translate_struct(data)
+        return xml
+
+    @staticmethod
+    def build_snapshot_policy_info_modified_schedule_counts():
+        ''' build xml data for snapshot-policy-info '''
+        xml = netapp_utils.zapi.NaElement('xml')
+        data = {'num-records': 1,
+                'attributes-list': {
+                    'snapshot-policy-info': {
+                        'comment': 'new comment',
+                        'enabled': 'true',
+                        'policy': 'ansible',
+                        'snapshot-policy-schedules': [
+                            {
+                                'snapshot-schedule-info': {
+                                    'count': 10,
+                                    'schedule': 'hourly',
+                                    'snapmirror-label': ''
+                                }
+                            },
+                            {
+                                'snapshot-schedule-info': {
+                                    'count': 50,
+                                    'schedule': 'daily',
+                                    'snapmirror-label': 'daily'
+                                }
+                            },
+                            {
+                                'snapshot-schedule-info': {
+                                    'count': 100,
+                                    'schedule': 'weekly',
+                                    'snapmirror-label': ''
+                                }
+                            }
+                        ],
+                        'vserver-name': 'hostname'
+                    }
+                }}
         xml.translate_struct(data)
         return xml
 
@@ -124,6 +297,18 @@ class TestMyModule(unittest.TestCase):
             'comment': comment
         })
 
+    def set_default_current(self):
+        default_args = self.set_default_args()
+        return dict({
+            'name': default_args['name'],
+            'enabled': default_args['enabled'],
+            'count': [default_args['count']],
+            'schedule': [default_args['schedule']],
+            'snapmirror_label': [''],
+            'comment': default_args['comment'],
+            'vserver': default_args['hostname']
+        })
+
     def test_module_fail_when_required_args_missing(self):
         ''' required arguments are reported as errors '''
         with pytest.raises(AnsibleFailJson) as exc:
@@ -166,20 +351,154 @@ class TestMyModule(unittest.TestCase):
             my_obj.apply()
         assert not exc.value.args[0]['changed']
 
-    def test_validate_params(self):
+    @patch('ansible.modules.storage.netapp.na_ontap_snapshot_policy.NetAppOntapSnapshotPolicy.modify_snapshot_policy')
+    def test_successful_modify_comment(self, modify_snapshot):
+        ''' modifying snapshot policy comment and testing idempotency '''
         data = self.set_default_args()
-        data['schedule'] = ['s1', 's2']
-        data['count'] = [1, 2, 3]
+        data['comment'] = 'modified comment'
         set_module_args(data)
         my_obj = my_module()
         my_obj.asup_log_for_cserver = Mock(return_value=None)
         if not self.onbox:
-            my_obj.server = self.server
-        with pytest.raises(AnsibleFailJson) as exc:
-            my_obj.create_snapshot_policy()
-        msg = 'Error: A Snapshot policy can have up to a maximum of 5 schedules,and a ' \
-              'count representing maximum number of Snapshot copies for each schedule'
-        assert exc.value.args[0]['msg'] == msg
+            my_obj.server = MockONTAPConnection('policy')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        assert exc.value.args[0]['changed']
+        current = self.set_default_current()
+        modify_snapshot.assert_called_with(current)
+        # to reset na_helper from remembering the previous 'changed' value
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = MockONTAPConnection('snapshot_policy_info_comment_modified')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        assert not exc.value.args[0]['changed']
+
+    @patch('ansible.modules.storage.netapp.na_ontap_snapshot_policy.NetAppOntapSnapshotPolicy.modify_snapshot_policy')
+    def test_successful_disable_policy(self, modify_snapshot):
+        ''' disabling snapshot policy and testing idempotency '''
+        data = self.set_default_args()
+        data['enabled'] = False
+        set_module_args(data)
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = MockONTAPConnection('policy')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        assert exc.value.args[0]['changed']
+        current = self.set_default_current()
+        modify_snapshot.assert_called_with(current)
+        # to reset na_helper from remembering the previous 'changed' value
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = MockONTAPConnection('snapshot_policy_info_policy_disabled')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        assert not exc.value.args[0]['changed']
+
+    @patch('ansible.modules.storage.netapp.na_ontap_snapshot_policy.NetAppOntapSnapshotPolicy.modify_snapshot_policy')
+    def test_successful_enable_policy(self, modify_snapshot):
+        ''' enabling snapshot policy and testing idempotency '''
+        data = self.set_default_args()
+        data['enabled'] = True
+        set_module_args(data)
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = MockONTAPConnection('snapshot_policy_info_policy_disabled')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        assert exc.value.args[0]['changed']
+        current = self.set_default_current()
+        current['enabled'] = False
+        modify_snapshot.assert_called_with(current)
+        # to reset na_helper from remembering the previous 'changed' value
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = MockONTAPConnection('policy')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        assert not exc.value.args[0]['changed']
+
+    @patch('ansible.modules.storage.netapp.na_ontap_snapshot_policy.NetAppOntapSnapshotPolicy.modify_snapshot_policy')
+    def test_successful_modify_schedules_add(self, modify_snapshot):
+        ''' adding snapshot policy schedules and testing idempotency '''
+        data = self.set_default_args()
+        data['schedule'] = ['hourly', 'daily', 'weekly']
+        data['count'] = [100, 5, 10]
+        data['snapmirror_label'] = ['', 'daily', '']
+        set_module_args(data)
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = MockONTAPConnection('policy')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        assert exc.value.args[0]['changed']
+        current = self.set_default_current()
+        modify_snapshot.assert_called_with(current)
+        # to reset na_helper from remembering the previous 'changed' value
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = MockONTAPConnection('snapshot_policy_info_schedules_added')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        assert not exc.value.args[0]['changed']
+
+    @patch('ansible.modules.storage.netapp.na_ontap_snapshot_policy.NetAppOntapSnapshotPolicy.modify_snapshot_policy')
+    def test_successful_modify_schedules_delete(self, modify_snapshot):
+        ''' deleting snapshot policy schedules and testing idempotency '''
+        data = self.set_default_args()
+        data['schedule'] = ['daily']
+        data['count'] = [5]
+        set_module_args(data)
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = MockONTAPConnection('policy')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        assert exc.value.args[0]['changed']
+        current = self.set_default_current()
+        modify_snapshot.assert_called_with(current)
+        # to reset na_helper from remembering the previous 'changed' value
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = MockONTAPConnection('snapshot_policy_info_schedules_deleted')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        assert not exc.value.args[0]['changed']
+
+    @patch('ansible.modules.storage.netapp.na_ontap_snapshot_policy.NetAppOntapSnapshotPolicy.modify_snapshot_policy')
+    def test_successful_modify_schedules(self, modify_snapshot):
+        ''' modifying snapshot policy schedule counts and testing idempotency '''
+        data = self.set_default_args()
+        data['schedule'] = ['hourly', 'daily', 'weekly']
+        data['count'] = [10, 50, 100]
+        set_module_args(data)
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = MockONTAPConnection('policy')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        assert exc.value.args[0]['changed']
+        current = self.set_default_current()
+        modify_snapshot.assert_called_with(current)
+        # to reset na_helper from remembering the previous 'changed' value
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = MockONTAPConnection('snapshot_policy_info_modified_schedule_counts')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        assert not exc.value.args[0]['changed']
 
     @patch('ansible.modules.storage.netapp.na_ontap_snapshot_policy.NetAppOntapSnapshotPolicy.delete_snapshot_policy')
     def test_successful_delete(self, delete_snapshot):
@@ -205,7 +524,7 @@ class TestMyModule(unittest.TestCase):
         assert not exc.value.args[0]['changed']
 
     def test_valid_schedule_count(self):
-        ''' validate error when schedule has more than 5 elements '''
+        ''' validate when schedule has same number of elements '''
         data = self.set_default_args()
         data['schedule'] = ['hourly', 'daily', 'weekly', 'monthly', '5min']
         data['count'] = [1, 2, 3, 4, 5]
@@ -219,6 +538,40 @@ class TestMyModule(unittest.TestCase):
         assert data['count'][2] == int(create_xml['count3'])
         assert data['schedule'][4] == create_xml['schedule5']
 
+    def test_valid_schedule_count_with_snapmirror_labels(self):
+        ''' validate when schedule has same number of elements with snapmirror labels '''
+        data = self.set_default_args()
+        data['schedule'] = ['hourly', 'daily', 'weekly', 'monthly', '5min']
+        data['count'] = [1, 2, 3, 4, 5]
+        data['snapmirror_label'] = ['hourly', 'daily', 'weekly', 'monthly', '5min']
+        set_module_args(data)
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = self.server
+        my_obj.create_snapshot_policy()
+        create_xml = my_obj.server.xml_in
+        assert data['count'][2] == int(create_xml['count3'])
+        assert data['schedule'][4] == create_xml['schedule5']
+        assert data['snapmirror_label'][3] == create_xml['snapmirror-label4']
+
+    def test_invalid_params(self):
+        ''' validate error when schedule does not have same number of elements '''
+        data = self.set_default_args()
+        data['schedule'] = ['s1', 's2']
+        data['count'] = [1, 2, 3]
+        set_module_args(data)
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = self.server
+        with pytest.raises(AnsibleFailJson) as exc:
+            my_obj.create_snapshot_policy()
+        msg = 'Error: A Snapshot policy must have at least 1 ' \
+              'schedule and can have up to a maximum of 5 schedules, with a count ' \
+              'representing the maximum number of Snapshot copies for each schedule'
+        assert exc.value.args[0]['msg'] == msg
+
     def test_invalid_schedule_count(self):
         ''' validate error when schedule has more than 5 elements '''
         data = self.set_default_args()
@@ -231,8 +584,59 @@ class TestMyModule(unittest.TestCase):
             my_obj.server = self.server
         with pytest.raises(AnsibleFailJson) as exc:
             my_obj.create_snapshot_policy()
-        msg = 'Error: A Snapshot policy can have up to a maximum of 5 schedules,and a ' \
-              'count representing maximum number of Snapshot copies for each schedule'
+        msg = 'Error: A Snapshot policy must have at least 1 ' \
+              'schedule and can have up to a maximum of 5 schedules, with a count ' \
+              'representing the maximum number of Snapshot copies for each schedule'
+        assert exc.value.args[0]['msg'] == msg
+
+    def test_invalid_schedule_count_less_than_one(self):
+        ''' validate error when schedule has less than 1 element '''
+        data = self.set_default_args()
+        data['schedule'] = []
+        data['count'] = []
+        set_module_args(data)
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = self.server
+        with pytest.raises(AnsibleFailJson) as exc:
+            my_obj.create_snapshot_policy()
+        msg = 'Error: A Snapshot policy must have at least 1 ' \
+              'schedule and can have up to a maximum of 5 schedules, with a count ' \
+              'representing the maximum number of Snapshot copies for each schedule'
+        assert exc.value.args[0]['msg'] == msg
+
+    def test_invalid_schedule_count_is_none(self):
+        ''' validate error when schedule is None '''
+        data = self.set_default_args()
+        data['schedule'] = None
+        data['count'] = None
+        set_module_args(data)
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = self.server
+        with pytest.raises(AnsibleFailJson) as exc:
+            my_obj.create_snapshot_policy()
+        msg = 'Error: A Snapshot policy must have at least 1 ' \
+              'schedule and can have up to a maximum of 5 schedules, with a count ' \
+              'representing the maximum number of Snapshot copies for each schedule'
+        assert exc.value.args[0]['msg'] == msg
+
+    def test_invalid_schedule_count_with_snapmirror_labels(self):
+        ''' validate error when schedule with snapmirror labels does not have same number of elements '''
+        data = self.set_default_args()
+        data['schedule'] = ['s1', 's2', 's3']
+        data['count'] = [1, 2, 3]
+        data['snapmirror_label'] = ['sm1', 'sm2']
+        set_module_args(data)
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = self.server
+        with pytest.raises(AnsibleFailJson) as exc:
+            my_obj.create_snapshot_policy()
+        msg = 'Error: Each Snapshot Policy schedule must have an accompanying SnapMirror Label'
         assert exc.value.args[0]['msg'] == msg
 
     def test_if_all_methods_catch_exception(self):

@@ -26,6 +26,9 @@
 # Copyright (c) the OpenSSL contributors
 # For more details, search for the function _OID_MAP.
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 from distutils.version import LooseVersion
 
@@ -300,7 +303,7 @@ def select_message_digest(digest_string):
     return digest
 
 
-def write_file(module, content, default_mode=None):
+def write_file(module, content, default_mode=None, path=None):
     '''
     Writes content into destination file as securely as possible.
     Uses file arguments from module.
@@ -309,6 +312,9 @@ def write_file(module, content, default_mode=None):
     file_args = module.load_file_common_arguments(module.params)
     if file_args['mode'] is None:
         file_args['mode'] = default_mode
+    # If the path was set to override module path
+    if path is not None:
+        file_args['path'] = path
     # Create tempfile name
     tmp_fd, tmp_name = tempfile.mkstemp(prefix=b'.ansible_tmp')
     try:
@@ -1504,6 +1510,7 @@ _OID_MAP = {
 
 _OID_LOOKUP = dict()
 _NORMALIZE_NAMES = dict()
+_NORMALIZE_NAMES_SHORT = dict()
 
 for dotted, names in _OID_MAP.items():
     for name in names:
@@ -1513,6 +1520,7 @@ for dotted, names in _OID_MAP.items():
                 .format(name, dotted, _OID_LOOKUP[name])
             )
         _NORMALIZE_NAMES[name] = names[0]
+        _NORMALIZE_NAMES_SHORT[name] = names[-1]
         _OID_LOOKUP[name] = dotted
 for alias, original in [('userID', 'userId')]:
     if alias in _NORMALIZE_NAMES:
@@ -1521,15 +1529,19 @@ for alias, original in [('userID', 'userId')]:
             .format(alias, original, _OID_LOOKUP[alias])
         )
     _NORMALIZE_NAMES[alias] = original
+    _NORMALIZE_NAMES_SHORT[alias] = _NORMALIZE_NAMES_SHORT[original]
     _OID_LOOKUP[alias] = _OID_LOOKUP[original]
 
 
-def pyopenssl_normalize_name(name):
+def pyopenssl_normalize_name(name, short=False):
     nid = OpenSSL._util.lib.OBJ_txt2nid(to_bytes(name))
     if nid != 0:
         b_name = OpenSSL._util.lib.OBJ_nid2ln(nid)
         name = to_text(OpenSSL._util.ffi.string(b_name))
-    return _NORMALIZE_NAMES.get(name, name)
+    if short:
+        return _NORMALIZE_NAMES_SHORT.get(name, name)
+    else:
+        return _NORMALIZE_NAMES.get(name, name)
 
 
 # #####################################################################################
@@ -1695,11 +1707,14 @@ def cryptography_name_to_oid(name):
     return x509.oid.ObjectIdentifier(dotted)
 
 
-def cryptography_oid_to_name(oid):
+def cryptography_oid_to_name(oid, short=False):
     dotted_string = oid.dotted_string
     names = _OID_MAP.get(dotted_string)
     name = names[0] if names else oid._name
-    return _NORMALIZE_NAMES.get(name, name)
+    if short:
+        return _NORMALIZE_NAMES_SHORT.get(name, name)
+    else:
+        return _NORMALIZE_NAMES.get(name, name)
 
 
 def cryptography_get_name(name):
@@ -1723,10 +1738,10 @@ def cryptography_get_name(name):
     raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}" (potentially unsupported by cryptography backend)'.format(name))
 
 
-def _get_hex(bytes):
-    if bytes is None:
-        return bytes
-    data = binascii.hexlify(bytes)
+def _get_hex(bytesstr):
+    if bytesstr is None:
+        return bytesstr
+    data = binascii.hexlify(bytesstr)
     data = to_text(b':'.join(data[i:i + 2] for i in range(0, len(data), 2)))
     return data
 

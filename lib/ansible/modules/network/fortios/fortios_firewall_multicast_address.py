@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_firewall_multicast_address
 short_description: Configure multicast addresses in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure firewall feature and multicast_address category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify firewall feature and multicast_address category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,91 +41,131 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     firewall_multicast_address:
         description:
             - Configure multicast addresses.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            associated-interface:
+            associated_interface:
                 description:
                     - Interface associated with the address object. When setting up a policy, only addresses associated with this interface are available.
                        Source system.interface.name.
+                type: str
             color:
                 description:
-                    - Integer value to determine the color of the icon in the GUI (1 - 32, default = 0, which sets value to 1).
+                    - Integer value to determine the color of the icon in the GUI (1 - 32).
+                type: int
             comment:
                 description:
                     - Comment.
-            end-ip:
+                type: str
+            end_ip:
                 description:
                     - Final IPv4 address (inclusive) in the range for the address.
+                type: str
             name:
                 description:
                     - Multicast address name.
                 required: true
-            start-ip:
+                type: str
+            start_ip:
                 description:
                     - First IPv4 address (inclusive) in the range for the address.
+                type: str
             subnet:
                 description:
                     - Broadcast address and subnet.
+                type: str
             tagging:
                 description:
                     - Config object tagging.
+                type: list
                 suboptions:
                     category:
                         description:
                             - Tag category. Source system.object-tagging.category.
+                        type: str
                     name:
                         description:
                             - Tagging entry name.
                         required: true
+                        type: str
                     tags:
                         description:
                             - Tags.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Tag name. Source system.object-tagging.tags.name.
                                 required: true
+                                type: str
             type:
                 description:
                     - "Type of address object: multicast IP address range or broadcast IP/mask to be treated as a multicast address."
+                type: str
                 choices:
                     - multicastrange
                     - broadcastmask
             visibility:
                 description:
                     - Enable/disable visibility of the multicast address on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -141,6 +178,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure multicast addresses.
     fortios_firewall_multicast_address:
@@ -149,14 +187,14 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       firewall_multicast_address:
-        state: "present"
-        associated-interface: "<your_own_value> (source system.interface.name)"
+        associated_interface: "<your_own_value> (source system.interface.name)"
         color: "4"
         comment: "Comment."
-        end-ip: "<your_own_value>"
+        end_ip: "<your_own_value>"
         name: "default_name_7"
-        start-ip: "<your_own_value>"
+        start_ip: "<your_own_value>"
         subnet: "<your_own_value>"
         tagging:
          -
@@ -229,14 +267,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -244,12 +284,12 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_firewall_multicast_address_data(json):
-    option_list = ['associated-interface', 'color', 'comment',
-                   'end-ip', 'name', 'start-ip',
+    option_list = ['associated_interface', 'color', 'comment',
+                   'end_ip', 'name', 'start_ip',
                    'subnet', 'tagging', 'type',
                    'visibility']
     dictionary = {}
@@ -261,54 +301,79 @@ def filter_firewall_multicast_address_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def firewall_multicast_address(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_multicast_address'] and data['firewall_multicast_address']:
+        state = data['firewall_multicast_address']['state']
+    else:
+        state = True
     firewall_multicast_address_data = data['firewall_multicast_address']
-    filtered_data = filter_firewall_multicast_address_data(firewall_multicast_address_data)
-    if firewall_multicast_address_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_firewall_multicast_address_data(firewall_multicast_address_data))
+
+    if state == "present":
         return fos.set('firewall',
                        'multicast-address',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif firewall_multicast_address_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('firewall',
                           'multicast-address',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_firewall(data, fos):
-    login(data)
 
-    methodlist = ['firewall_multicast_address']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['firewall_multicast_address']:
+        resp = firewall_multicast_address(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "firewall_multicast_address": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "associated-interface": {"required": False, "type": "str"},
+                "associated_interface": {"required": False, "type": "str"},
                 "color": {"required": False, "type": "int"},
                 "comment": {"required": False, "type": "str"},
-                "end-ip": {"required": False, "type": "str"},
+                "end_ip": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"},
-                "start-ip": {"required": False, "type": "str"},
+                "start_ip": {"required": False, "type": "str"},
                 "subnet": {"required": False, "type": "str"},
                 "tagging": {"required": False, "type": "list",
                             "options": {
@@ -330,15 +395,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_firewall(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_firewall(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_firewall(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

@@ -58,7 +58,7 @@ options:
     - Password for telnet application.
     - Password, publickey, domain, nsswitch for ssh application.
     required: true
-    choices: ['community', 'password', 'publickey', 'domain', 'nsswitch', 'usm']
+    choices: ['community', 'password', 'publickey', 'domain', 'nsswitch', 'usm', 'cert']
   set_password:
     description:
     - Password for the user account.
@@ -134,9 +134,7 @@ class NetAppOntapUser(object):
                               choices=['console', 'http', 'ontapi', 'rsh', 'snmp',
                                        'sp', 'service-processor', 'ssh', 'telnet'],),
             authentication_method=dict(required=True, type='str',
-                                       choices=['community', 'password',
-                                                'publickey', 'domain',
-                                                'nsswitch', 'usm']),
+                                       choices=['community', 'password', 'publickey', 'domain', 'nsswitch', 'usm', 'cert']),
             set_password=dict(required=False, type='str', no_log=True),
             role_name=dict(required=False, type='str'),
             lock_user=dict(required=False, type='bool'),

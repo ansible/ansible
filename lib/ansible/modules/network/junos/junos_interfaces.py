@@ -96,7 +96,7 @@ options:
     - deleted
     default: merged
     description:
-    - The state the configuration should be left in
+    - The state of the configuration after module completion
     type: str
 requirements:
   - ncclient (>=v0.6.4)
@@ -285,14 +285,14 @@ EXAMPLES = """
 """
 RETURN = """
 before:
-  description: The configuration prior to the model invocation.
+  description: The configuration as structured data prior to module invocation.
   returned: always
   type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
-  description: The resulting configuration model invocation.
+  description: The configuration as structured data after module completion.
   returned: when changed
   type: list
   sample: >
@@ -316,7 +316,12 @@ def main():
 
     :returns: the result form module invocation
     """
+    required_if = [('state', 'merged', ('config',)),
+                   ('state', 'replaced', ('config',)),
+                   ('state', 'overridden', ('config',))]
+
     module = AnsibleModule(argument_spec=InterfacesArgs.argument_spec,
+                           required_if=required_if,
                            supports_check_mode=True)
 
     result = Interfaces(module).execute_module()

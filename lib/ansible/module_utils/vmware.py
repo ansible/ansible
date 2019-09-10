@@ -40,7 +40,9 @@ except ImportError:
 
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import env_fallback, missing_required_lib
+from ansible.module_utils.urls import generic_urlparse
 
 
 class TaskError(Exception):
@@ -486,7 +488,16 @@ def vmware_argument_spec():
         validate_certs=dict(type='bool',
                             required=False,
                             default=True,
-                            fallback=(env_fallback, ['VMWARE_VALIDATE_CERTS'])),
+                            fallback=(env_fallback, ['VMWARE_VALIDATE_CERTS'])
+                            ),
+        proxy_host=dict(type='str',
+                        required=False,
+                        default=None,
+                        fallback=(env_fallback, ['VMWARE_PROXY_HOST'])),
+        proxy_port=dict(type='int',
+                        required=False,
+                        default=None,
+                        fallback=(env_fallback, ['VMWARE_PROXY_PORT'])),
     )
 
 
@@ -515,26 +526,43 @@ def connect_to_api(module, disconnect_atexit=True, return_si=False):
     if validate_certs and not hasattr(ssl, 'SSLContext'):
         module.fail_json(msg='pyVim does not support changing verification mode with python < 2.7.9. Either update '
                              'python or use validate_certs=false.')
-
-    ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-    if validate_certs:
+    elif validate_certs:
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         ssl_context.verify_mode = ssl.CERT_REQUIRED
         ssl_context.check_hostname = True
         ssl_context.load_default_certs()
+    elif hasattr(ssl, 'SSLContext'):
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        ssl_context.verify_mode = ssl.CERT_NONE
+        ssl_context.check_hostname = False
+    else:  # Python < 2.7.9 or RHEL/Centos < 7.4
+        ssl_context = None
 
     service_instance = None
+    proxy_host = module.params.get('proxy_host')
+    proxy_port = module.params.get('proxy_port')
+
+    connect_args = dict(
+        host=hostname,
+        port=port,
+    )
+    if ssl_context:
+        connect_args.update(sslContext=ssl_context)
+
+    msg_suffix = ''
     try:
-        connect_args = dict(
-            host=hostname,
-            user=username,
-            pwd=password,
-            port=port,
-        )
-        if ssl_context:
-            connect_args.update(sslContext=ssl_context)
-        service_instance = connect.SmartConnect(**connect_args)
+        if proxy_host:
+            msg_suffix = " [proxy: %s:%d]" % (proxy_host, proxy_port)
+            connect_args.update(httpProxyHost=proxy_host, httpProxyPort=proxy_port)
+            smart_stub = connect.SmartStubAdapter(**connect_args)
+            session_stub = connect.VimSessionOrientedStub(smart_stub, connect.VimSessionOrientedStub.makeUserLoginMethod(username, password))
+            service_instance = vim.ServiceInstance('ServiceInstance', session_stub)
+        else:
+            connect_args.update(user=username, pwd=password)
+            service_instance = connect.SmartConnect(**connect_args)
     except vim.fault.InvalidLogin as invalid_login:
-        module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s:%s as %s: %s" % (hostname, port, username, invalid_login.msg))
+        msg = "Unable to log on to vCenter or ESXi API at %s:%s " % (hostname, port)
+        module.fail_json(msg="%s as %s: %s" % (msg, username, invalid_login.msg) + msg_suffix)
     except vim.fault.NoPermission as no_permission:
         module.fail_json(msg="User %s does not have required permission"
                              " to log on to vCenter or ESXi API at %s:%s : %s" % (username, hostname, port, no_permission.msg))
@@ -542,13 +570,15 @@ def connect_to_api(module, disconnect_atexit=True, return_si=False):
         module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/%s: %s" % (hostname, port, generic_req_exc))
     except vmodl.fault.InvalidRequest as invalid_request:
         # Request is malformed
-        module.fail_json(msg="Failed to get a response from server %s:%s as "
-                             "request is malformed: %s" % (hostname, port, invalid_request.msg))
+        msg = "Failed to get a response from server %s:%s " % (hostname, port)
+        module.fail_json(msg="%s as request is malformed: %s" % (msg, invalid_request.msg) + msg_suffix)
     except Exception as generic_exc:
-        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s : %s" % (hostname, port, generic_exc))
+        msg = "Unknown error while connecting to vCenter or ESXi API at %s:%s" % (hostname, port) + msg_suffix
+        module.fail_json(msg="%s : %s" % (msg, generic_exc))
 
     if service_instance is None:
-        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s" % (hostname, port))
+        msg = "Unknown error while connecting to vCenter or ESXi API at %s:%s" % (hostname, port)
+        module.fail_json(msg=msg + msg_suffix)
 
     # Disabling atexit should be used in special cases only.
     # Such as IP change of the ESXi host which removes the connection anyway.
@@ -887,13 +917,14 @@ class PyVmomi(object):
         vm_obj = None
         user_desired_path = None
         use_instance_uuid = self.params.get('use_instance_uuid') or False
-        if self.params['uuid'] and not use_instance_uuid:
-            vm_obj = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid")
-        elif self.params['uuid'] and use_instance_uuid:
-            vm_obj = find_vm_by_id(self.content,
-                                   vm_id=self.params['uuid'],
-                                   vm_id_type="instance_uuid")
-        elif self.params['name']:
+        if 'uuid' in self.params and self.params['uuid']:
+            if not use_instance_uuid:
+                vm_obj = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid")
+            elif use_instance_uuid:
+                vm_obj = find_vm_by_id(self.content,
+                                       vm_id=self.params['uuid'],
+                                       vm_id_type="instance_uuid")
+        elif 'name' in self.params and self.params['name']:
             objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
             vms = []
 
@@ -911,10 +942,10 @@ class PyVmomi(object):
                 # We have found multiple virtual machines, decide depending upon folder value
                 if self.params['folder'] is None:
                     self.module.fail_json(msg="Multiple virtual machines with same name [%s] found, "
-                                              "Folder value is a required parameter to find uniqueness "
-                                              "of the virtual machine" % self.params['name'],
+                                          "Folder value is a required parameter to find uniqueness "
+                                          "of the virtual machine" % self.params['name'],
                                           details="Please see documentation of the vmware_guest module "
-                                                  "for folder parameter.")
+                                          "for folder parameter.")
 
                 # Get folder path where virtual machine is located
                 # User provided folder where user thinks virtual machine is present
@@ -934,8 +965,8 @@ class PyVmomi(object):
                     # User provided blank value or
                     # User provided only root value, we fail
                     self.module.fail_json(msg="vmware_guest found multiple virtual machines with same "
-                                              "name [%s], please specify folder path other than blank "
-                                              "or '/'" % self.params['name'])
+                                          "name [%s], please specify folder path other than blank "
+                                          "or '/'" % self.params['name'])
                 elif user_folder.startswith('/vm/'):
                     # User provided nested folder under VMware default vm folder i.e. folder = /vm/india/finance
                     user_desired_path = "%s%s%s" % (dcpath, user_defined_dc, user_folder)
@@ -959,7 +990,7 @@ class PyVmomi(object):
             elif vms:
                 # Unique virtual machine found.
                 vm_obj = vms[0]
-        elif self.params['moid']:
+        elif 'moid' in self.params and self.params['moid']:
             vm_obj = VmomiSupport.templateOf('VirtualMachine')(self.params['moid'], self.si._stub)
 
         if vm_obj:
@@ -1226,6 +1257,20 @@ class PyVmomi(object):
 
         """
         return find_datacenter_by_name(self.content, datacenter_name=datacenter_name)
+
+    def is_datastore_valid(self, datastore_obj=None):
+        """
+        Check if datastore selected is valid or not
+        Args:
+            datastore_obj: datastore managed object
+
+        Returns: True if datastore is valid, False if not
+        """
+        if not datastore_obj \
+           or datastore_obj.summary.maintenanceMode != 'normal' \
+           or not datastore_obj.summary.accessible:
+            return False
+        return True
 
     def find_datastore_by_name(self, datastore_name):
         """

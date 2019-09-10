@@ -1,0 +1,9 @@
+disabled
+shippable/posix/group2
+skip/osx
+skip/freebsd
+destructive
+skip/docker  # We need SSH access to the VM and need to be able to let
+             # docker-machine install docker in the VM. This won't work
+             # with tests running in docker containers.
+needs/root

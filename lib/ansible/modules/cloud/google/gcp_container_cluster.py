@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - The name of this cluster. The name must be unique within this project and location,
@@ -435,6 +436,80 @@ options:
         - Constraint enforced on the max num of pods per node.
         required: false
         type: str
+  ip_allocation_policy:
+    description:
+    - Configuration for controlling how IPs are allocated in the cluster.
+    required: false
+    type: dict
+    version_added: 2.9
+    suboptions:
+      use_ip_aliases:
+        description:
+        - Whether alias IPs will be used for pod IPs in the cluster.
+        required: false
+        type: bool
+      create_subnetwork:
+        description:
+        - Whether a new subnetwork will be created automatically for the cluster.
+        required: false
+        type: bool
+      subnetwork_name:
+        description:
+        - A custom subnetwork name to be used if createSubnetwork is true.
+        - If this field is empty, then an automatic name will be chosen for the new
+          subnetwork.
+        required: false
+        type: str
+      cluster_secondary_range_name:
+        description:
+        - The name of the secondary range to be used for the cluster CIDR block. The
+          secondary range will be used for pod IP addresses.
+        - This must be an existing secondary range associated with the cluster subnetwork
+          .
+        required: false
+        type: str
+      services_secondary_range_name:
+        description:
+        - The name of the secondary range to be used as for the services CIDR block.
+          The secondary range will be used for service ClusterIPs. This must be an
+          existing secondary range associated with the cluster subnetwork.
+        required: false
+        type: str
+      cluster_ipv4_cidr_block:
+        description:
+        - The IP address range for the cluster pod IPs. If this field is set, then
+          cluster.cluster_ipv4_cidr must be left blank.
+        - This field is only applicable when useIpAliases is true.
+        - Set to blank to have a range chosen with the default size.
+        - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+        required: false
+        type: str
+      node_ipv4_cidr_block:
+        description:
+        - The IP address range of the instance IPs in this cluster.
+        - This is applicable only if createSubnetwork is true.
+        - Set to blank to have a range chosen with the default size.
+        - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+        required: false
+        type: str
+      services_ipv4_cidr_block:
+        description:
+        - The IP address range of the services IPs in this cluster. If blank, a range
+          will be automatically chosen with the default size.
+        - This field is only applicable when useIpAliases is true.
+        - Set to blank to have a range chosen with the default size.
+        - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+        required: false
+        type: str
+      tpu_ipv4_cidr_block:
+        description:
+        - The IP address range of the Cloud TPUs in this cluster. If unspecified,
+          a range will be automatically chosen with the default size.
+        - This field is only applicable when useIpAliases is true.
+        - If unspecified, the range will use the default size.
+        - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+        required: false
+        type: str
   enable_tpu:
     description:
     - Enable the ability to use Cloud TPUs in this cluster.
@@ -447,6 +522,35 @@ options:
     required: false
     type: str
     version_added: 2.9
+  master_authorized_networks_config:
+    description:
+    - Configuration for controlling how IPs are allocated in the cluster.
+    required: false
+    type: dict
+    version_added: '2.10'
+    suboptions:
+      enabled:
+        description:
+        - Whether or not master authorized networks is enabled.
+        required: false
+        type: bool
+      cidr_blocks:
+        description:
+        - Define up to 50 external networks that could access Kubernetes master through
+          HTTPS.
+        required: false
+        type: list
+        suboptions:
+          display_name:
+            description:
+            - Optional field used to identify cidr blocks.
+            required: false
+            type: str
+          cidr_block:
+            description:
+            - Block specified in CIDR notation.
+            required: false
+            type: str
   location:
     description:
     - The location where the cluster is deployed.
@@ -892,6 +996,79 @@ defaultMaxPodsConstraint:
       - Constraint enforced on the max num of pods per node.
       returned: success
       type: str
+ipAllocationPolicy:
+  description:
+  - Configuration for controlling how IPs are allocated in the cluster.
+  returned: success
+  type: complex
+  contains:
+    useIpAliases:
+      description:
+      - Whether alias IPs will be used for pod IPs in the cluster.
+      returned: success
+      type: bool
+    createSubnetwork:
+      description:
+      - Whether a new subnetwork will be created automatically for the cluster.
+      returned: success
+      type: bool
+    subnetworkName:
+      description:
+      - A custom subnetwork name to be used if createSubnetwork is true.
+      - If this field is empty, then an automatic name will be chosen for the new
+        subnetwork.
+      returned: success
+      type: str
+    clusterSecondaryRangeName:
+      description:
+      - The name of the secondary range to be used for the cluster CIDR block. The
+        secondary range will be used for pod IP addresses.
+      - This must be an existing secondary range associated with the cluster subnetwork
+        .
+      returned: success
+      type: str
+    servicesSecondaryRangeName:
+      description:
+      - The name of the secondary range to be used as for the services CIDR block.
+        The secondary range will be used for service ClusterIPs. This must be an existing
+        secondary range associated with the cluster subnetwork.
+      returned: success
+      type: str
+    clusterIpv4CidrBlock:
+      description:
+      - The IP address range for the cluster pod IPs. If this field is set, then cluster.cluster_ipv4_cidr
+        must be left blank.
+      - This field is only applicable when useIpAliases is true.
+      - Set to blank to have a range chosen with the default size.
+      - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+      returned: success
+      type: str
+    nodeIpv4CidrBlock:
+      description:
+      - The IP address range of the instance IPs in this cluster.
+      - This is applicable only if createSubnetwork is true.
+      - Set to blank to have a range chosen with the default size.
+      - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+      returned: success
+      type: str
+    servicesIpv4CidrBlock:
+      description:
+      - The IP address range of the services IPs in this cluster. If blank, a range
+        will be automatically chosen with the default size.
+      - This field is only applicable when useIpAliases is true.
+      - Set to blank to have a range chosen with the default size.
+      - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+      returned: success
+      type: str
+    tpuIpv4CidrBlock:
+      description:
+      - The IP address range of the Cloud TPUs in this cluster. If unspecified, a
+        range will be automatically chosen with the default size.
+      - This field is only applicable when useIpAliases is true.
+      - If unspecified, the range will use the default size.
+      - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+      returned: success
+      type: str
 endpoint:
   description:
   - The IP address of this cluster's master endpoint.
@@ -981,6 +1158,34 @@ conditions:
       - Human-friendly representation of the condition.
       returned: success
       type: str
+masterAuthorizedNetworksConfig:
+  description:
+  - Configuration for controlling how IPs are allocated in the cluster.
+  returned: success
+  type: complex
+  contains:
+    enabled:
+      description:
+      - Whether or not master authorized networks is enabled.
+      returned: success
+      type: bool
+    cidrBlocks:
+      description:
+      - Define up to 50 external networks that could access Kubernetes master through
+        HTTPS.
+      returned: success
+      type: complex
+      contains:
+        displayName:
+          description:
+          - Optional field used to identify cidr blocks.
+          returned: success
+          type: str
+        cidrBlock:
+          description:
+          - Block specified in CIDR notation.
+          returned: success
+          type: str
 location:
   description:
   - The location where the cluster is deployed.
@@ -1073,8 +1278,29 @@ def main():
             legacy_abac=dict(type='dict', options=dict(enabled=dict(type='bool'))),
             network_policy=dict(type='dict', options=dict(provider=dict(type='str'), enabled=dict(type='bool'))),
             default_max_pods_constraint=dict(type='dict', options=dict(max_pods_per_node=dict(type='str'))),
+            ip_allocation_policy=dict(
+                type='dict',
+                options=dict(
+                    use_ip_aliases=dict(type='bool'),
+                    create_subnetwork=dict(type='bool'),
+                    subnetwork_name=dict(type='str'),
+                    cluster_secondary_range_name=dict(type='str'),
+                    services_secondary_range_name=dict(type='str'),
+                    cluster_ipv4_cidr_block=dict(type='str'),
+                    node_ipv4_cidr_block=dict(type='str'),
+                    services_ipv4_cidr_block=dict(type='str'),
+                    tpu_ipv4_cidr_block=dict(type='str'),
+                ),
+            ),
             enable_tpu=dict(type='bool'),
             tpu_ipv4_cidr_block=dict(type='str'),
+            master_authorized_networks_config=dict(
+                type='dict',
+                options=dict(
+                    enabled=dict(type='bool'),
+                    cidr_blocks=dict(type='list', elements='dict', options=dict(display_name=dict(type='str'), cidr_block=dict(type='str'))),
+                ),
+            ),
             location=dict(required=True, type='str', aliases=['zone']),
             kubectl_path=dict(type='str'),
             kubectl_context=dict(type='str'),
@@ -1148,8 +1374,12 @@ def resource_to_request(module):
         u'legacyAbac': ClusterLegacyabac(module.params.get('legacy_abac', {}), module).to_request(),
         u'networkPolicy': ClusterNetworkpolicy(module.params.get('network_policy', {}), module).to_request(),
         u'defaultMaxPodsConstraint': ClusterDefaultmaxpodsconstraint(module.params.get('default_max_pods_constraint', {}), module).to_request(),
+        u'ipAllocationPolicy': ClusterIpallocationpolicy(module.params.get('ip_allocation_policy', {}), module).to_request(),
         u'enableTpu': module.params.get('enable_tpu'),
         u'tpuIpv4CidrBlock': module.params.get('tpu_ipv4_cidr_block'),
+        u'masterAuthorizedNetworksConfig': ClusterMasterauthorizednetworksconfig(
+            module.params.get('master_authorized_networks_config', {}), module
+        ).to_request(),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -1234,6 +1464,7 @@ def response_to_hash(module, response):
         u'legacyAbac': ClusterLegacyabac(response.get(u'legacyAbac', {}), module).from_response(),
         u'networkPolicy': ClusterNetworkpolicy(response.get(u'networkPolicy', {}), module).from_response(),
         u'defaultMaxPodsConstraint': ClusterDefaultmaxpodsconstraint(response.get(u'defaultMaxPodsConstraint', {}), module).from_response(),
+        u'ipAllocationPolicy': ClusterIpallocationpolicy(response.get(u'ipAllocationPolicy', {}), module).from_response(),
         u'endpoint': response.get(u'endpoint'),
         u'initialClusterVersion': response.get(u'initialClusterVersion'),
         u'currentMasterVersion': response.get(u'currentMasterVersion'),
@@ -1248,6 +1479,7 @@ def response_to_hash(module, response):
         u'enableTpu': response.get(u'enableTpu'),
         u'tpuIpv4CidrBlock': response.get(u'tpuIpv4CidrBlock'),
         u'conditions': ClusterConditionsArray(response.get(u'conditions', []), module).from_response(),
+        u'masterAuthorizedNetworksConfig': ClusterMasterauthorizednetworksconfig(response.get(u'masterAuthorizedNetworksConfig', {}), module).from_response(),
     }
 
 
@@ -1671,6 +1903,45 @@ class ClusterDefaultmaxpodsconstraint(object):
         return remove_nones_from_dict({u'maxPodsPerNode': self.request.get(u'maxPodsPerNode')})
 
 
+class ClusterIpallocationpolicy(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict(
+            {
+                u'useIpAliases': self.request.get('use_ip_aliases'),
+                u'createSubnetwork': self.request.get('create_subnetwork'),
+                u'subnetworkName': self.request.get('subnetwork_name'),
+                u'clusterSecondaryRangeName': self.request.get('cluster_secondary_range_name'),
+                u'servicesSecondaryRangeName': self.request.get('services_secondary_range_name'),
+                u'clusterIpv4CidrBlock': self.request.get('cluster_ipv4_cidr_block'),
+                u'nodeIpv4CidrBlock': self.request.get('node_ipv4_cidr_block'),
+                u'servicesIpv4CidrBlock': self.request.get('services_ipv4_cidr_block'),
+                u'tpuIpv4CidrBlock': self.request.get('tpu_ipv4_cidr_block'),
+            }
+        )
+
+    def from_response(self):
+        return remove_nones_from_dict(
+            {
+                u'useIpAliases': self.request.get(u'useIpAliases'),
+                u'createSubnetwork': self.request.get(u'createSubnetwork'),
+                u'subnetworkName': self.request.get(u'subnetworkName'),
+                u'clusterSecondaryRangeName': self.request.get(u'clusterSecondaryRangeName'),
+                u'servicesSecondaryRangeName': self.request.get(u'servicesSecondaryRangeName'),
+                u'clusterIpv4CidrBlock': self.request.get(u'clusterIpv4CidrBlock'),
+                u'nodeIpv4CidrBlock': self.request.get(u'nodeIpv4CidrBlock'),
+                u'servicesIpv4CidrBlock': self.request.get(u'servicesIpv4CidrBlock'),
+                u'tpuIpv4CidrBlock': self.request.get(u'tpuIpv4CidrBlock'),
+            }
+        )
+
+
 class ClusterConditionsArray(object):
     def __init__(self, request, module):
         self.module = module
@@ -1696,6 +1967,52 @@ class ClusterConditionsArray(object):
 
     def _response_from_item(self, item):
         return remove_nones_from_dict({u'code': item.get(u'code'), u'message': item.get(u'message')})
+
+
+class ClusterMasterauthorizednetworksconfig(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict(
+            {u'enabled': self.request.get('enabled'), u'cidrBlocks': ClusterCidrblocksArray(self.request.get('cidr_blocks', []), self.module).to_request()}
+        )
+
+    def from_response(self):
+        return remove_nones_from_dict(
+            {u'enabled': self.request.get(u'enabled'), u'cidrBlocks': ClusterCidrblocksArray(self.request.get(u'cidrBlocks', []), self.module).from_response()}
+        )
+
+
+class ClusterCidrblocksArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'displayName': item.get('display_name'), u'cidrBlock': item.get('cidr_block')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'displayName': item.get(u'displayName'), u'cidrBlock': item.get(u'cidrBlock')})
 
 
 if __name__ == '__main__':

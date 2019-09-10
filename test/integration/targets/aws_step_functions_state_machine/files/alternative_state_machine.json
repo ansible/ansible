@@ -1,0 +1,10 @@
+{
+    "StartAt": "HelloWorld",
+    "States": {
+        "HelloWorld": {
+            "Type": "Pass",
+            "Result": "Some other result",
+            "End": true
+        }
+    }
+}

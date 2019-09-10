@@ -12,14 +12,14 @@ their answers.
 
 Does Ansible work with Windows XP or Server 2003?
 ``````````````````````````````````````````````````
-Ansible does not support managing Windows XP or Server 2003 hosts. The
-supported operating system versions are:
+Ansible does not work with Windows XP or Server 2003 hosts. Ansible does work with these Windows operating system versions:
 
 * Windows Server 2008
 * Windows Server 2008 R2
 * Windows Server 2012
 * Windows Server 2012 R2
 * Windows Server 2016
+* Windows Server 2019
 * Windows 7
 * Windows 8.1
 * Windows 10
@@ -29,7 +29,7 @@ Ansible also has minimum PowerShell version requirements - please see
 
 Can I manage Windows Nano Server with Ansible?
 ``````````````````````````````````````````````
-Windows Nano Server is not currently supported by Ansible, since it does
+Ansible does not currently work with Windows Nano Server, since it does
 not have access to the full .NET Framework that is used by the majority of the
 modules and internal components.
 
@@ -64,16 +64,16 @@ installed version and then clone the git repo.
 
 Can I use SSH keys to authenticate to Windows hosts?
 ````````````````````````````````````````````````````
-SSH keys are not supported when using the WinRM or PSRP connection plugins.
-These connection plugins support X509 certificates for authentication instead
-of the SSH key pairs that SSH supports.
+You cannot use SSH keys with the WinRM or PSRP connection plugins.
+These connection plugins use X509 certificates for authentication instead
+of the SSH key pairs that SSH uses.
 
 The way X509 certificates are generated and mapped to a user is different
 from the SSH implementation; consult the :ref:`windows_winrm` documentation for
 more information.
 
-Ansible 2.8 has added experimental support for using the SSH connection plugin,
-which supports authentication with SSH keys, to connect to Windows servers. See :ref:`this question <windows_faq_ssh>`
+Ansible 2.8 has added an experimental option to use the SSH connection plugin,
+which uses SSH keys for authentication, for Windows servers. See :ref:`this question <windows_faq_ssh>`
 for more information.
 
 .. _windows_faq_winrm:
@@ -109,9 +109,8 @@ Some ways to bypass these restrictions are to:
 * Use ``win_psexec`` to run a command on the host. PSExec does not use WinRM
   and so will bypass any of the restrictions.
 
-* To access network resources without any of these workarounds, an
-  authentication option that supports credential delegation can be used. Both
-  CredSSP and Kerberos with credential delegation enabled can support this.
+* To access network resources without any of these workarounds, you can use
+  CredSSP or Kerberos with credential delegation enabled.
 
 See :ref:`become` more info on how to use become. The limitations section at
 :ref:`windows_winrm` has more details around WinRM limitations.
@@ -165,7 +164,7 @@ and there is no equivalent Windows module available.
 
 Can I connect to Windows hosts over SSH?
 ````````````````````````````````````````
-Ansible 2.8 has added experimental support for using the SSH connection plugin
+Ansible 2.8 has added an experimental option to use the SSH connection plugin
 to manage Windows hosts. To connect to Windows hosts over SSH, you must install and configure the `Win32-OpenSSH <https://github.com/PowerShell/Win32-OpenSSH>`_
 fork that is in development with Microsoft on
 the Windows host(s). While most of the basics should work with SSH,

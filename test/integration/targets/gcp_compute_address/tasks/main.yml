@@ -35,9 +35,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#address'"
 - name: verify that address was created
-  gcp_compute_address_facts:
+  gcp_compute_address_info:
       filters:
          - name = test-address1
       region: us-west1
@@ -65,7 +64,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#address'"
 #----------------------------------------------------------
 - name: delete a address
   gcp_compute_address:
@@ -81,7 +79,7 @@
     that:
       - result.changed == true
 - name: verify that address was deleted
-  gcp_compute_address_facts:
+  gcp_compute_address_info:
       filters:
          - name = test-address1
       region: us-west1

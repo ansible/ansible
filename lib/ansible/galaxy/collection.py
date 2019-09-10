@@ -11,8 +11,8 @@ import os
 import shutil
 import tarfile
 import tempfile
+import threading
 import time
-import uuid
 import yaml
 
 from contextlib import contextmanager
@@ -21,11 +21,18 @@ from hashlib import sha256
 from io import BytesIO
 from yaml.error import YAMLError
 
+try:
+    import queue
+except ImportError:
+    import Queue as queue  # Python 2
+
 import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.galaxy.api import CollectionVersionMetadata, GalaxyError
 from ansible.module_utils import six
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
 from ansible.module_utils.urls import open_url
@@ -39,13 +46,12 @@ display = Display()
 MANIFEST_FORMAT = 1
 
 
-@six.python_2_unicode_compatible
 class CollectionRequirement:
 
     _FILE_MAPPING = [(b'MANIFEST.json', 'manifest_file'), (b'FILES.json', 'files_file')]
 
-    def __init__(self, namespace, name, b_path, source, versions, requirement, force, parent=None, validate_certs=True,
-                 metadata=None, files=None, skip=False):
+    def __init__(self, namespace, name, b_path, api, versions, requirement, force, parent=None, metadata=None,
+                 files=None, skip=False):
         """
         Represents a collection requirement, the versions that are available to be installed as well as any
         dependencies the collection has.
@@ -53,13 +59,13 @@ class CollectionRequirement:
         :param namespace: The collection namespace.
         :param name: The collection name.
         :param b_path: Byte str of the path to the collection tarball if it has already been downloaded.
-        :param source: The Galaxy server URL to download if the collection is from Galaxy.
+        :param api: The GalaxyAPI to use if the collection is from Galaxy.
         :param versions: A list of versions of the collection that are available.
         :param requirement: The version requirement string used to verify the list of versions fit the requirements.
         :param force: Whether the force flag applied to the collection.
         :param parent: The name of the parent the collection is a dependency of.
-        :param validate_certs: Whether to validate the Galaxy server certificate.
-        :param metadata: The collection metadata dict if it has already been retrieved.
+        :param metadata: The galaxy.api.CollectionVersionMetadata that has already been retrieved from the Galaxy
+            server.
         :param files: The files that exist inside the collection. This is based on the FILES.json file inside the
             collection artifact.
         :param skip: Whether to skip installing the collection. Should be set if the collection is already installed
@@ -68,21 +74,22 @@ class CollectionRequirement:
         self.namespace = namespace
         self.name = name
         self.b_path = b_path
-        self.source = source
+        self.api = api
         self.versions = set(versions)
         self.force = force
         self.skip = skip
         self.required_by = []
-        self._validate_certs = validate_certs
 
         self._metadata = metadata
         self._files = files
-        self._galaxy_info = None
 
         self.add_requirement(parent, requirement)
 
     def __str__(self):
-        return to_text("%s.%s" % (self.namespace, self.name))
+        return to_native("%s.%s" % (self.namespace, self.name))
+
+    def __unicode__(self):
+        return u"%s.%s" % (self.namespace, self.name)
 
     @property
     def latest_version(self):
@@ -94,12 +101,12 @@ class CollectionRequirement:
     @property
     def dependencies(self):
         if self._metadata:
-            return self._metadata['dependencies']
+            return self._metadata.dependencies
         elif len(self.versions) > 1:
             return None
 
         self._get_metadata()
-        return self._metadata['dependencies']
+        return self._metadata.dependencies
 
     def add_requirement(self, parent, requirement):
         self.required_by.append((parent, requirement))
@@ -109,16 +116,17 @@ class CollectionRequirement:
                 force_flag = '--force-with-deps' if parent else '--force'
                 version = self.latest_version if self.latest_version != '*' else 'unknown'
                 msg = "Cannot meet requirement %s:%s as it is already installed at version '%s'. Use %s to overwrite" \
-                      % (str(self), requirement, version, force_flag)
+                      % (to_text(self), requirement, version, force_flag)
                 raise AnsibleError(msg)
             elif parent is None:
-                msg = "Cannot meet requirement %s for dependency %s" % (requirement, str(self))
+                msg = "Cannot meet requirement %s for dependency %s" % (requirement, to_text(self))
             else:
-                msg = "Cannot meet dependency requirement '%s:%s' for collection %s" % (str(self), requirement, parent)
+                msg = "Cannot meet dependency requirement '%s:%s' for collection %s" \
+                      % (to_text(self), requirement, parent)
 
-            collection_source = to_text(self.b_path, nonstring='passthru') or self.source
+            collection_source = to_text(self.b_path, nonstring='passthru') or self.api.api_server
             req_by = "\n".join(
-                "\t%s - '%s:%s'" % (to_text(p) if p else 'base', str(self), r)
+                "\t%s - '%s:%s'" % (to_text(p) if p else 'base', to_text(self), r)
                 for p, r in self.required_by
             )
 
@@ -132,19 +140,21 @@ class CollectionRequirement:
 
     def install(self, path, b_temp_path):
         if self.skip:
-            display.display("Skipping '%s' as it is already installed" % str(self))
+            display.display("Skipping '%s' as it is already installed" % to_text(self))
             return
 
         # Install if it is not
         collection_path = os.path.join(path, self.namespace, self.name)
         b_collection_path = to_bytes(collection_path, errors='surrogate_or_strict')
-        display.display("Installing '%s:%s' to '%s'" % (str(self), self.latest_version,
-                                                        collection_path))
+        display.display("Installing '%s:%s' to '%s'" % (to_text(self), self.latest_version, collection_path))
 
         if self.b_path is None:
-            download_url = self._galaxy_info['download_url']
-            artifact_hash = self._galaxy_info['artifact']['sha256']
-            self.b_path = _download_file(download_url, b_temp_path, artifact_hash, self._validate_certs)
+            download_url = self._metadata.download_url
+            artifact_hash = self._metadata.artifact_sha256
+            headers = {}
+            self.api._add_auth_token(headers, download_url)
+            self.b_path = _download_file(download_url, b_temp_path, artifact_hash, self.api.validate_certs,
+                                         headers=headers)
 
         if os.path.exists(b_collection_path):
             shutil.rmtree(b_collection_path)
@@ -176,12 +186,7 @@ class CollectionRequirement:
     def _get_metadata(self):
         if self._metadata:
             return
-
-        n_collection_url = _urljoin(self.source, 'api', 'v2', 'collections', self.namespace, self.name, 'versions',
-                                    self.latest_version)
-        details = json.load(open_url(n_collection_url, validate_certs=self._validate_certs))
-        self._galaxy_info = details
-        self._metadata = details['metadata']
+        self._metadata = self.api.get_collection_version_metadata(self.namespace, self.name, self.latest_version)
 
     def _meets_requirements(self, version, requirements, parent):
         """
@@ -222,7 +227,7 @@ class CollectionRequirement:
         return False
 
     @staticmethod
-    def from_tar(b_path, validate_certs, force, parent=None):
+    def from_tar(b_path, force, parent=None):
         if not tarfile.is_tarfile(b_path):
             raise AnsibleError("Collection artifact at '%s' is not a valid tar file." % to_native(b_path))
 
@@ -249,12 +254,13 @@ class CollectionRequirement:
         namespace = meta['namespace']
         name = meta['name']
         version = meta['version']
+        meta = CollectionVersionMetadata(namespace, name, version, None, None, meta['dependencies'])
 
         return CollectionRequirement(namespace, name, b_path, None, [version], version, force, parent=parent,
-                                     validate_certs=validate_certs, metadata=meta, files=files)
+                                     metadata=meta, files=files)
 
     @staticmethod
-    def from_path(b_path, validate_certs, force, parent=None):
+    def from_path(b_path, force, parent=None):
         info = {}
         for b_file_name, property_name in CollectionRequirement._FILE_MAPPING:
             b_file_path = os.path.join(b_path, b_file_name)
@@ -269,76 +275,63 @@ class CollectionRequirement:
                                        % to_native(b_file_path))
 
         if 'manifest_file' in info:
-            meta = info['manifest_file']['collection_info']
+            manifest = info['manifest_file']['collection_info']
+            namespace = manifest['namespace']
+            name = manifest['name']
+            version = manifest['version']
+            dependencies = manifest['dependencies']
         else:
             display.warning("Collection at '%s' does not have a MANIFEST.json file, cannot detect version."
                             % to_text(b_path))
             parent_dir, name = os.path.split(to_text(b_path, errors='surrogate_or_strict'))
             namespace = os.path.split(parent_dir)[1]
-            meta = {
-                'namespace': namespace,
-                'name': name,
-                'version': '*',
-                'dependencies': {},
-            }
 
-        namespace = meta['namespace']
-        name = meta['name']
-        version = meta['version']
+            version = '*'
+            dependencies = {}
+
+        meta = CollectionVersionMetadata(namespace, name, version, None, None, dependencies)
 
         files = info.get('files_file', {}).get('files', {})
 
         return CollectionRequirement(namespace, name, b_path, None, [version], version, force, parent=parent,
-                                     validate_certs=validate_certs, metadata=meta, files=files, skip=True)
+                                     metadata=meta, files=files, skip=True)
 
     @staticmethod
-    def from_name(collection, servers, requirement, validate_certs, force, parent=None):
+    def from_name(collection, apis, requirement, force, parent=None):
         namespace, name = collection.split('.', 1)
-        galaxy_info = None
         galaxy_meta = None
 
-        for server in servers:
-            collection_url_paths = [server, 'api', 'v2', 'collections', namespace, name, 'versions']
-
-            is_single = False
-            if not (requirement == '*' or requirement.startswith('<') or requirement.startswith('>') or
-                    requirement.startswith('!=')):
-                if requirement.startswith('='):
-                    requirement = requirement.lstrip('=')
-
-                collection_url_paths.append(requirement)
-                is_single = True
-
-            n_collection_url = _urljoin(*collection_url_paths)
+        for api in apis:
             try:
-                resp = json.load(open_url(n_collection_url, validate_certs=validate_certs))
-            except urllib_error.HTTPError as err:
-                if err.code == 404:
+                if not (requirement == '*' or requirement.startswith('<') or requirement.startswith('>') or
+                        requirement.startswith('!=')):
+                    if requirement.startswith('='):
+                        requirement = requirement.lstrip('=')
+
+                    resp = api.get_collection_version_metadata(namespace, name, requirement)
+
+                    galaxy_meta = resp
+                    versions = [resp.version]
+                else:
+                    resp = api.get_collection_versions(namespace, name)
+
+                    # Galaxy supports semver but ansible-galaxy does not. We ignore any versions that don't match
+                    # StrictVersion (x.y.z) and only support pre-releases if an explicit version was set (done above).
+                    versions = [v for v in resp if StrictVersion.version_re.match(v)]
+            except GalaxyError as err:
+                if err.http_code == 404:
+                    display.vvv("Collection '%s' is not available from server %s %s"
+                                % (collection, api.name, api.api_server))
                     continue
                 raise
 
-            if is_single:
-                galaxy_info = resp
-                galaxy_meta = resp['metadata']
-                versions = [resp['version']]
-            else:
-                versions = []
-                while True:
-                    # Galaxy supports semver but ansible-galaxy does not. We ignore any versions that don't match
-                    # StrictVersion (x.y.z) and only support pre-releases if an explicit version was set (done above).
-                    versions += [v['version'] for v in resp['results'] if StrictVersion.version_re.match(v['version'])]
-                    if resp['next'] is None:
-                        break
-                    resp = json.load(open_url(to_native(resp['next'], errors='surrogate_or_strict'),
-                                              validate_certs=validate_certs))
-
+            display.vvv("Collection '%s' obtained from server %s %s" % (collection, api.name, api.api_server))
             break
         else:
             raise AnsibleError("Failed to find collection %s:%s" % (collection, requirement))
 
-        req = CollectionRequirement(namespace, name, None, server, versions, requirement, force, parent=parent,
-                                    validate_certs=validate_certs, metadata=galaxy_meta)
-        req._galaxy_info = galaxy_info
+        req = CollectionRequirement(namespace, name, None, api, versions, requirement, force, parent=parent,
+                                    metadata=galaxy_meta)
         return req
 
 
@@ -377,67 +370,36 @@ def build_collection(collection_path, output_path, force):
     _build_collection_tar(b_collection_path, b_collection_output, collection_manifest, file_manifest)
 
 
-def publish_collection(collection_path, server, key, ignore_certs, wait):
+def publish_collection(collection_path, api, wait, timeout):
     """
     Publish an Ansible collection tarball into an Ansible Galaxy server.
 
     :param collection_path: The path to the collection tarball to publish.
-    :param server: A native string of the Ansible Galaxy server to publish to.
-    :param key: The API key to use for authorization.
-    :param ignore_certs: Whether to ignore certificate validation when interacting with the server.
+    :param api: A GalaxyAPI to publish the collection to.
+    :param wait: Whether to wait until the import process is complete.
+    :param timeout: The time in seconds to wait for the import process to finish, 0 is indefinite.
     """
-    b_collection_path = to_bytes(collection_path, errors='surrogate_or_strict')
-    if not os.path.exists(b_collection_path):
-        raise AnsibleError("The collection path specified '%s' does not exist." % to_native(collection_path))
-    elif not tarfile.is_tarfile(b_collection_path):
-        raise AnsibleError("The collection path specified '%s' is not a tarball, use 'ansible-galaxy collection "
-                           "build' to create a proper release artifact." % to_native(collection_path))
-
-    display.display("Publishing collection artifact '%s' to %s" % (collection_path, server))
-
-    n_url = _urljoin(server, 'api', 'v2', 'collections')
-
-    data, content_type = _get_mime_data(b_collection_path)
-    headers = {
-        'Content-type': content_type,
-        'Content-length': len(data),
-    }
-    if key:
-        headers['Authorization'] = "Token %s" % key
-    validate_certs = not ignore_certs
-
-    try:
-        resp = json.load(open_url(n_url, data=data, headers=headers, method='POST', validate_certs=validate_certs))
-    except urllib_error.HTTPError as err:
-        try:
-            err_info = json.load(err)
-        except (AttributeError, ValueError):
-            err_info = {}
-
-        code = to_native(err_info.get('code', 'Unknown'))
-        message = to_native(err_info.get('message', 'Unknown error returned by Galaxy server.'))
-
-        raise AnsibleError("Error when publishing collection (HTTP Code: %d, Message: %s Code: %s)"
-                           % (err.code, message, code))
-
-    display.vvv("Collection has been pushed to the Galaxy server %s" % server)
-    import_uri = resp['task']
+    import_uri = api.publish_collection(collection_path)
     if wait:
-        _wait_import(import_uri, key, validate_certs)
-        display.display("Collection has been successfully published to the Galaxy server")
+        display.display("Collection has been published to the Galaxy server %s %s" % (api.name, api.api_server))
+        with _display_progress():
+            api.wait_import_task(import_uri, timeout)
+        display.display("Collection has been successfully published and imported to the Galaxy server %s %s"
+                        % (api.name, api.api_server))
     else:
-        display.display("Collection has been pushed to the Galaxy server, not waiting until import has completed "
-                        "due to --no-wait being set. Import task results can be found at %s" % import_uri)
+        display.display("Collection has been pushed to the Galaxy server %s %s, not waiting until import has "
+                        "completed due to --no-wait being set. Import task results can be found at %s"
+                        % (api.name, api.api_server, import_uri))
 
 
-def install_collections(collections, output_path, servers, validate_certs, ignore_errors, no_deps, force, force_deps):
+def install_collections(collections, output_path, apis, validate_certs, ignore_errors, no_deps, force, force_deps):
     """
     Install Ansible collections to the path specified.
 
     :param collections: The collections to install, should be a list of tuples with (name, requirement, Galaxy server).
     :param output_path: The path to install the collections to.
-    :param servers: A list of Galaxy servers to query when searching for a collection.
-    :param validate_certs: Whether to validate the Galaxy server certificates.
+    :param apis: A list of GalaxyAPIs to query when searching for a collection.
+    :param validate_certs: Whether to validate the certificates if downloading a tarball.
     :param ignore_errors: Whether to ignore any errors when installing the collection.
     :param no_deps: Ignore any collection dependencies and only install the base requirements.
     :param force: Re-install a collection if it has already been installed.
@@ -446,68 +408,36 @@ def install_collections(collections, output_path, servers, validate_certs, ignor
     existing_collections = _find_existing_collections(output_path)
 
     with _tempdir() as b_temp_path:
-        dependency_map = _build_dependency_map(collections, existing_collections, b_temp_path, servers, validate_certs,
-                                               force, force_deps, no_deps)
+        display.display("Process install dependency map")
+        with _display_progress():
+            dependency_map = _build_dependency_map(collections, existing_collections, b_temp_path, apis,
+                                                   validate_certs, force, force_deps, no_deps)
 
-        for collection in dependency_map.values():
-            try:
-                collection.install(output_path, b_temp_path)
-            except AnsibleError as err:
-                if ignore_errors:
-                    display.warning("Failed to install collection %s but skipping due to --ignore-errors being set. "
-                                    "Error: %s" % (str(collection), to_text(err)))
-                else:
-                    raise
+        display.display("Starting collection install process")
+        with _display_progress():
+            for collection in dependency_map.values():
+                try:
+                    collection.install(output_path, b_temp_path)
+                except AnsibleError as err:
+                    if ignore_errors:
+                        display.warning("Failed to install collection %s but skipping due to --ignore-errors being set. "
+                                        "Error: %s" % (to_text(collection), to_text(err)))
+                    else:
+                        raise
 
 
-def parse_collections_requirements_file(requirements_file):
+def validate_collection_name(name):
     """
-    Parses an Ansible requirement.yml file and returns all the collections defined in it. This value ca be used with
-    install_collection(). The requirements file is in the form:
+    Validates the collection name as an input from the user or a requirements file fit the requirements.
 
-        ---
-        collections:
-        - namespace.collection
-        - name: namespace.collection
-          version: version identifier, multiple identifiers are separated by ','
-          source: the URL or prededefined source name in ~/.ansible_galaxy to pull the collection from
-
-    :param requirements_file: The path to the requirements file.
-    :return: A list of tuples (name, version, source).
+    :param name: The input name with optional range specifier split by ':'.
+    :return: The input value, required for argparse validation.
     """
-    collection_info = []
+    collection, dummy, dummy = name.partition(':')
+    if AnsibleCollectionRef.is_valid_collection_name(collection):
+        return name
 
-    b_requirements_file = to_bytes(requirements_file, errors='surrogate_or_strict')
-    if not os.path.exists(b_requirements_file):
-        raise AnsibleError("The requirements file '%s' does not exist." % to_native(requirements_file))
-
-    display.vvv("Reading collection requirement file at '%s'" % requirements_file)
-    with open(b_requirements_file, 'rb') as req_obj:
-        try:
-            requirements = yaml.safe_load(req_obj)
-        except YAMLError as err:
-            raise AnsibleError("Failed to parse the collection requirements yml at '%s' with the following error:\n%s"
-                               % (to_native(requirements_file), to_native(err)))
-
-    if not isinstance(requirements, dict) or 'collections' not in requirements:
-        # TODO: Link to documentation page that documents the requirements.yml format for collections.
-        raise AnsibleError("Expecting collections requirements file to be a dict with the key "
-                           "collections that contains a list of collections to install.")
-
-    for collection_req in requirements['collections']:
-        if isinstance(collection_req, dict):
-            req_name = collection_req.get('name', None)
-            if req_name is None:
-                raise AnsibleError("Collections requirement entry should contain the key name.")
-
-            req_version = collection_req.get('version', '*')
-            req_source = collection_req.get('source', None)
-
-            collection_info.append((req_name, req_version, req_source))
-        else:
-            collection_info.append((collection_req, '*', None))
-
-    return collection_info
+    raise AnsibleError("Invalid collection name '%s', name must be in the format <namespace>.<collection>." % name)
 
 
 @contextmanager
@@ -522,6 +452,64 @@ def _tarfile_extract(tar, member):
     tar_obj = tar.extractfile(member)
     yield tar_obj
     tar_obj.close()
+
+
+@contextmanager
+def _display_progress():
+    def progress(display_queue, actual_display):
+        actual_display.debug("Starting display_progress display thread")
+        t = threading.current_thread()
+
+        while True:
+            for c in "|/-\\":
+                actual_display.display(c + "\b", newline=False)
+                time.sleep(0.1)
+
+                # Display a message from the main thread
+                while True:
+                    try:
+                        method, args, kwargs = display_queue.get(block=False, timeout=0.1)
+                    except queue.Empty:
+                        break
+                    else:
+                        func = getattr(actual_display, method)
+                        func(*args, **kwargs)
+
+                if getattr(t, "finish", False):
+                    actual_display.debug("Received end signal for display_progress display thread")
+                    return
+
+    class DisplayThread(object):
+
+        def __init__(self, display_queue):
+            self.display_queue = display_queue
+
+        def __getattr__(self, attr):
+            def call_display(*args, **kwargs):
+                self.display_queue.put((attr, args, kwargs))
+
+            return call_display
+
+    # Temporary override the global display class with our own which add the calls to a queue for the thread to call.
+    global display
+    old_display = display
+    try:
+        display_queue = queue.Queue()
+        display = DisplayThread(display_queue)
+        t = threading.Thread(target=progress, args=(display_queue, old_display))
+        t.daemon = True
+        t.start()
+
+        try:
+            yield
+        finally:
+            t.finish = True
+            t.join()
+    except Exception:
+        # The exception is re-raised so we can sure the thread is finished and not using the display anymore
+        raise
+    finally:
+        display = old_display
 
 
 def _get_galaxy_yml(b_galaxy_yml_path):
@@ -737,70 +725,6 @@ def _build_collection_tar(b_collection_path, b_tar_path, collection_manifest, fi
         display.display('Created collection for %s at %s' % (collection_name, to_text(b_tar_path)))
 
 
-def _get_mime_data(b_collection_path):
-    with open(b_collection_path, 'rb') as collection_tar:
-        data = collection_tar.read()
-
-    boundary = '--------------------------%s' % uuid.uuid4().hex
-    b_file_name = os.path.basename(b_collection_path)
-    part_boundary = b"--" + to_bytes(boundary, errors='surrogate_or_strict')
-
-    form = [
-        part_boundary,
-        b"Content-Disposition: form-data; name=\"sha256\"",
-        to_bytes(secure_hash_s(data), errors='surrogate_or_strict'),
-        part_boundary,
-        b"Content-Disposition: file; name=\"file\"; filename=\"%s\"" % b_file_name,
-        b"Content-Type: application/octet-stream",
-        b"",
-        data,
-        b"%s--" % part_boundary,
-    ]
-
-    content_type = 'multipart/form-data; boundary=%s' % boundary
-
-    return b"\r\n".join(form), content_type
-
-
-def _wait_import(task_url, key, validate_certs):
-    headers = {}
-    if key:
-        headers['Authorization'] = "Token %s" % key
-
-    display.vvv('Waiting until galaxy import task %s has completed' % task_url)
-
-    wait = 2
-    while True:
-        resp = json.load(open_url(to_native(task_url, errors='surrogate_or_strict'), headers=headers, method='GET',
-                                  validate_certs=validate_certs))
-
-        if resp.get('finished_at', None):
-            break
-        elif wait > 20:
-            # We try for a maximum of ~60 seconds before giving up in case something has gone wrong on the server end.
-            raise AnsibleError("Timeout while waiting for the Galaxy import process to finish, check progress at '%s'"
-                               % to_native(task_url))
-
-        status = resp.get('status', 'waiting')
-        display.vvv('Galaxy import process has a status of %s, wait %d seconds before trying again' % (status, wait))
-        time.sleep(wait)
-        wait *= 1.5  # poor man's exponential backoff algo so we don't flood the Galaxy API.
-
-    for message in resp.get('messages', []):
-        level = message['level']
-        if level == 'error':
-            display.error("Galaxy import error message: %s" % message['message'])
-        elif level == 'warning':
-            display.warning("Galaxy import warning message: %s" % message['message'])
-        else:
-            display.vvv("Galaxy import message: %s - %s" % (level, message['message']))
-
-    if resp['state'] == 'failed':
-        code = to_native(resp['error'].get('code', 'UNKNOWN'))
-        description = to_native(resp['error'].get('description', "Unknown error, see %s for more details" % task_url))
-        raise AnsibleError("Galaxy import process failed: %s (Code: %s)" % (description, code))
-
-
 def _find_existing_collections(path):
     collections = []
 
@@ -813,24 +737,24 @@ def _find_existing_collections(path):
         for b_collection in os.listdir(b_namespace_path):
             b_collection_path = os.path.join(b_namespace_path, b_collection)
             if os.path.isdir(b_collection_path):
-                req = CollectionRequirement.from_path(b_collection_path, True, False)
-                display.vvv("Found installed collection %s:%s at '%s'" % (str(req), req.latest_version,
+                req = CollectionRequirement.from_path(b_collection_path, False)
+                display.vvv("Found installed collection %s:%s at '%s'" % (to_text(req), req.latest_version,
                                                                           to_text(b_collection_path)))
                 collections.append(req)
 
     return collections
 
 
-def _build_dependency_map(collections, existing_collections, b_temp_path, servers, validate_certs, force, force_deps,
+def _build_dependency_map(collections, existing_collections, b_temp_path, apis, validate_certs, force, force_deps,
                           no_deps):
     dependency_map = {}
 
     # First build the dependency map on the actual requirements
     for name, version, source in collections:
-        _get_collection_info(dependency_map, existing_collections, name, version, source, b_temp_path, servers,
+        _get_collection_info(dependency_map, existing_collections, name, version, source, b_temp_path, apis,
                              validate_certs, (force or force_deps))
 
-    checked_parents = set([str(c) for c in dependency_map.values() if c.skip])
+    checked_parents = set([to_text(c) for c in dependency_map.values() if c.skip])
     while len(dependency_map) != len(checked_parents):
         while not no_deps:  # Only parse dependencies if no_deps was not set
             parents_to_check = set(dependency_map.keys()).difference(checked_parents)
@@ -843,7 +767,7 @@ def _build_dependency_map(collections, existing_collections, b_temp_path, server
                     deps_exhausted = False
                     for dep_name, dep_requirement in parent_info.dependencies.items():
                         _get_collection_info(dependency_map, existing_collections, dep_name, dep_requirement,
-                                             parent_info.source, b_temp_path, servers, validate_certs, force_deps,
+                                             parent_info.api, b_temp_path, apis, validate_certs, force_deps,
                                              parent=parent)
 
                     checked_parents.add(parent)
@@ -863,7 +787,7 @@ def _build_dependency_map(collections, existing_collections, b_temp_path, server
     return dependency_map
 
 
-def _get_collection_info(dep_map, existing_collections, collection, requirement, source, b_temp_path, server_list,
+def _get_collection_info(dep_map, existing_collections, collection, requirement, source, b_temp_path, apis,
                          validate_certs, force, parent=None):
     dep_msg = ""
     if parent:
@@ -879,38 +803,35 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
         b_tar_path = _download_file(collection, b_temp_path, None, validate_certs)
 
     if b_tar_path:
-        req = CollectionRequirement.from_tar(b_tar_path, validate_certs, force, parent=parent)
+        req = CollectionRequirement.from_tar(b_tar_path, force, parent=parent)
 
-        collection_name = str(req)
+        collection_name = to_text(req)
         if collection_name in dep_map:
             collection_info = dep_map[collection_name]
             collection_info.add_requirement(None, req.latest_version)
         else:
             collection_info = req
     else:
+        validate_collection_name(collection)
+
         display.vvvv("Collection requirement '%s' is the name of a collection" % collection)
         if collection in dep_map:
             collection_info = dep_map[collection]
             collection_info.add_requirement(parent, requirement)
         else:
-            servers = [source] if source else server_list
-            collection_info = CollectionRequirement.from_name(collection, servers, requirement, validate_certs, force,
-                                                              parent=parent)
+            apis = [source] if source else apis
+            collection_info = CollectionRequirement.from_name(collection, apis, requirement, force, parent=parent)
 
-    existing = [c for c in existing_collections if str(c) == str(collection_info)]
+    existing = [c for c in existing_collections if to_text(c) == to_text(collection_info)]
     if existing and not collection_info.force:
         # Test that the installed collection fits the requirement
-        existing[0].add_requirement(str(collection_info), requirement)
+        existing[0].add_requirement(to_text(collection_info), requirement)
         collection_info = existing[0]
 
-    dep_map[str(collection_info)] = collection_info
+    dep_map[to_text(collection_info)] = collection_info
 
 
-def _urljoin(*args):
-    return '/'.join(to_native(a, errors='surrogate_or_strict').rstrip('/') for a in args + ('',))
-
-
-def _download_file(url, b_path, expected_hash, validate_certs):
+def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
     bufsize = 65536
     digest = sha256()
 
@@ -920,7 +841,9 @@ def _download_file(url, b_path, expected_hash, validate_certs):
     b_file_path = tempfile.NamedTemporaryFile(dir=b_path, prefix=b_file_name, suffix=b_file_ext, delete=False).name
 
     display.vvv("Downloading %s to %s" % (url, to_text(b_path)))
-    resp = open_url(to_native(url, errors='surrogate_or_strict'), validate_certs=validate_certs)
+    # Galaxy redirs downloads to S3 which reject the request if an Authorization header is attached so don't redir that
+    resp = open_url(to_native(url, errors='surrogate_or_strict'), validate_certs=validate_certs, headers=headers,
+                    unredirected_headers=['Authorization'])
 
     with open(b_file_path, 'wb') as download_file:
         data = resp.read(bufsize)

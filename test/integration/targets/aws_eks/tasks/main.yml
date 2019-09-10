@@ -1,0 +1,66 @@
+- set_fact:
+    virtualenv: "{{ remote_tmp_dir }}/virtualenv"
+    virtualenv_command: "{{ ansible_python_interpreter }} -m virtualenv"
+
+- set_fact:
+    virtualenv_interpreter: "{{ virtualenv }}/bin/python"
+
+- pip:
+    name: virtualenv
+
+# Test graceful failure for missing kubernetes-validate
+
+- pip:
+    name:
+      - 'botocore<1.10.1'
+      - boto3
+      - coverage
+    virtualenv: "{{ virtualenv }}"
+    virtualenv_command: "{{ virtualenv_command }}"
+    virtualenv_site_packages: no
+
+- include_tasks: botocore_lt_1.10.1.yml
+  vars:
+    ansible_python_interpreter: "{{ virtualenv_interpreter }}"
+
+- file:
+    path: "{{ virtualenv }}"
+    state: absent
+
+# Test graceful failures when botocore<1.12.38
+
+- pip:
+    name:
+      - 'botocore>1.10.1,<1.12.38'
+      - boto3
+      - coverage
+    virtualenv: "{{ virtualenv }}"
+    virtualenv_command: "{{ virtualenv_command }}"
+    virtualenv_site_packages: no
+
+- include_tasks: botocore_lt_1.12.38.yml
+  vars:
+    ansible_python_interpreter: "{{ virtualenv_interpreter }}"
+
+- file:
+    path: "{{ virtualenv }}"
+    state: absent
+
+# Test validate with kubernetes-validate
+
+- pip:
+    name:
+      - 'botocore>=1.10.1'
+      - boto3
+    virtualenv: "{{ virtualenv }}"
+    virtualenv_command: "{{ virtualenv_command }}"
+    virtualenv_site_packages: no
+
+- include_tasks: full_test.yml
+  vars:
+    ansible_python_interpreter: "{{ virtualenv_interpreter }}"
+    playbook_namespace: ansible-test-k8s-validate
+
+- file:
+    path: "{{ virtualenv }}"
+    state: absent

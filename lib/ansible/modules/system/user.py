@@ -57,8 +57,7 @@ options:
     groups:
         description:
             - List of groups user will be added to. When set to an empty string C(''),
-              C(null), or C(~), the user is removed from all groups except the
-              primary group. (C(~) means C(null) in YAML)
+              the user is removed from all groups except the primary group.
             - Before Ansible 2.3, the only input format allowed was a comma separated string.
             - Mutually exclusive with C(local)
         type: list
@@ -93,6 +92,7 @@ options:
             - Optionally set the user's password to this crypted value.
             - On macOS systems, this value has to be cleartext. Beware of security issues.
             - To create a disabled account on Linux systems, set this to C('!') or C('*').
+            - To create a disabled account on OpenBSD, set this to C('*************').
             - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
               for details on various ways to generate these password values.
         type: str
@@ -371,7 +371,7 @@ ssh_fingerprint:
   type: str
   sample: '2048 SHA256:aYNHYcyVm87Igh0IMEDMbvW0QDlRQfE0aJugp684ko8 ansible-generated on host (RSA)'
 ssh_key_file:
-  description: Path to generated SSH public key file
+  description: Path to generated SSH private key file
   returned: When C(generate_ssh_key) is C(True)
   type: str
   sample: /home/asmith/.ssh/id_rsa
@@ -514,8 +514,8 @@ class User(object):
         if self.module.params['password'] and self.platform != 'Darwin':
             maybe_invalid = False
 
-            # Allow setting the password to * or ! in order to disable the account
-            if self.module.params['password'] in set(['*', '!']):
+            # Allow setting certain passwords in order to disable the account
+            if self.module.params['password'] in set(['*', '!', '*************']):
                 maybe_invalid = False
             else:
                 # : for delimiter, * for disable user, ! for lock user
@@ -869,9 +869,11 @@ class User(object):
                         exists = True
                         break
 
-            self.module.warn(
-                "'local: true' specified and user was not found in {file}. "
-                "The local user account may already exist if the local account database exists somewhere other than {file}.".format(file=self.PASSWORDFILE))
+            if not exists:
+                self.module.warn(
+                    "'local: true' specified and user '{name}' was not found in {file}. "
+                    "The local user account may already exist if the local account database exists "
+                    "somewhere other than {file}.".format(file=self.PASSWORDFILE, name=self.name))
 
             return exists
 
@@ -2899,7 +2901,7 @@ def main():
             # that do not exist.
             path_needs_parents = False
             if user.home:
-                parent = os.path.basename(user.home)
+                parent = os.path.dirname(user.home)
                 if not os.path.isdir(parent):
                     path_needs_parents = True
 

@@ -79,9 +79,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#instanceGroupManager'"
 - name: verify that instance_group_manager was created
-  gcp_compute_instance_group_manager_facts:
+  gcp_compute_instance_group_manager_info:
       filters:
          - name = {{ resource_name }}
       zone: us-west1-a
@@ -112,7 +111,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#instanceGroupManager'"
 #----------------------------------------------------------
 - name: delete a instance group manager
   gcp_compute_instance_group_manager:
@@ -131,7 +129,7 @@
     that:
       - result.changed == true
 - name: verify that instance_group_manager was deleted
-  gcp_compute_instance_group_manager_facts:
+  gcp_compute_instance_group_manager_info:
       filters:
          - name = {{ resource_name }}
       zone: us-west1-a

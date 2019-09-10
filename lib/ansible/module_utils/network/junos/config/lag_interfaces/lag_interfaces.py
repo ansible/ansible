@@ -14,9 +14,10 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import to_list, get_xml_conf_arg
+from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.junos.facts.facts import Facts
 from ansible.module_utils.network.junos.junos import locked_config, load_config, commit_configuration, discard_changes, tostring
+from ansible.module_utils.network.junos.utils.utils import get_resource_config
 from ansible.module_utils.network.common.netconf import build_root_xml_node, build_child_xml_node, build_subtree
 
 
@@ -167,7 +168,7 @@ class Lag_interfaces(ConfigBase):
                 <interfaces/>
             </configuration>
             """
-        data = self._connection.get_configuration(filter=config_filter)
+        data = get_resource_config(self._connection, config_filter=config_filter)
 
         for config in want:
             lag_name = config['name']

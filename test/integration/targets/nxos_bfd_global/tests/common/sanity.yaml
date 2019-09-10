@@ -85,6 +85,16 @@
     state: disabled
   ignore_errors: yes
 
+- name: feature bfd init
+  # 'feature bfd' init is slow on some platforms, retry on fail
+  nxos_bfd_global:
+    echo_interface:        "{{ nd_echo }}"
+  delay: 3
+  retries: 1
+  register: result
+  until: result is not failed
+  ignore_errors: yes
+
 - block:
   - name: BFD non defaults
     nxos_bfd_global: &bfd_non_def

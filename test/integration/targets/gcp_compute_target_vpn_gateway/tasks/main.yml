@@ -54,9 +54,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#targetVpnGateway'"
 - name: verify that target_vpn_gateway was created
-  gcp_compute_target_vpn_gateway_facts:
+  gcp_compute_target_vpn_gateway_info:
       filters:
          - name = {{ resource_name }}
       region: us-west1
@@ -85,7 +84,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#targetVpnGateway'"
 #----------------------------------------------------------
 - name: delete a target vpn gateway
   gcp_compute_target_vpn_gateway:
@@ -102,7 +100,7 @@
     that:
       - result.changed == true
 - name: verify that target_vpn_gateway was deleted
-  gcp_compute_target_vpn_gateway_facts:
+  gcp_compute_target_vpn_gateway_info:
       filters:
          - name = {{ resource_name }}
       region: us-west1

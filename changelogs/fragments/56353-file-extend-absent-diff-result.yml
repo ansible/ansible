@@ -1,2 +1,0 @@
-minor_changes:
-  - file - Extend ``-diff`` to return list of files and folders that will be removed in case of ``state=absent`` (https://github.com/ansible/ansible/pull/56353)

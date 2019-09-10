@@ -2,8 +2,6 @@
 # (c) 2018, NetApp Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from mock import MagicMock
-
 from ansible.modules.storage.netapp.netapp_e_mgmt_interface import MgmtInterface
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
 

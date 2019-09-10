@@ -16,38 +16,44 @@ Structure
 
 The ``galaxy.yml`` file must contain the following keys in valid YAML:
 
-.. raw:: html
 
-    <table  border=0 cellpadding=0 class="documentation-table">
-        {# Header of the documentation -#}
-        <tr>
-            <th>Key</th>
-            <th width="100%">Comments</th>
-        </tr>
-        {% for entry in options %}
-            <tr>
-                {# key name with required or type label #}
-                <td>
-                    <b>@{ entry.key }@</b>
-                    <div style="font-size: small">
-                        <span style="color: purple">@{ entry.type | documented_type }@</span>
-                        {% if entry.get('required', False) %} / <span style="color: red">required</span>{% endif %}
-                    </div>
-                </td>
-                {# Comments #}
-                <td>
-                    {% if entry.description is string %}
-                        <div>@{ entry.description | replace('\n', '\n    ') | html_ify }@</div>
-                    {% else %}
-                        {% for desc in entry.description %}
-                            <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
-                        {% endfor %}
-                    {% endif %}
-                </td>
-            </tr>
-        {% endfor %}
-    </table>
-    <br/>
+.. rst-class:: documentation-table
+
+.. list-table::
+    :header-rows: 1
+    :widths: auto
+
+    * - Key
+      - Comment
+
+{%- for entry in options %}
+
+
+    * - .. rst-class:: value-name
+
+        @{ entry.key }@ |br|
+
+        .. rst-class:: value-type
+
+        @{ entry.type | documented_type }@ |_|
+
+        {% if entry.get('required', False) -%}
+        .. rst-class:: value-separator
+
+        / |_|
+
+        .. rst-class:: value-required
+
+        required
+        {%- endif %}
+
+
+      - {% for desc in entry.description -%}
+        @{ desc | trim | rst_ify }@
+
+        {% endfor -%}
+{%- endfor %}
+
 
 Examples
 ========

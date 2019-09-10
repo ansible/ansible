@@ -186,6 +186,7 @@ options:
           - Monitor rule type when C(monitors) is specified.
           - When creating a new pool, if this value is not specified, the default of
             'all' will be used.
+        type: str
         choices:
           - all
           - at_least

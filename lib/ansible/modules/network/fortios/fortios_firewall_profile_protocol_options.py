@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_firewall_profile_protocol_options
 short_description: Configure protocol options in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure firewall feature and profile_protocol_options category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify firewall feature and profile_protocol_options category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,156 +41,209 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     firewall_profile_protocol_options:
         description:
             - Configure protocol options.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
             comment:
                 description:
                     - Optional comments.
+                type: str
             dns:
                 description:
                     - Configure DNS protocol options.
+                type: dict
                 suboptions:
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 53).
+                            - Ports to scan for content (1 - 65535).
+                        type: int
                     status:
                         description:
                             - Enable/disable the active status of scanning for this protocol.
+                        type: str
                         choices:
                             - enable
                             - disable
             ftp:
                 description:
                     - Configure FTP protocol options.
+                type: dict
                 suboptions:
-                    comfort-amount:
+                    comfort_amount:
                         description:
-                            - Amount of data to send in a transmission for client comforting (1 - 10240 bytes, default = 1).
-                    comfort-interval:
+                            - Amount of data to send in a transmission for client comforting (1 - 10240 bytes).
+                        type: int
+                    comfort_interval:
                         description:
-                            - Period of time between start, or last transmission, and the next client comfort transmission of data (1 - 900 sec, default = 10).
-                    inspect-all:
+                            - Period of time between start, or last transmission, and the next client comfort transmission of data (1 - 900 sec).
+                        type: int
+                    inspect_all:
                         description:
                             - Enable/disable the inspection of all ports for the protocol.
+                        type: str
                         choices:
                             - enable
                             - disable
                     options:
                         description:
                             - One or more options that can be applied to the session.
+                        type: str
                         choices:
                             - clientcomfort
                             - oversize
                             - splice
                             - bypass-rest-command
                             - bypass-mode-command
-                    oversize-limit:
+                    oversize_limit:
                         description:
-                            - Maximum in-memory file size that can be scanned (1 - 383 MB, default = 10).
+                            - Maximum in-memory file size that can be scanned (1 - 383 MB).
+                        type: int
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 21).
-                    scan-bzip2:
+                            - Ports to scan for content (1 - 65535).
+                        type: int
+                    scan_bzip2:
                         description:
                             - Enable/disable scanning of BZip2 compressed files.
+                        type: str
                         choices:
                             - enable
                             - disable
                     status:
                         description:
                             - Enable/disable the active status of scanning for this protocol.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    uncompressed-nest-limit:
+                    uncompressed_nest_limit:
                         description:
-                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100, default = 12).
-                    uncompressed-oversize-limit:
+                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100).
+                        type: int
+                    uncompressed_oversize_limit:
                         description:
-                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited, default = 10).
+                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited).
+                        type: int
             http:
                 description:
                     - Configure HTTP protocol options.
+                type: dict
                 suboptions:
-                    block-page-status-code:
+                    block_page_status_code:
                         description:
-                            - Code number returned for blocked HTTP pages (non-FortiGuard only) (100 - 599, default = 403).
-                    comfort-amount:
+                            - Code number returned for blocked HTTP pages (non-FortiGuard only) (100 - 599).
+                        type: int
+                    comfort_amount:
                         description:
-                            - Amount of data to send in a transmission for client comforting (1 - 10240 bytes, default = 1).
-                    comfort-interval:
+                            - Amount of data to send in a transmission for client comforting (1 - 10240 bytes).
+                        type: int
+                    comfort_interval:
                         description:
-                            - Period of time between start, or last transmission, and the next client comfort transmission of data (1 - 900 sec, default = 10).
-                    fortinet-bar:
+                            - Period of time between start, or last transmission, and the next client comfort transmission of data (1 - 900 sec).
+                        type: int
+                    fortinet_bar:
                         description:
                             - Enable/disable Fortinet bar on HTML content.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    fortinet-bar-port:
+                    fortinet_bar_port:
                         description:
-                            - Port for use by Fortinet Bar (1 - 65535, default = 8011).
-                    http-policy:
+                            - Port for use by Fortinet Bar (1 - 65535).
+                        type: int
+                    http_policy:
                         description:
                             - Enable/disable HTTP policy check.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    inspect-all:
+                    inspect_all:
                         description:
                             - Enable/disable the inspection of all ports for the protocol.
+                        type: str
                         choices:
                             - enable
                             - disable
                     options:
                         description:
                             - One or more options that can be applied to the session.
+                        type: str
                         choices:
                             - clientcomfort
                             - servercomfort
                             - oversize
                             - chunkedbypass
-                    oversize-limit:
+                    oversize_limit:
                         description:
-                            - Maximum in-memory file size that can be scanned (1 - 383 MB, default = 10).
+                            - Maximum in-memory file size that can be scanned (1 - 383 MB).
+                        type: int
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 80).
-                    post-lang:
+                            - Ports to scan for content (1 - 65535).
+                        type: int
+                    post_lang:
                         description:
                             - ID codes for character sets to be used to convert to UTF-8 for banned words and DLP on HTTP posts (maximum of 5 character sets).
+                        type: str
                         choices:
                             - jisx0201
                             - jisx0208
@@ -216,287 +266,349 @@ options:
                             - cp874
                             - cp1252
                             - cp1251
-                    range-block:
+                    range_block:
                         description:
                             - Enable/disable blocking of partial downloads.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    retry-count:
+                    retry_count:
                         description:
-                            - Number of attempts to retry HTTP connection (0 - 100, default = 0).
-                    scan-bzip2:
+                            - Number of attempts to retry HTTP connection (0 - 100).
+                        type: int
+                    scan_bzip2:
                         description:
                             - Enable/disable scanning of BZip2 compressed files.
+                        type: str
                         choices:
                             - enable
                             - disable
                     status:
                         description:
                             - Enable/disable the active status of scanning for this protocol.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    streaming-content-bypass:
+                    streaming_content_bypass:
                         description:
                             - Enable/disable bypassing of streaming content from buffering.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    strip-x-forwarded-for:
+                    strip_x_forwarded_for:
                         description:
                             - Enable/disable stripping of HTTP X-Forwarded-For header.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    switching-protocols:
+                    switching_protocols:
                         description:
                             - Bypass from scanning, or block a connection that attempts to switch protocol.
+                        type: str
                         choices:
                             - bypass
                             - block
-                    uncompressed-nest-limit:
+                    uncompressed_nest_limit:
                         description:
-                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100, default = 12).
-                    uncompressed-oversize-limit:
+                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100).
+                        type: int
+                    uncompressed_oversize_limit:
                         description:
-                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited, default = 10).
+                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited).
+                        type: int
             imap:
                 description:
                     - Configure IMAP protocol options.
+                type: dict
                 suboptions:
-                    inspect-all:
+                    inspect_all:
                         description:
                             - Enable/disable the inspection of all ports for the protocol.
+                        type: str
                         choices:
                             - enable
                             - disable
                     options:
                         description:
                             - One or more options that can be applied to the session.
+                        type: str
                         choices:
                             - fragmail
                             - oversize
-                    oversize-limit:
+                    oversize_limit:
                         description:
-                            - Maximum in-memory file size that can be scanned (1 - 383 MB, default = 10).
+                            - Maximum in-memory file size that can be scanned (1 - 383 MB).
+                        type: int
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 143).
-                    scan-bzip2:
+                            - Ports to scan for content (1 - 65535).
+                        type: int
+                    scan_bzip2:
                         description:
                             - Enable/disable scanning of BZip2 compressed files.
+                        type: str
                         choices:
                             - enable
                             - disable
                     status:
                         description:
                             - Enable/disable the active status of scanning for this protocol.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    uncompressed-nest-limit:
+                    uncompressed_nest_limit:
                         description:
-                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100, default = 12).
-                    uncompressed-oversize-limit:
+                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100).
+                        type: int
+                    uncompressed_oversize_limit:
                         description:
-                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited, default = 10).
-            mail-signature:
+                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited).
+                        type: int
+            mail_signature:
                 description:
                     - Configure Mail signature.
+                type: dict
                 suboptions:
                     signature:
                         description:
                             - Email signature to be added to outgoing email (if the signature contains spaces, enclose with quotation marks).
+                        type: str
                     status:
                         description:
                             - Enable/disable adding an email signature to SMTP email messages as they pass through the FortiGate.
+                        type: str
                         choices:
                             - disable
                             - enable
             mapi:
                 description:
                     - Configure MAPI protocol options.
+                type: dict
                 suboptions:
                     options:
                         description:
                             - One or more options that can be applied to the session.
+                        type: str
                         choices:
                             - fragmail
                             - oversize
-                    oversize-limit:
+                    oversize_limit:
                         description:
-                            - Maximum in-memory file size that can be scanned (1 - 383 MB, default = 10).
+                            - Maximum in-memory file size that can be scanned (1 - 383 MB).
+                        type: int
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 135).
-                    scan-bzip2:
+                            - Ports to scan for content (1 - 65535).
+                        type: int
+                    scan_bzip2:
                         description:
                             - Enable/disable scanning of BZip2 compressed files.
+                        type: str
                         choices:
                             - enable
                             - disable
                     status:
                         description:
                             - Enable/disable the active status of scanning for this protocol.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    uncompressed-nest-limit:
+                    uncompressed_nest_limit:
                         description:
-                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100, default = 12).
-                    uncompressed-oversize-limit:
+                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100).
+                        type: int
+                    uncompressed_oversize_limit:
                         description:
-                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited, default = 10).
+                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited).
+                        type: int
             name:
                 description:
                     - Name.
                 required: true
+                type: str
             nntp:
                 description:
                     - Configure NNTP protocol options.
+                type: dict
                 suboptions:
-                    inspect-all:
+                    inspect_all:
                         description:
                             - Enable/disable the inspection of all ports for the protocol.
+                        type: str
                         choices:
                             - enable
                             - disable
                     options:
                         description:
                             - One or more options that can be applied to the session.
+                        type: str
                         choices:
                             - oversize
                             - splice
-                    oversize-limit:
+                    oversize_limit:
                         description:
-                            - Maximum in-memory file size that can be scanned (1 - 383 MB, default = 10).
+                            - Maximum in-memory file size that can be scanned (1 - 383 MB).
+                        type: int
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 119).
-                    scan-bzip2:
+                            - Ports to scan for content (1 - 65535).
+                        type: int
+                    scan_bzip2:
                         description:
                             - Enable/disable scanning of BZip2 compressed files.
+                        type: str
                         choices:
                             - enable
                             - disable
                     status:
                         description:
                             - Enable/disable the active status of scanning for this protocol.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    uncompressed-nest-limit:
+                    uncompressed_nest_limit:
                         description:
-                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100, default = 12).
-                    uncompressed-oversize-limit:
+                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100).
+                        type: int
+                    uncompressed_oversize_limit:
                         description:
-                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited, default = 10).
-            oversize-log:
+                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited).
+                        type: int
+            oversize_log:
                 description:
                     - Enable/disable logging for antivirus oversize file blocking.
+                type: str
                 choices:
                     - disable
                     - enable
             pop3:
                 description:
                     - Configure POP3 protocol options.
+                type: dict
                 suboptions:
-                    inspect-all:
+                    inspect_all:
                         description:
                             - Enable/disable the inspection of all ports for the protocol.
+                        type: str
                         choices:
                             - enable
                             - disable
                     options:
                         description:
                             - One or more options that can be applied to the session.
+                        type: str
                         choices:
                             - fragmail
                             - oversize
-                    oversize-limit:
+                    oversize_limit:
                         description:
-                            - Maximum in-memory file size that can be scanned (1 - 383 MB, default = 10).
+                            - Maximum in-memory file size that can be scanned (1 - 383 MB).
+                        type: int
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 110).
-                    scan-bzip2:
+                            - Ports to scan for content (1 - 65535).
+                        type: int
+                    scan_bzip2:
                         description:
                             - Enable/disable scanning of BZip2 compressed files.
+                        type: str
                         choices:
                             - enable
                             - disable
                     status:
                         description:
                             - Enable/disable the active status of scanning for this protocol.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    uncompressed-nest-limit:
+                    uncompressed_nest_limit:
                         description:
-                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100, default = 12).
-                    uncompressed-oversize-limit:
+                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100).
+                        type: int
+                    uncompressed_oversize_limit:
                         description:
-                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited, default = 10).
-            replacemsg-group:
+                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited).
+                        type: int
+            replacemsg_group:
                 description:
                     - Name of the replacement message group to be used Source system.replacemsg-group.name.
-            rpc-over-http:
+                type: str
+            rpc_over_http:
                 description:
                     - Enable/disable inspection of RPC over HTTP.
+                type: str
                 choices:
                     - enable
                     - disable
             smtp:
                 description:
                     - Configure SMTP protocol options.
+                type: dict
                 suboptions:
-                    inspect-all:
+                    inspect_all:
                         description:
                             - Enable/disable the inspection of all ports for the protocol.
+                        type: str
                         choices:
                             - enable
                             - disable
                     options:
                         description:
                             - One or more options that can be applied to the session.
+                        type: str
                         choices:
                             - fragmail
                             - oversize
                             - splice
-                    oversize-limit:
+                    oversize_limit:
                         description:
-                            - Maximum in-memory file size that can be scanned (1 - 383 MB, default = 10).
+                            - Maximum in-memory file size that can be scanned (1 - 383 MB).
+                        type: int
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 25).
-                    scan-bzip2:
+                            - Ports to scan for content (1 - 65535).
+                        type: int
+                    scan_bzip2:
                         description:
                             - Enable/disable scanning of BZip2 compressed files.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    server-busy:
+                    server_busy:
                         description:
                             - Enable/disable SMTP server busy when server not available.
+                        type: str
                         choices:
                             - enable
                             - disable
                     status:
                         description:
                             - Enable/disable the active status of scanning for this protocol.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    uncompressed-nest-limit:
+                    uncompressed_nest_limit:
                         description:
-                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100, default = 12).
-                    uncompressed-oversize-limit:
+                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100).
+                        type: int
+                    uncompressed_oversize_limit:
                         description:
-                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited, default = 10).
-            switching-protocols-log:
+                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited).
+                        type: int
+            switching_protocols_log:
                 description:
                     - Enable/disable logging for HTTP/HTTPS switching protocols.
+                type: str
                 choices:
                     - disable
                     - enable
@@ -509,6 +621,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure protocol options.
     fortios_firewall_profile_protocol_options:
@@ -517,97 +630,97 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       firewall_profile_protocol_options:
-        state: "present"
         comment: "Optional comments."
         dns:
             ports: "5"
             status: "enable"
         ftp:
-            comfort-amount: "8"
-            comfort-interval: "9"
-            inspect-all: "enable"
+            comfort_amount: "8"
+            comfort_interval: "9"
+            inspect_all: "enable"
             options: "clientcomfort"
-            oversize-limit: "12"
+            oversize_limit: "12"
             ports: "13"
-            scan-bzip2: "enable"
+            scan_bzip2: "enable"
             status: "enable"
-            uncompressed-nest-limit: "16"
-            uncompressed-oversize-limit: "17"
+            uncompressed_nest_limit: "16"
+            uncompressed_oversize_limit: "17"
         http:
-            block-page-status-code: "19"
-            comfort-amount: "20"
-            comfort-interval: "21"
-            fortinet-bar: "enable"
-            fortinet-bar-port: "23"
-            http-policy: "disable"
-            inspect-all: "enable"
+            block_page_status_code: "19"
+            comfort_amount: "20"
+            comfort_interval: "21"
+            fortinet_bar: "enable"
+            fortinet_bar_port: "23"
+            http_policy: "disable"
+            inspect_all: "enable"
             options: "clientcomfort"
-            oversize-limit: "27"
+            oversize_limit: "27"
             ports: "28"
-            post-lang: "jisx0201"
-            range-block: "disable"
-            retry-count: "31"
-            scan-bzip2: "enable"
+            post_lang: "jisx0201"
+            range_block: "disable"
+            retry_count: "31"
+            scan_bzip2: "enable"
             status: "enable"
-            streaming-content-bypass: "enable"
-            strip-x-forwarded-for: "disable"
-            switching-protocols: "bypass"
-            uncompressed-nest-limit: "37"
-            uncompressed-oversize-limit: "38"
+            streaming_content_bypass: "enable"
+            strip_x_forwarded_for: "disable"
+            switching_protocols: "bypass"
+            uncompressed_nest_limit: "37"
+            uncompressed_oversize_limit: "38"
         imap:
-            inspect-all: "enable"
+            inspect_all: "enable"
             options: "fragmail"
-            oversize-limit: "42"
+            oversize_limit: "42"
             ports: "43"
-            scan-bzip2: "enable"
+            scan_bzip2: "enable"
             status: "enable"
-            uncompressed-nest-limit: "46"
-            uncompressed-oversize-limit: "47"
-        mail-signature:
+            uncompressed_nest_limit: "46"
+            uncompressed_oversize_limit: "47"
+        mail_signature:
             signature: "<your_own_value>"
             status: "disable"
         mapi:
             options: "fragmail"
-            oversize-limit: "53"
+            oversize_limit: "53"
             ports: "54"
-            scan-bzip2: "enable"
+            scan_bzip2: "enable"
             status: "enable"
-            uncompressed-nest-limit: "57"
-            uncompressed-oversize-limit: "58"
+            uncompressed_nest_limit: "57"
+            uncompressed_oversize_limit: "58"
         name: "default_name_59"
         nntp:
-            inspect-all: "enable"
+            inspect_all: "enable"
             options: "oversize"
-            oversize-limit: "63"
+            oversize_limit: "63"
             ports: "64"
-            scan-bzip2: "enable"
+            scan_bzip2: "enable"
             status: "enable"
-            uncompressed-nest-limit: "67"
-            uncompressed-oversize-limit: "68"
-        oversize-log: "disable"
+            uncompressed_nest_limit: "67"
+            uncompressed_oversize_limit: "68"
+        oversize_log: "disable"
         pop3:
-            inspect-all: "enable"
+            inspect_all: "enable"
             options: "fragmail"
-            oversize-limit: "73"
+            oversize_limit: "73"
             ports: "74"
-            scan-bzip2: "enable"
+            scan_bzip2: "enable"
             status: "enable"
-            uncompressed-nest-limit: "77"
-            uncompressed-oversize-limit: "78"
-        replacemsg-group: "<your_own_value> (source system.replacemsg-group.name)"
-        rpc-over-http: "enable"
+            uncompressed_nest_limit: "77"
+            uncompressed_oversize_limit: "78"
+        replacemsg_group: "<your_own_value> (source system.replacemsg-group.name)"
+        rpc_over_http: "enable"
         smtp:
-            inspect-all: "enable"
+            inspect_all: "enable"
             options: "fragmail"
-            oversize-limit: "84"
+            oversize_limit: "84"
             ports: "85"
-            scan-bzip2: "enable"
-            server-busy: "enable"
+            scan_bzip2: "enable"
+            server_busy: "enable"
             status: "enable"
-            uncompressed-nest-limit: "89"
-            uncompressed-oversize-limit: "90"
-        switching-protocols-log: "disable"
+            uncompressed_nest_limit: "89"
+            uncompressed_oversize_limit: "90"
+        switching_protocols_log: "disable"
 '''
 
 RETURN = '''
@@ -670,14 +783,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -685,15 +800,15 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_firewall_profile_protocol_options_data(json):
     option_list = ['comment', 'dns', 'ftp',
-                   'http', 'imap', 'mail-signature',
+                   'http', 'imap', 'mail_signature',
                    'mapi', 'name', 'nntp',
-                   'oversize-log', 'pop3', 'replacemsg-group',
-                   'rpc-over-http', 'smtp', 'switching-protocols-log']
+                   'oversize_log', 'pop3', 'replacemsg_group',
+                   'rpc_over_http', 'smtp', 'switching_protocols_log']
     dictionary = {}
 
     for attribute in option_list:
@@ -703,47 +818,72 @@ def filter_firewall_profile_protocol_options_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def firewall_profile_protocol_options(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_profile_protocol_options'] and data['firewall_profile_protocol_options']:
+        state = data['firewall_profile_protocol_options']['state']
+    else:
+        state = True
     firewall_profile_protocol_options_data = data['firewall_profile_protocol_options']
-    filtered_data = filter_firewall_profile_protocol_options_data(firewall_profile_protocol_options_data)
-    if firewall_profile_protocol_options_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_firewall_profile_protocol_options_data(firewall_profile_protocol_options_data))
+
+    if state == "present":
         return fos.set('firewall',
                        'profile-protocol-options',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif firewall_profile_protocol_options_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('firewall',
                           'profile-protocol-options',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_firewall(data, fos):
-    login(data)
 
-    methodlist = ['firewall_profile_protocol_options']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['firewall_profile_protocol_options']:
+        resp = firewall_profile_protocol_options(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "firewall_profile_protocol_options": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "comment": {"required": False, "type": "str"},
                 "dns": {"required": False, "type": "dict",
@@ -754,40 +894,40 @@ def main():
                         }},
                 "ftp": {"required": False, "type": "dict",
                         "options": {
-                            "comfort-amount": {"required": False, "type": "int"},
-                            "comfort-interval": {"required": False, "type": "int"},
-                            "inspect-all": {"required": False, "type": "str",
+                            "comfort_amount": {"required": False, "type": "int"},
+                            "comfort_interval": {"required": False, "type": "int"},
+                            "inspect_all": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
                             "options": {"required": False, "type": "str",
                                         "choices": ["clientcomfort", "oversize", "splice",
                                                     "bypass-rest-command", "bypass-mode-command"]},
-                            "oversize-limit": {"required": False, "type": "int"},
+                            "oversize_limit": {"required": False, "type": "int"},
                             "ports": {"required": False, "type": "int"},
-                            "scan-bzip2": {"required": False, "type": "str",
+                            "scan_bzip2": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
                             "status": {"required": False, "type": "str",
                                        "choices": ["enable", "disable"]},
-                            "uncompressed-nest-limit": {"required": False, "type": "int"},
-                            "uncompressed-oversize-limit": {"required": False, "type": "int"}
+                            "uncompressed_nest_limit": {"required": False, "type": "int"},
+                            "uncompressed_oversize_limit": {"required": False, "type": "int"}
                         }},
                 "http": {"required": False, "type": "dict",
                          "options": {
-                             "block-page-status-code": {"required": False, "type": "int"},
-                             "comfort-amount": {"required": False, "type": "int"},
-                             "comfort-interval": {"required": False, "type": "int"},
-                             "fortinet-bar": {"required": False, "type": "str",
+                             "block_page_status_code": {"required": False, "type": "int"},
+                             "comfort_amount": {"required": False, "type": "int"},
+                             "comfort_interval": {"required": False, "type": "int"},
+                             "fortinet_bar": {"required": False, "type": "str",
                                               "choices": ["enable", "disable"]},
-                             "fortinet-bar-port": {"required": False, "type": "int"},
-                             "http-policy": {"required": False, "type": "str",
+                             "fortinet_bar_port": {"required": False, "type": "int"},
+                             "http_policy": {"required": False, "type": "str",
                                              "choices": ["disable", "enable"]},
-                             "inspect-all": {"required": False, "type": "str",
+                             "inspect_all": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
                              "options": {"required": False, "type": "str",
                                          "choices": ["clientcomfort", "servercomfort", "oversize",
                                                      "chunkedbypass"]},
-                             "oversize-limit": {"required": False, "type": "int"},
+                             "oversize_limit": {"required": False, "type": "int"},
                              "ports": {"required": False, "type": "int"},
-                             "post-lang": {"required": False, "type": "str",
+                             "post_lang": {"required": False, "type": "str",
                                            "choices": ["jisx0201", "jisx0208", "jisx0212",
                                                        "gb2312", "ksc5601-ex", "euc-jp",
                                                        "sjis", "iso2022-jp", "iso2022-jp-1",
@@ -795,38 +935,38 @@ def main():
                                                        "hz", "ces-big5", "euc-kr",
                                                        "iso2022-jp-3", "iso8859-1", "tis620",
                                                        "cp874", "cp1252", "cp1251"]},
-                             "range-block": {"required": False, "type": "str",
+                             "range_block": {"required": False, "type": "str",
                                              "choices": ["disable", "enable"]},
-                             "retry-count": {"required": False, "type": "int"},
-                             "scan-bzip2": {"required": False, "type": "str",
+                             "retry_count": {"required": False, "type": "int"},
+                             "scan_bzip2": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
                              "status": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                             "streaming-content-bypass": {"required": False, "type": "str",
+                             "streaming_content_bypass": {"required": False, "type": "str",
                                                           "choices": ["enable", "disable"]},
-                             "strip-x-forwarded-for": {"required": False, "type": "str",
+                             "strip_x_forwarded_for": {"required": False, "type": "str",
                                                        "choices": ["disable", "enable"]},
-                             "switching-protocols": {"required": False, "type": "str",
+                             "switching_protocols": {"required": False, "type": "str",
                                                      "choices": ["bypass", "block"]},
-                             "uncompressed-nest-limit": {"required": False, "type": "int"},
-                             "uncompressed-oversize-limit": {"required": False, "type": "int"}
+                             "uncompressed_nest_limit": {"required": False, "type": "int"},
+                             "uncompressed_oversize_limit": {"required": False, "type": "int"}
                          }},
                 "imap": {"required": False, "type": "dict",
                          "options": {
-                             "inspect-all": {"required": False, "type": "str",
+                             "inspect_all": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
                              "options": {"required": False, "type": "str",
                                          "choices": ["fragmail", "oversize"]},
-                             "oversize-limit": {"required": False, "type": "int"},
+                             "oversize_limit": {"required": False, "type": "int"},
                              "ports": {"required": False, "type": "int"},
-                             "scan-bzip2": {"required": False, "type": "str",
+                             "scan_bzip2": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
                              "status": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                             "uncompressed-nest-limit": {"required": False, "type": "int"},
-                             "uncompressed-oversize-limit": {"required": False, "type": "int"}
+                             "uncompressed_nest_limit": {"required": False, "type": "int"},
+                             "uncompressed_oversize_limit": {"required": False, "type": "int"}
                          }},
-                "mail-signature": {"required": False, "type": "dict",
+                "mail_signature": {"required": False, "type": "dict",
                                    "options": {
                                        "signature": {"required": False, "type": "str"},
                                        "status": {"required": False, "type": "str",
@@ -836,69 +976,69 @@ def main():
                          "options": {
                              "options": {"required": False, "type": "str",
                                          "choices": ["fragmail", "oversize"]},
-                             "oversize-limit": {"required": False, "type": "int"},
+                             "oversize_limit": {"required": False, "type": "int"},
                              "ports": {"required": False, "type": "int"},
-                             "scan-bzip2": {"required": False, "type": "str",
+                             "scan_bzip2": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
                              "status": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                             "uncompressed-nest-limit": {"required": False, "type": "int"},
-                             "uncompressed-oversize-limit": {"required": False, "type": "int"}
+                             "uncompressed_nest_limit": {"required": False, "type": "int"},
+                             "uncompressed_oversize_limit": {"required": False, "type": "int"}
                          }},
                 "name": {"required": True, "type": "str"},
                 "nntp": {"required": False, "type": "dict",
                          "options": {
-                             "inspect-all": {"required": False, "type": "str",
+                             "inspect_all": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
                              "options": {"required": False, "type": "str",
                                          "choices": ["oversize", "splice"]},
-                             "oversize-limit": {"required": False, "type": "int"},
+                             "oversize_limit": {"required": False, "type": "int"},
                              "ports": {"required": False, "type": "int"},
-                             "scan-bzip2": {"required": False, "type": "str",
+                             "scan_bzip2": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
                              "status": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                             "uncompressed-nest-limit": {"required": False, "type": "int"},
-                             "uncompressed-oversize-limit": {"required": False, "type": "int"}
+                             "uncompressed_nest_limit": {"required": False, "type": "int"},
+                             "uncompressed_oversize_limit": {"required": False, "type": "int"}
                          }},
-                "oversize-log": {"required": False, "type": "str",
+                "oversize_log": {"required": False, "type": "str",
                                  "choices": ["disable", "enable"]},
                 "pop3": {"required": False, "type": "dict",
                          "options": {
-                             "inspect-all": {"required": False, "type": "str",
+                             "inspect_all": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
                              "options": {"required": False, "type": "str",
                                          "choices": ["fragmail", "oversize"]},
-                             "oversize-limit": {"required": False, "type": "int"},
+                             "oversize_limit": {"required": False, "type": "int"},
                              "ports": {"required": False, "type": "int"},
-                             "scan-bzip2": {"required": False, "type": "str",
+                             "scan_bzip2": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
                              "status": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                             "uncompressed-nest-limit": {"required": False, "type": "int"},
-                             "uncompressed-oversize-limit": {"required": False, "type": "int"}
+                             "uncompressed_nest_limit": {"required": False, "type": "int"},
+                             "uncompressed_oversize_limit": {"required": False, "type": "int"}
                          }},
-                "replacemsg-group": {"required": False, "type": "str"},
-                "rpc-over-http": {"required": False, "type": "str",
+                "replacemsg_group": {"required": False, "type": "str"},
+                "rpc_over_http": {"required": False, "type": "str",
                                   "choices": ["enable", "disable"]},
                 "smtp": {"required": False, "type": "dict",
                          "options": {
-                             "inspect-all": {"required": False, "type": "str",
+                             "inspect_all": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
                              "options": {"required": False, "type": "str",
                                          "choices": ["fragmail", "oversize", "splice"]},
-                             "oversize-limit": {"required": False, "type": "int"},
+                             "oversize_limit": {"required": False, "type": "int"},
                              "ports": {"required": False, "type": "int"},
-                             "scan-bzip2": {"required": False, "type": "str",
+                             "scan_bzip2": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
-                             "server-busy": {"required": False, "type": "str",
+                             "server_busy": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
                              "status": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                             "uncompressed-nest-limit": {"required": False, "type": "int"},
-                             "uncompressed-oversize-limit": {"required": False, "type": "int"}
+                             "uncompressed_nest_limit": {"required": False, "type": "int"},
+                             "uncompressed_oversize_limit": {"required": False, "type": "int"}
                          }},
-                "switching-protocols-log": {"required": False, "type": "str",
+                "switching_protocols_log": {"required": False, "type": "str",
                                             "choices": ["disable", "enable"]}
 
             }
@@ -907,15 +1047,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_firewall(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_firewall(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_firewall(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

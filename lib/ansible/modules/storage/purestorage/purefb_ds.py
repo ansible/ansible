@@ -70,6 +70,24 @@ options:
       perform directory lookups.
     - For OpenLDAP, enter the full DN of the user.
     type: str
+  nis_servers:
+    description:
+    - A list of up to 30 IP addresses or FQDNs for NIS servers.
+    - This cannot be used in conjunction with LDAP configurations.
+    type: list
+    version_added: 2.9
+  nis_domain:
+    description:
+    - The NIS domain to search
+    - This cannot be used in conjunction with LDAP configurations.
+    type: str
+    version_added: 2.9
+  join_ou:
+    description:
+      - The optional organizational unit (OU) where the machine account
+        for the directory service will be created.
+    type: str
+    version_added: 2.9
 extends_documentation_fragment:
 - purestorage.fb
 '''
@@ -85,7 +103,7 @@ EXAMPLES = r'''
 - name: Create NFS directory service (disabled)
   purefb_ds:
     dstype: nfs
-    uri: "ldap://lab.purestorage.com"
+    uri: "ldaps://lab.purestorage.com"
     base_dn: "DC=lab,DC=purestorage,DC=com"
     bind_user: Administrator
     bind_password: password
@@ -110,7 +128,7 @@ EXAMPLES = r'''
   purefb_ds:
     dstype: nfs
     enable: true
-    uri: "ldap://lab.purestorage.com"
+    uri: "ldaps://lab.purestorage.com"
     base_dn: "DC=lab,DC=purestorage,DC=com"
     bind_user: Administrator
     bind_password: password
@@ -122,6 +140,7 @@ RETURN = r'''
 '''
 
 
+NIS_API_VERSION = '1.7'
 HAS_PURITY_FB = True
 try:
     from purity_fb import DirectoryService
@@ -135,65 +154,126 @@ from ansible.module_utils.pure import get_blade, purefb_argument_spec
 
 def update_ds(module, blade):
     """Update Directory Service"""
+# This module is a place-holder until we figure out a way to
+# update the config on the fly rather than deleting and resetting
     changed = False
     module.exit_json(changed=changed)
 
 
 def enable_ds(module, blade):
     """Enable Directory Service"""
-    changed = False
-    try:
-        blade.directory_services.update_directory_services(names=[module.params['dstype']],
-                                                           directory_service=DirectoryService(enabled=True))
-        changed = True
-    except Exception:
-        module.fail_json(msg='Enable {0} Directory Service failed: Check Configuration'.format(module.params['dstype']))
+    changed = True
+    if not module.check_mode:
+        try:
+            blade.directory_services.update_directory_services(names=[module.params['dstype']],
+                                                               directory_service=DirectoryService(enabled=True))
+            changed = True
+        except Exception:
+            module.fail_json(msg='Enable {0} Directory Service failed: Check Configuration'.format(module.params['dstype']))
     module.exit_json(changed=changed)
 
 
 def disable_ds(module, blade):
     """Disable Directory Service"""
-    changed = False
-    try:
-        blade.directory_services.update_directory_services(names=[module.params['dstype']],
-                                                           directory_service=DirectoryService(enabled=False))
-        changed = True
-    except Exception:
-        module.fail_json(msg='Disable {0} Directory Service failed'.format(module.params['dstype']))
+    changed = True
+    if not module.check_mode:
+        try:
+            blade.directory_services.update_directory_services(names=[module.params['dstype']],
+                                                               directory_service=DirectoryService(enabled=False))
+        except Exception:
+            module.fail_json(msg='Disable {0} Directory Service failed'.format(module.params['dstype']))
     module.exit_json(changed=changed)
 
 
 def delete_ds(module, blade):
     """Delete Directory Service"""
-    changed = False
-    try:
-        dir_service = DirectoryService(uris=[''],
-                                       base_dn="",
-                                       bind_user="",
-                                       bind_password="",
-                                       enabled=False)
-        blade.directory_services.update_directory_services(names=[module.params['dstype']],
-                                                           directory_service=dir_service)
-        changed = True
-    except Exception:
-        module.fail_json(msg='Delete {0} Directory Service failed'.format(module.params['dstype']))
+    changed = True
+    if not module.check_mode:
+        dirserv = blade.directory_services.list_directory_services(names=[module.params['dstype']])
+        try:
+            if module.params['dstype'] == 'management':
+                if dirserv.items[0].uris:
+                    dir_service = DirectoryService(uris=[''],
+                                                   base_dn="",
+                                                   bind_user="",
+                                                   bind_password="",
+                                                   enabled=False)
+                else:
+                    changed = False
+            elif module.params['dstype'] == 'smb':
+                if dirserv.items[0].uris:
+                    smb_attrs = {'join_ou': ''}
+                    dir_service = DirectoryService(uris=[''],
+                                                   base_dn='',
+                                                   bind_user='',
+                                                   bind_password='',
+                                                   smb=smb_attrs,
+                                                   enabled=False)
+                else:
+                    changed = False
+            elif module.params['dstype'] == 'nfs':
+                if dirserv.items[0].uris:
+                    dir_service = DirectoryService(uris=[''],
+                                                   base_dn='',
+                                                   bind_user='',
+                                                   bind_password='',
+                                                   enabled=False)
+                elif dirserv.items[0].nfs.nis_domains:
+                    nfs_attrs = {'nis_domains': [],
+                                 'nis_servers': []}
+                    dir_service = DirectoryService(nfs=nfs_attrs,
+                                                   enabled=False)
+                else:
+                    changed = False
+            if changed:
+                blade.directory_services.update_directory_services(names=[module.params['dstype']],
+                                                                   directory_service=dir_service)
+        except Exception:
+            module.fail_json(msg='Delete {0} Directory Service failed'.format(module.params['dstype']))
     module.exit_json(changed=changed)
 
 
 def create_ds(module, blade):
     """Create Directory Service"""
-    changed = False
-    try:
-        dir_service = DirectoryService(uris=module.params['uri'],
-                                       base_dn=module.params['base_dn'],
-                                       bind_user=module.params['bind_user'],
-                                       bind_password=module.params['bind_password'],
-                                       enabled=module.params['enable'])
-        blade.directory_services.update_directory_services(names=[module.params['dstype']],
-                                                           directory_service=dir_service)
-        changed = True
-    except Exception:
-        module.fail_json(msg='Create {0} Directory Service failed: Check configuration'.format(module.params['dstype']))
+    changed = True
+    if not module.check_mode:
+        try:
+            if module.params['dstype'] == 'management':
+                if module.params['uri']:
+                    dir_service = DirectoryService(uris=module.params['uri'][0:30],
+                                                   base_dn=module.params['base_dn'],
+                                                   bind_user=module.params['bind_user'],
+                                                   bind_password=module.params['bind_password'],
+                                                   enabled=module.params['enable'])
+                else:
+                    module.fail_json(msg="URI and associated params must be specified to create dstype {0}".format(module.params['dstype']))
+            elif module.params['dstype'] == 'smb':
+                if module.params['uri']:
+                    smb_attrs = {'join_ou': module.params['join_ou']}
+                    dir_service = DirectoryService(uris=module.params['uri'][0:30],
+                                                   base_dn=module.params['base_dn'],
+                                                   bind_user=module.params['bind_user'],
+                                                   bind_password=module.params['bind_password'],
+                                                   smb=smb_attrs,
+                                                   enabled=module.params['enable'])
+                else:
+                    module.fail_json(msg="URI and associated params must be specified to create dstype {0}".format(module.params['dstype']))
+            elif module.params['dstype'] == 'nfs':
+                if module.params['nis_domain']:
+                    nfs_attrs = {'nis_domains': [module.params['nis_domain']],
+                                 'nis_servers': module.params['nis_servers'][0:30]}
+                    dir_service = DirectoryService(nfs=nfs_attrs,
+                                                   enabled=module.params['enable'])
+                else:
+                    dir_service = DirectoryService(uris=module.params['uri'][0:30],
+                                                   base_dn=module.params['base_dn'],
+                                                   bind_user=module.params['bind_user'],
+                                                   bind_password=module.params['bind_password'],
+                                                   enabled=module.params['enable'])
+            blade.directory_services.update_directory_services(names=[module.params['dstype']],
+                                                               directory_service=dir_service)
+        except Exception:
+            module.fail_json(msg='Create {0} Directory Service failed: Check configuration'.format(module.params['dstype']))
     module.exit_json(changed=changed)
 
 
@@ -207,25 +287,47 @@ def main():
         bind_password=dict(type='str', no_log=True),
         bind_user=dict(type='str'),
         base_dn=dict(type='str'),
+        join_ou=dict(type='str'),
+        nis_domain=dict(type='str'),
+        nis_servers=dict(type='list'),
     ))
 
-    required_together = [['uri', 'bind_password', 'bind_user', 'base_dn']]
+    required_together = [['uri', 'bind_password', 'bind_user', 'base_dn'],
+                         ['nis_servers', 'nis_domain'],
+                         ['join_ou', 'uri']]
+    mutually_exclusive = [['uri', 'nis_domain']]
 
     module = AnsibleModule(argument_spec,
                            required_together=required_together,
-                           supports_check_mode=False)
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
     if not HAS_PURITY_FB:
         module.fail_json(msg='purity_fb sdk is required for this module')
 
     state = module.params['state']
     blade = get_blade(module)
+    api_version = blade.api_version.list_versions().versions
     ds_configured = False
     dirserv = blade.directory_services.list_directory_services(names=[module.params['dstype']])
     ds_enabled = dirserv.items[0].enabled
     if dirserv.items[0].base_dn is not None:
         ds_configured = True
-
-    if state == 'absent' and ds_configured:
+    if (module.params['nis_domain'] or module.params['join_ou']) and (NIS_API_VERSION not in api_version):
+        module.fail_json(msg="NFS or SMB directory service attributes are not supported in your FlashBlade Purity version.")
+    ldap_uri = False
+    set_ldap = False
+    for uri in range(0, len(dirserv.items[0].uris)):
+        if "ldap" in dirserv.items[0].uris[uri].lower():
+            ldap_uri = True
+    if module.params['uri']:
+        for uri in range(0, len(module.params['uri'])):
+            if "ldap" in module.params['uri'][uri].lower():
+                set_ldap = True
+    if not module.params['uri'] and ldap_uri or \
+       module.params['uri'] and set_ldap:
+        if module.params['nis_servers'] or module.params['nis_domain']:
+            module.fail_json(msg="NIS configuration not supported in an LDAP environment")
+    if state == 'absent':
         delete_ds(module, blade)
     elif ds_configured and module.params['enable'] and ds_enabled:
         update_ds(module, blade)
@@ -233,6 +335,8 @@ def main():
         disable_ds(module, blade)
     elif ds_configured and module.params['enable'] and not ds_enabled:
         enable_ds(module, blade)
+# Now we have enabled the DS lets make sure there aren't any new updates...
+        update_ds(module, blade)
     elif not ds_configured and state == 'present':
         create_ds(module, blade)
     else:

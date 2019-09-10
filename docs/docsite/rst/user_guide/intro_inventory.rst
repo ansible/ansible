@@ -356,7 +356,7 @@ Default groups
 
 There are two default groups: ``all`` and ``ungrouped``. ``all`` contains every host.
 ``ungrouped`` contains all hosts that don't have another group aside from ``all``.
-Every host will always belong to at least 2 groups.
+Every host will always belong to at least 2 groups (``all`` and ``ungrouped`` or ``all`` and some other group).
 Though ``all`` and ``ungrouped`` are always present, they can be implicit and not appear in group listings like ``group_names``.
 
 .. _splitting_out_vars:
@@ -433,7 +433,7 @@ Starting in Ansible version 2.4, users can use the group variable ``ansible_grou
     a_group:
         testvar: a
         ansible_group_priority: 10
-    b_group：
+    b_group:
         testvar: b
 
 In this example, if both groups have the same priority, the result would normally have been ``testvar == b``, but since we are giving the ``a_group`` a higher priority the result will be ``testvar == a``.

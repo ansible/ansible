@@ -1,0 +1,12 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      interface GigabitEthernet 0/1
+      no ip address
+      no ipv6 address
+      interface GigabitEthernet 0/2
+      no ip address
+      no ipv6 address

@@ -52,119 +52,84 @@ Help
 Extending validate-modules
 ==========================
 
-The ``validate-modules`` tool has a `schema.py <https://github.com/ansible/ansible/blob/devel/test/sanity/validate-modules/schema.py>`_ that is used to validate the YAML blocks, such as ``DOCUMENTATION`` and ``RETURNS``.
+The ``validate-modules`` tool has a `schema.py <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/sanity/validate-modules/validate_modules/schema.py>`_ that is used to validate the YAML blocks, such as ``DOCUMENTATION`` and ``RETURNS``.
 
 
 Codes
 =====
 
-Errors
-------
-
-=========   ===================
-  code      sample message
----------   -------------------
-  **1xx**   **Locations**
-  101       Interpreter line is not ``#!/usr/bin/python``
-  102       Interpreter line is not ``#!powershell``
-  103       Did not find a call to ``main()`` (or ``removed_module()`` in the case of deprecated & docs only modules)
-  104       Call to ``main()`` not the last line (or ``removed_module()`` in the case of deprecated & docs only modules)
-  105       GPLv3 license header not found
-  106       Import found before documentation variables. All imports must appear below
-            ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
-  107       Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
-  108       GPLv3 license header should be the :ref:`short form <copyright>` for new modules
-  109       Next to last line is not ``if __name__ == "__main__":``
-  ..
----------   -------------------
-  **2xx**   **Imports**
-  201       Did not find a ``module_utils`` import
-  203       ``requests`` import found, should use ``ansible.module_utils.urls`` instead
-  204       ``boto`` import found, new modules should use ``boto3``
-  205       ``sys.exit()`` call found. Should be ``exit_json``/``fail_json``
-  206       ``WANT_JSON`` not found in module
-  207       ``REPLACER_WINDOWS`` not found in module
-  208       ``module_utils`` imports should import specific components, not ``*``
-  209       Only the following ``from __future__`` imports are allowed:
-            ``absolute_import``, ``division``, and ``print_function``.
-  210       ``subprocess.Popen`` used instead of ``module.run_command``
-  211       ``os.call`` used instead of ``module.run_command``
-  ..
----------   -------------------
-  **3xx**   **Documentation**
-  301       No ``DOCUMENTATION`` provided
-  302       ``DOCUMENTATION`` is not valid YAML
-  303       ``DOCUMENTATION`` fragment missing
-  304       Unknown ``DOCUMENTATION`` error
-  305       Invalid ``DOCUMENTATION`` schema
-  306       Module level ``version_added`` is not a valid version number
-  307       Module level ``version_added`` is incorrect
-  308       ``version_added`` for new option is not a valid version number
-  309       ``version_added`` for new option is incorrect
-  310       No ``EXAMPLES`` provided
-  311       ``EXAMPLES`` is not valid YAML
-  312       No ``RETURN`` documentation provided
-  313       ``RETURN`` is not valid YAML
-  314       No ``ANSIBLE_METADATA`` provided
-  315       ``ANSIBLE_METADATA`` was not provided as a dict, YAML not supported
-  316       Invalid ``ANSIBLE_METADATA`` schema
-  317       option is marked as required but specifies a default.
-            Arguments with a default should not be marked as required
-  318       Module marked as deprecated or removed in at least one of the filename, its metadata, or
-            in DOCUMENTATION (setting DOCUMENTATION.deprecated for deprecation or removing all
-            documentation for removed) but not in all three places.
-  319       ``RETURN`` fragments missing  or invalid
-  320       ``DOCUMENTATION.options`` must be a dictionary/hash when used
-  321       ``Exception`` attempting to import module for ``argument_spec`` introspection
-  322       argument is listed in the argument_spec, but not documented in the module
-  323       argument is listed in DOCUMENTATION.options, but not accepted by the module
-  324       Value for "default" from the argument_spec does not match the documentation
-  325       argument_spec defines type different than documentation does
-  326       Value for "choices" from the argument_spec does not match the documentation
-  327       Default value from the documentation is not compatible with type defined in the argument_spec
-  328       Choices value from the documentation is not compatible with type defined in the argument_spec
-  329       Default value from the argument_spec is not compatible with type defined in the argument_spec
-  330       Choices value from the argument_spec is not compatible with type defined in the argument_spec
-  331       argument in argument_spec must be a dictionary/hash when used
-  332       ``AnsibleModule`` schema validation error
-  333       ``ANSIBLE_METADATA.status`` of deprecated or removed can't include other statuses
-  334       ``ANSIBLE_METADATA`` cannot be changed in a point release for a stable branch
-  335       argument_spec implies type="str" but documentation defines it as different data type
-  336       argument in argument_spec is not a valid python identifier
-  337       Type value is defined in ``argument_spec`` but documentation doesn't specify a type
-  338       documentation doesn't specify a type but argument in ``argument_spec`` use default type (``str``)
-  ..
----------   -------------------
-  **4xx**   **Syntax**
-  401       Python ``SyntaxError`` while parsing module
-  403       Type comparison using ``type()`` found. Use ``isinstance()`` instead
-  ..
----------   -------------------
-  **5xx**   **Naming**
-  501       Official Ansible modules must have a ``.py`` extension for python
-            modules or a ``.ps1`` for powershell modules
-  502       Ansible module subdirectories must contain an ``__init__.py``
-  503       Missing python documentation file
-=========   ===================
-
-Warnings
---------
-
-=========   ===================
-  code      sample message
----------   -------------------
-  **1xx**   **Locations**
-  107       Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA`` for legacy modules
-  ..
----------   -------------------
-  **2xx**   **Imports**
-  208       ``module_utils`` imports should import specific components for legacy module, not ``*``
-  291       Try/Except ``HAS_`` expression missing
-  292       Did not find ``ansible.module_utils.basic`` import
-  ..
----------   -------------------
-  **3xx**   **Documentation**
-  312       No ``RETURN`` documentation provided for legacy module
-  391       Unknown pre-existing ``DOCUMENTATION`` error
-  392       Pre-existing ``DOCUMENTATION`` fragment missing
-=========   ===================
+============================================================   ==================   ====================   =========================================================================================
+  **Error Code**                                                 **Type**             **Level**            **Sample Message**
+------------------------------------------------------------   ------------------   --------------------   -----------------------------------------------------------------------------------------
+  deprecation-mismatch                                         Documentation        Error                  Module marked as deprecated or removed in at least one of the filename, its metadata, or in DOCUMENTATION (setting DOCUMENTATION.deprecated for deprecation or removing all Documentation for removed) but not in all three places.
+  doc-choices-do-not-match-spec                                Documentation        Error                  Value for "choices" from the argument_spec does not match the documentation
+  doc-choices-incompatible-type                                Documentation        Error                  Choices value from the documentation is not compatible with type defined in the argument_spec
+  doc-default-does-not-match-spec                              Documentation        Error                  Value for "default" from the argument_spec does not match the documentation
+  doc-default-incompatible-type                                Documentation        Error                  Default value from the documentation is not compatible with type defined in the argument_spec
+  doc-missing-type                                             Documentation        Error                  Documentation doesn't specify a type but argument in ``argument_spec`` use default type (``str``)
+  doc-type-does-not-match-spec                                 Documentation        Error                  Argument_spec defines type different than documentation does
+  documentation-error                                          Documentation        Error                  Unknown ``DOCUMENTATION`` error
+  documentation-syntax-error                                   Documentation        Error                  Invalid ``DOCUMENTATION`` schema
+  illegal-future-imports                                       Imports              Error                  Only the following ``from __future__`` imports are allowed: ``absolute_import``, ``division``, and ``print_function``.
+  import-before-documentation                                  Imports              Error                  Import found before documentation variables. All imports must appear below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
+  import-error                                                 Documentation        Error                  ``Exception`` attempting to import module for ``argument_spec`` introspection
+  import-placement                                             Locations            Warning                Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA`` for legacy modules
+  imports-improper-location                                    Imports              Error                  Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
+  incompatible-choices                                         Documentation        Error                  Choices value from the argument_spec is not compatible with type defined in the argument_spec
+  incompatible-default-type                                    Documentation        Error                  Default value from the argument_spec is not compatible with type defined in the argument_spec
+  invalid-argument-spec                                        Documentation        Error                  Argument in argument_spec must be a dictionary/hash when used
+  invalid-argument-spec-options                                Documentation        Error                  Suboptions in argument_spec are invalid
+  invalid-documentation                                        Documentation        Error                  ``DOCUMENTATION`` is not valid YAML
+  invalid-documentation-options                                Documentation        Error                  ``DOCUMENTATION.options`` must be a dictionary/hash when used
+  invalid-examples                                             Documentation        Error                  ``EXAMPLES`` is not valid YAML
+  invalid-extension                                            Naming               Error                  Official Ansible modules must have a ``.py`` extension for python modules or a ``.ps1`` for powershell modules
+  invalid-metadata-status                                      Documentation        Error                  ``ANSIBLE_METADATA.status`` of deprecated or removed can't include other statuses
+  invalid-metadata-type                                        Documentation        Error                  ``ANSIBLE_METADATA`` was not provided as a dict, YAML not supported, Invalid ``ANSIBLE_METADATA`` schema
+  invalid-module-schema                                        Documentation        Error                  ``AnsibleModule`` schema validation error
+  invalid-requires-extension                                   Naming               Error                  Module ``#AnsibleRequires -CSharpUtil`` should not end in .cs, Module ``#Requires`` should not end in .psm1
+  last-line-main-call                                          Syntax               Error                  Call to ``main()`` not the last line (or ``removed_module()`` in the case of deprecated & docs only modules)
+  metadata-changed                                             Documentation        Error                  ``ANSIBLE_METADATA`` cannot be changed in a point release for a stable branch
+  missing-doc-fragment                                         Documentation        Error                  ``DOCUMENTATION`` fragment missing
+  missing-existing-doc-fragment                                Documentation        Warning                Pre-existing ``DOCUMENTATION`` fragment missing
+  missing-documentation                                        Documentation        Error                  No ``DOCUMENTATION`` provided
+  missing-examples                                             Documentation        Error                  No ``EXAMPLES`` provided
+  missing-gplv3-license                                        Documentation        Error                  GPLv3 license header not found
+  missing-if-name-main                                         Syntax               Error                  Next to last line is not ``if __name__ == "__main__":``
+  missing-main-call                                            Syntax               Error                  Did not find a call to ``main()`` (or ``removed_module()`` in the case of deprecated & docs only modules)
+  missing-metadata                                             Documentation        Error                  No ``ANSIBLE_METADATA`` provided
+  missing-module-utils-basic-import                            Imports              Warning                Did not find ``ansible.module_utils.basic`` import
+  missing-module-utils-import                                  Imports              Error                  Did not find a ``module_utils`` import
+  missing-module-utils-import-c#                               Imports              Error                  No ``Ansible.ModuleUtils`` or C# Ansible util requirements/imports found
+  missing-powershell-interpreter                               Syntax               Error                  Interpreter line is not ``#!powershell``
+  missing-python-doc                                           Naming               Error                  Missing python documentation file
+  missing-python-interpreter                                   Syntax               Error                  Interpreter line is not ``#!/usr/bin/python``
+  missing-return                                               Documentation        Error                  No ``RETURN`` documentation provided
+  missing-return-legacy                                        Documentation        Warning                No ``RETURN`` documentation provided for legacy module
+  missing-subption-docs                                        Documentation        Error                  Argument in argument_spec has sub-options but documentation does not define sub-options
+  module-incorrect-version-added                               Documentation        Error                  Module level ``version_added`` is incorrect
+  module-invalid-version-added                                 Documentation        Error                  Module level ``version_added`` is not a valid version number
+  module-utils-specific-import                                 Imports              Error                  ``module_utils`` imports should import specific components, not ``*``
+  multiple-utils-per-requires                                  Imports              Error                  ``Ansible.ModuleUtils`` requirements do not support multiple modules per statement
+  multiple-c#-utils-per-requires                               Imports              Error                  Ansible C# util requirements do not support multiple utils per statement
+  no-default-for-required-parameter                            Documentation        Error                  Option is marked as required but specifies a default. Arguments with a default should not be marked as required
+  nonexistent-parameter-documented                             Documentation        Error                  Argument is listed in DOCUMENTATION.options, but not accepted by the module
+  option-incorrect-version-added                               Documentation        Error                  ``version_added`` for new option is incorrect
+  option-invalid-version-added                                 Documentation        Error                  ``version_added`` for new option is not a valid version number
+  parameter-invalid                                            Documentation        Error                  Argument in argument_spec is not a valid python identifier
+  parameter-invalid-elements                                   Documentation        Error                  Value for "elements" is valid only when value of "type" is ``list``
+  implied-parameter-type-mismatch                              Documentation        Error                  Argument_spec implies ``type="str"`` but documentation defines it as different data type
+  parameter-type-not-in-doc                                    Documentation        Error                  Type value is defined in ``argument_spec`` but documentation doesn't specify a type
+  python-syntax-error                                          Syntax               Error                  Python ``SyntaxError`` while parsing module
+  return-syntax-error                                          Documentation        Error                  ``RETURN`` is not valid YAML, ``RETURN`` fragments missing  or invalid
+  subdirectory-missing-init                                    Naming               Error                  Ansible module subdirectories must contain an ``__init__.py``
+  try-except-missing-has                                       Imports              Warning                Try/Except ``HAS_`` expression missing
+  undocumented-parameter                                       Documentation        Error                  Argument is listed in the argument_spec, but not documented in the module
+  unidiomatic-typecheck                                        Syntax               Error                  Type comparison using ``type()`` found. Use ``isinstance()`` instead
+  unknown-doc-fragment                                         Documentation        Warning                Unknown pre-existing ``DOCUMENTATION`` error
+  use-boto3                                                    Imports              Error                  ``boto`` import found, new modules should use ``boto3``
+  use-fail-json-not-sys-exit                                   Imports              Error                  ``sys.exit()`` call found. Should be ``exit_json``/``fail_json``
+  use-module-utils-urls                                        Imports              Error                  ``requests`` import found, should use ``ansible.module_utils.urls`` instead
+  use-run-command-not-os-call                                  Imports              Error                  ``os.call`` used instead of ``module.run_command``
+  use-run-command-not-popen                                    Imports              Error                  ``subprocess.Popen`` used instead of ``module.run_command``
+  use-short-gplv3-license                                      Documentation        Error                  GPLv3 license header should be the :ref:`short form <copyright>` for new modules
+============================================================   ==================   ====================   =========================================================================================

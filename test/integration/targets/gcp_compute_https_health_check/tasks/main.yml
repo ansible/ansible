@@ -13,7 +13,7 @@
 #
 # ----------------------------------------------------------------------------
 # Pre-test setup
-- name: delete a https health check
+- name: delete a HTTPS health check
   gcp_compute_https_health_check:
     name: "{{ resource_name }}"
     healthy_threshold: 10
@@ -25,7 +25,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: absent
 #----------------------------------------------------------
-- name: create a https health check
+- name: create a HTTPS health check
   gcp_compute_https_health_check:
     name: "{{ resource_name }}"
     healthy_threshold: 10
@@ -41,9 +41,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#httpsHealthCheck'"
 - name: verify that https_health_check was created
-  gcp_compute_https_health_check_facts:
+  gcp_compute_https_health_check_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -57,7 +56,7 @@
     that:
       - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
-- name: create a https health check that already exists
+- name: create a HTTPS health check that already exists
   gcp_compute_https_health_check:
     name: "{{ resource_name }}"
     healthy_threshold: 10
@@ -73,9 +72,8 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#httpsHealthCheck'"
 #----------------------------------------------------------
-- name: delete a https health check
+- name: delete a HTTPS health check
   gcp_compute_https_health_check:
     name: "{{ resource_name }}"
     healthy_threshold: 10
@@ -92,7 +90,7 @@
     that:
       - result.changed == true
 - name: verify that https_health_check was deleted
-  gcp_compute_https_health_check_facts:
+  gcp_compute_https_health_check_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -106,7 +104,7 @@
     that:
       - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
-- name: delete a https health check that does not exist
+- name: delete a HTTPS health check that does not exist
   gcp_compute_https_health_check:
     name: "{{ resource_name }}"
     healthy_threshold: 10

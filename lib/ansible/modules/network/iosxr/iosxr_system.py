@@ -24,9 +24,13 @@ description:
     on Cisco IOS XR devices. It provides an option to configure host system
     parameters or remove those parameters from the device active
     configuration.
+requirements:
+    - ncclient >= 0.5.3 when using netconf
+    - lxml >= 4.1.1 when using netconf
 extends_documentation_fragment: iosxr
 notes:
-  - Tested against IOS XRv 6.1.2
+  - This module works with connection C(network_cli) and C(netconf). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
+  - Tested against IOS XRv 6.1.3
   - name-servers I(state=absent) operation with C(netconf) transport is a success, but with rpc-error. This is
     due to XR platform issue. Recommended to use I(ignore_errors) option with the task as a workaround.
 options:
@@ -85,7 +89,7 @@ EXAMPLES = """
   iosxr_system:
     hostname: iosxr01
     domain_name: test.example.com
-    domain-search:
+    domain_search:
       - ansible.com
       - redhat.com
       - cisco.com
@@ -93,7 +97,7 @@ EXAMPLES = """
   iosxr_system:
     hostname: iosxr01
     domain_name: test.example.com
-    domain-search:
+    domain_search:
       - ansible.com
       - redhat.com
       - cisco.com
@@ -103,7 +107,7 @@ EXAMPLES = """
     hostname: iosxr01
     vrf: nondefault
     domain_name: test.example.com
-    domain-search:
+    domain_search:
       - ansible.com
       - redhat.com
       - cisco.com

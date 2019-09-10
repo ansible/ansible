@@ -95,9 +95,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#instance'"
 - name: verify that instance was created
-  gcp_compute_instance_facts:
+  gcp_compute_instance_info:
       filters:
          - name = {{ resource_name }}
       zone: us-central1-a
@@ -141,7 +140,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#instance'"
 #----------------------------------------------------------
 - name: delete a instance
   gcp_compute_instance:
@@ -173,7 +171,7 @@
     that:
       - result.changed == true
 - name: verify that instance was deleted
-  gcp_compute_instance_facts:
+  gcp_compute_instance_info:
       filters:
          - name = {{ resource_name }}
       zone: us-central1-a

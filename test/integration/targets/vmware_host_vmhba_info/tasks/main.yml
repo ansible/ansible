@@ -1,0 +1,39 @@
+# Test code for the vmware_host_vmhba_info module.
+# Copyright: (c) 2018, Christian Kotte <christian.kotte@gmx.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# TODO: vcsim does not support networkConfig related to operations
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+
+    - &vmhba_data
+      name: Gather vmhba info
+      vmware_host_vmhba_info:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        validate_certs: no
+      register: host_vmhbas
+
+    - debug:
+        var: host_vmhbas
+
+    - assert:
+        that:
+          - host_vmhbas.hosts_vmhbas_info is defined
+
+    - <<: *vmhba_data
+      name: Gather vmhba info in check mode 
+      check_mode: yes
+
+    - debug:
+        var: host_vmhbas
+
+    - assert:
+        that:
+          - host_vmhbas.hosts_vmhbas_info is defined

@@ -74,6 +74,19 @@ options:
     type: str
     aliases: [ ssl_rootcert ]
     version_added: '2.8'
+seealso:
+- name: PostgreSQL schemas
+  description: General information about PostgreSQL schemas.
+  link: https://www.postgresql.org/docs/current/ddl-schemas.html
+- name: CREATE SCHEMA reference
+  description: Complete reference of the CREATE SCHEMA command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createschema.html
+- name: ALTER SCHEMA reference
+  description: Complete reference of the ALTER SCHEMA command documentation.
+  link: https://www.postgresql.org/docs/current/sql-alterschema.html
+- name: DROP SCHEMA reference
+  description: Complete reference of the DROP SCHEMA command documentation.
+  link: https://www.postgresql.org/docs/current/sql-dropschema.html
 author:
 - Flavien Chantelot (@Dorn-) <contact@flavien.io>
 - Thomas O'Donnell (@andytom)

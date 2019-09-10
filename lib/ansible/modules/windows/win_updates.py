@@ -78,10 +78,10 @@ options:
         version_added: '2.8'
     state:
         description:
-        - Controls whether found updates are returned as a list or actually installed.
+        - Controls whether found updates are downloaded or installed or listed
         - This module also supports Ansible check mode, which has the same effect as setting state=searched
         type: str
-        choices: [ installed, searched ]
+        choices: [ installed, searched, downloaded ]
         default: installed
     log_path:
         description:
@@ -115,6 +115,7 @@ options:
 notes:
 - C(win_updates) must be run by a user with membership in the local Administrators group.
 - C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc).
+- C(win_updates) will I(become) SYSTEM using I(runas) unless C(use_scheduled_task) is C(yes)
 - By default C(win_updates) does not manage reboots, but will signal when a
   reboot is required with the I(reboot_required) return value, as of Ansible v2.5
   C(reboot) can be used to reboot the host if required in the one task.
@@ -187,6 +188,11 @@ EXAMPLES = r'''
   win_updates:
     reboot: yes
     reboot_timeout: 3600
+
+# Search and download Windows updates
+- name: Search and download Windows updates without installing them
+  win_updates:
+    state: downloaded
 '''
 
 RETURN = r'''
@@ -253,7 +259,7 @@ found_update_count:
     type: int
     sample: 3
 installed_update_count:
-    description: The number of updates successfully installed.
+    description: The number of updates successfully installed or downloaded.
     returned: success
     type: int
     sample: 2

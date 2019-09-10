@@ -16,16 +16,16 @@ DOCUMENTATION = '''
 
 module: docker_compose
 
-short_description: Manage docker services and containers.
+short_description: Manage multi-container Docker applications with Docker Compose.
 
 version_added: "2.1"
 
 author: "Chris Houseknecht (@chouseknecht)"
 
 description:
-  - Consumes docker compose to start, shutdown and scale services.
+  - Uses Docker Compose to start, shutdown and scale services.
   - Works with compose versions 1 and 2.
-  - Compose can be read from a docker-compose.yml (or .yaml) file or inline using the C(definition) option.
+  - Configuration can be read from a C(docker-compose.yml) or C(docker-compose.yaml) file or inline using the I(definition) option.
   - See the examples for more details.
   - Supports check mode.
   - This module was called C(docker_service) before Ansible 2.8. The usage did not change.
@@ -33,25 +33,26 @@ description:
 options:
   project_src:
     description:
-      - Path to a directory containing a docker-compose.yml or docker-compose.yaml file.
-      - Mutually exclusive with C(definition).
-      - Required when no C(definition) is provided.
+      - Path to a directory containing a C(docker-compose.yml) or C(docker-compose.yaml) file.
+      - Mutually exclusive with I(definition).
+      - Required when no I(definition) is provided.
     type: path
   project_name:
     description:
-      - Provide a project name. If not provided, the project name is taken from the basename of C(project_src).
-      - Required when C(definition) is provided.
+      - Provide a project name. If not provided, the project name is taken from the basename of I(project_src).
+      - Required when I(definition) is provided.
     type: str
   files:
     description:
-      - List of file names relative to C(project_src). Overrides docker-compose.yml or docker-compose.yaml.
+      - List of Compose file names relative to I(project_src). Overrides C(docker-compose.yml) or C(docker-compose.yaml).
       - Files are loaded and merged in the order given.
     type: list
   state:
     description:
       - Desired state of the project.
-      - Specifying I(present) is the same as running I(docker-compose up).
-      - Specifying I(absent) is the same as running I(docker-compose down).
+      - Specifying C(present) is the same as running C(docker-compose up) resp. C(docker-compose stop) (with I(stopped)) resp. C(docker-compose restart)
+        (with I(restarted)).
+      - Specifying C(absent) is the same as running C(docker-compose down).
     type: str
     default: present
     choices:
@@ -59,22 +60,24 @@ options:
       - present
   services:
     description:
-      - When C(state) is I(present) run I(docker-compose up) on a subset of services.
+      - When I(state) is C(present) run C(docker-compose up) resp. C(docker-compose stop) (with I(stopped)) resp. C(docker-compose restart) (with I(restarted))
+        on a subset of services.
+      - If empty, which is the default, the operation will be performed on all services defined in the Compose file (or inline I(definition)).
     type: list
   scale:
     description:
-      - When C(state) is I(present) scale services. Provide a dictionary of key/value pairs where the key
+      - When I(state) is C(present) scale services. Provide a dictionary of key/value pairs where the key
         is the name of the service and the value is an integer count for the number of containers.
     type: dict
   dependencies:
     description:
-      - When C(state) is I(present) specify whether or not to include linked services.
+      - When I(state) is C(present) specify whether or not to include linked services.
     type: bool
     default: yes
   definition:
     description:
-      - Provide docker-compose yaml describing one or more services, networks and volumes.
-      - Mutually exclusive with C(project_src) and C(files).
+      - Compose file describing one or more services, networks and volumes.
+      - Mutually exclusive with I(project_src) and I(files).
     type: dict
   hostname_check:
     description:
@@ -84,8 +87,8 @@ options:
   recreate:
     description:
       - By default containers will be recreated when their configuration differs from the service definition.
-      - Setting to I(never) ignores configuration differences and leaves existing containers unchanged.
-      - Setting to I(always) forces recreation of all existing containers.
+      - Setting to C(never) ignores configuration differences and leaves existing containers unchanged.
+      - Setting to C(always) forces recreation of all existing containers.
     type: str
     default: smart
     choices:
@@ -94,52 +97,54 @@ options:
       - smart
   build:
     description:
-      - Use with state I(present) to always build images prior to starting the application.
-      - Same as running docker-compose build with the pull option.
+      - Use with I(state) C(present) to always build images prior to starting the application.
+      - Same as running C(docker-compose build) with the pull option.
       - Images will only be rebuilt if Docker detects a change in the Dockerfile or build directory contents.
-      - Use the C(nocache) option to ignore the image cache when performing the build.
-      - If an existing image is replaced, services using the image will be recreated unless C(recreate) is I(never).
+      - Use the I(nocache) option to ignore the image cache when performing the build.
+      - If an existing image is replaced, services using the image will be recreated unless I(recreate) is C(never).
     type: bool
     default: no
   pull:
     description:
-      - Use with state I(present) to always pull images prior to starting the application.
-      - Same as running docker-compose pull.
-      - When a new image is pulled, services using the image will be recreated unless C(recreate) is I(never).
+      - Use with I(state) C(present) to always pull images prior to starting the application.
+      - Same as running C(docker-compose pull).
+      - When a new image is pulled, services using the image will be recreated unless I(recreate) is C(never).
     type: bool
     default: no
     version_added: "2.2"
   nocache:
     description:
-      - Use with the build option to ignore the cache during the image build process.
+      - Use with the I(build) option to ignore the cache during the image build process.
     type: bool
     default: no
     version_added: "2.2"
   remove_images:
     description:
-      - Use with state I(absent) to remove the all images or only local images.
+      - Use with I(state) C(absent) to remove all images or only local images.
     type: str
     choices:
         - 'all'
         - 'local'
   remove_volumes:
     description:
-      - Use with state I(absent) to remove data volumes.
+      - Use with I(state) C(absent) to remove data volumes.
     type: bool
     default: no
   stopped:
     description:
-      - Use with state I(present) to leave the containers in an exited or non-running state.
+      - Use with I(state) C(present) to stop all containers defined in the Compose file.
+      - If I(services) is defined, only the containers listed there will be stopped.
     type: bool
     default: no
   restarted:
     description:
-      - Use with state I(present) to restart all containers.
+      - Use with I(state) C(present) to restart all containers defined in the Compose file.
+      - If I(services) is defined, only the containers listed there will be restarted.
     type: bool
     default: no
   remove_orphans:
     description:
-      - Remove containers for services not defined in the compose file.
+      - Remove containers for services not defined in the Compose file.
     type: bool
     default: no
   timeout:
@@ -160,25 +165,28 @@ requirements:
 '''
 
 EXAMPLES = '''
-# Examples use the django example at U(https://docs.docker.com/compose/django/). Follow it to create the flask
-# directory
+# Examples use the django example at https://docs.docker.com/compose/django. Follow it to create the
+# flask directory
 
 - name: Run using a project directory
   hosts: localhost
   gather_facts: no
   tasks:
-    - docker_compose:
+    - name: Tear down existing services
+      docker_compose:
         project_src: flask
         state: absent
 
-    - docker_compose:
+    - name: Create and start services
+      docker_compose:
         project_src: flask
       register: output
 
     - debug:
         var: output
 
-    - docker_compose:
+    - name: Run `docker-compose up` again
+      docker_compose:
         project_src: flask
         build: no
       register: output
@@ -189,10 +197,11 @@ EXAMPLES = '''
     - assert:
         that: "not output.changed "
 
-    - docker_compose:
+    - name: Stop all services
+      docker_compose:
         project_src: flask
         build: no
-        stopped: true
+        stopped: yes
       register: output
 
     - debug:
@@ -203,10 +212,11 @@ EXAMPLES = '''
           - "not web.flask_web_1.state.running"
           - "not db.flask_db_1.state.running"
 
-    - docker_compose:
+    - name: Restart services
+      docker_compose:
         project_src: flask
         build: no
-        restarted: true
+        restarted: yes
       register: output
 
     - debug:
@@ -308,7 +318,7 @@ services:
   type: complex
   contains:
       container_name:
-          description: Name of the container. Format is I(project_service_#).
+          description: Name of the container. Format is C(project_service_#).
           returned: success
           type: complex
           contains:
@@ -385,7 +395,7 @@ services:
 
 actions:
   description: Provides the actions to be taken on each service as determined by compose.
-  returned: when in check mode or I(debug) true
+  returned: when in check mode or I(debug) is C(yes)
   type: complex
   contains:
       service_name:
@@ -876,11 +886,18 @@ class ContainerManager(DockerBaseClass):
                 except Exception as exc:
                     self.client.fail("Error: service image lookup failed - %s" % str(exc))
 
+                out_redir_name, err_redir_name = make_redirection_tempfiles()
                 # pull the image
                 try:
-                    service.pull(ignore_pull_failures=False)
+                    with stdout_redirector(out_redir_name):
+                        with stderr_redirector(err_redir_name):
+                            service.pull(ignore_pull_failures=False)
                 except Exception as exc:
-                    self.client.fail("Error: pull failed with %s" % str(exc))
+                    fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                                   msg_format="Error: pull failed with %s")
+                    self.client.fail(**fail_reason)
+                else:
+                    cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
 
                 # store the new image ID
                 new_image_id = ''
@@ -923,11 +940,18 @@ class ContainerManager(DockerBaseClass):
                     except Exception as exc:
                         self.client.fail("Error: service image lookup failed - %s" % str(exc))
 
+                    out_redir_name, err_redir_name = make_redirection_tempfiles()
                     # build the image
                     try:
-                        new_image_id = service.build(pull=self.pull, no_cache=self.nocache)
+                        with stdout_redirector(out_redir_name):
+                            with stderr_redirector(err_redir_name):
+                                new_image_id = service.build(pull=self.pull, no_cache=self.nocache)
                     except Exception as exc:
-                        self.client.fail("Error: build failed with %s" % str(exc))
+                        fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                                       msg_format="Error: build failed with %s")
+                        self.client.fail(**fail_reason)
+                    else:
+                        cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
 
                     if new_image_id not in old_image_id:
                         # if a new image was built
@@ -956,10 +980,17 @@ class ContainerManager(DockerBaseClass):
             ))
         if not self.check_mode and result['changed']:
             image_type = image_type_from_opt('--rmi', self.remove_images)
+            out_redir_name, err_redir_name = make_redirection_tempfiles()
             try:
-                self.project.down(image_type, self.remove_volumes, self.remove_orphans)
+                with stdout_redirector(out_redir_name):
+                    with stderr_redirector(err_redir_name):
+                        self.project.down(image_type, self.remove_volumes, self.remove_orphans)
             except Exception as exc:
-                self.client.fail("Error stopping project - %s" % str(exc))
+                fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                               msg_format="Error stopping project - %s")
+                self.client.fail(**fail_reason)
+            else:
+                cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
         return result
 
     def cmd_stop(self, service_names):
@@ -1047,10 +1078,17 @@ class ContainerManager(DockerBaseClass):
                     result['changed'] = True
                     service_res['scale'] = scale - len(containers)
                     if not self.check_mode:
+                        out_redir_name, err_redir_name = make_redirection_tempfiles()
                         try:
-                            service.scale(scale)
+                            with stdout_redirector(out_redir_name):
+                                with stderr_redirector(err_redir_name):
+                                    service.scale(scale)
                         except Exception as exc:
-                            self.client.fail("Error scaling %s - %s" % (service.name, str(exc)))
+                            fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                                           msg_format="Error scaling {0} - %s".format(service.name))
+                            self.client.fail(**fail_reason)
+                        else:
+                            cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
                     result['actions'].append(service_res)
         return result
 

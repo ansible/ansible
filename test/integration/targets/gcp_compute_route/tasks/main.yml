@@ -53,9 +53,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#route'"
 - name: verify that route was created
-  gcp_compute_route_facts:
+  gcp_compute_route_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -87,7 +86,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#route'"
 #----------------------------------------------------------
 - name: delete a route
   gcp_compute_route:
@@ -108,7 +106,7 @@
     that:
       - result.changed == true
 - name: verify that route was deleted
-  gcp_compute_route_facts:
+  gcp_compute_route_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"

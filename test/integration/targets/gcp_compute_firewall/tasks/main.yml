@@ -51,9 +51,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#firewall'"
 - name: verify that firewall was created
-  gcp_compute_firewall_facts:
+  gcp_compute_firewall_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -88,7 +87,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#firewall'"
 #----------------------------------------------------------
 - name: delete a firewall
   gcp_compute_firewall:
@@ -112,7 +110,7 @@
     that:
       - result.changed == true
 - name: verify that firewall was deleted
-  gcp_compute_firewall_facts:
+  gcp_compute_firewall_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"

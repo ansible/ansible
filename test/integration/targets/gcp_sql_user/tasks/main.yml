@@ -54,9 +54,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'sql#user'"
 - name: verify that user was created
-  gcp_sql_user_facts:
+  gcp_sql_user_info:
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -84,7 +83,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'sql#user'"
 #----------------------------------------------------------
 - name: delete a user
   gcp_sql_user:
@@ -102,7 +100,7 @@
     that:
       - result.changed == true
 - name: verify that user was deleted
-  gcp_sql_user_facts:
+  gcp_sql_user_info:
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"

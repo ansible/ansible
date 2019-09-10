@@ -77,6 +77,14 @@ options:
     default: True
     vars:
       - name: ansible_httpapi_validate_certs
+  use_proxy:
+    type: boolean
+    version_added: "2.9"
+    description:
+      - Whether to use https_proxy for requests.
+    default: True
+    vars:
+      - name: ansible_httpapi_use_proxy
   timeout:
     type: int
     description:
@@ -174,7 +182,7 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import httpapi_loader
-from ansible.plugins.connection import NetworkConnectionBase
+from ansible.plugins.connection import NetworkConnectionBase, ensure_connect
 
 
 class Connection(NetworkConnectionBase):
@@ -235,9 +243,9 @@ class Connection(NetworkConnectionBase):
             self.queue_message('vvv', "ESTABLISH HTTP(S) CONNECTFOR USER: %s TO %s" %
                                (self._play_context.remote_user, self._url))
             self.httpapi.set_become(self._play_context)
-            self.httpapi.login(self.get_option('remote_user'), self.get_option('password'))
-
             self._connected = True
+
+            self.httpapi.login(self.get_option('remote_user'), self.get_option('password'))
 
     def close(self):
         '''
@@ -250,12 +258,14 @@ class Connection(NetworkConnectionBase):
 
         super(Connection, self).close()
 
+    @ensure_connect
     def send(self, path, data, **kwargs):
         '''
         Sends the command to the device over api
         '''
         url_kwargs = dict(
             timeout=self.get_option('timeout'), validate_certs=self.get_option('validate_certs'),
+            use_proxy=self.get_option("use_proxy"),
             headers={},
         )
         url_kwargs.update(kwargs)

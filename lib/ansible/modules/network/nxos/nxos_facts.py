@@ -55,9 +55,13 @@ options:
     description:
       - When supplied, this argument will restrict the facts collected
         to a given subset. Possible values for this argument include
-        all and the resources like interfaces, vlans etc.
-        Can specify a list of values to include a larger subset.
-    choices: ['all', 'lag_interfaces']
+        all and the resources like interfaces, vlans etc. Can specify a
+        list of values to include a larger subset. Values can also be
+        used with an initial C(M(!)) to specify that a specific subset
+        should not be collected.
+        Valid subsets are 'all', 'bfd_interfaces', 'lag_interfaces', 'telemetry',
+        'vlans', 'lacp', 'lacp_interfaces', 'interfaces', 'l3_interfaces',
+        'l2_interfaces', 'lldp_global'.
     required: false
     version_added: "2.9"
 """
@@ -66,22 +70,18 @@ EXAMPLES = """
 - name: Gather all legacy facts
   nxos_facts:
     gather_subset: all
-
 - name: Gather only the config and default facts
   nxos_facts:
     gather_subset:
       - config
-
 - name: Do not gather hardware facts
   nxos_facts:
     gather_subset:
       - "!hardware"
-
 - name: Gather legacy and resource facts
   nxos_facts:
     gather_subset: all
     gather_network_resources: all
-
 - name: Gather only the interfaces resource facts and no legacy facts
   nxos_facts:
     gather_subset:
@@ -89,7 +89,6 @@ EXAMPLES = """
       - '!min'
     gather_network_resources:
       - interfaces
-
 - name: Gather interfaces resource and minimal legacy facts
   nxos_facts:
     gather_subset: min
@@ -101,12 +100,10 @@ ansible_net_gather_subset:
   description: The list of fact subsets collected from the device
   returned: always
   type: list
-
 ansible_net_gather_network_resources:
   description: The list of fact for network resource subsets collected from the device
   returned: when the resource is configured
   type: list
-
 # default
 ansible_net_model:
   description: The model name returned from the device
@@ -140,7 +137,6 @@ ansible_net_python_version:
   description: The Python version Ansible controller is using
   returned: always
   type: str
-
 # hardware
 ansible_net_filesystems:
   description: All file system names available on the device
@@ -154,13 +150,11 @@ ansible_net_memtotal_mb:
   description: The total memory on the remote device in Mb
   returned: when hardware is configured
   type: int
-
 # config
 ansible_net_config:
   description: The current active config from the device
   returned: when config is configured
   type: str
-
 # interfaces
 ansible_net_all_ipv4_addresses:
   description: All IPv4 addresses configured on the device
@@ -180,7 +174,6 @@ ansible_net_neighbors:
       CDP and LLDP neighbor data is present on one port, CDP is preferred.
   returned: when interfaces is configured
   type: dict
-
 # legacy (pre Ansible 2.2)
 fan_info:
   description: A hash of facts about fans in the remote device

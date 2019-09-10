@@ -101,12 +101,13 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Greg Crosby (@crosbygw)
 '''
 
 EXAMPLES = r'''
 - name: Create a DNS zone for DNS express
   bigip_dns_zone:
-    name: foo.bar.com
+    name: zone.foo.com
     dns_express:
       enabled: yes
       server: dns-lab
@@ -120,6 +121,89 @@ EXAMPLES = r'''
       server: lb.mydomain.com
       user: admin
   delegate_to: localhost
+
+- name: Disable DNS express zone, change server, and modify notify_action to bypass
+  bigip_dns_zone:
+    name: zone.foo.com
+    dns_express:
+      enabled: no
+      server: foo1.server.com
+      allow_notify_from:
+        - 192.168.39.10
+      notify_action: bypass
+      verify_tsig: no
+      response_policy: no
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
+  delegate_to: localhost
+
+- name: Add nameservers
+  bigip_dns_zone:
+    name: zone.foo.com
+    nameservers:
+      - foo1.nameserver.com
+      - foo2.nameserver.com
+      - foo3.nameserver.com
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
+  delegate_to: localhost
+
+- name: Remove nameserver
+  bigip_dns_zone:
+    name: zone.foo.com
+    nameservers:
+      - foo1.nameserver.com
+      - foo2.nameserver.com
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
+  delegate_to: localhost
+
+- name: Remove all nameservers
+  bigip_dns_zone:
+    name: zone.foo.com
+    nameservers: none
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
+  delegate_to: localhost
+
+- name: Add tsig_server_key
+  bigip_dns_zone:
+    name: zone.foo.com
+    tsig_server_key: key1
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
+  delegate_to: localhost
+
+- name: Remove tsig_server_key
+  bigip_dns_zone:
+    name: zone.foo.com
+    tsig_server_key: none
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
+  delegate_to: localhost
+
+- name: Remove zone
+  bigip_dns_zone:
+    name: zone.foo.com
+    state: absent
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
+  delegate_to: localhost
+
 '''
 
 RETURN = r'''

@@ -21,8 +21,7 @@ description:
 - Adds or removes a user (role) from a PostgreSQL server instance
   ("cluster" in PostgreSQL terminology) and, optionally,
   grants the user access to an existing database or tables.
-  A user is a role with login privilege
-  (see U(https://www.postgresql.org/docs/11/role-attributes.html) for more information).
+- A user is a role with login privilege.
 - The fundamental function of the module is to create, or delete, users from
   a PostgreSQL instances. Privilege assignment, or removal, is an optional
   step, which works on one database at a time. This allows for the module to
@@ -147,11 +146,23 @@ options:
     type: str
     aliases: [ ssl_rootcert ]
     version_added: '2.3'
+  groups:
+    description:
+    - The list of groups (roles) that need to be granted to the user.
+    type: list
+    version_added: '2.9'
 notes:
 - The module creates a user (role) with login privilege by default.
   Use NOLOGIN role_attr_flags to change this behaviour.
 - If you specify PUBLIC as the user (role), then the privilege changes will apply to all users (roles).
   You may not specify password or role_attr_flags when the PUBLIC user is specified.
+seealso:
+- module: postgresql_privs
+- module: postgresql_membership
+- module: postgresql_owner
+- name: PostgreSQL database roles
+  description: Complete reference of the PostgreSQL database roles documentation.
+  link: https://www.postgresql.org/docs/current/user-manag.html
 author:
 - Ansible Core Team
 extends_documentation_fragment: postgres
@@ -205,6 +216,13 @@ EXAMPLES = r'''
     db: test
     user: test
     password: ""
+
+- name: Create user test and grant group user_ro and user_rw to it
+  postgresql_user:
+    name: test
+    groups:
+    - user_ro
+    - user_rw
 '''
 
 RETURN = r'''
@@ -233,7 +251,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import pg_quote_identifier, SQLParseError
 from ansible.module_utils.postgres import (
     connect_to_db,
+    exec_sql,
     get_conn_params,
+    PgMembership,
     postgres_common_argument_spec,
 )
 from ansible.module_utils._text import to_bytes, to_native
@@ -754,7 +774,6 @@ def get_valid_flags_by_version(cursor):
 # Module execution.
 #
 
-
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
@@ -770,6 +789,7 @@ def main():
         expires=dict(type='str', default=None),
         conn_limit=dict(type='int', default=None),
         session_role=dict(type='str'),
+        groups=dict(type='list'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -791,6 +811,9 @@ def main():
     expires = module.params["expires"]
     conn_limit = module.params["conn_limit"]
     role_attr_flags = module.params["role_attr_flags"]
+    groups = module.params["groups"]
+    if groups:
+        groups = [e.strip() for e in groups]
 
     conn_params = get_conn_params(module, module.params, warn_db_default=False)
     db_connection = connect_to_db(module, conn_params)
@@ -826,6 +849,14 @@ def main():
             changed = grant_privileges(cursor, user, privs) or changed
         except SQLParseError as e:
             module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+
+        if groups:
+            target_roles = []
+            target_roles.append(user)
+            pg_membership = PgMembership(module, cursor, groups, target_roles)
+            changed = pg_membership.grant()
+            executed_queries.extend(pg_membership.executed_queries)
+
     else:
         if user_exists(cursor, user):
             if module.check_mode:

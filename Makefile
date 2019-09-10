@@ -12,7 +12,6 @@
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
 #   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html for requirements)
-#   make pyflakes, make pep8 -- source code checks
 
 ########################################################
 # variable section
@@ -20,6 +19,7 @@
 NAME = ansible
 OS = $(shell uname -s)
 PREFIX ?= '/usr/local'
+SDIST_DIR ?= 'dist'
 
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
@@ -172,18 +172,6 @@ authors:
 %.1: %.1.rst lib/ansible/release.py
 	$(ASCII2MAN)
 
-.PHONY: loc
-loc:
-	sloccount lib library bin
-
-.PHONY: pep8
-pep8:
-	$(ANSIBLE_TEST) sanity --test pep8 --python $(PYTHON_VERSION) $(TEST_FLAGS)
-
-.PHONY: pyflakes
-pyflakes:
-	pyflakes lib/ansible/*.py lib/ansible/*/*.py bin/*
-
 .PHONY: clean
 clean:
 	@echo "Cleaning up distutils stuff"
@@ -239,14 +227,14 @@ sdist_check:
 
 .PHONY: sdist
 sdist: sdist_check clean docs
-	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist --dist-dir=$(SDIST_DIR)
 
 # Official releases generate the changelog as the last commit before the release.
 # Snapshots shouldn't result in new checkins so the changelog is generated as
 # part of creating the tarball.
 .PHONY: snapshot
 snapshot: sdist_check clean docs changelog
-	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist --dist-dir=$(SDIST_DIR)
 
 .PHONY: sdist_upload
 sdist_upload: clean docs

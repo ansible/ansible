@@ -90,6 +90,10 @@ options:
      - '     - C(eagerzeroedthick) eagerzeroedthick disk'
      - '     - C(thick) thick disk'
      - '     Default: C(thick) thick disk, no eagerzero.'
+     - ' - C(disk_mode) (string): Type of disk mode. Valid values are:'
+     - '     - C(persistent) Changes are immediately and permanently written to the virtual disk. This is default.'
+     - '     - C(independent_persistent) Same as persistent, but not affected by snapshots.'
+     - '     - C(independent_nonpersistent) Changes to virtual disk are made to a redo log and discarded at power off, but not affected by snapshots.'
      - ' - C(datastore) (string): Name of datastore or datastore cluster to be used for the disk.'
      - ' - C(autoselect_datastore) (bool): Select the less used datastore. Specify only if C(datastore) is not specified.'
      - ' - C(scsi_controller) (integer): SCSI controller number. Valid value range from 0 to 3.'
@@ -127,6 +131,7 @@ EXAMPLES = '''
         scsi_controller: 1
         unit_number: 1
         scsi_type: 'paravirtual'
+        disk_mode: 'persistent'
       - size_gb: 10
         type: eagerzeroedthick
         state: present
@@ -134,6 +139,7 @@ EXAMPLES = '''
         scsi_controller: 2
         scsi_type: 'buslogic'
         unit_number: 12
+        disk_mode: 'independent_persistent'
       - size: 10Gb
         type: eagerzeroedthick
         state: present
@@ -141,6 +147,7 @@ EXAMPLES = '''
         scsi_controller: 2
         scsi_type: 'buslogic'
         unit_number: 1
+        disk_mode: 'independent_nonpersistent'
   delegate_to: localhost
   register: disk_facts
 
@@ -244,7 +251,7 @@ class PyVmomiHelper(PyVmomi):
         return scsi_ctl
 
     @staticmethod
-    def create_scsi_disk(scsi_ctl_key, disk_index):
+    def create_scsi_disk(scsi_ctl_key, disk_index, disk_mode):
         """
         Create Virtual Device Spec for virtual disk
         Args:
@@ -259,7 +266,7 @@ class PyVmomiHelper(PyVmomi):
         disk_spec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
         disk_spec.device = vim.vm.device.VirtualDisk()
         disk_spec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
-        disk_spec.device.backing.diskMode = 'persistent'
+        disk_spec.device.backing.diskMode = disk_mode
         disk_spec.device.controllerKey = scsi_ctl_key
         disk_spec.device.unitNumber = disk_index
         return disk_spec
@@ -340,7 +347,7 @@ class PyVmomiHelper(PyVmomi):
             scsi_controller = disk['scsi_controller'] + 1000  # VMware auto assign 1000 + SCSI Controller
             if disk['disk_unit_number'] not in current_scsi_info[scsi_controller]['disks'] and disk['state'] == 'present':
                 # Add new disk
-                disk_spec = self.create_scsi_disk(scsi_controller, disk['disk_unit_number'])
+                disk_spec = self.create_scsi_disk(scsi_controller, disk['disk_unit_number'], disk['disk_mode'])
                 disk_spec.device.capacityInKB = disk['size']
                 if disk['disk_type'] == 'thin':
                     disk_spec.device.backing.thinProvisioned = True
@@ -416,7 +423,8 @@ class PyVmomiHelper(PyVmomi):
                                 datastore=None,
                                 autoselect_datastore=True,
                                 disk_unit_number=0,
-                                scsi_controller=0)
+                                scsi_controller=0,
+                                disk_mode='persistent')
             # Check state
             if 'state' in disk:
                 if disk['state'] not in ['absent', 'present']:
@@ -568,6 +576,13 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg="Invalid 'disk_type' specified for disk index [%s]. Please specify"
                                           " 'disk_type' value from ['thin', 'thick', 'eagerzeroedthick']." % disk_index)
             current_disk['disk_type'] = disk_type
+
+            # Mode of Disk
+            temp_disk_mode = disk.get('disk_mode', 'persistent').lower()
+            if temp_disk_mode not in ['persistent', 'independent_persistent', 'independent_nonpersistent']:
+                self.module.fail_json(msg="Invalid 'disk_mode' specified for disk index [%s]. Please specify"
+                                          " 'disk_mode' value from ['persistent', 'independent_persistent', 'independent_nonpersistent']." % disk_index)
+            current_disk['disk_mode'] = temp_disk_mode
 
             # SCSI Controller Type
             scsi_contrl_type = disk.get('scsi_type', 'paravirtual').lower()

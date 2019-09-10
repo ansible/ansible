@@ -1,0 +1,121 @@
+---
+merged:
+  before:
+    - name: Loopback888
+    - name: Loopback999
+
+  commands:
+    - "interface GigabitEthernet0/0/0/0"
+    - "ipv4 address 198.51.100.1 255.255.255.0"
+    - "interface GigabitEthernet0/0/0/1"
+    - "ipv4 address 192.0.2.2 255.255.255.0 secondary"
+    - "ipv4 address 192.0.2.1 255.255.255.0"
+    - "ipv6 address 2001:db8:0:3::/64"
+
+  after:
+    - name: Loopback888
+    - name: Loopback999
+    - ipv4:
+      - address: 198.51.100.1 255.255.255.0
+      name: GigabitEthernet0/0/0/0
+    - ipv4:
+      - address: 192.0.2.1 255.255.255.0
+      - address: 192.0.2.2 255.255.255.0
+        secondary: true
+      ipv6:
+      - address: 2001:db8:0:3::/64
+      name: GigabitEthernet0/0/0/1
+
+replaced:
+  before:
+    - name: Loopback888
+    - name: Loopback999
+    - ipv4:
+      - address: 198.51.100.1 255.255.255.0
+      ipv6:
+      - address: 2001:db8::/32
+      name: GigabitEthernet0/0/0/0
+    - ipv4:
+      - address: 192.0.2.1 255.255.255.0
+      - address: 192.0.2.2 255.255.255.0
+        secondary: true
+      name: GigabitEthernet0/0/0/1
+
+  commands:
+    - "interface GigabitEthernet0/0/0/0"
+    - "no ipv6 address"
+    - "ipv4 address 203.0.113.27 255.255.255.0"
+    - "ipv4 address 203.0.114.1 255.255.255.0 secondary"
+
+  after:
+    - name: Loopback888
+    - name: Loopback999
+    - ipv4:
+      - address: 203.0.113.27 255.255.255.0
+      - address: 203.0.114.1 255.255.255.0
+        secondary: true
+      name: GigabitEthernet0/0/0/0
+    - ipv4:
+      - address: 192.0.2.1 255.255.255.0
+      - address: 192.0.2.2 255.255.255.0
+        secondary: true
+      name: GigabitEthernet0/0/0/1
+
+overridden:
+  before:
+    - name: Loopback888
+    - name: Loopback999
+    - ipv4:
+      - address: 198.51.100.1 255.255.255.0
+      ipv6:
+      - address: 2001:db8::/32
+      name: GigabitEthernet0/0/0/0
+    - ipv4:
+      - address: 192.0.2.1 255.255.255.0
+      - address: 192.0.2.2 255.255.255.0
+        secondary: true
+      name: GigabitEthernet0/0/0/1
+
+  commands:
+    - "interface GigabitEthernet0/0/0/0"
+    - "no ipv4 address"
+    - "no ipv6 address"
+    - "interface GigabitEthernet0/0/0/1"
+    - "no ipv4 address"
+    - "ipv4 address 198.51.102.1 255.255.255.0"
+    - "ipv6 address 2001:db8:1::/64"
+
+  after:
+    - name: Loopback888
+    - name: Loopback999
+    - ipv4:
+      - address: 198.51.102.1 255.255.255.0
+      ipv6:
+      - address: 2001:db8:1::/64
+      name: GigabitEthernet0/0/0/1
+
+deleted:
+  before:
+    - name: Loopback888
+    - name: Loopback999
+    - ipv4:
+      - address: 198.51.100.1 255.255.255.0
+      ipv6:
+      - address: 2001:db8::/32
+      name: GigabitEthernet0/0/0/0
+    - ipv4:
+      - address: 192.0.2.1 255.255.255.0
+      - address: 192.0.2.2 255.255.255.0
+        secondary: true
+      name: GigabitEthernet0/0/0/1
+
+  commands:
+    - "interface GigabitEthernet0/0/0/0"
+    - "no ipv4 address"
+    - "no ipv6 address"
+    - "interface GigabitEthernet0/0/0/1"
+    - "no ipv4 address"
+
+  after:
+    - name: Loopback888
+    - name: Loopback999

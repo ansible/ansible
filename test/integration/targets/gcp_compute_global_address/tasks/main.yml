@@ -33,9 +33,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#address'"
 - name: verify that global_address was created
-  gcp_compute_global_address_facts:
+  gcp_compute_global_address_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -61,7 +60,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#address'"
 #----------------------------------------------------------
 - name: delete a global address
   gcp_compute_global_address:
@@ -76,7 +74,7 @@
     that:
       - result.changed == true
 - name: verify that global_address was deleted
-  gcp_compute_global_address_facts:
+  gcp_compute_global_address_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"

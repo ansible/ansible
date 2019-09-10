@@ -4,6 +4,8 @@
 
 - vars:
     test_user: hello_user
+    test_group1: group1
+    test_group2: group2
     test_table: test
     task_parameters: &task_parameters
       become_user: '{{ pg_user }}'
@@ -519,6 +521,132 @@
       that:
       - result is not changed
 
+  #
+  # Test groups parameter
+  #
+  - name: Create test group
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_group2 }}'
+      role_attr_flags: NOLOGIN
+
+  - name: Create role test_group1 and grant test_group2 to test_group1 in check_mode
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_group1 }}'
+      groups: '{{ test_group2 }}'
+      role_attr_flags: NOLOGIN
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_group1 }}'
+      - result.queries == ['CREATE USER "{{ test_group1 }}" NOLOGIN', 'GRANT "{{ test_group2 }}" TO "{{ test_group1 }}"']
+
+  - name: check that the user doesn't exist
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT rolname FROM pg_roles WHERE rolname = '{{ test_group1 }}'"
+
+  - assert:
+      that:
+      - result.rowcount == 0
+
+  - name: check membership
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT grolist FROM pg_group WHERE groname = '{{ test_group2 }}' AND grolist != '{}'"
+
+  - assert:
+      that:
+      - result.rowcount == 0
+
+  - name: Create role test_group1 and grant test_group2 to test_group1
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_group1 }}'
+      groups: '{{ test_group2 }}'
+      role_attr_flags: NOLOGIN
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_group1 }}'
+      - result.queries == ['CREATE USER "{{ test_group1 }}" NOLOGIN', 'GRANT "{{ test_group2 }}" TO "{{ test_group1 }}"']
+
+  - name: check that the user exists
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT rolname FROM pg_roles WHERE rolname = '{{ test_group1 }}'"
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: check membership
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT grolist FROM pg_group WHERE groname = '{{ test_group2 }}' AND grolist != '{}'"
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Grant test_group2 to test_group1 again
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_group1 }}'
+      groups: '{{ test_group2 }}'
+
+  - assert:
+      that:
+      - result is not changed
+      - result.user == '{{ test_group1 }}'
+
+  - name: check membership
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT grolist FROM pg_group WHERE groname = '{{ test_group2 }}' AND grolist != '{}'"
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Grant groups to existent role
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      groups:
+      - '{{ test_group1 }}'
+      - '{{ test_group2 }}'
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_user }}'
+      - result.queries == ['GRANT "{{ test_group1 }}" TO "{{ test_user }}"', 'GRANT "{{ test_group2 }}" TO "{{ test_user }}"']
+
+  - name: check membership
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT * FROM pg_group WHERE groname in ('{{ test_group1 }}', '{{ test_group2 }}') AND grolist != '{}'"
+
+  - assert:
+      that:
+      - result.rowcount == 2
+
   always:
   #
   # Clean up
@@ -534,5 +662,9 @@
     <<: *task_parameters
     postgresql_user:
       <<: *pg_parameters
-      name: '{{ test_user }}'
+      name: '{{ item }}'
       state: absent
+    loop:
+    - '{{ test_user }}'
+    - '{{ test_group1 }}'
+    - '{{ test_group2 }}'

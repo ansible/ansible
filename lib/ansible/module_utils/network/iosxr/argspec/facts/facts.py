@@ -18,12 +18,7 @@ class FactsArgs(object):  # pylint: disable=R0903
     def __init__(self, **kwargs):
         pass
 
-    choices = [
-        'all',
-        'lacp'
-    ]
-
     argument_spec = {
         'gather_subset': dict(default=['!config'], type='list'),
-        'gather_network_resources': dict(choices=choices, type='list'),
+        'gather_network_resources': dict(type='list'),
     }

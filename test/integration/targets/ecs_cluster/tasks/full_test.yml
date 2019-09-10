@@ -219,7 +219,7 @@
       ignore_errors: yes
 
     - name: obtain ECS task definition facts
-      ecs_taskdefinition_facts:
+      ecs_taskdefinition_info:
         task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
         <<: *aws_connection_info
 
@@ -392,15 +392,15 @@
       register: ecs_task_definition_vpc_with_host_port
 
     - name: obtain ECS task definition facts
-      ecs_taskdefinition_facts:
+      ecs_taskdefinition_info:
         task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_task_definition_vpc_with_host_port.taskdefinition.revision }}"
         <<: *aws_connection_info
-      register: ecs_taskdefinition_facts
+      register: ecs_taskdefinition_info
 
     - name: assert that network mode is awsvpc
       assert:
         that:
-          - "ecs_taskdefinition_facts.network_mode == 'awsvpc'"
+          - "ecs_taskdefinition_info.network_mode == 'awsvpc'"
 
     - name: pause to allow service to scale down
       pause:
@@ -569,64 +569,64 @@
       register: ecs_service_creation_replica
 
     - name: obtain facts for all ECS services in the cluster
-      ecs_service_facts:
+      ecs_service_info:
         cluster: "{{ ecs_cluster_name }}"
         details: yes
         events: no
         <<: *aws_connection_info
-      register: ecs_service_facts
+      register: ecs_service_info
 
     - name: assert that facts are useful
       assert:
         that:
-          - "'services' in ecs_service_facts"
-          - ecs_service_facts.services | length > 0
-          - "'events' not in ecs_service_facts.services[0]"
+          - "'services' in ecs_service_info"
+          - ecs_service_info.services | length > 0
+          - "'events' not in ecs_service_info.services[0]"
 
     - name: obtain facts for existing service in the cluster
-      ecs_service_facts:
+      ecs_service_info:
         cluster: "{{ ecs_cluster_name }}"
         service: "{{ ecs_service_name }}"
         details: yes
         events: no
         <<: *aws_connection_info
-      register: ecs_service_facts
+      register: ecs_service_info
 
     - name: assert that existing service is available and running
       assert:
         that:
-          - "ecs_service_facts.services|length == 1"
-          - "ecs_service_facts.services_not_running|length == 0"
+          - "ecs_service_info.services|length == 1"
+          - "ecs_service_info.services_not_running|length == 0"
 
     - name: obtain facts for non-existent service in the cluster
-      ecs_service_facts:
+      ecs_service_info:
         cluster: "{{ ecs_cluster_name }}"
         service: madeup
         details: yes
         events: no
         <<: *aws_connection_info
-      register: ecs_service_facts
+      register: ecs_service_info
 
     - name: assert that non-existent service is missing
       assert:
         that:
-          - "ecs_service_facts.services_not_running[0].reason == 'MISSING'"
+          - "ecs_service_info.services_not_running[0].reason == 'MISSING'"
 
     - name: obtain specific ECS service facts
-      ecs_service_facts:
+      ecs_service_info:
         service: "{{ ecs_service_name }}2"
         cluster: "{{ ecs_cluster_name }}"
         details: yes
         <<: *aws_connection_info
-      register: ecs_service_facts
+      register: ecs_service_info
 
     - name: check that facts contain network configuration
       assert:
         that:
-          - "'networkConfiguration' in ecs_service_facts.ansible_facts.services[0]"
+          - "'networkConfiguration' in ecs_service_info.ansible_facts.services[0]"
 
     - name: attempt to get facts from missing task definition
-      ecs_taskdefinition_facts:
+      ecs_taskdefinition_info:
         task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_task_definition.taskdefinition.revision + 1}}"
         <<: *aws_connection_info
 
@@ -699,7 +699,7 @@
       register: ecs_fargate_task_definition
 
     - name: obtain ECS task definition facts
-      ecs_taskdefinition_facts:
+      ecs_taskdefinition_info:
         task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_fargate_task_definition.taskdefinition.revision }}"
         <<: *aws_connection_info
 
@@ -783,24 +783,24 @@
         msg: "***** TESTING COMPLETE. COMMENCE TEARDOWN *****"
 
     - name: obtain ECS service facts
-      ecs_service_facts:
+      ecs_service_info:
         service: "{{ ecs_service_name }}"
         cluster: "{{ ecs_cluster_name }}"
         details: yes
         <<: *aws_connection_info
-      register: ecs_service_facts
+      register: ecs_service_info
 
     - name: scale down ECS service
       ecs_service:
         state: present
         name: "{{ ecs_service_name }}"
         cluster: "{{ ecs_cluster_name }}"
-        task_definition: "{{ ecs_service_facts.ansible_facts.services[0].taskDefinition }}"
+        task_definition: "{{ ecs_service_info.ansible_facts.services[0].taskDefinition }}"
         desired_count: 0
         deployment_configuration: "{{ ecs_service_deployment_configuration }}"
         placement_strategy: "{{ ecs_service_placement_strategy }}"
         load_balancers:
-          - targetGroupArn: "{{ ecs_service_facts.ansible_facts.services[0].loadBalancers[0].targetGroupArn }}"
+          - targetGroupArn: "{{ ecs_service_info.ansible_facts.services[0].loadBalancers[0].targetGroupArn }}"
             containerName: "{{ ecs_task_name }}"
             containerPort: "{{ ecs_task_container_port }}"
         <<: *aws_connection_info
@@ -808,25 +808,25 @@
       register: ecs_service_scale_down
 
     - name: obtain second ECS service facts
-      ecs_service_facts:
+      ecs_service_info:
         service: "{{ ecs_service_name }}2"
         cluster: "{{ ecs_cluster_name }}"
         details: yes
         <<: *aws_connection_info
       ignore_errors: yes
-      register: ecs_service_facts
+      register: ecs_service_info
 
     - name: scale down second ECS service
       ecs_service:
         state: present
         name: "{{ ecs_service_name }}2"
         cluster: "{{ ecs_cluster_name }}"
-        task_definition: "{{ ecs_service_facts.ansible_facts.services[0].taskDefinition }}"
+        task_definition: "{{ ecs_service_info.ansible_facts.services[0].taskDefinition }}"
         desired_count: 0
         deployment_configuration: "{{ ecs_service_deployment_configuration }}"
         placement_strategy: "{{ ecs_service_placement_strategy }}"
         load_balancers:
-          - targetGroupArn: "{{ ecs_service_facts.ansible_facts.services[0].loadBalancers[0].targetGroupArn }}"
+          - targetGroupArn: "{{ ecs_service_info.ansible_facts.services[0].loadBalancers[0].targetGroupArn }}"
             containerName: "{{ ecs_task_name }}"
             containerPort: "{{ ecs_task_container_port }}"
         <<: *aws_connection_info

@@ -51,6 +51,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - For example, U(www.example.com).
@@ -75,12 +76,9 @@ options:
     type: list
   managed_zone:
     description:
-    - Identifies the managed zone addressed by this request.
-    - 'This field represents a link to a ManagedZone resource in GCP. It can be specified
-      in two ways. First, you can place a dictionary with key ''name'' and value of
-      your resource''s name Alternatively, you can add `register: name-of-resource`
-      to a gcp_dns_managed_zone task and then set this managed_zone field to "{{ name-of-resource
-      }}"'
+    - Identifies the managed zone addressed by this request. This must be a dictionary
+      that contains both a 'name' key and a 'dnsName' key. You can pass in the results
+      of the gcp_dns_managed_zone module, which will contain both.
     required: true
     type: dict
 extends_documentation_fragment: gcp
@@ -136,7 +134,9 @@ target:
   type: list
 managed_zone:
   description:
-  - Identifies the managed zone addressed by this request.
+  - Identifies the managed zone addressed by this request. This must be a dictionary
+    that contains both a 'name' key and a 'dnsName' key. You can pass in the results
+    of the gcp_dns_managed_zone module, which will contain both.
   returned: success
   type: dict
 '''
@@ -178,6 +178,9 @@ def main():
 
     fetch = fetch_wrapped_resource(module, 'dns#resourceRecordSet', 'dns#resourceRecordSetsListResponse', 'rrsets')
     changed = False
+
+    if 'dnsName' not in module.params.get('managed_zone') or 'name' not in module.params.get('managed_zone'):
+        module.fail_json(msg="managed_zone dictionary must contain both the name of the zone and the dns name of the zone")
 
     if fetch:
         if state == 'present':

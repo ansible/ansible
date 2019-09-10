@@ -1,5 +1,3 @@
-import os
-import tempfile
 
 from units.compat import unittest
 from ansible.modules.system.systemd import parse_systemctl_show

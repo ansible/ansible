@@ -8,7 +8,7 @@ __metaclass__ = type
 
 import pytest
 
-from units.compat.mock import patch, MagicMock, mock_open
+from units.compat.mock import patch, MagicMock
 from ansible.plugins.action.win_updates import ActionModule
 from ansible.playbook.task import Task
 
@@ -19,7 +19,7 @@ class TestWinUpdatesActionPlugin(object):
         (
             {"state": "invalid"},
             False,
-            "state must be either installed or searched"
+            "state must be either installed, searched or downloaded"
         ),
         (
             {"reboot": "nonsense"},

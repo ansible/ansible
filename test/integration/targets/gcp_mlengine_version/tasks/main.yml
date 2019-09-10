@@ -57,7 +57,7 @@
     that:
       - result.changed == true
 - name: verify that version was created
-  gcp_mlengine_version_facts:
+  gcp_mlengine_version_info:
       model: "{{ model }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -106,7 +106,7 @@
     that:
       - result.changed == true
 - name: verify that version was deleted
-  gcp_mlengine_version_facts:
+  gcp_mlengine_version_info:
       model: "{{ model }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
