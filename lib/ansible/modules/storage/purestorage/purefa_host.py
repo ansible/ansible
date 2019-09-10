@@ -177,6 +177,20 @@ PREFERRED_ARRAY_API_VERSION = '1.15'
 NVME_API_VERSION = '1.16'
 
 
+def _is_cbs(module, array, is_cbs=False):
+    """Is the selected array a Cloud Block Store"""
+    model = ''
+    ct0_model = array.get_hardware('CT0')['model']
+    if ct0_model:
+        model = ct0_model
+    else:
+        ct1_model = array.get_hardware('CT1')['model']
+        model = ct1_model
+    if 'CBS' in model:
+        is_cbs = True
+    return is_cbs
+
+
 def _set_host_initiators(module, array):
     """Set host initiators."""
     if module.params['protocol'] in ['nvme', 'mixed']:
@@ -417,6 +431,8 @@ def main():
     module = AnsibleModule(argument_spec, supports_check_mode=True)
 
     array = get_system(module)
+    if _is_cbs(module, array) and module.params['wwns'] or module.params['nqn']:
+        module.fail_json(msg='Cloud block Store only support iSCSI as a protocol')
     api_version = array._list_available_rest_versions()
     if module.params['nqn'] is not None and NVME_API_VERSION not in api_version:
         module.fail_json(msg='NVMe protocol not supported. Please upgrade your array.')
