@@ -1,40 +1,135 @@
 
 .. _developing_resource_modules:
 
-*********************************
-Developing nework resource models
-*********************************
+***********************************
+Developing network resource modules
+***********************************
 
 .. contents::
   :local:
 
 The resource module builder is an Ansible Playbook that helps developers scaffold and maintain an Ansible network resource module.
 
-**Capabilities**
-- Use a defined model to scaffold a resource module directory layout and initial class files.
-- Scaffold either an Ansible role or a collection.
-- Subsequent uses of the Resource Module Builder (RMB) will only replace the module arspec and file containing the module doc string.
-- Complex examples can be stored along side the model in the same directory.
-- Maintain the model as the source of truth for the module and use RMB to update the source files as needed.
-- Generates working sample modules for both `<network_os>_<resource>` and `<network_os>_facts`
+The resource module builder has the following capabilities:
 
+- Uses a defined model to scaffold a resource module directory layout and initial class files.
+- Scaffolds either an Ansible role or a collection.
+- Subsequent uses of the resource module builder will only replace the module arspec and file containing the module doc string.
+- Allows you to store complex examples along side the model in the same directory.
+- Maintains the model as the source of truth for the module and use resource module builder to update the source files as needed.
+- Generates working sample modules for both `<network_os>_<resource>` and `<network_os>_facts`.
+
+Accessing the resource module builder
+=====================================
+
+To access the resource module builder:
+
+#. clone the github repository:
+
+  .. code-block:: bash
+
+    git clone https://github.com/ansible-network/resource_module_builder.git
+
+#. Install the requirements:
+
+  .. code-block:: bash
+
+    pip install -r requirements.txt
+
+Creating a model
+================
+
+You must create a model for your new resource. The resource module builder uses this model to create:
+
+* The scaffold for a new module
+* The argspec for the new module
+* The docstring for the new module.
+
+The model is then the single source of truth for both the argspec and docstring, keeping them in sync. Use the resource module builder to generate this scaffolding. For any subsequent updates to the module, update the model first and use the resource module builder to update the module scaffolding.
+
+The following shows an example of a model file:
+
+.. code-block:: yaml
+
+  ---
+  GENERATOR_VERSION: '1.0'
+  ANSIBLE_METADATA: |
+      {
+          'metadata_version': '1.1',
+          'status': ['preview'],
+          'supported_by': '<support_group>'
+      }
+  NETWORK_OS: myos
+  RESOURCE: interfaces
+  COPYRIGHT: Copyright 2019 Red Hat
+  LICENSE: gpl-3.0.txt
+
+  DOCUMENTATION: |
+    module: myos_interfaces
+    version_added: 2.9
+    short_description: 'Manages <xxxx> attributes of <network_os> <resource>.'
+    description: 'Manages <xxxx> attributes of <network_os> <resource>'
+    author: Ansible Network Engineer
+   notes:
+      - 'Tested against <network_os> <version>'
+    options:
+      config:
+        description: The provided configuration
+        type: list
+        elements: dict
+        suboptions:
+          name:
+            type: str
+            description: The name of the <resource>
+          some_string:
+            type: str
+            description:
+            - The some_string_01
+            choices:
+            - choice_a
+            - choice_b
+            - choice_c
+            default: choice_a
+          some_bool:
+            description:
+            - The some_bool.
+            type: bool
+          some_int:
+            description:
+            - The some_int.
+            type: int
+            version_added: '1.1'
+          some_dict:
+            type: dict
+            description:
+            - The some_dict.
+            suboptions:
+              property_01:
+                description:
+                - The property_01
+                type: str
+      state:
+        description:
+        - The state the configuration should be left in
+        type: str
+        choices:
+        - merged
+        - replaced
+        - overridden
+        - deleted
+        default: merged
+  EXAMPLES:
+    - deleted_example_01.txt
+    - merged_example_01.txt
+    - overridden_example_01.txt
+    - replaced_example_01.txt
+
+See `Ansible network resource models  <https://github.com/ansible-network/resource_module_models>`_ for more examples.
 
 Using the resource module builder
 =================================
 
-.. code-block:: bash
-
-  pip install -r requirements.txt
-
-
-.. code-block:: bash
-
-  ansible-playbook -e rm_dest=<destination for modules and module utils> \
-                   -e structure=role \
-                   -e model=<model> \
-                   site.yml
-
-or
+To use the resource module builder to create a collection scaffold from your resource model:
 
 .. code-block:: bash
 
@@ -47,18 +142,22 @@ or
 
 Where the parameters are as follows:
 
-- `rm_dest`: The directory in which the files and directories for the resource module and facts modules should be placed
-- `structure`: The directory layout to be generated (role|collection)
-- `role`: Generate a role directory layout
-- `collection`: Generate a collection directory layout
-- `collection_org`: The organization of the collection, required when `structure=collection`
-- `collection_name`: The name of the collection, required when `structure=collection`
-- `model`: The path to the model file
+- `rm_dest`: The directory where the resource module builder places the files and directories for the resource module and facts modules.
+- `structure`: The directory layout type (role or collection)
+  - `role`: Generate a role directory layout.
+  - `collection`: Generate a collection directory layout.
+- `collection_org`: The organization of the collection, required when `structure=collection`.
+- `collection_name`: The name of the collection, required when `structure=collection`.
+- `model`: The path to the model file.
 
-Model
-=====
+To use the resource module builder to create a role scaffold:
 
-See the `models` directory for an example.
+.. code-block:: bash
+
+  ansible-playbook -e rm_dest=<destination for modules and module utils> \
+                   -e structure=role \
+                   -e model=<model> \
+                   site.yml
 
 Examples
 ========
@@ -200,7 +299,7 @@ Link the generated collection to `~/.ansible/collections/ansible_collections/<co
 
 
 `site.yml`
- ^^^^^^^^^
+^^^^^^^^^^
 
  .. code-block:: yaml
 
