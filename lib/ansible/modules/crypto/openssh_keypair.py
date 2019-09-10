@@ -202,7 +202,7 @@ class Keypair(object):
                 self.remove()
                 module.fail_json(msg="%s" % to_native(e))
 
-        elif not self.isPublicKeyValid(module):
+        elif not self.isPublicKeyValid(module, perms_required=False):
             pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
             pubkey = pubkey[1].strip('\n')
             try:
@@ -228,6 +228,9 @@ class Keypair(object):
                         msg='Unable to update the comment for the public key.')
 
         file_args = module.load_file_common_arguments(module.params)
+        if module.set_fs_attributes_if_different(file_args, False):
+            self.changed = True
+        file_args['path'] = file_args['path'] + '.pub'
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
 
@@ -268,7 +271,7 @@ class Keypair(object):
 
         return _check_state() and _check_perms(module) and _check_type() and _check_size()
 
-    def isPublicKeyValid(self, module):
+    def isPublicKeyValid(self, module, perms_required=True):
 
         def _get_pubkey_content():
             if os.path.exists(self.path + ".pub"):
@@ -296,6 +299,11 @@ class Keypair(object):
                 return pubkey_parts[2] == self.comment
             return False
 
+        def _check_perms(module):
+            file_args = module.load_file_common_arguments(module.params)
+            file_args['path'] = file_args['path'] + '.pub'
+            return not module.set_fs_attributes_if_different(file_args, False)
+
         pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
         pubkey = pubkey[1].strip('\n')
         pubkey_parts = _parse_pubkey()
@@ -305,7 +313,10 @@ class Keypair(object):
         if not self.comment:
             return _pubkey_valid(pubkey)
 
-        return _pubkey_valid(pubkey) and _comment_valid()
+        if not perms_required:
+            return _pubkey_valid(pubkey) and _comment_valid()
+
+        return _pubkey_valid(pubkey) and _comment_valid() and _check_perms(module)
 
     def dump(self):
         # return result as a dict
