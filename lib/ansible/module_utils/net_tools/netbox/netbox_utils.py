@@ -100,6 +100,8 @@ DEVICE_STATUS = dict(offline=0, active=1, planned=2, staged=3, failed=4, invento
 
 IP_ADDRESS_STATUS = dict(active=1, reserved=2, deprecated=3, dhcp=5)
 
+VIRTUAL_MACHINE_STATUS = dict(offline=0, active=1, staged=3)
+
 IP_ADDRESS_ROLE = dict(
     loopback=10, secondary=20, anycast=30, vip=40, vrrp=41, hsrp=42, glbp=43, carp=44
 )
