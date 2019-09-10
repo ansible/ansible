@@ -273,7 +273,10 @@ class DocCLI(CLI):
 
             if not any(filename.endswith(x) for x in C.BLACKLIST_EXTS):
                 doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0))
-                doc['filename'] = filename
+
+                if doc:
+                    # doc may be None, such as when the module has been removed
+                    doc['filename'] = filename
 
         except Exception as e:
             display.vvv(traceback.format_exc())
