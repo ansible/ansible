@@ -1413,7 +1413,7 @@ class AnsibleModule(object):
 
         for deprecation in deprecated_aliases:
             if deprecation['name'] in param.keys():
-                self._deprecations.append(
+                warnings._global_deprecations.append(
                     {'msg': "Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
                      'version': deprecation['version']})
         return alias_results

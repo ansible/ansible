@@ -339,8 +339,8 @@ class TestComplexArgSpecs:
         """Test a deprecated alias"""
         am = basic.AnsibleModule(**complex_argspec)
 
-        assert "Alias 'zodraz' is deprecated." in am._deprecations[0]['msg']
-        assert am._deprecations[0]['version'] == '9.99'
+        assert "Alias 'zodraz' is deprecated." in warnings._global_deprecations[0]['msg']
+        assert warnings._global_deprecations[0]['version'] == '9.99'
 
 
 class TestComplexOptions:
