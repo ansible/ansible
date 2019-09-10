@@ -22,7 +22,15 @@ module: hwc_vpc_security_group
 description:
     - vpc security group management.
 short_description: Creates a resource of Vpc/SecurityGroup in Huawei Cloud
-version_added: '2.9'
+notes:
+  - If I(id) option is provided, it takes precedence over I(name),
+    I(enterprise_project_id) and I(vpc_id) for security group selection.
+  - I(name), I(enterprise_project_id) and I(vpc_id) are used for security
+    group selection. If more than one security group with this options exists,
+    execution is aborted.
+  - No parameter support updating. If one of option is changed, the module
+    will create a new resource.
+version_added: '2.10'
 author: Huawei Inc. (@huaweicloud)
 requirements:
     - keystoneauth1 >= 3.6.0
@@ -33,13 +41,6 @@ options:
         type: str
         choices: ['present', 'absent']
         default: 'present'
-    filters:
-        description:
-            - A list of filters to apply when deciding whether existing
-              resources match and should be altered. The item of filters
-              is the name of input options.
-        type: list
-        required: true
     name:
         description:
             - Specifies the security group name. The value is a string of 1 to
@@ -51,9 +52,10 @@ options:
         description:
             - Specifies the enterprise project ID. When creating a security
               group, associate the enterprise project ID with the security
-              group.
+              group.s
         type: str
         required: false
+        default: 0
     vpc_id:
         description:
             - Specifies the resource ID of the VPC to which the security group
@@ -68,8 +70,6 @@ EXAMPLES = '''
 - name: create a security group
   hwc_vpc_security_group:
     name: "ansible_network_security_group_test"
-    filters:
-      - "name"
 '''
 
 RETURN = '''
@@ -91,11 +91,6 @@ RETURN = '''
         description:
             - Specifies the resource ID of the VPC to which the security group
               belongs.
-        type: str
-        returned: success
-    description:
-        description:
-            - Specifies supplementary information about the security group.
         type: str
         returned: success
     rules:
@@ -181,7 +176,6 @@ def build_module():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'],
                        type='str'),
-            filters=dict(required=True, type='list', elements='str'),
             name=dict(type='str', required=True),
             enterprise_project_id=dict(type='str'),
             vpc_id=dict(type='str')
@@ -198,16 +192,18 @@ def main():
 
     try:
         resource = None
-        if module.params['id']:
-            resource = True
+        if module.params.get("id"):
+            resource = read_resource(config)
+            if module.params['state'] == 'present':
+                check_resource_option(resource, module)
         else:
             v = search_resource(config)
             if len(v) > 1:
-                raise Exception("find more than one resources(%s)" % ", ".join([
+                raise Exception("Found more than one resource(%s)" % ", ".join([
                                 navigate_value(i, ["id"]) for i in v]))
 
             if len(v) == 1:
-                resource = v[0]
+                resource = update_properties(module, {"read": v[0]}, None)
                 module.params['id'] = navigate_value(resource, ["id"])
 
         result = {}
@@ -215,11 +211,10 @@ def main():
         if module.params['state'] == 'present':
             if resource is None:
                 if not module.check_mode:
-                    create(config)
+                    resource = create(config)
                 changed = True
 
-            result = read_resource(config)
-            result['id'] = module.params.get('id')
+            result = resource
         else:
             if resource:
                 if not module.check_mode:
@@ -239,7 +234,25 @@ def user_input_parameters(module):
         "enterprise_project_id": module.params.get("enterprise_project_id"),
         "name": module.params.get("name"),
         "vpc_id": module.params.get("vpc_id"),
+        "id": module.params.get("id"),
     }
+
+
+def check_resource_option(resource, module):
+    opts = user_input_parameters(module)
+
+    resource = {
+        "enterprise_project_id": resource.get("enterprise_project_id"),
+        "name": resource.get("name"),
+        "vpc_id": resource.get("vpc_id"),
+        "id": resource.get("id"),
+    }
+
+    if are_different_dicts(resource, opts):
+        raise Exception(
+            "Cannot change option from (%s) to (%s) for an"
+            " existing security group(%s)." % (resource, opts,
+                                               module.params.get('id')))
 
 
 def create(config):
@@ -250,6 +263,9 @@ def create(config):
     params = build_create_parameters(opts)
     r = send_create_request(module, params, client)
     module.params['id'] = navigate_value(r, ["security_group", "id"])
+
+    result = update_properties(module, {"read": fill_read_resp_body(r)}, None)
+    return result
 
 
 def delete(config):
@@ -293,7 +309,7 @@ def search_resource(config):
     module = config.module
     client = config.client(get_region(module), "vpc", "project")
     opts = user_input_parameters(module)
-    identity_obj = _build_identity_object(module, opts)
+    identity_obj = _build_identity_object(opts)
     query_link = _build_query_link(opts)
     link = "security-groups" + query_link
 
@@ -383,8 +399,6 @@ def send_read_request(module, client):
 def fill_read_resp_body(body):
     result = dict()
 
-    result["description"] = body.get("description")
-
     result["enterprise_project_id"] = body.get("enterprise_project_id")
 
     result["id"] = body.get("id")
@@ -437,10 +451,6 @@ def fill_read_resp_security_group_rules(value):
 def update_properties(module, response, array_index, exclude_output=False):
     r = user_input_parameters(module)
 
-    if not exclude_output:
-        v = navigate_value(response, ["read", "description"], array_index)
-        r["description"] = v
-
     v = navigate_value(response, ["read", "enterprise_project_id"],
                        array_index)
     r["enterprise_project_id"] = v
@@ -455,6 +465,9 @@ def update_properties(module, response, array_index, exclude_output=False):
 
     v = navigate_value(response, ["read", "vpc_id"], array_index)
     r["vpc_id"] = v
+
+    v = navigate_value(response, ["read", "id"], array_index)
+    r["id"] = v
 
     return r
 
@@ -559,27 +572,20 @@ def send_list_request(module, client, url):
     return navigate_value(r, ["security_groups"], None)
 
 
-def _build_identity_object(module, all_opts):
-    filters = module.params.get("filters")
-    opts = dict()
-    for k, v in all_opts.items():
-        opts[k] = v if k in filters else None
-
+def _build_identity_object(all_opts):
     result = dict()
 
-    result["description"] = None
-
-    v = navigate_value(opts, ["enterprise_project_id"], None)
+    v = navigate_value(all_opts, ["enterprise_project_id"], None)
     result["enterprise_project_id"] = v
 
     result["id"] = None
 
-    v = navigate_value(opts, ["name"], None)
+    v = navigate_value(all_opts, ["name"], None)
     result["name"] = v
 
     result["security_group_rules"] = None
 
-    v = navigate_value(opts, ["vpc_id"], None)
+    v = navigate_value(all_opts, ["vpc_id"], None)
     result["vpc_id"] = v
 
     return result
@@ -587,8 +593,6 @@ def _build_identity_object(module, all_opts):
 
 def fill_list_resp_body(body):
     result = dict()
-
-    result["description"] = body.get("description")
 
     result["enterprise_project_id"] = body.get("enterprise_project_id")
 
