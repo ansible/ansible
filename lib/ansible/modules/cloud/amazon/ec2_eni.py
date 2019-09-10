@@ -856,9 +856,6 @@ def main():
         ])
     )
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
     connection = module.client('ec2')
     state = module.params.get("state")
 
