@@ -37,6 +37,7 @@ options:
             - If true, sets variable persistently (will survive mysql restarts)
         type: bool
         default: False
+        version_added: "2.10"
 extends_documentation_fragment:
 - mysql
 '''
