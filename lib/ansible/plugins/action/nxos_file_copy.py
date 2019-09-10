@@ -452,6 +452,10 @@ class ActionModule(ActionBase):
         if socket_path is None:
             socket_path = self._connection.socket_path
         self.conn = Connection(socket_path)
+
+        # Call get_capabilities() to start the connection to the device.
+        self.conn.get_capabilities()
+
         self.socket_timeout = self.conn.get_option('persistent_command_timeout')
 
         # This action plugin support two modes of operation.
