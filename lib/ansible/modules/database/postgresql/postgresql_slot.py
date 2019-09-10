@@ -107,7 +107,7 @@ EXAMPLES = r'''
     db: ansible
     state: absent
 
-- name: Create logical_one logical slot to the database acme if doen't exist
+- name: Create logical_one logical slot to the database acme if doesn't exist
   postgresql_slot:
     name: logical_slot_one
     slot_type: logical

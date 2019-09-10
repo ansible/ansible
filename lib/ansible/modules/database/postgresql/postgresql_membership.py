@@ -20,7 +20,7 @@ short_description: Add or remove PostgreSQL roles from groups
 description:
 - Adds or removes PostgreSQL roles from groups (other roles).
 - Users are roles with login privilege.
-- Groups are PostgreSQL roles usually without LOGIN privelege.
+- Groups are PostgreSQL roles usually without LOGIN privilege.
 - "Common use case:"
 - 1) add a new group (groups) by M(postgresql_user) module with I(role_attr_flags=NOLOGIN)
 - 2) grant them desired privileges by M(postgresql_privs) module
