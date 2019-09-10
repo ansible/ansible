@@ -5511,9 +5511,9 @@ lib/ansible/modules/system/user.py validate-modules:use-run-command-not-popen
 lib/ansible/modules/system/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/system/user.py validate-modules:doc-default-incompatible-type
 lib/ansible/modules/system/xfconf.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/utilities/helper/_accelerate.py ansible-doc
 lib/ansible/modules/utilities/logic/async_status.py use-argspec-type-path
 lib/ansible/modules/utilities/logic/async_status.py validate-modules!skip
+lib/ansible/modules/utilities/logic/async_wrapper.py ansible-doc!skip  # not an actual module
 lib/ansible/modules/utilities/logic/async_wrapper.py use-argspec-type-path
 lib/ansible/modules/utilities/logic/wait_for.py pylint:blacklisted-name
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_credential.py validate-modules:doc-choices-do-not-match-spec
@@ -5709,7 +5709,7 @@ lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin 
 lib/ansible/plugins/action/nxos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/sros.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/vyos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
-lib/ansible/plugins/cache/base.py ansible-doc  # not a plugin, but a stub for backwards compatibility
+lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
 lib/ansible/plugins/callback/hipchat.py pylint:blacklisted-name
 lib/ansible/plugins/connection/lxc.py pylint:blacklisted-name
 lib/ansible/plugins/doc_fragments/a10.py future-import-boilerplate
