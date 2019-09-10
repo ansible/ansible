@@ -684,7 +684,7 @@ Networking
 Network resource modules
 ------------------------
 
-Ansible 2.9 introduced the first batch of network resource modules. These modules improve the usability of Ansible network modules. The older modules are deprecated in Ansible 2.9 and will be removed in Ansible 2.12. You should scan the list of deprecated modules above and replace them with the new network resource modules in your playbooks.
+Ansible 2.9 introduced the first batch of network resource modules. These modules improve the usability of Ansible network modules. The older modules are deprecated in Ansible 2.9 and will be removed in Ansible 2.13. You should scan the list of deprecated modules above and replace them with the new network resource modules in your playbooks.
 
 Top-level connection arguments removed in 2.9
 ---------------------------------------------
