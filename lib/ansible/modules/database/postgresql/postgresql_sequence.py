@@ -41,7 +41,7 @@ options:
     - Specifies the data type of the sequence. Valid types are bigint, integer,
       and smallint. bigint is the default. The data type determines the default
       minimum and maximum values of the sequence. For more info see the
-      documention
+      documentation
       U(https://www.postgresql.org/docs/current/sql-createsequence.html).
     - Supported from PostgreSQL 10.
     choices: [ bigint, integer, smallint ]
@@ -312,11 +312,11 @@ class Sequence(object):
 
     Arguments:
         module (AnsibleModule) -- object of AnsibleModule class
-        cursor (cursor) -- cursor objec of psycopg2 library
+        cursor (cursor) -- cursor object of psycopg2 library
 
     Attributes:
         module (AnsibleModule) -- object of AnsibleModule class
-        cursor (cursor) -- cursor objec of psycopg2 library
+        cursor (cursor) -- cursor object of psycopg2 library
         changed (bool) --  something was changed after execution or not
         executed_queries (list) -- executed queries
         name (str) -- name of the sequence
