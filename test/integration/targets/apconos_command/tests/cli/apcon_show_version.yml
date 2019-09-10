@@ -15,11 +15,3 @@
           - show version
       register: result
     - debug: var=result.stdout_lines
-
-    - name: 'Enable SSH'
-      apconos_command:
-        commands:
-          - enable service ssh
-          # enable SNMP
-          - enable service snmp
-      register: result
