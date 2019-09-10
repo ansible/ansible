@@ -43,7 +43,7 @@ options:
         description:
             - Query for existing DNS on this server.
             - When omitted value of C(server) will be used.
-        version_added: 2.10
+        version_added: "2.10"
     port:
         description:
             - Use this TCP port when connecting to C(server).
