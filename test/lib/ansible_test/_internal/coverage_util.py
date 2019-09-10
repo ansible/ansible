@@ -111,11 +111,11 @@ include =
         # temporary work-around for import sanity test
         coverage_config += '''
 include =
-     %s/*
+    %s/*
 
 omit =
-    */test/results/*
-''' % data_context().content.root
+    %s/*
+''' % (data_context().content.root, os.path.join(data_context().content.root, data_context().content.results_path))
     else:
         coverage_config += '''
 include =
