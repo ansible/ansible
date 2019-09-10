@@ -346,7 +346,7 @@ options:
             interface:
                 description:
                     - Interface of the disk.
-                choices: ['virtio', 'IDE']
+                choices: ['virtio', 'ide']
                 default: 'virtio'
             bootable:
                 description:
