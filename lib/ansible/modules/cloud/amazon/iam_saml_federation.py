@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 ---
 module: iam_saml_federation
 version_added: "2.9"
-short_description: maintain iam saml federation configuration.
+short_description: Maintain IAM SAML federation configuration.
 requirements:
     - boto3
 description:
@@ -107,28 +107,24 @@ saml_provider:
 '''
 
 try:
-    import boto3
     import botocore.exceptions
-
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import AWSRetry, aws_common_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.ec2 import AWSRetry, aws_common_argument_spec
 
 
 class SAMLProviderManager:
     """Handles SAML Identity Provider configuration"""
 
-    def __init__(self, module, **aws_connection_params):
+    def __init__(self, module):
         self.module = module
-        self.aws_connection_params = aws_connection_params
 
         try:
-            self.conn = boto3_conn(module, conn_type='client', resource='iam', **self.aws_connection_params)
+            self.conn = module.client('iam')
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg=str(e))
+            self.module.fail_json_aws(e, msg="Unknown boto error")
 
     # use retry decorator for boto3 calls
     @AWSRetry.backoff(tries=3, delay=5)
@@ -168,16 +164,13 @@ class SAMLProviderManager:
         try:
             arn = self._get_provider_arn(name)
         except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as e:
-            res['msg'] = str(e)
-            self.module.fail_json(**res)
+            self.module.fail_json_aws(e, msg="Could not get the ARN of the identity provider '{0}'".format(name))
 
         if arn:  # see if metadata needs updating
             try:
                 resp = self._get_saml_provider(arn)
             except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as e:
-                res['msg'] = str(e)
-                res['debug'] = [arn]
-                self.module.fail_json(**res)
+                self.module.fail_json_aws(e, msg="Could not retrieve the identity provider '{0}'".format(name))
 
             if metadata.strip() != resp['SAMLMetadataDocument'].strip():
                 # provider needs updating
@@ -187,9 +180,7 @@ class SAMLProviderManager:
                         resp = self._update_saml_provider(arn, metadata)
                         res['saml_provider'] = self._build_res(resp['SAMLProviderArn'])
                     except botocore.exceptions.ClientError as e:
-                        res['msg'] = str(e)
-                        res['debug'] = [arn, metadata]
-                        self.module.fail_json(**res)
+                        self.module.fail_json_aws(e, msg="Could not update the identity provider '{0}'".format(name))
 
         else:  # create
             res['changed'] = True
@@ -198,9 +189,7 @@ class SAMLProviderManager:
                     resp = self._create_saml_provider(metadata, name)
                     res['saml_provider'] = self._build_res(resp['SAMLProviderArn'])
                 except botocore.exceptions.ClientError as e:
-                    res['msg'] = str(e)
-                    res['debug'] = [name, metadata]
-                    self.module.fail_json(**res)
+                    self.module.fail_json_aws(e, msg="Could not create the identity provider '{0}'".format(name))
 
         self.module.exit_json(**res)
 
@@ -209,8 +198,7 @@ class SAMLProviderManager:
         try:
             arn = self._get_provider_arn(name)
         except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as e:
-            res['msg'] = str(e)
-            self.module.fail_json(**res)
+            self.module.fail_json_aws(e, msg="Could not get the ARN of the identity provider '{0}'".format(name))
 
         if arn:  # delete
             res['changed'] = True
@@ -218,9 +206,7 @@ class SAMLProviderManager:
                 try:
                     self._delete_saml_provider(arn)
                 except botocore.exceptions.ClientError as e:
-                    res['msg'] = str(e)
-                    res['debug'] = [arn]
-                    self.module.fail_json(**res)
+                    self.module.fail_json_aws(e, msg="Could not delete the identity provider '{0}'".format(name))
 
         self.module.exit_json(**res)
 
@@ -244,18 +230,14 @@ def main():
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[('state', 'present', ['saml_metadata_document'])]
     )
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
 
     name = module.params['name']
     state = module.params.get('state')
     saml_metadata_document = module.params.get('saml_metadata_document')
 
-    sp_man = SAMLProviderManager(module, **aws_connect_kwargs)
+    sp_man = SAMLProviderManager(module)
 
     if state == 'present':
         sp_man.create_or_update_saml_provider(name, saml_metadata_document)
