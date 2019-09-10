@@ -2541,15 +2541,15 @@ class BgpAf(object):
                 cmds.append(cmd)
 
         preference_external = module.params['preference_external']
-        if preference_external:
-            conf_str += "<preferenceExternal>%s</preferenceExternal>" % preference_external
-
         preference_internal = module.params['preference_internal']
-        if preference_internal:
-            conf_str += "<preferenceInternal>%s</preferenceInternal>" % preference_internal
-
         preference_local = module.params['preference_local']
-        if preference_local:
+        if any([preference_external, preference_internal, preference_local]):
+            preference_external = preference_external or "255"
+            preference_internal = preference_internal or "255"
+            preference_local = preference_local or "255"
+
+            conf_str += "<preferenceExternal>%s</preferenceExternal>" % preference_external
+            conf_str += "<preferenceInternal>%s</preferenceInternal>" % preference_internal
             conf_str += "<preferenceLocal>%s</preferenceLocal>" % preference_local
 
             cmd = "preference %s %s %s" % (
@@ -2787,6 +2787,8 @@ class BgpAf(object):
 
         cmds = []
         cmd = "import-route %s %s" % (import_protocol, import_process_id)
+        if import_protocol == "direct" or import_protocol == "static":
+            cmd = "import-route %s" % import_protocol
         cmds.append(cmd)
 
         return cmds
@@ -2815,6 +2817,8 @@ class BgpAf(object):
 
         cmds = []
         cmd = "import-route %s %s" % (import_protocol, import_process_id)
+        if import_protocol == "direct" or import_protocol == "static":
+            cmd = "import-route %s" % import_protocol
         cmds.append(cmd)
 
         return cmds
@@ -2843,6 +2847,8 @@ class BgpAf(object):
 
         cmds = []
         cmd = "undo import-route %s %s" % (import_protocol, import_process_id)
+        if import_protocol == "direct" or import_protocol == "static":
+            cmd = "undo import-route %s" % import_protocol
         cmds.append(cmd)
 
         return cmds
