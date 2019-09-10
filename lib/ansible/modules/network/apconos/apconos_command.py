@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: apconos_command
-version_added: "2.9"
+version_added: "2.10"
 author: "David Lee (@davidlee-ap)"
 short_description: Run arbitrary commands on APCON devices
 description:

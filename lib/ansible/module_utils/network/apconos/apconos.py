@@ -47,6 +47,7 @@ command_spec = {
     'command': dict(key=True),
 }
 
+
 def check_args(module, warnings):
     pass
 
