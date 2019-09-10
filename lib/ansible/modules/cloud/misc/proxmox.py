@@ -368,6 +368,7 @@ def create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, sw
         time.sleep(1)
     return False
 
+
 def update_instance(module, proxmox, vmid, node, **kwargs):
     proxmox_node = proxmox.nodes(node)
     kwargs = dict((k, v) for k, v in kwargs.items() if v is not None)
@@ -385,6 +386,7 @@ def update_instance(module, proxmox, vmid, node, **kwargs):
 
         if updateable_configs:
             vm.config.put(**updateable_configs)
+
 
 def start_instance(module, proxmox, vm, vmid, timeout):
     taskid = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.start.post()
