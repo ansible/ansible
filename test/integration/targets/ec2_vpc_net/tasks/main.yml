@@ -63,6 +63,7 @@
     - name: create a VPC
       ec2_vpc_net:
         cidr_block: 20.0.0.0/24
+        ipv6_cidr: True
         name: "{{ resource_prefix }}"
         state: present
         <<: *aws_connection_info
@@ -78,6 +79,7 @@
       assert:
         that:
           - '"cidr_block" in result.vpc'
+          - '"ipv6_cidr_block_association_set" in result.vpc'
           - '"classic_link_enabled" in result.vpc'
           - '"dhcp_options_id" in result.vpc'
           - '"id" in result.vpc'
@@ -86,9 +88,10 @@
           - '"state" in result.vpc'
           - '"tags" in result.vpc'
 
-    - name: set the first VPC as a fact for comparison and cleanup
+    - name: set the first VPC's details as facts for comparison and cleanup
       set_fact:
         vpc_1: "{{ result.vpc.id }}"
+        vpc_1_ipv6_cidr: "{{ result.vpc.ipv6_cidr_block_association_set.0.ipv6_cidr_block }}"
 
     - name: save default dhcp_options_id for later comparison
       set_fact:
@@ -96,9 +99,28 @@
 
     # ============================================================
 
+    - name: Try to add IPv6 CIDR when one already exists
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        ipv6_cidr: True
+        name: "{{ resource_prefix }}"
+        state: present
+        multi_ok: no
+        <<: *aws_connection_info
+      register: result
+
+    - name: Assert no changes made
+      assert:
+        that:
+          - '"Only one IPv6 CIDR is permitted per VPC, {{ result.vpc.id }} already has CIDR {{ vpc_1_ipv6_cidr }}" in result.warnings'
+          - 'not result.changed'
+
+    # ============================================================
+
     - name: test check mode creating an identical VPC
       ec2_vpc_net:
         cidr_block: 20.0.0.0/24
+        ipv6_cidr: True
         name: "{{ resource_prefix }}"
         state: present
         multi_ok: yes
@@ -117,6 +139,7 @@
       ec2_vpc_net:
         cidr_block: 20.0.0.0/24
         name: "{{ resource_prefix }}"
+        ipv6_cidr: True
         tenancy: dedicated
         state: present
         multi_ok: yes
@@ -136,6 +159,7 @@
     - name: attempt to create another VPC with the same CIDR and name without multi_ok
       ec2_vpc_net:
         cidr_block: 20.0.0.0/24
+        ipv6_cidr: True
         name: "{{ resource_prefix }}"
         state: present
         multi_ok: no
