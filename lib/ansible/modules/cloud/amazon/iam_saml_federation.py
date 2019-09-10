@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: iam_saml_federation
-version_added: "2.9"
+version_added: "2.10"
 short_description: Maintain IAM SAML federation configuration.
 requirements:
     - boto3
