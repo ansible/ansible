@@ -291,7 +291,7 @@ class VxlanArp(object):
             exp += r"|^#\s+interface %s\s+" % self.vbdif_name.lower().capitalize().replace(" ", "")
 
         if self.bridge_domain_id:
-            exp += "|^#\s+bridge-domain %s\s+" % self.bridge_domain_id
+            exp += r"|^#\s+bridge-domain %s\s+" % self.bridge_domain_id
 
         flags.append(exp)
         cfg_str = self.get_config(flags)
