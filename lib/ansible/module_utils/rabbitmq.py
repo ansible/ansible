@@ -10,9 +10,11 @@ __metaclass__ = type
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.six.moves.urllib import parse as urllib_parse
 from mimetypes import MimeTypes
 
 import os
+import json
 import traceback
 
 PIKA_IMP_ERR = None
@@ -55,9 +57,15 @@ class RabbitClient():
         self.vhost = self.params['vhost']
         self.queue = self.params['queue']
         self.headers = self.params['headers']
+        self.cafile = self.params['cafile']
+        self.certfile = self.params['certfile']
+        self.keyfile = self.params['keyfile']
 
         if self.host is not None:
             self.build_url()
+
+        if self.cafile is not None:
+            self.append_ssl_certs()
 
         self.connect_to_rabbitmq()
 
@@ -73,6 +81,17 @@ class RabbitClient():
         # Fail if url not specified and there is a missing parameter to build the url
         if self.params['url'] is None and any(self.params[k] is None for k in ['proto', 'host', 'port', 'password', 'username', 'vhost']):
             self.module.fail_json(msg="Connection parameters must be passed via url, or,  proto, host, port, vhost, username or password.")
+
+    def append_ssl_certs(self):
+        ssl_options = {}
+        if self.cafile:
+            ssl_options['cafile'] = self.cafile
+        if self.certfile:
+            ssl_options['certfile'] = self.certfile
+        if self.keyfile:
+            ssl_options['keyfile'] = self.keyfile
+
+        self.url = self.url + '?ssl_options=' + urllib_parse.quote(json.dumps(ssl_options))
 
     @staticmethod
     def rabbitmq_argument_spec():
