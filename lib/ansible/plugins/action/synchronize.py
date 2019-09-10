@@ -192,7 +192,7 @@ class ActionModule(ActionBase):
         # ssh paramiko docker buildah and local are fully supported transports.  Anything
         # else only works with delegate_to
         if delegate_to is None and self._connection.transport not in \
-                ('ssh', 'paramiko', 'local', 'docker', 'buildah'):
+                ('ssh', 'paramiko', 'local', 'docker', 'buildah', 'kubectl'):
             result['failed'] = True
             result['msg'] = (
                 "synchronize uses rsync to function. rsync needs to connect to the remote "
@@ -391,7 +391,7 @@ class ActionModule(ActionBase):
 
         # If launching synchronize against docker container
         # use rsync_opts to support container to override rsh options
-        if self._remote_transport in ['docker', 'buildah']:
+        if self._remote_transport in ['docker', 'buildah', 'kubectl']:
             # Replicate what we do in the module argumentspec handling for lists
             if not isinstance(_tmp_args.get('rsync_opts'), MutableSequence):
                 tmp_rsync_opts = _tmp_args.get('rsync_opts', [])
@@ -413,6 +413,21 @@ class ActionModule(ActionBase):
                     _tmp_args['rsync_opts'].append("--rsh=%s exec -i" % self._docker_cmd)
             elif self._remote_transport in ['buildah']:
                 _tmp_args['rsync_opts'].append("--rsh=buildah run --")
+            elif self._remote_transport in ['kubectl']:
+                for k in ('src', 'dest'):
+                    # Remove non existing local basename from path
+                    if _tmp_args[k].startswith('localhost:') and not os.path.exists(_tmp_args[k].lstrip('localhost:')):
+                        _tmp_args[k] = os.path.dirname(_tmp_args[k])
+                    _tmp_args[k] = _tmp_args[k].lstrip('localhost:').split('@', 1)[-1]
+                _tmp_args = dict(
+                    _local_rsync_path='oc',
+                    src=_tmp_args['src'],
+                    dest=_tmp_args['dest'],
+                    # Archive is set by default
+                    archive=False,
+                    delete=_tmp_args.get('delete', False),
+                    compress=_tmp_args.get('compress', True),
+                )
 
         # run the module and store the result
         result.update(self._execute_module('synchronize', module_args=_tmp_args, task_vars=task_vars))

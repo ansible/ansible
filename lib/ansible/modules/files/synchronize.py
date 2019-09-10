@@ -447,10 +447,20 @@ def main():
     verify_host = module.params['verify_host']
     link_dest = module.params['link_dest']
 
+    is_oc = rsync == 'oc'
     if '/' not in rsync:
         rsync = module.get_bin_path(rsync, required=True)
 
-    cmd = [rsync, '--delay-updates', '-F']
+    if is_oc:
+        cmd = [rsync, 'rsync', '-q', '--progress=false']
+        if delete:
+            cmd.append("--delete=true")
+        delete = False
+        if compress:
+            cmd.append("--compress=true")
+        compress = False
+    else:
+        cmd = [rsync, '--delay-updates', '-F']
     _sshpass_pipe = None
     if rsync_password:
         try:
@@ -508,7 +518,7 @@ def main():
     if source.startswith('rsync://') and dest.startswith('rsync://'):
         module.fail_json(msg='either src or dest must be a localhost', rc=1)
 
-    if is_rsh_needed(source, dest):
+    if not is_oc and is_rsh_needed(source, dest):
 
         # https://github.com/ansible/ansible/issues/15907
         has_rsh = False
@@ -561,13 +571,14 @@ def main():
             cmd.append('--link-dest=%s' % link_path)
 
     changed_marker = '<<CHANGED>>'
-    cmd.append('--out-format=' + changed_marker + '%i %n%L')
+    if not is_oc:
+        cmd.append('--out-format=' + changed_marker + '%i %n%L')
 
-    # expand the paths
-    if '@' not in source:
-        source = os.path.expanduser(source)
-    if '@' not in dest:
-        dest = os.path.expanduser(dest)
+        # expand the paths
+        if '@' not in source:
+            source = os.path.expanduser(source)
+        if '@' not in dest:
+            dest = os.path.expanduser(dest)
 
     cmd.append(source)
     cmd.append(dest)
