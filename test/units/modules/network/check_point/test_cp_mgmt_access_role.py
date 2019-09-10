@@ -32,8 +32,7 @@ OBJECT = {
     "networks": "any",
     "users": "any",
     "machines": "all identified",
-    "remote_access_clients": "any",
-    "color": "orange"
+    "remote_access_clients": "any"
 }
 
 CREATE_PAYLOAD = {
@@ -41,15 +40,13 @@ CREATE_PAYLOAD = {
     "networks": "any",
     "users": "any",
     "machines": "all identified",
-    "remote_access_clients": "any",
-    "color": "orange"
+    "remote_access_clients": "any"
 }
 
 UPDATE_PAYLOAD = {
     "name": "New Access Role 1",
     "users": "all identified",
-    "machines": "any",
-    "color": "blue"
+    "machines": "any"
 }
 
 DELETE_PAYLOAD = {
@@ -97,7 +94,7 @@ class TestCheckpointAccessRole(object):
 
     def test_update_idempotent(self, mocker, connection_mock):
         mock_function = mocker.patch(function_path)
-        mock_function.return_value = {'changed': True, api_call_object: OBJECT}
+        mock_function.return_value = {'changed': False, api_call_object: OBJECT}
         connection_mock.send_request.return_value = (200, OBJECT)
         result = self._run_module(UPDATE_PAYLOAD)
 
