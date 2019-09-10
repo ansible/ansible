@@ -22,7 +22,7 @@ API_APPS_ENDPOINTS = dict(
     ipam=["ip_addresses", "prefixes", "roles", "vlans", "vlan_groups", "vrfs"],
     secrets=[],
     tenancy=["tenants", "tenant_groups"],
-    virtualization=["clusters"],
+    virtualization=["clusters", "cluster_types", "cluster_groups"],
 )
 
 QUERY_TYPES = dict(
