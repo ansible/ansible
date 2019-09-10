@@ -143,8 +143,8 @@ def get_current_attr_value(module, filename, stanza, attr):
     if rc != 0:
         msg = 'Failed to run lssec command: ' + ' '.join(cmd)
         module.fail_json(msg=msg, rc=rc, stdout=stdout, stderr=stderr)
-    # Strip off whitespace and double-quotation marks that are sometimes added
-    lssec_out = stdout.splitlines()[1].split(':')[1].strip('\\\"\n ')
+    # Strip newline and double-quotation marks that are sometimes added
+    lssec_out = stdout.splitlines()[1].split(':', 1)[1].strip('\\\"\n')
     return str(lssec_out)
 
 
