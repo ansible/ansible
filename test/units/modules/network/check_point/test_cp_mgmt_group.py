@@ -32,8 +32,7 @@ OBJECT = {
     "members": [
         "New Host 1",
         "My Test Host 3"
-    ],
-    "color": "orange"
+    ]
 }
 
 CREATE_PAYLOAD = {
@@ -41,13 +40,11 @@ CREATE_PAYLOAD = {
     "members": [
         "New Host 1",
         "My Test Host 3"
-    ],
-    "color": "orange"
+    ]
 }
 
 UPDATE_PAYLOAD = {
-    "name": "New Group 5",
-    "color": "blue"
+    "name": "New Group 5"
 }
 
 DELETE_PAYLOAD = {
@@ -95,7 +92,7 @@ class TestCheckpointGroup(object):
 
     def test_update_idempotent(self, mocker, connection_mock):
         mock_function = mocker.patch(function_path)
-        mock_function.return_value = {'changed': True, api_call_object: OBJECT}
+        mock_function.return_value = {'changed': False, api_call_object: OBJECT}
         connection_mock.send_request.return_value = (200, OBJECT)
         result = self._run_module(UPDATE_PAYLOAD)
 
