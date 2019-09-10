@@ -188,7 +188,6 @@ def get_reset_reasons(module):
 
 def get_commands(module, state, mode):
     commands = list()
-    system_mode = ''
     if module.params['system_mode_maintenance'] is True and mode == 'normal':
         commands.append('system mode maintenance')
     elif (module.params['system_mode_maintenance'] is False and
