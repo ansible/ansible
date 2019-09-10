@@ -678,6 +678,10 @@ class DebianHostname(Hostname):
     distribution = 'Debian'
     strategy_class = DebianStrategy
 
+class DebianHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Kylin'
+    strategy_class = DebianStrategy
 
 class CumulusHostname(Hostname):
     platform = 'Linux'
