@@ -327,6 +327,7 @@ options:
 '''
 
 EXAMPLES = '''
+
 - name: CloudEngine BGP address family test
   hosts: cloudengine
   connection: local
@@ -338,19 +339,23 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       transport: cli
+
   tasks:
+
   - name: "Config BGP Address_Family"
     ce_bgp_af:
       state: present
       vrf_name: js
       af_type: ipv4uni
       provider: "{{ cli }}"
+
   - name: "Undo BGP Address_Family"
     ce_bgp_af:
       state: absent
       vrf_name: js
       af_type: ipv4uni
       provider: "{{ cli }}"
+
   - name: "Config import route"
     ce_bgp_af:
       state: present
@@ -359,6 +364,7 @@ EXAMPLES = '''
       import_protocol: ospf
       import_process_id: 123
       provider: "{{ cli }}"
+
   - name: "Undo import route"
     ce_bgp_af:
       state: absent
@@ -367,6 +373,7 @@ EXAMPLES = '''
       import_protocol: ospf
       import_process_id: 123
       provider: "{{ cli }}"
+
   - name: "Config network route"
     ce_bgp_af:
       state: present
@@ -375,6 +382,7 @@ EXAMPLES = '''
       network_address: 1.1.1.1
       mask_len: 24
       provider: "{{ cli }}"
+
   - name: "Undo network route"
     ce_bgp_af:
       state: absent
@@ -428,7 +436,7 @@ CE_GET_BGP_ADDRESS_FAMILY_HEADER = """
               <vrfName>%s</vrfName>
               <bgpVrfAFs>
                 <bgpVrfAF>
-                  <afType>%s</afType>
+                  <afType></afType>
 """
 CE_GET_BGP_ADDRESS_FAMILY_TAIL = """
                 </bgpVrfAF>
@@ -471,7 +479,7 @@ CE_CREATE_BGP_ADDRESS_FAMILY_HEADER = """
             <bgpVrf>
               <vrfName>%s</vrfName>
               <bgpVrfAFs>
-                <bgpVrfAF operation="merge">
+                <bgpVrfAF operation="create">
                   <afType>%s</afType>
 """
 CE_CREATE_BGP_ADDRESS_FAMILY_TAIL = """
@@ -828,7 +836,6 @@ class BgpAf(object):
         need_cfg = False
 
         vrf_name = module.params['vrf_name']
-        af_type = module.params['af_type']
         if vrf_name:
             if len(vrf_name) > 31 or len(vrf_name) == 0:
                 module.fail_json(
@@ -839,7 +846,7 @@ class BgpAf(object):
         state = module.params['state']
         af_type = module.params['af_type']
 
-        conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+        conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
             CE_GET_BGP_ADDRESS_FAMILY_TAIL
         recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -881,7 +888,6 @@ class BgpAf(object):
 
         state = module.params['state']
         vrf_name = module.params['vrf_name']
-        af_type = module.params['af_type']
 
         router_id = module.params['router_id']
         if router_id:
@@ -889,7 +895,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The len of router_id %s is out of [0 - 255].' % router_id)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<routerId></routerId>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -921,7 +927,7 @@ class BgpAf(object):
         determin_med = module.params['determin_med']
         if determin_med != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<determinMed></determinMed>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -953,7 +959,7 @@ class BgpAf(object):
         ebgp_if_sensitive = module.params['ebgp_if_sensitive']
         if ebgp_if_sensitive != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<ebgpIfSensitive></ebgpIfSensitive>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -985,7 +991,7 @@ class BgpAf(object):
         relay_delay_enable = module.params['relay_delay_enable']
         if relay_delay_enable != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<relayDelayEnable></relayDelayEnable>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1025,7 +1031,6 @@ class BgpAf(object):
         need_cfg = False
 
         vrf_name = module.params['vrf_name']
-        af_type = module.params['af_type']
 
         max_load_ibgp_num = module.params['max_load_ibgp_num']
         if max_load_ibgp_num:
@@ -1033,7 +1038,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The value of max_load_ibgp_num %s is out of [1 - 65535].' % max_load_ibgp_num)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<maxLoadIbgpNum></maxLoadIbgpNum>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1054,7 +1059,7 @@ class BgpAf(object):
         ibgp_ecmp_nexthop_changed = module.params['ibgp_ecmp_nexthop_changed']
         if ibgp_ecmp_nexthop_changed != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<ibgpEcmpNexthopChanged></ibgpEcmpNexthopChanged>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1078,7 +1083,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The value of max_load_ebgp_num %s is out of [1 - 65535].' % max_load_ebgp_num)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<maxLoadEbgpNum></maxLoadEbgpNum>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1099,7 +1104,7 @@ class BgpAf(object):
         ebgp_ecmp_nexthop_changed = module.params['ebgp_ecmp_nexthop_changed']
         if ebgp_ecmp_nexthop_changed != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<ebgpEcmpNexthopChanged></ebgpEcmpNexthopChanged>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1123,7 +1128,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The value of maximum_load_balance %s is out of [1 - 65535].' % maximum_load_balance)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<maximumLoadBalance></maximumLoadBalance>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1144,7 +1149,7 @@ class BgpAf(object):
         ecmp_nexthop_changed = module.params['ecmp_nexthop_changed']
         if ecmp_nexthop_changed != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<ecmpNexthopChanged></ecmpNexthopChanged>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1168,7 +1173,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The value of default_local_pref %s is out of [0 - 4294967295].' % default_local_pref)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<defaultLocalPref></defaultLocalPref>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1192,7 +1197,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The value of default_med %s is out of [0 - 4294967295].' % default_med)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<defaultMed></defaultMed>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1213,7 +1218,7 @@ class BgpAf(object):
         default_rt_import_enable = module.params['default_rt_import_enable']
         if default_rt_import_enable != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<defaultRtImportEnable></defaultRtImportEnable>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1237,7 +1242,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The len of router_id %s is out of [0 - 255].' % router_id)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<routerId></routerId>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1258,7 +1263,7 @@ class BgpAf(object):
         vrf_rid_auto_sel = module.params['vrf_rid_auto_sel']
         if vrf_rid_auto_sel != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<vrfRidAutoSel></vrfRidAutoSel>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1279,7 +1284,7 @@ class BgpAf(object):
         nexthop_third_party = module.params['nexthop_third_party']
         if nexthop_third_party != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<nexthopThirdParty></nexthopThirdParty>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1300,7 +1305,7 @@ class BgpAf(object):
         summary_automatic = module.params['summary_automatic']
         if summary_automatic != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<summaryAutomatic></summaryAutomatic>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1321,7 +1326,7 @@ class BgpAf(object):
         auto_frr_enable = module.params['auto_frr_enable']
         if auto_frr_enable != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<autoFrrEnable></autoFrrEnable>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1342,7 +1347,7 @@ class BgpAf(object):
         load_balancing_as_path_ignore = module.params['load_balancing_as_path_ignore']
         if load_balancing_as_path_ignore != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<loadBalancingAsPathIgnore></loadBalancingAsPathIgnore>" + \
                 CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
@@ -1364,7 +1369,7 @@ class BgpAf(object):
         rib_only_enable = module.params['rib_only_enable']
         if rib_only_enable != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<ribOnlyEnable></ribOnlyEnable>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1388,7 +1393,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The len of rib_only_policy_name %s is out of [1 - 40].' % rib_only_policy_name)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<ribOnlyPolicyName></ribOnlyPolicyName>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1409,7 +1414,7 @@ class BgpAf(object):
         active_route_advertise = module.params['active_route_advertise']
         if active_route_advertise != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<activeRouteAdvertise></activeRouteAdvertise>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1430,7 +1435,7 @@ class BgpAf(object):
         as_path_neglect = module.params['as_path_neglect']
         if as_path_neglect != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<asPathNeglect></asPathNeglect>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1451,7 +1456,7 @@ class BgpAf(object):
         med_none_as_maximum = module.params['med_none_as_maximum']
         if med_none_as_maximum != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<medNoneAsMaximum></medNoneAsMaximum>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1472,7 +1477,7 @@ class BgpAf(object):
         router_id_neglect = module.params['router_id_neglect']
         if router_id_neglect != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<routerIdNeglect></routerIdNeglect>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1493,7 +1498,7 @@ class BgpAf(object):
         igp_metric_ignore = module.params['igp_metric_ignore']
         if igp_metric_ignore != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<igpMetricIgnore></igpMetricIgnore>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1514,7 +1519,7 @@ class BgpAf(object):
         always_compare_med = module.params['always_compare_med']
         if always_compare_med != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<alwaysCompareMed></alwaysCompareMed>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1535,7 +1540,7 @@ class BgpAf(object):
         determin_med = module.params['determin_med']
         if determin_med != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<determinMed></determinMed>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1559,7 +1564,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The value of preference_external %s is out of [1 - 255].' % preference_external)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<preferenceExternal></preferenceExternal>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1583,7 +1588,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The value of preference_internal %s is out of [1 - 255].' % preference_internal)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<preferenceInternal></preferenceInternal>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1607,7 +1612,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The value of preference_local %s is out of [1 - 255].' % preference_local)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<preferenceLocal></preferenceLocal>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1631,7 +1636,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The len of prefrence_policy_name %s is out of [1 - 40].' % prefrence_policy_name)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<prefrencePolicyName></prefrencePolicyName>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1652,7 +1657,7 @@ class BgpAf(object):
         reflect_between_client = module.params['reflect_between_client']
         if reflect_between_client != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<reflectBetweenClient></reflectBetweenClient>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1677,7 +1682,7 @@ class BgpAf(object):
                     msg='Error: The value of reflector_cluster_id %s is out of '
                         '[1 - 4294967295].' % reflector_cluster_id)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<reflectorClusterId></reflectorClusterId>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1701,7 +1706,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The len of reflector_cluster_ipv4 %s is out of [0 - 255].' % reflector_cluster_ipv4)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<reflectorClusterIpv4></reflectorClusterIpv4>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1725,7 +1730,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The len of rr_filter_number %s is out of [1 - 51].' % rr_filter_number)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<rrFilterNumber></rrFilterNumber>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1746,7 +1751,7 @@ class BgpAf(object):
         policy_vpn_target = module.params['policy_vpn_target']
         if policy_vpn_target != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<policyVpnTarget></policyVpnTarget>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1767,7 +1772,7 @@ class BgpAf(object):
         next_hop_sel_depend_type = module.params['next_hop_sel_depend_type']
         if next_hop_sel_depend_type:
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<nextHopSelDependType></nextHopSelDependType>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1793,7 +1798,7 @@ class BgpAf(object):
                     msg='Error: The len of nhp_relay_route_policy_name %s is '
                         'out of [1 - 40].' % nhp_relay_route_policy_name)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<nhpRelayRoutePolicyName></nhpRelayRoutePolicyName>" + \
                 CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
@@ -1815,7 +1820,7 @@ class BgpAf(object):
         ebgp_if_sensitive = module.params['ebgp_if_sensitive']
         if ebgp_if_sensitive != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<ebgpIfSensitive></ebgpIfSensitive>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1836,7 +1841,7 @@ class BgpAf(object):
         reflect_chg_path = module.params['reflect_chg_path']
         if reflect_chg_path != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<reflectChgPath></reflectChgPath>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1860,7 +1865,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The value of add_path_sel_num %s is out of [2 - 64].' % add_path_sel_num)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<addPathSelNum></addPathSelNum>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1884,7 +1889,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The value of route_sel_delay %s is out of [0 - 3600].' % route_sel_delay)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<routeSelDelay></routeSelDelay>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1905,7 +1910,7 @@ class BgpAf(object):
         allow_invalid_as = module.params['allow_invalid_as']
         if allow_invalid_as != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<allowInvalidAs></allowInvalidAs>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1926,7 +1931,7 @@ class BgpAf(object):
         policy_ext_comm_enable = module.params['policy_ext_comm_enable']
         if policy_ext_comm_enable != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<policyExtCommEnable></policyExtCommEnable>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1947,7 +1952,7 @@ class BgpAf(object):
         supernet_uni_adv = module.params['supernet_uni_adv']
         if supernet_uni_adv != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<supernetUniAdv></supernetUniAdv>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1968,7 +1973,7 @@ class BgpAf(object):
         supernet_label_adv = module.params['supernet_label_adv']
         if supernet_label_adv != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<supernetLabelAdv></supernetLabelAdv>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1992,7 +1997,7 @@ class BgpAf(object):
                 module.fail_json(
                     msg='Error: The len of ingress_lsp_policy_name %s is out of [1 - 40].' % ingress_lsp_policy_name)
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<ingressLspPolicyName></ingressLspPolicyName>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -2013,7 +2018,7 @@ class BgpAf(object):
         originator_prior = module.params['originator_prior']
         if originator_prior != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<originatorPrior></originatorPrior>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -2034,7 +2039,7 @@ class BgpAf(object):
         lowest_priority = module.params['lowest_priority']
         if lowest_priority != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<lowestPriority></lowestPriority>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -2055,7 +2060,7 @@ class BgpAf(object):
         relay_delay_enable = module.params['relay_delay_enable']
         if relay_delay_enable != 'no_use':
 
-            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % (vrf_name, af_type) + \
+            conf_str = CE_GET_BGP_ADDRESS_FAMILY_HEADER % vrf_name + \
                 "<relayDelayEnable></relayDelayEnable>" + CE_GET_BGP_ADDRESS_FAMILY_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -2224,19 +2229,18 @@ class BgpAf(object):
         cmds = []
 
         cmd = "ipv4-family vpn-instance %s" % vrf_name
+        cmds.append(cmd)
 
         if af_type == "ipv4multi":
             cmd = "ipv4-family multicast"
         elif af_type == "ipv4vpn":
             cmd = "ipv4-family vpnv4"
         elif af_type == "ipv6uni":
-            cmd = "ipv6-family vpn-instance %s" % vrf_name
-            if vrf_name == "_public_":
-                cmd = "ipv6-family unicast"
+            cmd = "ipv6-family unicast"
         elif af_type == "ipv6vpn":
             cmd = "ipv6-family vpnv6"
         elif af_type == "evpn":
-            cmd = "l2vpn-family evpn"
+            cmd = "ipv6-family vpn-instance %s" % vrf_name
         cmds.append(cmd)
 
         return cmds
@@ -2261,19 +2265,18 @@ class BgpAf(object):
         cmds = []
 
         cmd = "ipv4-family vpn-instance %s" % vrf_name
+        cmds.append(cmd)
 
         if af_type == "ipv4multi":
             cmd = "ipv4-family multicast"
         elif af_type == "ipv4vpn":
             cmd = "ipv4-family vpnv4"
         elif af_type == "ipv6uni":
-            cmd = "ipv6-family vpn-instance %s" % vrf_name
-            if vrf_name == "_public_":
-                cmd = "ipv6-family unicast"
+            cmd = "ipv6-family unicast"
         elif af_type == "ipv6vpn":
             cmd = "ipv6-family vpnv6"
         elif af_type == "evpn":
-            cmd = "l2vpn-family evpn"
+            cmd = "ipv6-family vpn-instance %s" % vrf_name
         cmds.append(cmd)
 
         return cmds
@@ -2298,19 +2301,18 @@ class BgpAf(object):
         cmds = []
 
         cmd = "undo ipv4-family vpn-instance %s" % vrf_name
+        cmds.append(cmd)
 
         if af_type == "ipv4multi":
             cmd = "undo ipv4-family multicast"
         elif af_type == "ipv4vpn":
             cmd = "undo ipv4-family vpnv4"
         elif af_type == "ipv6uni":
-            cmd = "undo ipv6-family vpn-instance %s" % vrf_name
-            if vrf_name == "_public_":
-                cmd = "undo ipv6-family unicast"
+            cmd = "undo ipv6-family unicast"
         elif af_type == "ipv6vpn":
             cmd = "undo ipv6-family vpnv6"
         elif af_type == "evpn":
-            cmd = "l2vpn-family evpn"
+            cmd = "undo ipv6-family vpn-instance %s" % vrf_name
         cmds.append(cmd)
 
         return cmds
@@ -2340,9 +2342,7 @@ class BgpAf(object):
             if ibgp_ecmp_nexthop_changed == "true":
                 cmd = "maximum load-balancing ibgp %s ecmp-nexthop-changed" % max_load_ibgp_num
                 cmds.append(cmd)
-            else:
-                cmd = "undo maximum load-balancing ibgp %s ecmp-nexthop-changed" % max_load_ibgp_num
-                cmds.append(cmd)
+
         max_load_ebgp_num = module.params['max_load_ebgp_num']
         if max_load_ebgp_num:
             conf_str += "<maxLoadEbgpNum>%s</maxLoadEbgpNum>" % max_load_ebgp_num
@@ -2411,19 +2411,12 @@ class BgpAf(object):
         vrf_rid_auto_sel = module.params['vrf_rid_auto_sel']
         if vrf_rid_auto_sel != 'no_use':
             conf_str += "<vrfRidAutoSel>%s</vrfRidAutoSel>" % vrf_rid_auto_sel
-            family = "ipv4-family"
-            if af_type == "ipv6uni":
-                family = "ipv6-family"
+
             if vrf_rid_auto_sel == "true":
-                cmd = "%s vpn-instance %s" % (family, vrf_name)
-                cmds.append(cmd)
-                cmd = "router-id auto-select"
-                cmds.append(cmd)
+                cmd = "router-id %s vpn-instance auto-select" % router_id
             else:
-                cmd = "%s vpn-instance %s" % (family, vrf_name)
-                cmds.append(cmd)
-                cmd = "undo router-id auto-select"
-                cmds.append(cmd)
+                cmd = "undo router-id %s vpn-instance auto-select" % router_id
+            cmds.append(cmd)
 
         nexthop_third_party = module.params['nexthop_third_party']
         if nexthop_third_party != 'no_use':
@@ -2477,7 +2470,7 @@ class BgpAf(object):
             cmds.append(cmd)
 
         rib_only_policy_name = module.params['rib_only_policy_name']
-        if rib_only_policy_name and rib_only_enable == "true":
+        if rib_only_policy_name:
             conf_str += "<ribOnlyPolicyName>%s</ribOnlyPolicyName>" % rib_only_policy_name
 
             cmd = "routing-table rib-only route-policy %s" % rib_only_policy_name
@@ -2507,7 +2500,7 @@ class BgpAf(object):
         if med_none_as_maximum != 'no_use':
             conf_str += "<medNoneAsMaximum>%s</medNoneAsMaximum>" % med_none_as_maximum
 
-            if med_none_as_maximum == "true":
+            if med_none_as_maximum:
                 cmd = "bestroute med-none-as-maximum"
             else:
                 cmd = "undo bestroute med-none-as-maximum"
@@ -2530,9 +2523,7 @@ class BgpAf(object):
             if igp_metric_ignore == "true":
                 cmd = "bestroute igp-metric-ignore"
                 cmds.append(cmd)
-            else:
-                cmd = "undo bestroute igp-metric-ignore"
-                cmds.append(cmd)
+
         always_compare_med = module.params['always_compare_med']
         if always_compare_med != 'no_use':
             conf_str += "<alwaysCompareMed>%s</alwaysCompareMed>" % always_compare_med
@@ -2540,9 +2531,7 @@ class BgpAf(object):
             if always_compare_med == "true":
                 cmd = "compare-different-as-med"
                 cmds.append(cmd)
-            else:
-                cmd = "undo compare-different-as-med"
-                cmds.append(cmd)
+
         determin_med = module.params['determin_med']
         if determin_med != 'no_use':
             conf_str += "<determinMed>%s</determinMed>" % determin_med
@@ -2550,20 +2539,17 @@ class BgpAf(object):
             if determin_med == "true":
                 cmd = "deterministic-med"
                 cmds.append(cmd)
-            else:
-                cmd = "undo deterministic-med"
-                cmds.append(cmd)
 
         preference_external = module.params['preference_external']
-        if preference_external:
-            conf_str += "<preferenceExternal>%s</preferenceExternal>" % preference_external
-
         preference_internal = module.params['preference_internal']
-        if preference_internal:
-            conf_str += "<preferenceInternal>%s</preferenceInternal>" % preference_internal
-
         preference_local = module.params['preference_local']
-        if preference_local:
+        if any([preference_external, preference_internal, preference_local]):
+            preference_external = preference_external or "255"
+            preference_internal = preference_internal or "255"
+            preference_local = preference_local or "255"
+
+            conf_str += "<preferenceExternal>%s</preferenceExternal>" % preference_external
+            conf_str += "<preferenceInternal>%s</preferenceInternal>" % preference_internal
             conf_str += "<preferenceLocal>%s</preferenceLocal>" % preference_local
 
             cmd = "preference %s %s %s" % (
@@ -2604,17 +2590,10 @@ class BgpAf(object):
         rr_filter_number = module.params['rr_filter_number']
         if rr_filter_number:
             conf_str += "<rrFilterNumber>%s</rrFilterNumber>" % rr_filter_number
-            cmd = 'rr-filter %s' % rr_filter_number
-            cmds.append(cmd)
 
         policy_vpn_target = module.params['policy_vpn_target']
         if policy_vpn_target != 'no_use':
             conf_str += "<policyVpnTarget>%s</policyVpnTarget>" % policy_vpn_target
-            if policy_vpn_target == 'true':
-                cmd = 'policy vpn-target'
-            else:
-                cmd = 'undo policy vpn-target'
-            cmds.append(cmd)
 
         next_hop_sel_depend_type = module.params['next_hop_sel_depend_type']
         if next_hop_sel_depend_type:
@@ -2808,6 +2787,8 @@ class BgpAf(object):
 
         cmds = []
         cmd = "import-route %s %s" % (import_protocol, import_process_id)
+        if import_protocol == "direct" or import_protocol == "static":
+            cmd = "import-route %s" % import_protocol
         cmds.append(cmd)
 
         return cmds
@@ -2836,7 +2817,7 @@ class BgpAf(object):
 
         cmds = []
         cmd = "import-route %s %s" % (import_protocol, import_process_id)
-        if import_process_id == "0":
+        if import_protocol == "direct" or import_protocol == "static":
             cmd = "import-route %s" % import_protocol
         cmds.append(cmd)
 
@@ -2866,6 +2847,8 @@ class BgpAf(object):
 
         cmds = []
         cmd = "undo import-route %s %s" % (import_protocol, import_process_id)
+        if import_protocol == "direct" or import_protocol == "static":
+            cmd = "undo import-route %s" % import_protocol
         cmds.append(cmd)
 
         return cmds
@@ -3406,9 +3389,6 @@ def main():
             end_tmp[item] = bgp_import_network_route_rst[item]
     if end_tmp:
         end_state["bgp import & network route"] = end_tmp
-    if end_state == existing:
-        changed = False
-        updates = list()
 
     results = dict()
     results['proposed'] = proposed
