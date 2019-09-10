@@ -39,6 +39,11 @@ options:
         description:
             - Apply DNS modification on this server.
         required: true
+    query_server:
+        description:
+            - Query for existing DNS on this server.
+            - When omitted value of C(server) will be used.
+        version_added: 2.9
     port:
         description:
             - Use this TCP port when connecting to C(server).
@@ -245,6 +250,9 @@ class RecordManager(object):
         else:
             self.value = self.module.params['value']
 
+        if module.params['query_server'] is None:
+            self.module.params['query_server'] = module.params['server']
+
         self.dns_rc = 0
 
     def txt_helper(self, entry):
@@ -386,9 +394,9 @@ class RecordManager(object):
 
         try:
             if self.module.params['protocol'] == 'tcp':
-                lookup = dns.query.tcp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+                lookup = dns.query.tcp(query, self.module.params['query_server'], timeout=10, port=self.module.params['port'])
             else:
-                lookup = dns.query.udp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+                lookup = dns.query.udp(query, self.module.params['query_server'], timeout=10, port=self.module.params['port'])
         except (socket_error, dns.exception.Timeout) as e:
             self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, to_native(e)))
 
@@ -404,6 +412,7 @@ def main():
         argument_spec=dict(
             state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
             server=dict(required=True, type='str'),
+            query_server=dict(required=False, default=None, type='str'),
             port=dict(required=False, default=53, type='int'),
             key_name=dict(required=False, type='str'),
             key_secret=dict(required=False, type='str', no_log=True),
