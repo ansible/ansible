@@ -28,20 +28,17 @@ function_path = 'ansible.modules.network.check_point.cp_mgmt_access_layer.api_ca
 api_call_object = 'access_layer'
 
 OBJECT = {
-    "name": "New Layer 1",
-    "color": "orange"
+    "name": "New Layer 1"
 }
 
 CREATE_PAYLOAD = {
-    "name": "New Layer 1",
-    "color": "orange"
+    "name": "New Layer 1"
 }
 
 UPDATE_PAYLOAD = {
     "name": "New Layer 1",
     "mobile_access": True,
     "applications_and_url_filtering": False,
-    "color": "blue"
 }
 
 DELETE_PAYLOAD = {
@@ -89,7 +86,7 @@ class TestCheckpointAccessLayer(object):
 
     def test_update_idempotent(self, mocker, connection_mock):
         mock_function = mocker.patch(function_path)
-        mock_function.return_value = {'changed': True, api_call_object: OBJECT}
+        mock_function.return_value = {'changed': False, api_call_object: OBJECT}
         connection_mock.send_request.return_value = (200, OBJECT)
         result = self._run_module(UPDATE_PAYLOAD)
 
