@@ -110,9 +110,14 @@ options:
             - If C(yes), they are python regexes.
         type: bool
         default: no
+    min_depth:
+        description:
+            - Set the minimum number of levels to descend into.
+            - Default is a minimal depth of 1.
+        type: int
     depth:
         description:
-            - Set the maximum number of levels to decend into.
+            - Set the maximum number of levels to descend into.
             - Setting recurse to C(no) will override this value, which is effectively depth 1.
             - Default is unlimited depth.
         type: int
@@ -201,12 +206,12 @@ files:
 matched:
     description: Number of matches
     returned: success
-    type: str
+    type: int
     sample: 14
 examined:
     description: Number of filesystem objects looked at
     returned: success
-    type: str
+    type: int
     sample: 34
 '''
 
@@ -372,7 +377,8 @@ def main():
             follow=dict(type='bool', default=False),
             get_checksum=dict(type='bool', default=False),
             use_regex=dict(type='bool', default=False),
-            depth=dict(type='int'),
+            min_depth=dict(type='int'),
+            max_depth=dict(type='int'),
         ),
         supports_check_mode=True,
     )
@@ -411,12 +417,18 @@ def main():
         if os.path.isdir(npath):
             ''' ignore followlinks for python version < 2.6 '''
             for root, dirs, files in (sys.version_info < (2, 6, 0) and os.walk(npath)) or os.walk(npath, followlinks=params['follow']):
-                if params['depth']:
+                if params['max_depth']:
                     depth = root.replace(npath.rstrip(os.path.sep), '').count(os.path.sep)
                     if files or dirs:
                         depth += 1
-                    if depth > params['depth']:
+                    if depth > params['max_depth']:
                         del(dirs[:])
+                        continue
+                if params['min_depth']:
+                    depth = root.replace(npath.rstrip(os.path.sep), '').count(os.path.sep)
+                    if files or dirs:
+                        depth += 1
+                    if depth < params['min_depth']:
                         continue
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
