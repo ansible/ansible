@@ -112,7 +112,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import AWSRetry, aws_common_argument_spec
+from ansible.module_utils.ec2 import AWSRetry
 
 
 class SAMLProviderManager:
