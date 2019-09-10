@@ -348,7 +348,7 @@ class TaskExecutor:
             templar.available_variables = task_vars
 
             # pause between loop iterations
-            if loop_pause and ran_once:
+            if loop_pause and ran_once and 'skipped' not in res:
                 try:
                     time.sleep(float(loop_pause))
                 except ValueError as e:
