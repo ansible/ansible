@@ -22,7 +22,7 @@ module: hwc_vpc_route
 description:
     - vpc route management.
 short_description: Creates a resource of Vpc/Route in Huawei Cloud
-version_added: '2.9'
+version_added: '2.10'
 author: Huawei Inc. (@huaweicloud)
 requirements:
     - keystoneauth1 >= 3.6.0
