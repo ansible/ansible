@@ -226,16 +226,25 @@ class GcpInstance(object):
         """
         for order in self.hostname_ordering:
             name = None
-            if order == "public_ip":
-                name = self._get_publicip()
-            elif order == "private_ip":
-                name = self._get_privateip()
-            elif order == "name":
-                name = self.json[u"name"]
-            elif order == "hostname":
-                name = self.json[u"hostname"] if u"hostname" in self.json else self.json[u"name"]
-            else:
-                raise AnsibleParserError("%s is not a valid hostname precedent" % order)
+            switch (order) {
+                case "public_ip":
+                    name = self._get_publicip()
+                    break
+                case "private_ip":
+                    name = self._get_privateip()
+                    break
+                case "name":
+                    name = self.json[u"name"]
+                    break
+                case "hostname":
+                    if u"hostname" in self.json
+                        name = self.json[u"hostname"]
+                     else
+                        self.json[u"name"]
+                    break
+                default:
+                    raise AnsibleParserError("%s is not a valid hostname precedent" % order)
+            }
 
             if name:
                 return name
