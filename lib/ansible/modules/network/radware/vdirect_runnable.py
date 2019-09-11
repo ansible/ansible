@@ -88,7 +88,7 @@ options:
     description:
      - vDirect runnable type.
     required: true
-    choices: ['ConfigurationTemplate', 'Workflow', 'WorkflowTemplate']
+    choices: ['ConfigurationTemplate', 'Workflow', 'WorkflowTemplate', 'Plugin']
   runnable_name:
     description:
      - vDirect runnable name to run.
@@ -104,7 +104,7 @@ options:
      - the device connection details should always be passed as a parameter.
 
 requirements:
-  - "vdirect-client >= 4.1.1"
+  - "vdirect-client >= 4.9.0-post4"
 '''
 
 EXAMPLES = '''
@@ -138,10 +138,12 @@ except ImportError:
 CONFIGURATION_TEMPLATE_RUNNABLE_TYPE = 'ConfigurationTemplate'
 WORKFLOW_TEMPLATE_RUNNABLE_TYPE = 'WorkflowTemplate'
 WORKFLOW_RUNNABLE_TYPE = 'Workflow'
+PLUGIN_RUNNABLE_TYPE = 'Plugin'
 
 TEMPLATE_SUCCESS = 'Configuration template run completed.'
 WORKFLOW_CREATION_SUCCESS = 'Workflow created.'
 WORKFLOW_ACTION_SUCCESS = 'Workflow action run completed.'
+PLUGIN_ACTION_SUCCESS = 'Plugin action run completed.'
 
 meta_args = dict(
     vdirect_ip=dict(required=True, fallback=(env_fallback, ['VDIRECT_IP'])),
@@ -172,7 +174,7 @@ meta_args = dict(
         default=2188, type='int'),
     runnable_type=dict(
         required=True,
-        choices=[CONFIGURATION_TEMPLATE_RUNNABLE_TYPE, WORKFLOW_TEMPLATE_RUNNABLE_TYPE, WORKFLOW_RUNNABLE_TYPE]),
+        choices=[CONFIGURATION_TEMPLATE_RUNNABLE_TYPE, WORKFLOW_TEMPLATE_RUNNABLE_TYPE, WORKFLOW_RUNNABLE_TYPE, PLUGIN_RUNNABLE_TYPE]),
     runnable_name=dict(required=True),
     action_name=dict(required=False, default=None),
     parameters=dict(required=False, type='dict', default={})
@@ -222,29 +224,39 @@ class VdirectRunnable(object):
                                              https_port=params['vdirect_https_port'],
                                              http_port=params['vdirect_http_port'],
                                              timeout=params['vdirect_timeout'],
+                                             strict_http_results=True,
                                              https=params['vdirect_use_ssl'],
                                              verify=params['validate_certs'])
         self.params = params
         self.type = self.params['runnable_type']
         self.name = self.params['runnable_name']
-        if 'parameters' in self.params:
-            self.action_params = self.params['parameters']
-        else:
-            self.action_params = []
 
-    def _validate_runnable_exists(self):
-        res = self.client.runnable.get_runnable_objects(self.type)
-        runnable_names = res[rest_client.RESP_DATA]['names']
-        if self.name not in runnable_names:
-            raise MissingRunnableException(self.name)
-
-    def _validate_action_name(self):
         if self.type == WORKFLOW_TEMPLATE_RUNNABLE_TYPE:
             self.action_name = VdirectRunnable.CREATE_WORKFLOW_ACTION
         elif self.type == CONFIGURATION_TEMPLATE_RUNNABLE_TYPE:
             self.action_name = VdirectRunnable.RUN_ACTION
         else:
             self.action_name = self.params['action_name']
+
+        if 'parameters' in self.params and self.params['parameters']:
+            self.action_params = self.params['parameters']
+        else:
+            self.action_params = {}
+
+    def _validate_runnable_exists(self):
+        if self.type == WORKFLOW_RUNNABLE_TYPE:
+            res = self.client.runnable.get_runnable_objects(self.type)
+            runnable_names = res[rest_client.RESP_DATA]['names']
+            if self.name not in runnable_names:
+                raise MissingRunnableException(self.name)
+        else:
+            try:
+                self.client.catalog.get_catalog_item(self.type, self.name)
+            except rest_client.RestClientException:
+                raise MissingRunnableException(self.name)
+
+    def _validate_action_name(self):
+        if self.type in [WORKFLOW_RUNNABLE_TYPE, PLUGIN_RUNNABLE_TYPE]:
             res = self.client.runnable.get_available_actions(self.type, self.name)
             available_actions = res[rest_client.RESP_DATA]['names']
             if self.action_name not in available_actions:
@@ -263,6 +275,9 @@ class VdirectRunnable(object):
                                        if p['type'] == 'alteon' or
                                        p['type'] == 'defensePro' or
                                        p['type'] == 'appWall' or
+                                       p['type'] == 'alteon[]' or
+                                       p['type'] == 'defensePro[]' or
+                                       p['type'] == 'appWall[]' or
                                        p['direction'] != 'out']
         required_action_params_names = [n['name'] for n in required_action_params_dict]
 
@@ -284,11 +299,11 @@ class VdirectRunnable(object):
                     result_to_return['msg'] = WORKFLOW_CREATION_SUCCESS
                 elif self.type == CONFIGURATION_TEMPLATE_RUNNABLE_TYPE:
                     result_to_return['msg'] = TEMPLATE_SUCCESS
+                elif self.type == PLUGIN_RUNNABLE_TYPE:
+                    result_to_return['msg'] = PLUGIN_ACTION_SUCCESS
                 else:
                     result_to_return['msg'] = WORKFLOW_ACTION_SUCCESS
-
-                if 'parameters' in result[rest_client.RESP_DATA]:
-                    result_to_return['parameters'] = result[rest_client.RESP_DATA]['parameters']
+                result_to_return['output'] = result[rest_client.RESP_DATA]
 
             else:
                 if 'exception' in result[rest_client.RESP_DATA]:
@@ -307,7 +322,8 @@ class VdirectRunnable(object):
 def main():
 
     module = AnsibleModule(argument_spec=meta_args,
-                           required_if=[['runnable_type', WORKFLOW_RUNNABLE_TYPE, ['action_name']]])
+                           required_if=[['runnable_type', WORKFLOW_RUNNABLE_TYPE, ['action_name']],
+                                        ['runnable_type', PLUGIN_RUNNABLE_TYPE, ['action_name']]])
 
     if not HAS_REST_CLIENT:
         module.fail_json(msg="The python vdirect-client module is required")
