@@ -47,8 +47,12 @@ DOCUMENTATION = '''
                 - name: TOWER_PASSWORD
             required: True
         inventory_id:
-            description: The ID of the Ansible Tower inventory that you wish to import.
-            type: string
+            description:
+                - The ID of the Ansible Tower inventory that you wish to import.
+                - This is allowed to be either the inventory primary key or its named URL slug.
+                - Primary key values will be accepted as strings or integers, and URL slugs must be strings.
+                - Named URL slugs follow the syntax of "inventory_name++organization_name".
+            type: raw
             env:
                 - name: TOWER_INVENTORY
             required: True
@@ -100,8 +104,9 @@ import json
 from ansible.module_utils import six
 from ansible.module_utils.urls import Request, urllib_error, ConnectionError, socket, httplib
 from ansible.module_utils._text import to_native
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleParserError, AnsibleOptionsError
 from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.config.manager import ensure_type
 
 # Python 2/3 Compatibility
 try:
@@ -159,7 +164,18 @@ class InventoryModule(BaseInventoryPlugin):
                                   force_basic_auth=True,
                                   validate_certs=self.get_option('validate_certs'))
 
-        inventory_id = self.get_option('inventory_id').replace('/', '')
+        # validate type of inventory_id because we allow two types as special case
+        inventory_id = self.get_option('inventory_id')
+        if isinstance(inventory_id, int):
+            inventory_id = to_native(self.get_option('inventory_id'))
+        else:
+            try:
+                inventory_id = ensure_type(inventory_id, 'str')
+            except ValueError as e:
+                raise AnsibleOptionsError(
+                    'Invalid type for configuration option inventory_id, '
+                    'not integer, and cannot convert to string: %s' % to_native(e))
+        inventory_id = inventory_id.replace('/', '')
         inventory_url = '/api/v2/inventories/{inv_id}/script/?hostvars=1&towervars=1&all=1'.format(inv_id=inventory_id)
         inventory_url = urljoin(tower_host, inventory_url)
 
