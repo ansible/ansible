@@ -25,10 +25,6 @@ from .util_common import (
     run_command,
 )
 
-from .data import (
-    data_context,
-)
-
 
 def create_virtual_environment(args,  # type: EnvironmentConfig
                                version,  # type: str
