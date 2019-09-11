@@ -121,8 +121,10 @@ notes:
      the virtualenv needs to be created.
    - By default, this module will use the appropriate version of pip for the
      interpreter used by ansible (e.g. pip3 when using python 3, pip2 otherwise)
-   - The interpreter used by ansible requires the setuptools package, regardless
-     of the version of pip set with the executable option.
+   - The interpreter used by ansible
+     (see :ref:`ansible_python_interpreter<ansible_python_interpreter>`)
+     requires the setuptools package, regardless of the version of pip set with
+     the executable option.
 requirements:
 - pip
 - virtualenv
