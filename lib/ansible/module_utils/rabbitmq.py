@@ -196,6 +196,6 @@ class RabbitClient():
 
         try:
             self.conn_channel.basic_publish(**args)
-            return 1
+            return True
         except pika.exceptions.UnroutableError:
-            return -1
+            return False
