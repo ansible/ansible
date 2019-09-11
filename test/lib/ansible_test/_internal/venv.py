@@ -2,6 +2,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
 import os
 
 from . import types as t
@@ -15,6 +16,7 @@ from .util import (
     SubprocessError,
     get_available_python_versions,
     SUPPORTED_PYTHON_VERSIONS,
+    ANSIBLE_TEST_DATA_ROOT,
     display,
     remove_tree,
 )
@@ -85,6 +87,15 @@ def run_venv(args,  # type: EnvironmentConfig
              path,  # type: str
              ):  # type: (...) -> bool
     """Create a virtual environment using the 'venv' module. Not available on Python 2.x."""
+    cmd = [run_python, os.path.join(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'virtualenvcheck.py'))]
+    check_result = json.loads(run_command(args, cmd, capture=True, always=True)[0])
+    real_prefix = check_result['real_prefix']
+
+    if real_prefix:
+        # we must use the real python to create a virtual environment with venv
+        # attempting to use python from a virtualenv created virtual environment results in a copy of that environment instead
+        run_python = os.path.join(real_prefix, 'bin', 'python')
+
     cmd = [run_python, '-m', 'venv']
 
     if system_site_packages:
