@@ -497,8 +497,8 @@ def _network_args(module, cloud):
 def _parse_meta(meta):
     if isinstance(meta, str):
         metas = {}
-        for kv_str in meta.split(","):
-            k, v = kv_str.split("=")
+        for kv_str in meta.split(','):
+            k, v = kv_str.split('=')
             metas[k] = v
         return metas
     if not meta:
@@ -513,7 +513,7 @@ def _delete_server(module, cloud):
             timeout=module.params['timeout'],
             delete_ips=module.params['delete_fip'])
     except Exception as e:
-        module.fail_json(msg="Error in deleting vm: %s" % e.message)
+        module.fail_json(msg='Error in deleting vm: %s' % e.message)
     module.exit_json(changed=True, result='deleted')
 
 
@@ -527,17 +527,17 @@ def _create_server(module, cloud):
         image_id = cloud.get_image_id(
             module.params['image'], module.params['image_exclude'])
         if not image_id:
-            module.fail_json(msg="Could not find image %s" %
+            module.fail_json(msg='Could not find image %s' %
                              module.params['image'])
 
     if flavor:
         flavor_dict = cloud.get_flavor(flavor)
         if not flavor_dict:
-            module.fail_json(msg="Could not find flavor %s" % flavor)
+            module.fail_json(msg='Could not find flavor %s' % flavor)
     else:
         flavor_dict = cloud.get_flavor_by_ram(flavor_ram, flavor_include)
         if not flavor_dict:
-            module.fail_json(msg="Could not find any matching flavor")
+            module.fail_json(msg='Could not find any matching flavor')
 
     nics = _network_args(module, cloud)
 
