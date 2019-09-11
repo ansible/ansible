@@ -386,7 +386,7 @@ def update_instance(module, proxmox, vmid, node, **kwargs):
 
         if updateable_configs:
             vm.config.put(**updateable_configs)
-
+            module.exit_json(changed=True, msg="VM with vmid = %s was updated" % vmid)
 
 def start_instance(module, proxmox, vm, vmid, timeout):
     taskid = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.start.post()
