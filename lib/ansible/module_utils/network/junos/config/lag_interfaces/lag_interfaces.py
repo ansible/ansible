@@ -75,7 +75,7 @@ class Lag_interfaces(ConfigBase):
                 if self._module._diff:
                     result['diff'] = {'prepared': diff}
 
-        result['xml'] = config_xmls
+        result['commands'] = config_xmls
 
         changed_lag_interfaces_facts = self.get_lag_interfaces_facts()
 
