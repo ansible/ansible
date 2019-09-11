@@ -135,7 +135,7 @@ class Cliconf(CliconfBase):
         else:
             self.send_command('top')
             self.discard_changes()
-            self.send_command('exit')
+
         resp['request'] = requests
         resp['response'] = results
         return resp
