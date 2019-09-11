@@ -253,7 +253,7 @@
     - result.schema == 'public'
     - result.query == 'CREATE INDEX CONCURRENTLY test1_idx ON public.test_table USING BTREE (id) WHERE id > 1 AND id != 10'
 
-# Drop index from spacific schema with cascade in check_mode
+# Drop index from specific schema with cascade in check_mode
 - name: postgresql_idx - drop index from specific schema cascade in check_mode
   become_user: "{{ pg_user }}"
   become: yes
@@ -295,7 +295,7 @@
     - result.rowcount == 1
   when: tablespace.rc == 0
 
-# Drop index from spacific schema with cascade
+# Drop index from specific schema with cascade
 - name: postgresql_idx - drop index from specific schema cascade
   become_user: "{{ pg_user }}"
   become: yes
