@@ -338,11 +338,6 @@ def get_custom_value(arg, config, module):
     splitted_config = config.splitlines()
     value = ''
 
-    command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
-    has_command = command_re.search(config)
-    command_val_re = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(command), re.M)
-    has_command_val = command_val_re.search(config)
-
     if arg.startswith('additional_paths'):
         value = 'inherit'
         for line in splitted_config:

@@ -316,7 +316,7 @@ def is_default_interface(name, module):
 
     try:
         body = execute_show_command(command, module)[0]
-    except (IndexError, TypeError) as e:
+    except (IndexError, TypeError):
         body = ''
 
     if body:
@@ -535,7 +535,6 @@ def map_config_to_obj(want, module):
                     obj['description'] = interface_table.get('desc')
                     obj['mtu'] = interface_table.get('eth_mtu')
                     obj['duplex'] = interface_table.get('eth_duplex')
-                    speed = interface_table.get('eth_speed')
 
                     command = 'show run interface {0}'.format(obj['name'])
                     body = execute_show_command(command, module)[0]

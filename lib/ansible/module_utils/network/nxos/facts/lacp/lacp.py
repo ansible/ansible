@@ -45,7 +45,6 @@ class LacpFacts(object):
         :rtype: dictionary
         :returns: facts
         """
-        obj = []
         if not data:
             data = connection.get("show running-config | include lacp")
         resources = data.strip()

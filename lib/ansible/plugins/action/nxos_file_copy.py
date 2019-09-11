@@ -191,7 +191,6 @@ class ActionModule(ActionBase):
         timeout = self.socket_timeout
         local_file = self.playvals['local_file']
         file_system = self.playvals['file_system']
-        file_size = os.path.getsize(local_file)
 
         if not self.enough_space(local_file, file_system):
             raise AnsibleError('Could not transfer file. Not enough space on device.')
