@@ -35,8 +35,8 @@ description:
     - If C(verification_method=EMAIL), the email address(es) that the validation email(s) were sent to will be in the return parameter I(emails). This is
       purely informational. For domains requested using this module, this will always be a list of size 1.
 notes:
-    - There is a small delay (typically about 5 seconds, but as long as 30) before obtaining the random values when requesting a validation.
-      Be aware of that if doing bulk domain requests.
+    - There is a small delay (typically about 5 seconds, but as long as 60) before obtaining the random values when requesting a validation
+      while C(verification_method=DNS) or C(verification_method=WEB_SERVER). Be aware of that if doing many domain validation requests.
 options:
     client_id:
         description:
@@ -330,8 +330,8 @@ class EcsDomain(object):
                 result = self.ecs_client.GetDomain(clientId=module.params['client_id'], domain=module.params['domain_name'])
 
                 # It takes a bit of time before the random values are available
-                if module.params['verification_method'] == 'DNS' or module.params['verification_method'] == 'FILE':
-                    for i in range(2):
+                if module.params['verification_method'] == 'DNS' or module.params['verification_method'] == 'WEB_SERVER':
+                    for i in range(4):
                         # Check both that random values are now available, and that they're different than were populated by previous 'check'
                         if module.params['verification_method'] == 'DNS':
                             if result.get('dnsMethod') and result['dnsMethod']['recordValue'] != self.dns_contents:
@@ -362,7 +362,7 @@ class EcsDomain(object):
         if self.ev_eligible:
             result['ev_eligible'] = self.ev_eligible
         if self.ev_days_remaining:
-            result['ov_days_remaining'] = self.ev_days_remaining
+            result['ev_days_remaining'] = self.ev_days_remaining
         if self.emails:
             result['emails'] = self.emails
 
