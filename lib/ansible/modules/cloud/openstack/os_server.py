@@ -603,7 +603,7 @@ def _detach_ip_list(cloud, server, extra_ips):
             server_id=server.id, floating_ip_id=ip_id)
 
 
-def _check_ips(module, cloud, server):
+def _update_ips(module, cloud, server):
     changed = False
 
     auto_ip = module.params['auto_ip']
@@ -661,7 +661,7 @@ def _check_ips(module, cloud, server):
     return (changed, server)
 
 
-def _check_security_groups(module, cloud, server):
+def _update_security_groups(module, cloud, server):
     changed = False
 
     # server security groups were added to shade in 1.19. Until then this
@@ -695,8 +695,8 @@ def _get_server_state(module, cloud):
         if server.status not in ('ACTIVE', 'SHUTOFF', 'PAUSED', 'SUSPENDED'):
             module.fail_json(
                 msg="The instance is available but not Active state: " + server.status)
-        (ip_changed, server) = _check_ips(module, cloud, server)
-        (sg_changed, server) = _check_security_groups(module, cloud, server)
+        (ip_changed, server) = _update_ips(module, cloud, server)
+        (sg_changed, server) = _update_security_groups(module, cloud, server)
         (server_changed, server) = _update_server(module, cloud, server)
         _exit_hostvars(module, cloud, server,
                        ip_changed or sg_changed or server_changed)
