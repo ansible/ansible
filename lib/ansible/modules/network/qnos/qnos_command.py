@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: qnos_command
-version_added: "2.9"
+version_added: "2.10"
 author: "Peter Sprygada (@privateip)"
 short_description: Run commands on remote devices running Quanta
 description:
