@@ -6,6 +6,12 @@ __metaclass__ = type
 def pytest_configure():
     """Configure this pytest plugin."""
     try:
+        if pytest_configure.executed:
+            return
+    except AttributeError:
+        pytest_configure.executed = True
+
+    try:
         import coverage
     except ImportError:
         coverage = None
@@ -57,3 +63,6 @@ def pytest_configure():
 
     if cov:
         cov.start()
+
+
+pytest_configure()
