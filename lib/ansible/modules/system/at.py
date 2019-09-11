@@ -79,7 +79,7 @@ EXAMPLES = '''
 import os
 import tempfile
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, get_platform
 
 
 def add_job(module, result, at_cmd, count, units, command, script_file):
@@ -92,7 +92,10 @@ def add_job(module, result, at_cmd, count, units, command, script_file):
 
 def delete_job(module, result, at_cmd, command, script_file):
     for matching_job in get_matching_jobs(module, at_cmd, script_file):
-        at_command = "%s -d %s" % (at_cmd, matching_job)
+        if get_platform() != 'AIX':
+            at_command = "%s -d %s" % (at_cmd, matching_job)
+        else:
+            at_command = "%s -r %s" % (at_cmd, matching_job)
         rc, out, err = module.run_command(at_command, check_rc=True)
         result['changed'] = True
     if command:
@@ -120,7 +123,11 @@ def get_matching_jobs(module, at_cmd, script_file):
     #   If the script text is contained in a job add job number to list.
     for current_job in current_jobs:
         split_current_job = current_job.split()
-        at_command = "%s -c %s" % (at_cmd, split_current_job[0])
+
+        if get_platform() != 'AIX':
+            at_command = "%s -c %s" % (at_cmd, split_current_job[0])
+        else:
+            at_command = "%s -lv %s" % (at_cmd, split_current_job[0])
         rc, out, err = module.run_command(at_command, check_rc=True)
         if script_file_string in out:
             matching_jobs.append(split_current_job[0])
