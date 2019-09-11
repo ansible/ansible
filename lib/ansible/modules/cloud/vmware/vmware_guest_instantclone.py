@@ -27,22 +27,59 @@ requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
-   state:
-    description:
-    - Whether a given clone should be present or absent from the vSphere instance.
-    default: present
-    choices: [ present, absent ]
-    required: True
-    type: str
    name:
     description:
     - Name of the new instant clone VM.
     required: True
     type: str
-   source_vm:
+   name_match:
     description:
-    - Name of the source VM to clone from, for best results ensure it is in a frozen state.
-    required: True
+    - If multiple virtual machines matching the name, use the first or last found.
+    default: 'first'
+    choices: [ first, last ]
+    type: str
+   uuid:
+    description:
+    - UUID of the virtual machine to clone from, if known; this is VMware's unique identifier.
+    - This is required if C(name) or C(moid) is not supplied.
+    type: str
+   moid:
+     description:
+     - Managed Object ID of the base VM, if known. This is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
+     type: str
+   use_instance_uuid:
+    description:
+    - Whether to use the VMware instance UUID rather than the BIOS UUID.
+    default: no
+    type: bool
+   folder:
+    description:
+    - Destination folder, absolute path to find an existing guest or create the new guest.
+    - The folder should include the datacenter. ESX's datacenter is ha-datacenter.
+    - This parameter is case sensitive.
+    - This parameter is required, while deploying new virtual machine. version_added 2.5.
+    - 'If multiple machines are found with same name, this parameter is used to identify
+       uniqueness of the virtual machine. version_added 2.5'
+    - 'Examples:'
+    - '   folder: /ha-datacenter/vm'
+    - '   folder: ha-datacenter/vm'
+    - '   folder: /datacenter1/vm'
+    - '   folder: datacenter1/vm'
+    - '   folder: /datacenter1/vm/folder1'
+    - '   folder: datacenter1/vm/folder1'
+    - '   folder: /folder1/datacenter1/vm'
+    - '   folder: folder1/datacenter1/vm'
+    - '   folder: /folder1/datacenter1/vm/folder2'
+    type: str
+   datacenter:
+    description:
+    - Datacenter for the clone operation.
+    - This parameter is case sensitive.
+    type: str
+   clone_name:
+    description:
+    - Name of the new instant clone VM
     type: str
    customvalues:
     description:
@@ -52,9 +89,36 @@ options:
 extends_documentation_fragment: vmware.documentation
 '''
 EXAMPLES = r'''
+- name: Create an instant clone of a running VM
+  vmware_guest_instantclone:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: source-vm
+    datacenter: MYVMWDC
+    clone_name: new-instantclone
+  delegate_to: localhost
+
+- name: Create an instant clone with custom config values
+  vmware_guest_instantclone:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: source-vm
+    datacenter: MYVMWDC
+    clone_name: new-instantclone
+
+  delegate_to: localhost
 '''
 
 RETURN = r'''
+instance:
+    description: metadata about the new instant clone
+    returned: always
+    type: dict
+    sample: None
 '''
 
 HAS_PYVMOMI = False
