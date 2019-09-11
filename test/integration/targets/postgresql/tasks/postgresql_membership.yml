@@ -93,7 +93,7 @@
     - result.state == "present"
     - result.target_roles == ["user1"]
 
-# Grant group1 to user1 againt to check that nothing changes:
+# Grant group1 to user1 again to check that nothing changes:
 - name: postgresql_membership - grant group1 to user1 again
   become_user: "{{ pg_user }}"
   become: yes
