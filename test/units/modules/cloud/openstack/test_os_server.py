@@ -84,6 +84,9 @@ class FakeCloud(object):
     def get_openstack_vars(self, server):
         return server
 
+    def get_server(self, name):
+        return None
+
     create_server = mock.MagicMock()
 
 
@@ -188,7 +191,7 @@ class TestCreateServer(object):
               - key: value
         '''
         with pytest.raises(AnsibleExit):
-            os_server._create_server(self.module, self.cloud)
+            os_server._present_server(self.module, self.cloud)
 
         assert(self.cloud.create_server.call_count == 1)
         assert(self.cloud.create_server.call_args[1]['image'] == self.cloud.get_image_id('cirros'))
@@ -204,7 +207,7 @@ class TestCreateServer(object):
               - net-name: network1
         '''
         with pytest.raises(AnsibleFail):
-            os_server._create_server(self.module, self.cloud)
+            os_server._present_server(self.module, self.cloud)
 
         assert('missing_flavor' in
                self.module.fail_json.call_args[1]['msg'])
@@ -218,7 +221,7 @@ class TestCreateServer(object):
               - net-name: missing_network
         '''
         with pytest.raises(AnsibleFail):
-            os_server._create_server(self.module, self.cloud)
+            os_server._present_server(self.module, self.cloud)
 
         assert('missing_network' in
                self.module.fail_json.call_args[1]['msg'])
