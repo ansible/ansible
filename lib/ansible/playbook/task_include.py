@@ -73,7 +73,7 @@ class TaskInclude(Task):
 
         apply_attrs = task.args.get('apply', {})
 
-        if task.action in ('include_tasks', 'import_tasks') and not task.args["_raw_params"]:
+        if task.action in ('import_tasks') and not task.args.get("_raw_params"):
             raise AnsibleParserError('Invalid arguments for TASK: %s' % task.action, obj=data)
 
         if apply_attrs and task.action != 'include_tasks':
