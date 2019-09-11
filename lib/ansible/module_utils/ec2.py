@@ -278,8 +278,12 @@ def get_aws_connection_info(module, boto3=False):
             security_token = os.environ['AWS_SESSION_TOKEN']
         elif os.environ.get('EC2_SECURITY_TOKEN'):
             security_token = os.environ['EC2_SECURITY_TOKEN']
+        elif HAS_BOTO and boto.config.get('Credentials', 'aws_session_token'):
+            security_token = boto.config.get('Credentials', 'aws_session_token')
         elif HAS_BOTO and boto.config.get('Credentials', 'aws_security_token'):
             security_token = boto.config.get('Credentials', 'aws_security_token')
+        elif HAS_BOTO and boto.config.get('default', 'aws_session_token'):
+            security_token = boto.config.get('default', 'aws_session_token')
         elif HAS_BOTO and boto.config.get('default', 'aws_security_token'):
             security_token = boto.config.get('default', 'aws_security_token')
         else:
