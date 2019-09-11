@@ -27,14 +27,44 @@ BASE_PARAMS = {'vdirect_ip': None, 'vdirect_user': None, 'vdirect_password': Non
                'vdirect_https_port': None, 'vdirect_http_port': None,
                'vdirect_timeout': None, 'vdirect_use_ssl': None, 'validate_certs': None}
 
-RUNNABLE_PARAMS = {'runnable_type': 'ConfigurationTemplate', 'runnable_name': 'runnable',
-                   'action_name': None, 'parameters': None}
+CONFIGURATION_TEMPLATE_RUNNABLE_PARAMS = {
+    'runnable_type': 'ConfigurationTemplate', 'runnable_name': 'runnable',
+    'action_name': None, 'parameters': None}
 
-RUNNABLE_OBJECTS_RESULT = [200, '', '', {'names': ['runnable']}]
-AVAILABLE_ACTIONS_RESULT = [200, '', '', {'names': ['a', 'b']}]
-ACTIONS_PARAMS_RESULT = [200, '', '', {'parameters': [{'name': 'pin', 'type': 'in', 'direction': 'in'},
-                                                      {'name': 'pout', 'type': 'out', 'direction': 'out'},
-                                                      {'name': 'alteon', 'type': 'alteon'}]}]
+WORKFLOW_TEMPLATE_RUNNABLE_PARAMS = {
+    'runnable_type': 'WorkflowTemplate', 'runnable_name': 'runnable',
+    'action_name': None, 'parameters': None}
+
+WORKFLOW_RUNNABLE_PARAMS = {
+    'runnable_type': 'Workflow', 'runnable_name': 'runnable',
+    'action_name': 'one', 'parameters': None}
+
+PLUGIN_RUNNABLE_PARAMS = {
+    'runnable_type': 'Plugin', 'runnable_name': 'runnable',
+    'action_name': 'two', 'parameters': None}
+
+
+WORKFLOW_RUNNABLE_OBJECT_RESULT = [200, '', '', {'names': ['runnable']}]
+ACTIONS_RESULT = [200, '', '', {'names': ['one', 'two']}]
+
+
+ACTIONS_PARAMS_RESULT_BASIC = [200, '', '',
+                               {'parameters': [
+                                   {'name': 'pin', 'type': 'in', 'direction': 'in'},
+                                   {'name': 'pout', 'type': 'out', 'direction': 'out'},
+                                   {'name': 'alteon', 'type': 'alteon'}
+                               ]}]
+ACTIONS_PARAMS_RESULT_FULL = [200, '', '',
+                              {'parameters': [
+                                  {'name': 'pin', 'type': 'in', 'direction': 'in'},
+                                  {'name': 'pout', 'type': 'out', 'direction': 'out'},
+                                  {'name': 'alteon', 'type': 'alteon'},
+                                  {'name': 'alteon_array', 'type': 'alteon[]'},
+                                  {'name': 'dp', 'type': 'defensePro'},
+                                  {'name': 'dp_array', 'type': 'defensePro[]'},
+                                  {'name': 'appWall', 'type': 'appWall'},
+                                  {'name': 'appWall_array', 'type': 'appWall[]'}
+                              ]}]
 
 RUN_RESULT = [200, '', '', {
     "uri": "https://10.11.12.13:2189/api/status?token=Workflow%5Ca%5Capply%5Cc4b533a8-8764-4cbf-a19c-63b11b9ccc09",
@@ -42,7 +72,7 @@ RUN_RESULT = [200, '', '', {
     "complete": True, "status": 200, "success": True, "messages": [], "action": "apply", "parameters": {},
 }]
 
-MODULE_RESULT = {"msg": "Configuration template run completed.", "parameters": {}}
+MODULE_RESULT = {"msg": "Configuration template run completed."}
 
 
 @patch('vdirect_client.rest_client.RestClient')
@@ -56,29 +86,32 @@ class RestClient:
 
 @patch('vdirect_client.rest_client.Runnable')
 class Runnable:
+    runnable_objects_result = None
     available_actions_result = None
     action_info_result = None
-    runnable_objects_result = None
     run_result = None
 
     def __init__(self, client):
         self.client = client
 
     @classmethod
-    def set_action_info_result(cls, result):
-        Runnable.action_info_result = result
+    def set_runnable_objects_result(cls, result):
+        Runnable.runnable_objects_result = result
 
     @classmethod
     def set_available_actions_result(cls, result):
         Runnable.available_actions_result = result
 
     @classmethod
+    def set_action_info_result(cls, result):
+        Runnable.action_info_result = result
+
+    @classmethod
     def set_run_result(cls, result):
         Runnable.run_result = result
 
-    @classmethod
-    def set_runnable_objects_result(cls, result):
-        Runnable.runnable_objects_result = result
+    def get_runnable_objects(self, type):
+        return Runnable.runnable_objects_result
 
     def get_available_actions(self, type=None, name=None):
         return Runnable.available_actions_result
@@ -89,8 +122,27 @@ class Runnable:
     def run(self, data, type, name, action_name):
         return Runnable.run_result
 
-    def get_runnable_objects(self, type):
-        return Runnable.runnable_objects_result
+
+@patch('vdirect_client.rest_client.Catalog')
+class Catalog:
+    _404 = False
+
+    def __init__(self, client):
+        self.client = client
+
+    @classmethod
+    def set_catalog_item_200(cls):
+        Catalog._404 = False
+
+    @classmethod
+    def set_catalog_item_404(cls):
+        Catalog._404 = True
+
+    @classmethod
+    def get_catalog_item(cls, type=None, name=None):
+        if Catalog._404:
+            from ansible.modules.network.radware import vdirect_runnable
+            raise vdirect_runnable.MissingRunnableException(name)
 
 
 class TestManager(unittest.TestCase):
@@ -116,60 +168,166 @@ class TestManager(unittest.TestCase):
             except KeyError:
                 assert True
 
-    def test_validate_runnable_exists(self, *args):
+    def test_validate_configuration_template_exists(self, *args):
         with patch.dict('sys.modules', **{
             'vdirect_client': self.module_mock,
             'vdirect_client.rest_client': self.module_mock,
         }):
             from ansible.modules.network.radware import vdirect_runnable
 
-            Runnable.set_runnable_objects_result(RUNNABLE_OBJECTS_RESULT)
-            BASE_PARAMS.update(RUNNABLE_PARAMS)
+            Catalog.set_catalog_item_200()
+            BASE_PARAMS.update(CONFIGURATION_TEMPLATE_RUNNABLE_PARAMS)
             vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
             vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
+            vdirectRunnable.client.catalog = Catalog(vdirectRunnable.client)
             vdirectRunnable._validate_runnable_exists()
             assert True
 
-            BASE_PARAMS.update(RUNNABLE_PARAMS)
-            BASE_PARAMS['runnable_name'] = "missing"
+    def test_validate_workflow_template_exists(self, *args):
+        with patch.dict('sys.modules', **{
+            'vdirect_client': self.module_mock,
+            'vdirect_client.rest_client': self.module_mock,
+        }):
+            from ansible.modules.network.radware import vdirect_runnable
+
+            Catalog.set_catalog_item_200()
+            BASE_PARAMS.update(WORKFLOW_TEMPLATE_RUNNABLE_PARAMS)
             vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
             vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
+            vdirectRunnable.client.catalog = Catalog(vdirectRunnable.client)
+            vdirectRunnable._validate_runnable_exists()
+            assert True
+
+    def test_validate_workflow_exists(self, *args):
+        with patch.dict('sys.modules', **{
+            'vdirect_client': self.module_mock,
+            'vdirect_client.rest_client': self.module_mock,
+        }):
+            from ansible.modules.network.radware import vdirect_runnable
+
+            Catalog.set_catalog_item_200()
+            BASE_PARAMS.update(CONFIGURATION_TEMPLATE_RUNNABLE_PARAMS)
+            Runnable.set_runnable_objects_result(WORKFLOW_RUNNABLE_OBJECT_RESULT)
+            BASE_PARAMS.update(WORKFLOW_RUNNABLE_PARAMS)
+            vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
+            vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
+            vdirectRunnable.client.catalog = Catalog(vdirectRunnable.client)
+            vdirectRunnable._validate_runnable_exists()
+            assert True
+
+    def test_validate_plugin_exists(self, *args):
+        with patch.dict('sys.modules', **{
+            'vdirect_client': self.module_mock,
+            'vdirect_client.rest_client': self.module_mock,
+        }):
+            from ansible.modules.network.radware import vdirect_runnable
+
+            Runnable.set_runnable_objects_result(WORKFLOW_RUNNABLE_OBJECT_RESULT)
+            BASE_PARAMS.update(WORKFLOW_RUNNABLE_PARAMS)
+            vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
+            vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
+            vdirectRunnable.client.catalog = Catalog(vdirectRunnable.client)
+            vdirectRunnable._validate_runnable_exists()
+            assert True
+
+            BASE_PARAMS['runnable_name'] = 'missing'
+            vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
+            vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
+            vdirectRunnable.client.catalog = Catalog(vdirectRunnable.client)
             try:
                 vdirectRunnable._validate_runnable_exists()
                 self.fail("MissingRunnableException was not thrown for missing runnable name")
             except vdirect_runnable.MissingRunnableException:
                 assert True
 
-    def test_validate_action_name(self, *args):
+    def test_validate_configuration_template_action_name(self, *args):
         with patch.dict('sys.modules', **{
             'vdirect_client': self.module_mock,
             'vdirect_client.rest_client': self.module_mock,
         }):
             from ansible.modules.network.radware import vdirect_runnable
 
-            Runnable.set_runnable_objects_result(RUNNABLE_OBJECTS_RESULT)
-            BASE_PARAMS.update(RUNNABLE_PARAMS)
+            Catalog.set_catalog_item_200()
+            BASE_PARAMS.update(PLUGIN_RUNNABLE_PARAMS)
+            vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
+            vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
+            vdirectRunnable.client.catalog = Catalog(vdirectRunnable.client)
+            vdirectRunnable._validate_runnable_exists()
+            assert True
+
+            Catalog.set_catalog_item_404()
+            try:
+                vdirectRunnable._validate_runnable_exists()
+                self.fail("MissingRunnableException was not thrown for missing runnable name")
+            except vdirect_runnable.MissingRunnableException:
+                assert True
+
+    def test_validate_configuration_template_action_name(self, *args):
+        with patch.dict('sys.modules', **{
+            'vdirect_client': self.module_mock,
+            'vdirect_client.rest_client': self.module_mock,
+        }):
+            from ansible.modules.network.radware import vdirect_runnable
+
+            Runnable.set_available_actions_result(ACTIONS_RESULT)
+            BASE_PARAMS.update(CONFIGURATION_TEMPLATE_RUNNABLE_PARAMS)
             vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
             vdirectRunnable._validate_action_name()
             assert vdirectRunnable.action_name == vdirect_runnable.VdirectRunnable.RUN_ACTION
 
-            BASE_PARAMS['runnable_type'] = vdirect_runnable.WORKFLOW_TEMPLATE_RUNNABLE_TYPE
+    def test_validate_workflow_template_action_name(self, *args):
+        with patch.dict('sys.modules', **{
+            'vdirect_client': self.module_mock,
+            'vdirect_client.rest_client': self.module_mock,
+        }):
+            from ansible.modules.network.radware import vdirect_runnable
+
+            Runnable.set_available_actions_result(ACTIONS_RESULT)
+            BASE_PARAMS.update(WORKFLOW_TEMPLATE_RUNNABLE_PARAMS)
             vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
             vdirectRunnable._validate_action_name()
             assert vdirectRunnable.action_name == vdirect_runnable.VdirectRunnable.CREATE_WORKFLOW_ACTION
 
-            BASE_PARAMS['runnable_type'] = vdirect_runnable.WORKFLOW_RUNNABLE_TYPE
-            BASE_PARAMS['action_name'] = 'a'
-            vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
-            vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
-            Runnable.set_available_actions_result(AVAILABLE_ACTIONS_RESULT)
-            vdirectRunnable._validate_action_name()
-            assert vdirectRunnable.action_name == 'a'
+    def test_validate_workflow_action_name(self, *args):
+        with patch.dict('sys.modules', **{
+            'vdirect_client': self.module_mock,
+            'vdirect_client.rest_client': self.module_mock,
+        }):
+            from ansible.modules.network.radware import vdirect_runnable
 
-            BASE_PARAMS['action_name'] = 'c'
+            Runnable.set_available_actions_result(ACTIONS_RESULT)
+            BASE_PARAMS.update(WORKFLOW_RUNNABLE_PARAMS)
             vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
             vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
-            Runnable.set_available_actions_result(AVAILABLE_ACTIONS_RESULT)
+            vdirectRunnable._validate_action_name()
+            assert vdirectRunnable.action_name == 'one'
+
+            BASE_PARAMS['action_name'] = 'three'
+            vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
+            vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
+            try:
+                vdirectRunnable._validate_action_name()
+                self.fail("WrongActionNameException was not thrown for wrong action name")
+            except vdirect_runnable.WrongActionNameException:
+                assert True
+
+    def test_validate_plugin_action_name(self, *args):
+        with patch.dict('sys.modules', **{
+            'vdirect_client': self.module_mock,
+            'vdirect_client.rest_client': self.module_mock,
+        }):
+            from ansible.modules.network.radware import vdirect_runnable
+
+            Runnable.set_available_actions_result(ACTIONS_RESULT)
+            BASE_PARAMS.update(PLUGIN_RUNNABLE_PARAMS)
+            vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
+            vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
+            vdirectRunnable._validate_action_name()
+            assert vdirectRunnable.action_name == 'two'
+
+            BASE_PARAMS['action_name'] = 'three'
+            vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
+            vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
             try:
                 vdirectRunnable._validate_action_name()
                 self.fail("WrongActionNameException was not thrown for wrong action name")
@@ -183,18 +341,11 @@ class TestManager(unittest.TestCase):
         }):
             from ansible.modules.network.radware import vdirect_runnable
 
-            Runnable.set_runnable_objects_result(RUNNABLE_OBJECTS_RESULT)
-            BASE_PARAMS.update(RUNNABLE_PARAMS)
-            BASE_PARAMS['runnable_type'] = vdirect_runnable.WORKFLOW_RUNNABLE_TYPE
-            BASE_PARAMS['action_name'] = 'a'
-            BASE_PARAMS['parameters'] = {"alteon": "x"}
+            Runnable.set_action_info_result(ACTIONS_PARAMS_RESULT_BASIC)
+            BASE_PARAMS.update(CONFIGURATION_TEMPLATE_RUNNABLE_PARAMS)
 
             vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
             vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
-            Runnable.set_available_actions_result(AVAILABLE_ACTIONS_RESULT)
-            Runnable.set_action_info_result(ACTIONS_PARAMS_RESULT)
-
-            vdirectRunnable._validate_action_name()
             try:
                 vdirectRunnable._validate_required_action_params()
                 self.fail("MissingActionParametersException was not thrown for missing parameters")
@@ -203,6 +354,19 @@ class TestManager(unittest.TestCase):
 
             BASE_PARAMS['parameters'] = {"alteon": "x"}
             vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
+            try:
+                vdirectRunnable._validate_required_action_params()
+                self.fail("MissingActionParametersException was not thrown for missing parameters")
+            except vdirect_runnable.MissingActionParametersException:
+                assert True
+
+            BASE_PARAMS['parameters'] = {"pin": "x", "alteon": "a1"}
+            vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
+            vdirectRunnable._validate_action_name()
+            vdirectRunnable._validate_required_action_params()
+            assert True
+
+            Runnable.set_action_info_result(ACTIONS_PARAMS_RESULT_FULL)
             vdirectRunnable._validate_action_name()
             try:
                 vdirectRunnable._validate_required_action_params()
@@ -210,7 +374,12 @@ class TestManager(unittest.TestCase):
             except vdirect_runnable.MissingActionParametersException:
                 assert True
 
-            BASE_PARAMS['parameters'] = {"pin": "x", "alteon": "x"}
+            BASE_PARAMS['parameters'].update(
+                {"alteon_array": "[a1, a2]",
+                 "dp": "dp1", "dp_array": "[dp1, dp2]",
+                 "appWall": "appWall1",
+                 "appWall_array": "[appWall1, appWall2]"
+                 })
             vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
             vdirectRunnable._validate_action_name()
             vdirectRunnable._validate_required_action_params()
@@ -223,46 +392,28 @@ class TestManager(unittest.TestCase):
         }):
             from ansible.modules.network.radware import vdirect_runnable
 
-            Runnable.set_runnable_objects_result(RUNNABLE_OBJECTS_RESULT)
-
-            BASE_PARAMS.update(RUNNABLE_PARAMS)
-
-            BASE_PARAMS['runnable_type'] = vdirect_runnable.CONFIGURATION_TEMPLATE_RUNNABLE_TYPE
+            Catalog.set_catalog_item_200()
+            BASE_PARAMS.update(CONFIGURATION_TEMPLATE_RUNNABLE_PARAMS)
+            Runnable.set_available_actions_result(ACTIONS_RESULT)
+            Runnable.set_action_info_result(ACTIONS_PARAMS_RESULT_BASIC)
             BASE_PARAMS['parameters'] = {"pin": "x", "alteon": "x"}
+
             vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
             vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
-            Runnable.set_available_actions_result(AVAILABLE_ACTIONS_RESULT)
-            Runnable.set_action_info_result(ACTIONS_PARAMS_RESULT)
             Runnable.set_run_result(RUN_RESULT)
             res = vdirectRunnable.run()
-            assert res == MODULE_RESULT
-
-            BASE_PARAMS['runnable_type'] = vdirect_runnable.WORKFLOW_TEMPLATE_RUNNABLE_TYPE
-            MODULE_RESULT['msg'] = "Workflow created."
-            vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
-            vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
-            res = vdirectRunnable.run()
-            assert res == MODULE_RESULT
-
-            BASE_PARAMS['runnable_type'] = vdirect_runnable.WORKFLOW_RUNNABLE_TYPE
-            BASE_PARAMS['action_name'] = 'a'
-            MODULE_RESULT['msg'] = "Workflow action run completed."
-            vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
-            vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
-            Runnable.set_available_actions_result(AVAILABLE_ACTIONS_RESULT)
-            Runnable.set_action_info_result(ACTIONS_PARAMS_RESULT)
-            res = vdirectRunnable.run()
-            assert res == MODULE_RESULT
+            assert res['msg'] == MODULE_RESULT['msg']
 
             result_parameters = {"param1": "value1", "param2": "value2"}
             RUN_RESULT[self.module_mock.rest_client.RESP_DATA]['parameters'] = result_parameters
             MODULE_RESULT['parameters'] = result_parameters
             res = vdirectRunnable.run()
-            assert res == MODULE_RESULT
+            assert res['msg'] == MODULE_RESULT['msg']
+            assert res['output']['parameters'] == result_parameters
 
             RUN_RESULT[self.module_mock.rest_client.RESP_DATA]['status'] = 404
             vdirectRunnable.run()
-            assert res == MODULE_RESULT
+            assert res['msg'] == MODULE_RESULT['msg']
 
             RUN_RESULT[self.module_mock.rest_client.RESP_STATUS] = 400
             RUN_RESULT[self.module_mock.rest_client.RESP_REASON] = "Reason"
