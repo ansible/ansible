@@ -72,7 +72,7 @@ class TaskInclude(Task):
             task.args['_raw_params'] = task.args.pop('file', None)
 
         apply_attrs = task.args.get('apply', {})
-        
+
         if task.action in ('include_tasks', 'import_tasks') and not task.args["_raw_params"]:
             raise AnsibleParserError('Invalid arguments for TASK: %s' % task.action, obj=data)
 
