@@ -14,4 +14,4 @@
 
     - assert:
         that:
-            - untiltest|length == 2
+            - untiltest['results']|length == 2
