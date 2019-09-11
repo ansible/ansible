@@ -45,17 +45,6 @@ class ActionModule(ActionBase):
 
         return mod_args
 
-    def _get_network_os(self, task_vars):
-        network_os = ''
-        if 'network_os' in self._task.args and self._task.args['network_os']:
-            network_os = self._task.args['network_os']
-        elif self._play_context.network_os:
-            network_os = self._play_context.network_os
-        elif 'network_os' in task_vars.get('ansible_facts', {}) and task_vars['ansible_facts']['network_os']:
-            network_os = task_vars['ansible_facts']['network_os']
-
-        return network_os
-
     def run(self, tmp=None, task_vars=None):
 
         self._supports_check_mode = True
@@ -67,11 +56,8 @@ class ActionModule(ActionBase):
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
         if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
-            network_os = self._get_network_os(task_vars)
-            if network_os:
-                modules.extend([connection_map.get(network_os, 'setup')])
-            else:
-                modules.extend([connection_map.get(self._connection._load_name, 'setup')])
+            network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os',  task_vars.get('ansible_facts', {}).get('network_os')))
+            modules.extend([connection_map.get(network_os or self._connection._load_name, 'setup')])
             modules.pop(modules.index('smart'))
 
         failed = {}
