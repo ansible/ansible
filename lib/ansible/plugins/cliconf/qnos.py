@@ -27,7 +27,7 @@ short_description: Use qnos cliconf to run command on Quanta Switches
 description:
   - This qnos plugin provides low level abstraction apis for
     sending and receiving CLI commands from Quanta Switches.
-version_added: "2.9"
+version_added: "2.10"
 """
 
 import re
