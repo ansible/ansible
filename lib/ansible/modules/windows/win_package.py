@@ -41,7 +41,7 @@ options:
     version_added: '2.8'
   creates_path:
     description:
-    - Will check the existance of the path specified and use the result to
+    - Will check the existence of the path specified and use the result to
       determine whether the package is already installed.
     - You can use this in conjunction with C(product_id) and other C(creates_*).
     type: path
@@ -248,7 +248,7 @@ log:
   sample: Installation completed successfully
 rc:
   description: The return code of the package process.
-  returned: change occured
+  returned: change occurred
   type: int
   sample: 0
 reboot_required:

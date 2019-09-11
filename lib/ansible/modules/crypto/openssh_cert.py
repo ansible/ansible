@@ -363,7 +363,7 @@ class Certificate(object):
 
     def is_same_datetime(self, datetime_one, datetime_two):
 
-        # This function is for backwards compatability only because .total_seconds() is new in python2.7
+        # This function is for backwards compatibility only because .total_seconds() is new in python2.7
         def timedelta_total_seconds(time_delta):
             return (time_delta.microseconds + 0.0 + (time_delta.seconds + time_delta.days * 24 * 3600) * 10 ** 6) / 10 ** 6
         # try to use .total_ seconds() from python2.7

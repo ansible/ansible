@@ -128,7 +128,7 @@ ansible_facts:
               sample: username
         packages:
           description: List of installed Packages
-          returned: alway
+          returned: always
           type: complex
           contains:
             package:

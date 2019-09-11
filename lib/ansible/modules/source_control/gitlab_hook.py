@@ -191,7 +191,7 @@ class GitLabHook(object):
         self.hookObject = None
 
     '''
-    @param prokect Project Object
+    @param project Project Object
     @param hook_url Url to call on event
     @param description Description of the group
     @param parent Parent group full path

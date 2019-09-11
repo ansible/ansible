@@ -273,7 +273,7 @@ options:
     version_added: '2.4'
   update_password:
     description:
-    - Whether to update the password even when not other changes have occured.
+    - Whether to update the password even when not other changes have occurred.
     - When C(yes) will always result in a change when executing the module.
     type: bool
     default: yes

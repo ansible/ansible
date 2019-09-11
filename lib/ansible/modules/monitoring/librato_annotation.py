@@ -47,7 +47,7 @@ options:
         required: false
     description:
         description:
-            - The description contains extra meta-data about a particular annotation
+            - The description contains extra metadata about a particular annotation
             - The description should contain specifics on the individual annotation e.g. Deployed 9b562b2 shipped new feature foo!
         required: false
     start_time:

@@ -31,7 +31,7 @@ options:
     default: present
   chdir:
     description:
-      - The directory to execute the bundler commands from. This directoy
+      - The directory to execute the bundler commands from. This directory
         needs to contain a valid Gemfile or .bundle/ directory
     default: temporary working directory
   exclude_groups:

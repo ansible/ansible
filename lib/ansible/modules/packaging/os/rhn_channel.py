@@ -119,10 +119,10 @@ def main():
     try:
         session = client.auth.login(user, password)
     except Exception as e:
-        module.fail_json(msg="Unable to establish session with Sattelite server: %s " % to_text(e))
+        module.fail_json(msg="Unable to establish session with Satellite server: %s " % to_text(e))
 
     if not session:
-        module.fail_json(msg="Failed to establish session with Sattelite server.")
+        module.fail_json(msg="Failed to establish session with Satellite server.")
 
     # get systemid
     try:

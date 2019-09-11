@@ -140,7 +140,7 @@ output:
     type: str
     sample: "------------------------------------\\n   ROBOCOPY     ::     Robust File Copy for Windows         \\n------------------------------------\\n "
 msg:
-    description: Output intrepreted into a concise message.
+    description: Output interpreted into a concise message.
     returned: always
     type: str
     sample: No files copied!

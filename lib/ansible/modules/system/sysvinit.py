@@ -59,7 +59,7 @@ options:
         type: bool
         description:
             - Have the module daemonize as the service itself might not do so properly.
-            - This is useful with badly written init scripts or deamons, which
+            - This is useful with badly written init scripts or daemons, which
               commonly manifests as the task hanging as it is still holding the
               tty or the service dying when the task is over as the connection
               closes the session.

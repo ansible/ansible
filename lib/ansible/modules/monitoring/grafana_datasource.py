@@ -155,7 +155,7 @@ options:
     default: second
   sslmode:
     description:
-      - SSL mode for C(postgres) datasoure type.
+      - SSL mode for C(postgres) datasource type.
     choices: [ disable, require, verify-ca, verify-full ]
   trends:
     required: false

@@ -84,7 +84,7 @@ not_found:
   type: dict
   sample:
   - boto4
-  - riquests
+  - requests
 '''
 
 import re

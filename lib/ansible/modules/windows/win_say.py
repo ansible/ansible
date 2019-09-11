@@ -28,7 +28,7 @@ options:
     type: str
   msg_file:
     description:
-      - Full path to a windows format text file containing the text to be spokend.
+      - Full path to a windows format text file containing the text to be spoken.
       - Use either C(msg) or C(msg_file).
       - Optional so that you can use this module just to play sounds.
     type: path

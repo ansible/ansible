@@ -1222,7 +1222,7 @@ class DnfModule(YumDnf):
             )
 
         # Set state as installed by default
-        # This is not set in AnsibleModule() because the following shouldn't happend
+        # This is not set in AnsibleModule() because the following shouldn't happen
         # - dnf: autoremove=yes state=installed
         if self.state is None:
             self.state = 'installed'

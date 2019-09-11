@@ -372,7 +372,7 @@ def main():
     # --- user input validation ---
 
     if name is None and ensure_present:
-        module.fail_json(msg="You must specify 'name' to insert a new cron variabale")
+        module.fail_json(msg="You must specify 'name' to insert a new cron variable")
 
     if value is None and ensure_present:
         module.fail_json(msg="You must specify 'value' to insert a new cron variable")

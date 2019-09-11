@@ -274,7 +274,7 @@ EXAMPLES = r'''
     xpath: /business/website
     children: []
 
-# In case of namespaces, like in below XML, they have to be explicitely stated.
+# In case of namespaces, like in below XML, they have to be explicitly stated.
 #
 # <foo xmlns="http://x.test" xmlns:attr="http://z.test">
 #   <bar>
@@ -639,7 +639,7 @@ def set_target_inner(module, tree, xpath, namespaces, attribute, value):
     except Exception as e:
         missing_namespace = ""
         # NOTE: This checks only the namespaces defined in root element!
-        # TODO: Implement a more robust check to check for child namespaces' existance
+        # TODO: Implement a more robust check to check for child namespaces' existence
         if tree.getroot().nsmap and ":" not in xpath:
             missing_namespace = "XML document has namespace(s) defined, but no namespace prefix(es) used in xpath!\n"
         module.fail_json(msg="%sXpath %s causes a failure: %s\n  -- tree is %s" %

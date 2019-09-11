@@ -319,7 +319,7 @@ EXAMPLES = r'''
     - www.ansible.com
     - m.ansible.com
 
-- name: Force re-generate an OpenSSL Certificate Signing Request
+- name: Force regenerate an OpenSSL Certificate Signing Request
   openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr
     privatekey_path: /etc/ssl/private/ansible.com.pem

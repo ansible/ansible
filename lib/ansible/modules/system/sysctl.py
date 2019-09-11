@@ -149,7 +149,7 @@ class SysctlModule(object):
         # get the current proc fs value
         self.proc_value = self.get_token_curr_value(thisname)
 
-        # get the currect sysctl file value
+        # get the current sysctl file value
         self.read_sysctl_file()
         if thisname not in self.file_values:
             self.file_values[thisname] = None

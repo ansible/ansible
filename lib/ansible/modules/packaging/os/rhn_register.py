@@ -358,7 +358,7 @@ def main():
             channels=dict(type='list', default=[]),
         ),
         # username/password is required for state=absent, or if channels is not empty
-        # (basically anything that uses self.api requires username/password) but it doesnt
+        # (basically anything that uses self.api requires username/password) but it doesn't
         # look like we can express that with required_if/required_together/mutually_exclusive
 
         # only username+password can be used for unregister

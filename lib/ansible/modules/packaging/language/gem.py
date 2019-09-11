@@ -61,7 +61,7 @@ options:
   install_dir:
     description:
     - Install the gems into a specific directory.
-      These gems will be independant from the global installed ones.
+      These gems will be independent from the global installed ones.
       Specifying this requires user_install to be false.
     required: false
     version_added: "2.6"
