@@ -21,7 +21,7 @@ DOCUMENTATION = r'''
 ---
 module: aix_chsec
 short_description: Modify AIX stanza files
-version_added: '2.9'
+version_added: '2.10'
 description:
 - Modify stanza attributes to AIX config files using the C(chsec) command.
 options:
