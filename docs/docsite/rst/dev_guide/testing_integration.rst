@@ -127,7 +127,7 @@ the Ansible continuous integration (CI) system is recommended.
 
    Using Docker Engine to run Docker on a non-Linux host (such as macOS) is not recommended.
    Some tests may fail, depending on the image used for testing.
-   Using the ``--docker-privileged`` option may resolve the issue.
+   Using the ``--docker-privileged`` option when running ``integration`` (not ``network-integration`` or ``windows-integration``) may resolve the issue.
 
 Running Integration Tests
 -------------------------
