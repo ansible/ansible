@@ -281,7 +281,7 @@ class CryptHandler(Handler):
                              % (device, result[STDERR]))
 
     def run_luks_add_key(self, device, keyfile, new_keyfile):
-        ''' Add new key to given 'device'; authentization done using 'keyfile'
+        ''' Add new key to given 'device'; authentication done using 'keyfile'
             Raises ValueError when command fails
         '''
         result = self._run_command([self._cryptsetup_bin, 'luksAddKey', device,

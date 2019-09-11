@@ -605,7 +605,7 @@ class PamdService(object):
             if next_rule is not None and not next_rule.matches(new_type, new_control, new_path):
                 # If the previous rule doesn't match we'll insert our new rule.
 
-                # Second set the original next rule's previuous to the new_rule
+                # Second set the original next rule's previous to the new_rule
                 next_rule.prev = new_rule
                 # Third, set the new_rule's next to the original next rule
                 new_rule.next = next_rule
@@ -810,7 +810,7 @@ def main():
                             file %s with error %s.' %
                          (fname, str(e)))
 
-    # Assuming we didnt fail, create the service
+    # Assuming we didn't fail, create the service
     service = PamdService(content)
     # Set the action
     action = module.params['state']

@@ -47,7 +47,7 @@ options:
     type: str
   purge:
     description:
-      - When set to true, all variables which are not untoucheded in the task will be deleted.
+      - When set to true, all variables which are not untouched in the task will be deleted.
     default: false
     type: bool
   vars:

@@ -202,7 +202,7 @@ def main():
             result, info = account.send_signed_request(endpoint, payload)
         if info['status'] != 200:
             already_revoked = False
-            # Standarized error from draft 14 on (https://tools.ietf.org/html/rfc8555#section-7.6)
+            # Standardized error from draft 14 on (https://tools.ietf.org/html/rfc8555#section-7.6)
             if result.get('type') == 'urn:ietf:params:acme:error:alreadyRevoked':
                 already_revoked = True
             else:
