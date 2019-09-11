@@ -108,7 +108,9 @@ notes:
   - This module requires the pika python library U(https://pika.readthedocs.io/).
   - Pika is a pure-Python implementation of the AMQP 0-9-1 protocol that tries to stay fairly independent of the underlying network support library.
   - This module is tested against RabbitMQ. Other AMQP 0.9.1 protocol based servers may work but not tested/guaranteed.
-  - The certificate authentication was tested with certificates created from U(https://www.rabbitmq.com/ssl.html#automated-certificate-generation) and RabbitMQ configuration variables C(ssl_options.verify = verify_peer) & C(ssl_options.fail_if_no_peer_cert = true).
+  - The certificate authentication was tested with certificates created
+    from U(https://www.rabbitmq.com/ssl.html#automated-certificate-generation) and RabbitMQ
+    configuration variables C(ssl_options.verify = verify_peer) & C(ssl_options.fail_if_no_peer_cert = true).
 author: "John Imison (@Im0)"
 '''
 
