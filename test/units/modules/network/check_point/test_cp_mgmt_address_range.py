@@ -20,10 +20,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import pytest
-from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleFailJson, AnsibleExitJson
+from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleExitJson
 
 from ansible.module_utils import basic
-from ansible.module_utils.network.checkpoint.checkpoint import api_call
 from ansible.modules.network.check_point import cp_mgmt_address_range
 
 function_path = 'ansible.modules.network.check_point.cp_mgmt_address_range.api_call'
