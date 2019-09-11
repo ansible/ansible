@@ -4,5 +4,4 @@ docker_prereq_packages:
   - lvm2
   - libseccomp
 
-docker_pip_extra_packages:
-  - requests==2.6.0
+docker_pip_extra_packages: []

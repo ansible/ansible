@@ -25,6 +25,11 @@
   args:
     warn: no
 
+- name: Remove the existing python-requests to be able to install the one wanted by docker-py
+  yum:
+    name: python-requests
+    state: absent
+
 - name: Install docker
   yum:
     name: "{{ docker_packages }}"
