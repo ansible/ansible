@@ -15,7 +15,7 @@ DOCUMENTATION = """
 ---
 module: pn_vtep_vxlan
 author: "Pluribus Networks (@rajaspachipulusu17)"
-version_added: "2.9"
+version_added: "2.10"
 short_description: CLI command to add/remove vtep-vxlan
 description:
   - This module can be used to add a VXLAN to a vtep and remove a VXLAN from a vtep.
