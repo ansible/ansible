@@ -408,6 +408,8 @@ class TaskExecutor:
                 cond = Conditional(loader=self._loader)
                 cond.when = self._task.loop_control.get_validated_value('until', self._task.loop_control._until, self._task.loop_control.until, templar)
                 if cond.evaluate_conditional(templar, task_vars):
+                    # delete loop vars before exiting loop
+                    del task_vars[loop_var]
                     break
 
             # done with loop var, remove for next iteration
