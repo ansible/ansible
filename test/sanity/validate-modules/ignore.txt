@@ -385,7 +385,6 @@ lib/ansible/modules/monitoring/logentries.py E322
 lib/ansible/modules/monitoring/logentries.py E326
 lib/ansible/modules/monitoring/logicmonitor.py E317
 lib/ansible/modules/monitoring/logicmonitor.py E324
-lib/ansible/modules/monitoring/logicmonitor.py E326
 lib/ansible/modules/monitoring/logicmonitor_facts.py E317
 lib/ansible/modules/monitoring/logicmonitor_facts.py E324
 lib/ansible/modules/monitoring/nagios.py E317

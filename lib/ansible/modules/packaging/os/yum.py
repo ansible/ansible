@@ -645,7 +645,7 @@ class YumModule(YumDnf):
                     pkgs = my.returnPackagesByDep(req_spec) + my.returnInstalledPackagesByDep(req_spec)
                 except Exception as e:
                     # If a repo with `repo_gpgcheck=1` is added and the repo GPG
-                    # key was never accepted, quering this repo will throw an
+                    # key was never accepted, querying this repo will throw an
                     # error: 'repomd.xml signature could not be verified'. In that
                     # situation we need to run `yum -y makecache` which will accept
                     # the key and try again.
@@ -945,7 +945,7 @@ class YumModule(YumDnf):
                 (name, ver, rel, epoch, arch) = splitFilename(envra)
                 installed_pkgs = self.is_installed(repoq, name)
 
-                # case for two same envr but differrent archs like x86_64 and i686
+                # case for two same envr but different archs like x86_64 and i686
                 if len(installed_pkgs) == 2:
                     (cur_name0, cur_ver0, cur_rel0, cur_epoch0, cur_arch0) = splitFilename(installed_pkgs[0])
                     (cur_name1, cur_ver1, cur_rel1, cur_epoch1, cur_arch1) = splitFilename(installed_pkgs[1])
@@ -1129,7 +1129,7 @@ class YumModule(YumDnf):
                     installed = self.is_installed(repoq, pkg)
 
                 if installed:
-                    # Return a mesage so it's obvious to the user why yum failed
+                    # Return a message so it's obvious to the user why yum failed
                     # and which package couldn't be removed. More details:
                     # https://github.com/ansible/ansible/issues/35672
                     res['msg'] = "Package '%s' couldn't be removed!" % pkg
@@ -1445,7 +1445,7 @@ class YumModule(YumDnf):
             self.yum_basecmd.extend(e_cmd)
 
         if self.state in ('installed', 'present', 'latest'):
-            """ The need of this entire if conditional has to be chalanged
+            """ The need of this entire if conditional has to be changed
                 this function is the ensure function that is called
                 in the main section.
 
