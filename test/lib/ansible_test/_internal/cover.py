@@ -175,7 +175,7 @@ def _command_coverage_combine_python(args):
             updated.add_arcs({filename: list(arc_data[filename])})
 
         if args.all:
-            updated.add_arcs(dict((source, []) for source in sources))
+            updated.add_arcs(dict((source[0], []) for source in sources))
 
         if not args.explain:
             output_file = coverage_file + group
