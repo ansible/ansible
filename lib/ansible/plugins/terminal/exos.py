@@ -23,9 +23,6 @@ import re
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.terminal import TerminalBase
-from ansible.utils.display import Display
-
-display = Display()
 
 
 class TerminalModule(TerminalBase):
@@ -59,4 +56,4 @@ class TerminalModule(TerminalBase):
         try:
             self._exec_cli_command(b'configure cli columns 256')
         except AnsibleConnectionFailure:
-            display.display('WARNING: Unable to configure cli columns, command responses may be truncated')
+            self._connection.queue_message('warning', 'Unable to configure cli columns, command responses may be truncated')
