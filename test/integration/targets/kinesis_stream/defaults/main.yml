@@ -1,0 +1,3 @@
+---
+# defaults file for kinesis_stream test
+kinesis_stream_name: "{{ resource_prefix }}"

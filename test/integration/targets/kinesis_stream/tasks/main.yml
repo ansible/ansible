@@ -1,0 +1,123 @@
+---
+
+- block:
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: True
+
+    # ============================================================
+    - name: test with no parameters
+      kinesis_stream:
+      register: result
+      failed_when: result is success
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - result is success
+           - 'result.msg.startswith("missing required arguments: name")'
+
+    # ============================================================
+    - name: test with no parameters except state absent
+      kinesis_stream:
+        state: absent
+      register: result
+      failed_when: result is success
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - result is success
+           - 'result.msg.startswith("missing required arguments: name")'
+
+    # ============================================================
+    - name: create a basic kinesis stream - missing shards param
+      kinesis_stream:
+        name: "{{ kinesis_stream_name }}"
+      register: result
+      failed_when: result is success
+
+    - name: assert failure when called with no parameters - missing shards param
+      assert:
+        that:
+           - result is success
+           - result.msg == 'Shards is required when state == present.'
+
+    # ============================================================
+    - name: create a basic kinesis stream - missing region
+      kinesis_stream:
+        name: "{{ kinesis_stream_name }}"
+        shards: 1
+      register: result
+      failed_when: result is success
+
+    - name: assert create a basic kinesis stream - missing region
+      assert:
+        that:
+           - result is success
+           - "'requires a region and none was found' in result.msg"
+
+    # ============================================================
+    - name: create a basic kinesis stream
+      kinesis_stream:
+        name: "{{ kinesis_stream_name }}"
+        shards: 1
+        wait: yes
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - result is success
+           - result is changed
+
+    # ============================================================
+    - name: create a basic kinesis stream - idempotent check
+      kinesis_stream:
+        name: "{{ kinesis_stream_name }}"
+        shards: 1
+        wait: yes
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - result is success
+           - result is not changed
+
+    # ============================================================
+    - name: test state=absent (expect changed=True)
+      kinesis_stream:
+        name: "{{ kinesis_stream_name }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert state=absent
+      assert:
+        that:
+           - result is not failed
+           - result is changed
+
+  always:
+
+    # ============================================================
+    - name: test state=absent (expect changed=False)
+      kinesis_stream:
+        name: "{{ kinesis_stream_name }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert state=absent
+      assert:
+        that:
+           - result is success
+           - result is not changed
