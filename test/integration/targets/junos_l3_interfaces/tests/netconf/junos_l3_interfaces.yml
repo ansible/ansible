@@ -20,8 +20,8 @@
 - assert:
     that:
       - result is changed
-      - "'<nc:address><nc:name>192.168.100.1/24</nc:name></nc:address>' in result.xml[0]"
-      - "'<nc:address><nc:name>10.200.16.20/24</nc:name></nc:address>' in result.xml[0]"
+      - "'<nc:address><nc:name>192.168.100.1/24</nc:name></nc:address>' in result.commands[0]"
+      - "'<nc:address><nc:name>10.200.16.20/24</nc:name></nc:address>' in result.commands[0]"
       - "result.after[0].name == 'ge-1/0/0'"
       - "result.after[0].ipv4[0]['address'] == '192.168.100.1/24'"
       - "result.after[0].ipv4[1]['address'] == '10.200.16.20/24'"
@@ -61,8 +61,8 @@
 - assert:
     that:
       - result is changed
-      - "'<nc:address><nc:name>100.64.0.1/10</nc:name></nc:address>' in result.xml[0]"
-      - "'<nc:address><nc:name>100.64.0.2/10</nc:name></nc:address>' in result.xml[0]"
+      - "'<nc:address><nc:name>100.64.0.1/10</nc:name></nc:address>' in result.commands[0]"
+      - "'<nc:address><nc:name>100.64.0.2/10</nc:name></nc:address>' in result.commands[0]"
       - "result.after[0].name == 'ge-1/0/0'"
       - "result.after[0].ipv4[0]['address'] == '192.168.100.1/24'"
       - "result.after[0].ipv4[1]['address'] == '10.200.16.20/24'"
@@ -79,7 +79,7 @@
 - assert:
     that:
       - result is changed
-      - "'<nc:name>ge-2/0/0</nc:name><nc:unit><nc:name>0</nc:name><nc:family><nc:inet><nc:address delete=\"delete\"/>' in result.xml[0]"
+      - "'<nc:name>ge-2/0/0</nc:name><nc:unit><nc:name>0</nc:name><nc:family><nc:inet><nc:address delete=\"delete\"/>' in result.commands[0]"
 
 - name: Override all config
   junos_l3_interfaces:
@@ -96,4 +96,4 @@
 - assert:
     that:
       - result is changed
-      - "'<nc:name>fxp0</nc:name><nc:unit><nc:name>0</nc:name><nc:family><nc:inet><nc:dhcp/></nc:inet>' in result.xml[0]"
+      - "'<nc:name>fxp0</nc:name><nc:unit><nc:name>0</nc:name><nc:family><nc:inet><nc:dhcp/></nc:inet>' in result.commands[0]"

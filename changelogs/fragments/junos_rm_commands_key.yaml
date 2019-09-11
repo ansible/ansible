@@ -1,0 +1,2 @@
+bugfixes:
+- Return commands key instead of xml in result for junos resource module (https://github.com/ansible/ansible/issues/61773)
