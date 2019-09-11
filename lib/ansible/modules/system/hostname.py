@@ -607,6 +607,12 @@ class OpenSUSELeapHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class AsteraHostname(Hostname):
+    platform = 'Linux'
+    distribution = '"astralinuxce"'
+    strategy_class = SystemdStrategy
+
+
 class ArchHostname(Hostname):
     platform = 'Linux'
     distribution = 'Arch'
