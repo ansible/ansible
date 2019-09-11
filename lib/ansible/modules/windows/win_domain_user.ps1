@@ -153,7 +153,7 @@ If ($state -eq 'present') {
     }
 
     If ($password) {
-        # Don't uncecessary check for working credentials.
+        # Don't unnecessary check for working credentials.
         # Set the password if we need to.
         # For new_users there is also no difference between always and when_changed
         # so we don't need to differentiate between this two states.

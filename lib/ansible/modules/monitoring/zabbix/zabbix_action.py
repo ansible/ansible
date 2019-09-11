@@ -121,7 +121,7 @@ options:
                     - When I(type) is set to C(trigger_severity), the choices
                       are (case-insensitive) C(not classified), C(information), C(warning), C(average), C(high), C(disaster)
                       irrespective of user-visible names being changed in Zabbix. Defaults to C(not classified) if omitted.
-                    - Besides the above options, this is usualy either the name
+                    - Besides the above options, this is usually either the name
                       of the object or a string to compare with.
             operator:
                 description:
@@ -784,7 +784,7 @@ class Action(object):
         self._zapi_wrapper = zapi_wrapper
 
     def _construct_parameters(self, **kwargs):
-        """Contruct parameters.
+        """Construct parameters.
 
         Args:
             **kwargs: Arbitrary keyword parameters.
@@ -1609,7 +1609,7 @@ def compare_dictionaries(d1, d2, diff_dict):
     Used in recursion with compare_lists() function.
     Args:
         d1: first dictionary to compare
-        d2: second ditionary to compare
+        d2: second dictionary to compare
         diff_dict: dictionary to store the difference
 
     Returns:
