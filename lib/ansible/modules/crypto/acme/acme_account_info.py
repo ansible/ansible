@@ -174,7 +174,7 @@ orders:
       returned: when server returns this
     error:
       description:
-        - In case an error occured during processing, this contains information about the error.
+        - In case an error occurred during processing, this contains information about the error.
         - The field is structured as a problem document (RFC7807).
       type: complex
       returned: when an error occurred
