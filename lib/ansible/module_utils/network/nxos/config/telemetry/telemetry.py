@@ -152,11 +152,6 @@ class Telemetry(ConfigBase):
         ref.get_playvals()
         device_cache = ref.cache_existing
 
-        if device_cache is None:
-            device_cache_lines = []
-        else:
-            device_cache_lines = device_cache.split("\n")
-
         # Get Telemetry Destination Group Data
         if want.get('destination_groups'):
             td = {'name': 'destination_groups', 'type': 'TMS_DESTGROUP',

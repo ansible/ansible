@@ -192,7 +192,6 @@ def main():
     check_args(module, warnings)
 
     destination = module.params['dest']
-    count = module.params['count']
     state = module.params['state']
 
     ping_command = 'ping {0}'.format(destination)
