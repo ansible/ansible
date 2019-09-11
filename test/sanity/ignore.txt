@@ -4861,8 +4861,6 @@ lib/ansible/modules/notification/cisco_spark.py validate-modules:doc-default-doe
 lib/ansible/modules/notification/cisco_spark.py validate-modules:doc-missing-type
 lib/ansible/modules/notification/flowdock.py validate-modules:doc-missing-type
 lib/ansible/modules/notification/grove.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/notification/hall.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/notification/hall.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/notification/hipchat.py validate-modules:undocumented-parameter
 lib/ansible/modules/notification/hipchat.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/notification/hipchat.py validate-modules:doc-missing-type
