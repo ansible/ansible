@@ -409,7 +409,7 @@ Status
 {% else %}
 
 {%   set support = { 'core': 'the Ansible Core Team', 'network': 'the Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'the Ansible Community', 'curated': 'a Third Party'} %}
-{%   set module_states = { 'preview': 'not guaranteed to have a backwards compatible interface', 'stableinterface': 'guaranteed to have no backward incompatible interface changes going forward'} %}
+{%   set module_states = { 'preview': 'not guaranteed to have a backwards compatible interface', 'stableinterface': 'guaranteed to have backward compatible interface changes going forward'} %}
 
 {%   if metadata %}
 {%     if metadata.status %}
