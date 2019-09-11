@@ -123,7 +123,6 @@ def get_matching_jobs(module, at_cmd, script_file):
     #   If the script text is contained in a job add job number to list.
     for current_job in current_jobs:
         split_current_job = current_job.split()
-
         if get_platform() != 'AIX':
             at_command = "%s -c %s" % (at_cmd, split_current_job[0])
         else:
