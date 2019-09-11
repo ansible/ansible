@@ -236,7 +236,7 @@ class GcpInstance(object):
                 if u"hostname" in self.json:
                     name = self.json[u"hostname"]
                 else:
-                    self.json[u"name"]
+                    name = self.json[u"name"]
             else:
                 raise AnsibleParserError("%s is not a valid hostname precedent" % order)
 
