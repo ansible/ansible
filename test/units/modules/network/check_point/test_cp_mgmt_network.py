@@ -22,7 +22,6 @@ import pytest
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleFailJson, AnsibleExitJson
 
 from ansible.module_utils import basic
-from ansible.module_utils.network.checkpoint.checkpoint import api_call
 from ansible.modules.network.check_point import cp_mgmt_network
 
 OBJECT = {'name': 'test_network', 'nat_settings': {'auto_rule': True,
