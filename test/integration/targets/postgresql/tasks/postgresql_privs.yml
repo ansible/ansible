@@ -499,7 +499,7 @@
 # Test ALL_IN_SCHEMA for 'partioned tables type #
 #################################################
 
-# Partioning tables is a feature introduced in Postgresql 10.
+# Partitioning tables is a feature introduced in Postgresql 10.
 # (see https://www.postgresql.org/docs/10/ddl-partitioning.html )
 # The test below check for this version
 

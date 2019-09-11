@@ -45,7 +45,7 @@
 
 ####################
 # Test: create sequence in checkmode
-- name: postgresql_sequence - create a new seqeunce with name "foobar" in check_mode
+- name: postgresql_sequence - create a new sequence with name "foobar" in check_mode
   become_user: "{{ pg_user }}"
   become: yes
   check_mode: yes
@@ -64,7 +64,7 @@
       - result.queries == ["CREATE SEQUENCE \"public\".\"foobar\""]
 
 # Real SQL check
-- name: postgresql_sequence - check that the new seqeunce "foobar" not exists
+- name: postgresql_sequence - check that the new sequence "foobar" not exists
   become: yes
   become_user: "{{ pg_user }}"
   postgresql_query:
@@ -81,7 +81,7 @@
 
 ####################
 # Test: create sequence
-- name: postgresql_sequence - create a new seqeunce with name "foobar"
+- name: postgresql_sequence - create a new sequence with name "foobar"
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_sequence:
@@ -99,7 +99,7 @@
       - result.queries == ["CREATE SEQUENCE \"public\".\"foobar\""]
 
 # Real SQL check
-- name: postgresql_sequence - check that the new seqeunce "foobar" exists
+- name: postgresql_sequence - check that the new sequence "foobar" exists
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -135,7 +135,7 @@
       - result.queries == ["DROP SEQUENCE \"public\".\"foobar\""]
 
 # Real SQL check
-- name: postgresql_sequence - check that the seqeunce "foobar" still exists
+- name: postgresql_sequence - check that the sequence "foobar" still exists
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -170,7 +170,7 @@
       - result.queries == ["DROP SEQUENCE \"public\".\"foobar\""]
 
 # Real SQL check
-- name: postgresql_sequence - check that the seqeunce "foobar" not exists
+- name: postgresql_sequence - check that the sequence "foobar" not exists
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -205,7 +205,7 @@
       - result.queries == []
 
 # Real SQL check
-- name: postgresql_sequence - check that the seqeunce "foobar" not exists
+- name: postgresql_sequence - check that the sequence "foobar" not exists
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -248,7 +248,7 @@
       - result.queries == ["CREATE SEQUENCE \"public\".\"foobar_desc\" INCREMENT BY -1 MINVALUE 1 MAXVALUE 1000 START WITH 101 CYCLE"]
 
 # Real SQL check
-- name: postgresql_sequence - check that the new seqeunce "foobar_desc" exists
+- name: postgresql_sequence - check that the new sequence "foobar_desc" exists
   postgresql_query:
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
@@ -283,7 +283,7 @@
       - result.queries == ["ALTER SEQUENCE \"public\".\"foobar_desc\" RENAME TO \"foobar_with_options\""]
 
 # Real SQL check
-- name: postgresql_sequence - check that the seqeunce "foobar_desc" still exists and is not renamed
+- name: postgresql_sequence - check that the sequence "foobar_desc" still exists and is not renamed
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -319,7 +319,7 @@
       - result.queries == ["ALTER SEQUENCE \"public\".\"foobar_desc\" RENAME TO \"foobar_with_options\""]
 
 # Real SQL check
-- name: postgresql_sequence - check that the renamed seqeunce "foobar_with_options" exists
+- name: postgresql_sequence - check that the renamed sequence "foobar_with_options" exists
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -357,7 +357,7 @@
       - result.queries == ["ALTER SEQUENCE \"public\".\"foobar_with_options\" SET SCHEMA \"foobar_schema\""]
 
 # Real SQL check
-- name: postgresql_sequence - check that the seqeunce "foobar_with_options" still exists in the old schema
+- name: postgresql_sequence - check that the sequence "foobar_with_options" still exists in the old schema
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -394,7 +394,7 @@
       - result.queries == ["ALTER SEQUENCE \"public\".\"foobar_with_options\" SET SCHEMA \"foobar_schema\""]
 
 # Real SQL check
-- name: postgresql_sequence - check that the seqeunce "foobar_with_options" exists in new schema
+- name: postgresql_sequence - check that the sequence "foobar_with_options" exists in new schema
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -432,7 +432,7 @@
       - result.queries == ["ALTER SEQUENCE \"foobar_schema\".\"foobar_with_options\" OWNER TO \"{{ db_user1 }}\""]
 
 # Real SQL check
-- name: postgresql_sequence - check that the seqeunce "foobar_with_options" has still the old owner
+- name: postgresql_sequence - check that the sequence "foobar_with_options" has still the old owner
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -476,7 +476,7 @@
       - result.queries == ["ALTER SEQUENCE \"foobar_schema\".\"foobar_with_options\" OWNER TO \"{{ db_user1 }}\""]
 
 # Real SQL check
-- name: postgresql_sequence - check that the seqeunce "foobar_with_options" has a new owner
+- name: postgresql_sequence - check that the sequence "foobar_with_options" has a new owner
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -498,7 +498,7 @@
       - result.rowcount == 1
 
 ####################
-# Test: drop seqeunce with cascade
+# Test: drop sequence with cascade
 
 # CREATE SEQUENCE seq1;
 # CREATE TABLE t1 (f1 INT NOT NULL DEFAULT nextval('seq1'));
@@ -511,7 +511,7 @@
     login_user: "{{ pg_user }}"
     name: seq1
 
-- name: postgresql_sequence - create table which use seqeunce for drop cascade test
+- name: postgresql_sequence - create table which use sequence for drop cascade test
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_table:
@@ -522,7 +522,7 @@
     - f1 INT NOT NULL DEFAULT nextval('seq1')
 
 ####################
-# Test: drop seqeunce with cascade in checkmode
+# Test: drop sequence with cascade in checkmode
 - name: postgresql_sequence - drop with cascade a sequence called seq1
   become_user: "{{ pg_user }}"
   become: yes
@@ -544,7 +544,7 @@
       - result.queries == ["DROP SEQUENCE \"public\".\"seq1\" CASCADE"]
 
 # Real SQL check
-- name: postgresql_sequence - check that the seqeunce "seq1" still exists
+- name: postgresql_sequence - check that the sequence "seq1" still exists
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -559,7 +559,7 @@
       - result.rowcount == 1
 
 ####################
-# Test: drop seqeunce with cascade
+# Test: drop sequence with cascade
 - name: postgresql_sequence - drop with cascade a sequence called seq1
   become_user: "{{ pg_user }}"
   become: yes
@@ -580,7 +580,7 @@
       - result.queries == ["DROP SEQUENCE \"public\".\"seq1\" CASCADE"]
 
 # Real SQL check
-- name: postgresql_sequence - check that the seqeunce "seq1" not exists
+- name: postgresql_sequence - check that the sequence "seq1" not exists
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -596,7 +596,7 @@
 
 ####################
 # Test: create sequence with owner in checkmode
-- name: postgresql_sequence - create a new seqeunce with name "foobar2" with owner "{{ db_user2 }}"
+- name: postgresql_sequence - create a new sequence with name "foobar2" with owner "{{ db_user2 }}"
   become_user: "{{ pg_user }}"
   become: yes
   check_mode: yes
@@ -616,7 +616,7 @@
       - result.queries == ["CREATE SEQUENCE \"public\".\"foobar2\"", "ALTER SEQUENCE \"public\".\"foobar2\" OWNER TO \"ansible_db_user2\""]
 
 # Real SQL check
-- name: postgresql_sequence - check that the new seqeunce "foobar2" does not exists
+- name: postgresql_sequence - check that the new sequence "foobar2" does not exists
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -632,7 +632,7 @@
 
 ####################
 # Test: create sequence with owner
-- name: postgresql_sequence - create a new seqeunce with name "foobar2" with owner "{{ db_user2 }}"
+- name: postgresql_sequence - create a new sequence with name "foobar2" with owner "{{ db_user2 }}"
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_sequence:
@@ -651,7 +651,7 @@
       - result.queries == ["CREATE SEQUENCE \"public\".\"foobar2\"", "ALTER SEQUENCE \"public\".\"foobar2\" OWNER TO \"ansible_db_user2\""]
 
 # Real SQL check
-- name: postgresql_sequence - check that the new seqeunce "foobar2" exists
+- name: postgresql_sequence - check that the new sequence "foobar2" exists
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -665,7 +665,7 @@
     that:
       - result.rowcount == 1
 
-- name: postgresql_sequence - check that the seqeunce "foobar2" has owner "{{ db_user2 }}"
+- name: postgresql_sequence - check that the sequence "foobar2" has owner "{{ db_user2 }}"
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:

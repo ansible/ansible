@@ -73,7 +73,7 @@
     login_user: "{{ pg_user }}"
   register: result
 
-- name: assert that removing an alreaady removed db makes no change
+- name: assert that removing an already removed db makes no change
   assert:
     that:
        - result is not changed
@@ -132,7 +132,7 @@
       - "'en_US' not in result.stdout_lines[-2]"
       - "'100' in result.stdout_lines[-2]"
 
-- name: Check that running db cration with options a second time does nothing
+- name: Check that running db creation with options a second time does nothing
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_db:
@@ -237,7 +237,7 @@
     loop_var: loop_item
 
 # BYPASSRLS role attribute was introduced in PostgreSQL 9.5, so
-# we want to test atrribute management differently depending
+# we want to test attribute management differently depending
 # on the version.
 - set_fact:
     bypassrls_supported: "{{ postgres_version_resp.stdout is version('9.5.0', '>=') }}"
