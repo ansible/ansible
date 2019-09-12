@@ -506,8 +506,11 @@ def main():
                               required_if=[('state', 'present', ['assume_role_policy_document'])],
                               supports_check_mode=True)
 
-    if module.params.get('boundary') and module.params.get('create_instance_profile'):
-        module.fail_json(msg="When using a boundary policy, `create_instance_profile` must be set to `false`.")
+    if module.params.get('boundary'):
+        if module.params.get('create_instance_profile'):
+            module.fail_json(msg="When using a boundary policy, `create_instance_profile` must be set to `false`.")
+        if not module.params.get('boundary').startswith('arn:aws:iam'):
+            module.fail_json(msg="Boundary policy must be an ARN")
     if module.params.get('boundary') is not None and not module.botocore_at_least('1.10.57'):
         module.fail_json(msg="When using a boundary policy, botocore must be at least v1.10.57. "
                          "Current versions: boto3-{boto3_version} botocore-{botocore_version}".format(**module._gather_versions()))
@@ -515,6 +518,10 @@ def main():
         max_session_duration = module.params.get('max_session_duration')
         if max_session_duration < 3600 or max_session_duration > 43200:
             module.fail_json(msg="max_session_duration must be between 1 and 12 hours (3600 and 43200 seconds)")
+    if module.params.get('path'):
+        path = module.params.get('path')
+        if not path.endswith('/') or not path.startswith('/'):
+            module.fail_json(msg="path must begin and end with /")
 
     connection = module.client('iam')
 
