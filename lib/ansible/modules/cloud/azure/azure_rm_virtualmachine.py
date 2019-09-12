@@ -344,12 +344,13 @@ options:
             - 'SystemAssigned'
             - 'UserAssigned'
             - 'SystemAssigned, UserAssigned'
+        version_added: "2.8"
     vm_user_assigned_identities:
         description:
             - List of user assigned identity names to assign to the VM. Only used when I(vm_identity=UserAssigned)
               or I(vm_identity='SystemAssigned, UserAssigned').
         type: list
-        version_added: 2.9
+        version_added: "2.10"
     winrm:
         description:
             - List of Windows Remote Management configurations of the VM.
