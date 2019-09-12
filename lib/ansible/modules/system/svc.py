@@ -196,7 +196,7 @@ class Svc(object):
             if re.search(' up ', out):
                 self.state = 'start'
             elif re.search(' down ', out):
-                self.state = 'stopp'
+                self.state = 'stop'
             else:
                 self.state = 'unknown'
                 return
