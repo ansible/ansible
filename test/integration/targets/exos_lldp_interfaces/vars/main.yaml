@@ -1,0 +1,398 @@
+---
+initial_state:
+  - enabled: true
+    name: '1'
+  - enabled: false
+    name: '2'
+  - enabled: false
+    name: '3'
+  - enabled: false
+    name: '4'
+  - enabled: false
+    name: '5'
+  - enabled: true
+    name: '6'
+  - enabled: true
+    name: '7'
+  - enabled: true
+    name: '8'
+  - enabled: true
+    name: '9'
+  - enabled: true
+    name: '10'
+  - enabled: true
+    name: '11'
+  - enabled: true
+    name: '12'
+  - enabled: true
+    name: '13'
+  - enabled: true
+    name: '14'
+  - enabled: true
+    name: '15'
+  - enabled: true
+    name: '16'
+  - enabled: true
+    name: '17'
+  - enabled: true
+    name: '18'
+  - enabled: true
+    name: '19'
+  - enabled: true
+    name: '20'
+  - enabled: true
+    name: '21'
+  - enabled: true
+    name: '22'
+  - enabled: true
+    name: '23'
+  - enabled: true
+    name: '24'
+  - enabled: true
+    name: '25'
+  - enabled: true
+    name: '26'
+  - enabled: true
+    name: '27'
+  - enabled: true
+    name: '28'
+  - enabled: true
+    name: '29'
+  - enabled: true
+    name: '30'
+  - enabled: true
+    name: '31'
+  - enabled: true
+    name: '32'
+  - enabled: true
+    name: '33'
+  - enabled: true
+    name: '34'
+
+merged:
+  requests:
+    - data: '{"openconfig-lldp:config": {"enabled": false, "name": "1"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=1/config
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "2"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=2/config
+
+  after:
+    - enabled: false
+      name: '1'
+    - enabled: true
+      name: '2'
+    - enabled: false
+      name: '3'
+    - enabled: false
+      name: '4'
+    - enabled: false
+      name: '5'
+    - enabled: true
+      name: '6'
+    - enabled: true
+      name: '7'
+    - enabled: true
+      name: '8'
+    - enabled: true
+      name: '9'
+    - enabled: true
+      name: '10'
+    - enabled: true
+      name: '11'
+    - enabled: true
+      name: '12'
+    - enabled: true
+      name: '13'
+    - enabled: true
+      name: '14'
+    - enabled: true
+      name: '15'
+    - enabled: true
+      name: '16'
+    - enabled: true
+      name: '17'
+    - enabled: true
+      name: '18'
+    - enabled: true
+      name: '19'
+    - enabled: true
+      name: '20'
+    - enabled: true
+      name: '21'
+    - enabled: true
+      name: '22'
+    - enabled: true
+      name: '23'
+    - enabled: true
+      name: '24'
+    - enabled: true
+      name: '25'
+    - enabled: true
+      name: '26'
+    - enabled: true
+      name: '27'
+    - enabled: true
+      name: '28'
+    - enabled: true
+      name: '29'
+    - enabled: true
+      name: '30'
+    - enabled: true
+      name: '31'
+    - enabled: true
+      name: '32'
+    - enabled: true
+      name: '33'
+    - enabled: true
+      name: '34'
+
+replaced:
+  requests:
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "3"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=3/config
+
+  after:
+    - enabled: true
+      name: '1'
+    - enabled: false
+      name: '2'
+    - enabled: true
+      name: '3'
+    - enabled: false
+      name: '4'
+    - enabled: false
+      name: '5'
+    - enabled: true
+      name: '6'
+    - enabled: true
+      name: '7'
+    - enabled: true
+      name: '8'
+    - enabled: true
+      name: '9'
+    - enabled: true
+      name: '10'
+    - enabled: true
+      name: '11'
+    - enabled: true
+      name: '12'
+    - enabled: true
+      name: '13'
+    - enabled: true
+      name: '14'
+    - enabled: true
+      name: '15'
+    - enabled: true
+      name: '16'
+    - enabled: true
+      name: '17'
+    - enabled: true
+      name: '18'
+    - enabled: true
+      name: '19'
+    - enabled: true
+      name: '20'
+    - enabled: true
+      name: '21'
+    - enabled: true
+      name: '22'
+    - enabled: true
+      name: '23'
+    - enabled: true
+      name: '24'
+    - enabled: true
+      name: '25'
+    - enabled: true
+      name: '26'
+    - enabled: true
+      name: '27'
+    - enabled: true
+      name: '28'
+    - enabled: true
+      name: '29'
+    - enabled: true
+      name: '30'
+    - enabled: true
+      name: '31'
+    - enabled: true
+      name: '32'
+    - enabled: true
+      name: '33'
+    - enabled: true
+      name: '34'
+
+overridden:
+  requests:
+    - data: '{"openconfig-lldp:config": {"enabled": false, "name": "6"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=6/config
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "5"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=5/config
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "2"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=2/config
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "3"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=3/config
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "4"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=4/config
+
+  after:
+    - enabled: true
+      name: '1'
+    - enabled: true
+      name: '2'
+    - enabled: true
+      name: '3'
+    - enabled: true
+      name: '4'
+    - enabled: true
+      name: '5'
+    - enabled: false
+      name: '6'
+    - enabled: true
+      name: '7'
+    - enabled: true
+      name: '8'
+    - enabled: true
+      name: '9'
+    - enabled: true
+      name: '10'
+    - enabled: true
+      name: '11'
+    - enabled: true
+      name: '12'
+    - enabled: true
+      name: '13'
+    - enabled: true
+      name: '14'
+    - enabled: true
+      name: '15'
+    - enabled: true
+      name: '16'
+    - enabled: true
+      name: '17'
+    - enabled: true
+      name: '18'
+    - enabled: true
+      name: '19'
+    - enabled: true
+      name: '20'
+    - enabled: true
+      name: '21'
+    - enabled: true
+      name: '22'
+    - enabled: true
+      name: '23'
+    - enabled: true
+      name: '24'
+    - enabled: true
+      name: '25'
+    - enabled: true
+      name: '26'
+    - enabled: true
+      name: '27'
+    - enabled: true
+      name: '28'
+    - enabled: true
+      name: '29'
+    - enabled: true
+      name: '30'
+    - enabled: true
+      name: '31'
+    - enabled: true
+      name: '32'
+    - enabled: true
+      name: '33'
+    - enabled: true
+      name: '34'
+
+deleted:
+  requests:
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "2"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=2/config
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "3"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=3/config
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "4"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=4/config
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "5"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=5/config
+
+  after:
+    - enabled: true
+      name: '1'
+    - enabled: true
+      name: '2'
+    - enabled: true
+      name: '3'
+    - enabled: true
+      name: '4'
+    - enabled: true
+      name: '5'
+    - enabled: true
+      name: '6'
+    - enabled: true
+      name: '7'
+    - enabled: true
+      name: '8'
+    - enabled: true
+      name: '9'
+    - enabled: true
+      name: '10'
+    - enabled: true
+      name: '11'
+    - enabled: true
+      name: '12'
+    - enabled: true
+      name: '13'
+    - enabled: true
+      name: '14'
+    - enabled: true
+      name: '15'
+    - enabled: true
+      name: '16'
+    - enabled: true
+      name: '17'
+    - enabled: true
+      name: '18'
+    - enabled: true
+      name: '19'
+    - enabled: true
+      name: '20'
+    - enabled: true
+      name: '21'
+    - enabled: true
+      name: '22'
+    - enabled: true
+      name: '23'
+    - enabled: true
+      name: '24'
+    - enabled: true
+      name: '25'
+    - enabled: true
+      name: '26'
+    - enabled: true
+      name: '27'
+    - enabled: true
+      name: '28'
+    - enabled: true
+      name: '29'
+    - enabled: true
+      name: '30'
+    - enabled: true
+      name: '31'
+    - enabled: true
+      name: '32'
+    - enabled: true
+      name: '33'
+    - enabled: true
+      name: '34'

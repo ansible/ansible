@@ -21,7 +21,6 @@
 #   builder template.
 #
 #############################################
-
 """
 The module file for exos_lldp_interfaces
 """
@@ -42,7 +41,7 @@ version_added: "2.10"
 short_description: Manage link layer discovery protocol (LLDP) attributes of interfaces on EXOS platforms.
 description:
   - This module manages link layer discovery protocol (LLDP) attributes of interfaces on Extreme Networks EXOS platforms.
-author: Ujwal Komarla (@ujwalkomarla)
+author: Jayalakshmi Viswanathan (@JayalakshmiV)
 options:
   config:
     description: The list of link layer discovery protocol interface attribute configurations
@@ -98,19 +97,19 @@ EXAMPLES = """
 #           "enabled": false,
 #           "name": "3"
 #         }
-#       }, 
-#       {
-#         "config": {
-#           "enabled": true, 
-#           "name": "4"
-#         } 
 #       },
 #       {
 #         "config": {
-#           "enabled": false, 
+#           "enabled": true,
+#           "name": "4"
+#         }
+#       },
+#       {
+#         "config": {
+#           "enabled": false,
 #           "name": "5"
 #         }
-#       } 
+#       }
 #     ]
 #   }
 # }
@@ -119,15 +118,15 @@ EXAMPLES = """
   exos_lldp_interfaces:
     config:
       - name: '2'
-	enabled: false 
+        enabled: false
       - name: '5'
-	enabled: true
+        enabled: true
     state: merged
 
 # Module Execution Results:
 # -------------------------
 #
-# "before": 
+# "before":
 #    - name: '1'
 #      enabled: True
 #    - name: '2'
@@ -383,15 +382,15 @@ EXAMPLES = """
 #     "interface": [
 #       {
 #         "config": {
-#           "enabled": true, 
+#           "enabled": false,
 #           "name": "1"
 #         },
-#       }, 
+#       },
 #       {
 #         "config": {
-#           "enabled": true,
+#           "enabled": false,
 #           "name": "2"
-#         }, 
+#         },
 #       },
 #       {
 #         "config": {
@@ -413,11 +412,11 @@ EXAMPLES = """
 # Module Execution Results:
 # -------------------------
 #
-# "before": 
+# "before":
 #    - name: '1'
-#      enabled: True
+#      enabled: False
 #    - name: '2'
-#      enabled: True
+#      enabled: False
 #    - name: '3'
 #      enabled: False
 #
@@ -426,22 +425,33 @@ EXAMPLES = """
 #         "data": |
 #         {
 #           "openconfig-lldp:config": {
-#             "enabled": false,
+#             "enabled": true,
 #             "name": "1"
 #           }
 #         }
 #         "method": "PATCH",
 #         "path": "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=1/config"
 #     },
+#     {
+#         "data": |
+#         {
+#           "openconfig-lldp:config": {
+#             "enabled": true,
+#             "name": "3"
+#           }
+#         }
+#         "method": "PATCH",
+#         "path": "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=3/config"
+#     }
 # ]
 #
 # "after":
 #    - name: '1'
-#      enabled: False
-#    - name: '2'
 #      enabled: True
-#    - name: '3'
+#    - name: '2'
 #      enabled: False
+#    - name: '3'
+#      enabled: True
 #
 #  After state:
 # -------------
@@ -453,19 +463,19 @@ EXAMPLES = """
 #     "interface": [
 #       {
 #         "config": {
-#           "enabled": false,
+#           "enabled": true,
 #           "name": "1"
 #         },
 #       },
 #       {
 #         "config": {
-#           "enabled": true,
+#           "enabled": false,
 #           "name": "2"
 #         },
 #       },
 #       {
 #         "config": {
-#           "enabled": false,
+#           "enabled": true,
 #           "name": "3"
 #         },
 #       }
@@ -546,34 +556,12 @@ EXAMPLES = """
 #         "data": |
 #         {
 #           "openconfig-lldp:config": {
-#             "enabled": false,
-#             "name": "1"
+#             "enabled": true,
+#             "name": "5"
 #           }
 #         }
 #         "method": "PATCH",
-#         "path": "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=1/config"
-#     },
-#     {
-#         "data": |
-#         {
-#           "openconfig-lldp:config": {
-#             "enabled": false,
-#             "name": "2"
-#           }
-#         }
-#         "method": "PATCH",
-#         "path": "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=2/config"
-#     },
-#     {
-#         "data": |
-#         {
-#           "openconfig-lldp:config": {
-#             "enabled": false,
-#             "name": "4"
-#           }
-#         }
-#         "method": "PATCH",
-#         "path": "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=4/config"
+#         "path": "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=5/config"
 #     },
 #     {
 #         "data": |
@@ -590,15 +578,15 @@ EXAMPLES = """
 #
 # "after":
 #    - name: '1'
-#      enabled: False
+#      enabled: True
 #    - name: '2'
-#      enabled: False
+#      enabled: True
 #    - name: '3'
 #      enabled: True
 #    - name: '4'
-#      enabled: False
+#      enabled: True
 #    - name: '5'
-#      enabled: False
+#      enabled: True
 
 # After state:
 # -------------
@@ -611,13 +599,13 @@ EXAMPLES = """
 #     "interface": [
 #       {
 #         "config": {
-#           "enabled": false,
+#           "enabled": true,
 #           "name": "1"
 #         }
 #       },
 #       {
 #         "config": {
-#           "enabled": false,
+#           "enabled": true,
 #           "name": "2"
 #         }
 #       },
@@ -629,13 +617,13 @@ EXAMPLES = """
 #       },
 #       {
 #         "config": {
-#           "enabled": false,
+#           "enabled": true,
 #           "name": "4"
 #         }
 #       },
 #       {
 #         "config": {
-#           "enabled": false,
+#           "enabled": true,
 #           "name": "5"
 #         }
 #       }
@@ -652,19 +640,20 @@ before:
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
+  type: list
 after:
   description: The resulting configuration model invocation.
   returned: when changed
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
-commands:
-  description: The set of commands pushed to the remote device.
+  type: list
+requests:
+  description: The set of requests pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: [{"data": "...", "method": "...", "path": "..."}, {"data": "...", "method": "...", "path": "..."}, {"data": "...", "method": "...", "path": "..."}]    
 """
-
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.exos.argspec.lldp_interfaces.lldp_interfaces import Lldp_interfacesArgs
@@ -677,9 +666,10 @@ def main():
 
     :returns: the result form module invocation
     """
-    required_if = [('state', 'merged', ('config',)),
-                   ('state', 'replaced', ('config',))]
-    module = AnsibleModule(argument_spec=Lldp_interfacesArgs.argument_spec, required_if=required_if,
+    required_if = [('state', 'merged', ('config', )),
+                   ('state', 'replaced', ('config', ))]
+    module = AnsibleModule(argument_spec=Lldp_interfacesArgs.argument_spec,
+                           required_if=required_if,
                            supports_check_mode=True)
 
     result = Lldp_interfaces(module).execute_module()

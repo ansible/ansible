@@ -36,7 +36,12 @@ class Lldp_interfaces(ConfigBase):
     ]
 
     LLDP_INTERFACE = {
-        "data": {"openconfig-lldp:config": {"name": None, "enabled": 'true'}},
+        "data": {
+            "openconfig-lldp:config": {
+                "name": None,
+                "enabled": True
+            }
+        },
         "method": "PATCH",
         "path": None
     }
@@ -52,8 +57,10 @@ class Lldp_interfaces(ConfigBase):
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
-        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
-        lldp_interfaces_facts = facts['ansible_network_resources'].get('lldp_interfaces')
+        facts, _warnings = Facts(self._module).get_facts(
+            self.gather_subset, self.gather_network_resources)
+        lldp_interfaces_facts = facts['ansible_network_resources'].get(
+            'lldp_interfaces')
         if not lldp_interfaces_facts:
             return []
         return lldp_interfaces_facts
@@ -126,7 +133,7 @@ class Lldp_interfaces(ConfigBase):
                   to the desired configuration
         """
         requests = []
- 
+
         for w in want:
             for h in have:
                 if w['name'] == h['name']:
@@ -157,7 +164,7 @@ class Lldp_interfaces(ConfigBase):
 
         for h in have:
             if h not in have_copy:
-                if h['enabled']:
+                if not h['enabled']:
                     lldp_delete = self._update_delete_request(h)
                     if lldp_delete["path"]:
                         lldp_delete["data"] = json.dumps(lldp_delete["data"])
@@ -195,14 +202,15 @@ class Lldp_interfaces(ConfigBase):
             for w in want:
                 for h in have:
                     if w['name'] == h['name']:
-                        if h['enabled']:
+                        if not h['enabled']:
                             lldp_delete = self._update_delete_request(h)
                             if lldp_delete["path"]:
-                                lldp_delete["data"] = json.dumps(lldp_delete["data"])
+                                lldp_delete["data"] = json.dumps(
+                                    lldp_delete["data"])
                                 requests.append(lldp_delete)
         else:
             for h in have:
-                if h['enabled']:
+                if not h['enabled']:
                     lldp_delete = self._update_delete_request(h)
                     if lldp_delete["path"]:
                         lldp_delete["data"] = json.dumps(lldp_delete["data"])
@@ -215,9 +223,12 @@ class Lldp_interfaces(ConfigBase):
         lldp_request = deepcopy(self.LLDP_INTERFACE)
 
         if have['enabled'] != want['enabled']:
-            lldp_request["data"]["openconfig-lldp:config"]["name"] = want['name']
-            lldp_request["data"]["openconfig-lldp:config"]["enabled"] = want['enabled']
-            lldp_request["path"] = self.LLDP_PATH + str(want['name']) + "/config"
+            lldp_request["data"]["openconfig-lldp:config"]["name"] = want[
+                'name']
+            lldp_request["data"]["openconfig-lldp:config"]["enabled"] = want[
+                'enabled']
+            lldp_request["path"] = self.LLDP_PATH + str(
+                want['name']) + "/config"
 
         return lldp_request
 
@@ -226,7 +237,7 @@ class Lldp_interfaces(ConfigBase):
         lldp_delete = deepcopy(self.LLDP_INTERFACE)
 
         lldp_delete["data"]["openconfig-lldp:config"]["name"] = have['name']
-        lldp_delete["data"]["openconfig-lldp:config"]["enabled"] = 'false'
+        lldp_delete["data"]["openconfig-lldp:config"]["enabled"] = True
         lldp_delete["path"] = self.LLDP_PATH + str(have['name']) + "/config"
 
         return lldp_delete

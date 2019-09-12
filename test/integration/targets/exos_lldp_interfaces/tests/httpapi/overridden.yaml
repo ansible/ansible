@@ -1,0 +1,47 @@
+---
+- debug:
+    msg: "Start exos_lldp_interfaces overridden integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _reset_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+  - name: Override device LLDP interface configuration with provided configurations
+    exos_lldp_interfaces: &overridden
+      config:
+        - name: 6 
+          enabled: false
+        - name: 5
+          enabled: true
+      state: overridden
+    register: result
+
+  - name: Assert that before dicts were correclty generated
+    assert:
+      that:
+        - "{{ initial_state == result['before'] }}"
+
+  - name: Assert that after dicts were correctly generated
+    assert:
+      that:
+        - "{{ overridden['after'] == result['after'] }}"
+
+  - name: Assert that correct set of requests were generated
+    assert:
+      that:
+        - "{{ overridden['requests'] == result['requests'] }}"
+
+  - name: Override device LLDP interface configuration with provided configurations (IDEMPOTENT)
+    exos_lldp_interfaces: *overridden
+    register: result
+
+  - name: Assert that task was idempotent
+    assert:
+      that:
+          - "result['changed'] == false"
+
+  - name: Assert that before dict is correctly generated
+    assert:
+      that:
+          - "{{ overridden['after'] == result['before'] }}"            
