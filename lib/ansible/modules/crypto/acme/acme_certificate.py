@@ -532,7 +532,7 @@ class ACMEClient(object):
 
     def _add_or_update_auth(self, identifier_type, identifier, auth):
         '''
-        Add or update the given authroization in the global authorizations list.
+        Add or update the given authorization in the global authorizations list.
         Return True if the auth was updated/added and False if no change was
         necessary.
         '''

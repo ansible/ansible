@@ -1025,7 +1025,7 @@ def create_archive(git_path, module, dest, archive, version, repo, result):
             except OSError as e:
                 module.fail_json(msg="Failed to move %s to %s" %
                                      (new_archive, archive),
-                                 details=u"Error occured while moving : %s"
+                                 details=u"Error occurred while moving : %s"
                                          % to_text(e))
     else:
         # Perform archive from local directory
