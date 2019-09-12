@@ -209,7 +209,7 @@ def get_endpoint_deleted_waiter(client):
 
 
 def endpoint_exists(endpoint):
-    """ Returns boolean based on the existance of the endpoint
+    """ Returns boolean based on the existence of the endpoint
     :param endpoint: dict containing the described endpoint
     :return: bool
     """

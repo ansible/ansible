@@ -111,7 +111,7 @@ elasticache_clusters:
           type: str
           sample: in-sync
     cache_parameter_group:
-      description: Contents of the Cache Parameter GGroup
+      description: Contents of the Cache Parameter Group
       returned: always
       type: complex
       contains:

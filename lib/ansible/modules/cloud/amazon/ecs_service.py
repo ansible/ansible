@@ -134,16 +134,16 @@ options:
         version_added: 2.8
     service_registries:
         description:
-          - describes service disovery registries this service will register with.
+          - describes service discovery registries this service will register with.
         required: false
         version_added: 2.8
         suboptions:
             container_name:
                 description:
-                  - container name for service disovery registration
+                  - container name for service discovery registration
             container_port:
                 description:
-                  - container port for service disovery registration
+                  - container port for service discovery registration
             arn:
                 description:
                   - Service discovery registry ARN
@@ -598,7 +598,7 @@ def main():
                         loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
 
                 if update:
-                    # check various parameters and boto versions and give a helpful erro in boto is not new enough for feature
+                    # check various parameters and boto versions and give a helpful error in boto is not new enough for feature
 
                     if module.params['scheduling_strategy']:
                         if not module.botocore_at_least('1.10.37'):

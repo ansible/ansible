@@ -25,7 +25,7 @@ author:
 options:
     encrypt:
         description:
-            - A boolean value that, if true, creates an encrypted file system. This can not be modfied after the file
+            - A boolean value that, if true, creates an encrypted file system. This can not be modified after the file
               system is created.
         type: bool
         default: 'no'

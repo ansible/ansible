@@ -150,19 +150,19 @@ loadbalancer:
             type: str
             sample: "lingxian_test"
         vip_network_id:
-            description: Network ID the load balancer virutal IP port belongs in.
+            description: Network ID the load balancer virtual IP port belongs in.
             type: str
             sample: "f171db43-56fd-41cf-82d7-4e91d741762e"
         vip_subnet_id:
-            description: Subnet ID the load balancer virutal IP port belongs in.
+            description: Subnet ID the load balancer virtual IP port belongs in.
             type: str
             sample: "c53e3c70-9d62-409a-9f71-db148e7aa853"
         vip_port_id:
-            description: The load balancer virutal IP port ID.
+            description: The load balancer virtual IP port ID.
             type: str
             sample: "2061395c-1c01-47ab-b925-c91b93df9c1d"
         vip_address:
-            description: The load balancer virutal IP address.
+            description: The load balancer virtual IP address.
             type: str
             sample: "192.168.2.88"
         public_vip_address:

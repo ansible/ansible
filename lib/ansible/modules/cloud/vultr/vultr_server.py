@@ -286,7 +286,7 @@ vultr_server:
       type: str
       sample: "CentOS 6 x64"
     firewall_group:
-      description: Firewall group the server is assinged to
+      description: Firewall group the server is assigned to
       returned: success and available
       type: str
       sample: "CentOS 6 x64"

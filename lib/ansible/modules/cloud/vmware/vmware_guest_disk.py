@@ -100,7 +100,7 @@ options:
      - '   Only 4 SCSI controllers are allowed per VM.'
      - '   Care should be taken while specifying C(scsi_controller) is 0 and C(unit_number) as 0 as this disk may contain OS.'
      - ' - C(unit_number) (integer): Disk Unit Number. Valid value range from 0 to 15. Only 15 disks are allowed per SCSI Controller.'
-     - ' - C(scsi_type) (string): Type of SCSI controller. This value is required only for the first occurance of SCSI Controller.'
+     - ' - C(scsi_type) (string): Type of SCSI controller. This value is required only for the first occurrence of SCSI Controller.'
      - '   This value is ignored, if SCSI Controller is already present or C(state) is C(absent).'
      - '   Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual).'
      - '   C(paravirtual) is default value for this parameter.'

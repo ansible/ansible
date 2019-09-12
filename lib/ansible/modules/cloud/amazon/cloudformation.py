@@ -153,7 +153,7 @@ options:
     required: False
   capabilities:
     description:
-    - Specify capabilites that stack template contains.
+    - Specify capabilities that stack template contains.
     - Valid values are CAPABILITY_IAM, CAPABILITY_NAMED_IAM and CAPABILITY_AUTO_EXPAND.
     type: list
     version_added: "2.8"

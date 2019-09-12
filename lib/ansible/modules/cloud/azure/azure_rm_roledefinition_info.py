@@ -24,7 +24,7 @@ description:
 options:
     scope:
         description:
-            - The scope of role defintion.
+            - The scope of role definition.
         required: True
     id:
         description:

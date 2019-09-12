@@ -51,7 +51,7 @@ EXAMPLES = """
 
 RETURN = """
 images:
-    description: info from all or specificed images
+    description: info from all or specified images
     returned: always
     type: dict
     sample: [

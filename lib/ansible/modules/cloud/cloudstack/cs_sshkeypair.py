@@ -152,7 +152,7 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
                     # delete the ssh key with matching fingerprint but wrong name
                     args['name'] = ssh_key['name']
                     self.query_api('deleteSSHKeyPair', **args)
-                    # First match for key retrievment will be the fingerprint.
+                    # First match for key retrievement will be the fingerprint.
                     # We need to make another lookup if there is a key with identical name.
                     self.ssh_key = None
                     ssh_key = self.get_ssh_key()

@@ -387,7 +387,7 @@ class AzureRMKeyVaultKeyInfo(AzureRMModuleBase):
         '''
         Lists keys in specific key vault.
 
-        :return: deserialized keys, incldues key identifier, attributes and tags.
+        :return: deserialized keys, includes key identifier, attributes and tags.
         '''
         self.log("Get the key vaults in current subscription")
 
@@ -429,7 +429,7 @@ class AzureRMKeyVaultKeyInfo(AzureRMModuleBase):
         '''
         Lists deleted keys in specific key vault.
 
-        :return: deserialized keys, incldues key identifier, attributes and tags.
+        :return: deserialized keys, includes key identifier, attributes and tags.
         '''
         self.log("Get the key vaults in current subscription")
 

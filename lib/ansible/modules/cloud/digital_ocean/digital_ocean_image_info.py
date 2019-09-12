@@ -28,7 +28,7 @@ version_added: "2.6"
 options:
   image_type:
     description:
-     - Specifies the type of image information to be retrived.
+     - Specifies the type of image information to be retrieved.
      - If set to C(application), then information are gathered related to all application images.
      - If set to C(distribution), then information are gathered related to all distribution images.
      - If set to C(private), then information are gathered related to all private images.

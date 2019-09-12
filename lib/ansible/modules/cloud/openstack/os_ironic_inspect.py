@@ -64,7 +64,7 @@ ansible_facts:
             type: str
             sample: "x86_64"
         local_gb:
-            description: Total size of local disk storage as updaed in node properties.
+            description: Total size of local disk storage as updated in node properties.
             type: str
             sample: "10"
         cpus:

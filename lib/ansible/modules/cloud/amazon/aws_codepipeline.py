@@ -139,7 +139,7 @@ EXAMPLES = '''
 
 RETURN = '''
 pipeline:
-  description: Returns the dictionary desribing the code pipeline configuration.
+  description: Returns the dictionary describing the code pipeline configuration.
   returned: success
   type: complex
   contains:

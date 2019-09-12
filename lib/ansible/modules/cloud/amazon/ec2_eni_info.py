@@ -69,7 +69,7 @@ network_interfaces:
           public_ip: "52.1.0.63"
         }
     attachment:
-      description: Infor about attached ec2 instance
+      description: Info about attached ec2 instance
       returned: always, empty dict if ENI is not attached
       type: dict
       sample: {

@@ -541,7 +541,7 @@ defaultObjectAcl:
       type: str
 id:
   description:
-  - The ID of the bucket. For buckets, the id and name properities are the same.
+  - The ID of the bucket. For buckets, the id and name properties are the same.
   returned: success
   type: str
 lifecycle:

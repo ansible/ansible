@@ -29,7 +29,7 @@ options:
         description: The name used to identify the policy within the scope of the identity it's attached to.
         required: true
     policy:
-        description: A properly formated JSON sending authorization policy. Required when I(state=present).
+        description: A properly formatted JSON sending authorization policy. Required when I(state=present).
     state:
         description: Whether to create(or update) or delete the authorization policy on the identity.
         default: present

@@ -25,7 +25,7 @@ options:
     choices: [present, absent]
   id_to_associate:
     description:
-      - The ID of the link aggrecation group or connection to associate with the virtual interface.
+      - The ID of the link aggregation group or connection to associate with the virtual interface.
     aliases: [link_aggregation_group_id, connection_id]
   public:
     description:

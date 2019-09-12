@@ -112,7 +112,7 @@ class AwsCvsNetappSnapshot(object):
     def __init__(self):
         """
         Parse arguments, setup state variables,
-        check paramenters and ensure request module is installed
+        check parameters and ensure request module is installed
         """
         self.argument_spec = netapp_utils.aws_cvs_host_argument_spec()
         self.argument_spec.update(dict(
@@ -145,7 +145,7 @@ class AwsCvsNetappSnapshot(object):
 
     def getSnapshotId(self, name):
         # Check if  snapshot exists
-        # Return snpashot Id  If Snapshot is found, None otherwise
+        # Return snapshot Id  If Snapshot is found, None otherwise
         list_snapshots, error = self.restApi.get('Snapshots')
 
         if error:
@@ -217,7 +217,7 @@ class AwsCvsNetappSnapshot(object):
 
                 elif cd_action == "create":
                     if 'from_name' in self.data:
-                        # If cd_action is craete and from_name is given
+                        # If cd_action is create and from_name is given
                         snapshotId = self.getSnapshotId(self.data['from_name'])
                         if snapshotId is not None:
                             # If resource pointed by from_name exists, rename the snapshot to name

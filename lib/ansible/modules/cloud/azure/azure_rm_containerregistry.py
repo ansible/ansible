@@ -142,7 +142,7 @@ credentials:
             sample: pass2value
 tags:
     description:
-        - Tags assigned to the resource. Dictionary of string:string parirs.
+        - Tags assigned to the resource. Dictionary of string:string pairs.
     returned: always
     type: dict
 '''

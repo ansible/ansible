@@ -71,7 +71,7 @@ applicationsecuritygroups:
                 "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/applicationSecurityGroups/MyAsg"
         location:
             description:
-                - Loation of the application security group.
+                - Location of the application security group.
             type: str
             returned: always
             sample: eastus

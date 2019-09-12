@@ -195,7 +195,7 @@ options:
                         type: bool
                     subnet_resource_id:
                         description:
-                            - Subnet associdated to the cluster.
+                            - Subnet associated to the cluster.
         version_added: "2.8"
 
 extends_documentation_fragment:

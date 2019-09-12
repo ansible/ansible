@@ -210,7 +210,7 @@ EXAMPLES = '''
     nics:
       - name: nic1
 
-# Enable usb suppport and serial console
+# Enable usb support and serial console
 - ovirt_instance_type:
     name: myit
     usb_support: True

@@ -45,7 +45,7 @@ options:
     type: str
   ad_state:
      description:
-        - Wheter the ESXi host is joined to an AD domain or not.
+        - Whether the ESXi host is joined to an AD domain or not.
      type: str
      choices: [ present, absent ]
      default: 'absent'

@@ -189,7 +189,7 @@ EXAMPLES = '''
   cs_network:
     name: my network
     clean_up: yes
-    state: restared
+    state: restarted
   delegate_to: localhost
 
 - name: Remove a network

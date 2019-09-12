@@ -75,7 +75,7 @@ options:
       required: False
     state:
       description:
-      - The state of Virutal Machine deployed from template in content library.
+      - The state of Virtual Machine deployed from template in content library.
       - If set to C(present) and VM does not exists, then VM is created.
       - If set to C(present) and VM exists, no action is taken.
       - If set to C(poweredon) and VM does not exists, then VM is created with powered on state.

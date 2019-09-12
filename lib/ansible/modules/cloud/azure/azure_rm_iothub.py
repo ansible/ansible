@@ -139,7 +139,7 @@ options:
             connection_string:
                 description:
                     - Connection string of the custom endpoint.
-                    - The connection string should have send priviledge.
+                    - The connection string should have send privilege.
                 type: str
                 required: yes
             container:

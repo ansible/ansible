@@ -244,7 +244,7 @@ class EntityVnicPorfileModule(BaseModule):
         return (
             check_custom_properties() and
             # The reason why we can't use equal method, is we get None from _get_network_filter_id or _get_qos_id method, when passing empty string.
-            # And when first param of equal method is None it retruns true.
+            # And when first param of equal method is None it returns true.
             self._get_network_filter_id() == getattr(entity.network_filter, 'id', None) and
             self._get_qos_id() == getattr(entity.qos, 'id', None) and
             equal(self.param('migratable'), getattr(entity, 'migratable', None)) and
