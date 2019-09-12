@@ -34,6 +34,9 @@ Connections Available
     Returned Data Format  ``stdout[0].``
     ====================  ==========================================
 
+.. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
+
+
 Using CLI in Ansible
 ====================
 
@@ -50,11 +53,6 @@ Example CLI ``group_vars/qnos.yml``
 
 - If you are using SSH keys (including an ssh-agent) you can remove the ``ansible_password`` configuration.
 - If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables.
-
-Options
--------
-- See :ref:`cli_command <cli_command_module>.
-- See :ref:`cli_config <cli_config_module>.
 
 Example CLI Task
 ----------------
