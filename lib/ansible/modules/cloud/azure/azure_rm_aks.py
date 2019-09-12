@@ -187,8 +187,8 @@ options:
                         type: bool
                     subnet_resource_id:
                         description:
-                            - Subnet associdated to the cluster.
-        version_added: 2.8
+                            - Subnet associated to the cluster.
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure

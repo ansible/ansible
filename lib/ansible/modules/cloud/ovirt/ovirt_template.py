@@ -284,7 +284,7 @@ EXAMPLES = '''
     storage_domain: mystorage
     cluster: mycluster
 
-# Edit template subeversion
+# Edit template subversion
 - ovirt_template:
     cluster: mycluster
     name: mytemplate
@@ -293,7 +293,7 @@ EXAMPLES = '''
         number: 2
         name: subversion
 
-# Create new template subeversion
+# Create new template subversion
 - ovirt_template:
     cluster: mycluster
     name: mytemplate

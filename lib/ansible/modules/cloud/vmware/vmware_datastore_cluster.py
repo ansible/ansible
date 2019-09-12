@@ -124,7 +124,7 @@ class VMwareDatastoreClusterManager(PyVmomi):
                     try:
                         self.datacenter_obj.datastoreFolder.CreateStoragePod(name=self.datastore_cluster_name)
                     except Exception as generic_exc:
-                        self.module.fail_json(msg="Failed to create datstore cluster"
+                        self.module.fail_json(msg="Failed to create datastore cluster"
                                                   " '%s' due to %s" % (self.datastore_cluster_name,
                                                                        to_native(generic_exc)))
                 results['changed'] = True

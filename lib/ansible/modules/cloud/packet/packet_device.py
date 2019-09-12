@@ -290,7 +290,7 @@ ALLOWED_STATES = ['absent', 'active', 'inactive', 'rebooted', 'present']
 
 def serialize_device(device):
     """
-    Standard represenation for a device as returned by various tasks::
+    Standard representation for a device as returned by various tasks::
 
         {
             'id': 'device_id'

@@ -445,7 +445,7 @@ instance:
                             type: complex
                             contains:
                                 name:
-                                    description: avaialbility zone
+                                    description: availability zone
                                     returned: when RDS instance exists
                                     type: string
                                     sample: "eu-west-1b"

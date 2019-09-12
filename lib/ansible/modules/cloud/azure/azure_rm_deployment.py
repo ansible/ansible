@@ -324,8 +324,7 @@ deployment:
             description: The Azure ID of the deployment
             type: str
             returned: always
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Resources/deployments/myD
-                     eployment"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Resources/deployments/myDeployment"
         instances:
             description: Provides the public IP addresses for each VM instance.
             type: list
