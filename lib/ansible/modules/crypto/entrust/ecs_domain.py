@@ -25,7 +25,7 @@ description:
     - Requires credentials for the L(Entrust Certificate Services,https://www.entrustdatacard.com/products/categories/ssl-certificates) (ECS) API.
     - If the domain is already in the validation process, no new validation will be requested, but the validation data (if applicable) will be returned.
     - If the domain is already in the validation process but the I(verification_method) specified is different than the current I(verification_method),
-      the verification_method will be updated and validation data (if applicable) will be returned.
+      the I(verification_method) will be updated and validation data (if applicable) will be returned.
     - If the domain is an active, validated domain, the return value of I(changed) will be false, unless C(domain_status=EXPIRED), in which case a re-validation
       will be performed.
     - If C(verification_method=DNS), details about the required DNS entry will be specified in the return parameters I(dns_contents), I(dns_location), and
