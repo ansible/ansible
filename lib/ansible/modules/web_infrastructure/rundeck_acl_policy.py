@@ -90,11 +90,11 @@ rundeck_response:
     returned: failed
     type: str
 before:
-    description: dictionnary containing ACL policy informations before modification.
+    description: Dictionary containing ACL policy informations before modification.
     returned: success
     type: dict
 after:
-    description: dictionnary containing ACL policy informations after modification.
+    description: Dictionary containing ACL policy informations after modification.
     returned: success
     type: dict
 '''

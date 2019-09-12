@@ -42,7 +42,7 @@ options:
         - Password of the user.
     superuser:
       description:
-        - User is a system wide administator.
+        - User is a system wide administrator.
       type: bool
       default: 'no'
     auditor:

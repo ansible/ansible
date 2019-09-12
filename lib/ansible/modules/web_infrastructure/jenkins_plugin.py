@@ -95,7 +95,7 @@ notes:
     only the Web UI credentials.
   - It's necessary to notify the handler or call the I(service) module to
     restart the Jenkins service after a new plugin was installed.
-  - Pinning works only if the plugin is installed and Jenkis service was
+  - Pinning works only if the plugin is installed and Jenkins service was
     successfully restarted after the plugin installation.
   - It is not possible to run the module remotely by changing the I(url)
     parameter to point to the Jenkins server. The module must be used on the
