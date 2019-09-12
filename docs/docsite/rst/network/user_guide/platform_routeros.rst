@@ -29,6 +29,8 @@ Connections Available
 | **Returned Data Format**  | ``stdout[0].``                                |
 +---------------------------+-----------------------------------------------+
 
+RouterOS does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli``.
+
 Using CLI in Ansible
 ====================
 
