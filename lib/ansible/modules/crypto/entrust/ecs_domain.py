@@ -80,7 +80,7 @@ options:
         type: str
 seealso:
     - module: openssl_certificate
-      description: Can be used to request certificates from ECS, with C(provider=ECS).
+      description: Can be used to request certificates from ECS, with C(provider=entrust).
     - module: ecs_certificate
       description: Can be used to request a Certificate from ECS using a verified domain.
 extends_documentation_fragment:
@@ -179,24 +179,24 @@ client_id:
     type: int
     sample: 1
 ov_eligible:
-    description: Whether the domain is eligible for submission of "OV" certificates. Will never be C(False) if I(ov_eligible) is C(True)
+    description: Whether the domain is eligible for submission of "OV" certificates. Will never be C(false) if I(ov_eligible) is C(true)
     returned: success and I(domain_status) is C(APPROVED), C(RE_VERIFICATION) or C(EXPIRING).
     type: bool
-    sample: True
+    sample: true
 ov_days_remaining:
     description: The number of days the domain remains eligible for submission of "OV" certificates. Will never be less than the value of I(ev_days_remaining)
-    returned: success and I(ov_eligible) is C(True) and I(domain_status) is C(APPROVED), C(RE_VERIFICATION) or C(EXPIRING).
+    returned: success and I(ov_eligible) is C(true) and I(domain_status) is C(APPROVED), C(RE_VERIFICATION) or C(EXPIRING).
     type: int
     sample: 129
 ev_eligible:
-    description: Whether the domain is eligible for submission of "EV" certificates. Will never be C(True) if I(ov_eligible) is C(False)
+    description: Whether the domain is eligible for submission of "EV" certificates. Will never be C(true) if I(ov_eligible) is C(false)
     returned: success and I(domain_status) is C(APPROVED), C(RE_VERIFICATION) or C(EXPIRING).
     type: bool
-    sample: True
+    sample: true
 ev_days_remaining:
     description: The number of days the domain remains eligible for submission of "EV" certificates. Will never be greater than the value of
                  I(ov_days_remaining)
-    returned: success and I(ev_eligible) is C(True) and I(domain_status) is C(APPROVED), C(RE_VERIFICATION) or C(EXPIRING).
+    returned: success and I(ev_eligible) is C(true) and I(domain_status) is C(APPROVED), C(RE_VERIFICATION) or C(EXPIRING).
     type: int
     sample: 94
 
