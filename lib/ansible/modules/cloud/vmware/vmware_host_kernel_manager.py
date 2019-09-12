@@ -77,7 +77,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-results:
+host_kernel_status:
     description:
     - dict with information on what was changed, by ESXi host in scope.
     returned: success
@@ -183,7 +183,7 @@ class VmwareKernelManager(PyVmomi):
                 self.results[host.name]['changed'] = changed
                 self.results[host.name]['msg'] = msg
 
-        self.module.exit_json(changed=any(change_list), results=self.results)
+        self.module.exit_json(changed=any(change_list), host_kernel_status=self.results)
 
 
 def main():
