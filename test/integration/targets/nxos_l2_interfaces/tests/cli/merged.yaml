@@ -11,6 +11,12 @@
   ignore_errors: yes
 
 - block:
+  - name: setup2
+    cli_config:
+      config: |
+        interface {{ test_int1 }}
+          switchport
+
   - name: Merged
     nxos_l2_interfaces: &merged
       config:
