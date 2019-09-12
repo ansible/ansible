@@ -66,6 +66,14 @@ options:
     type: bool
     default: true
     version_added: "2.5"
+  delete_instance_profile:
+    description:
+      - When deleting a role will also delete the instance profile created with
+        the same name as the role
+      - Only applies when C(state=absent)
+    type: bool
+    default: false
+    version_added: "2.10"
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
   - aws
@@ -425,6 +433,12 @@ def destroy_role(connection, module):
             try:
                 if not module.check_mode:
                     connection.remove_role_from_instance_profile(InstanceProfileName=profile['InstanceProfileName'], RoleName=params['RoleName'])
+                    if profile['InstanceProfileName'] == params['RoleName']:
+                        if module.params.get("delete_instance_profile"):
+                            try:
+                                connection.delete_instance_profile(InstanceProfileName=profile['InstanceProfileName'])
+                            except ClientError as e:
+                                module.fail_json_aws(e, msg="Unable to remove instance profile {1}".format(profile['InstanceProfileName']))
             except ClientError as e:
                 module.fail_json(msg="Unable to remove role {0} from instance profile {1}: {2}".format(
                                  params['RoleName'], profile['InstanceProfileName'], to_native(e)),
@@ -507,6 +521,7 @@ def main():
         description=dict(type='str'),
         boundary=dict(type='str', aliases=['boundary_policy_arn']),
         create_instance_profile=dict(type='bool', default=True),
+        delete_instance_profile=dict(type='bool', default=False),
         purge_policies=dict(type='bool', default=True),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
