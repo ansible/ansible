@@ -33,8 +33,7 @@ CREATE_PAYLOAD = {
 
 UPDATE_PAYLOAD = {
     "name": "New Layer 1",
-    "applications_and_url_filtering": False,
-    "data_awareness": True
+    "applications_and_url_filtering": False
 }
 
 OBJECT_AFTER_UPDATE = UPDATE_PAYLOAD
