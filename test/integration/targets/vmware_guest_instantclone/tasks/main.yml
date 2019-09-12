@@ -1,0 +1,9 @@
+# Test0001: Create an instant clone
+- name: 0001 - Create an instant clone
+    validate_certs: False
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ dc1 }}'
+    name: '{{ source_vm }}'
+    clone_name: '{{ name }}'

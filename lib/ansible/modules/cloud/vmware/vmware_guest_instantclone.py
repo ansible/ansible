@@ -29,7 +29,8 @@ requirements:
 options:
    name:
     description:
-    - Name of the new instant clone VM.
+    - Name of the VM to create an instant clone from.
+    - This is required if C(uuid) or C(moid) is not supplied.
     required: True
     type: str
    name_match:
@@ -53,25 +54,6 @@ options:
     - Whether to use the VMware instance UUID rather than the BIOS UUID.
     default: no
     type: bool
-   folder:
-    description:
-    - Destination folder, absolute path to find an existing guest or create the new guest.
-    - The folder should include the datacenter. ESX's datacenter is ha-datacenter.
-    - This parameter is case sensitive.
-    - This parameter is required, while deploying new virtual machine. version_added 2.5.
-    - 'If multiple machines are found with same name, this parameter is used to identify
-       uniqueness of the virtual machine. version_added 2.5'
-    - 'Examples:'
-    - '   folder: /ha-datacenter/vm'
-    - '   folder: ha-datacenter/vm'
-    - '   folder: /datacenter1/vm'
-    - '   folder: datacenter1/vm'
-    - '   folder: /datacenter1/vm/folder1'
-    - '   folder: datacenter1/vm/folder1'
-    - '   folder: /folder1/datacenter1/vm'
-    - '   folder: folder1/datacenter1/vm'
-    - '   folder: /folder1/datacenter1/vm/folder2'
-    type: str
    datacenter:
     description:
     - Datacenter for the clone operation.
@@ -88,6 +70,7 @@ options:
     type: list
 extends_documentation_fragment: vmware.documentation
 '''
+
 EXAMPLES = r'''
 - name: Create an instant clone of a running VM
   vmware_guest_instantclone:
@@ -242,7 +225,6 @@ def main():
         uuid=dict(type='str'),
         moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
-        folder=dict(type='str'),
         datacenter=dict(required=True, type='str'),
         clone_name=dict(required=True, type='str'),
         customvalues=dict(type='list', default=[]),
