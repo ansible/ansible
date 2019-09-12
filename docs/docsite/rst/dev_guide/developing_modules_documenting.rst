@@ -337,8 +337,6 @@ For example, all AWS modules should include:
     - ec2
 
 
-You can find more examples by searching for ``extends_documentation_fragment`` under the Ansible source tree.
-
 .. _examples_block:
 
 EXAMPLES block
