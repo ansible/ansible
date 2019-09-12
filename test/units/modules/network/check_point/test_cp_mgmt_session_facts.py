@@ -37,9 +37,7 @@ SHOW_PLURAL_PAYLOAD = {
     'details_level': 'uid'
 }
 
-SHOW_SINGLE_PAYLOAD = {
-    'name': 'object_which_is_not_exist'
-}
+SHOW_SINGLE_PAYLOAD = {}
 
 api_call_object = 'session'
 api_call_object_plural_version = 'sessions'

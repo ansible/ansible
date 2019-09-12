@@ -38,7 +38,7 @@ SHOW_PLURAL_PAYLOAD = {
 }
 
 SHOW_SINGLE_PAYLOAD = {
-    'name': 'object_which_is_not_exist'
+    'uid': '53de74b7-8f19-4cbe-99fc-a81ef0759bad'
 }
 
 api_call_object = 'global-assignment'

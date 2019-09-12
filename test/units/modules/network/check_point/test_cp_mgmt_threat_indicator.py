@@ -34,11 +34,11 @@ OBJECT = {
             "product": "AV"
         }
     ],
-    "action": "ask",
+    "action": "Ask",
     "profile_overrides": [
         {
             "profile": "My_Profile",
-            "action": "detect"
+            "action": "Detect"
         }
     ],
     "ignore_warnings": True
@@ -55,11 +55,11 @@ CREATE_PAYLOAD = {
             "product": "AV"
         }
     ],
-    "action": "ask",
+    "action": "Ask",
     "profile_overrides": [
         {
             "profile": "My_Profile",
-            "action": "detect"
+            "action": "Detect"
         }
     ],
     "ignore_warnings": True
@@ -67,7 +67,7 @@ CREATE_PAYLOAD = {
 
 UPDATE_PAYLOAD = {
     "name": "My_Indicator",
-    "action": "prevent",
+    "action": "Prevent",
     "ignore_warnings": True
 }
 

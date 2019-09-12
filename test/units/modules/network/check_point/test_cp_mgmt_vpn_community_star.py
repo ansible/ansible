@@ -25,13 +25,15 @@ from ansible.modules.network.check_point import cp_mgmt_vpn_community_star
 
 OBJECT = {
     "name": "New_VPN_Community_Star_1",
-    "center_gateways": "Second_Security_Gateway",
+    "center_gateways": [
+        "Second_Security_Gateway"
+    ],
     "encryption_method": "prefer ikev2 but support ikev1",
     "encryption_suite": "custom",
     "ike_phase_1": {
         "data_integrity": "sha1",
         "encryption_algorithm": "aes-128",
-        "diffie_hellman_group": "group 19"
+        "diffie_hellman_group": "group-19"
     },
     "ike_phase_2": {
         "data_integrity": "aes-xcbc",
@@ -41,13 +43,15 @@ OBJECT = {
 
 CREATE_PAYLOAD = {
     "name": "New_VPN_Community_Star_1",
-    "center_gateways": "Second_Security_Gateway",
+    "center_gateways": [
+        "Second_Security_Gateway"
+    ],
     "encryption_method": "prefer ikev2 but support ikev1",
     "encryption_suite": "custom",
     "ike_phase_1": {
         "data_integrity": "sha1",
         "encryption_algorithm": "aes-128",
-        "diffie_hellman_group": "group 19"
+        "diffie_hellman_group": "group-19"
     },
     "ike_phase_2": {
         "data_integrity": "aes-xcbc",
@@ -62,7 +66,7 @@ UPDATE_PAYLOAD = {
     "ike_phase_1": {
         "data_integrity": "sha1",
         "encryption_algorithm": "aes-128",
-        "diffie_hellman_group": "group 19"
+        "diffie_hellman_group": "group-19"
     },
     "ike_phase_2": {
         "data_integrity": "aes-xcbc",
