@@ -437,10 +437,19 @@ from ansible.module_utils.openstack import (
     openstack_full_argument_spec, openstack_module_kwargs)
 
 
-def _exit_hostvars(module, cloud, server, diff, changed=True):
+def _exit_hostvars(module, cloud, server, diff, result, changed=True):
+    redact_keys = ['adminPass']
+    for k in redact_keys:
+        if k in diff['before']:
+            diff['before'][k] = '***'
+        if k in diff['after']:
+            diff['after'][k] = '***'
+        if k in server:
+            server[k] = '***'
+
     hostvars = cloud.get_openstack_vars(server)
     module.exit_json(
-        changed=changed, diff=diff, server=server, id=server.id, openstack=hostvars)
+        changed=changed, diff=diff, server=server, result=result, id=server.id, openstack=hostvars)
 
 
 def _parse_nics(nics):
@@ -702,7 +711,7 @@ def _present_server(module, cloud):
     if not server:
         server = _create_server(module, cloud)
         diff['after'] = server
-        _exit_hostvars(module, cloud, server, diff, True)
+        _exit_hostvars(module, cloud, server, diff, 'created', True)
 
     if server.status not in ('ACTIVE', 'SHUTOFF', 'PAUSED', 'SUSPENDED'):
         module.fail_json(
@@ -712,7 +721,7 @@ def _present_server(module, cloud):
         diff['before'] = server
         (changed, server) = _update_server(module, cloud, server)
         diff['after'] = server
-        _exit_hostvars(module, cloud, server, diff, changed)
+        _exit_hostvars(module, cloud, server, diff, 'updated', changed)
 
 
 def _absent_server(module, cloud):
@@ -721,6 +730,7 @@ def _absent_server(module, cloud):
     server = cloud.get_server(module.params['name'])
 
     if server:
+        server['adminPass'] = '***'
         diff['before'] = server
         changed = _delete_server(module, cloud)
         module.exit_json(changed=changed, result='deleted', diff=diff)
