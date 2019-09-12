@@ -180,7 +180,7 @@ client_id:
     sample: 1
 ov_eligible:
     description: Whether the domain is eligible for submission of "OV" certificates. Will never be C(false) if I(ov_eligible) is C(true)
-    returned: success and I(domain_status) is C(APPROVED), C(RE_VERIFICATION) or C(EXPIRING).
+    returned: success and I(domain_status) is C(APPROVED), C(RE_VERIFICATION), C(EXPIRING), or C(EXPIRED).
     type: bool
     sample: true
 ov_days_remaining:
@@ -190,7 +190,7 @@ ov_days_remaining:
     sample: 129
 ev_eligible:
     description: Whether the domain is eligible for submission of "EV" certificates. Will never be C(true) if I(ov_eligible) is C(false)
-    returned: success and I(domain_status) is C(APPROVED), C(RE_VERIFICATION) or C(EXPIRING).
+    returned: success and I(domain_status) is C(APPROVED), C(RE_VERIFICATION) or C(EXPIRING), or C(EXPIRED).
     type: bool
     sample: true
 ev_days_remaining:
@@ -355,11 +355,11 @@ class EcsDomain(object):
 
         if self.verification_method:
             result['verification_method'] = self.verification_method
-        if self.ov_eligible:
+        if self.ov_eligible is not None:
             result['ov_eligible'] = self.ov_eligible
         if self.ov_days_remaining:
             result['ov_days_remaining'] = self.ov_days_remaining
-        if self.ev_eligible:
+        if self.ev_eligible is not None:
             result['ev_eligible'] = self.ev_eligible
         if self.ev_days_remaining:
             result['ev_days_remaining'] = self.ev_days_remaining
