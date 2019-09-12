@@ -28,15 +28,15 @@ description:
       the I(verification_method) will be updated and validation data (if applicable) will be returned.
     - If the domain is an active, validated domain, the return value of I(changed) will be false, unless C(domain_status=EXPIRED), in which case a re-validation
       will be performed.
-    - If C(verification_method=DNS), details about the required DNS entry will be specified in the return parameters I(dns_contents), I(dns_location), and
+    - If C(verification_method=dns), details about the required DNS entry will be specified in the return parameters I(dns_contents), I(dns_location), and
       I(dns_resource_type).
-    - If C(verification_method=WEB_SERVER), details about the required file details will be specified in the return parameters I(file_contents) and
+    - If C(verification_method=web_server), details about the required file details will be specified in the return parameters I(file_contents) and
       I(file_location).
-    - If C(verification_method=EMAIL), the email address(es) that the validation email(s) were sent to will be in the return parameter I(emails). This is
+    - If C(verification_method=email), the email address(es) that the validation email(s) were sent to will be in the return parameter I(emails). This is
       purely informational. For domains requested using this module, this will always be a list of size 1.
 notes:
     - There is a small delay (typically about 5 seconds, but can be as long as 60 seconds) before obtaining the random values when requesting a validation
-      while C(verification_method=DNS) or C(verification_method=WEB_SERVER). Be aware of that if doing many domain validation requests.
+      while C(verification_method=dns) or C(verification_method=web_server). Be aware of that if doing many domain validation requests.
 options:
     client_id:
         description:
@@ -52,17 +52,17 @@ options:
     verification_method:
         description:
             - The verification method to be used to prove control of the domain.
-            - If C(verification_method=EMAIL) and the value I(verification_email) is specified, that value is used for the email validation. If
+            - If C(verification_method=email) and the value I(verification_email) is specified, that value is used for the email validation. If
               I(verification_email) is not provided, the first value present in WHOIS data will be used. An email will be sent to the address in
               I(verification_email) with instructions on how to verify control of the domain.
-            - If C(verification_method=DNS), the value I(dns_contents) must be stored in location I(dns_location), with a DNS record type of
-              I(verification_DNS_record_type). To prove domain ownership, update your DNS records so the text string returned by I(dns_contents) is available at
-              I(DNS_location).
-            - If C(verification_method=WEB_SERVER), the contents of return value I(file_contents) must be made available on a web server accessible at location
+            - If C(verification_method=dns), the value I(dns_contents) must be stored in location I(dns_location), with a DNS record type of
+              I(verification_dns_record_type). To prove domain ownership, update your DNS records so the text string returned by I(dns_contents) is available at
+              I(dns_location).
+            - If C(verification_method=web_server), the contents of return value I(file_contents) must be made available on a web server accessible at location
               I(file_location).
-            - If C(verification_method=MANUAL), the domain will be validated with a manual process. This is not recommended.
+            - If C(verification_method=manual), the domain will be validated with a manual process. This is not recommended.
         type: str
-        choices: [ 'DNS', 'EMAIL', 'MANUAL', 'WEB_SERVER']
+        choices: [ 'dns', 'email', 'manual', 'web_server']
         required: true
     verification_email:
         description:
@@ -73,10 +73,10 @@ options:
               example1.ansible.com, or test.example2.ansible.com, and you want to use the "admin" preconstructed name, the email address should be
               admin@ansible.com.'
             - If using the email values from the WHOIS data for the domain or it's top level namespace, they must be exact matches.
-            - If C(verification_method=EMAIL) but I(verification_email) is not provided, the first email address found in WHOIS data for the domain will be
+            - If C(verification_method=email) but I(verification_email) is not provided, the first email address found in WHOIS data for the domain will be
               used.
             - To verify domain ownership, domain owner must follow the instructions in the email they receive.
-            - Only allowed if C(verification_method=EMAIL)
+            - Only allowed if C(verification_method=email)
         type: str
 seealso:
     - module: openssl_certificate
@@ -92,7 +92,7 @@ EXAMPLES = r'''
   ecs_domain:
     domain_name: ansible.com
     client_id: 2
-    verification_method: EMAIL
+    verification_method: email
     verification_email: admin@ansible.com
     entrust_api_user: apiusername
     entrust_api_key: a^lv*32!cd9LnT
@@ -103,7 +103,7 @@ EXAMPLES = r'''
         request revalidation if expires within 90 days
   ecs_domain:
     domain_name: ansible.com
-    verification_method: DNS
+    verification_method: dns
     entrust_api_user: apiusername
     entrust_api_key: a^lv*32!cd9LnT
     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
@@ -113,7 +113,7 @@ EXAMPLES = r'''
         if fewer than 60 days remaining of EV eligibility.
   ecs_domain:
     domain_name: ansible.com
-    verification_method: WEB_SERVER
+    verification_method: web_server
     entrust_api_user: apiusername
     entrust_api_key: a^lv*32!cd9LnT
     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
@@ -122,7 +122,7 @@ EXAMPLES = r'''
 - name: Request domain validation using manual validation.
   ecs_domain:
     domain_name: ansible.com
-    verification_method: MANUAL
+    verification_method: manual
     entrust_api_user: apiusername
     entrust_api_key: a^lv*32!cd9LnT
     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
@@ -140,37 +140,37 @@ verification_method:
     description: Verification method used to request the domain validation. If C(changed) will be the same as I(verification_method) input parameter.
     returned: changed or success
     type: str
-    sample: DNS
+    sample: dns
 file_location:
     description: The location that ECS will be expecting to be able to find the file for domain verification, containing the contents of I(file_contents).
-    returned: I(verification_method) is C(WEB_SERVER)
+    returned: I(verification_method) is C(web_server)
     type: str
     sample: http://ansible.com/.well-known/pki-validation/abcd.txt
 file_contents:
     description: The contents of the file that ECS will be expecting to find at C(file_location).
-    returned: I(verification_method) is C(WEB_SERVER)
+    returned: I(verification_method) is C(web_server)
     type: str
     sample: AB23CD41432522FF2526920393982FAB
 emails:
     description:
         - The list of emails used to request validation of this domain.
         - Domains requested using this module will only have a list of size 1.
-    returned: I(verification_method) is C(EMAIL)
+    returned: I(verification_method) is C(email)
     type: list
     sample: [ admin@ansible.com, administrator@ansible.com ]
 dns_location:
-    description: The location that ECS will be expecting to be able to find the DNS entry for domain verification, containing the contents of I(DNS_contents).
-    returned: changed and if I(verification_method) is C(DNS)
+    description: The location that ECS will be expecting to be able to find the DNS entry for domain verification, containing the contents of I(dns_contents).
+    returned: changed and if I(verification_method) is C(dns)
     type: str
     sample: _pki-validation.ansible.com
 dns_contents:
-    description: The value that ECS will be expecting to find in the DNS record located at I(DNS_location).
-    returned: changed and if I(verification_method) is C(DNS)
+    description: The value that ECS will be expecting to find in the DNS record located at I(dns_location).
+    returned: changed and if I(verification_method) is C(dns)
     type: str
     sample: AB23CD41432522FF2526920393982FAB
 dns_resource_type:
-    description: The type of resource record that ECS will be expecting for the DNS record located at I(DNS_location).
-    returned: changed and if I(verification_method) is C(DNS)
+    description: The type of resource record that ECS will be expecting for the DNS record located at I(dns_location).
+    returned: changed and if I(verification_method) is C(dns)
     type: str
     sample: TXT
 client_id:
@@ -266,7 +266,7 @@ class EcsDomain(object):
 
     def set_domain_details(self, domain_details):
         if domain_details.get('verificationMethod'):
-            self.verification_method = domain_details['verificationMethod']
+            self.verification_method = domain_details['verificationMethod'].lower()
         self.domain_status = domain_details['verificationStatus']
         self.ov_eligible = domain_details.get('ovEligible')
         self.ov_days_remaining = calculate_days_remaining(domain_details.get('ovExpiry'))
@@ -274,14 +274,14 @@ class EcsDomain(object):
         self.ev_days_remaining = calculate_days_remaining(domain_details.get('evExpiry'))
         self.client_id = domain_details['clientId']
 
-        if self.verification_method == 'DNS' and domain_details.get('dnsMethod'):
+        if self.verification_method == 'dns' and domain_details.get('dnsMethod'):
             self.dns_location = domain_details['dnsMethod']['recordDomain']
             self.dns_resource_type = domain_details['dnsMethod']['recordType']
             self.dns_contents = domain_details['dnsMethod']['recordValue']
-        elif self.verification_method == 'WEB_SERVER' and domain_details.get('webServerMethod'):
+        elif self.verification_method == 'web_server' and domain_details.get('webServerMethod'):
             self.file_location = domain_details['webServerMethod']['fileLocation']
             self.file_contents = domain_details['webServerMethod']['fileContents']
-        elif self.verification_method == 'EMAIL' and domain_details.get('emailMethod'):
+        elif self.verification_method == 'email' and domain_details.get('emailMethod'):
             self.emails = domain_details['emailMethod']
 
     def check(self, module):
@@ -308,8 +308,8 @@ class EcsDomain(object):
         if not self.check(module):
             body = {}
 
-            body['verificationMethod'] = module.params['verification_method']
-            if module.params['verification_method'] == 'EMAIL':
+            body['verificationMethod'] = module.params['verification_method'].upper()
+            if module.params['verification_method'] == 'email':
                 emailMethod = {}
                 if module.params['verification_email']:
                     emailMethod['emailSource'] = 'SPECIFIED'
@@ -330,13 +330,13 @@ class EcsDomain(object):
                 result = self.ecs_client.GetDomain(clientId=module.params['client_id'], domain=module.params['domain_name'])
 
                 # It takes a bit of time before the random values are available
-                if module.params['verification_method'] == 'DNS' or module.params['verification_method'] == 'WEB_SERVER':
+                if module.params['verification_method'] == 'dns' or module.params['verification_method'] == 'web_server':
                     for i in range(4):
                         # Check both that random values are now available, and that they're different than were populated by previous 'check'
-                        if module.params['verification_method'] == 'DNS':
+                        if module.params['verification_method'] == 'dns':
                             if result.get('dnsMethod') and result['dnsMethod']['recordValue'] != self.dns_contents:
                                 break
-                        elif module.params['verification_method'] == 'WEB_SERVER':
+                        elif module.params['verification_method'] == 'web_server':
                             if result.get('webServerMethod') and result['webServerMethod']['fileContents'] != self.file_contents:
                                 break
                     time.sleep(10)
@@ -366,14 +366,14 @@ class EcsDomain(object):
         if self.emails:
             result['emails'] = self.emails
 
-        if self.verification_method == 'DNS':
+        if self.verification_method == 'dns':
             result['dns_location'] = self.dns_location
             result['dns_contents'] = self.dns_contents
             result['dns_resource_type'] = self.dns_resource_type
-        elif self.verification_method == 'WEB_SERVER':
+        elif self.verification_method == 'web_server':
             result['file_location'] = self.file_location
             result['file_contents'] = self.file_contents
-        elif self.verification_method == 'EMAIL':
+        elif self.verification_method == 'email':
             result['emails'] = self.emails
 
         return result
@@ -383,7 +383,7 @@ def ecs_domain_argument_spec():
     return dict(
         client_id=dict(type='int', default=1),
         domain_name=dict(type='str', required=True),
-        verification_method=dict(type='str', choices=['DNS', 'EMAIL', 'MANUAL', 'WEB_SERVER']),
+        verification_method=dict(type='str', choices=['dns', 'email', 'manual', 'web_server']),
         verification_email=dict(type='str'),
     )
 
@@ -396,7 +396,7 @@ def main():
         supports_check_mode=False,
     )
 
-    if module.params['verification_email'] and module.params['verification_method'] != 'EMAIL':
+    if module.params['verification_email'] and module.params['verification_method'] != 'email':
         module.fail_json(msg='The verification_email field is invalid when verification_method="{0}".'.format(module.params['verification_method']))
 
     domain = EcsDomain(module)

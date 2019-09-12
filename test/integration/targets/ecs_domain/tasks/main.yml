@@ -55,10 +55,10 @@
     dest: '{{ entrust_api_cert_key }}'
 
 - block:
-  - name: Have ECS request a domain validation via DNS
+  - name: Have ECS request a domain validation via dns
     ecs_domain:
-      domain_name: DNS.{{ common_name }}
-      verification_method: DNS
+      domain_name: dns.{{ common_name }}
+      verification_method: dns
       entrust_api_user: '{{ entrust_api_user }}'
       entrust_api_key: '{{ entrust_api_key }}'
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
@@ -70,7 +70,7 @@
         - dns_result is not failed
         - dns_result.changed
         - dns_result.domain_status == 'INITIAL_VERIFICATION'
-        - dns_result.verification_method == 'DNS'
+        - dns_result.verification_method == 'dns'
         - dns_result.dns_location is string
         - dns_result.dns_contents is string
         - dns_result.dns_resource_type is string
@@ -78,10 +78,10 @@
         - dns_result.file_contents is undefined
         - dns_result.emails is undefined
 
-  - name: Have ECS request a domain validation via WEB_SERVER
+  - name: Have ECS request a domain validation via web_server
     ecs_domain:
       domain_name: FILE.{{ common_name }}
-      verification_method: WEB_SERVER
+      verification_method: web_server
       entrust_api_user: '{{ entrust_api_user }}'
       entrust_api_key: '{{ entrust_api_key }}'
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
@@ -93,7 +93,7 @@
         - file_result is not failed
         - file_result.changed
         - file_result.domain_status == 'INITIAL_VERIFICATION'
-        - file_result.verification_method == 'WEB_SERVER'
+        - file_result.verification_method == 'web_server'
         - file_result.dns_location is undefined
         - file_result.dns_contents is undefined
         - file_result.dns_resource_type is undefined
@@ -101,10 +101,10 @@
         - file_result.file_contents is string
         - file_result.emails is undefined
 
-  - name: Have ECS request a domain validation via EMAIL
+  - name: Have ECS request a domain validation via email
     ecs_domain:
-      domain_name: EMAIL.{{ common_name }}
-      verification_method: EMAIL
+      domain_name: email.{{ common_name }}
+      verification_method: email
       verification_email: admin@testcertificates.com
       entrust_api_user: '{{ entrust_api_user }}'
       entrust_api_key: '{{ entrust_api_key }}'
@@ -117,7 +117,7 @@
         - email_result is not failed
         - email_result.changed
         - email_result.domain_status == 'INITIAL_VERIFICATION'
-        - email_result.verification_method == 'EMAIL'
+        - email_result.verification_method == 'email'
         - email_result.dns_location is undefined
         - email_result.dns_contents is undefined
         - email_result.dns_resource_type is undefined
@@ -125,10 +125,10 @@
         - email_result.file_contents is undefined
         - email_result.emails[0] == 'admin@testcertificates.com'
 
-  - name: Have ECS request a domain validation via EMAIL with no address provided
+  - name: Have ECS request a domain validation via email with no address provided
     ecs_domain:
-      domain_name: EMAIL2.{{ common_name }}
-      verification_method: EMAIL
+      domain_name: email2.{{ common_name }}
+      verification_method: email
       entrust_api_user: '{{ entrust_api_user }}'
       entrust_api_key: '{{ entrust_api_key }}'
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
@@ -140,7 +140,7 @@
         - email_result2 is not failed
         - email_result2.changed
         - email_result2.domain_status == 'INITIAL_VERIFICATION'
-        - email_result2.verification_method == 'EMAIL'
+        - email_result2.verification_method == 'email'
         - email_result2.dns_location is undefined
         - email_result2.dns_contents is undefined
         - email_result2.dns_resource_type is undefined
@@ -148,10 +148,10 @@
         - email_result2.file_contents is undefined
         - email_result2.emails is defined
 
-  - name: Have ECS request a domain validation via MANUAL
+  - name: Have ECS request a domain validation via manual
     ecs_domain:
-      domain_name: MANUAL.{{ common_name }}
-      verification_method: MANUAL
+      domain_name: manual.{{ common_name }}
+      verification_method: manual
       entrust_api_user: '{{ entrust_api_user }}'
       entrust_api_key: '{{ entrust_api_key }}'
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
@@ -163,7 +163,7 @@
         - manual_result is not failed
         - manual_result.changed
         - manual_result.domain_status == 'INITIAL_VERIFICATION'
-        - manual_result.verification_method == 'MANUAL'
+        - manual_result.verification_method == 'manual'
         - manual_result.dns_location is undefined
         - manual_result.dns_contents is undefined
         - manual_result.dns_resource_type is undefined
@@ -171,10 +171,10 @@
         - manual_result.file_contents is undefined
         - manual_result.emails is undefined
 
-  - name: Have ECS request a domain validation via DNS that remains unchanged
+  - name: Have ECS request a domain validation via dns that remains unchanged
     ecs_domain:
-      domain_name: DNS.{{ common_name }}
-      verification_method: DNS
+      domain_name: dns.{{ common_name }}
+      verification_method: dns
       entrust_api_user: '{{ entrust_api_user }}'
       entrust_api_key: '{{ entrust_api_key }}'
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
@@ -186,7 +186,7 @@
         - dns_result2 is not failed
         - not dns_result2.changed
         - dns_result2.domain_status == 'INITIAL_VERIFICATION'
-        - dns_result2.verification_method == 'DNS'
+        - dns_result2.verification_method == 'dns'
         - dns_result2.dns_location is string
         - dns_result2.dns_contents is string
         - dns_result2.dns_resource_type is string
@@ -194,10 +194,10 @@
         - dns_result2.file_contents is undefined
         - dns_result2.emails is undefined
 
-  - name: Have ECS request a domain validation via FILE for DNS, to change verification method
+  - name: Have ECS request a domain validation via FILE for dns, to change verification method
     ecs_domain:
-      domain_name: DNS.{{ common_name }}
-      verification_method: WEB_SERVER
+      domain_name: dns.{{ common_name }}
+      verification_method: web_server
       entrust_api_user: '{{ entrust_api_user }}'
       entrust_api_key: '{{ entrust_api_key }}'
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
@@ -209,7 +209,7 @@
         - dns_result_now_file is not failed
         - dns_result_now_file.changed
         - dns_result_now_file.domain_status == 'INITIAL_VERIFICATION'
-        - dns_result_now_file.verification_method == 'WEB_SERVER'
+        - dns_result_now_file.verification_method == 'web_server'
         - dns_result_now_file.dns_location is undefined
         - dns_result_now_file.dns_contents is undefined
         - dns_result_now_file.dns_resource_type is undefined
@@ -220,7 +220,7 @@
   - name: Request revalidation of an approved domain
     ecs_domain:
       domain_name: '{{ existing_domain_common_name }}'
-      verification_method: MANUAL
+      verification_method: manual
       entrust_api_user: '{{ entrust_api_user }}'
       entrust_api_key: '{{ entrust_api_key }}'
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
@@ -242,7 +242,7 @@
   - name: Request revalidation of an approved domain
     ecs_domain:
       domain_name: '{{ existing_domain_common_name }}'
-      verification_method: WEB_SERVER
+      verification_method: web_server
       entrust_api_user: '{{ entrust_api_user }}'
       entrust_api_key: '{{ entrust_api_key }}'
       entrust_api_client_cert_path: '{{ entrust_api_cert }}'
@@ -254,7 +254,7 @@
         - file_existing_domain_revalidate is not failed
         - file_existing_domain_revalidate.changed
         - file_existing_domain_revalidate.domain_status == 'RE_VERIFICATION'
-        - file_existing_domain_revalidate.verification_method == 'WEB_SERVER'
+        - file_existing_domain_revalidate.verification_method == 'web_server'
         - file_existing_domain_revalidate.dns_location is undefined
         - file_existing_domain_revalidate.dns_contents is undefined
         - file_existing_domain_revalidate.dns_resource_type is undefined
