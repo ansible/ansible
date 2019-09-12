@@ -507,7 +507,7 @@ class Ec2Metadata(object):
                         for (key, value) in dict.items():
                             self._data['%s:%s' % (new_uri, key.lower())] = value
                     except Exception:
-                        self._data['%s' % (new_uri)] = content  # not a stringifed JSON string
+                        self._data['%s' % (new_uri)] = content  # not a stringified JSON string
 
     def fix_invalid_varnames(self, data):
         """Change ':'' and '-' to '_' to ensure valid template variable names"""

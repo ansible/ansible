@@ -41,7 +41,7 @@ options:
         type: str
     label_selector:
         description:
-            - The label selector for the servery you want to get.
+            - The label selector for the server you want to get.
         type: str
 extends_documentation_fragment: hcloud
 """

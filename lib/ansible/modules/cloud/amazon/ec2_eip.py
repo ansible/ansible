@@ -71,7 +71,7 @@ options:
     version_added: "2.5"
   tag_name:
     description:
-      - When reuse_existing_ip_allowed is true, suppplement with this option to only reuse
+      - When reuse_existing_ip_allowed is true, supplement with this option to only reuse
         an Elastic IP if it is tagged with tag_name.
     default: 'no'
     version_added: "2.9"
