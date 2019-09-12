@@ -26,6 +26,7 @@ options:
       - List arguments to be passed to the container.
       - Corresponds to the C(ARG) parameter of C(docker service create).
     type: list
+    elements: str
   command:
     description:
       - Command to execute when the container starts.
@@ -39,6 +40,7 @@ options:
       - Corresponds to the C(--config) option of C(docker service create).
       - Requires API version >= 1.30.
     type: list
+    elements: dict
     suboptions:
       config_id:
         description:
@@ -72,6 +74,7 @@ options:
       - Corresponds to the C(--constraint) option of C(docker service create).
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(placement.constraints) instead.
     type: list
+    elements: str
   container_labels:
     description:
       - Dictionary of key value pairs.
@@ -83,18 +86,21 @@ options:
       - Corresponds to the C(--dns) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: str
   dns_search:
     description:
       - List of custom DNS search domains.
       - Corresponds to the C(--dns-search) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: str
   dns_options:
     description:
       - List of custom DNS options.
       - Corresponds to the C(--dns-option) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: str
   endpoint_mode:
     description:
       - Service endpoint mode.
@@ -120,6 +126,7 @@ options:
         variable that shows up more than once.
       - If variable also present in I(env), then I(env) value will override.
     type: list
+    elements: path
     version_added: "2.8"
   force_update:
     description:
@@ -134,6 +141,7 @@ options:
       - Corresponds to the C(--group) option of C(docker service update).
       - Requires API version >= 1.25.
     type: list
+    elements: str
     version_added: "2.8"
   healthcheck:
     description:
@@ -271,6 +279,7 @@ options:
       - List of dictionaries describing the service mounts.
       - Corresponds to the C(--mount) option of C(docker service create).
     type: list
+    elements: dict
     suboptions:
       source:
         description:
@@ -365,6 +374,7 @@ options:
         If changes are made the service will then be removed and recreated.
       - Corresponds to the C(--network) option of C(docker service create).
     type: list
+    elements: raw
   placement:
     description:
       - Configures service placement preferences and constraints.
@@ -374,12 +384,14 @@ options:
           - List of the service constraints.
           - Corresponds to the C(--constraint) option of C(docker service create).
         type: list
+        elements: str
       preferences:
         description:
           - List of the placement preferences as key value pairs.
           - Corresponds to the C(--placement-pref) option of C(docker service create).
           - Requires API version >= 1.27.
         type: list
+        elements: dict
     type: dict
     version_added: "2.8"
   publish:
@@ -388,6 +400,7 @@ options:
       - Corresponds to the C(--publish) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: dict
     suboptions:
       published_port:
         description:
@@ -593,6 +606,7 @@ options:
       - Corresponds to the C(--secret) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: dict
     suboptions:
       secret_id:
         description:
@@ -2672,14 +2686,14 @@ def main():
             mode=dict(type='str', choices=['ingress', 'host']),
         )),
         placement=dict(type='dict', options=dict(
-            constraints=dict(type='list'),
-            preferences=dict(type='list'),
+            constraints=dict(type='list', elements='str'),
+            preferences=dict(type='list', elements='dict'),
         )),
-        constraints=dict(type='list', removed_in_version='2.12'),
+        constraints=dict(type='list', elements='str', removed_in_version='2.12'),
         tty=dict(type='bool'),
-        dns=dict(type='list'),
-        dns_search=dict(type='list'),
-        dns_options=dict(type='list'),
+        dns=dict(type='list', elements='str'),
+        dns_search=dict(type='list', elements='str'),
+        dns_options=dict(type='list', elements='str'),
         healthcheck=dict(type='dict', options=dict(
             test=dict(type='raw'),
             interval=dict(type='str'),

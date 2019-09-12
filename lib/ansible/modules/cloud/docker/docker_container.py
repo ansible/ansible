@@ -39,10 +39,12 @@ options:
     description:
       - List of capabilities to add to the container.
     type: list
+    elements: str
   cap_drop:
     description:
       - List of capabilities to drop from the container.
     type: list
+    elements: str
     version_added: "2.7"
   cleanup:
     description:
@@ -108,10 +110,12 @@ options:
       - "List of host device bindings to add to the container. Each binding is a mapping expressed
         in the format: <path_on_host>:<path_in_container>:<cgroup_permissions>"
     type: list
+    elements: str
   device_read_bps:
     description:
       - "List of device path and read rate (bytes per second) from device."
     type: list
+    elements: dict
     suboptions:
       path:
         description:
@@ -131,6 +135,7 @@ options:
     description:
       - "List of device and write rate (bytes per second) to device."
     type: list
+    elements: dict
     suboptions:
       path:
         description:
@@ -150,6 +155,7 @@ options:
     description:
       - "List of device and read rate (IO per second) from device."
     type: list
+    elements: dict
     suboptions:
       path:
         description:
@@ -167,6 +173,7 @@ options:
     description:
       - "List of device and write rate (IO per second) to device."
     type: list
+    elements: dict
     suboptions:
       path:
         description:
@@ -184,14 +191,17 @@ options:
     description:
       - list of DNS options
     type: list
+    elements: str
   dns_servers:
     description:
       - List of custom DNS servers.
     type: list
+    elements: str
   dns_search_domains:
     description:
       - List of custom DNS search domains.
     type: list
+    elements: str
   domainname:
     description:
       - Container domainname.
@@ -212,6 +222,7 @@ options:
     description:
       - Command that overwrites the default ENTRYPOINT of the image.
     type: list
+    elements: str
   etc_hosts:
     description:
       - Dict of host-to-IP mappings, where each host name is a key in the dictionary.
@@ -224,6 +235,7 @@ options:
         If the port is already exposed using EXPOSE in a Dockerfile, it does not
         need to be exposed again.
     type: list
+    elements: str
     aliases:
       - exposed
       - expose
@@ -238,6 +250,7 @@ options:
     description:
       - List of additional group names and/or IDs that the container process will run as.
     type: list
+    elements: str
   healthcheck:
     description:
       - 'Configure a check that is run to determine whether or not containers for this service are "healthy".
@@ -332,6 +345,7 @@ options:
       - List of name aliases for linked containers in the format C(container_name:alias).
       - Setting this will force container to be restarted.
     type: list
+    elements: str
   log_driver:
     description:
       - Specify the logging driver. Docker uses I(json-file) by default.
@@ -378,6 +392,7 @@ options:
   mounts:
     version_added: "2.9"
     type: list
+    elements: dict
     description:
       - 'Specification for mounts to be added to the container. More powerful alternative to I(volumes).'
     suboptions:
@@ -479,6 +494,7 @@ options:
         network if C(networks) is specified. You need to explicity use C(purge_networks) to enforce
         the removal of the default network (and all other networks not explicitly mentioned in C(networks)).
     type: list
+    elements: dict
     suboptions:
       name:
         description:
@@ -497,11 +513,13 @@ options:
         description:
           - A list of containers to link to.
         type: list
+        elements: str
       aliases:
         description:
           - List of aliases for this container in this network. These names
             can be used in the network to reach this container.
         type: list
+        elements: str
     version_added: "2.2"
   networks_cli_compatible:
     description:
@@ -579,6 +597,7 @@ options:
         Note that the first bridge network with a com.docker.network.bridge.host_binding_ipv4
         value encountered in the list of C(networks) is the one that will be used.
     type: list
+    elements: str
     aliases:
       - ports
   pull:
@@ -640,6 +659,7 @@ options:
     description:
       - List of security options in the form of C("label:user:User")
     type: list
+    elements: str
   state:
     description:
       - 'I(absent) - A container matching the specified name will be stopped and removed. Use force_kill to kill the container
@@ -692,6 +712,7 @@ options:
     description:
       - Mount a tmpfs directory
     type: list
+    elements: str
     version_added: 2.4
   tty:
     description:
@@ -702,6 +723,7 @@ options:
     description:
       - "List of ulimit options. A ulimit is specified as C(nofile:262144:262144)"
     type: list
+    elements: str
   sysctls:
     description:
       - Dictionary of key,value pairs.
@@ -728,6 +750,7 @@ options:
       - "Note that Ansible 2.7 and earlier only supported one mode, which had to be one of C(ro), C(rw),
         C(z), and C(Z)."
     type: list
+    elements: str
   volume_driver:
     description:
       - The container volume driver.
@@ -736,6 +759,7 @@ options:
     description:
       - List of container names or Ids to get volumes from.
     type: list
+    elements: str
   working_dir:
     description:
       - Path to the working directory.

@@ -38,6 +38,7 @@ options:
         where C(tag) is optional. If a tag is not provided, C(latest) will be used. Instead of image names, also
         image IDs can be used.
     type: list
+    elements: str
     required: yes
 
 extends_documentation_fragment:
