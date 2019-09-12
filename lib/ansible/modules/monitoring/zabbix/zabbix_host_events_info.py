@@ -15,51 +15,53 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 RETURN = '''
 ---
-output:
-    description: Host Zabbix Triggers in Json format
+triggers_ok:
+    description: Host Zabbix Triggers in OK state
     returned: On success
     type: complex
     contains:
-            triggers_ok:
-                - comments: Raise an alert whenever there is no data received from the agent during
-                    the given interval
-                  description: 'Status {HOSTNAME}: server is unreachable'
-                  error: ''
-                  expression: "{13665}=1"
-                  flags: '0'
-                  lastchange: '1556112352'
-                  priority: '4'
-                  state: '0'
-                  status: '0'
-                  templateid: '13619'
-                  triggerid: '14038'
-                  type: '0'
-                  url: ''
-                  value: '0'
-            triggers_problem:
-                - comments: ''
-                  description: 'Process: NTPd is down'
-                  error: ''
-                  expression: "{13667}=0"
-                  flags: '0'
-                  last_event:
-                    acknowledged: '0'
-                    acknowledges:
-                    - alias: Admin
-                      clock: '1556182269'
-                      message: waiting customer action
-                    clock: '1556182854'
-                    eventid: '630'
-                    value: '1'
-                  lastchange: '1556182854'
-                  priority: '4'
-                  state: '0'
-                  status: '0'
-                  templateid: '13615'
-                  triggerid: '14040'
-                  type: '0'
-                  url: ''
-                  value: '1'
+            - comments: Additional description of the trigger (https://www.zabbix.com/documentation/3.0/manual/api/reference/trigger/object)
+              description: Name of the trigger
+              error: Error text if there have been any problems when updating the state of the trigger
+              expression: Reduced trigger expression
+              flags: Origin of the trigger
+              lastchange: Time when the trigger last changed its state (timestamp)
+              priority: Severity of the trigger
+              state: State of the trigger
+              status: Whether the trigger is enabled or disabled
+              templateid: ID of the parent template trigger
+              triggerid: ID of the trigger
+              type: Whether the trigger can generate multiple problem events
+              url: URL associated with the trigger
+              value: Whether the trigger is in OK or problem state
+triggers_problem:
+    description: Host Zabbix Triggers in problem state (https://www.zabbix.com/documentation/3.0/manual/api/reference/trigger/object & https://www.zabbix.com/documentation/3.0/manual/api/reference/event/object)
+    returned: On success
+    type: complex
+    contains:
+            - comments: Additional description of the trigger
+              description: Name of the trigger
+              error: Error text if there have been any problems when updating the state of the trigger
+              expression: Reduced trigger expression
+              flags: Origin of the trigger
+              last_event:
+                acknowledged: If set to true return only acknowledged events
+                acknowledges:
+                - alias: Account who acknowledge 
+                  clock: Time when the event was created (timestamp)
+                  message: Text of the acknowledgement message
+                clock: Time when the event was created (timestamp)
+                eventid: ID of the event
+                value: State of the related object
+              lastchange: Time when the trigger last changed its state (timestamp)
+              priority: Severity of the trigger
+              state: State of the trigger
+              status: Whether the trigger is enabled or disabled
+              templateid: ID of the parent template trigger
+              triggerid: ID of the trigger
+              type: Whether the trigger can generate multiple problem events
+              url: URL associated with the trigger
+              value: Whether the trigger is in OK or problem state
 '''
 
 DOCUMENTATION = '''
@@ -123,12 +125,15 @@ EXAMPLES = '''
   when: zbx_host['triggers_problem']|length > 0
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+import atexit
+import traceback
 
 try:
     from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
 
@@ -192,7 +197,8 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'),
+                         exception=ZBX_IMP_ERR)
 
     trigger_severity_map = {'not_classified': 0, 'information': 1, 'warning': 2, 'average': 3, 'high': 4, 'disaster': 5}
     server_url = module.params['server_url']
@@ -213,6 +219,7 @@ def main():
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
                         validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
@@ -229,9 +236,6 @@ def main():
     elif host_id_type == 'hostid':
         ''' check hostid exist'''
         zabbix_host = host.get_host(host_id, host_inventory, 'hostid')
-
-    else:
-        module.exit_json(ok=False, host=[], result="No Host present")
 
     triggers = host.get_triggers_by_host_id_in_problem_state(host_id, trigger_severity)
 
