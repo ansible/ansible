@@ -1,0 +1,2 @@
+bugfixes:
+- vmware_guest - Add ability to upgrade the guest hardware version to latest fix issue #56273.
