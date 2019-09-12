@@ -1,0 +1,142 @@
+interactions:
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"b7275d8fcee9a9eaa113bc4114f945e5"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:38:31 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=b7275d8fcee9a9eaa113bc4114f945e5;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"used_by_entity": null}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '24'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - b7275d8fcee9a9eaa113bc4114f945e5
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/tagging/category?~action=list-used-categories
+  response:
+    body:
+      string: '{"type":"com.vmware.vapi.std.errors.invalid_argument","value":{"messages":[{"args":["com.vmware.cis.tagging.category.list_used_categories"],"default_message":"Unable
+        to validate input to method com.vmware.cis.tagging.category.list_used_categories","id":"vapi.invoke.input.invalid"},{"args":["operation-input","used_by_entity"],"default_message":"Structure
+        ''operation-input'' is missing a field: used_by_entity","id":"vapi.data.structure.field.missing"}]}}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:38:31 GMT
+    status:
+      code: 400
+      message: Bad Request
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"95fd15bb0b267774f51499f84225a145"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:39:33 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=95fd15bb0b267774f51499f84225a145;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"used_by_entity": null}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '24'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 95fd15bb0b267774f51499f84225a145
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/tagging/category?~action=list-used-categories
+  response:
+    body:
+      string: '{"type":"com.vmware.vapi.std.errors.invalid_argument","value":{"messages":[{"args":["com.vmware.cis.tagging.category.list_used_categories"],"default_message":"Unable
+        to validate input to method com.vmware.cis.tagging.category.list_used_categories","id":"vapi.invoke.input.invalid"},{"args":["operation-input","used_by_entity"],"default_message":"Structure
+        ''operation-input'' is missing a field: used_by_entity","id":"vapi.data.structure.field.missing"}]}}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:39:33 GMT
+    status:
+      code: 400
+      message: Bad Request
+version: 1
