@@ -929,12 +929,10 @@ class PyVmomi(object):
             vms = []
 
             for temp_vm_object in objects:
-                if len(temp_vm_object.propSet) != 1:
-                    continue
-                for temp_vm_object_property in temp_vm_object.propSet:
-                    if temp_vm_object_property.val == self.params['name']:
-                        vms.append(temp_vm_object.obj)
-                        break
+                if (
+                        len(temp_vm_object.propSet) == 1 and
+                        temp_vm_object.propSet[0].val == self.params['name']):
+                    vms.append(temp_vm_object.obj)
 
             # get_managed_objects_properties may return multiple virtual machine,
             # following code tries to find user desired one depending upon the folder specified.
