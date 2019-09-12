@@ -1,18 +1,11 @@
 boto3
 placebo
-cryptography
 pycrypto
-jinja2
-mock
 passlib
 pypsrp
-pytest
-pytest-mock
-pytest-xdist
 python-memcached
 pytz
 pyvmomi
-pyyaml
 redis
 requests
 setuptools > 0.6 # pytest-xdist installed via requirements does not work with very old setuptools (sanity_ok)
