@@ -63,7 +63,7 @@ class TestCheckpointHostFacts(object):
         try:
             result = self._run_module(SHOW_SINGLE_PAYLOAD)
         except Exception as e:
-            result = e.message
+            result = e.args[0]
 
         assert result['failed']
         assert 'Checkpoint device returned error 404 with message ' + failure_msg == result['msg']

@@ -21,7 +21,7 @@ import pytest
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleExitJson
 
 from ansible.module_utils import basic
-from ansible.modules.network.check_point import cp_mgmt_threat_layer_facts
+from ansible.modules.network.check_point import cp_mgmt_service_icmp6_facts
 
 OBJECT = {
     "from": 1,
@@ -41,13 +41,13 @@ SHOW_SINGLE_PAYLOAD = {
     'name': 'object_which_is_not_exist'
 }
 
-api_call_object = 'threat-layer'
-api_call_object_plural_version = 'threat-layers'
+api_call_object = 'service-icmp6'
+api_call_object_plural_version = 'services-icmp6'
 failure_msg = '''{u'message': u'Requested object [object_which_is_not_exist] not found', u'code': u'generic_err_object_not_found'}'''
 
 
-class TestCheckpointThreatLayerFacts(object):
-    module = cp_mgmt_threat_layer_facts
+class TestCheckpointServiceIcmp6Facts(object):
+    module = cp_mgmt_service_icmp6_facts
 
     @pytest.fixture(autouse=True)
     def module_mock(self, mocker):

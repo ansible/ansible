@@ -21,72 +21,39 @@ import pytest
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleExitJson
 
 from ansible.module_utils import basic
-from ansible.modules.network.check_point import cp_mgmt_vpn_community_star
+from ansible.modules.network.check_point import cp_mgmt_service_icmp6
 
 OBJECT = {
-    "name": "New_VPN_Community_Star_1",
-    "center_gateways": [
-        "Second_Security_Gateway"
-    ],
-    "encryption_method": "prefer ikev2 but support ikev1",
-    "encryption_suite": "custom",
-    "ike_phase_1": {
-        "data_integrity": "sha1",
-        "encryption_algorithm": "aes-128",
-        "diffie_hellman_group": "group-1"
-    },
-    "ike_phase_2": {
-        "data_integrity": "aes-xcbc",
-        "encryption_algorithm": "aes-gcm-128"
-    }
+    "name": "Icmp1",
+    "icmp_type": 5,
+    "icmp_code": 7
 }
 
 CREATE_PAYLOAD = {
-    "name": "New_VPN_Community_Star_1",
-    "center_gateways": [
-        "Second_Security_Gateway"
-    ],
-    "encryption_method": "prefer ikev2 but support ikev1",
-    "encryption_suite": "custom",
-    "ike_phase_1": {
-        "data_integrity": "sha1",
-        "encryption_algorithm": "aes-128",
-        "diffie_hellman_group": "group-1"
-    },
-    "ike_phase_2": {
-        "data_integrity": "aes-xcbc",
-        "encryption_algorithm": "aes-gcm-128"
-    }
+    "name": "Icmp1",
+    "icmp_type": 5,
+    "icmp_code": 7
 }
 
 UPDATE_PAYLOAD = {
-    "name": "New_VPN_Community_Star_1",
-    "encryption_method": "ikev2 only",
-    "encryption_suite": "custom",
-    "ike_phase_1": {
-        "data_integrity": "sha1",
-        "encryption_algorithm": "aes-128",
-        "diffie_hellman_group": "group-1"
-    },
-    "ike_phase_2": {
-        "data_integrity": "aes-xcbc",
-        "encryption_algorithm": "aes-gcm-128"
-    }
+    "name": "Icmp1",
+    "icmp_type": 45,
+    "icmp_code": 13
 }
 
 OBJECT_AFTER_UPDATE = UPDATE_PAYLOAD
 
 DELETE_PAYLOAD = {
-    "name": "New_VPN_Community_Star_1",
+    "name": "Icmp1",
     "state": "absent"
 }
 
-function_path = 'ansible.modules.network.check_point.cp_mgmt_vpn_community_star.api_call'
-api_call_object = 'vpn-community-star'
+function_path = 'ansible.modules.network.check_point.cp_mgmt_service_icmp6.api_call'
+api_call_object = 'service-icmp6'
 
 
-class TestCheckpointVpnCommunityStar(object):
-    module = cp_mgmt_vpn_community_star
+class TestCheckpointServiceIcmp6(object):
+    module = cp_mgmt_service_icmp6
 
     @pytest.fixture(autouse=True)
     def module_mock(self, mocker):

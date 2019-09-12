@@ -29,7 +29,7 @@ OBJECT = {
     "email": "admin@gmail.com",
     "must_change_password": False,
     "phone_number": "1800-800-800",
-    "authentication_method": "check point password",
+    "authentication_method": "undefined",
     "permissions_profile": "read write all"
 }
 
@@ -39,7 +39,7 @@ CREATE_PAYLOAD = {
     "email": "admin@gmail.com",
     "must_change_password": False,
     "phone_number": "1800-800-800",
-    "authentication_method": "check point password",
+    "authentication_method": "undefined",
     "permissions_profile": "read write all"
 }
 
