@@ -141,7 +141,7 @@ options:
       - Indicate if the container should be unprivileged
     type: bool
     default: 'no'
-protection:
+  protection:
     version_added: "devel"
     description:
       - Indicate if the container should be protected
