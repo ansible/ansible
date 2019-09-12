@@ -5,6 +5,57 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.5
+======
+
+Release Summary
+---------------
+
+| Release Date: 2019-09-12
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ovirt_vm - add documentation warning about linux boot params - they will not be suported since oVirt 4.4 (https://bugzilla.redhat.com/1732437)
+- ovirt_vm - add warning message about linux boot params - they will not be suported since oVirt 4.4 (https://bugzilla.redhat.com/1732437)
+
+Bugfixes
+--------
+
+- Backported to stable-2.8 - Fix
+- Extended loop variables now work with includes (https://github.com/ansible/ansible/pull/61231)
+- Fix nxos_install_os test cases typo (https://github.com/ansible/ansible/pull/58825).
+- Pipelining now works with the buildah plugin.
+- acme_certificate - improve compatibility when finalizing ACME v2 orders. Fixes problem with Buypass' ACME v2 testing endpoint.
+- apt_facts - fix performance regression when getting facts about apt packages (https://github.com/ansible/ansible/issues/60450)
+- aws_s3 - Try to wait for the bucket to exist before setting the access control list.
+- bigip_monitor_http - fix issue with receive parameter idempotency (https://github.com/ansible/ansible/pull/59999)
+- ce_bfd_global - update to fix some bugs - When BFD is unavailable, tosExp and other parameters are sent down to report errors; this error is corrected and the query results are processed again. (https://github.com/ansible/ansible/pull/60412)
+- constructed - Add a warning for the change in behavior in the sanitization of the groups option.
+- digital_ocean_droplet - Fix creation of DigitalOcean droplets using digital_ocean_droplet module (https://github.com/ansible/ansible/pull/61655)
+- docker_compose - fix issue where docker deprecation warning results in ansible erroneously reporting a failure
+- docker_container - improve error behavior when parsing port ranges fails.
+- docker_login - report change on successful logout (https://github.com/ansible/ansible/issues/59232)
+- docker_swarm_service - allow the same port to be published both with TCP and UDP.
+- meraki_syslog - Module would ignore net_id parameter if passed.
+- meraki_syslog - Properly handle tasks with `net_id` instead of `net_name`.
+- netapp_e_lun_mapping - Fix hosts with same lun number conflict in netapp_e_lun_mapping
+- netapp_e_lun_mapping - Fix netapp_e_host module bug when lun=0
+- openssl_certificate - if both private key and CSR were specified, the idempotency check for ``selfsigned`` and ``ownca`` providers ignored the CSR.
+- os_user - when domain is provided, default_project will be taken from this domain.
+- ovirt_vm - update tempalte search by datacenter (https://github.com/ansible/ansible/issues/59189)
+- proxmox_kvm - fixed issue when vm has not yet a name item (https://github.com/ansible/ansible/issues/58194)
+- purefa_facts - Fix bug which causes module failure when selecting I(admins) or I(all) against an old Purity version
+- systemd - wait for a service which is in deactivating state when using ``state=stopped`` (https://github.com/ansible/ansible/pull/59471)
+- user - allow 13 asterisk characters in password field without warning
+- user - update docs to reflect proper way to remove account from all groups
+- vmware - Ensure we can use the modules with Python < 2.7.9 or RHEL/CentOS < 7.4, this as soon as ``validate_certs`` is disabled.
+- win_domain - Set reboot required dependent on exception and add exception id to error message
+- win_domain_controller - Do not fail the play without the user being able to catch dcpromo failing because of a pending reboot within a playbook using ignore_error or retry logic.
+- xenserver_guest - when adding disks to a VM in powered on state, disks are now properly plugged/activated (https://github.com/ansible/ansible/issues/60693).
+
 v2.8.4
 ======
 

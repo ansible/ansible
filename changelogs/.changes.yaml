@@ -1853,3 +1853,40 @@ releases:
     - win_dsc-datetime.yaml
     - win_user-logon-err.yaml
     release_date: '2019-08-15'
+  2.8.5:
+    codename: How Many More Times
+    fragments:
+    - 57096-netapp_e_lun_mapping-Fix-confict-and-zero-lun.yaml
+    - 57185-fix_vmware_modules_py_pre2.79.yaml
+    - 58194-vm-name-item-not-yet-present-at-creation-time.yaml
+    - 59471-systemd-wait-while-deactivating.yaml
+    - 59745-fix-pipelining-in-buildah-connection-plugin.yml
+    - 60381-docker_login-logout-change.yml
+    - 60410-search-project-in-domain.yml
+    - 60412-ce_bfd_global-to-fix-bugs.yml
+    - 60461-ovirt-vm-update-template-search-by-datacenter.yml
+    - 60581-ovirt-vm-add-linux-boot-param-warning.yml
+    - 60582-ovirt-vm-update-kernel-docs.yml
+    - 60616-support-multiple-port.yaml
+    - 60683-backport-57418.yaml
+    - 60727-acme_certificate-acme-compatibility.yml
+    - 60737-xenserver_guest-vbd-plug-fix.yml
+    - 60745-openssl_certificate-idempotency.yml
+    - 60912-constructed-groups-option-sanitization.yaml
+    - 60961-docker_compose-fix-deprecation-warning.yml
+    - 61231-extended-loop-include.yaml
+    - 61655-fix-digital-ocean-droplet-create.yaml
+    - 61735-wait-for-s3-bucket-to-exist-before-modifying.yaml
+    - 61740-docker_container-port-range-parsing.yml
+    - bigip-monitor-http-receive-parameter.yaml
+    - meraki-syslog-net-id.yaml
+    - meraki_syslog_net_id.yaml
+    - nxos_install_os_28_testfix.yaml
+    - openbsd-disabled-account-no-warning-for-passwd.yaml
+    - package_facts-performace-regression-fix.yaml
+    - purefa_facts-api-version-check-for-admin-and-all.yml
+    - user-docs-group-fix.yaml
+    - v2.8.5_summary.yaml
+    - win_domain-exceptions-2.yaml
+    - win_domain-exceptions.yaml
+    release_date: '2019-09-12'
