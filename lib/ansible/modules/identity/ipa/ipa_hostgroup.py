@@ -44,6 +44,7 @@ options:
     description:
     - assign only hosts and hostgroup to that host-group, others are removed
     default: true
+    version_added: "2.10"
   state:
     description:
     - State to ensure.

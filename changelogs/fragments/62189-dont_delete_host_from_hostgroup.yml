@@ -1,0 +1,2 @@
+minor_changes:
+  - add clear option to module Identity/ipa to choose to keep or not all host/hostgroup from hostgroup
