@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: clc_firewall_policy
 short_description: Create/delete/update firewall policies
 description:
-  - Create or delete or update firewall polices on Centurylink Cloud
+  - Create or delete or update firewall policies on Centurylink Cloud
 version_added: "2.0"
 options:
   location:

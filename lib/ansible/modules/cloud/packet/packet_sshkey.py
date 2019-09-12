@@ -200,7 +200,7 @@ def act_on_sshkeys(target_state, module, packet_conn):
 
             matching_sshkeys.append(new_key_response)
     else:
-        # state is 'absent' => delete mathcing keys
+        # state is 'absent' => delete matching keys
         for k in matching_sshkeys:
             try:
                 k.delete()

@@ -164,7 +164,7 @@ response:
                         allowExtensionOperations:
                             description:
                                 - Specifies whether extension operations should be allowed on the virtual machine.
-                                - This may only be set to False when no extentions are present on the virtual machine.
+                                - This may only be set to False when no extensions are present on the virtual machine.
                             type: bool
                             returned: always
                             sample: true
@@ -176,7 +176,7 @@ response:
                             sample: myVM
                         requireGuestProvisionSignale:
                             description:
-                                - Specifies the host require guest provision siganl or not.
+                                - Specifies the host require guest provision signal or not.
                             type: bool
                             returned: always
                             sample: true
@@ -188,7 +188,7 @@ response:
                             sample: []
                         linuxConfiguration:
                             description:
-                                - Specifies the Linux operatiing system settings on the virtual machine.
+                                - Specifies the Linux operating system settings on the virtual machine.
                             type: dict
                             returned: when OS type is Linux
                             sample: {
@@ -203,14 +203,14 @@ response:
                     sample: Succeeded
                 vmID:
                     description:
-                        - Specifies the VM unique ID whic is a 128-bits identifier that is encoded and stored in all Azure laaS VMs SMBIOS.
+                        - Specifies the VM unique ID which is a 128-bits identifier that is encoded and stored in all Azure laaS VMs SMBIOS.
                         - It can be read using platform BIOS commands.
                     type: str
                     returned: always
                     sample: "eb86d9bb-6725-4787-a487-2e497d5b340c"
                 storageProfile:
                     description:
-                        - Specifies the storae account type for the managed disk.
+                        - Specifies the storage account type for the managed disk.
                     type: complex
                     returned: always
                     contains:

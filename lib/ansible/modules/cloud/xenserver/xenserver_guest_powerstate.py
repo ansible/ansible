@@ -16,7 +16,7 @@ DOCUMENTATION = r'''
 module: xenserver_guest_powerstate
 short_description: Manages power states of virtual machines running on Citrix XenServer host or pool
 description: >
-   This module can be used to power on, power off, restart or suspend virtual machine and grecefully reboot or shutdown guest OS of virtual machine.
+   This module can be used to power on, power off, restart or suspend virtual machine and gracefully reboot or shutdown guest OS of virtual machine.
 version_added: '2.8'
 author:
 - Bojan Vitnik (@bvitnik) <bvitnik@mainstream.rs>
@@ -38,7 +38,7 @@ options:
     description:
     - Specify the state VM should be in.
     - If C(state) is set to value other than C(present), then VM is transitioned into required state and facts are returned.
-    - If C(state) is set to C(present), then VM is just checked for existance and facts are returned.
+    - If C(state) is set to C(present), then VM is just checked for existence and facts are returned.
     type: str
     default: present
     choices: [ powered-on, powered-off, restarted, shutdown-guest, reboot-guest, suspended, present ]
@@ -64,7 +64,7 @@ options:
     default: no
   state_change_timeout:
     description:
-    - 'By default, module will wait indefinitely for VM to change state or accquire an IP address if C(wait_for_ip_address: yes).'
+    - 'By default, module will wait indefinitely for VM to change state or acquire an IP address if C(wait_for_ip_address: yes).'
     - If this parameter is set to positive value, the module will instead wait specified number of seconds for the state change.
     - In case of timeout, module will generate an error message.
     type: int

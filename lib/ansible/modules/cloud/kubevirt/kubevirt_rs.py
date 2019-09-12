@@ -68,7 +68,7 @@ requirements:
 EXAMPLES = '''
 - name: Create virtual machine replica set 'myvmir'
   kubevirt_rs:
-      state: presnet
+      state: present
       name: myvmir
       namespace: vms
       wait: true

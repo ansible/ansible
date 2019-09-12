@@ -62,7 +62,7 @@ options:
     description:
       - The amount of memory in MB to allocate to VMs in the vApp.  If the
         I(vm_name) argument is provided, then this becomes a per VM setting
-        otherise it is applied to all VMs in the vApp.
+        otherwise it is applied to all VMs in the vApp.
   operation:
     description:
       - Specifies an operation to be performed on the vApp.
@@ -167,7 +167,7 @@ def create(module):
 
     module.vca.block_until_completed(task)
 
-    # Connect the network to the Vapp/VM and return asigned IP
+    # Connect the network to the Vapp/VM and return assigned IP
     if network_name is not None:
         vm_ip = connect_to_network(module, vdc_name, vapp_name, network_name, network_mode)
         return vm_ip

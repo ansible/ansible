@@ -28,7 +28,7 @@ options:
         required: True
     permissions:
         description:
-            - Set of role definition peremissions.
+            - Set of role definition permissions.
             - See U(https://docs.microsoft.com/en-us/azure/app-service/app-service-web-overview) for more info.
         suboptions:
             actions:
@@ -250,7 +250,7 @@ class AzureRMRoleDefinition(AzureRMModuleBase):
 
         elif self.state == 'absent':
             if old_response:
-                self.log("Delete role defintion")
+                self.log("Delete role definition")
                 self.results['changed'] = True
 
                 if self.check_mode:
