@@ -35,7 +35,7 @@ description:
     - If C(verification_method=EMAIL), the email address(es) that the validation email(s) were sent to will be in the return parameter I(emails). This is
       purely informational. For domains requested using this module, this will always be a list of size 1.
 notes:
-    - There is a small delay (typically about 5 seconds, but as long as 60) before obtaining the random values when requesting a validation
+    - There is a small delay (typically about 5 seconds, but can be as long as 60 seconds) before obtaining the random values when requesting a validation
       while C(verification_method=DNS) or C(verification_method=WEB_SERVER). Be aware of that if doing many domain validation requests.
 options:
     client_id:
