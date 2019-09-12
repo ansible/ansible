@@ -1398,7 +1398,7 @@ class ModuleValidator(Validator):
                     msg += " has sub-options but documentation does not define it"
                     self.reporter.error(
                         path=self.object_path,
-                        code='missing-subption-docs',
+                        code='missing-suboption-docs',
                         msg=msg
                     )
                 self._validate_argument_spec({'options': doc_suboptions}, spec_suboptions, kwargs, context=context + [arg])
