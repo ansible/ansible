@@ -555,16 +555,15 @@ def _create_server(module, cloud):
         if not flavor_dict:
             module.fail_json(msg='Could not find any matching flavor')
 
-    module.params['meta'] = _parse_meta(module.params['meta'])
     if module.check_mode:
         server = dict(
             name=module.params['name'],
-            metadata=module.params['meta'],
             security_groups=module.params['security_groups']
         )
         return server
 
     nics = _network_args(module, cloud)
+    module.params['meta'] = _parse_meta(module.params['meta'])
 
     bootkwargs = dict(
         name=module.params['name'],
