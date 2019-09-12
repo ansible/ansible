@@ -210,7 +210,7 @@ def user_add_or_update(module, HTTPMethod):
     api_base_url = cyberark_session["api_base_url"]
     validate_certs = cyberark_session["validate_certs"]
 
-    # Prepare result, paylod, and headers
+    # Prepare result, payload, and headers
     result = {}
     payload = {}
     headers = {'Content-Type': 'application/json',
