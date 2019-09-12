@@ -105,7 +105,7 @@ Codes
   missing-python-interpreter                                   Syntax               Error                  Interpreter line is not ``#!/usr/bin/python``
   missing-return                                               Documentation        Error                  No ``RETURN`` documentation provided
   missing-return-legacy                                        Documentation        Warning                No ``RETURN`` documentation provided for legacy module
-  missing-subption-docs                                        Documentation        Error                  Argument in argument_spec has sub-options but documentation does not define sub-options
+  missing-suboption-docs                                       Documentation        Error                  Argument in argument_spec has sub-options but documentation does not define sub-options
   module-incorrect-version-added                               Documentation        Error                  Module level ``version_added`` is incorrect
   module-invalid-version-added                                 Documentation        Error                  Module level ``version_added`` is not a valid version number
   module-utils-specific-import                                 Imports              Error                  ``module_utils`` imports should import specific components, not ``*``
