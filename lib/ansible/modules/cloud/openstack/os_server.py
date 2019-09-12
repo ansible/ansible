@@ -437,7 +437,7 @@ from ansible.module_utils.openstack import (
     openstack_full_argument_spec, openstack_module_kwargs)
 
 
-def _exit_hostvars(module, cloud, server, diff, result, changed=True):
+def _exit_hostvars(module, cloud, server, diff, changed=True):
     redact_keys = ['adminPass']
     for k in redact_keys:
         if k in diff['before']:
@@ -447,9 +447,13 @@ def _exit_hostvars(module, cloud, server, diff, result, changed=True):
         if k in server:
             server[k] = '***'
 
-    hostvars = cloud.get_openstack_vars(server)
+    if module.check_mode:
+        hostvars = server
+    else:
+        hostvars = cloud.get_openstack_vars(server)
+
     module.exit_json(
-        changed=changed, diff=diff, server=server, result=result, id=server.id, openstack=hostvars)
+        changed=changed, diff=diff, server=server, id=server.get('id', None), openstack=hostvars)
 
 
 def _parse_nics(nics):
@@ -516,6 +520,9 @@ def _parse_meta(meta):
 
 
 def _delete_server(module, cloud):
+    if module.check_mode:
+        return True
+
     try:
         cloud.delete_server(
             module.params['name'], wait=module.params['wait'],
@@ -548,9 +555,16 @@ def _create_server(module, cloud):
         if not flavor_dict:
             module.fail_json(msg='Could not find any matching flavor')
 
-    nics = _network_args(module, cloud)
-
     module.params['meta'] = _parse_meta(module.params['meta'])
+    if module.check_mode:
+        server = dict(
+            name=module.params['name'],
+            metadata=module.params['meta'],
+            security_groups=module.params['security_groups']
+        )
+        return server
+
+    nics = _network_args(module, cloud)
 
     bootkwargs = dict(
         name=module.params['name'],
@@ -585,6 +599,8 @@ def _create_server(module, cloud):
 
 def _update_server(module, cloud, server):
     changed = False
+    sg_changed = False
+    ip_changed = False
 
     module.params['meta'] = _parse_meta(module.params['meta'])
 
@@ -596,14 +612,20 @@ def _update_server(module, cloud, server):
             update_meta[k] = v
 
     if update_meta:
-        cloud.set_server_metadata(server, update_meta)
+        if module.check_mode:
+            server['metadata'].update(update_meta)
+        else:
+            cloud.set_server_metadata(server, update_meta)
         changed = True
 
     # these functions perform update checks themselves
-    (changed, server) = _update_security_groups(module, cloud, server)
-    (changed, server) = _update_ips(module, cloud, server)
+    (sg_changed, server) = _update_security_groups(module, cloud, server)
+    (ip_changed, server) = _update_ips(module, cloud, server)
 
-    if changed:
+    if sg_changed or ip_changed:
+        changed = True
+
+    if changed and not module.check_mode:
         # Refresh server vars
         server = cloud.get_server(module.params['name'])
 
@@ -692,6 +714,19 @@ def _update_security_groups(module, cloud, server):
     add_sgs = module_security_groups - server_security_groups
     remove_sgs = server_security_groups - module_security_groups
 
+    if module.check_mode:
+        if add_sgs:
+            sg_list = [dict(name=sg) for sg in add_sgs]
+            server['security_groups'].extend(sg_list)
+            changed = True
+
+        if remove_sgs:
+            sg_list = [dict(name=sg) for sg in server_security_groups if sg not in remove_sgs]
+            server['security_groups'] = sg_list
+            changed = True
+
+        return (changed, server)
+
     if add_sgs:
         cloud.add_server_security_groups(server, list(add_sgs))
         changed = True
@@ -711,17 +746,17 @@ def _present_server(module, cloud):
     if not server:
         server = _create_server(module, cloud)
         diff['after'] = server
-        _exit_hostvars(module, cloud, server, diff, 'created', True)
+        _exit_hostvars(module, cloud, server, diff, True)
 
     if server.status not in ('ACTIVE', 'SHUTOFF', 'PAUSED', 'SUSPENDED'):
         module.fail_json(
             msg='The instance is available but not Active state: %s' % server.status)
 
     if server:
-        diff['before'] = server
+        diff['before'] = server.copy()
         (changed, server) = _update_server(module, cloud, server)
         diff['after'] = server
-        _exit_hostvars(module, cloud, server, diff, 'updated', changed)
+        _exit_hostvars(module, cloud, server, diff, changed)
 
 
 def _absent_server(module, cloud):
@@ -781,7 +816,9 @@ def main():
             ('boot_from_volume', True, ['volume_size', 'image']),
         ],
     )
-    module = AnsibleModule(argument_spec, **module_kwargs)
+    module = AnsibleModule(argument_spec,
+                           supports_check_mode=True,
+                           **module_kwargs)
 
     state = module.params['state']
     image = module.params['image']
