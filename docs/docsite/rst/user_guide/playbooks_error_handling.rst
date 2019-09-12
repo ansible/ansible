@@ -152,12 +152,18 @@ Aborting the play
 
 Sometimes it's desirable to abort the entire play on failure, not just skip remaining tasks for a host.
 
-The ``any_errors_fatal`` play option will end the play when any tasks results in an error and stop execution of the play::
+The ``any_errors_fatal`` option will end the play and prevent any subsequent plays from running. When an error is encountered, all hosts in the current batch are given the opportunity to finish the fatal task and then the execution of the play stops. ``any_errors_fatal`` can be set at the play or block level::
 
      - hosts: somehosts
        any_errors_fatal: true
        roles:
          - myrole
+
+     - hosts: somehosts
+       tasks:
+         - block:
+             - include_tasks: mytasks.yml
+           any_errors_fatal: true
 
 for finer-grained control ``max_fail_percentage`` can be used to abort the run after a given percentage of hosts has failed.
 
