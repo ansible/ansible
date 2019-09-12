@@ -60,6 +60,8 @@ def parse_kv(args, check_raw=False):
     if args is not None:
         try:
             vargs = split_args(args)
+        except IndexError as e:
+            raise AnsibleParserError("Unable to parse argument string", orig_exc=e)
         except ValueError as ve:
             if 'no closing quotation' in str(ve).lower():
                 raise AnsibleParserError("error parsing argument string, try quoting the entire line.", orig_exc=ve)
