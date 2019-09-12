@@ -25,8 +25,7 @@ options:
         description:
         - Create or modify an organization.
         - C(org_id) must be specified if multiple organizations of the same name exist.
-        - C(absent) WILL DELETE YOUR ENTIRE ORGANIZATION, AND ALL ASSOCIATED OBJECTS, WITHOUT CONFIRMATION. USE WITH CAUTION.
-        choices: ['absent', 'present', 'query']
+        choices: ['present', 'query']
         default: present
     clone:
         description:
@@ -132,7 +131,7 @@ def main():
     # the module
     argument_spec = meraki_argument_spec()
     argument_spec.update(clone=dict(type='str'),
-                         state=dict(type='str', choices=['absent', 'present', 'query'], default='present'),
+                         state=dict(type='str', choices=['present', 'query'], default='present'),
                          org_name=dict(type='str', aliases=['name', 'organization']),
                          org_id=dict(type='str', aliases=['id']),
                          )
