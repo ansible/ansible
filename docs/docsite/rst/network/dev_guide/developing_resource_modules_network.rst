@@ -14,23 +14,23 @@ The resource module builder has the following capabilities:
 
 - Uses a defined model to scaffold a resource module directory layout and initial class files.
 - Scaffolds either an Ansible role or a collection.
-- Subsequent uses of the resource module builder will only replace the module arspec and file containing the module doc string.
+- Subsequent uses of the resource module builder will only replace the module arspec and file containing the module docstring.
 - Allows you to store complex examples along side the model in the same directory.
 - Maintains the model as the source of truth for the module and use resource module builder to update the source files as needed.
-- Generates working sample modules for both `<network_os>_<resource>` and `<network_os>_facts`.
+- Generates working sample modules for both ``<network_os>_<resource>`` and ``<network_os>_facts``.
 
 Accessing the resource module builder
 =====================================
 
 To access the resource module builder:
 
-#. clone the github repository:
+1. clone the github repository:
 
   .. code-block:: bash
 
     git clone https://github.com/ansible-network/resource_module_builder.git
 
-#. Install the requirements:
+2. Install the requirements:
 
   .. code-block:: bash
 
@@ -43,11 +43,11 @@ You must create a model for your new resource. The resource module builder uses 
 
 * The scaffold for a new module
 * The argspec for the new module
-* The docstring for the new module.
+* The docstring for the new module
 
-The model is then the single source of truth for both the argspec and docstring, keeping them in sync. Use the resource module builder to generate this scaffolding. For any subsequent updates to the module, update the model first and use the resource module builder to update the module scaffolding.
+The model is then the single source of truth for both the argspec and docstring, keeping them in sync. Use the resource module builder to generate this scaffolding. For any subsequent updates to the module, update the model first and use the resource module builder to update the module argspec and docstring.
 
-The following shows an example of a model file:
+For example, the resource model builder includes the ``myos_interfaces.yml`` sample in the :file:`models` directory, as seen below:
 
 .. code-block:: yaml
 
@@ -67,8 +67,8 @@ The following shows an example of a model file:
   DOCUMENTATION: |
     module: myos_interfaces
     version_added: 2.9
-    short_description: 'Manages <xxxx> attributes of <network_os> <resource>.'
-    description: 'Manages <xxxx> attributes of <network_os> <resource>'
+    short_description: 'Manages <xxxx> attributes of <network_os> <resource>'
+    description: 'Manages <xxxx> attributes of <network_os> <resource>.'
     author: Ansible Network Engineer
    notes:
       - 'Tested against <network_os> <version>'
@@ -110,7 +110,7 @@ The following shows an example of a model file:
                 type: str
       state:
         description:
-        - The state the configuration should be left in
+        - The state of the configuration after module completion.
         type: str
         choices:
         - merged
@@ -124,6 +124,8 @@ The following shows an example of a model file:
     - overridden_example_01.txt
     - replaced_example_01.txt
 
+Notice that you should include examples for each of the states that the resource supports. The resource module builder also includes these in the sample model.
+
 See `Ansible network resource models  <https://github.com/ansible-network/resource_module_models>`_ for more examples.
 
 Using the resource module builder
@@ -134,21 +136,23 @@ To use the resource module builder to create a collection scaffold from your res
 .. code-block:: bash
 
   ansible-playbook -e rm_dest=<destination for modules and module utils> \
-                 -e structure=collection \
-                 -e collection_org=<collection_org> \
-                 -e collection_name=<collection_name> \
-                 -e model=<model> \
-                 site.yml
+                   -e structure=collection \
+                   -e collection_org=<collection_org> \
+                   -e collection_name=<collection_name> \
+                   -e model=<model> \
+                   site.yml
 
 Where the parameters are as follows:
 
-- `rm_dest`: The directory where the resource module builder places the files and directories for the resource module and facts modules.
-- `structure`: The directory layout type (role or collection)
-  - `role`: Generate a role directory layout.
-  - `collection`: Generate a collection directory layout.
-- `collection_org`: The organization of the collection, required when `structure=collection`.
-- `collection_name`: The name of the collection, required when `structure=collection`.
-- `model`: The path to the model file.
+- ``rm_dest``: The directory where the resource module builder places the files and directories for the resource module and facts modules.
+- ``structure``: The directory layout type (role or collection)
+
+  - ``role``: Generate a role directory layout.
+  - ``collection``: Generate a collection directory layout.
+
+- ``collection_org``: The organization of the collection, required when `structure=collection`.
+- ``collection_name``: The name of the collection, required when `structure=collection`.
+- ``model``: The path to the model file.
 
 To use the resource module builder to create a role scaffold:
 
@@ -167,8 +171,8 @@ Collection directory layout
 
 This example shows the directory layout for the following:
 
-- `network_os`: myos
-- `resource`: interfaces
+- ``network_os``: myos
+- ``resource``: interfaces
 
 .. code-block:: bash
 
@@ -181,45 +185,47 @@ This example shows the directory layout for the following:
 
 .. code-block:: text
 
-    roles
-    └── my_role
-    ├── library
-    │   ├── __init__.py
-    │   ├── myos_facts.py
-    │   └── myos_interfaces.py
-    ├── LICENSE.txt
-    ├── module_utils
-    │   ├── __init__.py
-    │   └── network
-    │       ├── __init__.py
-    │       └── myos
-    │           ├── argspec
-    │           │   ├── facts
-    │           │   │   ├── facts.py
-    │           │   │   └── __init__.py
-    │           │   ├── __init__.py
-    │           │   └── interfaces
-    │           │       ├── __init__.py
-    │           │       └── interfaces.py
-    │           ├── config
-    │           │   ├── base.py
-    │           │   ├── __init__.py
-    │           │   └── interfaces
-    │           │       ├── __init__.py
-    │           │       └── interfaces.py
-    │           ├── facts
-    │           │   ├── base.py
-    │           │   ├── facts.py
-    │           │   ├── __init__.py
-    │           │   └── interfaces
-    │           │       ├── __init__.py
-    │           │       └── interfaces.py
-    │           ├── __init__.py
-    │           └── utils
-    │               ├── __init__.py
-    │               └── utils.py
-    └── README.md
-
+  ├── docs
+  ├── LICENSE.txt
+  ├── playbooks
+  ├── plugins
+  |   ├── action
+  |   ├── filter
+  |   ├── inventory
+  |   ├── modules
+  |   |   ├── __init__.py
+  |   |   ├── myos_facts.py
+  |   |   └──  myos_interfaces.py
+  |   └──  module_utils
+  |       ├── __init__.py
+  |       └──  network
+  |           ├── __init__.py
+  |           └──  myos
+  |               ├── argspec
+  |               |   ├── facts
+  |               |   |   ├── facts.py
+  |               |   |   └──  __init__.py
+  |               |   ├── __init__.py
+  |               |   └──  interfaces
+  |               |       ├── __init__.py
+  |               |       └──  interfaces.py
+  |               ├── config
+  |               |   ├── __init__.py
+  |               |   └──  interfaces
+  |               |       ├── __init__.py
+  |               |       └──  interfaces.py
+  |               ├── facts
+  |               |   ├── facts.py
+  |               |   ├── __init__.py
+  |               |   └──  interfaces
+  |               |       ├── __init__.py
+  |               |       └──  interfaces.py
+  |               ├── __init__.py
+  |               └──  utils
+  |                   ├── __init__.py
+  |                   └──  utils.py
+  ├── README.md
+  └──  roles
 
 
 Role directory layout
@@ -227,8 +233,8 @@ Role directory layout
 
 This example displays the role directory layout for the following:
 
-- `network_os`: myos
-- `resource`: interfaces
+- ``network_os``: myos
+- ``resource``: interfaces
 
 .. code-block:: bash
 
@@ -280,26 +286,10 @@ This example displays the role directory layout for the following:
         └── README.md
 
 
-Using the collection layout
----------------------------
+Using the collection
+--------------------
 
-.. code-block:: bash
-
-  git clone git@github.com:ansible/ansible.git
-  cd ansible
-  git fetch origin pull/52194/head:collection_test
-  git checkout collection_test
-
-
-Link the generated collection to `~/.ansible/collections/ansible_collections/<collection_org>/<collection_name>`
-
-.. code-block:: bash
-
-  ln -s ~/github/rm_example ~/.ansible/collections/ansible_collections/cidrblock/my_collection
-
-
-`site.yml`
-^^^^^^^^^^
+This example shows how to use the generated collection in a playbook:
 
  .. code-block:: yaml
 
@@ -316,11 +306,10 @@ Link the generated collection to `~/.ansible/collections/ansible_collections/<co
            var: ansible_network_resources
 
 
-Using the role layout
----------------------
+Using the role
+--------------
 
-`site.yml`
-^^^^^^^^^^^
+This example shows how to use the generated role in a playbook:
 
 .. code-block:: yaml
 
@@ -341,61 +330,45 @@ Using the role layout
           var: ansible_network_resources
 
 
-Resource Module Structure/Workflow
-==================================
+Resource module structure and workflow
+======================================
 
-Module
-------
+The resource module structure includes the following components:
 
-`library/<ansible_network_os>_<resource>.py`.
+  Module
+    ``library/<ansible_network_os>_<resource>.py``.
+    Imports the ``module_utils`` resource package and calls ``execute_module`` API
 
-- Import `module_utils` resource package and calls `execute_module` API
+    .. code-block:: python
 
-.. code-block:: python
+      def main():
+          result = <resource_package>(module).execute_module()
 
-  def main():
-      result = <resource_package>(module).execute_module()
+  Module argspec
+    ``module_utils/<ansible_network_os>/argspec/<resource>/``.
+    Argspec for the resource.
 
-Module Argspec
---------------
+  Facts
+    ``module_utils/<ansible_network_os>/facts/<resource>/``.
+    - Populate facts for the resource.
+    - Entry in ``module_utils/<ansible_network_os>/facts/facts.py`` for ``get_facts`` API to keep ``<ansible_network_os>_facts`` module and facts gathered for the resource module in sync for every subset.
 
-`module_utils/<ansible_network_os>/argspec/<resource>/`.
+  Module package in module_utils
+    ``module_utils/<ansible_network_os>/<config>/<resource>/``.
+    - Implement ``execute_module`` API that loads the configuration to device and generates the result with ``changed``, ``commands``, ``before`` and ``after`` keys.
+    - Call ``get_facts`` API that returns the ``<resource>`` configuration facts or return the difference if the device has onbox diff support.
+    - Compare facts gathered and given key-values if diff is not supported.
+    - Generate final configuration.
 
-- Argspec for the resource.
+  Utils
+    ``module_utils/<ansible_network_os>/utils``.
 
-Facts
------
-
-`module_utils/<ansible_network_os>/facts/<resource>/`.
-
-- Populate facts for the resource.
-- Entry in `module_utils/<ansible_network_os>/facts/facts.py` for `get_facts` API to keep
-  `<ansible_network_os>_facts` module and facts gathered for the resource module in sync
-  for every subset.
-
-Module Package in module_utils
--------------------------------
-
-`module_utils/<ansible_network_os>/<config>/<resource>/`.
-
-- Implement `execute_module` API that loads the config to device and generates the result with
-  `changed`, `commands`, `before` and `after` keys.
-- Call `get_facts` API that returns the `<resource>` config facts or return the diff if the
-  device has onbox diff support.
-- Compare facts gathered and given key-values if diff is not supported.
-- Generate final config.
-
-Utils
------
-
-`module_utils/<ansible_network_os>/utils`.
-
-- Utilities for the` <ansible_network_os>` platform.
+    - Utilities for the ``<ansible_network_os>`` platform.
 
 Developer notes
 ===============
 
-The tests rely on a role generated by the resource module builder. After changes to the resource module builder, the role should be regenerated and the tests modified and run as needed.  To generate the role after changes:
+The tests rely on a role generated by the resource module builder. After changes to the resource module builder, the role should be regenerated and the tests modified and run as needed. To generate the role after changes:
 
 .. code-block:: bash
 
