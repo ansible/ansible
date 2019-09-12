@@ -42,7 +42,7 @@ Ansible Collections
 
 Since sanity tests change between Ansible releases, a separate ignore file is needed for each Ansible major release.
 
-The filename is ``test/sanity/ignore-X.Y.txt`` where ``X.Y`` is the Ansible release being used to test the collection.
+The filename is ``tests/sanity/ignore-X.Y.txt`` where ``X.Y`` is the Ansible release being used to test the collection.
 
 Maintaining a separate file for each Ansible release allows a collection to pass tests for multiple versions of Ansible.
 
