@@ -39,8 +39,15 @@ class LoopControl(FieldAttributeBase):
         t = LoopControl()
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
-    def _post_validate_label(self, attr, value, templar):
+    def post_validate(self, templar):
+        '''
+        Override of base class post_validate, to also do final validation
+        '''
+        self.validate()
+
+        super(LoopControl, self).post_validate(templar)
+
+    def _validate_label(self, attr, name, value):
         ''' default to loop var '''
         if value is None:
-            value = templar.template('{{%s}}' % self.loop_var)
-        return value
+            setattr(self, name, '{{%s}}' % self.loop_var)
