@@ -93,7 +93,7 @@ options:
   asynchronous:
     description:
     - Will run the command as a detached process and the module returns
-      immediately after starting the processs while the process continues to
+      immediately after starting the process while the process continues to
       run in the background.
     - The I(stdout) and I(stderr) return values will be null when this is set
       to C(yes).
