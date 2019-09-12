@@ -44,6 +44,11 @@ options:
       - A list of managed policy ARNs or, since Ansible 2.4, a list of either managed policy ARNs or friendly names.
         To embed an inline policy, use M(iam_policy). To remove existing policies, use an empty list item.
     aliases: [ managed_policies ]
+  max_session_duration:
+    description:
+      - The maximum duration (in seconds) of a session when assuming the role.
+      - Valid values are between 1 and 12 hours (3600 and 43200 seconds).
+    version_added: "2.10"
   purge_policies:
     description:
       - Detaches any managed policies not listed in the "managed_policy" option. Set to false if you want to attach policies elsewhere.
@@ -59,7 +64,7 @@ options:
     description:
       - Creates an IAM instance profile along with the role
     type: bool
-    default: yes
+    default: true
     version_added: "2.5"
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
@@ -230,6 +235,8 @@ def create_or_update_role(connection, module):
     params['Path'] = module.params.get('path')
     params['RoleName'] = module.params.get('name')
     params['AssumeRolePolicyDocument'] = module.params.get('assume_role_policy_document')
+    if module.params.get('max_session_duration') is not None:
+        params['MaxSessionDuration'] = module.params.get('max_session_duration')
     if module.params.get('description') is not None:
         params['Description'] = module.params.get('description')
     if module.params.get('boundary') is not None:
@@ -347,6 +354,15 @@ def create_or_update_role(connection, module):
         except (BotoCoreError, ClientError) as e:
             module.fail_json(msg="Unable to update description for role {0}: {1}".format(params['RoleName'], to_native(e)),
                              exception=traceback.format_exc())
+    # Check MaxSessionDuration update
+    if not role.get('MadeInCheckMode') and params.get('MaxSessionDuration') and role.get('MaxSessionDuration') != params['MaxSessionDuration']:
+        try:
+            if not module.check_mode:
+                connection.update_role(RoleName=params['RoleName'], MaxSessionDuration=params['MaxSessionDuration'])
+
+            changed = True
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg="Unable to update maximum session duration for role {0}".format(params['RoleName']))
 
     # Check if permission boundary needs update
     if not role.get('MadeInCheckMode') and (
@@ -486,6 +502,7 @@ def main():
         path=dict(type='str', default="/"),
         assume_role_policy_document=dict(type='json'),
         managed_policy=dict(type='list', aliases=['managed_policies']),
+        max_session_duration=dict(type='int'),
         state=dict(type='str', choices=['present', 'absent'], default='present'),
         description=dict(type='str'),
         boundary=dict(type='str', aliases=['boundary_policy_arn']),
@@ -501,6 +518,10 @@ def main():
     if module.params.get('boundary') is not None and not module.botocore_at_least('1.10.57'):
         module.fail_json(msg="When using a boundary policy, botocore must be at least v1.10.57. "
                          "Current versions: boto3-{boto3_version} botocore-{botocore_version}".format(**module._gather_versions()))
+    if module.params.get('max_session_duration'):
+        max_session_duration = module.params.get('max_session_duration')
+        if max_session_duration < 3600 or max_session_duration > 43200:
+            module.fail_json(msg="max_session_duration must be between 1 and 12 hours (3600 and 43200 seconds)")
 
     connection = module.client('iam')
 
