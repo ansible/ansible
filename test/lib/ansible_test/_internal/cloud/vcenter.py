@@ -61,7 +61,7 @@ class VcenterProvider(CloudProvider):
         :type targets: tuple[TestTarget]
         :type exclude: list[str]
         """
-        if self.vmware_test_platform == 'govcsim':
+        if self.vmware_test_platform == 'govcsim' or (self.vmware_test_platform == '' and not os.path.isfile(self.config_static_path)):
             docker = find_executable('docker', required=False)
 
             if docker:
@@ -72,8 +72,8 @@ class VcenterProvider(CloudProvider):
 
             if skipped:
                 exclude.append(skip)
-                display.warning('Excluding tests marked "%s" which require the "docker" command: %s'
-                                % (skip.rstrip('/'), ', '.join(skipped)))
+                display.warning('Excluding tests marked "%s" which require the "docker" command or config (see "%s"): %s'
+                                % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
         else:
             if os.path.isfile(self.config_static_path):
                 return
