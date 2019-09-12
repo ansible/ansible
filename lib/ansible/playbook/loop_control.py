@@ -25,11 +25,11 @@ from ansible.playbook.base import FieldAttributeBase
 
 class LoopControl(FieldAttributeBase):
 
-    _loop_var = FieldAttribute(isa='str', default='item')
+    _loop_var = FieldAttribute(isa='str', default='item', priority=10)
     _index_var = FieldAttribute(isa='str')
-    _label = FieldAttribute(isa='str')
+    _label = FieldAttribute(isa='str', priority=5)
     _pause = FieldAttribute(isa='float', default=0)
-    _extended = FieldAttribute(isa='bool')
+    _extended = FieldAttribute(isa='bool', default=False)
 
     def __init__(self):
         super(LoopControl, self).__init__()
@@ -38,3 +38,9 @@ class LoopControl(FieldAttributeBase):
     def load(data, variable_manager=None, loader=None):
         t = LoopControl()
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
+
+    def _post_validate_label(self, attr, value, templar):
+        ''' default to loop var '''
+        if value is None:
+            value = templar.template('{{%s}}' % self.loop_var)
+        return value

@@ -280,26 +280,17 @@ class TaskExecutor:
         # task_vars = self._job_vars.copy()
         task_vars = self._job_vars
 
-        loop_var = 'item'
-        index_var = None
-        label = None
-        loop_pause = 0
-        extended = False
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
 
-        # FIXME: move this to the object itself to allow post_validate to take care of templating (loop_control.post_validate)
-        if self._task.loop_control:
-            loop_var = templar.template(self._task.loop_control.loop_var)
-            index_var = templar.template(self._task.loop_control.index_var)
-            loop_pause = templar.template(self._task.loop_control.pause)
-            extended = templar.template(self._task.loop_control.extended)
+        # force template evaluation
+        self._task.loop_control.post_validate(templar=templar)
 
-            # This may be 'None',so it is templated below after we ensure a value and an item is assigned
-            label = self._task.loop_control.label
-
-        # ensure we always have a label
-        if label is None:
-            label = '{{' + loop_var + '}}'
+        # assign vars to be used for all loop iterations
+        loop_var = self._task.loop_control.loop_var
+        index_var = self._task.loop_control.index_var
+        loop_pause = self._task.loop_control.pause
+        extended = self._task.loop_control.extended
+        label = self._task.loop_control.label
 
         if loop_var in task_vars:
             display.warning(u"The loop variable '%s' is already in use. "
