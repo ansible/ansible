@@ -141,6 +141,12 @@ options:
       - Indicate if the container should be unprivileged
     type: bool
     default: 'no'
+protection:
+    version_added: "devel"
+    description:
+      - Indicate if the container should be protected
+    type: bool
+    default: 'no'
 
 notes:
   - Requires proxmoxer and requests modules on host. This modules can be installed with pip.
@@ -447,7 +453,8 @@ def main():
             force=dict(type='bool', default='no'),
             state=dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted']),
             pubkey=dict(type='str', default=None),
-            unprivileged=dict(type='bool', default='no')
+            unprivileged=dict(type='bool', default='no'),
+            protection=dict(type='bool', default='no')
         )
     )
 
@@ -470,6 +477,7 @@ def main():
     if module.params['ostemplate'] is not None:
         template_store = module.params['ostemplate'].split(":")[0]
     timeout = module.params['timeout']
+    protection = module.params['protection']
 
     # If password not set get it from PROXMOX_PASSWORD env
     if not api_password:
@@ -528,7 +536,8 @@ def main():
                             searchdomain=module.params['searchdomain'],
                             force=int(module.params['force']),
                             pubkey=module.params['pubkey'],
-                            unprivileged=int(module.params['unprivileged']))
+                            unprivileged=int(module.params['unprivileged'],
+                            protection=int(module.params['protection'])))
 
             module.exit_json(changed=True, msg="deployed VM %s from template %s" % (vmid, module.params['ostemplate']))
         except Exception as e:
