@@ -10,7 +10,7 @@
   - name: Override device LLDP interface configuration with provided configurations
     exos_lldp_interfaces: &overridden
       config:
-        - name: 6 
+        - name: 6
           enabled: false
         - name: 5
           enabled: true
@@ -44,4 +44,4 @@
   - name: Assert that before dict is correctly generated
     assert:
       that:
-          - "{{ overridden['after'] == result['before'] }}"            
+          - "{{ overridden['after'] == result['before'] }}"
