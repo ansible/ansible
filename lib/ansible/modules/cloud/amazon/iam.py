@@ -265,9 +265,9 @@ def delete_dependencies_first(module, iam, name):
     except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
         if 'must detach all policies first' in error_msg:
-            module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+            module.fail_json(changed=changed, msg="All inline policies have been removed. Though it appears"
                                                   "that %s has Managed Polices. This is not "
-                                                  "currently supported by boto. Please detach the polices "
+                                                  "currently supported by boto. Please detach the policies "
                                                   "through the console and try again." % name)
         module.fail_json(changed=changed, msg="Failed to delete policies: %s" % err, exception=traceback.format_exc())
 
@@ -494,9 +494,9 @@ def delete_group(module=None, iam=None, name=None):
             except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(err)
                 if ('must delete policies first') in error_msg:
-                    module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+                    module.fail_json(changed=changed, msg="All inline policies have been removed. Though it appears"
                                                           "that %s has Managed Polices. This is not "
-                                                          "currently supported by boto. Please detach the polices "
+                                                          "currently supported by boto. Please detach the policies "
                                                           "through the console and try again." % name)
                 else:
                     module.fail_json(changed=changed, msg=str(error_msg))
@@ -578,9 +578,9 @@ def delete_role(module, iam, name, role_list, prof_list):
                 except boto.exception.BotoServerError as err:
                     error_msg = boto_exception(err)
                     if ('must detach all policies first') in error_msg:
-                        module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+                        module.fail_json(changed=changed, msg="All inline policies have been removed. Though it appears"
                                                               "that %s has Managed Polices. This is not "
-                                                              "currently supported by boto. Please detach the polices "
+                                                              "currently supported by boto. Please detach the policies "
                                                               "through the console and try again." % name)
                     else:
                         module.fail_json(changed=changed, msg=str(err))

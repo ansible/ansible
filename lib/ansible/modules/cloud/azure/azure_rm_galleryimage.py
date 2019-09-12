@@ -142,7 +142,7 @@ options:
             type: int
   disallowed:
     description:
-      - Disalloved parameter values.
+      - Disallowed parameter values.
     type: dict
     suboptions:
       disk_types:

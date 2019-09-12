@@ -47,7 +47,7 @@ options:
         description:
         - A list of rules that the Web ACL will enforce.
         - Each rule must contain I(name), I(action), I(priority) keys.
-        - Priorities must be unique, but not necessarily consecutive. Lower numbered priorities are evalauted first.
+        - Priorities must be unique, but not necessarily consecutive. Lower numbered priorities are evaluated first.
         - The I(type) key can be passed as C(rate_based), it defaults to C(regular)
     purge_rules:
         description:

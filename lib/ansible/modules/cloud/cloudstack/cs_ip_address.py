@@ -67,7 +67,7 @@ options:
     description:
       - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
       - Tags can be used as an unique identifier for the IP Addresses.
-      - In this case, at least one of them must be unique to ensure idempontency.
+      - In this case, at least one of them must be unique to ensure idempotency.
     type: list
     aliases: [ tag ]
     version_added: '2.6'
@@ -80,7 +80,7 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-- name: Associate an IP address conditonally
+- name: Associate an IP address conditionally
   cs_ip_address:
     network: My Network
   register: ip_address

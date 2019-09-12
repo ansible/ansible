@@ -71,13 +71,13 @@ options:
 
   inbound_default_policy:
     description:
-      - Default policy for incoming trafic.
+      - Default policy for incoming traffic.
     type: str
     choices: [ accept, drop ]
 
   outbound_default_policy:
     description:
-      - Default policy for outcoming trafic.
+      - Default policy for outcoming traffic.
     type: str
     choices: [ accept, drop ]
 
