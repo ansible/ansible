@@ -7,6 +7,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.compat import ipaddress
 
 
 def search_obj_in_list(name, lst, key='name'):
@@ -162,3 +163,27 @@ def is_dict_element_present(dict, key):
         if item == key:
             return True
     return False
+
+def get_ip_address_version(address):
+    """
+    This function returns the version of IP address
+    :param address: IP address
+    :return:
+    """
+    address = unicode(address)
+    version = ipaddress.ip_address(address.split("/")[0]).version
+    return version
+
+
+def get_route_type(address):
+    """
+    This function returns the route type based on IP address
+    :param address:
+    :return:
+    """
+    version = get_ip_address_version(address)
+    if version == 6:
+        return 'route6'
+    elif version == 4:
+        return 'route'
+

@@ -1,0 +1,62 @@
+---
+- debug:
+    msg: "START vyos_static_routes round trip integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+  - name: Apply the provided configuration (base config)
+    vyos_static_routes:
+      config:
+        - address: 192.0.0.0/24
+          blackhole:
+            enabled: true
+          next_hop:
+            - address: 192.11.11.11
+            - address: 192.11.11.12
+        - address:  2001:db8::0/32
+          blackhole:
+            distance: 2 
+          next_hop:
+            - address: 2001:db8::5
+            - address: 2001:db8::1
+
+      state: merged
+    register: base_config
+
+  - name: Gather static_routes facts
+    vyos_facts:
+      gather_subset:
+        - default
+      gather_network_resources:
+        - static_routes
+
+  - name: Apply the provided configuration (config to be reverted)
+    vyos_static_routes:
+      config:
+        - address: 192.0.0.0/24
+          blackhole:
+            distance: 2
+          next_hop:
+            - address: 192.1.1.11
+            - address: 192.11.11.12
+            - address: 192.3.3.13        
+      state: merged
+    register: result
+
+  - name: Assert that changes were applied
+    assert:
+      that: "{{ round_trip['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+  - name: Revert back to base config using facts round trip
+    vyos_static_routes:
+      config: "{{ ansible_facts['network_resources']['static_routes'] }}"
+      state: overridden
+    register: revert
+
+  - name: Assert that config was reverted
+    assert:
+      that: "{{ base_config['after'] | symmetric_difference(revert['after']) |length == 0 }}"
+
+  always:
+  - include_tasks: _remove_config.yaml
