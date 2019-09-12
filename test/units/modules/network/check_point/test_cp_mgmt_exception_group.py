@@ -26,16 +26,29 @@ from ansible.modules.network.check_point import cp_mgmt_exception_group
 OBJECT = {
     "name": "exception_group_2",
     "apply_on": "manually-select-threat-rules",
-    "applied_threat_rules.0.layer": "MyLayer",
-    "applied_threat_rules.0.name": "MyThreatRule"
+    "applied_threat_rules": {
+        "add": [
+            {
+                "layer": "MyLayer",
+                "name": "MyThreatRule"
+            }
+        ]
+    }
 }
 
 CREATE_PAYLOAD = {
     "name": "exception_group_2",
     "apply_on": "manually-select-threat-rules",
-    "applied_threat_rules.0.layer": "MyLayer",
-    "applied_threat_rules.0.name": "MyThreatRule"
+    "applied_threat_rules": {
+        "add": [
+            {
+                "layer": "MyLayer",
+                "name": "MyThreatRule"
+            }
+        ]
+    }
 }
+
 
 UPDATE_PAYLOAD = {
     "name": "exception_group_2",
