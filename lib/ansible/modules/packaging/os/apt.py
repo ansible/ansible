@@ -1061,7 +1061,6 @@ def main():
     use_apt_get = p['force_apt_get']
 
     if not use_apt_get and not APTITUDE_CMD:
-        module.warn("Could not find aptitude. Using apt-get instead")
         use_apt_get = True
 
     updated_cache = False
