@@ -1,4 +1,6 @@
-# Ansible module to manage CheckPoint Firewall (c) 2019
+# Copyright (c) 2019 Red Hat
+#
+# This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,43 +16,31 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import absolute_import
 
 import pytest
-from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleExitJson
+from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleFailJson, AnsibleExitJson
 
 from ansible.module_utils import basic
+from ansible.module_utils.network.checkpoint.checkpoint import api_call
 from ansible.modules.network.check_point import cp_mgmt_network
 
-OBJECT = {
-    "name": "New Network 1",
-    "subnet": "192.0.2.0",
-    "subnet_mask": "255.255.255.0"
-}
+OBJECT = {'name': 'test_network', 'nat_settings': {'auto_rule': True,
+                                                   'hide_behind': 'ip-address',
+                                                   'ip_address': '192.168.1.111'},
+          'subnet': '192.0.2.1', 'subnet_mask': '255.255.255.0', 'state': 'present'}
 
-CREATE_PAYLOAD = {
-    "name": "New Network 1",
-    "subnet": "192.0.2.0",
-    "subnet_mask": "255.255.255.0"
-}
+CREATE_PAYLOAD = {'name': 'test_network', 'nat_settings': {'auto_rule': True,
+                                                           'hide_behind': 'ip-address',
+                                                           'ip_address': '192.168.1.111'},
+                  'subnet': '192.168.1.0', 'subnet_mask': '255.255.255.0', 'state': 'present'}
 
-UPDATE_PAYLOAD = {
-    "name": "New Network 1",
-    "color": "blue",
-    "subnet": "192.0.0.0",
-    "mask_length": 16
-}
+UPDATE_PAYLOAD = {'name': 'test_new_network', 'nat_settings': {'auto_rule': True,
+                                                               'hide_behind': 'ip-address',
+                                                               'ip_address': '192.168.1.111'},
+                  'subnet': '192.168.1.0', 'subnet_mask': '255.255.255.0', 'state': 'present'}
 
-OBJECT_AFTER_UPDATE = UPDATE_PAYLOAD
-
-DELETE_PAYLOAD = {
-    "name": "New Network 1",
-    "state": "absent"
-}
-
-function_path = 'ansible.modules.network.check_point.cp_mgmt_network.api_call'
-api_call_object = 'network'
+DELETE_PAYLOAD = {'name': 'test_new_network', 'state': 'absent'}
 
 
 class TestCheckpointNetwork(object):
@@ -65,46 +55,49 @@ class TestCheckpointNetwork(object):
         connection_class_mock = mocker.patch('ansible.module_utils.network.checkpoint.checkpoint.Connection')
         return connection_class_mock.return_value
 
-    def test_create(self, mocker, connection_mock):
-        mock_function = mocker.patch(function_path)
-        mock_function.return_value = {'changed': True, api_call_object: OBJECT}
+    @pytest.fixture
+    def get_network_404(self, mocker):
+        mock_function = mocker.patch('ansible.modules.network.check_point.cp_mgmt_network.api_call')
+        mock_function.return_value = (404, 'Object not found')
+        return mock_function.return_value
+
+    def test_network_create(self, mocker, connection_mock):
+        mock_function = mocker.patch('ansible.modules.network.check_point.cp_mgmt_network.api_call')
+        mock_function.return_value = {'changed': True, 'network': OBJECT}
+        connection_mock.api_call.return_value = {'changed': True, 'network': OBJECT}
         result = self._run_module(CREATE_PAYLOAD)
 
         assert result['changed']
-        assert OBJECT.items() == result[api_call_object].items()
+        assert 'network' in result
 
-    def test_create_idempotent(self, mocker, connection_mock):
-        mock_function = mocker.patch(function_path)
-        mock_function.return_value = {'changed': False, api_call_object: OBJECT}
+    def test_network_create_idempotent(self, mocker, connection_mock):
+        mock_function = mocker.patch('ansible.modules.network.check_point.cp_mgmt_network.api_call')
+        mock_function.return_value = {'changed': False, 'network': OBJECT}
+        connection_mock.send_request.return_value = (200, OBJECT)
         result = self._run_module(CREATE_PAYLOAD)
 
         assert not result['changed']
 
-    def test_update(self, mocker, connection_mock):
-        mock_function = mocker.patch(function_path)
-        mock_function.return_value = {'changed': True, api_call_object: OBJECT_AFTER_UPDATE}
+    def test_network_update(self, mocker, connection_mock):
+        mock_function = mocker.patch('ansible.modules.network.check_point.cp_mgmt_network.api_call')
+        mock_function.return_value = {'changed': True, 'network': OBJECT}
+        connection_mock.send_request.return_value = (200, OBJECT)
         result = self._run_module(UPDATE_PAYLOAD)
 
         assert result['changed']
-        assert OBJECT_AFTER_UPDATE.items() == result[api_call_object].items()
 
-    def test_update_idempotent(self, mocker, connection_mock):
-        mock_function = mocker.patch(function_path)
-        mock_function.return_value = {'changed': False, api_call_object: OBJECT_AFTER_UPDATE}
-        result = self._run_module(UPDATE_PAYLOAD)
-
-        assert not result['changed']
-
-    def test_delete(self, mocker, connection_mock):
-        mock_function = mocker.patch(function_path)
+    def test_network_delete(self, mocker, connection_mock):
+        mock_function = mocker.patch('ansible.modules.network.check_point.cp_mgmt_network.api_call')
         mock_function.return_value = {'changed': True}
+        connection_mock.send_request.return_value = (200, OBJECT)
         result = self._run_module(DELETE_PAYLOAD)
 
         assert result['changed']
 
-    def test_delete_idempotent(self, mocker, connection_mock):
-        mock_function = mocker.patch(function_path)
+    def test_network_delete_idempotent(self, mocker, connection_mock):
+        mock_function = mocker.patch('ansible.modules.network.check_point.cp_mgmt_network.api_call')
         mock_function.return_value = {'changed': False}
+        connection_mock.send_request.return_value = (200, OBJECT)
         result = self._run_module(DELETE_PAYLOAD)
 
         assert not result['changed']
