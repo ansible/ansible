@@ -33,13 +33,17 @@ options:
     - List of hosts that belong to the host-group.
     - If an empty list is passed all hosts will be removed from the group.
     - If option is omitted hosts will not be checked or changed.
-    - If option is passed all assigned hosts that are not passed will be unassigned from the group.
+    - If option is passed and option clear is true, all assigned hosts that are not passed will be unassigned from the group.
   hostgroup:
     description:
     - List of host-groups than belong to that host-group.
     - If an empty list is passed all host-groups will be removed from the group.
     - If option is omitted host-groups will not be checked or changed.
-    - If option is passed all assigned hostgroups that are not passed will be unassigned from the group.
+    - If option is passed and option clear is true, all assigned hostgroups that are not passed will be unassigned from the group.
+  clear:
+    description:
+    - assign only hosts and hostgroup to that host-group, others are removed
+    default: true
   state:
     description:
     - State to ensure.
@@ -59,6 +63,7 @@ EXAMPLES = '''
     hostgroup:
     - mysql-server
     - oracle-server
+    clear: true
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
@@ -137,6 +142,7 @@ def ensure(module, client):
     state = module.params['state']
     host = module.params['host']
     hostgroup = module.params['hostgroup']
+    clear = module.params['clear']
 
     ipa_hostgroup = client.hostgroup_find(name=name)
     module_hostgroup = get_hostgroup_dict(description=module.params['description'])
@@ -159,13 +165,14 @@ def ensure(module, client):
 
         if host is not None:
             changed = client.modify_if_diff(name, ipa_hostgroup.get('member_host', []), [item.lower() for item in host],
-                                            client.hostgroup_add_host, client.hostgroup_remove_host) or changed
+                                            client.hostgroup_add_host, client.hostgroup_remove_host, clear=clear) or changed
 
         if hostgroup is not None:
             changed = client.modify_if_diff(name, ipa_hostgroup.get('member_hostgroup', []),
                                             [item.lower() for item in hostgroup],
                                             client.hostgroup_add_hostgroup,
-                                            client.hostgroup_remove_hostgroup) or changed
+                                            client.hostgroup_remove_hostgroup,
+                                            clear=clear) or changed
 
     else:
         if ipa_hostgroup:
@@ -182,6 +189,7 @@ def main():
                          description=dict(type='str'),
                          host=dict(type='list'),
                          hostgroup=dict(type='list'),
+                         clear=dict(type='bool', default=True),
                          state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']))
 
     module = AnsibleModule(argument_spec=argument_spec,
