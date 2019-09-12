@@ -314,7 +314,7 @@ def main():
         name=dict(),
         full_name=dict(),
         role=dict(choices=ROLES),
-        encrypted_password=dict(),
+        encrypted_password=dict(no_log=True),
         sshkey=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
         active=dict(type='bool', default=True)
