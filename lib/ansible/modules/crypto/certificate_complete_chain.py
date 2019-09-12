@@ -49,6 +49,7 @@ options:
                certificates in PEM format."
             - "Symbolic links will be followed."
         type: list
+        elements: path
         required: yes
     intermediate_certificates:
         description:
@@ -61,6 +62,7 @@ options:
                certificates in PEM format."
             - "Symbolic links will be followed."
         type: list
+        elements: path
         default: []
 '''
 
