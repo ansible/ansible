@@ -468,7 +468,7 @@ def form_urlencoded(body):
 
     if isinstance(body, (Mapping, Sequence)):
         result = []
-        # Turn a list of lists into a list of tupples that urlencode accepts
+        # Turn a list of lists into a list of tuples that urlencode accepts
         for key, values in kv_list(body):
             if isinstance(values, string_types) or not isinstance(values, (Mapping, Sequence)):
                 values = [values]
