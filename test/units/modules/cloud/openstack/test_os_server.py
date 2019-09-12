@@ -173,6 +173,7 @@ class TestCreateServer(object):
         self.module.params = params_from_doc(method)
         self.module.fail_json.side_effect = AnsibleFail()
         self.module.exit_json.side_effect = AnsibleExit()
+        self.module.check_mode = False
 
         self.meta = mock.MagicMock()
         self.meta.gett_hostvars_from_server.return_value = {
