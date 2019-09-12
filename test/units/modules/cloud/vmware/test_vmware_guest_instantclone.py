@@ -32,8 +32,7 @@ def test_vmware_guest_instantclone_wo_parameters(capfd):
     out, err = capfd.readouterr()
     results = json.loads(out)
     assert results['failed']
-    # WTF is the order of datacenter and clone_name random in msg??????
-    assert "missing required arguments: datacenter, clone_name" in results['msg']
+    assert "missing required arguments:" in results['msg']
 
 
 @pytest.mark.parametrize('patch_ansible_module, testcase', TEST_CASES, indirect=['patch_ansible_module'])

@@ -11,7 +11,21 @@
         },
         {
             "failed": "True",
-            "msg": "Unknown error while connecting to vCenter or ESXi API at esxi01.example.com:443 : [Errno -2] Name or service not known"
+            "msg": "Unknown error while connecting to vCenter or ESXi API at esxi01.example.com:443 :"
+        }
+    ],
+    [
+        {
+            "hostname": "esxi01.example.com",
+            "username": "administrator@vsphere.local",
+            "password": "Secret@123$%",
+            "validate_certs": "False",
+            "datacenter": "test-datacenter",
+            "clone_name": "clone-test"
+        },
+        {
+            "failed": "True",
+            "msg": "one of the following is required: name, uuid, moid"
         }
     ]
 ]

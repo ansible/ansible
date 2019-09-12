@@ -143,9 +143,9 @@ class PyVmomiHelper(PyVmomi):
         vm_state = gather_vm_facts(self.content, vm)
         # An instant clone requires the base VM to be running, fail if it is not
         if vm_state['hw_power_status'] != 'poweredOn':
-            self.module.module.fail_json(msg='Unable to instant clone a VM in a "%s" state. It must be powered on.' % vm_state['hw_power_status'])
+            self.module.fail_json(msg='Unable to instant clone a VM in a "%s" state. It must be powered on.' % vm_state['hw_power_status'])
         if vm_state['instant_clone_frozen'] is None:
-            self.module.module.fail_json(msg='Unable to determine if VM is in a frozen state. Is vSphere running 6.7 or later?')
+            self.module.fail_json(msg='Unable to determine if VM is in a frozen state. Is vSphere running 6.7 or later?')
 
         # Build VM config dict
         config = []
@@ -153,7 +153,7 @@ class PyVmomiHelper(PyVmomi):
         if len(self.module.params['customvalues']) != 0:
             for kv in self.module.params['customvalues']:
                 if 'key' not in kv or 'value' not in kv:
-                    self.module.module.exit_json(msg="The parameter customvalues items required both 'key' and 'value' fields.")
+                    self.module.exit_json(msg="The parameter customvalues items required both 'key' and 'value' fields.")
                 ov = vim.OptionValue()
                 ov.key = kv['key']
                 ov.value = kv['value']
@@ -268,9 +268,6 @@ def main():
     if not vm:
         vm_id = (module.params.get('uuid') or module.params.get('name') or module.params.get('moid'))
         module.fail_json(msg="Unable to find any VM with the identifier: %s" % vm_id)
-
-    if not module.params['clone_name']:
-        module.fail_json(msg='Please specify a name for the new instant clone using the clone_name parameter.')
 
     if module.check_mode:
         result.update(
