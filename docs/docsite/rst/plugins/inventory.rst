@@ -127,7 +127,7 @@ Here is an example of setting inventory caching with some fact caching defaults 
 .. code-block:: ini
 
    [defaults]
-   fact_caching = json
+   fact_caching = jsonfile
    fact_caching_connection = /tmp/ansible_facts
    cache_timeout = 3600
 
