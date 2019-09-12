@@ -752,9 +752,13 @@ def _present_server(module, cloud):
             msg='The instance is available but not Active state: %s' % server.status)
 
     if server:
-        diff['before'] = server.copy()
+        diff['before'] = cloud.get_openstack_vars(server)
         (changed, server) = _update_server(module, cloud, server)
-        diff['after'] = server
+        if module.check_mode:
+            diff['after'] = server
+        else:
+            diff['after'] = cloud.get_openstack_vars(server)
+
         _exit_hostvars(module, cloud, server, diff, changed)
 
 
@@ -764,8 +768,7 @@ def _absent_server(module, cloud):
     server = cloud.get_server(module.params['name'])
 
     if server:
-        server['adminPass'] = '***'
-        diff['before'] = server
+        diff['before'] = cloud.get_openstack_vars(server)
         changed = _delete_server(module, cloud)
         module.exit_json(changed=changed, result='deleted', diff=diff)
 
