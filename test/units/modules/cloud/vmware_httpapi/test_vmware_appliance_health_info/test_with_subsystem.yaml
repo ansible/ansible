@@ -1,0 +1,482 @@
+interactions:
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"aed09c7cae73a80cc081e9f4ba45a6bf"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:30:57 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=aed09c7cae73a80cc081e9f4ba45a6bf;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"583f39534276b64f50507171967b96c3"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:32:05 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=583f39534276b64f50507171967b96c3;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"a0148d722663b8d536ef0867151d2aaf"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:12 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=a0148d722663b8d536ef0867151d2aaf;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - a0148d722663b8d536ef0867151d2aaf
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:12 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"795be3f125f5d053724940ec54c5038a"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:56 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=795be3f125f5d053724940ec54c5038a;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 795be3f125f5d053724940ec54c5038a
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:57 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"0c52a0034b358398b0f40b46de5e4e0f"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:35:03 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=0c52a0034b358398b0f40b46de5e4e0f;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 0c52a0034b358398b0f40b46de5e4e0f
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:35:03 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"d57118945a79d898cc690e31c736d667"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:36:07 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=d57118945a79d898cc690e31c736d667;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - d57118945a79d898cc690e31c736d667
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:36:07 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"4fd9c9a11ef5a585299dd4ce0ac58e27"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:37:01 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=4fd9c9a11ef5a585299dd4ce0ac58e27;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 4fd9c9a11ef5a585299dd4ce0ac58e27
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:37:01 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"be66c34b782b274254ddd7d179cb9aed"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:38:26 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=be66c34b782b274254ddd7d179cb9aed;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - be66c34b782b274254ddd7d179cb9aed
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:38:26 GMT
+    status:
+      code: 200
+      message: OK
+version: 1

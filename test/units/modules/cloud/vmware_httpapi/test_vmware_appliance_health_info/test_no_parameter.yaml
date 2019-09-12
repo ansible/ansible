@@ -1,0 +1,2594 @@
+interactions:
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"b74b8a0c958677fefc7a2e8662987d4b"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:30:56 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=b74b8a0c958677fefc7a2e8662987d4b;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - b74b8a0c958677fefc7a2e8662987d4b
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/applmgmt
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:30:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - b74b8a0c958677fefc7a2e8662987d4b
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/database-storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:30:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - b74b8a0c958677fefc7a2e8662987d4b
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/load
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:30:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - b74b8a0c958677fefc7a2e8662987d4b
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/mem
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:30:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - b74b8a0c958677fefc7a2e8662987d4b
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/software-packages
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:30:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - b74b8a0c958677fefc7a2e8662987d4b
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:30:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - b74b8a0c958677fefc7a2e8662987d4b
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/swap
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:30:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - b74b8a0c958677fefc7a2e8662987d4b
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:30:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - b74b8a0c958677fefc7a2e8662987d4b
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system/lastcheck
+  response:
+    body:
+      string: '{"value":"2019-09-12T23:22:51.890Z"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:30:57 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"6e8e915eb38402fb00abeaf053645795"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:32:04 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=6e8e915eb38402fb00abeaf053645795;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 6e8e915eb38402fb00abeaf053645795
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/applmgmt
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:32:04 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 6e8e915eb38402fb00abeaf053645795
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/database-storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:32:04 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 6e8e915eb38402fb00abeaf053645795
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/load
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:32:04 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 6e8e915eb38402fb00abeaf053645795
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/mem
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:32:04 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 6e8e915eb38402fb00abeaf053645795
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/software-packages
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:32:04 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 6e8e915eb38402fb00abeaf053645795
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:32:04 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 6e8e915eb38402fb00abeaf053645795
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/swap
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:32:04 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 6e8e915eb38402fb00abeaf053645795
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:32:04 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 6e8e915eb38402fb00abeaf053645795
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system/lastcheck
+  response:
+    body:
+      string: '{"value":"2019-09-12T23:22:51.890Z"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:32:04 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"ba8563aabbe24ca6a4292fe7536d960c"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:11 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=ba8563aabbe24ca6a4292fe7536d960c;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ba8563aabbe24ca6a4292fe7536d960c
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/applmgmt
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:12 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ba8563aabbe24ca6a4292fe7536d960c
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/database-storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:12 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ba8563aabbe24ca6a4292fe7536d960c
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/load
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:12 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ba8563aabbe24ca6a4292fe7536d960c
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/mem
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:12 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ba8563aabbe24ca6a4292fe7536d960c
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/software-packages
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:12 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ba8563aabbe24ca6a4292fe7536d960c
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:12 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ba8563aabbe24ca6a4292fe7536d960c
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/swap
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:12 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ba8563aabbe24ca6a4292fe7536d960c
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:12 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ba8563aabbe24ca6a4292fe7536d960c
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system/lastcheck
+  response:
+    body:
+      string: '{"value":"2019-09-12T23:22:51.890Z"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:12 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"08a169f5e4710158254197d8601ffe66"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:56 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=08a169f5e4710158254197d8601ffe66;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 08a169f5e4710158254197d8601ffe66
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/applmgmt
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 08a169f5e4710158254197d8601ffe66
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/database-storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 08a169f5e4710158254197d8601ffe66
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/load
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 08a169f5e4710158254197d8601ffe66
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/mem
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 08a169f5e4710158254197d8601ffe66
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/software-packages
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 08a169f5e4710158254197d8601ffe66
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 08a169f5e4710158254197d8601ffe66
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/swap
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 08a169f5e4710158254197d8601ffe66
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 08a169f5e4710158254197d8601ffe66
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system/lastcheck
+  response:
+    body:
+      string: '{"value":"2019-09-12T23:22:51.890Z"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:33:56 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"a12b3a5384dee4de9d5d3e4e78fe1480"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:35:02 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=a12b3a5384dee4de9d5d3e4e78fe1480;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - a12b3a5384dee4de9d5d3e4e78fe1480
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/applmgmt
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:35:02 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - a12b3a5384dee4de9d5d3e4e78fe1480
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/database-storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:35:02 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - a12b3a5384dee4de9d5d3e4e78fe1480
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/load
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:35:02 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - a12b3a5384dee4de9d5d3e4e78fe1480
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/mem
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:35:02 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - a12b3a5384dee4de9d5d3e4e78fe1480
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/software-packages
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:35:02 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - a12b3a5384dee4de9d5d3e4e78fe1480
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:35:02 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - a12b3a5384dee4de9d5d3e4e78fe1480
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/swap
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:35:02 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - a12b3a5384dee4de9d5d3e4e78fe1480
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:35:03 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - a12b3a5384dee4de9d5d3e4e78fe1480
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system/lastcheck
+  response:
+    body:
+      string: '{"value":"2019-09-12T23:22:51.890Z"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:35:03 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"74919ffef09ecf8c0a90292d96629ad9"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:36:06 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=74919ffef09ecf8c0a90292d96629ad9;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 74919ffef09ecf8c0a90292d96629ad9
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/applmgmt
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:36:06 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 74919ffef09ecf8c0a90292d96629ad9
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/database-storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:36:06 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 74919ffef09ecf8c0a90292d96629ad9
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/load
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:36:07 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 74919ffef09ecf8c0a90292d96629ad9
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/mem
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:36:07 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 74919ffef09ecf8c0a90292d96629ad9
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/software-packages
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:36:07 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 74919ffef09ecf8c0a90292d96629ad9
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:36:07 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 74919ffef09ecf8c0a90292d96629ad9
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/swap
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:36:07 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 74919ffef09ecf8c0a90292d96629ad9
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:36:07 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - 74919ffef09ecf8c0a90292d96629ad9
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system/lastcheck
+  response:
+    body:
+      string: '{"value":"2019-09-12T23:22:51.890Z"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:36:07 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"db09dd0ac4f06463f30af293ec7b5036"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:37:00 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=db09dd0ac4f06463f30af293ec7b5036;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - db09dd0ac4f06463f30af293ec7b5036
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/applmgmt
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:37:00 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - db09dd0ac4f06463f30af293ec7b5036
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/database-storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:37:00 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - db09dd0ac4f06463f30af293ec7b5036
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/load
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:37:00 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - db09dd0ac4f06463f30af293ec7b5036
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/mem
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:37:00 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - db09dd0ac4f06463f30af293ec7b5036
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/software-packages
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:37:00 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - db09dd0ac4f06463f30af293ec7b5036
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:37:00 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - db09dd0ac4f06463f30af293ec7b5036
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/swap
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:37:00 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - db09dd0ac4f06463f30af293ec7b5036
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:37:00 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - db09dd0ac4f06463f30af293ec7b5036
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system/lastcheck
+  response:
+    body:
+      string: '{"value":"2019-09-12T23:22:51.890Z"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:37:00 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Authorization:
+      - Basic YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2FsOiEyMzRBYUFhNTY=
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+    method: POST
+    uri: https://vcenter.test/rest/com/vmware/cis/session
+  response:
+    body:
+      string: '{"value":"ffbd4194e5e34523179608b8638b436f"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:38:25 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Set-Cookie:
+      - vmware-api-session-id=ffbd4194e5e34523179608b8638b436f;Path=/rest;Secure;HttpOnly
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ffbd4194e5e34523179608b8638b436f
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/applmgmt
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:38:25 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ffbd4194e5e34523179608b8638b436f
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/database-storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:38:25 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ffbd4194e5e34523179608b8638b436f
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/load
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:38:25 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ffbd4194e5e34523179608b8638b436f
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/mem
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:38:25 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ffbd4194e5e34523179608b8638b436f
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/software-packages
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:38:25 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ffbd4194e5e34523179608b8638b436f
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/storage
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:38:26 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ffbd4194e5e34523179608b8638b436f
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/swap
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:38:26 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ffbd4194e5e34523179608b8638b436f
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system
+  response:
+    body:
+      string: '{"value":"green"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:38:26 GMT
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Connection:
+      - close
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - vcenter.test
+      User-Agent:
+      - Python-urllib/3.7
+      Vmware-Api-Session-Id:
+      - ffbd4194e5e34523179608b8638b436f
+    method: GET
+    uri: https://vcenter.test/rest/appliance/health/system/lastcheck
+  response:
+    body:
+      string: '{"value":"2019-09-12T23:22:51.890Z"}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Sep 2019 07:38:26 GMT
+    status:
+      code: 200
+      message: OK
+version: 1
