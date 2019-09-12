@@ -159,7 +159,7 @@ instance_target_groups:
             type: complex
             contains:
                 target_id:
-                    description: the target ID referiing to this instance
+                    description: the target ID referring to this instance
                     type: str
                     returned: always
                     sample:

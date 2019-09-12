@@ -238,9 +238,9 @@ class VmwareDrsGroupManager(PyVmomi):
 
     def __set_result(self, group_obj):
         """
-        Creates result for successfull run
+        Creates result for successful run
         Args:
-            group_obj: group pbject
+            group_obj: group object
 
         Returns: None
 

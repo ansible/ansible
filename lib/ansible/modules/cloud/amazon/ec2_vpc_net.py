@@ -124,7 +124,7 @@ vpc:
       type: NoneType
       sample: null
     dhcp_options_id:
-      description: the id of the DHCP options assocaited with this VPC
+      description: the id of the DHCP options associated with this VPC
       returned: always
       type: str
       sample: dopt-0fb8bd6b

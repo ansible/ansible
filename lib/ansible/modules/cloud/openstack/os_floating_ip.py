@@ -182,7 +182,7 @@ def main():
                     network_id = cloud.get_network(name_or_id=network)["id"]
                 else:
                     network_id = None
-                # check if we have floting ip on given nat_destination network
+                # check if we have floating ip on given nat_destination network
                 if nat_destination:
                     nat_floating_addrs = [addr for addr in server.addresses.get(
                         cloud.get_network(nat_destination)['name'], [])
