@@ -118,7 +118,10 @@ def dict_merge(a, b):
         if k in result and isinstance(result[k], dict):
             result[k] = dict_merge(result[k], v)
         else:
-            result[k] = deepcopy(v)
+            if isinstance(result[k], list):
+                result[k] = [dict_merge(result[k][i], v[i]) if isinstance(result[k][i], dict) else deepcopy(v[i]) for i in range(len(result[k]))]
+            else:
+                result[k] = deepcopy(v)
     return result
 
 
