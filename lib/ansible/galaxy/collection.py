@@ -460,15 +460,18 @@ def _display_progress():
     config_display = C.GALAXY_DISPLAY_PROGRESS
     display_wheel = sys.stdout.isatty() if config_display is None else config_display
 
+    if not display_wheel:
+        yield
+        return
+
     def progress(display_queue, actual_display):
         actual_display.debug("Starting display_progress display thread")
         t = threading.current_thread()
 
         while True:
             for c in "|/-\\":
-                if display_wheel:
-                    actual_display.display(c + "\b", newline=False)
-                    time.sleep(0.1)
+                actual_display.display(c + "\b", newline=False)
+                time.sleep(0.1)
 
                 # Display a message from the main thread
                 while True:
