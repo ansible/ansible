@@ -335,6 +335,23 @@ def generate_pip_install(pip, command, packages=None):
         if command == 'sanity':
             options += ['-r', os.path.join(data_context().content.root, 'test', 'sanity', 'requirements.txt')]
 
+    if command == 'units':
+        requirements = os.path.join(data_context().content.unit_path, 'requirements.txt')
+
+        if os.path.exists(requirements) and os.path.getsize(requirements):
+            options += ['-r', requirements]
+
+    if command in ('integration', 'windows-integration', 'network-integration'):
+        requirements = os.path.join(data_context().content.integration_path, 'requirements.txt')
+
+        if os.path.exists(requirements) and os.path.getsize(requirements):
+            options += ['-r', requirements]
+
+        requirements = os.path.join(data_context().content.integration_path, '%s.requirements.txt' % command)
+
+        if os.path.exists(requirements) and os.path.getsize(requirements):
+            options += ['-r', requirements]
+
     if packages:
         options += packages
 

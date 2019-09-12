@@ -415,6 +415,11 @@ class PathMapper:
                             command: self.integration_all_target,
                         }
 
+                    if name == command + '.requirements' and ext == '.txt':
+                        return {
+                            command: self.integration_all_target,
+                        }
+
             return {
                 'integration': self.integration_all_target,
                 'windows-integration': self.integration_all_target,

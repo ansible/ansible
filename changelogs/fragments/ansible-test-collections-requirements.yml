@@ -1,0 +1,3 @@
+bugfixes:
+    - ansible-test now correctly installs the requirements specified by the collection's unit and integration tests
+      instead of the requirements specified for Ansible's own unit and integration tests
