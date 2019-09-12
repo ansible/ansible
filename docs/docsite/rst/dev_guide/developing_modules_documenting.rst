@@ -222,8 +222,8 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
   :suboptions:
 
-    * If this option takes a dict, you can define its structure here.
-    * See :ref:`azure_rm_securitygroup_module`, :ref:`os_ironic_node_module` for examples.
+    * If this option takes a dict or list of dicts, you can define the structure here.
+    * See :ref:`azure_rm_securitygroup_module`, :ref:`azure_rm_azurefirewall_module` and :ref:`os_ironic_node_module` for examples.
 
 :requirements:
 
