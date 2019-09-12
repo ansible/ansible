@@ -30,7 +30,7 @@ OBJECT = {
     "ike_phase_1": {
         "data_integrity": "sha1",
         "encryption_algorithm": "aes-128",
-        "diffie_hellman_group": "group 19"
+        "diffie_hellman_group": "group-19"
     },
     "ike_phase_2": {
         "data_integrity": "aes-xcbc",
@@ -45,7 +45,7 @@ CREATE_PAYLOAD = {
     "ike_phase_1": {
         "data_integrity": "sha1",
         "encryption_algorithm": "aes-128",
-        "diffie_hellman_group": "group 19"
+        "diffie_hellman_group": "group-19"
     },
     "ike_phase_2": {
         "data_integrity": "aes-xcbc",
@@ -60,7 +60,7 @@ UPDATE_PAYLOAD = {
     "ike_phase_1": {
         "data_integrity": "sha1",
         "encryption_algorithm": "aes-128",
-        "diffie_hellman_group": "group 19"
+        "diffie_hellman_group": "group-19"
     },
     "ike_phase_2": {
         "data_integrity": "aes-xcbc",

@@ -48,9 +48,7 @@ UPDATE_PAYLOAD = {
 
 OBJECT_AFTER_UPDATE = UPDATE_PAYLOAD
 
-DELETE_PAYLOAD = {
-    "uid": "53de74b7-8f19-4cbe-99fc-a81ef0759bad"
-}
+DELETE_PAYLOAD = {}
 
 function_path = 'ansible.modules.network.check_point.cp_mgmt_global_assignment.api_call'
 api_call_object = 'global-assignment'

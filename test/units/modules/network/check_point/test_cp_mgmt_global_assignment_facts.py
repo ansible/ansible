@@ -37,9 +37,7 @@ SHOW_PLURAL_PAYLOAD = {
     'details_level': 'uid'
 }
 
-SHOW_SINGLE_PAYLOAD = {
-    'uid': '53de74b7-8f19-4cbe-99fc-a81ef0759bad'
-}
+SHOW_SINGLE_PAYLOAD = {}
 
 api_call_object = 'global-assignment'
 api_call_object_plural_version = 'global-assignments'
