@@ -342,7 +342,8 @@ class ActionModule(ActionBase):
         nxos_session = pexpect.spawn('ssh ' + nxos_username + '@' + nxos_hostname + ' -p' + str(port))
         # There might be multiple user_response_required prompts or intermittent timeouts
         # spawning the expect session so loop up to 5 times during the spwan process.
-        for connect_attempt in range(6):
+        max_attempts = 6
+        for connect_attempt in range(max_attempts):
             outcome = process_outcomes(nxos_session)
             if outcome['user_response_required']:
                 nxos_session.sendline('yes')
@@ -353,6 +354,10 @@ class ActionModule(ActionBase):
             if outcome['final_prompt_detected']:
                 break
             if outcome['error'] or outcome['expect_timeout']:
+                # Error encountered, try to spawn expect session n more times up to mac_attempts - 1
+                if connect_attempt < max_attempts:
+                    nxos_session = pexpect.spawn('ssh ' + nxos_username + '@' + nxos_hostname + ' -p' + str(port))
+                    continue
                 self.results['failed'] = True
                 self.results['error_data'] = 'Failed to spawn expect session! ' + outcome['error_data']
                 return
