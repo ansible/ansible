@@ -344,6 +344,7 @@ class ActionModule(ActionBase):
         # spawning the expect session so loop up to 24 times during the spawn process.
         max_attempts = 24
         for connect_attempt in range(max_attempts):
+            import epdb ; epdb.serve()
             outcome = process_outcomes(nxos_session)
             if outcome['user_response_required']:
                 nxos_session.sendline('yes')
