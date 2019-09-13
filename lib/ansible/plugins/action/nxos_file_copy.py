@@ -22,6 +22,12 @@ import hashlib
 import os
 import re
 
+import datetime
+def logit(msg):
+    with open('/tmp/alog.txt', 'a') as of:
+        d = datetime.datetime.now().replace(microsecond=0).isoformat()
+        of.write("---- %s ----\n%s\n" % (d,msg))
+
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.connection import Connection
@@ -339,6 +345,10 @@ class ActionModule(ActionBase):
             return outcome
 
         # Spawn pexpect connection to NX-OS device.
+        logit('Initial attempt to spawn ssh session')
+        logit('nxos_username: %s' % nxos_username)
+        logit('nxos_hostname: %s' % nxos_hostname)
+        logit('port: %s' % str(port))
         nxos_session = pexpect.spawn('ssh ' + nxos_username + '@' + nxos_hostname + ' -p' + str(port))
         # There might be multiple user_response_required prompts or intermittent timeouts
         # spawning the expect session so loop up to 5 times during the spwan process.
@@ -346,24 +356,31 @@ class ActionModule(ActionBase):
         for connect_attempt in range(max_attempts):
             outcome = process_outcomes(nxos_session)
             if outcome['user_response_required']:
+                logit('user_response_required')
                 nxos_session.sendline('yes')
                 continue
             if outcome['password_prompt_detected']:
+                logit('password_prompt_detected')
                 nxos_session.sendline(nxos_password)
                 continue
             if outcome['final_prompt_detected']:
+                logit('final_prompt_detected')
                 break
             if outcome['error'] or outcome['expect_timeout']:
                 # Error encountered, try to spawn expect session n more times up to mac_attempts - 1
+                logit('error_encountered')
                 if connect_attempt < max_attempts:
+                    logit('Attempt %s to spawn ssh session' % connect_attempt)
                     nxos_session = pexpect.spawn('ssh ' + nxos_username + '@' + nxos_hostname + ' -p' + str(port))
                     continue
+                logit('final failure error ... return the info')
                 self.results['failed'] = True
                 self.results['error_data'] = 'Failed to spawn expect session! ' + outcome['error_data']
                 return
         else:
             # The before property will contain all text up to the expected string pattern.
             # The after string will contain the text that was matched by the expected pattern.
+            logit('Strange error, outcome info: %s' % outcome)
             msg = 'After {0} attempts, failed to spawn pexpect session to {1}'
             msg += 'BEFORE: {2}, AFTER: {3}'
             raise AnsibleError(msg.format(connect_attempt, nxos_hostname, nxos_session.before, nxos_session.before))
