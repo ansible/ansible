@@ -33,8 +33,8 @@ notes:
   - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - Default, where supported, restores params default value.
   - In case of C(state=absent) the address-family configuration will be absent.
-    Therefore the options C(route_target_both_auto_evpn), C(route_target_import)
-    , C(route_target_export) and C(route_target_both) are ignored.
+    Therefore the options C(route_target_both_auto_evpn) and C(route_targets)
+    are ignored.
 options:
   vrf:
     description:
@@ -50,26 +50,12 @@ options:
       - Enable/Disable the EVPN route-target 'auto' setting for both
         import and export target communities.
     type: bool
-  route_target_import:
+  route_targets:
     description:
-      - Specify the route-targets which should be imported under the AF.
-        This argument accepts a list of dicts that specify the route-target
-        and state of each route-target. See examples.
-    type: list
-    version_added: "2.8"
-  route_target_export:
-    description:
-      - Specify the route-targets which should be exported under the AF.
-        This argument accepts a list of dicts that specify the route-target
-        and state of each route-target. See examples.
-    type: list
-    version_added: "2.8"
-  route_target_both:
-    description:
-      - Specify the route-targets which should be imported & exported
-        under the AF.
-        This argument accepts a list of dicts that specify the route-target
-        and state of each route-target. See examples.
+      - Specify the route-targets which should be imported and/or exported under
+        the AF. This argument accepts a list of dicts that specify the
+        route-target, the direction (import|export|both) and state of each
+        route-target. Default direction is C(direction=both). See examples.
     type: list
     version_added: "2.8"
   state:
@@ -90,41 +76,50 @@ EXAMPLES = '''
 - nxos_vrf_af:
     vrf: ntc
     afi: ipv4
-    route_target_import:
+    route_targets:
       - rt: '65000:1000'
+        direction: import
       - rt: '65001:1000'
+        direction: import
 
 - nxos_vrf_af:
     vrf: ntc
     afi: ipv4
-    route_target_import:
+    route_targets:
       - rt: '65000:1000'
+        direction: import
       - rt: '65001:1000'
         state: absent
 
 - nxos_vrf_af:
     vrf: ntc
     afi: ipv4
-    route_target_export:
+    route_targets:
       - rt: '65000:1000'
+        direction: export
       - rt: '65001:1000'
+        direction: export
 
 - nxos_vrf_af:
     vrf: ntc
     afi: ipv4
-    route_target_export:
+    route_targets:
       - rt: '65000:1000'
+        direction: export
         state: absent
 
 - nxos_vrf_af:
     vrf: ntc
     afi: ipv4
-    route_target_both:
+    route_targets:
       - rt: '65000:1000'
+        direction: both
         state: present
       - rt: '65001:1000'
+        direction: import
         state: present
       - rt: '65002:1000'
+        direction: both
         state: absent
 '''
 
