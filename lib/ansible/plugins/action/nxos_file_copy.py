@@ -368,6 +368,7 @@ class ActionModule(ActionBase):
         else:
             # The before property will contain all text up to the expected string pattern.
             # The after string will contain the text that was matched by the expected pattern.
+            import epdb ; epdb.serve()
             msg = 'After {0} attempts, failed to spawn pexpect session to {1}'
             msg += 'BEFORE: {2}, AFTER: {3}'
             raise AnsibleError(msg.format(connect_attempt, nxos_hostname, nxos_session.before, nxos_session.after))
