@@ -40,6 +40,7 @@ class Lag_interfacesFacts(object):
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for lag_interfaces
         :param connection: the device connection
+        :param ansible_facts: Facts dictionary
         :param data: previously collected configuration
         :rtype: dictionary
         :returns: facts
@@ -69,7 +70,7 @@ class Lag_interfacesFacts(object):
                     else:
                         objs[group_name] = obj
         objs = list(objs.values())
-        facts = {}
+        facts = {'lag_interfaces': []}
         if objs:
             params = utils.validate_config(self.argument_spec, {'config': objs})
             facts['lag_interfaces'] = [utils.remove_empties(cfg) for cfg in params['config']]

@@ -41,7 +41,7 @@ class LacpFacts(object):
         """ Populate the facts for lacp
         :param connection: the device connection
         :param ansible_facts: Facts dictionary
-        :param data: previously collected conf
+        :param data: previously collected configuration
         :rtype: dictionary
         :returns: facts
         """
