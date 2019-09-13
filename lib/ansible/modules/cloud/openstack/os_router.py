@@ -240,7 +240,7 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids, internal_
     # check external interfaces
     if module.params['external_fixed_ips']:
         for new_iface in module.params['external_fixed_ips']:
-            subnet = cloud.get_subnet(new_iface['subnet'], filters)
+            subnet = cloud.get_subnet(new_iface['subnet'])
             exists = False
 
             # compare the requested interface with existing, looking for an existing match
@@ -347,7 +347,7 @@ def _validate_subnets(module, cloud, filters=None):
                 subnet = cloud.get_subnet(iface['subnet'], filters)
                 if not subnet:
                     module.fail_json(msg='subnet %s not found' % iface['subnet'])
-                net = cloud.get_network(iface['net'])
+                net = cloud.get_network(iface['net'], filters))
                 if not net:
                     module.fail_json(msg='net %s not found' % iface['net'])
                 if "portip" not in iface:
