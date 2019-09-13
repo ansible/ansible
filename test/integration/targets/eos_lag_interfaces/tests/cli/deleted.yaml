@@ -26,4 +26,4 @@
 
 - assert:
     that:
-      - "'lag_interfaces' not in ansible_facts.network_resources"
+      - "ansible_facts.network_resources.lag_interfaces == []"
