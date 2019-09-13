@@ -728,34 +728,29 @@ def uniquely_find_eni(connection, module, eni=None):
     if eni_id is None and private_ip_address is None and (instance_id is None and device_index is None):
         return None
 
-    filter_set = False
     if eni_id:
         filters.append({'Name': 'network-interface-id',
                         'Values': [eni_id]})
-        filter_set = True
 
-    if private_ip_address and subnet_id and not filter_set:
+    if private_ip_address and subnet_id and not filters:
         filters.append({'Name': 'private-ip-address',
                         'Values': [private_ip_address]})
         filters.append({'Name': 'subnet-id',
                         'Values': [subnet_id]})
-        filter_set = True
 
-    if not attached and instance_id and device_index and not filter_set:
+    if not attached and instance_id and device_index and not filters:
         filters.append({'Name': 'attachment.instance-id',
                         'Values': [instance_id]})
         filters.append({'Name': 'attachment.device-index',
                         'Values': [device_index]})
-        filter_set = True
 
-    if name and subnet_id and not filter_set:
+    if name and subnet_id and not filters:
         filters.append({'Name': 'tag:Name',
                         'Values': [name]})
         filters.append({'Name': 'subnet-id',
                         'Values': [subnet_id]})
-        filter_set = True
 
-    if not filter_set:
+    if not filters:
         return None
 
     try:
