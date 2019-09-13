@@ -21,6 +21,7 @@ import copy
 import hashlib
 import os
 import re
+import time
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_bytes
@@ -344,13 +345,13 @@ class ActionModule(ActionBase):
         # spawning the expect session so loop up to 24 times during the spawn process.
         max_attempts = 24
         for connect_attempt in range(max_attempts):
-            import epdb ; epdb.serve()
             outcome = process_outcomes(nxos_session)
             if outcome['user_response_required']:
                 nxos_session.sendline('yes')
                 continue
             if outcome['password_prompt_detected']:
-                nxos_session.sendline('%s' % nxos_password)
+                time.sleep(3)
+                nxos_session.sendline(nxos_password)
                 continue
             if outcome['final_prompt_detected']:
                 break
@@ -360,18 +361,18 @@ class ActionModule(ActionBase):
                     outcome['error'] = False
                     outcome['expect_timeout'] = False
                     nxos_session.close()
-                    import epdb ; epdb.serve()
                     nxos_session = pexpect.spawn('ssh ' + nxos_username + '@' + nxos_hostname + ' -p' + str(port))
                     continue
                 self.results['failed'] = True
                 self.results['error_data'] = 'Failed to spawn expect session! ' + outcome['error_data']
+                nxos_session.close()
                 return
         else:
             # The before property will contain all text up to the expected string pattern.
             # The after string will contain the text that was matched by the expected pattern.
-            import epdb ; epdb.serve()
             msg = 'After {0} attempts, failed to spawn pexpect session to {1}'
             msg += 'BEFORE: {2}, AFTER: {3}'
+            nxos_session.close()
             raise AnsibleError(msg.format(connect_attempt, nxos_hostname, nxos_session.before, nxos_session.after))
 
         # Create local file directory under NX-OS filesystem if
@@ -411,13 +412,17 @@ class ActionModule(ActionBase):
             if outcome['error'] or outcome['expect_timeout']:
                 self.results['failed'] = True
                 self.results['error_data'] = outcome['error_data']
+                nxos_session.close()
                 return
         else:
             # The before property will contain all text up to the expected string pattern.
             # The after string will contain the text that was matched by the expected pattern.
             msg = 'After {0} attempts, failed to copy file to {1}'
             msg += 'BEFORE: {2}, AFTER: {3}, CMD: {4}'
+            nxos_session.close()
             raise AnsibleError(msg.format(copy_attempt, nxos_hostname, nxos_session.before, nxos_session.before, copy_cmd))
+
+        nxos_session.close()
 
     def file_pull(self):
         local_file = self.playvals['local_file']
