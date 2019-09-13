@@ -57,7 +57,7 @@ options:
         route-target, the direction (import|export|both) and state of each
         route-target. Default direction is C(direction=both). See examples.
     type: list
-    version_added: "2.8"
+    version_added: "2.10"
   state:
     description:
       - Determines whether the config should be present or
