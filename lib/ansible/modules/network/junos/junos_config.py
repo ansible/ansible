@@ -371,7 +371,7 @@ def main():
         dir_path=dict(type='path')
     )
     argument_spec = dict(
-        lines=dict(type='list'),
+        lines=dict(aliases=['commands'], type='list'),
 
         src=dict(type='path'),
         src_format=dict(choices=['xml', 'text', 'set', 'json']),
