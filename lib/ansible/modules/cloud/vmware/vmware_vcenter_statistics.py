@@ -130,16 +130,22 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 from ansible.module_utils._text import to_native
+from functools import total_ordering
 
 
 # This is a helper class to sort the changes in a valid order
 # "Greater than" means a change has to happen after another one.
 # As an example, let's say self is daily (key == 1) and other is weekly (key == 2)
+@total_ordering
 class ChangeHelper:
     def __init__(self, old, new):
         self.key = new.key
         self.old = old
         self.new = new
+
+    def __eq__(self, other):
+        return ((self.key, self.new.enabled, self.new.level) ==
+                (other.key, other.new.enabled, other.new.level))
 
     def __gt__(self, other):
         if self.key < other.key:
@@ -153,7 +159,7 @@ class ChangeHelper:
             else:
                 return self.new.level < other.old.level
         else:
-            return not (self.old > self.new)
+            return not (other > self)
 
 
 class VmwareVcenterStatistics(PyVmomi):
