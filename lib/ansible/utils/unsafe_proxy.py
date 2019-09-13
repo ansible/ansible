@@ -128,9 +128,9 @@ def wrap_var(v):
     return v
 
 
-def to_unsafe_bytes(value, errors='surrogate_or_strict'):
-    return wrap_var(to_bytes(value, errors=errors))
+def to_unsafe_bytes(*args, **kwargs):
+    return wrap_var(to_bytes(*args, **kwargs))
 
 
-def to_unsafe_text(value, errors='surrogate_or_strict'):
-    return wrap_var(to_text(value, errors=errors))
+def to_unsafe_text(*args, **kwargs):
+    return wrap_var(to_text(*args, **kwargs))
