@@ -359,6 +359,7 @@ class ActionModule(ActionBase):
                     outcome['error'] = False
                     outcome['expect_timeout'] = False
                     nxos_session.close()
+                    import epdb ; epdb.serve()
                     nxos_session = pexpect.spawn('ssh ' + nxos_username + '@' + nxos_hostname + ' -p' + str(port))
                     continue
                 self.results['failed'] = True
