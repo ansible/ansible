@@ -1,8 +1,10 @@
 ---
 - debug:
-    msg: "Start exos_lldp_global deleted integration tests ansible_connection={{ ansible_connection }}"
+    msg: "Start exos_lldp_interfaces deleted integration tests ansible_connection={{ ansible_connection }}"
 
 - include_tasks: _reset_config.yaml
+
+- include_tasks: _populate_config.yaml
 
 - set_fact:
     config:
@@ -28,7 +30,7 @@
   - name: Assert that correct set of requests were generated
     assert:
       that:
-        - "{{ deleted['requests'] == result['requests'] }}"
+        - "deleted['requests']|symmetric_difference(result['requests']) == []"
 
   - name: Assert that before dicts were correctly generated
     assert:
@@ -45,7 +47,7 @@
 
   - assert:
       that:
-        - "config|intersect(ansible_facts.network_resources.lldp_interfaces) == config"
+        - "config|difference(ansible_facts.network_resources.lldp_interfaces) == []"
 
   - name: Delete attributes of all configured interfaces (IDEMPOTENT)
     exos_lldp_interfaces: *deleted
@@ -66,4 +68,4 @@
 
   - assert:
       that:
-        - "config|intersect(ansible_facts.network_resources.lldp_interfaces) == config"
+        - "config|difference(ansible_facts.network_resources.lldp_interfaces) == []"

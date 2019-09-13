@@ -4,6 +4,8 @@
 
 - include_tasks: _reset_config.yaml
 
+- include_tasks: _populate_config.yaml
+
 - set_fact:
     config:
       - enabled: true
@@ -24,7 +26,7 @@
   - name: Assert that correct set of requests were generated
     assert:
       that:
-        - "{{ overridden['requests'] == result['requests'] }}"
+        - "overridden['requests']|symmetric_difference(result['requests']) == []"
 
   - name: Assert that before dicts were correctly generated
     assert:
@@ -41,7 +43,7 @@
 
   - assert:
       that:
-        - "config|intersect(ansible_facts.network_resources.lldp_interfaces) == config"
+        - "config|difference(ansible_facts.network_resources.lldp_interfaces) == []"
 
   - name: Override device LLDP interface configuration with provided configurations (IDEMPOTENT)
     exos_lldp_interfaces: *overridden
@@ -61,4 +63,4 @@
 
   - assert:
       that:
-        - "config|intersect(ansible_facts.network_resources.lldp_interfaces) == config"
+        - "config|difference(ansible_facts.network_resources.lldp_interfaces) == []"

@@ -3,4 +3,3 @@
   exos_config:
     lines:
       - enable lldp ports all
-      - disable lldp ports 2-5
