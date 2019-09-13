@@ -364,7 +364,7 @@ class ActionModule(ActionBase):
             if outcome['password_prompt_detected']:
                 logit('password_prompt_detected')
                 logit('%s, %s' % (nxos_session.before, nxos_session.after))
-                nxos_session.sendline(nxos_password)
+                nxos_session.sendline('%s' % nxos_password)
                 logit('%s, %s' % (nxos_session.before, nxos_session.after))
                 continue
             if outcome['final_prompt_detected']:
@@ -376,6 +376,7 @@ class ActionModule(ActionBase):
                 if connect_attempt < max_attempts:
                     logit('Attempt %s to spawn ssh session' % connect_attempt)
                     logit('%s, %s' % (nxos_session.before, nxos_session.after))
+                    nxos_session.close()
                     nxos_session = pexpect.spawn('ssh ' + nxos_username + '@' + nxos_hostname + ' -p' + str(port))
                     continue
                 logit('final failure error ... return the info')
