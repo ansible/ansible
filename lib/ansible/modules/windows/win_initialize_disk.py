@@ -18,7 +18,7 @@ module: win_initialize_disk
 
 short_description: Initializes disks on Windows Server
 
-version_added: "2.9"
+version_added: "2.10"
 
 description:
     - "The M(win_initialize_disk) module initializes disks"
