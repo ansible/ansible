@@ -52,7 +52,8 @@ options:
      version_added: "2.3"
    flavor:
      description:
-       - Flavor to resize the serve
+       - Flavor to resize the server
+     version_added: "2.10"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
