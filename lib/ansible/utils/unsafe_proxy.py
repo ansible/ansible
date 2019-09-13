@@ -53,7 +53,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common._collections_compat import Mapping, MutableSequence, Set
 from ansible.module_utils.six import string_types, binary_type, text_type
 
@@ -126,3 +126,11 @@ def wrap_var(v):
         v = AnsibleUnsafeText(v)
 
     return v
+
+
+def to_unsafe_bytes(*args, **kwargs):
+    return wrap_var(to_bytes(*args, **kwargs))
+
+
+def to_unsafe_text(*args, **kwargs):
+    return wrap_var(to_text(*args, **kwargs))

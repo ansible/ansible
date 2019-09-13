@@ -27,6 +27,8 @@ from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor, remove_omit
 from ansible.plugins.loader import action_loader, lookup_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
+from ansible.module_utils.six import text_type
 
 from units.mock.loader import DictDataLoader
 
@@ -100,6 +102,28 @@ class TestTaskExecutor(unittest.TestCase):
         te._get_loop_items = MagicMock(side_effect=AnsibleError(""))
         res = te.run()
         self.assertIn("failed", res)
+
+    def test_task_executor_run_clean_res(self):
+        te = TaskExecutor(None, MagicMock(), None, None, None, None, None, None)
+        te._get_loop_items = MagicMock(return_value=[1])
+        te._run_loop = MagicMock(
+            return_value=[
+                {
+                    'unsafe_bytes': AnsibleUnsafeBytes(b'{{ $bar }}'),
+                    'unsafe_text': AnsibleUnsafeText(u'{{ $bar }}'),
+                    'bytes': b'bytes',
+                    'text': u'text',
+                    'int': 1,
+                }
+            ]
+        )
+        res = te.run()
+        data = res['results'][0]
+        self.assertIsInstance(data['unsafe_bytes'], AnsibleUnsafeText)
+        self.assertIsInstance(data['unsafe_text'], AnsibleUnsafeText)
+        self.assertIsInstance(data['bytes'], text_type)
+        self.assertIsInstance(data['text'], text_type)
+        self.assertIsInstance(data['int'], int)
 
     def test_task_executor_get_loop_items(self):
         fake_loader = DictDataLoader({})
