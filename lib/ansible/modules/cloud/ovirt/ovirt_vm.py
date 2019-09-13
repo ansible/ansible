@@ -105,12 +105,12 @@ options:
         version_added: "2.5"
     affinity_group_mappings:
         description:
-            - "Mapper which maps affinty name between VM's OVF and the destination affinity this VM should be registered to,
+            - "Mapper which maps affinity name between VM's OVF and the destination affinity this VM should be registered to,
                relevant when C(state) is registered."
         version_added: "2.5"
     affinity_label_mappings:
         description:
-            - "Mappper which maps affinity label name between VM's OVF and the destination label this VM should be registered to,
+            - "Mapper which maps affinity label name between VM's OVF and the destination label this VM should be registered to,
                relevant when C(state) is registered."
         version_added: "2.5"
     lun_mappings:
@@ -151,7 +151,7 @@ options:
         description:
             - Name of the storage domain where all template disks should be created.
             - This parameter is considered only when C(template) is provided.
-            - IMPORTANT - This parameter is not idempotent, if the VM exists and you specfiy different storage domain,
+            - IMPORTANT - This parameter is not idempotent, if the VM exists and you specify different storage domain,
               disk won't move.
         version_added: "2.4"
     disk_format:
@@ -274,7 +274,7 @@ options:
     host_devices:
         description:
             - Single Root I/O Virtualization - technology that allows single device to expose multiple endpoints that can be passed to VMs
-            - host_devices is an list which contain dictinary with name and state of device
+            - host_devices is an list which contain dictionary with name and state of device
         version_added: "2.7"
     delete_protected:
         description:
@@ -1106,7 +1106,7 @@ EXAMPLES = '''
         - spice
         - vnc
 
-# Execute remote viever to VM
+# Execute remote viewer to VM
 - block:
   - name: Create a ticket for console for a running VM
     ovirt_vms:
@@ -1628,7 +1628,7 @@ class VmsModule(BaseModule):
         """
         This function will first wait for the status DOWN of the VM.
         Then it will find the active snapshot and wait until it's state is OK for
-        stateless VMs and statless snaphot is removed.
+        stateless VMs and stateless snapshot is removed.
         """
         vm_service = self._service.vm_service(vm.id)
         wait(

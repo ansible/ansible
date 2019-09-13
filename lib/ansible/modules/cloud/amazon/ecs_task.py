@@ -126,7 +126,7 @@ EXAMPLES = '''
 '''
 RETURN = '''
 task:
-    description: details about the tast that was started
+    description: details about the task that was started
     returned: success
     type: complex
     contains:

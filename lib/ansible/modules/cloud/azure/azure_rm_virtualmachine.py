@@ -1740,7 +1740,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         return True
 
     def delete_vm_storage(self, vhd_uris):
-        # FUTURE: figure out a cloud_env indepdendent way to delete these
+        # FUTURE: figure out a cloud_env independent way to delete these
         for uri in vhd_uris:
             self.log("Extracting info from blob uri '{0}'".format(uri))
             try:

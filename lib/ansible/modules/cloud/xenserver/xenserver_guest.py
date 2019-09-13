@@ -116,7 +116,7 @@ options:
   disks:
     description:
     - A list of disks to add to VM.
-    - All parameters are case sensetive.
+    - All parameters are case sensitive.
     - Removing or detaching existing disks of VM is not supported.
     - 'Required parameters per entry:'
     - ' - C(size_[tb,gb,mb,kb,b]) (integer): Disk storage size in specified unit. VM needs to be shut down to reconfigure this parameter.'
@@ -139,7 +139,7 @@ options:
   networks:
     description:
     - A list of networks (in the order of the NICs).
-    - All parameters are case sensetive.
+    - All parameters are case sensitive.
     - 'Required parameters per entry:'
     - ' - C(name) (string): Name of a XenServer network to attach the network interface to. You can also use C(name_label) as an alias.'
     - 'Optional parameters per entry (used for VM hardware):'

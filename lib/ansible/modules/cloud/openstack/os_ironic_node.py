@@ -258,7 +258,7 @@ def main():
         wait = module.params['wait']
         timeout = module.params['timeout']
 
-        # User has reqeusted desired state to be in maintenance state.
+        # User has requested desired state to be in maintenance state.
         if module.params['state'] == 'maintenance':
             module.params['maintenance'] = True
 

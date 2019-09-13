@@ -348,7 +348,7 @@ def main():
         existing_definitions_in_family = task_mgr.describe_task_definitions(module.params['family'])
 
         if 'revision' in module.params and module.params['revision']:
-            # The definition specifies revision. We must gurantee that an active revision of that number will result from this.
+            # The definition specifies revision. We must guarantee that an active revision of that number will result from this.
             revision = int(module.params['revision'])
 
             # A revision has been explicitly specified. Attempt to locate a matching revision
@@ -357,7 +357,7 @@ def main():
 
             if existing and existing['status'] != "ACTIVE":
                 # We cannot reactivate an inactive revision
-                module.fail_json(msg="A task in family '%s' already exists for revsion %d, but it is inactive" % (family, revision))
+                module.fail_json(msg="A task in family '%s' already exists for revision %d, but it is inactive" % (family, revision))
             elif not existing:
                 if not existing_definitions_in_family and revision != 1:
                     module.fail_json(msg="You have specified a revision of %d but a created revision would be 1" % revision)

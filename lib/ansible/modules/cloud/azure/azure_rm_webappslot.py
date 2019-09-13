@@ -689,7 +689,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                 return True
         return False
 
-    # comparing deployment source with input, determine wheather it's changed
+    # comparing deployment source with input, determine whether it's changed
     def is_deployment_source_changed(self, existing_webapp):
         if self.deployment_source:
             if self.deployment_source.get('url') \

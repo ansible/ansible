@@ -249,7 +249,7 @@ class HostModule(OpenNebulaModule):
             if desired_template_changes is None:
                 desired_template_changes = dict()
 
-            # complete the template with speficic ansible parameters
+            # complete the template with specific ansible parameters
             if self.is_parameter('labels'):
                 desired_template_changes['LABELS'] = self.get_parameter('labels')
 
