@@ -1,0 +1,74 @@
+- block:
+  - name: Create a classic ELB with classic networking
+    ec2_elb_lb: 
+      name: "{{ resource_prefix }}-classic-elb"
+      state: present
+      zones:
+        - us-east-1a
+        - us-east-1d
+      listeners:
+        - protocol: http # options are http, https, ssl, tcp
+          load_balancer_port: 80
+          instance_port: 80
+          proxy_protocol: True
+    register: classic_elb
+
+  - name: Assert the elb was created
+    assert:
+      that:
+        - classic_elb.changed
+
+  - name: Create a security group with a classic elb-sg rule
+    ec2_group:
+      name: "{{ resource_prefix }}-sg-a"
+      description: "EC2 classic test security group"
+      rules:
+      - proto: tcp
+        ports: 80
+        group_id: amazon-elb/amazon-elb-sg
+      state: present
+    register: classic_sg
+
+  - name: Assert the SG was created
+    assert:
+      that:
+        - classic_sg.changed
+        - "{{ classic_sg.ip_permissions | length }} == 1"
+
+  - set_fact:
+      elb_sg_id: "{{ classic_sg.ip_permissions.user_id_group_pairs.group_name }}/{{ classic_sg.ip_permissions.user_id_group_pairs.group_id }}/{{ classic_sg.ip_permissions.user_id_group_pairs.user_id }}"
+
+  - name: Update the security group
+    ec2_group:
+      name: "{{ resource_prefix }}-sg-a"
+      description: "EC2 classic test security group"
+      rules:
+      - proto: tcp
+        ports: 8080
+        group_id: "{{ elb_sg_id }}"
+      - proto: tcp
+        ports:
+          - 80
+        cidr_ip: 0.0.0.0/0
+      state: present
+    register: updated_classic_sg
+
+
+  - name: Assert the SG was updated
+    assert:
+      that:
+        - updated_classic_sg.changed
+        - "{{ updated_classic_sg.ip_permissions | length }} == 2"
+        - "{{ classic_sg.ip_permissions[0]}} not in {{ updated_classic_sg.ip_permissions[*] }}"
+
+  # ===========================================
+  always:
+    - name: Terminate classic ELB
+      ec2_elb_lb:
+        name: "{{ resource_prefix }}-classic-elb"
+        state: absent
+
+    - name: Delete security group
+      ec2_group:
+        name: "{{ resource_prefix }}-sg-a"
+        state: absent
