@@ -509,7 +509,7 @@ files:
     notified: if-meaton
   $modules/windows/win_security_policy.py:
     <<: *windows
-    maintainers: defionscode
+    maintainers: $team_windows
   contrib/:
     support: community
   contrib/inventory:
@@ -1295,7 +1295,8 @@ files:
     maintainers: jpmens
   $plugins/lookup/cyberarkpassword.py:
     notified: cyberark-bizdev
-  $plugins/lookup/hashi_vault: defionscode
+  $plugins/lookup/hashi_vault:
+    support: community
   $plugins/lookup/k8s.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
