@@ -1,0 +1,2 @@
+bugfixes:
+  - "user.py now use the long option for creating users without user groups on RHEL/CentOS as the short option case changes between versions"
