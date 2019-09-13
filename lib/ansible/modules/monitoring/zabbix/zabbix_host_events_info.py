@@ -35,7 +35,7 @@ triggers_ok:
               url: URL associated with the trigger
               value: Whether the trigger is in OK or problem state
 triggers_problem:
-    description: Host Zabbix Triggers in problem state (https://www.zabbix.com/documentation/3.0/manual/api/reference/trigger/object & https://www.zabbix.com/documentation/3.0/manual/api/reference/event/object)
+    description: Host Zabbix Triggers in problem state. See trigger and event objects in API documentation of your zabbix version for more
     returned: On success
     type: complex
     contains:
@@ -47,7 +47,7 @@ triggers_problem:
               last_event:
                 acknowledged: If set to true return only acknowledged events
                 acknowledges:
-                - alias: Account who acknowledge 
+                - alias: Account who acknowledge
                   clock: Time when the event was created (timestamp)
                   message: Text of the acknowledgement message
                 clock: Time when the event was created (timestamp)
@@ -66,13 +66,13 @@ triggers_problem:
 
 DOCUMENTATION = '''
 ---
-module: zabbix_host_triggers
+module: zabbix_host_events_info
 short_description: Get all triggers about a Zabbix host
 description:
    - This module allows you to see if a Zabbix host have no active alert to make actions on it.
      For this case use module Ansible 'fail' to exclude host in trouble.
    - Length of "triggers_ok" allow if template's triggers exist for Zabbix Host
-version_added: "2.9"
+version_added: "2.10"
 author:
     - "Stéphane Travassac (@stravassac)"
 requirements:
@@ -84,6 +84,7 @@ options:
             - Identifier of Zabbix Host
         default: hostname
         required: true
+        type: str
     host_id_type:
         description:
             - Type of host_identifier
@@ -93,6 +94,7 @@ options:
             - hostid
         required: false
         default: hostname
+        type: str
     trigger_severity:
         description:
             - Zabbix severity for search filter
@@ -105,13 +107,14 @@ options:
             - average
             - high
             - disaster
+        type: str
 extends_documentation_fragment:
     - zabbix
 '''
 
 EXAMPLES = '''
 - name: exclude machine if alert active on it
-  zabbix_host_triggers_problem:
+  zabbix_host_events_info:
       server_url: "{{ zabbix_url }}"
       login_user: "{{ lookup('env','ZABBIX_USER') }}"
       login_password: "{{ lookup('env','ZABBIX_PASSWORD') }}"
