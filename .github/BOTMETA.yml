@@ -169,6 +169,10 @@ files:
     labels: [ cloud, vmware ]
     maintainers: $team_vmware
     notified: lparkes
+  $modules/cloud/vmware_httpapi/: &vmware_httpapi
+    keywords: [ esx, vcenter, vcsa, vcsim, vsphere ]
+    labels: [ cloud, vmware_httpapi ]
+    maintainers: $team_vmware_httpapi
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
   $modules/cloud/vultr/: &vultr
     labels: [ cloud, vultr ]
@@ -828,6 +832,7 @@ files:
   $module_utils/utm_utils.py:
     maintainers: $team_e_spirit
   $module_utils/vmware: *vmware
+  $module_utils/vmware_httpapi: *vmware_httpapi
   $module_utils/vultr.py: *vultr
   $module_utils/xenserver.py:
       maintainers: bvitnik
@@ -1609,6 +1614,7 @@ macros:
   team_tower: ghjm matburt ryanpetrello rooftopcellist AlanCoding jladdjr kdelee chrismeyersfsu
   team_ucs: dsoper2 movinalot SDBrett vallard vvb
   team_vmware: Akasurde warthog9 Tomorrow9 goneri pgbidkar
+  team_vmware_httpapi: Akasurde warthog9 Tomorrow9 goneri pgbidkar n3pjk
   team_virt: joshainglis karmab
   team_vultr: resmo Spredzy
   team_windows: jborean93 jhawkesworth nitzmahone ShachafGoldstein
