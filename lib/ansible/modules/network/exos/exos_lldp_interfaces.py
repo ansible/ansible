@@ -652,7 +652,7 @@ requests:
   description: The set of requests pushed to the remote device.
   returned: always
   type: list
-  sample: [{"data": "...", "method": "...", "path": "..."}, {"data": "...", "method": "...", "path": "..."}, {"data": "...", "method": "...", "path": "..."}]    
+  sample: [{"data": "...", "method": "...", "path": "..."}, {"data": "...", "method": "...", "path": "..."}, {"data": "...", "method": "...", "path": "..."}]
 """
 
 from ansible.module_utils.basic import AnsibleModule
