@@ -12,6 +12,11 @@
         name: '2'
       - enabled: true
         name: '3'
+    config_all:
+      - enabled: true
+        name: '4'
+      - enabled: true
+        name: '5'
 
 - exos_facts:
     gather_network_resources: lldp_interfaces
@@ -28,7 +33,7 @@
   - name: Assert that correct set of requests were generated
     assert:
       that:
-        - "deleted['requests']|symmetric_difference(result['requests']) == []"
+        - "deleted['requests_1']|symmetric_difference(result['requests']) == []"
 
   - name: Assert that before dicts were correctly generated
     assert:
@@ -47,6 +52,34 @@
       that:
         - "config|difference(ansible_facts.network_resources.lldp_interfaces) == []"
 
+  - name: Delete LLDP interface configuration
+    exos_lldp_interfaces: 
+      config:
+      state: deleted
+    register: result
+
+  - name: Assert that correct set of requests were generated
+    assert:
+      that:
+        - "deleted['requests_2']|symmetric_difference(result['requests']) == []"
+
+  - name: Assert that before dicts were correctly generated
+    assert:
+      that:
+        - "ansible_facts.network_resources.lldp_interfaces|symmetric_difference(result.before) == []"
+
+  - exos_facts:
+      gather_network_resources: lldp_interfaces
+
+  - name: Assert that after dicts were correctly generated
+    assert:
+      that:
+        - "ansible_facts.network_resources.lldp_interfaces|symmetric_difference(result.after) == []"
+
+  - assert:
+      that:
+        - "config_all|difference(ansible_facts.network_resources.lldp_interfaces) == []"
+
   - name: Delete attributes of all configured interfaces (IDEMPOTENT)
     exos_lldp_interfaces: *deleted
     register: result
@@ -64,6 +97,9 @@
       that:
         - "ansible_facts.network_resources.lldp_interfaces|symmetric_difference(result.before) == []"
 
+  - set_fact:
+      expected_config: "{{ config }} + {{ config_all }}"
+
   - assert:
       that:
-        - "config|difference(ansible_facts.network_resources.lldp_interfaces) == []"
+        - "expected_config|difference(ansible_facts.network_resources.lldp_interfaces) == []"
