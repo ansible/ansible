@@ -1,0 +1,2 @@
+bugfixes:
+    - Fix for junos cli_config replace option (https://github.com/ansible/ansible/pull/62131).
