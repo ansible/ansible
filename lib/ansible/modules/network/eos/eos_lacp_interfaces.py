@@ -43,6 +43,10 @@ short_description: Manage Link Aggregation Control Protocol (LACP) attributes of
 description:
   - This module manages Link Aggregation Control Protocol (LACP) attributes of interfaces on Arista EOS devices.
 author: Nathaniel Case (@Qalthos)
+notes:
+- Tested against Arista EOS 4.20.10M
+- This module works with connection C(network_cli). See the
+  L(EOS Platform Options,../network/user_guide/platform_eos.html).
 options:
   config:
     description: A dictionary of LACP interfaces options.

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
 The eos_interfaces class
 It is in this file where the current configuration (as dict)
@@ -12,10 +13,10 @@ created
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils.network.common.utils import to_list, param_list_to_dict
-
 from ansible.module_utils.network.common.cfg.base import ConfigBase
+from ansible.module_utils.network.common.utils import to_list, dict_diff, param_list_to_dict
 from ansible.module_utils.network.eos.facts.facts import Facts
+from ansible.module_utils.network.eos.utils.utils import normalize_interface
 
 
 class Interfaces(ConfigBase):
@@ -93,148 +94,143 @@ class Interfaces(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
+        state = self._module.params['state']
         want = param_list_to_dict(want)
         have = param_list_to_dict(have)
-        state = self._module.params['state']
         if state == 'overridden':
-            commands = state_overridden(want, have)
+            commands = self._state_overridden(want, have)
         elif state == 'deleted':
-            commands = state_deleted(want, have)
+            commands = self._state_deleted(want, have)
         elif state == 'merged':
-            commands = state_merged(want, have)
+            commands = self._state_merged(want, have)
         elif state == 'replaced':
-            commands = state_replaced(want, have)
+            commands = self._state_replaced(want, have)
+        return commands
+
+    @staticmethod
+    def _state_replaced(want, have):
+        """ The command generator when state is replaced
+
+        :rtype: A list
+        :returns: the commands necessary to migrate the current configuration
+                  to the desired configuration
+        """
+        commands = []
+        for key, desired in want.items():
+            interface_name = normalize_interface(key)
+            if interface_name in have:
+                extant = have[interface_name]
+            else:
+                extant = dict()
+
+            add_config = dict_diff(extant, desired)
+            del_config = dict_diff(desired, extant)
+
+            commands.extend(generate_commands(key, add_config, del_config))
+
+        return commands
+
+    @staticmethod
+    def _state_overridden(want, have):
+        """ The command generator when state is overridden
+
+        :rtype: A list
+        :returns: the commands necessary to migrate the current configuration
+                  to the desired configuration
+        """
+        commands = []
+        for key, extant in have.items():
+            if key in want:
+                desired = want[key]
+            else:
+                desired = dict()
+
+            add_config = dict_diff(extant, desired)
+            del_config = dict_diff(desired, extant)
+
+            commands.extend(generate_commands(key, add_config, del_config))
+
+        return commands
+
+    @staticmethod
+    def _state_merged(want, have):
+        """ The command generator when state is merged
+
+        :rtype: A list
+        :returns: the commands necessary to merge the provided into
+                  the current configuration
+        """
+        commands = []
+        for key, desired in want.items():
+            interface_name = normalize_interface(key)
+            if interface_name in have:
+                extant = have[interface_name]
+            else:
+                extant = dict()
+
+            add_config = dict_diff(extant, desired)
+
+            commands.extend(generate_commands(key, add_config, {}))
+
+        return commands
+
+    @staticmethod
+    def _state_deleted(want, have):
+        """ The command generator when state is deleted
+
+        :rtype: A list
+        :returns: the commands necessary to remove the current configuration
+                  of the provided objects
+        """
+        commands = []
+        for key in want:
+            desired = dict()
+            if key in have:
+                extant = have[key]
+            else:
+                continue
+
+            del_config = dict_diff(desired, extant)
+
+            commands.extend(generate_commands(key, {}, del_config))
+
         return commands
 
 
-def state_replaced(want, have):
-    """ The command generator when state is replaced
-
-    :rtype: A list
-    :returns: the commands necessary to migrate the current configuration
-              to the desired configuration
-    """
-    commands = _compute_commands(want, have, replace=True, remove=True)
-
-    replace = commands['replace']
-    remove = commands['remove']
-
-    commands_by_interface = replace
-    for interface, commands in remove.items():
-        commands_by_interface[interface] = replace.get(interface, []) + commands
-
-    return _flatten_commands(commands_by_interface)
-
-
-def state_overridden(want, have):
-    """ The command generator when state is overridden
-
-    :rtype: A list
-    :returns: the commands necessary to migrate the current configuration
-              to the desired configuration
-    """
-    # Add empty desired state for unspecified interfaces
-    for key in have:
-        if key not in want:
-            want[key] = {}
-
-    # Otherwise it's the same as replaced
-    return state_replaced(want, have)
-
-
-def state_merged(want, have):
-    """ The command generator when state is merged
-
-    :rtype: A list
-    :returns: the commands necessary to merge the provided into
-              the current configuration
-    """
-    commands = _compute_commands(want, have, replace=True)
-    return _flatten_commands(commands['replace'])
-
-
-def state_deleted(want, have):
-    """ The command generator when state is deleted
-
-    :rtype: A list
-    :returns: the commands necessary to remove the current configuration
-              of the provided objects
-    """
-    commands = _compute_commands(want, have, remove=True)
-    return _flatten_commands(commands['remove'])
-
-
-def _compute_commands(want, have, replace=False, remove=False):
-    replace_params = {}
-    remove_params = {}
-    for name, config in want.items():
-        extant = have.get(name, {})
-
-        if remove:
-            remove_params[name] = dict(set(extant.items()).difference(config.items()))
-        if replace:
-            replace_params[name] = dict(set(config.items()).difference(extant.items()))
-            if remove:
-                # We won't need to also clear the configuration if we've
-                # already set it to something
-                for param in replace_params[name]:
-                    remove_params[name].pop(param, None)
-
-    returns = {}
-    if replace:
-        returns['replace'] = _replace_config(replace_params)
-    if remove:
-        returns['remove'] = _remove_config(remove_params)
-
-    return returns
-
-
-def _remove_config(params):
-    """
-    Generates commands to reset config to defaults based on keys provided.
-    """
-    commands = {}
-    for interface, config in params.items():
-        interface_commands = []
-        for param in config:
-            if param == 'enabled':
-                interface_commands.append('no shutdown')
-            elif param in ('description', 'mtu'):
-                interface_commands.append('no {0}'.format(param))
-            elif param == 'speed':
-                interface_commands.append('speed auto')
-        if interface_commands:
-            commands[interface] = interface_commands
-
-    return commands
-
-
-def _replace_config(params):
-    """
-    Generates commands to replace config to new values based on provided dictionary.
-    """
-    commands = {}
-    for interface, config in params.items():
-        interface_commands = []
-        for param, state in config.items():
-            if param == 'description':
-                interface_commands.append('description "{0}"'.format(state))
-            elif param == 'enabled':
-                interface_commands.append('{0}shutdown'.format('no ' if state else ''))
-            elif param == 'mtu':
-                interface_commands.append('mtu {0}'.format(state))
-        if 'speed' in config:
-            interface_commands.append('speed {0}{1}'.format(config['speed'], config['duplex']))
-        if interface_commands:
-            commands[interface] = interface_commands
-
-    return commands
-
-
-def _flatten_commands(command_dict):
+def generate_commands(interface, to_set, to_remove):
     commands = []
-    for interface, interface_commands in command_dict.items():
-        commands.append('interface {0}'.format(interface))
-        commands.extend(interface_commands)
+    for key, value in to_set.items():
+        if value is None:
+            continue
+
+        if key == "enabled":
+            commands.append('{0}shutdown'.format('no ' if value else ''))
+        elif key == "speed":
+            if value == "auto":
+                commands.append("{0} {1}".format(key, value))
+            else:
+                commands.append('speed {0}{1}'.format(value, to_set['duplex']))
+        elif key == "duplex":
+            # duplex is handled with speed
+            continue
+        else:
+            commands.append("{0} {1}".format(key, value))
+
+        # Don't try to also remove the same key, if present in to_remove
+        to_remove.pop(key, None)
+
+    for key in to_remove.keys():
+        if key == "enabled":
+            commands.append('no shutdown')
+        elif key == "speed":
+            commands.append("speed auto")
+        elif key == "duplex":
+            # duplex is handled with speed
+            continue
+        else:
+            commands.append("no {0}".format(key))
+
+    if commands:
+        commands.insert(0, "interface {0}".format(interface))
 
     return commands
