@@ -210,7 +210,7 @@ def main():
 
         if module.params['route_targets'] is not None:
             for rt in module.params['route_targets']:
-                if rt.get('direction') == 'both':
+                if rt.get('direction') == 'both' or not rt.get('direction'):
                     rt_commands = match_current_rt(rt, 'import', current, rt_commands)
                     rt_commands = match_current_rt(rt, 'export', current, rt_commands)
                 else:
