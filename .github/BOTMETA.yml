@@ -146,7 +146,7 @@ files:
   $modules/cloud/misc/virt_pool.py: *virt
   $modules/cloud/misc/xenserver_facts.py:
     ignored: andyhky
-  $modules/cloud/opennebula/: ilicmilan kustodian xorel rsmontero
+  $modules/cloud/opennebula/: ilicmilan kustodian xorel rsmontero meerkampdvv
   $modules/cloud/openstack/: $team_openstack
   $modules/cloud/oracle/: &oracle
     labels: [ cloud, oracle ]
