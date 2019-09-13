@@ -28,7 +28,7 @@ from ansible.executor.task_executor import TaskExecutor, remove_omit
 from ansible.plugins.loader import action_loader, lookup_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
-from ansible.module_utils.six import text_type, binary_type
+from ansible.module_utils.six import text_type
 
 from units.mock.loader import DictDataLoader
 
