@@ -357,11 +357,15 @@ class ActionModule(ActionBase):
             outcome = process_outcomes(nxos_session)
             if outcome['user_response_required']:
                 logit('user_response_required')
+                logit('%s, %s' % (nxos_session.before, nxos_session.after))
                 nxos_session.sendline('yes')
+                logit('%s, %s' % (nxos_session.before, nxos_session.after))
                 continue
             if outcome['password_prompt_detected']:
                 logit('password_prompt_detected')
+                logit('%s, %s' % (nxos_session.before, nxos_session.after))
                 nxos_session.sendline(nxos_password)
+                logit('%s, %s' % (nxos_session.before, nxos_session.after))
                 continue
             if outcome['final_prompt_detected']:
                 logit('final_prompt_detected')
@@ -371,6 +375,7 @@ class ActionModule(ActionBase):
                 logit('error_encountered')
                 if connect_attempt < max_attempts:
                     logit('Attempt %s to spawn ssh session' % connect_attempt)
+                    logit('%s, %s' % (nxos_session.before, nxos_session.after))
                     nxos_session = pexpect.spawn('ssh ' + nxos_username + '@' + nxos_hostname + ' -p' + str(port))
                     continue
                 logit('final failure error ... return the info')
@@ -383,7 +388,7 @@ class ActionModule(ActionBase):
             logit('Strange error, outcome info: %s' % outcome)
             msg = 'After {0} attempts, failed to spawn pexpect session to {1}'
             msg += 'BEFORE: {2}, AFTER: {3}'
-            raise AnsibleError(msg.format(connect_attempt, nxos_hostname, nxos_session.before, nxos_session.before))
+            raise AnsibleError(msg.format(connect_attempt, nxos_hostname, nxos_session.before, nxos_session.after))
 
         # Create local file directory under NX-OS filesystem if
         # local_file_directory playbook parameter is set.
