@@ -667,7 +667,7 @@ def control_state(sd_module):
     sd_service = sd_module._service.service(sd.id)
 
     # In the case of no status returned, it's an attached storage domain.
-    # Redetermine the corresponding serivce and entity:
+    # Redetermine the corresponding service and entity:
     if sd.status is None:
         sd_service = sd_module._attached_sd_service(sd)
         sd = get_entity(sd_service)

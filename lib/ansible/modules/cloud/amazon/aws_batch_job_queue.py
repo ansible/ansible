@@ -233,7 +233,7 @@ def manage_state(module, aws):
     if state == 'present':
         if current_state == 'present':
             updates = False
-            # Update Batch Job Queuet configuration
+            # Update Batch Job Queue configuration
             job_kwargs = {'jobQueue': job_queue_name}
 
             # Update configuration if needed

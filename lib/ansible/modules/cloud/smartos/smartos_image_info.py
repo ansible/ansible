@@ -28,7 +28,7 @@ options:
         description:
             - Criteria for selecting image. Can be any value from image
               manifest and 'published_date', 'published', 'source', 'clones',
-              and 'size'. More informaton can be found at U(https://smartos.org/man/1m/imgadm)
+              and 'size'. More information can be found at U(https://smartos.org/man/1m/imgadm)
               under 'imgadm list'.
 '''
 

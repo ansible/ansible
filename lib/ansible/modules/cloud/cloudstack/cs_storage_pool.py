@@ -217,7 +217,7 @@ suitable_for_migration:
   type: bool
   sample: false
 storage_capabilities:
-  description: Capabilities of the torage pool.
+  description: Capabilities of the storage pool.
   returned: success
   type: dict
   sample: {"VOLUME_SNAPSHOT_QUIESCEVM": "false"}
