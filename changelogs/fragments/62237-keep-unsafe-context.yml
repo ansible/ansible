@@ -1,0 +1,3 @@
+bugfixes:
+- TaskExecutor - Ensure we don't erase unsafe context in TaskExecutor.run on bytes
+  (https://github.com/ansible/ansible/issues/62237)
