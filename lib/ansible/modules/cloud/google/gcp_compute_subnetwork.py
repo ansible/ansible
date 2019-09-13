@@ -40,7 +40,7 @@ description:
   other resources to communicate with each other via internal, private IP addresses.
 - Each VPC network is subdivided into subnets, and each subnet is contained within
   a single region. You can have more than one subnet in a region for a given VPC network.
-  Each subnet has a continuous private RFC1918 IP space. You create instances, containers,
+  Each subnet has a contiguous private RFC1918 IP space. You create instances, containers,
   and the like in these subnets.
 - When you create an instance, you must create it in a subnet, and the instance draws
   its internal IP address from that subnet.
