@@ -160,26 +160,12 @@ def main():
         afi=dict(required=True, choices=['ipv4', 'ipv6']),
         route_target_both_auto_evpn=dict(required=False, type='bool'),
         state=dict(choices=['present', 'absent'], default='present'),
-        route_target_import=dict(
+        route_targets=dict(
             rt=dict(type='str'),
-            state=dict(
-                choices=['present', 'absent'],
-                default='present'
+            direction=dict(
+                choices=['import', 'export', 'both'],
+                default='both'
             ),
-            elements='dict',
-            type='list'
-        ),
-        route_target_export=dict(
-            rt=dict(type='str'),
-            state=dict(
-                choices=['present', 'absent'],
-                default='present'
-            ),
-            elements='dict',
-            type='list'
-        ),
-        route_target_both=dict(
-            rt=dict(type='str'),
             state=dict(
                 choices=['present', 'absent'],
                 default='present'
@@ -227,18 +213,13 @@ def main():
             elif have_auto_evpn and not want_auto_evpn:
                 commands.append('no route-target both auto evpn')
 
-        if module.params['route_target_import'] is not None:
-            for rt in module.params['route_target_import']:
-                rt_commands = match_current_rt(rt, 'import', current, rt_commands)
-
-        if module.params['route_target_export'] is not None:
-            for rt in module.params['route_target_export']:
-                rt_commands = match_current_rt(rt, 'export', current, rt_commands)
-
-        if module.params['route_target_both'] is not None:
-            for rt in module.params['route_target_both']:
-                rt_commands = match_current_rt(rt, 'import', current, rt_commands)
-                rt_commands = match_current_rt(rt, 'export', current, rt_commands)
+        if module.params['route_targets'] is not None:
+            for rt in module.params['route_targets']:
+                if rt.get('direction') == 'both':
+                    rt_commands = match_current_rt(rt, 'import', current, rt_commands)
+                    rt_commands = match_current_rt(rt, 'export', current, rt_commands)
+                else:
+                    rt_commands = match_current_rt(rt, rt.get('direction'), current, rt_commands)
 
         if rt_commands:
             commands.extend(rt_commands)
