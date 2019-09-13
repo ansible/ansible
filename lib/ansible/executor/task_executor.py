@@ -290,7 +290,7 @@ class TaskExecutor:
         index_var = self._task.loop_control.index_var
         loop_pause = self._task.loop_control.pause
         extended = self._task.loop_control.extended
-        label = self._task.loop_control.label
+        label = self._task.loop_control.label  # label skips post_validate as it is templated directly below
 
         if loop_var in task_vars:
             display.warning(u"The loop variable '%s' is already in use. "
@@ -308,6 +308,7 @@ class TaskExecutor:
             task_vars['ansible_loop_var'] = loop_var
 
             task_vars[loop_var] = item
+
             if index_var:
                 task_vars['ansible_index_var'] = index_var
                 task_vars[index_var] = item_index

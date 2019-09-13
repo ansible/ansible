@@ -51,3 +51,7 @@ class LoopControl(FieldAttributeBase):
         ''' default to loop var '''
         if value is None:
             setattr(self, name, '{{%s}}' % self.loop_var)
+
+    def _post_validate_label(self, attr, value, templar):
+        ''' skip templating as it is done directly in loop code '''
+        return value
