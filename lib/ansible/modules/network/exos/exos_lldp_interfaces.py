@@ -62,10 +62,10 @@ options:
       - The state the configuration should be left in.
     type: str
     choices:
-    - merged
-    - replaced
-    - overridden
-    - deleted
+      - merged
+      - replaced
+      - overridden
+      - deleted
     default: merged
 """
 EXAMPLES = """

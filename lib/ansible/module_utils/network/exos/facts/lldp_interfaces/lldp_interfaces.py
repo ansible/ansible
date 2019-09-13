@@ -83,6 +83,6 @@ class Lldp_interfacesFacts(object):
         config = deepcopy(spec)
 
         config["name"] = conf["name"]
-        config["enabled"] = "True" if conf["enabled"] else "False"
+        config["enabled"] = True if conf["enabled"] else False
 
         return utils.remove_empties(config)

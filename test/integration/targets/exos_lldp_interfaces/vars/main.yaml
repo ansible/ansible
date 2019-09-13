@@ -40,9 +40,3 @@ deleted:
     - data: '{"openconfig-lldp:config": {"enabled": true, "name": "3"}}'
       method: PATCH
       path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=3/config
-    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "4"}}'
-      method: PATCH
-      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=4/config
-    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "5"}}'
-      method: PATCH
-      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=5/config

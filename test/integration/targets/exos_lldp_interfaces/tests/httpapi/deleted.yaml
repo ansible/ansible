@@ -12,10 +12,6 @@
         name: '2'
       - enabled: true
         name: '3'
-      - enabled: true
-        name: '4'
-      - enabled: true
-        name: '5'
 
 - exos_facts:
     gather_network_resources: lldp_interfaces
@@ -24,6 +20,8 @@
   - name: Delete LLDP interface configuration
     exos_lldp_interfaces: &deleted
       config:
+        - name: '2'
+        - name: '3'
       state: deleted
     register: result
 
