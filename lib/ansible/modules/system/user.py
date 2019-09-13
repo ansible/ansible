@@ -598,10 +598,10 @@ class User(object):
             cmd.append('-g')
             cmd.append(self.group)
         elif self.group_exists(self.name):
-            # use the --nocreategroup (-n/-N)option (no user group) 
-            # if a group already exists with the same name 
-            # as the user to prevent errors from useradd 
-            # trying to create a group when USERGROUPS_ENAB 
+            # use the --nocreategroup (-n/-N)option (no user group)
+            # if a group already exists with the same name
+            # as the user to prevent errors from useradd
+            # trying to create a group when USERGROUPS_ENAB
             # is set in /etc/login.defs.
             if os.path.exists('/etc/redhat-release'):
                 # use the long command to avoid case shifting issues
