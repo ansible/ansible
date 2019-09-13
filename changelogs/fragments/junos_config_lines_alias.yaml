@@ -1,0 +1,2 @@
+bugfixes:
+- junos_config - Add commands alias to lines option to be in sync with other platforms (https://github.com/ansible/ansible/pull/62221)
