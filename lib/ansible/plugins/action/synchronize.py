@@ -245,6 +245,10 @@ class ActionModule(ActionBase):
         elif delegate_to is not None and delegate_to in dest_host_ids:
             dest_is_local = True
 
+        # Fix for local copy to occur without sshpass
+        if dest_is_local:
+            _tmp_args['_local_rsync_password'] = None
+
         # CHECK FOR NON-DEFAULT SSH PORT
         inv_port = task_vars.get('ansible_ssh_port', None) or C.DEFAULT_REMOTE_PORT
         if _tmp_args.get('dest_port', None) is None:
