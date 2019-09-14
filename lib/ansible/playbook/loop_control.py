@@ -29,6 +29,7 @@ class LoopControl(FieldAttributeBase):
     _index_var = FieldAttribute(isa='str')
     _label = FieldAttribute(isa='str')
     _pause = FieldAttribute(isa='float', default=0)
+    _pause_after_skipped_tasks = FieldAttribute(isa='bool', default=True)
     _extended = FieldAttribute(isa='bool')
 
     def __init__(self):

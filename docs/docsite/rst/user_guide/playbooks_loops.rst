@@ -327,7 +327,7 @@ To control the time (in seconds) between the execution of each item in a task lo
 
     # main.yml
     - name: create servers, pause 3s before creating next
-      digital_ocean:
+      digital_ocean_droplet:
         name: "{{ item }}"
         state: present
       loop:
@@ -335,6 +335,25 @@ To control the time (in seconds) between the execution of each item in a task lo
         - server2
       loop_control:
         pause: 3
+
+To avoid pausing after skipped tasks add ``pause_after_skipped_tasks: no`` to ``loop_control``::
+
+    # main.yml
+    - name: create servers for students only, don't pause when iterating through teachers
+      digital_ocean_droplet:
+        name: "{{ item }}-server"
+        state: present
+      when: item is match("student")
+      loop:
+        - teacher1
+        - teacher2
+        - teacher3
+        - student1
+        - student2
+        - student3
+      loop_control:
+        pause: 3
+        pause_after_skipped_tasks: no
 
 Tracking progress through a loop with ``index_var``
 ---------------------------------------------------

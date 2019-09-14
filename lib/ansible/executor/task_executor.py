@@ -284,6 +284,7 @@ class TaskExecutor:
         index_var = None
         label = None
         loop_pause = 0
+        loop_pause_after_skipped_tasks = True
         extended = False
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
 
@@ -292,6 +293,7 @@ class TaskExecutor:
             loop_var = templar.template(self._task.loop_control.loop_var)
             index_var = templar.template(self._task.loop_control.index_var)
             loop_pause = templar.template(self._task.loop_control.pause)
+            loop_pause_after_skipped_tasks = templar.template(self._task.loop_control.pause_after_skipped_tasks)
             extended = templar.template(self._task.loop_control.extended)
 
             # This may be 'None',so it is templated below after we ensure a value and an item is assigned
@@ -343,7 +345,7 @@ class TaskExecutor:
             templar.available_variables = task_vars
 
             # pause between loop iterations
-            if loop_pause and ran_once:
+            if ran_once and loop_pause and (loop_pause_after_skipped_tasks or 'skipped' not in res or not res['skipped']):
                 try:
                     time.sleep(float(loop_pause))
                 except ValueError as e:
