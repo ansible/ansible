@@ -1,21 +1,18 @@
 ---
 - name: Integration testing for ec2_eip
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
   block:
-    - name: set up aws connection info
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: True
 
     - name: Allocate a new eip - attempt reusing unallocated ones
       ec2_eip:
         state: present
         in_vpc: yes
         reuse_existing_ip_allowed: yes
-        <<: *aws_connection_info
       register: eip
 
     - assert:
@@ -28,7 +25,6 @@
       ec2_eip:
         state: present
         in_vpc: yes
-        <<: *aws_connection_info
       register: new_eip
 
     - assert:
@@ -42,7 +38,6 @@
       ec2_eip:
         state: present
         in_vpc: yes
-        <<: *aws_connection_info
         public_ip: "{{ eip.public_ip }}"
       register: existing_eip
 
@@ -57,7 +52,6 @@
       ec2_eip:
         state: present
         in_vpc: yes
-        <<: *aws_connection_info
         reuse_existing_ip_allowed: yes
         tag_name: Team
       register: tagged_eip
@@ -72,7 +66,6 @@
       ec2_eip:
         state: present
         in_vpc: yes
-        <<: *aws_connection_info
         public_ip: "{{ eip.public_ip }}"
         reuse_existing_ip_allowed: yes
         tag_name: Team
@@ -89,7 +82,6 @@
       ec2_eip:
         state: present
         in_vpc: yes
-        <<: *aws_connection_info
         reuse_existing_ip_allowed: yes
         tag_name: Team
         tag_value: Backend
@@ -106,7 +98,6 @@
       ec2_eip:
         state: present
         in_vpc: yes
-        <<: *aws_connection_info
         public_ipv4_pool: amazon
       register: pool_eip
 
@@ -127,12 +118,13 @@
         - tagged_eip
         - backend_eip
         - amazon_eip
+      ignore_errors: yes
     - name: Cleanup newly allocated eip
       ec2_eip:
         state: absent
         public_ip: "{{ item.public_ip }}"
         in_vpc: yes
-        <<: *aws_connection_info
+      ignore_errors: yes
       when: item is defined and item is changed and item.public_ip is defined and item.public_ip != ""
       loop:
         - "{{ eip }}"
@@ -141,4 +133,3 @@
         - "{{ tagged_eip }}"
         - "{{ backend_eip }}"
         - "{{ amazon_eip }}"
-...
