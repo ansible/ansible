@@ -364,6 +364,8 @@ class TestFailure(TestResult):
         """
         :rtype: str
         """
+        if self.command != 'sanity':
+            return None  # only sanity tests have docs links
 
         # Use the major.minor version for the URL only if this a release that
         # matches the pattern 2.4.0, otherwise, use 'devel'
@@ -373,19 +375,13 @@ class TestFailure(TestResult):
             url_version = '.'.join(ansible_version.split('.')[:2])
 
         testing_docs_url = 'https://docs.ansible.com/ansible/%s/dev_guide/testing' % url_version
-        testing_docs_dir = 'docs/docsite/rst/dev_guide/testing'
 
         url = '%s/%s/' % (testing_docs_url, self.command)
-        path = os.path.join(testing_docs_dir, self.command)
 
         if self.test:
             url += '%s.html' % self.test
-            path = os.path.join(path, '%s.rst' % self.test)
 
-        if os.path.exists(path):
-            return url
-
-        return None
+        return url
 
     def format_title(self, help_link=None):
         """
