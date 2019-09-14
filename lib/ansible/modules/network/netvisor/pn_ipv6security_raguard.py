@@ -74,7 +74,7 @@ EXAMPLES = """
     pn_name: "foo1"
     pn_device: "host"
     pn_access_list: "sample"
-    pn_prefix_list: "sampe"
+    pn_prefix_list: "sample"
     pn_router_priority: "low"
 
 - name: ipv6 security ragurad modify

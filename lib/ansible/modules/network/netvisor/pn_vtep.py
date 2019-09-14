@@ -18,7 +18,7 @@ author: "Pluribus Networks (@rajaspachipulusu17)"
 version_added: "2.9"
 short_description: CLI command to create/delete vtep
 description:
-  - This module can be used to create a vtep and delte a vtep.
+  - This module can be used to create a vtep and delete a vtep.
 options:
   pn_cliswitch:
     description:

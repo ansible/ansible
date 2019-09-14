@@ -217,12 +217,12 @@ before:
   description: The configuration as structured data prior to module invocation.
   returned: always
   type: dict
-  sample: The configuration returned will alwys be in the same format of the paramters above.
+  sample: The configuration returned will always be in the same format of the parameters above.
 after:
   description: The configuration as structured data after module completion.
   returned: when changed
   type: dict
-  sample: The configuration returned will alwys be in the same format of the paramters above.
+  sample: The configuration returned will always be in the same format of the parameters above.
 commands:
   description: The set of commands pushed to the remote device
   returned: always
