@@ -91,12 +91,13 @@ account_uri:
 account:
   description: The account information, as retrieved from the ACME server.
   returned: if account exists
-  type: complex
+  type: dict
   contains:
     contact:
       description: the challenge resource that must be created for validation
       returned: always
       type: list
+      elements: str
       sample: "['mailto:me@example.com', 'tel:00123456789']"
     status:
       description: the account's status
@@ -124,6 +125,7 @@ orders:
     - "If I(retrieve_orders) is C(url_list), this will be a list of URLs."
     - "If I(retrieve_orders) is C(object_list), this will be a list of objects."
   type: list
+  #elements: ... depends on retrieve_orders
   returned: if account exists, I(retrieve_orders) is not C(ignore), and server supports order listing
   contains:
     status:
@@ -146,6 +148,7 @@ orders:
       description:
         - List of identifiers this order is for.
       type: list
+      elements: dict
       contains:
         type:
           description: Type of identifier. C(dns) or C(ip).
@@ -176,12 +179,13 @@ orders:
       description:
         - In case an error occurred during processing, this contains information about the error.
         - The field is structured as a problem document (RFC7807).
-      type: complex
+      type: dict
       returned: when an error occurred
     authorizations:
       description:
         - A list of URLs for authorizations for this order.
       type: list
+      elements: str
     finalize:
       description:
         - A URL used for finalizing an ACME order.

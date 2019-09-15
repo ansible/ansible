@@ -193,6 +193,7 @@ info:
     description: Information about the certificate. Output of C(ssh-keygen -L -f).
     returned: change or success
     type: list
+    elements: str
 
 '''
 
