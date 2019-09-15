@@ -6,7 +6,6 @@
       aws_secret_key: "{{aws_secret_key}}"
       region: "{{aws_region}}"
       security_token: "{{security_token}}"
-  no_log: true
 
 - name: Check if ec2_linux_vars_to_delete.yml is present
   stat:
