@@ -1,0 +1,2 @@
+bugfixes:
+  - "win_find - Get-FileStat used [int] instead of [int64] for file size calculations"
