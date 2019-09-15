@@ -324,6 +324,9 @@ def find_address(ec2, module, public_ip, device_id, is_instance=True):
     try:
         addresses = ec2.describe_addresses(**kwargs)
     except is_boto3_error_code('InvalidAddress.NotFound') as e:
+        # If we're releasing and we can't find it, it's already gone...
+        if module.params.get('state') == 'absent':
+            module.exit_json(changed=False)
         module.fail_json_aws(e, msg="Couldn't obtain list of existing Elastic IP addresses")
 
     addresses = addresses["Addresses"]

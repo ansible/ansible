@@ -16,7 +16,6 @@
 #
 # Possible Bugs:
 # - check_mode not honoured #62318
-# - Throws an error if you attempt to re-release an already released EIP #62331
 #
 - name: Integration testing for ec2_eip
   module_defaults:
@@ -70,8 +69,8 @@
         that:
           - eip is defined
           - eip is changed
-          - eip.public_ip is defined and eip.public_ip != ""
-          - eip.allocation_id is defined and eip.allocation_id != ""
+          - eip.public_ip is defined and ( eip.public_ip | ipaddr )
+          - eip.allocation_id is defined and eip.allocation_id.startswith("eipalloc-")
           - ( eip_info_start.addresses | length ) + 1 == ( eip_info.addresses | length )
 
     # Get the info for our specific eip
@@ -126,8 +125,8 @@
         that:
           - eip is defined
           - eip is changed
-          - eip.public_ip is defined and eip.public_ip != ""
-          - eip.allocation_id is defined and eip.allocation_id != ""
+          - eip.public_ip is defined and ( eip.public_ip | ipaddr )
+          - eip.allocation_id is defined and eip.allocation_id.startswith("eipalloc-")
           - ( eip_info_start.addresses | length ) + 1  == ( eip_info.addresses | length )
 
     - name: Re-Allocate a new eip - attempt reusing unallocated ones (one available)
@@ -141,8 +140,8 @@
         that:
           - reallocate_eip is defined
           - reallocate_eip is not changed
-          - reallocate_eip.public_ip is defined and eip.public_ip != ""
-          - reallocate_eip.allocation_id is defined and eip.allocation_id != ""
+          - reallocate_eip.public_ip is defined and ( reallocate_eip.public_ip | ipaddr )
+          - reallocate_eip.allocation_id is defined and reallocate_eip.allocation_id.startswith("eipalloc-")
           - ( eip_info_start.addresses | length ) + 1  == ( eip_info.addresses | length )
 
     - name: Release eip
@@ -171,8 +170,8 @@
         that:
           - eip is defined
           - eip is changed
-          - eip.public_ip is defined and eip.public_ip != ""
-          - eip.allocation_id is defined and eip.allocation_id != ""
+          - eip.public_ip is defined and ( eip.public_ip | ipaddr )
+          - eip.allocation_id is defined and eip.allocation_id.startswith("eipalloc-")
           - ( eip_info_start.addresses | length ) + 1  == ( eip_info.addresses | length )
 
     - name: Match an existing eip (changed == false)
@@ -186,8 +185,8 @@
         that:
           - reallocate_eip is defined
           - reallocate_eip is not changed
-          - reallocate_eip.public_ip is defined and reallocate_eip.public_ip != ""
-          - reallocate_eip.allocation_id is defined and reallocate_eip.allocation_id != ""
+          - reallocate_eip.public_ip is defined and ( reallocate_eip.public_ip | ipaddr )
+          - reallocate_eip.allocation_id is defined and reallocate_eip.allocation_id.startswith("eipalloc-")
           - ( eip_info_start.addresses | length ) + 1  == ( eip_info.addresses | length )
 
     - name: Release eip
@@ -216,8 +215,8 @@
         that:
           - eip is defined
           - eip is changed
-          - eip.public_ip is defined and eip.public_ip != ""
-          - eip.allocation_id is defined and eip.allocation_id != ""
+          - eip.public_ip is defined and ( eip.public_ip | ipaddr )
+          - eip.allocation_id is defined and eip.allocation_id.startswith("eipalloc-")
           - ( eip_info_start.addresses | length ) + 1  == ( eip_info.addresses | length )
 
     - name: attempt reusing an existing eip with a tag (No match available)
@@ -232,8 +231,8 @@
         that:
           - no_tagged_eip is defined
           - no_tagged_eip is changed
-          - no_tagged_eip.public_ip is defined and no_tagged_eip.public_ip != ""
-          - no_tagged_eip.allocation_id is defined and no_tagged_eip.allocation_id != ""
+          - no_tagged_eip.public_ip is defined and ( no_tagged_eip.public_ip | ipaddr )
+          - no_tagged_eip.allocation_id is defined and no_tagged_eip.allocation_id.startswith("eipalloc-")
           - ( eip_info_start.addresses | length ) + 2  == ( eip_info.addresses | length )
 
     - name: tag eip so we can try matching it
@@ -255,8 +254,8 @@
         that:
           - reallocate_eip is defined
           - reallocate_eip is not changed
-          - reallocate_eip.public_ip is defined and reallocate_eip.public_ip != ""
-          - reallocate_eip.allocation_id is defined and reallocate_eip.allocation_id != ""
+          - reallocate_eip.public_ip is defined and ( reallocate_eip.public_ip | ipaddr )
+          - reallocate_eip.allocation_id is defined and reallocate_eip.allocation_id.startswith("eipalloc-")
           - ( eip_info_start.addresses | length ) + 2  == ( eip_info.addresses | length )
 
     - name: attempt reusing an existing eip with a tag and it's value (no match available)
@@ -272,8 +271,8 @@
         that:
           - backend_eip is defined
           - backend_eip is changed
-          - backend_eip.public_ip is defined and backend_eip.public_ip != ""
-          - backend_eip.allocation_id is defined and backend_eip.allocation_id != ""
+          - backend_eip.public_ip is defined and ( backend_eip.public_ip | ipaddr )
+          - backend_eip.allocation_id is defined and backend_eip.allocation_id.startswith("eipalloc-")
           - ( eip_info_start.addresses | length ) + 3  == ( eip_info.addresses | length )
 
     - name: tag eip so we can try matching it
@@ -353,8 +352,8 @@
         that:
           - eip is defined
           - eip is changed
-          - eip.public_ip is defined and eip.public_ip != ""
-          - eip.allocation_id is defined and eip.allocation_id != ""
+          - eip.public_ip is defined and ( eip.public_ip | ipaddr )
+          - eip.allocation_id is defined and eip.allocation_id.startswith("eipalloc-")
           - ( eip_info_start.addresses | length ) + 1  == ( eip_info.addresses | length )
 
     #==================================================================
@@ -415,13 +414,13 @@
           - associate_eip is changed
           - eip_info.addresses | length == 1
           - associate_eip.public_ip is defined and eip.public_ip == associate_eip.public_ip
-          - associate_eip.allocation_id is defined and eip.allocation_id != ""
+          - associate_eip.allocation_id is defined and eip.allocation_id == associate_eip.allocation_id
           - eip_info.addresses[0].allocation_id == eip.allocation_id
           - eip_info.addresses[0].domain == "vpc"
           - eip_info.addresses[0].public_ip == eip.public_ip
-          - eip_info.addresses[0].association_id is defined and eip_info.addresses[0].association_id != ""
+          - eip_info.addresses[0].association_id is defined and eip_info.addresses[0].association_id.startswith("eipassoc-")
           - eip_info.addresses[0].network_interface_id == eni_create_a.interface.id
-          - eip_info.addresses[0].private_ip_address is defined and eip_info.addresses[0].private_ip_address != ""
+          - eip_info.addresses[0].private_ip_address is defined and ( eip_info.addresses[0].private_ip_address | ipaddr )
           - eip_info.addresses[0].network_interface_owner_id == caller_facts.account
 
     - name: Re-Attach EIP to ENI A (no change)
@@ -438,14 +437,14 @@
           - associate_eip is defined
           - associate_eip is not changed
           - associate_eip.public_ip is defined and eip.public_ip == associate_eip.public_ip
-          - associate_eip.allocation_id is defined and eip.allocation_id != ""
+          - associate_eip.allocation_id is defined and eip.allocation_id == associate_eip.allocation_id
           - eip_info.addresses | length == 1
           - eip_info.addresses[0].allocation_id == eip.allocation_id
           - eip_info.addresses[0].domain == "vpc"
           - eip_info.addresses[0].public_ip == eip.public_ip
-          - eip_info.addresses[0].association_id is defined and eip_info.addresses[0].association_id != ""
+          - eip_info.addresses[0].association_id is defined and eip_info.addresses[0].association_id.startswith("eipassoc-")
           - eip_info.addresses[0].network_interface_id == eni_create_a.interface.id
-          - eip_info.addresses[0].private_ip_address is defined and eip_info.addresses[0].private_ip_address != ""
+          - eip_info.addresses[0].private_ip_address is defined and ( eip_info.addresses[0].private_ip_address | ipaddr )
 
     # Test attaching EIP to ENI B
     - name: Attach EIP to ENI B (should fail, already associated)
@@ -466,9 +465,9 @@
           - eip_info.addresses[0].allocation_id == eip.allocation_id
           - eip_info.addresses[0].domain == "vpc"
           - eip_info.addresses[0].public_ip == eip.public_ip
-          - eip_info.addresses[0].association_id is defined and eip_info.addresses[0].association_id != ""
+          - eip_info.addresses[0].association_id is defined and eip_info.addresses[0].association_id.startswith("eipassoc-")
           - eip_info.addresses[0].network_interface_id == eni_create_a.interface.id
-          - eip_info.addresses[0].private_ip_address is defined and eip_info.addresses[0].private_ip_address != ""
+          - eip_info.addresses[0].private_ip_address is defined and ( eip_info.addresses[0].private_ip_address | ipaddr )
 
     - name: Attach EIP to ENI B
       ec2_eip:
@@ -485,14 +484,14 @@
           - associate_eip is defined
           - associate_eip is changed
           - associate_eip.public_ip is defined and eip.public_ip == associate_eip.public_ip
-          - associate_eip.allocation_id is defined and eip.allocation_id != ""
+          - associate_eip.allocation_id is defined and eip.allocation_id == associate_eip.allocation_id
           - eip_info.addresses | length == 1
           - eip_info.addresses[0].allocation_id == eip.allocation_id
           - eip_info.addresses[0].domain == "vpc"
           - eip_info.addresses[0].public_ip == eip.public_ip
-          - eip_info.addresses[0].association_id is defined and eip_info.addresses[0].association_id != ""
+          - eip_info.addresses[0].association_id is defined and eip_info.addresses[0].association_id.startswith("eipassoc-")
           - eip_info.addresses[0].network_interface_id == eni_create_b.interface.id
-          - eip_info.addresses[0].private_ip_address is defined and eip_info.addresses[0].private_ip_address != ""
+          - eip_info.addresses[0].private_ip_address is defined and ( eip_info.addresses[0].private_ip_address | ipaddr )
 
     - name: Detach EIP from ENI B, without enabling release on disassociation
       ec2_eip:
@@ -540,7 +539,8 @@
           - associate_eip is defined
           - associate_eip is changed
           - associate_eip.public_ip is defined and eip.public_ip == associate_eip.public_ip
-          - associate_eip.allocation_id is defined and eip.allocation_id != ""
+          - associate_eip.allocation_id is defined and eip.allocation_id == associate_eip.allocation_id
+          - eip_info.addresses[0].network_interface_id == eni_create_a.interface.id
 
     - name: Detach EIP from ENI A, enabling release on disassociation
       ec2_eip:
@@ -592,7 +592,8 @@
         state: absent
         eni_id: "{{ eni_create_a.interface.id }}"
 
-    - ec2_vpc_igw:
+    - name: Cleanup IGW
+      ec2_vpc_igw:
         state: absent
         vpc_id: "{{ vpc_result.vpc.id }}"
       register: vpc_igw
@@ -629,8 +630,8 @@
         that:
           - eip is defined
           - eip is changed
-          - eip.public_ip is defined and eip.public_ip != ""
-          - eip.allocation_id is defined and eip.allocation_id != ""
+          - eip.public_ip is defined and ( eip.public_ip | ipaddr )
+          - eip.allocation_id is defined and eip.allocation_id.startswith("eipalloc-")
           - ( eip_info_start.addresses | length ) + 1 == ( eip_info.addresses | length )
 
     - name: Release eip
@@ -646,19 +647,18 @@
           - eip_release is changed
           - ( eip_info_start.addresses | length ) == ( eip_info.addresses | length )
 
-    # XXX Throws a big exception
-    #- name: Rerelease eip (no change)
-    #  ec2_eip:
-    #    state: absent
-    #    public_ip: "{{ eip.public_ip }}"
-    #  register: eip_release
-    #- ec2_eip_info:
-    #  register: eip_info
-    #- assert:
-    #    that:
-    #      - eip_release is defined
-    #      - eip_release is not changed
-    #      - ( eip_info_start.addresses | length ) == ( eip_info.addresses | length )
+    - name: Rerelease eip (no change)
+      ec2_eip:
+        state: absent
+        public_ip: "{{ eip.public_ip }}"
+      register: eip_release
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - eip_release is defined
+          - eip_release is not changed
+          - ( eip_info_start.addresses | length ) == ( eip_info.addresses | length )
 
   always:
 
@@ -674,7 +674,8 @@
         eni_id: "{{ eni_create_b.interface.id }}"
       ignore_errors: yes
 
-    - ec2_vpc_igw:
+    - name: Cleanup IGW
+      ec2_vpc_igw:
         state: absent
         vpc_id: "{{ vpc_result.vpc.id }}"
       register: vpc_igw
