@@ -37,7 +37,7 @@ class Lldp_interfacesArgs(object):
         pass
 
     argument_spec = {'config': {'elements': 'dict',
-                                'options': {'enable': {'type': 'bool'},
+                                'options': {'enabled': {'type': 'bool'},
                                             'name': {'required': True, 'type': 'str'}},
                                 'type': 'list'},
                      'state': {'choices': ['merged', 'replaced', 'deleted', 'overridden'],
