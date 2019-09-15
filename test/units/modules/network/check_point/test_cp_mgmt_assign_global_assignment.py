@@ -1,4 +1,4 @@
- # Ansible module to manage CheckPoint Firewall (c) 2019
+# Ansible module to manage CheckPoint Firewall (c) 2019
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
