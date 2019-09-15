@@ -29,6 +29,8 @@
 
   - name: remove local file with unicode filename and content
     local_action: file path={{ local_tmp }}-汉语/汉语.txt state=absent
+  - name: fetch remote file with unicode filename and content
+    fetch: src={{ remote_tmp }}-汉语/汉语.txt dest={{ local_tmp }}-汉语/汉语.txt fail_on_missing=true validate_checksum=true flat=true
 
   ### remove local and remote temp files
 
