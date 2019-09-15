@@ -204,14 +204,7 @@ class RecordManager(object):
         if module.params['zone'] is None:
             if module.params['record'][-1] != '.':
                 self.module.fail_json(msg='record must be absolute when omitting zone parameter')
-
-            try:
-                self.zone = dns.resolver.zone_for_name(self.module.params['record']).to_text()
-            except (dns.exception.Timeout, dns.resolver.NoNameservers, dns.resolver.NoRootSOA) as e:
-                self.module.fail_json(msg='Zone resolver error (%s): %s' % (e.__class__.__name__, to_native(e)))
-
-            if self.zone is None:
-                self.module.fail_json(msg='Unable to find zone, dnspython returned None')
+            self.zone = self.lookup_zone()
         else:
             self.zone = module.params['zone']
 
@@ -251,6 +244,31 @@ class RecordManager(object):
         if entry[0] == '"' and entry[-1] == '"':
             return entry
         return '"{text}"'.format(text=entry)
+
+    def lookup_zone(self):
+        name = dns.name.from_text(self.module.params['record'])
+        while True:
+            query = dns.message.make_query(name, dns.rdatatype.SOA)
+            try:
+                if self.module.params['protocol'] == 'tcp':
+                    lookup = dns.query.tcp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+                else:
+                    lookup = dns.query.udp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+            except (socket_error, dns.exception.Timeout) as e:
+                self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, to_native(e)))
+            if lookup.rcode() in [dns.rcode.SERVFAIL, dns.rcode.REFUSED]:
+                self.module.fail_json(msg='Zone lookup failure: \'%s\' will not respond to queries regarding \'%s\'.' % (
+                    self.module.params['server'], self.module.params['record']))
+            try:
+                zone = lookup.authority[0].name
+                if zone == name:
+                    return zone.to_text()
+            except IndexError:
+                pass
+            try:
+                name = name.parent()
+            except dns.name.NoParent:
+                self.module.fail_json(msg='Zone lookup of \'%s\' failed for unknown reason.' % (self.module.params['record']))
 
     def __do_update(self, update):
         response = None
