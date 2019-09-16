@@ -47,7 +47,7 @@ version_added: '2.9'
 '''
 
 EXAMPLES = r'''
-- name: Get all vlans in frabric A
+- name: Get all vlans in fabric A
   ucs_vlan_find:
     hostname: 172.16.143.150
     username: admin
