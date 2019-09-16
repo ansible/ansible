@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ##############################################
 #                 WARNING                    #
@@ -41,6 +42,10 @@ version_added: 2.9
 short_description: Manages interface attributes of Arista EOS interfaces
 description: ['This module manages the interface attributes of Arista EOS interfaces.']
 author: ['Nathaniel Case (@qalthos)']
+notes:
+- Tested against Arista EOS 4.20.10M
+- This module works with connection C(network_cli). See the
+  L(EOS Platform Options,../network/user_guide/platform_eos.html).
 options:
   config:
     description: The provided configuration
@@ -85,7 +90,7 @@ options:
     - deleted
     default: merged
     description:
-    - The state the configuration should be left in.
+    - The state of the configuration after module completion.
     type: str
 
 """
@@ -254,12 +259,12 @@ EXAMPLES = """
 
 RETURN = """
 before:
-  description: The configuration prior to the model invocation.
+  description: The configuration as structured data prior to module invocation.
   returned: always
   type: dict
   sample: The configuration returned will always be in the same format of the parameters above.
 after:
-  description: The resulting configuration model invocation.
+  description: The configuration as structured data after module completion.
   returned: when changed
   type: dict
   sample: The configuration returned will always be in the same format of the parameters above.

@@ -54,7 +54,7 @@ options:
         version_added: '2.9'
     template_groups:
         description:
-            - List of host groups to add template to when template is createad.
+            - List of host groups to add template to when template is created.
             - Replaces the current host groups the template belongs to if the template is already present.
             - Required when creating a new template with C(state=present) and I(template_name) is used.
               Not required when updating an existing template.
@@ -363,7 +363,7 @@ class Template(object):
                                template_macros, template_content, template_type):
         """Compares template parameters to already existing values if any are found.
 
-        template_json - JSON structures are compared as deep sorted dictonaries,
+        template_json - JSON structures are compared as deep sorted dictionaries,
         template_xml - XML structures are compared as strings, but filtered and formatted first,
         If none above is used, all the other arguments are compared to their existing counterparts
         retrieved from Zabbix API."""
@@ -379,7 +379,7 @@ class Template(object):
             return changed
 
         existing_template = self.dump_template(template_ids, template_type='json')
-        # Compare JSON objects as deep sorted python dictonaries
+        # Compare JSON objects as deep sorted python dictionaries
         if template_content is not None and template_type == 'json':
             parsed_template_json = self.load_json_template(template_content)
             if self.diff_template(parsed_template_json, existing_template):
@@ -509,7 +509,7 @@ class Template(object):
                 if element.text is None and len(list(element)) == 0:
                     template.remove(element)
 
-        # Filter new lines and identation
+        # Filter new lines and indentation
         xml_root_text = list(line.strip() for line in ET.tostring(parsed_xml_root).split('\n'))
         return ''.join(xml_root_text)
 

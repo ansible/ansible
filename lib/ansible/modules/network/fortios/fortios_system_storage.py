@@ -124,14 +124,14 @@ options:
                     - disable
             usage:
                 description:
-                    - Use hard disk for logging or WAN Optimization (default = log).
+                    - Use hard disk for logging or WAN Optimization .
                 type: str
                 choices:
                     - log
                     - wanopt
             wanopt_mode:
                 description:
-                    - WAN Optimization mode (default = mix).
+                    - WAN Optimization mode .
                 type: str
                 choices:
                     - mix

@@ -82,7 +82,7 @@ notes:
       output of your scripts.
       This option was added in Ansible 2.1.
     - This module is also supported for Windows targets.
-    - This module should be run with elevated priviliges on BSD systems to gather facts like ansible_product_version.
+    - This module should be run with elevated privileges on BSD systems to gather facts like ansible_product_version.
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
@@ -131,7 +131,7 @@ EXAMPLES = """
 """
 
 # import module snippets
-from ansible.module_utils.basic import AnsibleModule
+from ...module_utils.basic import AnsibleModule
 
 from ansible.module_utils.facts.namespace import PrefixFactNamespace
 from ansible.module_utils.facts import ansible_collector

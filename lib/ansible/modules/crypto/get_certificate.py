@@ -20,7 +20,8 @@ description:
     - Makes a secure connection and returns information about the presented certificate
     - The module can use the cryptography Python library, or the pyOpenSSL Python
       library. By default, it tries to detect which one is available. This can be
-      overridden with the I(select_crypto_backend) option."
+      overridden with the I(select_crypto_backend) option. Please note that the PyOpenSSL
+      backend was deprecated in Ansible 2.9 and will be removed in Ansible 2.13."
 options:
     host:
       description:
@@ -233,6 +234,7 @@ def main():
         if not PYOPENSSL_FOUND:
             module.fail_json(msg=missing_required_lib('pyOpenSSL >= {0}'.format(MINIMAL_PYOPENSSL_VERSION)),
                              exception=PYOPENSSL_IMP_ERR)
+        module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated', version='2.13')
     elif backend == 'cryptography':
         if not CRYPTOGRAPHY_FOUND:
             module.fail_json(msg=missing_required_lib('cryptography >= {0}'.format(MINIMAL_CRYPTOGRAPHY_VERSION)),

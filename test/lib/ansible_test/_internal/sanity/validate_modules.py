@@ -82,13 +82,13 @@ class ValidateModulesTest(SanitySingleVersion):
 
         if data_context().content.collection:
             cmd.extend(['--collection', data_context().content.collection.directory])
-
-        if args.base_branch:
-            cmd.extend([
-                '--base-branch', args.base_branch,
-            ])
         else:
-            display.warning('Cannot perform module comparison against the base branch. Base branch not detected when running locally.')
+            if args.base_branch:
+                cmd.extend([
+                    '--base-branch', args.base_branch,
+                ])
+            else:
+                display.warning('Cannot perform module comparison against the base branch. Base branch not detected when running locally.')
 
         try:
             stdout, stderr = run_command(args, cmd, env=env, capture=True)
@@ -117,7 +117,7 @@ class ValidateModulesTest(SanitySingleVersion):
                     line=int(item['line']) if 'line' in item else 0,
                     column=int(item['column']) if 'column' in item else 0,
                     level='error',
-                    code='E%s' % item['code'],
+                    code='%s' % item['code'],
                     message=item['msg'],
                 ))
 

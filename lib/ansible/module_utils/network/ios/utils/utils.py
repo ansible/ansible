@@ -30,7 +30,7 @@ def add_command_to_config_list(interface, cmd, commands):
 
 def dict_to_set(sample_dict):
     # Generate a set with passed dictionary for comparison
-    test_dict = {}
+    test_dict = dict()
     if isinstance(sample_dict, dict):
         for k, v in iteritems(sample_dict):
             if v is not None:

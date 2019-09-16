@@ -1,2 +1,0 @@
-minor_changes:
-- Meraki modules now return data in snake_case instead of camelCase. The ANSIBLE_MERAKI_FORMAT environment variable can be set to camelcase to revert back to camelcase until deprecation in Ansible 2.13.

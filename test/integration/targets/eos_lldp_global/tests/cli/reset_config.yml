@@ -1,0 +1,28 @@
+---
+- name: Reset initial config
+  cli_config:
+    config: |
+      lldp timer 3000
+      lldp holdtime 100
+      lldp reinit 5
+      no lldp tlv-select management-address 
+      no lldp tlv-select system-description
+      lldp tlv-select port-description
+  become: yes
+
+- eos_facts:
+    gather_network_resources: lldp_global
+  become: yes
+
+- set_fact:
+    expected_config:
+      timer: 3000
+      holdtime: 100
+      reinit: 5
+      tlv_select:
+        management_address: False
+        system_description: False
+
+- assert:
+    that:
+      - "expected_config == ansible_facts.network_resources.lldp_global"

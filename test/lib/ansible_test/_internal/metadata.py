@@ -11,6 +11,10 @@ from .util import (
     is_shippable,
 )
 
+from .util_common import (
+    write_json_file,
+)
+
 from .diff import (
     parse_diff,
     FileDiff,
@@ -72,8 +76,7 @@ class Metadata:
 
         display.info('>>> Metadata: %s\n%s' % (path, data), verbosity=3)
 
-        with open(path, 'w') as data_fd:
-            json.dump(data, data_fd, sort_keys=True, indent=4)
+        write_json_file(path, data)
 
     @staticmethod
     def from_file(path):

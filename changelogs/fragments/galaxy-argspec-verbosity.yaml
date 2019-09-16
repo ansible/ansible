@@ -1,2 +1,0 @@
-deprecated_features:
-- Deprecated setting the verbosity before the sub command for ``ansible-galaxy`` and ``ansible-vault``. Set the verbosity level after the sub command, e.g. do ``ansible-galaxy init -v`` and not ``ansible-galaxy -v init``.

@@ -27,7 +27,7 @@ module: fortios_system_mobile_tunnel
 short_description: Configure Mobile tunnels, an implementation of Network Mobility (NEMO) extensions for Mobile IPv4 RFC5177 in Fortinet's FortiOS and
    FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify system feature and mobile_tunnel category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.5
@@ -77,6 +77,7 @@ options:
         description:
             - Indicates whether to create or remove the object.
         type: str
+        required: true
         choices:
             - present
             - absent
@@ -102,7 +103,7 @@ options:
                 type: str
             lifetime:
                 description:
-                    - NMMO HA registration request lifetime (180 - 65535 sec, default = 65535).
+                    - NMMO HA registration request lifetime (180 - 65535 sec).
                 type: int
             n_mhae_key:
                 description:
@@ -117,7 +118,7 @@ options:
                     - base64
             n_mhae_spi:
                 description:
-                    - "NEMO authentication SPI (default: 256)."
+                    - "NEMO authentication SPI ."
                 type: int
             name:
                 description:
@@ -144,15 +145,15 @@ options:
                         type: str
             reg_interval:
                 description:
-                    - NMMO HA registration interval (5 - 300, default = 5).
+                    - NMMO HA registration interval (5 - 300).
                 type: int
             reg_retry:
                 description:
-                    - Maximum number of NMMO HA registration retries (1 to 30, default = 3).
+                    - Maximum number of NMMO HA registration retries (1 to 30).
                 type: int
             renew_interval:
                 description:
-                    - Time before lifetime expiraton to send NMMO HA re-registration (5 - 60, default = 60).
+                    - Time before lifetime expiraton to send NMMO HA re-registration (5 - 60).
                 type: int
             roaming_interface:
                 description:
@@ -358,7 +359,7 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
@@ -399,6 +400,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None

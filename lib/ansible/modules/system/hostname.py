@@ -155,8 +155,10 @@ class GenericStrategy(object):
 
     def __init__(self, module):
         self.module = module
-        self.hostname_cmd = self.module.get_bin_path('hostname', True)
         self.changed = False
+        self.hostname_cmd = self.module.get_bin_path('hostnamectl', False)
+        if not self.hostname_cmd:
+            self.hostname_cmd = self.module.get_bin_path('hostname', True)
 
     def update_current_and_permanent_hostname(self):
         self.update_current_hostname()
@@ -374,7 +376,7 @@ class SystemdStrategy(GenericStrategy):
     """
 
     def get_current_hostname(self):
-        cmd = ['hostname']
+        cmd = [self.hostname_cmd, '--transient', 'status']
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
@@ -383,13 +385,13 @@ class SystemdStrategy(GenericStrategy):
     def set_current_hostname(self, name):
         if len(name) > 64:
             self.module.fail_json(msg="name cannot be longer than 64 characters on systemd servers, try a shorter name")
-        cmd = ['hostnamectl', '--transient', 'set-hostname', name]
+        cmd = [self.hostname_cmd, '--transient', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
     def get_permanent_hostname(self):
-        cmd = ['hostnamectl', '--static', 'status']
+        cmd = [self.hostname_cmd, '--static', 'status']
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
@@ -398,11 +400,11 @@ class SystemdStrategy(GenericStrategy):
     def set_permanent_hostname(self, name):
         if len(name) > 64:
             self.module.fail_json(msg="name cannot be longer than 64 characters on systemd servers, try a shorter name")
-        cmd = ['hostnamectl', '--pretty', 'set-hostname', name]
+        cmd = [self.hostname_cmd, '--pretty', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
-        cmd = ['hostnamectl', '--static', 'set-hostname', name]
+        cmd = [self.hostname_cmd, '--static', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
@@ -607,6 +609,12 @@ class OpenSUSELeapHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class AsteraHostname(Hostname):
+    platform = 'Linux'
+    distribution = '"astralinuxce"'
+    strategy_class = SystemdStrategy
+
+
 class ArchHostname(Hostname):
     platform = 'Linux'
     distribution = 'Arch'
@@ -676,6 +684,12 @@ class AmazonLinuxHostname(Hostname):
 class DebianHostname(Hostname):
     platform = 'Linux'
     distribution = 'Debian'
+    strategy_class = DebianStrategy
+
+
+class KylinHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Kylin'
     strategy_class = DebianStrategy
 
 

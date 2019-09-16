@@ -86,10 +86,10 @@ module_utils
 
 When coding with ``module_utils`` in a collection, the Python ``import`` statement needs to take into account the FQCN along with the ``ansible_collections`` convention. The resulting Python import will look like ``from ansible_collections.{namespace}.{collection}.plugins.module_utils.{util} import {something}``
 
-The following example snippet shows a module using both default Ansible ``module_utils`` and
-those provided by a collection. In this example the namespace is
-``ansible_example``, the collection is ``community``, and the ``module_util`` in
-question is called ``qradar`` such that the FQCN is ``ansible_example.community.plugins.module_utils.qradar``:
+The following example snippets show a Python and PowerShell module using both default Ansible ``module_utils`` and
+those provided by a collection. In this example the namespace is ``ansible_example``, the collection is ``community``.
+In the Python example the ``module_util`` in question is called ``qradar`` such that the FQCN is
+``ansible_example.community.plugins.module_utils.qradar``:
 
 .. code-block:: python
 
@@ -115,6 +115,26 @@ question is called ``qradar`` such that the FQCN is ``ansible_example.community.
         headers={"Content-Type": "application/json"},
         not_rest_data_keys=['state']
     )
+
+
+In the PowerShell example the ``module_util`` in question is called ``hyperv`` such that the FCQN is
+``ansible_example.community.plugins.module_utils.hyperv``:
+
+.. code-block:: powershell
+
+    #!powershell
+    #AnsibleRequires -CSharpUtil Ansible.Basic
+    #AnsibleRequires -PowerShell ansible_collections.ansible_example.community.plugins.module_utils.hyperv
+
+    $spec = @{
+        name = @{ required = $true; type = "str" }
+        state = @{ required = $true; choices = @("present", "absent") }
+    }
+    $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+
+    Invoke-HyperVFunction -Name $module.Params.name
+
+    $module.ExitJson()
 
 
 roles directory
@@ -218,6 +238,21 @@ a tarball of the built collection in the current directory which can be uploaded
 This tarball is mainly intended to upload to Galaxy
 as a distribution method, but you can use it directly to install the collection on target systems.
 
+.. _trying_collection_locally:
+
+Trying collection locally
+-------------------------
+
+You can try your collection locally by installing it from the tarball.
+
+.. code-block:: bash
+
+   ansible-galaxy collection install my_namespace-my_collection-1.0.0.tar.gz -p ./collections/ansible_collections
+
+You should use one of the values configured in :ref:`COLLECTIONS_PATHS` for your path. This is also where Ansible itself will expect to find collections when attempting to use them.
+
+Then try to use the local collection inside a playbook, for more details see :ref:`Using collections <using_collections>`
+
 .. _publishing_collections:
 
 Publishing collections
@@ -287,20 +322,20 @@ See the `content_collector README <https://github.com/ansible/content_collector>
 Installing collections
 ======================
 
-You can use the ``ansible-galaxy collection install`` command to install a collection on your system. The collection by default is installed at ``/path/ansible_collections/my_namespace/my_collection``. You can optionally add the ``-p`` option to specify an alternate location.
+You can use the ``ansible-galaxy collection install`` command to install a collection on your system. You must specify an installation location using the ``-p`` option.
 
 To install a collection hosted in Galaxy:
 
 .. code-block:: bash
 
-   ansible-galaxy collection install my_namespace.my_collection -p /path
+   ansible-galaxy collection install my_namespace.my_collection -p /collections
 
 
 You can also directly use the tarball from your build:
 
 .. code-block:: bash
 
-   ansible-galaxy collection install my_namespace-my_collection-1.0.0.tar.gz -p ./collections/ansible_collections
+   ansible-galaxy collection install my_namespace-my_collection-1.0.0.tar.gz -p ./collections
 
 .. note::
     The install command automatically appends the path ``ansible_collections`` to the one specified  with the ``-p`` option unless the
@@ -450,6 +485,8 @@ For operations where only one Galaxy server is used, i.e. ``publish``, ``info``,
     collection. The install process will not search for a collection requirement in a different Galaxy instance.
 
 
+.. _using_collections:
+ 
 Using collections
 =================
 

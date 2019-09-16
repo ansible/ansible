@@ -32,7 +32,7 @@
   gcp_sql_database:
     name: "{{ resource_name }}"
     charset: utf8
-    instance: "{{ instance }}"
+    instance: "{{ instance.name }}"
     project: "{{ gcp_project }}"
     auth_kind: "{{ gcp_cred_kind }}"
     service_account_file: "{{ gcp_cred_file }}"
@@ -42,7 +42,7 @@
   gcp_sql_database:
     name: "{{ resource_name }}"
     charset: utf8
-    instance: "{{ instance }}"
+    instance: "{{ instance.name }}"
     project: "{{ gcp_project }}"
     auth_kind: "{{ gcp_cred_kind }}"
     service_account_file: "{{ gcp_cred_file }}"
@@ -54,7 +54,7 @@
       - result.changed == true
 - name: verify that database was created
   gcp_sql_database_info:
-      instance: "{{ instance }}"
+      instance: "{{ instance.name }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -70,7 +70,7 @@
   gcp_sql_database:
     name: "{{ resource_name }}"
     charset: utf8
-    instance: "{{ instance }}"
+    instance: "{{ instance.name }}"
     project: "{{ gcp_project }}"
     auth_kind: "{{ gcp_cred_kind }}"
     service_account_file: "{{ gcp_cred_file }}"
@@ -85,7 +85,7 @@
   gcp_sql_database:
     name: "{{ resource_name }}"
     charset: utf8
-    instance: "{{ instance }}"
+    instance: "{{ instance.name }}"
     project: "{{ gcp_project }}"
     auth_kind: "{{ gcp_cred_kind }}"
     service_account_file: "{{ gcp_cred_file }}"
@@ -97,7 +97,7 @@
       - result.changed == true
 - name: verify that database was deleted
   gcp_sql_database_info:
-      instance: "{{ instance }}"
+      instance: "{{ instance.name }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -113,7 +113,7 @@
   gcp_sql_database:
     name: "{{ resource_name }}"
     charset: utf8
-    instance: "{{ instance }}"
+    instance: "{{ instance.name }}"
     project: "{{ gcp_project }}"
     auth_kind: "{{ gcp_cred_kind }}"
     service_account_file: "{{ gcp_cred_file }}"

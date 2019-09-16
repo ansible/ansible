@@ -1,2 +1,0 @@
-bugfixes:
-  - aws_ec2 inventory plugin - fixed race condition when trying to fetch IAM instance profile (role) credentials (https://github.com/ansible/ansible/pull/59638)

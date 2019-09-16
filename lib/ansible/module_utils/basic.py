@@ -79,7 +79,7 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
-from ansible.module_utils._text import to_native, to_bytes, to_text
+from ._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.text.converters import (
     jsonify,
     container_to_bytes as json_dict_unicode_to_bytes,
@@ -1427,6 +1427,18 @@ class AnsibleModule(object):
         alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings=alias_warnings)
         for option, alias in alias_warnings:
             self._warnings.append('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
+
+        deprecated_aliases = []
+        for i in spec.keys():
+            if 'deprecated_aliases' in spec[i].keys():
+                for alias in spec[i]['deprecated_aliases']:
+                    deprecated_aliases.append(alias)
+
+        for deprecation in deprecated_aliases:
+            if deprecation['name'] in param.keys():
+                self._deprecations.append(
+                    {'msg': "Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
+                     'version': deprecation['version']})
         return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):

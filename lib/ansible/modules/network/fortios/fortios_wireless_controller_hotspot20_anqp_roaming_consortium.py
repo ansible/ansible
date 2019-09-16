@@ -29,7 +29,7 @@ description:
     - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify wireless_controller_hotspot20 feature and anqp_roaming_consortium category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.4
+      Tested with FOS v6.0.5
 version_added: "2.9"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)

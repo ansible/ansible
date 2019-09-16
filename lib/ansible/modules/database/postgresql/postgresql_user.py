@@ -21,8 +21,7 @@ description:
 - Adds or removes a user (role) from a PostgreSQL server instance
   ("cluster" in PostgreSQL terminology) and, optionally,
   grants the user access to an existing database or tables.
-  A user is a role with login privilege
-  (see U(https://www.postgresql.org/docs/11/role-attributes.html) for more information).
+- A user is a role with login privilege.
 - The fundamental function of the module is to create, or delete, users from
   a PostgreSQL instances. Privilege assignment, or removal, is an optional
   step, which works on one database at a time. This allows for the module to
@@ -157,6 +156,13 @@ notes:
   Use NOLOGIN role_attr_flags to change this behaviour.
 - If you specify PUBLIC as the user (role), then the privilege changes will apply to all users (roles).
   You may not specify password or role_attr_flags when the PUBLIC user is specified.
+seealso:
+- module: postgresql_privs
+- module: postgresql_membership
+- module: postgresql_owner
+- name: PostgreSQL database roles
+  description: Complete reference of the PostgreSQL database roles documentation.
+  link: https://www.postgresql.org/docs/current/user-manag.html
 author:
 - Ansible Core Team
 extends_documentation_fragment: postgres
@@ -247,6 +253,7 @@ from ansible.module_utils.postgres import (
     connect_to_db,
     exec_sql,
     get_conn_params,
+    PgMembership,
     postgres_common_argument_spec,
 )
 from ansible.module_utils._text import to_bytes, to_native
@@ -763,95 +770,9 @@ def get_valid_flags_by_version(cursor):
     ]
 
 
-class PgMembership():
-    def __init__(self, module, cursor, target_roles, groups, fail_on_role=True):
-        self.module = module
-        self.cursor = cursor
-        self.target_roles = [r.strip() for r in target_roles]
-        self.groups = groups
-        self.granted = {}
-        self.fail_on_role = fail_on_role
-        self.non_existent_roles = []
-        self.changed = False
-        self.__check_roles_exist()
-
-    def grant(self):
-        for group in self.groups:
-            self.granted[group] = []
-
-            for role in self.target_roles:
-                # If role is in a group now, pass:
-                if self.__check_membership(group, role):
-                    continue
-
-                query = "GRANT %s TO %s" % ((pg_quote_identifier(group, 'role'),
-                                            (pg_quote_identifier(role, 'role'))))
-                self.changed = exec_sql(self, query, ddl=True, add_to_executed=False)
-                executed_queries.append(query)
-
-                if self.changed:
-                    self.granted[group].append(role)
-
-        return self.changed
-
-    def __check_membership(self, src_role, dst_role):
-        query = ("SELECT ARRAY(SELECT b.rolname FROM "
-                 "pg_catalog.pg_auth_members m "
-                 "JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid) "
-                 "WHERE m.member = r.oid) "
-                 "FROM pg_catalog.pg_roles r "
-                 "WHERE r.rolname = '%s'" % dst_role)
-
-        res = exec_sql(self, query, add_to_executed=False)
-        membership = []
-        if res:
-            membership = res[0][0]
-
-        if not membership:
-            return False
-
-        if src_role in membership:
-            return True
-
-        return False
-
-    def __check_roles_exist(self):
-        for group in self.groups:
-            if not self.__role_exists(group):
-                if self.fail_on_role:
-                    self.module.fail_json(msg="Role %s does not exist" % group)
-                else:
-                    self.module.warn("Role %s does not exist, pass" % group)
-                    self.non_existent_roles.append(group)
-
-        for role in self.target_roles:
-            if not self.__role_exists(role):
-                if self.fail_on_role:
-                    self.module.fail_json(msg="Role %s does not exist" % role)
-                else:
-                    self.module.warn("Role %s does not exist, pass" % role)
-
-                if role not in self.groups:
-                    self.non_existent_roles.append(role)
-
-                else:
-                    if self.fail_on_role:
-                        self.module.exit_json(msg="Role role '%s' is a member of role '%s'" % (role, role))
-                    else:
-                        self.module.warn("Role role '%s' is a member of role '%s', pass" % (role, role))
-
-        # Update role lists, excluding non existent roles:
-        self.groups = [g for g in self.groups if g not in self.non_existent_roles]
-
-        self.target_roles = [r for r in self.target_roles if r not in self.non_existent_roles]
-
-    def __role_exists(self, role):
-        return exec_sql(self, "SELECT 1 FROM pg_roles WHERE rolname = '%s'" % role, add_to_executed=False)
-
 # ===========================================
 # Module execution.
 #
-
 
 def main():
     argument_spec = postgres_common_argument_spec()
@@ -932,8 +853,9 @@ def main():
         if groups:
             target_roles = []
             target_roles.append(user)
-            pg_membership = PgMembership(module, cursor, target_roles, groups)
+            pg_membership = PgMembership(module, cursor, groups, target_roles)
             changed = pg_membership.grant()
+            executed_queries.extend(pg_membership.executed_queries)
 
     else:
         if user_exists(cursor, user):

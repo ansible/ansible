@@ -17,6 +17,10 @@ from .util import (
     remove_tree,
 )
 
+from .util_common import (
+    write_text_file,
+)
+
 from .data import (
     data_context,
 )
@@ -45,8 +49,7 @@ def coverage_setup(args):  # type: (TestConfig) -> None
     else:
         args.coverage_config_base_path = tempfile.mkdtemp()
 
-        with open(os.path.join(args.coverage_config_base_path, COVERAGE_CONFIG_NAME), 'w') as coverage_config_path_fd:
-            coverage_config_path_fd.write(coverage_config)
+        write_text_file(os.path.join(args.coverage_config_base_path, COVERAGE_CONFIG_NAME), coverage_config)
 
 
 def coverage_cleanup(args):  # type: (TestConfig) -> None
@@ -81,6 +84,7 @@ omit =
     */pyshared/*
     */pytest
     */AnsiballZ_*.py
+    */test/results/*
 '''
 
     return coverage_config
@@ -107,11 +111,11 @@ include =
         # temporary work-around for import sanity test
         coverage_config += '''
 include =
-     %s/*
+    %s/*
 
 omit =
-    */test/runner/.tox/*
-''' % data_context().content.root
+    %s/*
+''' % (data_context().content.root, os.path.join(data_context().content.root, data_context().content.results_path))
     else:
         coverage_config += '''
 include =

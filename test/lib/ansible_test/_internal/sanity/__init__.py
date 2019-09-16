@@ -26,10 +26,12 @@ from ..util import (
     find_python,
     is_subdir,
     paths_to_dirs,
+    get_ansible_version,
 )
 
 from ..util_common import (
     run_command,
+    handle_layout_messages,
 )
 
 from ..ansible_util import (
@@ -67,10 +69,6 @@ from ..data import (
     data_context,
 )
 
-from ..env import (
-    get_ansible_version,
-)
-
 COMMAND = 'sanity'
 SANITY_ROOT = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'sanity')
 
@@ -79,6 +77,8 @@ def command_sanity(args):
     """
     :type args: SanityConfig
     """
+    handle_layout_messages(data_context().content.sanity_messages)
+
     changes = get_changes_filter(args)
     require = args.require + changes
     targets = SanityTargets.create(args.include, args.exclude, require)
@@ -88,8 +88,6 @@ def command_sanity(args):
 
     if args.delegate:
         raise Delegate(require=changes, exclude=args.exclude)
-
-    install_command_requirements(args)
 
     tests = sanity_get_tests()
 
@@ -108,12 +106,14 @@ def command_sanity(args):
     total = 0
     failed = []
 
+    requirements_installed = set()  # type: t.Set[str]
+
     for test in tests:
         if args.list_tests:
             display.info(test.name)
             continue
 
-        available_versions = get_available_python_versions(SUPPORTED_PYTHON_VERSIONS)
+        available_versions = sorted(get_available_python_versions(SUPPORTED_PYTHON_VERSIONS).keys())
 
         if args.python:
             # specific version selected
@@ -180,6 +180,10 @@ def command_sanity(args):
                 sanity_targets = SanityTargets(tuple(all_targets), tuple(usable_targets))
 
                 if usable_targets or test.no_targets:
+                    if version not in requirements_installed:
+                        requirements_installed.add(version)
+                        install_command_requirements(args, version)
+
                     if isinstance(test, SanityCodeSmellTest):
                         result = test.test(args, sanity_targets, version)
                     elif isinstance(test, SanityMultipleVersion):
@@ -249,7 +253,7 @@ class SanityIgnoreParser:
             file_name = 'ignore.txt'
 
         self.args = args
-        self.relative_path = os.path.join('test/sanity', file_name)
+        self.relative_path = os.path.join(data_context().content.sanity_path, file_name)
         self.path = os.path.join(data_context().content.root, self.relative_path)
         self.ignores = collections.defaultdict(lambda: collections.defaultdict(dict))  # type: t.Dict[str, t.Dict[str, t.Dict[str, int]]]
         self.skips = collections.defaultdict(lambda: collections.defaultdict(int))  # type: t.Dict[str, t.Dict[str, int]]

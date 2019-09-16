@@ -64,8 +64,8 @@ class InventoryCLI(CLI):
         opt_help.add_basedir_options(self.parser)
 
         # remove unused default options
-        self.parser.add_argument('--limit', default=argparse.SUPPRESS, type=lambda v: self.parser.error('unrecognized arguments: --limit'))
-        self.parser.add_argument('--list-hosts', default=argparse.SUPPRESS, type=lambda v: self.parser.error('unrecognized arguments: --list-hosts'))
+        self.parser.add_argument('-l', '--limit', help=argparse.SUPPRESS, action=opt_help.UnrecognizedArgument, nargs='?')
+        self.parser.add_argument('--list-hosts', help=argparse.SUPPRESS, action=opt_help.UnrecognizedArgument)
 
         self.parser.add_argument('args', metavar='host|group', nargs='?')
 
@@ -112,7 +112,7 @@ class InventoryCLI(CLI):
 
         # set host pattern to default if not supplied
         if options.args:
-            options.pattern = options.args[0]
+            options.pattern = options.args
         else:
             options.pattern = 'all'
 
@@ -180,7 +180,7 @@ class InventoryCLI(CLI):
         else:
             import json
             from ansible.parsing.ajson import AnsibleJSONEncoder
-            results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4)
+            results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4, preprocess_unsafe=True)
 
         return results
 

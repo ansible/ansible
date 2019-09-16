@@ -15,11 +15,11 @@
               dhcp_hostname: test.com
           - name: GigabitEthernet0/2
             ipv4:
-            - address: 192.168.3.1/24
+            - address: 198.51.100.1/24
               secondary: True
-            - address: 192.168.3.2/24
+            - address: 198.51.100.2/24
             ipv6:
-            - address: fd5d:12c9:2201:1::1/64
+            - address: 2001:db8:0:3::/64
         state: merged
       register: result
 

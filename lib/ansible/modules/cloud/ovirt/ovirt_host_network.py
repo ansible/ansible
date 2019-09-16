@@ -296,7 +296,7 @@ class HostNetworksModule(BaseModule):
         # Check if labels need to be updated on interface/bond:
         if labels:
             net_labels = nic_service.network_labels_service().list()
-            # If any lables which user passed aren't assigned, relabel the interface:
+            # If any labels which user passed aren't assigned, relabel the interface:
             if sorted(labels) != sorted([lbl.id for lbl in net_labels]):
                 return True
 

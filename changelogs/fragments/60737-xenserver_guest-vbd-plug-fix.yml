@@ -1,2 +1,0 @@
-bugfixes:
-- xenserver_guest - when adding disks to a VM in powered on state, disks are now properly plugged/activated (https://github.com/ansible/ansible/issues/60693).

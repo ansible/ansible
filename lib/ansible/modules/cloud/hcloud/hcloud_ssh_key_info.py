@@ -76,7 +76,7 @@ hcloud_ssh_key_info:
             type: str
             sample: 0e:e0:bd:c7:2d:1f:69:49:94:44:91:f1:19:fd:35:f3
         public_key:
-            description: The acctual public key
+            description: The actual public key
             returned: always
             type: str
             sample: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGpl/tnk74nnQJxxLAtutUApUZMRJxryKh7VXkNbd4g9 john@example.com"

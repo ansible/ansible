@@ -243,9 +243,9 @@ class Connection(NetworkConnectionBase):
             self.queue_message('vvv', "ESTABLISH HTTP(S) CONNECTFOR USER: %s TO %s" %
                                (self._play_context.remote_user, self._url))
             self.httpapi.set_become(self._play_context)
-            self.httpapi.login(self.get_option('remote_user'), self.get_option('password'))
-
             self._connected = True
+
+            self.httpapi.login(self.get_option('remote_user'), self.get_option('password'))
 
     def close(self):
         '''

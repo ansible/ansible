@@ -141,9 +141,9 @@ class ActionModule(ActionBase):
         use_task = boolean(self._task.args.get('use_scheduled_task', False),
                            strict=False)
 
-        if state not in ['installed', 'searched']:
+        if state not in ['installed', 'searched', 'downloaded']:
             result['failed'] = True
-            result['msg'] = "state must be either installed or searched"
+            result['msg'] = "state must be either installed, searched or downloaded"
             return result
 
         try:

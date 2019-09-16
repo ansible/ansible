@@ -23,7 +23,10 @@ except ImportError:
     import_module = __import__
 
 _SYNTHETIC_PACKAGES = {
-    'ansible_collections.ansible': dict(type='pkg_only'),
+    # these provide fallback package definitions when there are no on-disk paths
+    'ansible_collections': dict(type='pkg_only', allow_external_subpackages=True),
+    'ansible_collections.ansible': dict(type='pkg_only', allow_external_subpackages=True),
+    # these implement the ansible.builtin synthetic collection mapped to the packages inside the ansible distribution
     'ansible_collections.ansible.builtin': dict(type='pkg_only'),
     'ansible_collections.ansible.builtin.plugins': dict(type='map', map='ansible.plugins'),
     'ansible_collections.ansible.builtin.plugins.module_utils': dict(type='map', map='ansible.module_utils', graft=True),
@@ -48,6 +51,7 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
         self._n_configured_paths = [to_native(os.path.expanduser(p), errors='surrogate_or_strict') for p in self._n_configured_paths]
 
         self._n_playbook_paths = []
+        self._default_collection = None
         # pre-inject grafted package maps so we can force them to use the right loader instead of potentially delegating to a "normal" loader
         for syn_pkg_def in (p for p in iteritems(_SYNTHETIC_PACKAGES) if p[1].get('graft')):
             pkg_name = syn_pkg_def[0]
@@ -70,6 +74,14 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
     def n_collection_paths(self):
         return self._n_playbook_paths + self._n_configured_paths
 
+    def get_collection_path(self, collection_name):
+        if not AnsibleCollectionRef.is_valid_collection_name(collection_name):
+            raise ValueError('{0} is not a valid collection name'.format(to_native(collection_name)))
+
+        m = import_module('ansible_collections.{0}'.format(collection_name))
+
+        return m.__file__
+
     def set_playbook_paths(self, b_playbook_paths):
         if isinstance(b_playbook_paths, string_types):
             b_playbook_paths = [b_playbook_paths]
@@ -81,9 +93,18 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
         self._n_playbook_paths = [os.path.join(to_native(p), 'collections') for p in b_playbook_paths if not (p in added_paths or added_paths.add(p))]
         # FIXME: only allow setting this once, or handle any necessary cache/package path invalidations internally?
 
+    # FIXME: is there a better place to store this?
+    # FIXME: only allow setting this once
+    def set_default_collection(self, collection_name):
+        self._default_collection = collection_name
+
+    @property
+    def default_collection(self):
+        return self._default_collection
+
     def find_module(self, fullname, path=None):
         # this loader is only concerned with items under the Ansible Collections namespace hierarchy, ignore others
-        if fullname.startswith('ansible_collections.') or fullname == 'ansible_collections':
+        if fullname and fullname.split('.', 1)[0] == 'ansible_collections':
             return self
 
         return None
@@ -91,6 +112,8 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
     def load_module(self, fullname):
         if sys.modules.get(fullname):
             return sys.modules[fullname]
+
+        newmod = None
 
         # this loader implements key functionality for Ansible collections
         # * implicit distributed namespace packages for the root Ansible namespace (no pkgutil.extend_path hackery reqd)
@@ -114,10 +137,13 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
         synpkg_remainder = ''
 
         if not synpkg_def:
-            synpkg_def = _SYNTHETIC_PACKAGES.get(parent_pkg_name)
-            synpkg_remainder = '.' + fullname.rpartition('.')[2]
+            # if the parent is a grafted package, we have some special work to do, otherwise just look for stuff on disk
+            parent_synpkg_def = _SYNTHETIC_PACKAGES.get(parent_pkg_name)
+            if parent_synpkg_def and parent_synpkg_def.get('graft'):
+                synpkg_def = parent_synpkg_def
+                synpkg_remainder = '.' + fullname.rpartition('.')[2]
 
-        # FIXME: collapse as much of this back to on-demand as possible (maybe stub packages that get replaced when actually loaded?)
+        # FUTURE: collapse as much of this back to on-demand as possible (maybe stub packages that get replaced when actually loaded?)
         if synpkg_def:
             pkg_type = synpkg_def.get('type')
             if not pkg_type:
@@ -141,9 +167,13 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
                 newmod.__loader__ = self
                 newmod.__path__ = []
 
-                sys.modules[fullname] = newmod
+                if not synpkg_def.get('allow_external_subpackages'):
+                    # if external subpackages are NOT allowed, we're done
+                    sys.modules[fullname] = newmod
+                    return newmod
 
-                return newmod
+                # if external subpackages ARE allowed, check for on-disk implementations and return a normal
+                # package if we find one, otherwise return the one we created here
 
         if not parent_pkg:  # top-level package, look for NS subpackages on all collection paths
             package_paths = [self._extend_path_with_ns(p, fullname) for p in self.n_collection_paths]
@@ -155,7 +185,7 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
             is_package = True
             location = None
             # check for implicit sub-package first
-            if os.path.isdir(candidate_child_path):
+            if os.path.isdir(to_bytes(candidate_child_path)):
                 # Py3.x implicit namespace packages don't have a file location, so they don't support get_data
                 # (which assumes the parent dir or that the loader has an internal mapping); so we have to provide
                 # a bogus leaf file on the __file__ attribute for pkgutil.get_data to strip off
@@ -163,10 +193,10 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
             else:
                 for source_path in [os.path.join(candidate_child_path, '__init__.py'),
                                     candidate_child_path + '.py']:
-                    if not os.path.isfile(source_path):
+                    if not os.path.isfile(to_bytes(source_path)):
                         continue
 
-                    with open(source_path, 'rb') as fd:
+                    with open(to_bytes(source_path), 'rb') as fd:
                         source = fd.read()
 
                     code_object = compile(source=source, filename=source_path, mode='exec', flags=0, dont_inherit=True)
@@ -197,6 +227,11 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
                 # FIXME: decide cases where we don't actually want to exec the code?
                 exec(code_object, newmod.__dict__)
 
+            return newmod
+
+        # even if we didn't find one on disk, fall back to a synthetic package if we have one...
+        if newmod:
+            sys.modules[fullname] = newmod
             return newmod
 
         # FIXME: need to handle the "no dirs present" case for at least the root and synthetic internal collections like ansible.builtin
@@ -432,14 +467,17 @@ def get_collection_role_path(role_name, collection_list=None):
         # looks like a valid qualified collection ref; skip the collection_list
         role = acr.resource
         collection_list = [acr.collection]
+        subdirs = acr.subdirs
+        resource = acr.resource
     elif not collection_list:
         return None  # not a FQ role and no collection search list spec'd, nothing to do
     else:
-        role = role_name  # treat as unqualified, loop through the collection search list to try and resolve
+        resource = role_name  # treat as unqualified, loop through the collection search list to try and resolve
+        subdirs = ''
 
     for collection_name in collection_list:
         try:
-            acr = AnsibleCollectionRef(collection_name=collection_name, subdirs=acr.subdirs, resource=acr.resource, ref_type=acr.ref_type)
+            acr = AnsibleCollectionRef(collection_name=collection_name, subdirs=subdirs, resource=resource, ref_type='role')
             # FIXME: error handling/logging; need to catch any import failures and move along
 
             # FIXME: this line shouldn't be necessary, but py2 pkgutil.get_data is delegating back to built-in loader when it shouldn't
@@ -448,7 +486,7 @@ def get_collection_role_path(role_name, collection_list=None):
             if pkg is not None:
                 # the package is now loaded, get the collection's package and ask where it lives
                 path = os.path.dirname(to_bytes(sys.modules[acr.n_python_package_name].__file__, errors='surrogate_or_strict'))
-                return role, to_text(path, errors='surrogate_or_strict'), collection_name
+                return resource, to_text(path, errors='surrogate_or_strict'), collection_name
 
         except IOError:
             continue
@@ -457,6 +495,51 @@ def get_collection_role_path(role_name, collection_list=None):
             continue
 
     return None
+
+
+_N_COLLECTION_PATH_RE = re.compile(r'/ansible_collections/([^/]+)/([^/]+)')
+
+
+def get_collection_name_from_path(path):
+    """
+    Return the containing collection name for a given path, or None if the path is not below a configured collection, or
+    the collection cannot be loaded (eg, the collection is masked by another of the same name higher in the configured
+    collection roots).
+    :param n_path: native-string path to evaluate for collection containment
+    :return: collection name or None
+    """
+    n_collection_paths = [to_native(os.path.realpath(to_bytes(p))) for p in AnsibleCollectionLoader().n_collection_paths]
+
+    b_path = os.path.realpath(to_bytes(path))
+    n_path = to_native(b_path)
+
+    for coll_path in n_collection_paths:
+        common_prefix = to_native(os.path.commonprefix([b_path, to_bytes(coll_path)]))
+        if common_prefix == coll_path:
+            # strip off the common prefix (handle weird testing cases of nested collection roots, eg)
+            collection_remnant = n_path[len(coll_path):]
+            # commonprefix may include the trailing /, prepend to the remnant if necessary (eg trailing / on root)
+            if collection_remnant[0] != '/':
+                collection_remnant = '/' + collection_remnant
+            # the path lives under this collection root, see if it maps to a collection
+            found_collection = _N_COLLECTION_PATH_RE.search(collection_remnant)
+            if not found_collection:
+                continue
+            n_collection_name = '{0}.{1}'.format(*found_collection.groups())
+
+            loaded_collection_path = AnsibleCollectionLoader().get_collection_path(n_collection_name)
+
+            if not loaded_collection_path:
+                return None
+
+            # ensure we're using the canonical real path, with the bogus __synthetic__ stripped off
+            b_loaded_collection_path = os.path.dirname(os.path.realpath(to_bytes(loaded_collection_path)))
+
+            # if the collection path prefix matches the path prefix we were passed, it's the same collection that's loaded
+            if os.path.commonprefix([b_path, b_loaded_collection_path]) == b_loaded_collection_path:
+                return n_collection_name
+
+            return None  # if not, it's a collection, but not the same collection the loader sees, so ignore it
 
 
 def set_collection_playbook_paths(b_playbook_paths):

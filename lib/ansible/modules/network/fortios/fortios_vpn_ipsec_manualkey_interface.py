@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_vpn_ipsec_manualkey_interface
 short_description: Configure IPsec manual keys in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify vpn_ipsec feature and manualkey_interface category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,49 +41,77 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     vpn_ipsec_manualkey_interface:
         description:
             - Configure IPsec manual keys.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            addr-type:
+            addr_type:
                 description:
                     - IP version to use for IP packets.
+                type: str
                 choices:
                     - 4
                     - 6
-            auth-alg:
+            auth_alg:
                 description:
                     - Authentication algorithm. Must be the same for both ends of the tunnel.
+                type: str
                 choices:
                     - null
                     - md5
@@ -94,55 +119,61 @@ options:
                     - sha256
                     - sha384
                     - sha512
-            auth-key:
+            auth_key:
                 description:
                     - Hexadecimal authentication key in 16-digit (8-byte) segments separated by hyphens.
-            enc-alg:
+                type: str
+            enc_alg:
                 description:
                     - Encryption algorithm. Must be the same for both ends of the tunnel.
+                type: str
                 choices:
                     - null
                     - des
-            enc-key:
+            enc_key:
                 description:
                     - Hexadecimal encryption key in 16-digit (8-byte) segments separated by hyphens.
+                type: str
             interface:
                 description:
                     - Name of the physical, aggregate, or VLAN interface. Source system.interface.name.
-            ip-version:
+                type: str
+            ip_version:
                 description:
                     - IP version to use for VPN interface.
+                type: str
                 choices:
                     - 4
                     - 6
-            local-gw:
+            local_gw:
                 description:
                     - IPv4 address of the local gateway's external interface.
-            local-gw6:
+                type: str
+            local_gw6:
                 description:
                     - Local IPv6 address of VPN gateway.
-            local-spi:
+                type: str
+            local_spi:
                 description:
                     - Local SPI, a hexadecimal 8-digit (4-byte) tag. Discerns between two traffic streams with different encryption rules.
+                type: str
             name:
                 description:
                     - IPsec tunnel name.
                 required: true
-            npu-offload:
-                description:
-                    - Enable/disable offloading IPsec VPN manual key sessions to NPUs.
-                choices:
-                    - enable
-                    - disable
-            remote-gw:
+                type: str
+            remote_gw:
                 description:
                     - IPv4 address of the remote gateway's external interface.
-            remote-gw6:
+                type: str
+            remote_gw6:
                 description:
                     - Remote IPv6 address of VPN gateway.
-            remote-spi:
+                type: str
+            remote_spi:
                 description:
                     - Remote SPI, a hexadecimal 8-digit (4-byte) tag. Discerns between two traffic streams with different encryption rules.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -152,6 +183,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure IPsec manual keys.
     fortios_vpn_ipsec_manualkey_interface:
@@ -160,23 +192,22 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       vpn_ipsec_manualkey_interface:
-        state: "present"
-        addr-type: "4"
-        auth-alg: "null"
-        auth-key: "<your_own_value>"
-        enc-alg: "null"
-        enc-key: "<your_own_value>"
+        addr_type: "4"
+        auth_alg: "null"
+        auth_key: "<your_own_value>"
+        enc_alg: "null"
+        enc_key: "<your_own_value>"
         interface: "<your_own_value> (source system.interface.name)"
-        ip-version: "4"
-        local-gw: "<your_own_value>"
-        local-gw6: "<your_own_value>"
-        local-spi: "<your_own_value>"
+        ip_version: "4"
+        local_gw: "<your_own_value>"
+        local_gw6: "<your_own_value>"
+        local_spi: "<your_own_value>"
         name: "default_name_13"
-        npu-offload: "enable"
-        remote-gw: "<your_own_value>"
-        remote-gw6: "<your_own_value>"
-        remote-spi: "<your_own_value>"
+        remote_gw: "<your_own_value>"
+        remote_gw6: "<your_own_value>"
+        remote_spi: "<your_own_value>"
 '''
 
 RETURN = '''
@@ -239,14 +270,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -254,15 +287,15 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_vpn_ipsec_manualkey_interface_data(json):
-    option_list = ['addr-type', 'auth-alg', 'auth-key',
-                   'enc-alg', 'enc-key', 'interface',
-                   'ip-version', 'local-gw', 'local-gw6',
-                   'local-spi', 'name', 'npu-offload',
-                   'remote-gw', 'remote-gw6', 'remote-spi']
+    option_list = ['addr_type', 'auth_alg', 'auth_key',
+                   'enc_alg', 'enc_key', 'interface',
+                   'ip_version', 'local_gw', 'local_gw6',
+                   'local_spi', 'name', 'remote_gw',
+                   'remote_gw6', 'remote_spi']
     dictionary = {}
 
     for attribute in option_list:
@@ -272,82 +305,92 @@ def filter_vpn_ipsec_manualkey_interface_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
 
 def vpn_ipsec_manualkey_interface(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['vpn_ipsec_manualkey_interface'] and data['vpn_ipsec_manualkey_interface']:
+        state = data['vpn_ipsec_manualkey_interface']['state']
+    else:
+        state = True
     vpn_ipsec_manualkey_interface_data = data['vpn_ipsec_manualkey_interface']
-    flattened_data = flatten_multilists_attributes(vpn_ipsec_manualkey_interface_data)
-    filtered_data = filter_vpn_ipsec_manualkey_interface_data(flattened_data)
-    if vpn_ipsec_manualkey_interface_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_vpn_ipsec_manualkey_interface_data(vpn_ipsec_manualkey_interface_data))
+
+    if state == "present":
         return fos.set('vpn.ipsec',
                        'manualkey-interface',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif vpn_ipsec_manualkey_interface_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('vpn.ipsec',
                           'manualkey-interface',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_vpn_ipsec(data, fos):
-    login(data)
 
     if data['vpn_ipsec_manualkey_interface']:
         resp = vpn_ipsec_manualkey_interface(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "vpn_ipsec_manualkey_interface": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "addr-type": {"required": False, "type": "str",
+                "addr_type": {"required": False, "type": "str",
                               "choices": ["4", "6"]},
-                "auth-alg": {"required": False, "type": "str",
+                "auth_alg": {"required": False, "type": "str",
                              "choices": ["null", "md5", "sha1",
                                          "sha256", "sha384", "sha512"]},
-                "auth-key": {"required": False, "type": "str"},
-                "enc-alg": {"required": False, "type": "str",
+                "auth_key": {"required": False, "type": "str"},
+                "enc_alg": {"required": False, "type": "str",
                             "choices": ["null", "des"]},
-                "enc-key": {"required": False, "type": "str"},
+                "enc_key": {"required": False, "type": "str"},
                 "interface": {"required": False, "type": "str"},
-                "ip-version": {"required": False, "type": "str",
+                "ip_version": {"required": False, "type": "str",
                                "choices": ["4", "6"]},
-                "local-gw": {"required": False, "type": "str"},
-                "local-gw6": {"required": False, "type": "str"},
-                "local-spi": {"required": False, "type": "str"},
+                "local_gw": {"required": False, "type": "str"},
+                "local_gw6": {"required": False, "type": "str"},
+                "local_spi": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"},
-                "npu-offload": {"required": False, "type": "str",
-                                "choices": ["enable", "disable"]},
-                "remote-gw": {"required": False, "type": "str"},
-                "remote-gw6": {"required": False, "type": "str"},
-                "remote-spi": {"required": False, "type": "str"}
+                "remote_gw": {"required": False, "type": "str"},
+                "remote_gw6": {"required": False, "type": "str"},
+                "remote_spi": {"required": False, "type": "str"}
 
             }
         }
@@ -355,15 +398,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_vpn_ipsec(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_vpn_ipsec(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_vpn_ipsec(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

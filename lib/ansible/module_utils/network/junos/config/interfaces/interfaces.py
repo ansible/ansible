@@ -76,7 +76,7 @@ class Interfaces(ConfigBase):
                 if self._module._diff:
                     result['diff'] = {'prepared': diff}
 
-        result['xml'] = config_xmls
+        result['commands'] = config_xmls
 
         changed_interfaces_facts = self.get_interfaces_facts()
 
@@ -184,7 +184,7 @@ class Interfaces(ConfigBase):
             if config.get('duplex'):
                 build_child_xml_node(intf, 'link-mode', config['duplex'])
 
-            if config.get('enable') is False:
+            if config.get('enabled') is False:
                 build_child_xml_node(intf, 'disable')
 
             holdtime = config.get('hold_time')

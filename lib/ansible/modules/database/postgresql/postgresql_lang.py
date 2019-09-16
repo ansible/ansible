@@ -22,18 +22,14 @@ description:
   relationship with a PostgreSQL database.
 - The module can be used on the machine where executed or on a remote host.
 - When removing a language from a database, it is possible that dependencies prevent
-  the database from being removed. In that case, you can specify casade to
+  the database from being removed. In that case, you can specify I(cascade=yes) to
   automatically drop objects that depend on the language (such as functions in the
   language).
 - In case the language can't be deleted because it is required by the
-  database system, you can specify fail_on_drop=no to ignore the error.
-- Be carefull when marking a language as trusted since this could be a potential
+  database system, you can specify I(fail_on_drop=no) to ignore the error.
+- Be careful when marking a language as trusted since this could be a potential
   security breach. Untrusted languages allow only users with the PostgreSQL superuser
   privilege to use this language to create new functions.
-- For more information about PostgreSQL languages see the official documentation
-  U(https://www.postgresql.org/docs/current/sql-createlanguage.html),
-  U(https://www.postgresql.org/docs/current/sql-alterlanguage.html),
-  U(https://www.postgresql.org/docs/current/sql-droplanguage.html).
 version_added: '1.7'
 options:
   lang:
@@ -64,21 +60,21 @@ options:
     description:
     - If C(yes), fail when removing a language. Otherwise just log and continue.
     - In some cases, it is not possible to remove a language (used by the db-system).
-    - When dependencies block the removal, consider using C(cascade).
+    - When dependencies block the removal, consider using I(cascade).
     type: bool
     default: 'yes'
   cascade:
     description:
     - When dropping a language, also delete object that depend on this language.
-    - Only used when C(state=absent).
+    - Only used when I(state=absent).
     type: bool
     default: 'no'
   session_role:
     version_added: '2.8'
     description:
     - Switch to session_role after connecting.
-    - The specified session_role must be a role that the current login_user is a member of.
-    - Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+    - The specified I(session_role) must be a role that the current I(login_user) is a member of.
+    - Permissions checking for SQL commands is carried out as though the I(session_role) were the one that had logged in originally.
     type: str
   state:
     description:
@@ -94,7 +90,7 @@ options:
   ssl_mode:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
-      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for more information on the modes.
       - Default of C(prefer) matches libpq default.
     type: str
     default: prefer
@@ -107,6 +103,19 @@ options:
     type: str
     aliases: [ ssl_rootcert ]
     version_added: '2.8'
+seealso:
+- name: PostgreSQL languages
+  description: General information about PostgreSQL languages.
+  link: https://www.postgresql.org/docs/current/xplang.html
+- name: CREATE LANGUAGE reference
+  description: Complete reference of the CREATE LANGUAGE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createlanguage.html
+- name: ALTER LANGUAGE reference
+  description: Complete reference of the ALTER LANGUAGE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-alterlanguage.html
+- name: DROP LANGUAGE reference
+  description: Complete reference of the DROP LANGUAGE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-droplanguage.html
 author:
 - Jens Depuydt (@jensdepuydt)
 - Thomas O'Donnell (@andytom)

@@ -120,7 +120,7 @@ class ConnectionProcess(object):
 
     def run(self):
         try:
-            while True:
+            while not self.connection._conn_closed:
                 signal.signal(signal.SIGALRM, self.connect_timeout)
                 signal.signal(signal.SIGTERM, self.handler)
                 signal.alarm(self.connection.get_option('persistent_connect_timeout'))
@@ -139,6 +139,7 @@ class ConnectionProcess(object):
                         display.display("jsonrpc request: %s" % data, log_only=True)
 
                     signal.alarm(self.connection.get_option('persistent_command_timeout'))
+
                     resp = self.srv.handle_request(data)
                     signal.alarm(0)
 

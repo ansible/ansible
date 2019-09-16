@@ -88,6 +88,13 @@ options:
      - Default is unlimited, it can be explicitly set to 0 as unlimited.
     type: int
     version_added: '2.9'
+  identity_preserve:
+    description:
+     - Specifies whether or not the identity of the source Vserver is replicated to the destination Vserver.
+     - If this parameter is set to true, the source Vserver's configuration will additionally be replicated to the destination.
+     - If the parameter is set to false, then only the source Vserver's volumes and RBAC configuration are replicated to the destination.
+    type: bool
+    version_added: '2.9'
 short_description: "NetApp ONTAP or ElementSW Manage SnapMirror"
 version_added: "2.7"
 '''
@@ -105,6 +112,17 @@ EXAMPLES = """
         schedule: hourly
         policy: MirrorAllSnapshots
         max_transfer_rate: 1000
+        hostname: "{{ destination_cluster_hostname }}"
+        username: "{{ destination_cluster_username }}"
+        password: "{{ destination_cluster_password }}"
+
+    # creates and initializes the snapmirror between vservers
+    - name: Create ONTAP/ONTAP vserver SnapMirror
+      na_ontap_snapmirror:
+        state: present
+        source_vserver: ansible_src
+        destination_vserver: ansible_dest
+        identity_preserve: true
         hostname: "{{ destination_cluster_hostname }}"
         username: "{{ destination_cluster_username }}"
         password: "{{ destination_cluster_password }}"
@@ -217,7 +235,8 @@ class NetAppONTAPSnapmirror(object):
                                  default='ontap_ontap'),
             source_username=dict(required=False, type='str'),
             source_password=dict(required=False, type='str', no_log=True),
-            max_transfer_rate=dict(required=False, type='int')
+            max_transfer_rate=dict(required=False, type='int'),
+            identity_preserve=dict(required=False, type='bool')
         ))
 
         self.module = AnsibleModule(
@@ -349,6 +368,8 @@ class NetAppONTAPSnapmirror(object):
             snapmirror_create.add_new_child('policy', self.parameters['policy'])
         if self.parameters.get('max_transfer_rate'):
             snapmirror_create.add_new_child('max-transfer-rate', str(self.parameters['max_transfer_rate']))
+        if self.parameters.get('identity_preserve'):
+            snapmirror_create.add_new_child('identity-preserve', str(self.parameters['identity_preserve']))
         try:
             self.server.invoke_successfully(snapmirror_create, enable_tunneling=True)
             self.snapmirror_initialize()

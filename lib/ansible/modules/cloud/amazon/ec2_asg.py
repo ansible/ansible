@@ -672,7 +672,10 @@ def get_properties(autoscaling_group):
     properties['termination_policies'] = autoscaling_group.get('TerminationPolicies')
     properties['target_group_arns'] = autoscaling_group.get('TargetGroupARNs')
     properties['vpc_zone_identifier'] = autoscaling_group.get('VPCZoneIdentifier')
-    properties['metrics_collection'] = autoscaling_group.get('EnabledMetrics')
+    metrics = autoscaling_group.get('EnabledMetrics')
+    if metrics:
+        metrics.sort(key=lambda x: x["Metric"])
+    properties['metrics_collection'] = metrics
 
     if properties['target_group_arns']:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
@@ -1032,6 +1035,10 @@ def create_autoscaling_group(connection):
         if len(set_tags) > 0:
             have_tags = as_group.get('Tags')
             want_tags = asg_tags
+            if have_tags:
+                have_tags.sort(key=lambda x: x["Key"])
+            if want_tags:
+                want_tags.sort(key=lambda x: x["Key"])
             dead_tags = []
             have_tag_keyvals = [x['Key'] for x in have_tags]
             want_tag_keyvals = [x['Key'] for x in want_tags]
@@ -1403,7 +1410,7 @@ def get_instances_by_launch_config(props, lc_check, initial_instances):
 def get_instances_by_launch_template(props, lt_check, initial_instances):
     new_instances = []
     old_instances = []
-    # old instances are those that have the old launch template or version of the same launch templatec
+    # old instances are those that have the old launch template or version of the same launch template
     if lt_check:
         for i in props['instances']:
             # Check if migrating from launch_config_name to launch_template_name first

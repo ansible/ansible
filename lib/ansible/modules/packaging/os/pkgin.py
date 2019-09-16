@@ -285,7 +285,7 @@ def update_package_db(module):
 
     if rc == 0:
         if re.search('database for.*is up-to-date\n$', out):
-            return False, "datebase is up-to-date"
+            return False, "database is up-to-date"
         else:
             return True, "updated repository database"
     else:

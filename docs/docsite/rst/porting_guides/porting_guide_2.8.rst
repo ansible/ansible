@@ -12,7 +12,8 @@ We suggest you read this page along with `Ansible Changelog for 2.8 <https://git
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Playbook
 ========
@@ -62,12 +63,162 @@ Beginning in version 2.8, Ansible will warn if a module expects a string, but a 
 
 This behavior can be changed to be an error or to be ignored by setting the ``ANSIBLE_STRING_CONVERSION_ACTION`` environment variable, or by setting the ``string_conversion_action`` configuration in the ``defaults`` section of ``ansible.cfg``.
 
-
 Command line facts
 ------------------
 
 ``cmdline`` facts returned in system will be deprecated in favor of ``proc_cmdline``. This change handles special case where Kernel command line parameter contains multiple values with the same key.
 
+Bare variables in conditionals
+------------------------------
+
+In Ansible 2.7 and earlier, top-level variables sometimes treated boolean strings as if they were boolean values. This led to inconsistent behavior in conditional tests built on top-level variables defined as strings. Ansible 2.8 began changing this behavior. For example, if you set two conditions like this:
+
+.. code-block:: yaml
+
+   tasks:
+     - include_tasks: teardown.yml
+       when: teardown
+
+     - include_tasks: provision.yml
+       when: not teardown
+
+based on a variable you define **as a string** (with quotation marks around it):
+
+* In Ansible 2.7 and earlier, the two conditions above evaluated as ``True`` and ``False`` respectively if ``teardown: 'true'``
+* In Ansible 2.7 and earlier, both conditions evaluated as ``False`` if ``teardown: 'false'``
+* In Ansible 2.8 and later, you have the option of disabling conditional bare variables, so ``when: teardown`` always evaluates as ``True`` and ``when: not teardown`` always evaluates as ``False`` when ``teardown`` is a non-empty string (including ``'true'`` or ``'false'``)
+
+Ultimately, ``when: 'string'`` will always evaluate as ``True`` and ``when: not 'string'`` will always evaluate as ``False``, as long as ``'string'`` is not empty, even if the value of ``'string'`` itself looks like a boolean. For users with playbooks that depend on the old behavior, we added a config setting that preserves it. You can use the ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable or ``conditional_bare_variables`` in the ``defaults`` section of ``ansible.cfg`` to select the behavior you want on your control node. The default setting is ``true``, which preserves the old behavior. Set the config value or environment variable to ``false`` to start using the new option.
+
+.. note::
+
+   In 2.10 the default setting for ``conditional_bare_variables`` will change to ``false``. In 2.12 the old behavior will be deprecated.
+
+Updating your playbooks
+^^^^^^^^^^^^^^^^^^^^^^^
+
+To prepare your playbooks for the new behavior, you must update your conditional statements so they accept only boolean values. For variables, you can use the ``bool`` filter to evaluate the string ``'false'`` as ``False``:
+
+.. code-block:: yaml
+
+    vars:
+      teardown: 'false'
+
+    tasks:
+      - include_tasks: teardown.yml
+        when: teardown | bool
+
+      - include_tasks: provision.yml
+        when: not teardown | bool
+
+Alternatively, you can re-define your variables as boolean values (without quotation marks) instead of strings:
+
+.. code-block:: yaml
+
+            vars:
+              teardown: false
+
+            tasks:
+              - include_tasks: teardown.yml
+                when: teardown
+
+              - include_tasks: provision.yml
+                when: not teardown
+
+For dictionaries and lists, use the ``length`` filter to evaluate the presence of a dictionary or list as ``True``:
+
+.. code-block:: yaml+jinja
+
+      - debug:
+        when: my_list | length > 0
+
+      - debug:
+        when: my_dictionary | length > 0
+
+Do not use the ``bool`` filter with lists or dictionaries. If you use ``bool`` with a list or dict, Ansible will always evaluate it as ``False``.
+
+Double-interpolation
+^^^^^^^^^^^^^^^^^^^^
+
+The ``conditional_bare_variables`` setting also affects variables set based on other variables. The old behavior unexpectedly double-interpolated those variables. For example:
+
+.. code-block:: yaml
+
+    vars:
+      double_interpolated: 'bare_variable'
+      bare_variable: false
+
+    tasks:
+      - debug:
+        when: double_interpolated
+
+* In Ansible 2.7 and earlier, ``when: double_interpolated`` evaluated to the value of ``bare_variable``, in this case, ``False``. If the variable ``bare_variable`` is undefined, the conditional fails.
+* In Ansible 2.8 and later, with bare variables disabled, Ansible evaluates ``double_interpolated`` as the string ``'bare_variable'``, which is ``True``.
+
+To double-interpolate variable values, use curly braces:
+
+.. code-block:: yaml+jinja
+
+    vars:
+      double_interpolated: "{{ other_variable }}"
+      other_variable: false
+
+Nested variables
+^^^^^^^^^^^^^^^^
+
+The ``conditional_bare_variables`` setting does not affect nested variables. Any string value assigned to a subkey is already respected and not treated as a boolean. If ``complex_variable['subkey']`` is a non-empty string, then ``when: complex_variable['subkey']`` is always ``True`` and ``when: not complex_variable['subkey']`` is always ``False``. If you want a string subkey like ``complex_variable['subkey']`` to be evaluated as a boolean, you must use the ``bool`` filter.
+
+Gathering Facts
+---------------
+
+In Ansible 2.8 the implicit "Gathering Facts" task in a play was changed to
+obey play tags. Previous to 2.8, the "Gathering Facts" task would ignore play
+tags and tags supplied from the command line and always run in a task.
+
+The behavior change affects the following example play.
+
+.. code-block:: yaml
+
+    - name: Configure Webservers
+      hosts: webserver
+      tags:
+        - webserver
+      tasks:
+        - name: Install nginx
+          package:
+            name: nginx
+          tags:
+            - nginx
+
+In Ansible 2.8, if you supply ``--tags nginx``, the implicit
+"Gathering Facts" task will be skipped, as the task now inherits
+the tag of ``webserver`` instead of ``always``.
+
+If no play level tags are set, the "Gathering Facts" task will
+be given a tag of ``always`` and will effectively match prior
+behavior.
+
+You can achieve similar results to the pre-2.8 behavior, by
+using an explicit ``gather_facts`` task in your ``tasks`` list.
+
+.. code-block:: yaml
+
+    - name: Configure Webservers
+      hosts: webserver
+      gather_facts: false
+      tags:
+        - webserver
+      tasks:
+        - name: Gathering Facts
+          gather_facts:
+          tags:
+            - always
+
+        - name: Install nginx
+          package:
+            name: nginx
+          tags:
+            - nginx
 
 Python Interpreter Discovery
 ============================

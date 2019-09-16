@@ -22,6 +22,16 @@
       name: testns.testcoll.maskedmodule
     register: maskedmodule_out
 
+  # ensure the ansible ns can have real collections added to it
+  - name: call an external module in the ansible namespace
+    ansible.bullcoll.bullmodule:
+    register: bullmodule_out
+
+  # ensure the ansible ns cannot override ansible.builtin externally
+  - name: call an external module in the ansible.builtin collection (should use the built in module)
+    ansible.builtin.ping:
+    register: builtin_ping_out
+
   # action in a collection subdir
   - name: test subdir action FQ
     testns.testcoll.action_subdir.subdir_ping_action:
@@ -59,6 +69,9 @@
       - systestmodule_out.source == 'sys'
       - contentadjmodule_out.source == 'content_adj'
       - not maskedmodule_out.plugin_path
+      - bullmodule_out.source == 'user_ansible_bullcoll'
+      - builtin_ping_out.source is not defined
+      - builtin_ping_out.ping == 'pong'
       - subdir_ping_action_out is not changed
       - subdir_ping_module_out is not changed
       - granular_out.mu_result == 'thingtocall in leaf'
@@ -193,15 +206,6 @@
       - testmodule_out.source == 'user'
       - systestmodule_out.source == 'sys'
 
-# FIXME: this won't work until collections list gets passed through task templar
-#  - name: exercise unqualified filters/tests/lookups
-#    assert:
-#      that:
-#      - "'data' | testfilter == 'data_from_userdir'"
-#      - "'from_user' is testtest"
-#      - lookup('mylookup') == 'lookup_from_user_dir'
-
-
 # test keyword-static execution of a FQ collection-backed role with "tasks/main.yaml"
 - name: verify collection-backed role execution (keyword static)
   hosts: testhost
@@ -217,6 +221,7 @@
     assert:
       that:
       - test_role_output.msg == test_role_input
+      - testrole_source == 'collection'
 
 
 # test dynamic execution of a FQ collection-backed role
@@ -234,7 +239,7 @@
     assert:
       that:
       - test_role_output.msg == test_role_input
-
+      - testrole_source == 'collection'
 
 # test task-static execution of a FQ collection-backed role
 - name: verify collection-backed role execution (task static)
@@ -250,6 +255,7 @@
     assert:
       that:
       - test_role_output.msg == test_role_input
+      - testrole_source == 'collection'
 
 
 # test a legacy playbook-adjacent role, ensure that play collections config is not inherited
@@ -268,6 +274,8 @@
     assert:
       that:
       - test_role_output.msg == test_role_input
+      - testrole_source == 'legacy roles dir'
+
 
 # test dynamic execution of a FQ collection-backed role
 - name: verify collection-backed role execution in subdir (include)
@@ -281,6 +289,53 @@
     assert:
       that:
       - test_role_output.msg == test_role_input
+      - testrole_source == 'collection'
+
+
+# test collection-relative role deps (keyword static)
+- name: verify collection-relative role deps
+  hosts: testhost
+  vars:
+    outer_role_input: keyword static outer
+    test_role_input: keyword static inner
+  roles:
+    - testns.testcoll.calls_intra_collection_dep_role_unqualified
+  tasks:
+    - assert:
+        that:
+          - outer_role_output.msg == outer_role_input
+          - test_role_output.msg == test_role_input
+          - testrole_source == 'collection'
+
+# test collection-relative role deps (task static)
+- name: verify collection-relative role deps
+  hosts: testhost
+  vars:
+    outer_role_input: task static outer
+    test_role_input: task static inner
+  tasks:
+    - import_role:
+        name: testns.testcoll.calls_intra_collection_dep_role_unqualified
+    - assert:
+        that:
+          - outer_role_output.msg == outer_role_input
+          - test_role_output.msg == test_role_input
+          - testrole_source == 'collection'
+
+# test collection-relative role deps (task dynamic)
+- name: verify collection-relative role deps
+  hosts: testhost
+  vars:
+    outer_role_input: task dynamic outer
+    test_role_input: task dynamic inner
+  tasks:
+    - include_role:
+        name: testns.testcoll.calls_intra_collection_dep_role_unqualified
+    - assert:
+        that:
+          - outer_role_output.msg == outer_role_input
+          - test_role_output.msg == test_role_input
+          - testrole_source == 'collection'
 
 
 - name: validate static task include behavior

@@ -32,9 +32,9 @@
         password: '{{ vcenter_password }}'
         library_id: '{{ content_library }}'
         validate_certs: false
-      register: content_lib_facts
+      register: content_lib_info
 
     - name: Check Content Library details
       assert:
         that:
-          - '{{ content_lib_facts.content_lib_details[0].library_id == content_library }}'
+          - '{{ content_lib_info.content_lib_details[0].library_id == content_library }}'

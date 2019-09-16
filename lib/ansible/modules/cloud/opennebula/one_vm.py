@@ -167,8 +167,8 @@ options:
   disk_saveas:
     description:
       - Creates an image from a VM disk.
-      - It is a dictionary where you have to specife C(name) of the new image.
-      - Optionally you can specife C(disk_id) of the disk you want to save. By default C(disk_id) is 0.
+      - It is a dictionary where you have to specify C(name) of the new image.
+      - Optionally you can specify C(disk_id) of the disk you want to save. By default C(disk_id) is 0.
       - I(NOTE)':' This operation will only be performed on the first VM (if more than one VM ID is passed)
       - and the VM has to be in the C(poweredoff) state.
       - Also this operation will fail if an image with specified C(name) already exists.
@@ -1386,7 +1386,7 @@ def main():
     if exact_count is not None and exact_count < 0:
         module.fail_json(msg='`exact_count` cannot be less than 0')
     if count <= 0:
-        module.fail_json(msg='`count` has to be grater than 0')
+        module.fail_json(msg='`count` has to be greater than 0')
 
     if permissions is not None:
         import re

@@ -1409,7 +1409,7 @@ def url_argument_spec():
     '''
     return dict(
         url=dict(type='str'),
-        force=dict(type='bool', default=False, aliases=['thirsty']),
+        force=dict(type='bool', default=False, aliases=['thirsty'], deprecated_aliases=[dict(name='thirsty', version='2.13')]),
         http_agent=dict(type='str', default='ansible-httpget'),
         use_proxy=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),
@@ -1423,7 +1423,7 @@ def url_argument_spec():
 
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10,
-              use_gssapi=False, unix_socket=None, ca_path=None):
+              use_gssapi=False, unix_socket=None, ca_path=None, cookies=None):
     """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
@@ -1479,7 +1479,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     client_cert = module.params.get('client_cert')
     client_key = module.params.get('client_key')
 
-    cookies = cookiejar.LWPCookieJar()
+    if not isinstance(cookies, cookiejar.CookieJar):
+        cookies = cookiejar.LWPCookieJar()
 
     r = None
     info = dict(url=url, status=-1)

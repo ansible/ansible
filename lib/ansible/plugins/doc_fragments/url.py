@@ -16,6 +16,7 @@ options:
   force:
     description:
       - If C(yes) do not get a cached copy.
+      - Alias C(thirsty) has been deprecated and will be removed in 2.13.
     type: bool
     default: no
     aliases: [ thirsty ]

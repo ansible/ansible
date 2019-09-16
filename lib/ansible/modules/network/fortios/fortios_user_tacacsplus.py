@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_user_tacacsplus
 short_description: Configure TACACS+ server entries in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure user feature and tacacsplus category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify user feature and tacacsplus category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,43 +41,70 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip adress.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     user_tacacsplus:
         description:
             - Configure TACACS+ server entries.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            authen-type:
+            authen_type:
                 description:
                     - Allowed authentication protocols/methods.
+                type: str
                 choices:
                     - mschap
                     - chap
@@ -90,37 +114,47 @@ options:
             authorization:
                 description:
                     - Enable/disable TACACS+ authorization.
+                type: str
                 choices:
                     - enable
                     - disable
             key:
                 description:
                     - Key to access the primary server.
+                type: str
             name:
                 description:
                     - TACACS+ server entry name.
                 required: true
+                type: str
             port:
                 description:
                     - Port number of the TACACS+ server.
-            secondary-key:
+                type: int
+            secondary_key:
                 description:
                     - Key to access the secondary server.
-            secondary-server:
+                type: str
+            secondary_server:
                 description:
                     - Secondary TACACS+ server CN domain name or IP address.
+                type: str
             server:
                 description:
                     - Primary TACACS+ server CN domain name or IP address.
-            source-ip:
+                type: str
+            source_ip:
                 description:
                     - source IP for communications to TACACS+ server.
-            tertiary-key:
+                type: str
+            tertiary_key:
                 description:
                     - Key to access the tertiary server.
-            tertiary-server:
+                type: str
+            tertiary_server:
                 description:
                     - Tertiary TACACS+ server CN domain name or IP address.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -130,6 +164,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure TACACS+ server entries.
     fortios_user_tacacsplus:
@@ -138,19 +173,19 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       user_tacacsplus:
-        state: "present"
-        authen-type: "mschap"
+        authen_type: "mschap"
         authorization: "enable"
         key: "<your_own_value>"
         name: "default_name_6"
         port: "7"
-        secondary-key: "<your_own_value>"
-        secondary-server: "<your_own_value>"
+        secondary_key: "<your_own_value>"
+        secondary_server: "<your_own_value>"
         server: "192.168.100.40"
-        source-ip: "84.230.14.43"
-        tertiary-key: "<your_own_value>"
-        tertiary-server: "<your_own_value>"
+        source_ip: "84.230.14.43"
+        tertiary_key: "<your_own_value>"
+        tertiary_server: "<your_own_value>"
 '''
 
 RETURN = '''
@@ -213,14 +248,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -228,14 +265,14 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_user_tacacsplus_data(json):
-    option_list = ['authen-type', 'authorization', 'key',
-                   'name', 'port', 'secondary-key',
-                   'secondary-server', 'server', 'source-ip',
-                   'tertiary-key', 'tertiary-server']
+    option_list = ['authen_type', 'authorization', 'key',
+                   'name', 'port', 'secondary_key',
+                   'secondary_server', 'server', 'source_ip',
+                   'tertiary_key', 'tertiary_server']
     dictionary = {}
 
     for attribute in option_list:
@@ -245,49 +282,74 @@ def filter_user_tacacsplus_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def user_tacacsplus(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['user_tacacsplus'] and data['user_tacacsplus']:
+        state = data['user_tacacsplus']['state']
+    else:
+        state = True
     user_tacacsplus_data = data['user_tacacsplus']
-    filtered_data = filter_user_tacacsplus_data(user_tacacsplus_data)
-    if user_tacacsplus_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_user_tacacsplus_data(user_tacacsplus_data))
+
+    if state == "present":
         return fos.set('user',
                        'tacacs+',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif user_tacacsplus_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('user',
                           'tacacs+',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_user(data, fos):
-    login(data)
 
-    methodlist = ['user_tacacsplus']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['user_tacacsplus']:
+        resp = user_tacacsplus(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "user_tacacsplus": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "authen-type": {"required": False, "type": "str",
+                "authen_type": {"required": False, "type": "str",
                                 "choices": ["mschap", "chap", "pap",
                                             "ascii", "auto"]},
                 "authorization": {"required": False, "type": "str",
@@ -295,12 +357,12 @@ def main():
                 "key": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"},
                 "port": {"required": False, "type": "int"},
-                "secondary-key": {"required": False, "type": "str"},
-                "secondary-server": {"required": False, "type": "str"},
+                "secondary_key": {"required": False, "type": "str"},
+                "secondary_server": {"required": False, "type": "str"},
                 "server": {"required": False, "type": "str"},
-                "source-ip": {"required": False, "type": "str"},
-                "tertiary-key": {"required": False, "type": "str"},
-                "tertiary-server": {"required": False, "type": "str"}
+                "source_ip": {"required": False, "type": "str"},
+                "tertiary_key": {"required": False, "type": "str"},
+                "tertiary_server": {"required": False, "type": "str"}
 
             }
         }
@@ -308,15 +370,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_user(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_user(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_user(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

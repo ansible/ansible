@@ -1,0 +1,27 @@
+---
+- debug: msg="START common/not_hardware_facts.yaml on connection={{ ansible_connection }}"
+
+
+- name: test not hardware
+  exos_facts:
+    gather_subset:
+      - "!hardware"
+  register: result
+
+- assert:
+    that:
+      # _facts modules should never report a change
+      - "result.changed == false"
+
+      # Correct subsets are present
+      - "'config' in result.ansible_facts.ansible_net_gather_subset"
+
+      - "'default' in result.ansible_facts.ansible_net_gather_subset"
+      - "'interfaces' in result.ansible_facts.ansible_net_gather_subset"
+      # ... and not present
+      - "'hardware' not in result.ansible_facts.ansible_net_gather_subset"
+
+      # Items from those subsets are present
+      - "result.ansible_facts.ansible_net_interfaces | length > 1" # more than one interface returned
+
+- debug: msg="END common/not_hardware_facts.yaml on connection={{ ansible_connection }}"

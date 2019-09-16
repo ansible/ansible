@@ -8,5 +8,12 @@ __metaclass__ = type
 
 
 class DependencyError(Exception):
-    """Used when a dependency is unmet"""
-    pass
+    """A dependency was unmet"""
+
+
+class MissingUserInput(Exception):
+    """The user failed to provide input (via cli arg or interactively"""
+
+
+class InvalidUserInput(Exception):
+    """The user provided invalid input"""

@@ -76,8 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
-        required: true
+        required: false
         choices:
             - present
             - absent
@@ -88,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             block_malicious_url:
                 description:
                     - Enable/disable malicious URL blocking.
@@ -604,7 +617,12 @@ def underscore_to_hyphen(data):
 
 def ips_sensor(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['ips_sensor'] and data['ips_sensor']:
+        state = data['ips_sensor']['state']
+    else:
+        state = True
     ips_sensor_data = data['ips_sensor']
     filtered_data = underscore_to_hyphen(filter_ips_sensor_data(ips_sensor_data))
 
@@ -644,11 +662,13 @@ def main():
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "ips_sensor": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "block_malicious_url": {"required": False, "type": "str",
                                         "choices": ["disable", "enable"]},
                 "comment": {"required": False, "type": "str"},

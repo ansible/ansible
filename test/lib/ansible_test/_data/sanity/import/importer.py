@@ -16,6 +16,9 @@ def main():
     import traceback
     import warnings
 
+    import_dir = os.environ['SANITY_IMPORT_DIR']
+    minimal_dir = os.environ['SANITY_MINIMAL_DIR']
+
     try:
         import importlib.util
         imp = None  # pylint: disable=invalid-name
@@ -37,6 +40,15 @@ def main():
     except ImportError:
         # noinspection PyPep8Naming
         AnsibleCollectionLoader = None
+
+    # These are the public attribute sof a doc-only module
+    doc_keys = ('ANSIBLE_METADATA',
+                'DOCUMENTATION',
+                'EXAMPLES',
+                'RETURN',
+                'absolute_import',
+                'division',
+                'print_function')
 
     class ImporterAnsibleModuleException(Exception):
         """Exception thrown during initialization of ImporterAnsibleModule."""
@@ -80,17 +92,21 @@ def main():
             if not path.startswith('lib/ansible/modules/'):
                 return
 
+            # __init__ in module directories is empty (enforced by a different test)
+            if path.endswith('__init__.py'):
+                return
+
             # async_wrapper is not an Ansible module
             if path == 'lib/ansible/modules/utilities/logic/async_wrapper.py':
                 return
 
-            # run code protected by __name__ conditional
-            name = '__main__'
+            name = calculate_python_module_name(path)
             # show the Ansible module responsible for the exception, even if it was thrown in module_utils
             filter_dir = os.path.join(base_dir, 'lib/ansible/modules')
         else:
-            # do not run code protected by __name__ conditional
-            name = 'module_import_test'
+            # Calculate module name
+            name = calculate_python_module_name(path)
+
             # show the Ansible file responsible for the exception, even if it was thrown in 3rd party code
             filter_dir = base_dir
 
@@ -98,15 +114,58 @@ def main():
 
         try:
             if imp:
-                with open(path, 'r') as module_fd:
-                    with capture_output(capture):
-                        imp.load_module(name, module_fd, os.path.abspath(path), ('.py', 'r', imp.PY_SOURCE))
+                with capture_output(capture):
+                    # On Python2 without absolute_import we have to import parent modules all
+                    # the way up the tree
+                    full_path = os.path.abspath(path)
+                    parent_mod = None
+
+                    py_packages = name.split('.')
+                    # BIG HACK: reimporting module_utils breaks the monkeypatching of basic we did
+                    # above and also breaks modules which import names directly from module_utils
+                    # modules (you'll get errors like ERROR:
+                    # lib/ansible/modules/storage/netapp/na_ontap_vserver_cifs_security.py:151:0:
+                    # AttributeError: 'module' object has no attribute 'netapp').
+                    # So when we import a module_util here, use a munged name.
+                    if 'module_utils' in py_packages:
+                        # Avoid accidental double underscores by using _1 as a prefix
+                        py_packages[-1] = '_1%s' % py_packages[-1]
+                        name = '.'.join(py_packages)
+
+                    for idx in range(1, len(py_packages)):
+                        parent_name = '.'.join(py_packages[:idx])
+                        if parent_mod is None:
+                            toplevel_end = full_path.find('ansible/module')
+                            toplevel = full_path[:toplevel_end]
+                            parent_mod_info = imp.find_module(parent_name, [toplevel])
+                        else:
+                            parent_mod_info = imp.find_module(py_packages[idx - 1], parent_mod.__path__)
+
+                        parent_mod = imp.load_module(parent_name, *parent_mod_info)
+                        # skip distro due to an apparent bug or bad interaction in
+                        # imp.load_module() with our distro/__init__.py.
+                        # distro/__init__.py sets sys.modules['ansible.module_utils.distro']
+                        # = _distro.pyc
+                        # but after running imp.load_module(),
+                        # sys.modules['ansible.module_utils.distro._distro'] = __init__.pyc
+                        # (The opposite of what we set)
+                        # This does not affect runtime so regular import seems to work.  It's
+                        # just imp.load_module()
+                        if name == 'ansible.module_utils.distro._1__init__':
+                            return
+
+                    with open(path, 'r') as module_fd:
+                        module = imp.load_module(name, module_fd, full_path, ('.py', 'r', imp.PY_SOURCE))
+                        if ansible_module:
+                            run_if_really_module(module)
             else:
                 spec = importlib.util.spec_from_file_location(name, os.path.abspath(path))
                 module = importlib.util.module_from_spec(spec)
 
                 with capture_output(capture):
                     spec.loader.exec_module(module)
+                    if ansible_module:
+                        run_if_really_module(module)
 
             capture_report(path, capture, messages)
         except ImporterAnsibleModuleException:
@@ -153,6 +212,34 @@ def main():
 
             report_message(error, messages)
 
+    def run_if_really_module(module):
+        # Module was removed
+        if ('removed' not in module.ANSIBLE_METADATA['status'] and
+                # Documentation only module
+                [attr for attr in
+                 (frozenset(module.__dict__.keys()).difference(doc_keys))
+                 if not (attr.startswith('__') and attr.endswith('__'))]):
+            # Run main() code for ansible_modules
+            module.main()
+
+    def calculate_python_module_name(path):
+        name = None
+        try:
+            idx = path.index('ansible/modules')
+        except ValueError:
+            try:
+                idx = path.index('ansible/module_utils')
+            except ValueError:
+                try:
+                    idx = path.index('ansible_collections')
+                except ValueError:
+                    # Default
+                    name = 'module_import_test'
+        if name is None:
+            name = path[idx:-len('.py')].replace('/', '.')
+
+        return name
+
     class Capture:
         """Captured output and/or exception."""
         def __init__(self):
@@ -181,9 +268,6 @@ def main():
 
             filepath = os.path.relpath(warning.filename)
             lineno = warning.lineno
-
-            import_dir = 'test/runner/.tox/import/'
-            minimal_dir = 'test/runner/.tox/minimal-'
 
             if filepath.startswith('../') or filepath.startswith(minimal_dir):
                 # The warning occurred outside our source tree.

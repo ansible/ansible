@@ -890,7 +890,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                 create_option=self.compute_models.DiskCreateOptionTypes.empty,
                                 disk_size_gb=data_disk['disk_size_gb'],
                                 managed_disk=self.compute_models.VirtualMachineScaleSetManagedDiskParameters(
-                                    storage_account_type=data_disk['managed_disk_type']
+                                    storage_account_type=data_disk.get('managed_disk_type', None)
                                 ),
                             ))
                         vmss_resource.virtual_machine_profile.storage_profile.data_disks = data_disks

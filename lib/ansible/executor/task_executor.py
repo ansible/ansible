@@ -28,7 +28,7 @@ from ansible.plugins.loader import become_loader, cliconf_loader, connection_loa
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
+from ansible.utils.unsafe_proxy import AnsibleUnsafe, to_unsafe_text, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, isidentifier
@@ -152,7 +152,7 @@ class TaskExecutor:
 
             def _clean_res(res, errors='surrogate_or_strict'):
                 if isinstance(res, binary_type):
-                    return to_text(res, errors=errors)
+                    return to_unsafe_text(res, errors=errors)
                 elif isinstance(res, dict):
                     for k in res:
                         try:
@@ -1019,7 +1019,7 @@ class TaskExecutor:
         Returns the correct action plugin to handle the requestion task action
         '''
 
-        module_prefix = self._task.action.split('_')[0]
+        module_prefix = self._task.action.split('.')[-1].split('_')[0]
 
         collections = self._task.collections
 
@@ -1060,6 +1060,7 @@ def start_connection(play_context, variables):
     for dirname in candidate_paths:
         ansible_connection = os.path.join(dirname, 'ansible-connection')
         if os.path.isfile(ansible_connection):
+            display.vvvv("Found ansible-connection at path {0}".format(ansible_connection))
             break
     else:
         raise AnsibleError("Unable to find location of 'ansible-connection'. "

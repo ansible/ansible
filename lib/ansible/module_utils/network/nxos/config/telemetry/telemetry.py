@@ -13,9 +13,6 @@ created
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import re
-from copy import deepcopy
-
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.nxos.facts.facts import Facts
@@ -154,11 +151,6 @@ class Telemetry(ConfigBase):
         ref.get_existing()
         ref.get_playvals()
         device_cache = ref.cache_existing
-
-        if device_cache is None:
-            device_cache_lines = []
-        else:
-            device_cache_lines = device_cache.split("\n")
 
         # Get Telemetry Destination Group Data
         if want.get('destination_groups'):

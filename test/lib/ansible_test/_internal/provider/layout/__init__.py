@@ -80,18 +80,37 @@ class ContentLayout(Layout):
                  root,  # type: str
                  paths,  # type: t.List[str]
                  plugin_paths,  # type: t.Dict[str, str]
-                 collection=None,  # type: t.Optional[CollectionDetail]
-                 unit_path=None,  # type: t.Optional[str]
-                 unit_module_path=None,  # type: t.Optional[str]
-                 unit_module_utils_path=None,  # type: t.Optional[str]
+                 collection,  # type: t.Optional[CollectionDetail]
+                 test_path,  # type: str
+                 results_path,  # type: str
+                 sanity_path,  # type: str
+                 sanity_messages,  # type: t.Optional[LayoutMessages]
+                 integration_path,  # type: str
+                 integration_targets_path,  # type: str
+                 integration_vars_path,  # type: str
+                 integration_messages,  # type: t.Optional[LayoutMessages]
+                 unit_path,  # type: str
+                 unit_module_path,  # type: str
+                 unit_module_utils_path,  # type: str
+                 unit_messages,  # type: t.Optional[LayoutMessages]
                  ):  # type: (...) -> None
         super(ContentLayout, self).__init__(root, paths)
 
         self.plugin_paths = plugin_paths
         self.collection = collection
+        self.test_path = test_path
+        self.results_path = results_path
+        self.sanity_path = sanity_path
+        self.sanity_messages = sanity_messages
+        self.integration_path = integration_path
+        self.integration_targets_path = integration_targets_path
+        self.integration_vars_path = integration_vars_path
+        self.integration_messages = integration_messages
         self.unit_path = unit_path
         self.unit_module_path = unit_module_path
         self.unit_module_utils_path = unit_module_utils_path
+        self.unit_messages = unit_messages
+
         self.is_ansible = root == ANSIBLE_SOURCE_ROOT
 
     @property
@@ -129,18 +148,26 @@ class ContentLayout(Layout):
         return self.plugin_paths.get('module_utils')
 
 
+class LayoutMessages:
+    """Messages generated during layout creation that should be deferred for later display."""
+    def __init__(self):
+        self.info = []  # type: t.List[str]
+        self.warning = []  # type: t.List[str]
+        self.error = []  # type: t.List[str]
+
+
 class CollectionDetail:
     """Details about the layout of the current collection."""
     def __init__(self,
                  name,  # type: str
                  namespace,  # type: str
                  root,  # type: str
-                 prefix,  # type: str
                  ):  # type: (...) -> None
         self.name = name
         self.namespace = namespace
         self.root = root
-        self.prefix = prefix
+        self.full_name = '%s.%s' % (namespace, name)
+        self.prefix = '%s.' % self.full_name
         self.directory = os.path.join('ansible_collections', namespace, name)
 
 

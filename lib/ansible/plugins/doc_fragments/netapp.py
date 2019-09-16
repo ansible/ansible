@@ -202,14 +202,17 @@ notes:
 options:
   api_key:
     required: true
+    type: str
     description:
     - The access key to authenticate with the AWSCVS Web Services Proxy or Embedded Web Services API.
   secret_key:
     required: true
+    type: str
     description:
     - The secret_key to authenticate with the AWSCVS Web Services Proxy or Embedded Web Services API.
   api_url:
     required: true
+    type: str
     description:
     - The url to the AWSCVS Web Services Proxy or Embedded Web Services API.
   validate_certs:

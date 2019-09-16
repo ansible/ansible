@@ -102,6 +102,7 @@ def complex_argspec():
         bar3=dict(type='list', elements='path'),
         zardoz=dict(choices=['one', 'two']),
         zardoz2=dict(type='list', choices=['one', 'two', 'three']),
+        zardoz3=dict(type='str', aliases=['zodraz'], deprecated_aliases=[dict(name='zodraz', version='9.99')]),
     )
     mut_ex = (('bar', 'bam'), ('bing', 'bang', 'bong'))
     req_to = (('bam', 'baz'),)
@@ -331,6 +332,14 @@ class TestComplexArgSpecs:
         assert isinstance(am.params['bar3'], list)
         assert am.params['bar3'][0].startswith('/')
         assert am.params['bar3'][1] == 'test/'
+
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'zodraz': 'one'}], indirect=['stdin'])
+    def test_deprecated_alias(self, capfd, mocker, stdin, complex_argspec):
+        """Test a deprecated alias"""
+        am = basic.AnsibleModule(**complex_argspec)
+
+        assert "Alias 'zodraz' is deprecated." in am._deprecations[0]['msg']
+        assert am._deprecations[0]['version'] == '9.99'
 
 
 class TestComplexOptions:

@@ -80,12 +80,12 @@ options:
         suboptions:
             collector_ip:
                 description:
-                    - IP address of the sFlow collector that sFlow agents added to interfaces in this VDOM send sFlow datagrams to (default = 0.0.0.0).
+                    - IP address of the sFlow collector that sFlow agents added to interfaces in this VDOM send sFlow datagrams to .
                 type: str
             collector_port:
                 description:
                     - UDP port number used for sending sFlow datagrams (configure only if required by your sFlow collector or your network configuration) (0 -
-                       65535, default = 6343).
+                       65535).
                 type: int
             source_ip:
                 description:

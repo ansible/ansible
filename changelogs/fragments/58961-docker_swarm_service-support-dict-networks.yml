@@ -1,2 +1,0 @@
-minor_changes:
-  - "docker_swarm_service - Support passing dictionaries in ``networks`` to allow setting ``aliases`` and ``options``."

@@ -120,7 +120,7 @@ EXAMPLES = '''
 
 - name: create a bucket access control
   gcp_storage_bucket_access_control:
-    bucket: test_object
+    bucket: "{{ bucket }}"
     entity: user-alexstephen@google.com
     role: WRITER
     project: test_project
@@ -220,10 +220,7 @@ def main():
     state = module.params['state']
     kind = 'storage#bucketAccessControl'
 
-    if module.params['id']:
-        fetch = fetch_resource(module, self_link(module), kind)
-    else:
-        fetch = {}
+    fetch = fetch_resource(module, self_link(module), kind)
     changed = False
 
     if fetch:
@@ -286,11 +283,13 @@ def fetch_resource(module, link, kind, allow_not_found=True):
 
 
 def self_link(module):
-    return "https://www.googleapis.com/storage/v1/b/{bucket}/acl/{entity}".format(**module.params)
+    res = {'bucket': replace_resource_dict(module.params['bucket'], 'name'), 'entity': module.params['entity']}
+    return "https://www.googleapis.com/storage/v1/b/{bucket}/acl/{entity}".format(**res)
 
 
 def collection(module):
-    return "https://www.googleapis.com/storage/v1/b/{bucket}/acl".format(**module.params)
+    res = {'bucket': replace_resource_dict(module.params['bucket'], 'name')}
+    return "https://www.googleapis.com/storage/v1/b/{bucket}/acl".format(**res)
 
 
 def return_if_object(module, response, kind, allow_not_found=False):

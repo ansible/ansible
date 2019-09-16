@@ -1,3 +1,0 @@
-minor_changes:
-  - Add ability to force a protection group snapshot to immeadiatley replicate to a remote array (if configured)
-  - Add support for `check_mode`

@@ -28,6 +28,8 @@ from .util import (
 
 from .util_common import (
     run_command,
+    write_json_file,
+    ResultType,
 )
 
 from .config import (
@@ -306,20 +308,26 @@ class AnsibleCoreCI:
             )
         else:
             response_json = response.json()
-
             status = response_json['status']
-            con = response_json['connection']
+            con = response_json.get('connection')
 
-            self.connection = InstanceConnection(
-                running=status == 'running',
-                hostname=con['hostname'],
-                port=int(con.get('port', self.port)),
-                username=con['username'],
-                password=con.get('password'),
-            )
+            if con:
+                self.connection = InstanceConnection(
+                    running=status == 'running',
+                    hostname=con['hostname'],
+                    port=int(con.get('port', self.port)),
+                    username=con['username'],
+                    password=con.get('password'),
+                    response_json=response_json,
+                )
+            else:  # 'vcenter' resp does not have a 'connection' key
+                self.connection = InstanceConnection(
+                    running=status == 'running',
+                    response_json=response_json,
+                )
 
-            if self.connection.password:
-                display.sensitive.add(str(self.connection.password))
+        if self.connection.password:
+            display.sensitive.add(str(self.connection.password))
 
         status = 'running' if self.connection.running else 'starting'
 
@@ -329,9 +337,9 @@ class AnsibleCoreCI:
 
         return self.connection
 
-    def wait(self):
+    def wait(self, iterations=90):  # type: (t.Optional[int]) -> None
         """Wait for the instance to become ready."""
-        for _iteration in range(1, 90):
+        for _iteration in range(1, iterations):
             if self.get().running:
                 return
             time.sleep(10)
@@ -486,10 +494,7 @@ class AnsibleCoreCI:
 
         config = self.save()
 
-        make_dirs(os.path.dirname(self.path))
-
-        with open(self.path, 'w') as instance_fd:
-            instance_fd.write(json.dumps(config, indent=4, sort_keys=True))
+        write_json_file(self.path, config, create_directories=True)
 
     def save(self):
         """
@@ -553,40 +558,30 @@ class SshKey:
         """
         :type args: EnvironmentConfig
         """
-        cache_dir = os.path.join(data_context().content.root, 'test/cache')
+        key_pair = self.get_key_pair()
 
-        self.key = os.path.join(cache_dir, self.KEY_NAME)
-        self.pub = os.path.join(cache_dir, self.PUB_NAME)
+        if not key_pair:
+            key_pair = self.generate_key_pair(args)
 
-        key_dst = os.path.relpath(self.key, data_context().content.root)
-        pub_dst = os.path.relpath(self.pub, data_context().content.root)
+        key, pub = key_pair
+        key_dst, pub_dst = self.get_in_tree_key_pair_paths()
 
-        if not os.path.isfile(self.key) or not os.path.isfile(self.pub):
-            base_dir = os.path.expanduser('~/.ansible/test/')
+        def ssh_key_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+            """
+            Add the SSH keys to the payload file list.
+            They are either outside the source tree or in the cache dir which is ignored by default.
+            """
+            if data_context().content.collection:
+                working_path = data_context().content.collection.directory
+            else:
+                working_path = ''
 
-            key = os.path.join(base_dir, self.KEY_NAME)
-            pub = os.path.join(base_dir, self.PUB_NAME)
+            files.append((key, os.path.join(working_path, os.path.relpath(key_dst, data_context().content.root))))
+            files.append((pub, os.path.join(working_path, os.path.relpath(pub_dst, data_context().content.root))))
 
-            if not args.explain:
-                make_dirs(base_dir)
+        data_context().register_payload_callback(ssh_key_callback)
 
-            if not os.path.isfile(key) or not os.path.isfile(pub):
-                run_command(args, ['ssh-keygen', '-m', 'PEM', '-q', '-t', 'rsa', '-N', '', '-f', key])
-
-            self.key = key
-            self.pub = pub
-
-            def ssh_key_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
-                """Add the SSH keys to the payload file list."""
-                if data_context().content.collection:
-                    working_path = data_context().content.collection.directory
-                else:
-                    working_path = ''
-
-                files.append((key, os.path.join(working_path, key_dst)))
-                files.append((pub, os.path.join(working_path, pub_dst)))
-
-            data_context().register_payload_callback(ssh_key_callback)
+        self.key, self.pub = key, pub
 
         if args.explain:
             self.pub_contents = None
@@ -594,22 +589,67 @@ class SshKey:
             with open(self.pub, 'r') as pub_fd:
                 self.pub_contents = pub_fd.read().strip()
 
+    def get_in_tree_key_pair_paths(self):  # type: () -> t.Optional[t.Tuple[str, str]]
+        """Return the ansible-test SSH key pair paths from the content tree."""
+        temp_dir = ResultType.TMP.path
+
+        key = os.path.join(temp_dir, self.KEY_NAME)
+        pub = os.path.join(temp_dir, self.PUB_NAME)
+
+        return key, pub
+
+    def get_source_key_pair_paths(self):  # type: () -> t.Optional[t.Tuple[str, str]]
+        """Return the ansible-test SSH key pair paths for the current user."""
+        base_dir = os.path.expanduser('~/.ansible/test/')
+
+        key = os.path.join(base_dir, self.KEY_NAME)
+        pub = os.path.join(base_dir, self.PUB_NAME)
+
+        return key, pub
+
+    def get_key_pair(self):  # type: () -> t.Optional[t.Tuple[str, str]]
+        """Return the ansible-test SSH key pair paths if present, otherwise return None."""
+        key, pub = self.get_in_tree_key_pair_paths()
+
+        if os.path.isfile(key) and os.path.isfile(pub):
+            return key, pub
+
+        key, pub = self.get_source_key_pair_paths()
+
+        if os.path.isfile(key) and os.path.isfile(pub):
+            return key, pub
+
+        return None
+
+    def generate_key_pair(self, args):  # type: (EnvironmentConfig) -> t.Tuple[str, str]
+        """Generate an SSH key pair for use by all ansible-test invocations for the current user."""
+        key, pub = self.get_source_key_pair_paths()
+
+        if not args.explain:
+            make_dirs(os.path.dirname(key))
+
+        if not os.path.isfile(key) or not os.path.isfile(pub):
+            run_command(args, ['ssh-keygen', '-m', 'PEM', '-q', '-t', 'rsa', '-N', '', '-f', key])
+
+        return key, pub
+
 
 class InstanceConnection:
     """Container for remote instance status and connection details."""
-    def __init__(self, running, hostname, port, username, password):
-        """
-        :type running: bool
-        :type hostname: str
-        :type port: int
-        :type username: str
-        :type password: str | None
-        """
+    def __init__(self,
+                 running,  # type: bool
+                 hostname=None,  # type: t.Optional[str]
+                 port=None,  # type: t.Optional[int]
+                 username=None,  # type: t.Optional[str]
+                 password=None,  # type: t.Optional[str]
+                 response_json=None,  # type: t.Optional[t.Dict[str, t.Any]]
+                 ):  # type: (...) -> None
         self.running = running
         self.hostname = hostname
         self.port = port
         self.username = username
         self.password = password
+        self.response_json = response_json or {}
 
     def __str__(self):
         if self.password:

@@ -19,8 +19,6 @@ module: postgresql_idx
 short_description: Create or drop indexes from a PostgreSQL database
 description:
 - Create or drop indexes from a PostgreSQL database.
-- For more information see U(https://www.postgresql.org/docs/current/sql-createindex.html),
-  U(https://www.postgresql.org/docs/current/sql-dropindex.html).
 version_added: '2.8'
 
 options:
@@ -105,11 +103,27 @@ options:
   cascade:
     description:
     - Automatically drop objects that depend on the index,
-      and in turn all objects that depend on those objects U(https://www.postgresql.org/docs/current/sql-dropindex.html).
+      and in turn all objects that depend on those objects.
     - It used only with I(state=absent).
     - Mutually exclusive with I(concurrent=yes)
     type: bool
     default: no
+
+seealso:
+- module: postgresql_table
+- module: postgresql_tablespace
+- name: PostgreSQL indexes reference
+  description: General information about PostgreSQL indexes.
+  link: https://www.postgresql.org/docs/current/indexes.html
+- name: CREATE INDEX reference
+  description: Complete reference of the CREATE INDEX command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createindex.html
+- name: ALTER INDEX reference
+  description: Complete reference of the ALTER INDEX command documentation.
+  link: https://www.postgresql.org/docs/current/sql-alterindex.html
+- name: DROP INDEX reference
+  description: Complete reference of the DROP INDEX command documentation.
+  link: https://www.postgresql.org/docs/current/sql-dropindex.html
 
 notes:
 - The index building process can affect database performance.

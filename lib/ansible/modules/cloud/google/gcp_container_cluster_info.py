@@ -470,6 +470,79 @@ resources:
           - Constraint enforced on the max num of pods per node.
           returned: success
           type: str
+    ipAllocationPolicy:
+      description:
+      - Configuration for controlling how IPs are allocated in the cluster.
+      returned: success
+      type: complex
+      contains:
+        useIpAliases:
+          description:
+          - Whether alias IPs will be used for pod IPs in the cluster.
+          returned: success
+          type: bool
+        createSubnetwork:
+          description:
+          - Whether a new subnetwork will be created automatically for the cluster.
+          returned: success
+          type: bool
+        subnetworkName:
+          description:
+          - A custom subnetwork name to be used if createSubnetwork is true.
+          - If this field is empty, then an automatic name will be chosen for the
+            new subnetwork.
+          returned: success
+          type: str
+        clusterSecondaryRangeName:
+          description:
+          - The name of the secondary range to be used for the cluster CIDR block.
+            The secondary range will be used for pod IP addresses.
+          - This must be an existing secondary range associated with the cluster subnetwork
+            .
+          returned: success
+          type: str
+        servicesSecondaryRangeName:
+          description:
+          - The name of the secondary range to be used as for the services CIDR block.
+            The secondary range will be used for service ClusterIPs. This must be
+            an existing secondary range associated with the cluster subnetwork.
+          returned: success
+          type: str
+        clusterIpv4CidrBlock:
+          description:
+          - The IP address range for the cluster pod IPs. If this field is set, then
+            cluster.cluster_ipv4_cidr must be left blank.
+          - This field is only applicable when useIpAliases is true.
+          - Set to blank to have a range chosen with the default size.
+          - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+          returned: success
+          type: str
+        nodeIpv4CidrBlock:
+          description:
+          - The IP address range of the instance IPs in this cluster.
+          - This is applicable only if createSubnetwork is true.
+          - Set to blank to have a range chosen with the default size.
+          - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+          returned: success
+          type: str
+        servicesIpv4CidrBlock:
+          description:
+          - The IP address range of the services IPs in this cluster. If blank, a
+            range will be automatically chosen with the default size.
+          - This field is only applicable when useIpAliases is true.
+          - Set to blank to have a range chosen with the default size.
+          - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+          returned: success
+          type: str
+        tpuIpv4CidrBlock:
+          description:
+          - The IP address range of the Cloud TPUs in this cluster. If unspecified,
+            a range will be automatically chosen with the default size.
+          - This field is only applicable when useIpAliases is true.
+          - If unspecified, the range will use the default size.
+          - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+          returned: success
+          type: str
     endpoint:
       description:
       - The IP address of this cluster's master endpoint.
@@ -559,6 +632,34 @@ resources:
           - Human-friendly representation of the condition.
           returned: success
           type: str
+    masterAuthorizedNetworksConfig:
+      description:
+      - Configuration for controlling how IPs are allocated in the cluster.
+      returned: success
+      type: complex
+      contains:
+        enabled:
+          description:
+          - Whether or not master authorized networks is enabled.
+          returned: success
+          type: bool
+        cidrBlocks:
+          description:
+          - Define up to 50 external networks that could access Kubernetes master
+            through HTTPS.
+          returned: success
+          type: complex
+          contains:
+            displayName:
+              description:
+              - Optional field used to identify cidr blocks.
+              returned: success
+              type: str
+            cidrBlock:
+              description:
+              - Block specified in CIDR notation.
+              returned: success
+              type: str
     location:
       description:
       - The location where the cluster is deployed.

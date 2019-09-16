@@ -34,19 +34,13 @@ from ansible.plugins.loader import connection_loader
 
 class TestConnectionClass(unittest.TestCase):
 
-    @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
-    def test_network_cli__connect_error(self, mocked_super):
-        pc = PlayContext()
-        pc.network_os = 'ios'
-        conn = connection_loader.get('network_cli', pc, '/dev/null')
-
-        conn.ssh = MagicMock()
-        conn.receive = MagicMock()
-        conn._network_os = 'does not exist'
-
-        self.assertRaises(AnsibleConnectionFailure, conn._connect)
-
     def test_network_cli__invalid_os(self):
+        pc = PlayContext()
+        pc.network_os = 'does not exist'
+
+        self.assertRaises(AnsibleConnectionFailure, connection_loader.get, 'network_cli', pc, '/dev/null')
+
+    def test_network_cli__no_os(self):
         pc = PlayContext()
         pc.network_os = None
 
@@ -83,13 +77,13 @@ class TestConnectionClass(unittest.TestCase):
         terminal = MagicMock(supports_multiplexing=False)
         conn._terminal = terminal
         conn._ssh_shell = MagicMock()
-        conn.paramiko_conn = MagicMock()
+        conn._paramiko_conn = MagicMock()
         conn._connected = True
 
         conn.close()
         self.assertTrue(terminal.on_close_shell.called)
         self.assertIsNone(conn._ssh_shell)
-        self.assertIsNone(conn.paramiko_conn)
+        self.assertIsNone(conn._paramiko_conn)
 
     @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli_exec_command(self, mocked_super):

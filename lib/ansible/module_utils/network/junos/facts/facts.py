@@ -9,7 +9,6 @@ this file validates each subset of facts and selectively
 calls the appropriate facts gathering function
 """
 
-from ansible.module_utils.network.junos.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.junos.facts.legacy.base import Default, Hardware, Config, Interfaces, OFacts, HAS_PYEZ
 from ansible.module_utils.network.junos.facts.interfaces.interfaces import InterfacesFacts
@@ -59,9 +58,8 @@ class Facts(FactsBase):
         :rtype: dict
         :return: the facts gathered
         """
-        netres_choices = FactsArgs.argument_spec['gather_network_resources'].get('choices', [])
         if self.VALID_RESOURCE_SUBSETS:
-            self.get_network_resources_facts(netres_choices, FACT_RESOURCE_SUBSETS, resource_facts_type, data)
+            self.get_network_resources_facts(FACT_RESOURCE_SUBSETS, resource_facts_type, data)
 
         if not legacy_facts_type:
             legacy_facts_type = self._gather_subset

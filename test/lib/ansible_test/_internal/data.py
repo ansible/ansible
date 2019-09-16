@@ -13,6 +13,7 @@ from .util import (
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
     ANSIBLE_SOURCE_ROOT,
+    display,
 )
 
 from .provider import (
@@ -57,6 +58,7 @@ class DataContext:
         layout_providers = get_path_provider_classes(LayoutProvider)
         source_providers = get_path_provider_classes(SourceProvider)
 
+        self.__layout_providers = layout_providers
         self.__source_providers = source_providers
         self.__ansible_source = None  # type: t.Optional[t.Tuple[t.Tuple[str, str], ...]]
 
@@ -70,7 +72,44 @@ class DataContext:
             content = self.__create_content_layout(layout_providers, source_providers, current_path, True)
 
         self.content = content  # type: ContentLayout
-        self.results = os.path.join(self.content.root, 'test', 'results')
+
+    def create_collection_layouts(self):  # type: () -> t.List[ContentLayout]
+        """
+        Return a list of collection layouts, one for each collection in the same collection root as the current collection layout.
+        An empty list is returned if the current content layout is not a collection layout.
+        """
+        layout = self.content
+        collection = layout.collection
+
+        if not collection:
+            return []
+
+        root_path = os.path.join(collection.root, 'ansible_collections')
+        display.info('Scanning collection root: %s' % root_path, verbosity=1)
+        namespace_names = sorted(name for name in os.listdir(root_path) if os.path.isdir(os.path.join(root_path, name)))
+        collections = []
+
+        for namespace_name in namespace_names:
+            namespace_path = os.path.join(root_path, namespace_name)
+            collection_names = sorted(name for name in os.listdir(namespace_path) if os.path.isdir(os.path.join(namespace_path, name)))
+
+            for collection_name in collection_names:
+                collection_path = os.path.join(namespace_path, collection_name)
+
+                if collection_path == os.path.join(collection.root, collection.directory):
+                    collection_layout = layout
+                else:
+                    collection_layout = self.__create_content_layout(self.__layout_providers, self.__source_providers, collection_path, False)
+
+                file_count = len(collection_layout.all_files())
+
+                if not file_count:
+                    continue
+
+                display.info('Including collection: %s (%d files)' % (collection_layout.collection.full_name, file_count), verbosity=1)
+                collections.append(collection_layout)
+
+        return collections
 
     @staticmethod
     def __create_content_layout(layout_providers,  # type: t.List[t.Type[LayoutProvider]]

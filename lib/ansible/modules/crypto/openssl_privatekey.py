@@ -30,7 +30,8 @@ description:
       consider using the I(backup) option."
     - The module can use the cryptography Python library, or the pyOpenSSL Python
       library. By default, it tries to detect which one is available. This can be
-      overridden with the I(select_crypto_backend) option."
+      overridden with the I(select_crypto_backend) option. Please note that the
+      PyOpenSSL backend was deprecated in Ansible 2.9 and will be removed in Ansible 2.13."
 requirements:
     - Either cryptography >= 1.2.3 (older versions might work as well)
     - Or pyOpenSSL
@@ -116,6 +117,8 @@ options:
             - The default choice is C(auto), which tries to use C(cryptography) if available, and falls back to C(pyopenssl).
             - If set to C(pyopenssl), will try to use the L(pyOpenSSL,https://pypi.org/project/pyOpenSSL/) library.
             - If set to C(cryptography), will try to use the L(cryptography,https://cryptography.io/) library.
+            - Please note that the C(pyopenssl) backend has been deprecated in Ansible 2.9, and will be removed in Ansible 2.13.
+              From that point on, only the C(cryptography) backend will be available.
         type: str
         default: auto
         choices: [ auto, cryptography, pyopenssl ]
@@ -674,6 +677,7 @@ def main():
             if not PYOPENSSL_FOUND:
                 module.fail_json(msg=missing_required_lib('pyOpenSSL >= {0}'.format(MINIMAL_PYOPENSSL_VERSION)),
                                  exception=PYOPENSSL_IMP_ERR)
+            module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated', version='2.13')
             private_key = PrivateKeyPyOpenSSL(module)
         elif backend == 'cryptography':
             if not CRYPTOGRAPHY_FOUND:

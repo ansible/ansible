@@ -84,7 +84,10 @@ options:
       managed_image:
         description:
           - Managed image reference, could be resource id, or dictionary containing C(resource_group) and C(name)
-        required: true
+        type: raw
+      snapshot:
+        description:
+          - Source snapshot to be used.
         type: raw
       replica_count:
         description:
@@ -243,6 +246,13 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                                  '/images/{name}'),
                         disposition='source/managedImage/id'
                     ),
+                    snapshot=dict(
+                        type='raw',
+                        pattern=('/subscriptions/{subscription_id}/resourceGroups'
+                                 '/{resource_group}/providers/Microsoft.Compute'
+                                 '/snapshots/{name}'),
+                        disposition='source/managedImage/id'
+                    ),
                     replica_count=dict(
                         type='int',
                         disposition='replicaCount'
@@ -352,6 +362,10 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                 self.results['compare'] = []
                 if not self.default_compare(modifiers, self.body, old_response, '', self.results):
                     self.to_do = Actions.Update
+
+        # fix leftovers (if empty structures were left)
+        self.body.get('properties', {}).get('publishingProfile', {}).pop('snapshot', None)
+        self.body.get('properties', {}).get('publishingProfile', {}).pop('managed_image', None)
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log('Need to Create / Update the GalleryImageVersion instance')

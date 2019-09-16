@@ -28,7 +28,7 @@ also use it to create a new role, remove roles, or perform tasks on the Galaxy w
 
 The command line tool by default communicates with the Galaxy website API using the server address *https://galaxy.ansible.com*. Since the `Galaxy project <https://github.com/ansible/galaxy>`_
 is an open source project, you may be running your own internal Galaxy server and wish to override the default server address. You can do this using the *--server* option
-or by setting the Galaxy server value in your *ansible.cfg* file. For information on setting the value in *ansible.cfg* visit `Galaxy Settings <./intro_configuration.html#galaxy-settings>`_.
+or by setting the Galaxy server value in your *ansible.cfg* file. For information on setting the value in *ansible.cfg* see :ref:`galaxy_server`.
 
 
 Installing Roles
@@ -96,7 +96,7 @@ Each role in the file will have one or more of the following attributes:
      The source of the role. Use the format *username.role_name*, if downloading from Galaxy; otherwise, provide a URL pointing
      to a repository within a git based SCM. See the examples below. This is a required attribute.
    scm
-     Specify the SCM. As of this writing only *git* or *hg* are supported. See the examples below. Defaults to *git*.
+     Specify the SCM. As of this writing only *git* or *hg* are allowed. See the examples below. Defaults to *git*.
    version:
      The version of the role to download. Provide a release tag value, commit hash, or branch name. Defaults to the branch set as a default in the repository, otherwise defaults to the *master*.
    name:
@@ -183,7 +183,7 @@ Dependencies
 Roles can also be dependent on other roles, and when you install a role that has dependencies, those dependencies will automatically be installed.
 
 You specify role dependencies in the ``meta/main.yml`` file by providing a list of roles. If the source of a role is Galaxy, you can simply specify the role in
-the format ``username.role_name``. The more complex format used in ``requirements.yml`` is also supported, allowing you to provide ``src``, ``scm``, ``version``, and ``name``.
+the format ``username.role_name``. You can also use the more complex format in ``requirements.yml``, allowing you to provide ``src``, ``scm``, ``version``, and ``name``.
 
 Tags are inherited *down* the dependency chain. In order for tags to be applied to a role and all its dependencies, the tag should be applied to the role, not to all the tasks within a role.
 

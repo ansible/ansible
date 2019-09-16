@@ -956,7 +956,7 @@ def get_diff_final_resource(client, module, security_group):
                         format_rule['user_id_group_pairs'][0].pop(k)
             final_rules.append(format_rule)
             # Order final rules consistently
-            final_rules.sort(key=lambda x: x.get('cidr_ip', x.get('ip_ranges', x.get('ipv6_ranges', x.get('prefix_list_ids', x.get('user_id_group_pairs'))))))
+            final_rules.sort(key=get_ip_permissions_sort_key)
         return final_rules
     security_group_ingress = security_group.get('ip_permissions', [])
     specified_ingress = module.params['rules']
@@ -994,6 +994,34 @@ def flatten_nested_targets(module, rules):
             if target_list_type is not None:
                 rule[target_list_type] = list(_flatten(rule[target_list_type]))
     return rules
+
+
+def get_rule_sort_key(dicts):
+    if dicts.get('cidr_ip'):
+        return dicts.get('cidr_ip')
+    elif dicts.get('cidr_ipv6'):
+        return dicts.get('cidr_ipv6')
+    elif dicts.get('prefix_list_id'):
+        return dicts.get('prefix_list_id')
+    elif dicts.get('group_id'):
+        return dicts.get('group_id')
+    return None
+
+
+def get_ip_permissions_sort_key(rule):
+    if rule.get('ip_ranges'):
+        rule.get('ip_ranges').sort(key=get_rule_sort_key)
+        return rule.get('ip_ranges')[0]['cidr_ip']
+    elif rule.get('ipv6_ranges'):
+        rule.get('ipv6_ranges').sort(key=get_rule_sort_key)
+        return rule.get('ipv6_ranges')[0]['cidr_ipv6']
+    elif rule.get('prefix_list_ids'):
+        rule.get('prefix_list_ids').sort(key=get_rule_sort_key)
+        return rule.get('prefix_list_ids')[0]['prefix_list_id']
+    elif rule.get('user_id_group_pairs'):
+        rule.get('user_id_group_pairs').sort(key=get_rule_sort_key)
+        return rule.get('user_id_group_pairs')[0]['group_id']
+    return None
 
 
 def main():
@@ -1195,6 +1223,8 @@ def main():
     if module._diff:
         if module.params['state'] == 'present':
             after = get_diff_final_resource(client, module, security_group)
+            if before.get('ip_permissions'):
+                before['ip_permissions'].sort(key=get_ip_permissions_sort_key)
 
         security_group['diff'] = [{'before': before, 'after': after}]
 

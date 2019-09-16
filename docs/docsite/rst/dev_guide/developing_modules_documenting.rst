@@ -222,8 +222,8 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
   :suboptions:
 
-    * If this option takes a dict, you can define its structure here.
-    * See :ref:`azure_rm_securitygroup_module`, :ref:`os_ironic_node_module` for examples.
+    * If this option takes a dict or list of dicts, you can define the structure here.
+    * See :ref:`azure_rm_securitygroup_module`, :ref:`azure_rm_azurefirewall_module` and :ref:`os_ironic_node_module` for examples.
 
 :requirements:
 
@@ -285,6 +285,42 @@ Documentation fragments
 
 If you're writing multiple related modules, they may share common documentation, such as authentication details, file mode settings, ``notes:`` or ``seealso:`` entries. Rather than duplicate that information in each module's ``DOCUMENTATION`` block, you can save it once as a doc_fragment plugin and use it in each module's documentation. In Ansible, shared documentation fragments are contained in a ``ModuleDocFragment`` class in `lib/ansible/plugins/doc_fragments/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/doc_fragments>`_. To include a documentation fragment, add ``extends_documentation_fragment: FRAGMENT_NAME`` in your module's documentation.
 
+Modules should only use items from a doc fragment if the module will implement all of the interface documented there in a manner that behaves the same as the existing modules which import that fragment. The goal is that items imported from the doc fragment will behave identically when used in another module that imports the doc fragment.
+
+By default, only the ``DOCUMENTATION`` property from a doc fragment is inserted into the module documentation. It is possible to define additional properties in the doc fragment in order to import only certain parts of a doc fragment or mix and match as appropriate. If a property is defined in both the doc fragment and the module, the module value overrides the doc fragment.
+
+Here is an example doc fragment named ``example_fragment.py``:
+
+.. code-block:: python
+
+    class ModuleDocFragment(object):
+        # Standard documentation
+        DOCUMENTATION = r'''
+        options:
+          # options here
+        '''
+
+        # Additional section
+        OTHER = r'''
+        options:
+          # other options here
+        '''
+
+
+To insert the contents of ``OTHER`` in a module:
+
+.. code-block:: yaml+jinja
+
+    extends_documentation_fragment: example_fragment.other
+
+Or use both :
+
+.. code-block:: yaml+jinja
+
+    extends_documentation_fragment:
+      - example_fragment
+      - example_fragment.other
+
 .. _note:
   * Prior to Ansible 2.8, documentation fragments were kept in ``lib/ansible/utils/module_docs_fragments``.
 
@@ -300,8 +336,6 @@ For example, all AWS modules should include:
     - aws
     - ec2
 
-
-You can find more examples by searching for ``extends_documentation_fragment`` under the Ansible source tree.
 
 .. _examples_block:
 

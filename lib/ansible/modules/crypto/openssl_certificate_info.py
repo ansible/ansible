@@ -22,7 +22,8 @@ description:
     - It uses the pyOpenSSL or cryptography python library to interact with OpenSSL. If both the
       cryptography and PyOpenSSL libraries are available (and meet the minimum version requirements)
       cryptography will be preferred as a backend over PyOpenSSL (unless the backend is forced with
-      C(select_crypto_backend))
+      C(select_crypto_backend)). Please note that the PyOpenSSL backend was deprecated in Ansible 2.9
+      and will be removed in Ansible 2.13.
 requirements:
     - PyOpenSSL >= 0.15 or cryptography >= 1.6
 author:
@@ -52,6 +53,8 @@ options:
             - The default choice is C(auto), which tries to use C(cryptography) if available, and falls back to C(pyopenssl).
             - If set to C(pyopenssl), will try to use the L(pyOpenSSL,https://pypi.org/project/pyOpenSSL/) library.
             - If set to C(cryptography), will try to use the L(cryptography,https://cryptography.io/) library.
+            - Please note that the C(pyopenssl) backend has been deprecated in Ansible 2.9, and will be removed in Ansible 2.13.
+              From that point on, only the C(cryptography) backend will be available.
         type: str
         default: auto
         choices: [ auto, cryptography, pyopenssl ]
@@ -272,6 +275,12 @@ authority_cert_serial_number:
     type: int
     sample: '12345'
     version_added: "2.9"
+ocsp_uri:
+    description: The OCSP responder URI, if included in the certificate. Will be
+                 C(none) if no OCSP responder URI is included.
+    returned: success
+    type: str
+    version_added: "2.9"
 '''
 
 
@@ -279,6 +288,7 @@ import abc
 import binascii
 import datetime
 import os
+import re
 import traceback
 from distutils.version import LooseVersion
 
@@ -443,6 +453,10 @@ class CertificateInfo(crypto_utils.OpenSSLObject):
     def _get_all_extensions(self):
         pass
 
+    @abc.abstractmethod
+    def _get_ocsp_uri(self):
+        pass
+
     def get_info(self):
         result = dict()
         self.cert = crypto_utils.load_certificate(self.path, backend=self.backend)
@@ -497,6 +511,7 @@ class CertificateInfo(crypto_utils.OpenSSLObject):
 
         result['serial_number'] = self._get_serial_number()
         result['extensions_by_oid'] = self._get_all_extensions()
+        result['ocsp_uri'] = self._get_ocsp_uri()
 
         return result
 
@@ -644,6 +659,17 @@ class CertificateInfoCryptography(CertificateInfo):
     def _get_all_extensions(self):
         return crypto_utils.cryptography_get_extensions_from_cert(self.cert)
 
+    def _get_ocsp_uri(self):
+        try:
+            ext = self.cert.extensions.get_extension_for_class(x509.AuthorityInformationAccess)
+            for desc in ext.value:
+                if desc.access_method == x509.oid.AuthorityInformationAccessOID.OCSP:
+                    if isinstance(desc.access_location, x509.UniformResourceIdentifier):
+                        return desc.access_location.value
+        except x509.ExtensionNotFound as dummy:
+            pass
+        return None
+
 
 class CertificateInfoPyOpenSSL(CertificateInfo):
     """validate the supplied certificate."""
@@ -764,6 +790,16 @@ class CertificateInfoPyOpenSSL(CertificateInfo):
     def _get_all_extensions(self):
         return crypto_utils.pyopenssl_get_extensions_from_cert(self.cert)
 
+    def _get_ocsp_uri(self):
+        for i in range(self.cert.get_extension_count()):
+            ext = self.cert.get_extension(i)
+            if ext.get_short_name() == b'authorityInfoAccess':
+                v = str(ext)
+                m = re.search('^OCSP - URI:(.*)$', v, flags=re.MULTILINE)
+                if m:
+                    return m.group(1)
+        return None
+
 
 def main():
     module = AnsibleModule(
@@ -811,6 +847,7 @@ def main():
             except AttributeError:
                 module.fail_json(msg='You need to have PyOpenSSL>=0.15')
 
+            module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated', version='2.13')
             certificate = CertificateInfoPyOpenSSL(module)
         elif backend == 'cryptography':
             if not CRYPTOGRAPHY_FOUND:
