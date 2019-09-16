@@ -718,7 +718,7 @@ except ImportError:
 from ansible.module_utils.six import text_type, string_types
 from ansible.module_utils.six.moves.urllib import parse as urlparse
 from ansible.module_utils._text import to_bytes, to_native
-from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.common.validation import check_type_bool
 import ansible.module_utils.ec2 as ec2_utils
 from ansible.module_utils.ec2 import (boto3_conn,
                                       ec2_argument_spec,
@@ -1142,7 +1142,7 @@ def build_top_level_options(params):
         if params.get('ebs_optimized') == 'auto':
             ebs_optimized = _supports_ebs_optimized(params.get('instance_type'))
         else:
-            ebs_optimized = boolean(params.get('ebs_optimized'))
+            ebs_optimized = params.get('ebs_optimized')
         spec['EbsOptimized'] = ebs_optimized
     if params.get('instance_initiated_shutdown_behavior'):
         spec['InstanceInitiatedShutdownBehavior'] = params.get('instance_initiated_shutdown_behavior')
@@ -1645,6 +1645,15 @@ def main():
                 module.fail_json(msg="Parameter network.interfaces can't be used with security_group")
             if module.params.get('security_groups'):
                 module.fail_json(msg="Parameter network.interfaces can't be used with security_groups")
+
+    if module.params.get('ebs_optimized'):
+        if module.params.get('ebs_optimized') != 'auto':
+            try:
+                module.params['ebs_optimized'] = check_type_bool(module.params.get('ebs_optimized'))
+            except TypeError as e:
+                module.fail_json(msg="Parameter ebs_optimized must be a boolean or 'auto'")
+
+
 
     state = module.params.get('state')
     ec2 = module.client('ec2')
