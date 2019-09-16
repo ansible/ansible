@@ -66,7 +66,7 @@ options:
     type: int
   description:
     description:
-    - Description for the Endpoint retention policy.
+    - Description for the End point retention policy.
     type: str
     aliases: [ descr ]
   state:
