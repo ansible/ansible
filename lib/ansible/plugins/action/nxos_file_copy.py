@@ -286,7 +286,7 @@ class ActionModule(ActionBase):
             # 14) - Copy completed without issues
             # 15) - nxos_router_prompt#
             # 16) - pexpect timeout
-            possible_outcomes = ['sure you want to continue connecting \(yes/no\)\? ',
+            possible_outcomes = [r'sure you want to continue connecting \(yes/no\)\? ',
                                  '(?i)Password: ',
                                  'file existing with this name',
                                  'timed out',
