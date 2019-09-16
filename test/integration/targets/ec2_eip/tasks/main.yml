@@ -43,7 +43,7 @@
         state: present
         in_vpc: yes
         <<: *aws_connection_info
-        public_ip: "{{ eip.public_ip }}"
+        public_ip: "{{ eip.public_ip[0] }}"
       register: existing_eip
 
     - assert:
@@ -73,7 +73,7 @@
         state: present
         in_vpc: yes
         <<: *aws_connection_info
-        public_ip: "{{ eip.public_ip }}"
+        public_ip: "{{ eip.public_ip[0] }}"
         reuse_existing_ip_allowed: yes
         tag_name: Team
         tag_value: Backend
@@ -116,6 +116,37 @@
           - pool_eip is changed
           - pool_eip.public_ip is defined and pool_eip.public_ip != ""
           - pool_eip.allocation_id is defined and pool_eip.allocation_id != ""
+
+    - name: Gather existing eips before check_mode allocation
+      ec2_eip_info:
+        <<: *aws_connection_info
+      register: eip_info_before
+    - assert:
+        that:
+          - eip_info_before is defined
+
+    - name: Allocate eip in check_mode
+      ec2_eip:
+        state: present
+        in_vpc: yes
+        <<: *aws_connection_info
+      check_mode: yes
+      register: check_mode_eip
+    - assert:
+        that:
+          - check_mode_eip is defined
+          - check_mode_eip.allocation_id is not defined
+          - check_mode_eip.public_ip is not defined
+
+    - name: Ensure check_mode hasnt allocated a new eip
+      ec2_eip_info:
+        <<: *aws_connection_info
+      register: eip_info_after
+    - assert:
+        that:
+          - eip_info_after is defined
+          - ( eip_info_before | length ) == ( eip_info_after | length )
+            
   always:
     - debug:
         msg: "{{ item }}"
@@ -130,7 +161,7 @@
     - name: Cleanup newly allocated eip
       ec2_eip:
         state: absent
-        public_ip: "{{ item.public_ip }}"
+        public_ip: "{{ item.public_ip[0] }}"
         in_vpc: yes
         <<: *aws_connection_info
       when: item is defined and item is changed and item.public_ip is defined and item.public_ip != ""
@@ -141,4 +172,3 @@
         - "{{ tagged_eip }}"
         - "{{ backend_eip }}"
         - "{{ amazon_eip }}"
-...

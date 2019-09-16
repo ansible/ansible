@@ -371,9 +371,13 @@ def allocate_address(ec2, module, domain, reuse_existing_ip_allowed, check_mode,
         return allocate_address_from_pool(ec2, module, domain, check_mode, public_ipv4_pool), True
 
     try:
-        result = ec2.allocate_address(Domain=domain, aws_retry=True), True
+        result = ec2.allocate_address(DryRun=check_mode, Domain=domain, aws_retry=True), True
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-        module.fail_json_aws(e, msg="Couldn't allocate Elastic IP address")
+        if e.response['Error']['Code'] == "DryRunOperation":
+            result = "Would have allocated the Elastic IP address if not in check_mode", True
+        else:
+            module.fail_json_aws(e, msg="Couldn't allocate Elastic IP address")
+
     return result
 
 
@@ -490,12 +494,15 @@ def allocate_address_from_pool(ec2, module, domain, check_mode, public_ipv4_pool
         params['PublicIpv4Pool'] = public_ipv4_pool
 
     if check_mode:
-        params['DryRun'] = 'true'
+        params['DryRun'] = True
 
     try:
         result = ec2.allocate_address(aws_retry=True, **params)
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-        module.fail_json_aws(e, msg="Couldn't allocate Elastic IP address")
+        if e.response['Error']['Code'] == "DryRunOperation":
+            result = "Would have allocated the Elastic IP address if not in check_mode"
+        else:
+            module.fail_json_aws(e, msg="Couldn't allocate Elastic IP address")
     return result
 
 
@@ -594,11 +601,10 @@ def main():
                         ec2, module, domain, reuse_existing_ip_allowed,
                         module.check_mode, tag_dict, public_ipv4_pool
                     )
-                result = {
-                    'changed': changed,
-                    'public_ip': address['PublicIp'],
-                    'allocation_id': address['AllocationId']
-                }
+                result = {'changed': changed}
+                if not module.check_mode:
+                    result['public_ip'] = address['PublicIp'],
+                    result['allocation_id'] = address['AllocationId']
         else:
             if device_id:
                 disassociated = ensure_absent(
