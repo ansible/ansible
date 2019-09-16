@@ -356,7 +356,7 @@ class ActionModule(ActionBase):
             if outcome['final_prompt_detected']:
                 break
             if outcome['error'] or outcome['expect_timeout']:
-                # Error encountered, try to spawn expect session n more times up to mac_attempts - 1
+                # Error encountered, try to spawn expect session n more times up to max_attempts - 1
                 if connect_attempt < max_attempts:
                     outcome['error'] = False
                     outcome['expect_timeout'] = False
