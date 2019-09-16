@@ -776,7 +776,7 @@
     - result.rowcount == 1
 
 # true mode obj_type: view again
-- name: postgresql_owner - set vatview owner again
+- name: postgresql_owner - set view owner again
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_owner:

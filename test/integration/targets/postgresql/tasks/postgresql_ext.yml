@@ -157,7 +157,7 @@
 # I couldn't check it for two or more extension in one time
 # because most of the common extensions are available in postgresql-contrib package
 # that tries to change the default python interpreter and fails during tests respectively.
-# Anyway, that's enough to be sure that the proper SQL was exequted.
+# Anyway, that's enough to be sure that the proper SQL was executed.
 #
 
 # Drop extension cascade
