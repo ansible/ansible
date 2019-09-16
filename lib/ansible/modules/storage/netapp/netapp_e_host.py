@@ -140,7 +140,7 @@ id:
 
 ssid:
     description:
-        - the unique identifer of the E-Series storage-system with the current api
+        - the unique identifier of the E-Series storage-system with the current api
     returned: on success
     type: str
     sample: 1
@@ -148,7 +148,7 @@ ssid:
 
 api_url:
     description:
-        - the url of the API that this request was proccessed by
+        - the url of the API that this request was processed by
     returned: on success
     type: str
     sample: https://webservices.example.com:8443
