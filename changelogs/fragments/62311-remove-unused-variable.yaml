@@ -1,0 +1,2 @@
+bugfixes:
+  - Remove unused variable in junos_user to fix flake8 failure.
