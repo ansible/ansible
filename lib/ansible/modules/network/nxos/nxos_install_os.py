@@ -361,7 +361,7 @@ def build_install_cmd_set(issu, image, kick, type, force=True):
     #
     # 1) Combined kickstart/system image:
     #    * Use option 'non-disruptive' for issu.
-    #    * Omit option non-disruptive' for disruptive upgrades.
+    #    * Omit option 'non-disruptive' for disruptive upgrades.
     # 2) Separate kickstart + system images.
     #    * Omit hidden 'force' option for issu.
     #    * Use hidden 'force' option for disruptive upgrades.

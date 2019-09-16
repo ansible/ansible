@@ -54,7 +54,7 @@ options:
     type: int
   encap_mode:
     description:
-    - The encapsulataion method to be used.
+    - The encapsulation method to be used.
     - The APIC defaults to C(auto) when unset during creation.
     - If vxlan is selected, switching_mode must be "AVE".
     type: str
