@@ -66,7 +66,7 @@ extends_documentation_fragment: tower
 EXAMPLES = '''
 - tower_workflow_template:
     name: Workflow Template
-    description: My very first Worflow Template
+    description: My very first Workflow Template
     organization: My optional Organization
     schema: "{{ lookup('file', 'my_workflow.json') }}"
 

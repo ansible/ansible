@@ -37,7 +37,7 @@ options:
     timeout:
       description:
         - If waiting for the workflow to complete this will abort after this
-        - ammount of seconds
+          amount of seconds
 
 requirements:
   - "python >= 2.6"
