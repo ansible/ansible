@@ -233,7 +233,7 @@ def map_obj_to_ele(module, want):
                     ssh_rsa = SubElement(auth, 'ssh-ecdsa')
                 elif 'ssh-ed25519' in item['sshkey']:
                     ssh_rsa = SubElement(auth, 'ssh-ed25519')
-                key = SubElement(ssh_rsa, 'name').text = item['sshkey']
+                SubElement(ssh_rsa, 'name').text = item['sshkey']
 
             if item.get('encrypted_password'):
                 auth = SubElement(user, 'authentication')
