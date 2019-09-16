@@ -111,7 +111,7 @@ options:
     version_added: "2.4"
   isadmin:
     description:
-      - Grant admin privilieges to the user
+      - Grant admin privileges to the user
     type: bool
     default: no
     version_added: "2.8"

@@ -553,7 +553,7 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
             if (
                     len(m['root']) > 1 and
                     mnt['root'].startswith("%s/" % m['root'])):
-                # Ommit the parent's root in the child's root
+                # Omit the parent's root in the child's root
                 # == Example:
                 # 140 136 253:2 /rootfs / rw - ext4 /dev/sdb2 rw
                 # 141 140 253:2 /rootfs/tmp/aaa /tmp/bbb rw - ext4 /dev/sdb2 rw
