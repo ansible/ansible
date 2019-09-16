@@ -299,7 +299,7 @@ def check_storage_profile_props(ucs, module, dn):
         if mo_1.check_prop_match(**kwargs):
             props_match = True
     elif not module.params['storage_profile']:
-        # no stroage profile mo or desired state
+        # no storage profile mo or desired state
         props_match = True
 
     return props_match
