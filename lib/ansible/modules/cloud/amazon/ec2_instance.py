@@ -1243,19 +1243,6 @@ def diff_instance_and_params(instance, params, ec2=None, skip=None):
 
     for mapping in param_mappings:
         if params.get(mapping.param_key) is not None and mapping.instance_key not in skip:
-<<<<<<< HEAD
-            value = AWSRetry.jittered_backoff()(ec2.describe_instance_attribute)(Attribute=mapping.attribute_name, InstanceId=id_)
-            if params.get(mapping.param_key) is not None and value[mapping.instance_key]['Value'] != params.get(mapping.param_key):
-                arguments = dict(
-                    InstanceId=instance['InstanceId'],
-                    # Attribute=mapping.attribute_name,
-||||||| merged common ancestors
-            value = ec2.describe_instance_attribute(Attribute=mapping.attribute_name, InstanceId=id_)
-            if params.get(mapping.param_key) is not None and value[mapping.instance_key]['Value'] != params.get(mapping.param_key):
-                arguments = dict(
-                    InstanceId=instance['InstanceId'],
-                    # Attribute=mapping.attribute_name,
-=======
             value = ec2.describe_instance_attribute(Attribute=mapping.attribute_name, InstanceId=id_)
             if mapping.param_key not in ['security_groups', 'security_group']:
                 if params.get(mapping.param_key) is not None and value[mapping.instance_key]['Value'] != params.get(mapping.param_key):
@@ -1282,7 +1269,6 @@ def diff_instance_and_params(instance, params, ec2=None, skip=None):
                     groups=params.get('security_groups'),
                     subnet_id=subnet_id,
                     ec2=ec2
->>>>>>> Added SG handling for existing instances + some cleanup
                 )
                 expected_groups = [g['GroupId'] for g in groups]
                 instance_groups = [g['GroupId'] for g in value['Groups']]
