@@ -378,7 +378,7 @@ def main():
                     result["firmware_update_capabilities"] = rf_utils.get_firmware_update_capabilities()
 
         elif category == "Sessions":
-            # excute only if we find SessionService resources
+            # execute only if we find SessionService resources
             resource = rf_utils._find_sessionservice_resource()
             if resource['ret'] is False:
                 module.fail_json(msg=resource['msg'])
