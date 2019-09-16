@@ -364,6 +364,7 @@ class ActionModule(ActionBase):
                     nxos_session = pexpect.spawn('ssh ' + nxos_username + '@' + nxos_hostname + ' -p' + str(port))
                     continue
                 self.results['failed'] = True
+                re.sub(nxos_password, '', outcome['error_data'])
                 self.results['error_data'] = 'Failed to spawn expect session! ' + outcome['error_data']
                 nxos_session.close()
                 return
@@ -372,8 +373,10 @@ class ActionModule(ActionBase):
             # The after string will contain the text that was matched by the expected pattern.
             msg = 'After {0} attempts, failed to spawn pexpect session to {1}'
             msg += 'BEFORE: {2}, AFTER: {3}'
+            error_msg = msg.format(connect_attempt, nxos_hostname, nxos_session.before, nxos_session.after)
+            re.sub(nxos_password, '', error_msg)
             nxos_session.close()
-            raise AnsibleError(msg.format(connect_attempt, nxos_hostname, nxos_session.before, nxos_session.after))
+            raise AnsibleError(error_msg)
 
         # Create local file directory under NX-OS filesystem if
         # local_file_directory playbook parameter is set.
@@ -387,6 +390,7 @@ class ActionModule(ActionBase):
                     if outcome['error'] or outcome['expect_timeout']:
                         self.results['mkdir_cmd'] = mkdir_cmd
                         self.results['failed'] = True
+                        re.sub(nxos_password, '', outcome['error_data'])
                         self.results['error_data'] = outcome['error_data']
                         return
                     local_dir_root += each + '/'
@@ -411,6 +415,8 @@ class ActionModule(ActionBase):
                 break
             if outcome['error'] or outcome['expect_timeout']:
                 self.results['failed'] = True
+                re.sub(nxos_password, '', outcome['error_data'])
+                re.sub(self.playvals['remote_scp_server_password'], '', outcome['error_data'])
                 self.results['error_data'] = outcome['error_data']
                 nxos_session.close()
                 return
@@ -419,8 +425,11 @@ class ActionModule(ActionBase):
             # The after string will contain the text that was matched by the expected pattern.
             msg = 'After {0} attempts, failed to copy file to {1}'
             msg += 'BEFORE: {2}, AFTER: {3}, CMD: {4}'
+            error_msg = msg.format(copy_attempt, nxos_hostname, nxos_session.before, nxos_session.before, copy_cmd)
+            re.sub(nxos_password, '', error_msg)
+            re.sub(self.playvals['remote_scp_server_password'], '', error_msg)
             nxos_session.close()
-            raise AnsibleError(msg.format(copy_attempt, nxos_hostname, nxos_session.before, nxos_session.before, copy_cmd))
+            raise AnsibleError(error_msg)
 
         nxos_session.close()
 
