@@ -238,13 +238,12 @@ Function Get-FileStat($file) {
     }
 
     $islnk = $false
-    $isdir = $false
+    $isdir = $attributes -contains 'Directory'
     $isshared = $false
 
     if ($attributes -contains 'ReparsePoint') {
         # TODO: Find a way to differenciate between soft and junction links
         $islnk = $true
-        $isdir = $true
 
         # Try and get the symlink source, can result in failure if link is broken
         try {
