@@ -172,8 +172,8 @@ class Lldp_interfaces(ConfigBase):
             if config.get('name'):
                 build_child_xml_node(lldp_intf_root, 'name', config['name'])
 
-            if config.get('enable') is not None:
-                if config['enable'] is False:
+            if config.get('enabled') is not None:
+                if config['enabled'] is False:
                     build_child_xml_node(lldp_intf_root, 'disable')
                 else:
                     build_child_xml_node(lldp_intf_root, 'disable', None, {'delete': 'delete'})

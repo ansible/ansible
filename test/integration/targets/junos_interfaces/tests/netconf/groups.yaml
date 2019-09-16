@@ -8,12 +8,12 @@
     expected_group_output:
       - name: ge-0/0/11
         description: "within test group"
-        enable: true
+        enabled: true
       - name: ge-0/0/12
         description: "global interface config"
-        enable: true
+        enabled: true
       - name: fxp0
-        enable: true
+        enabled: true
 
 - name: "Teardown delete interface configuration"
   junos_config: &delete_interface_config
