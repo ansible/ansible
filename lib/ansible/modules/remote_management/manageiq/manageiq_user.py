@@ -313,7 +313,7 @@ def main():
                 changed=False,
                 msg="user %s: does not exist in manageiq" % (userid))
 
-    # user shoult exist
+    # user should exist
     if state == "present":
         # if we have a user, edit it
         if user:

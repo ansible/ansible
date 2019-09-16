@@ -68,7 +68,7 @@ EXAMPLES = '''
 
 - name: Gather information about a Logical Interconnect Group by name
   oneview_logical_interconnect_group_info:
-    name: logical lnterconnect group name
+    name: logical interconnect group name
     hostname: 172.16.101.48
     username: administrator
     password: my_password

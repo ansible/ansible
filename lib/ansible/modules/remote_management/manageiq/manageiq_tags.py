@@ -225,7 +225,7 @@ class ManageIQTags(object):
                 error=e)
             self.module.fail_json(msg=msg)
 
-        # check all entities in result to be successfull
+        # check all entities in result to be successful
         for result in response['results']:
             if not result['success']:
                 msg = "Failed to {action}: {message}".format(

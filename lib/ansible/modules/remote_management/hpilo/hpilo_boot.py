@@ -52,7 +52,7 @@ options:
     - The state of the boot media.
     - "no_boot: Do not boot from the device"
     - "boot_once: Boot from the device once and then notthereafter"
-    - "boot_always: Boot from the device each time the serveris rebooted"
+    - "boot_always: Boot from the device each time the server is rebooted"
     - "connect: Connect the virtual media device and set to boot_always"
     - "disconnect: Disconnects the virtual media device and set to no_boot"
     - "poweroff: Power off the server"

@@ -48,7 +48,7 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # get all cmms info
-- name: get nodess data from LXCA
+- name: get nodes data from LXCA
   lxca_cmms:
     login_user: USERID
     login_password: Password
