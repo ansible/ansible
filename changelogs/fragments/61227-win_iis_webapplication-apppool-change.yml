@@ -1,0 +1,2 @@
+minor_changes:
+- win_iis_webapplication - now uses the current application pool of the website instead of the DefaultAppPool if none was specified.

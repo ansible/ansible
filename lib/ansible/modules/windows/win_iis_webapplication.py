@@ -40,6 +40,7 @@ options:
   application_pool:
     description:
     - The application pool in which the new site executes.
+    - If not specified, the application pool of the current website will be used.
     type: str
 seealso:
 - module: win_iis_virtualdirectory
