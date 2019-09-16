@@ -26,7 +26,7 @@ description:
     Purity//FB operating system. By default, the module will collect basic
     fact information including hosts, host groups, protection
     groups and volume counts. Additional fact information can be collected
-    based on the configured set of arguements.
+    based on the configured set of arguments.
 author:
   - Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:

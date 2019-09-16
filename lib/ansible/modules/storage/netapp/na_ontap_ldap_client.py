@@ -48,7 +48,7 @@ options:
 
   ldap_servers:
     description:
-    - Comma separated list of LDAP servers. FQDN's or IP addreses
+    - Comma separated list of LDAP servers. FQDN's or IP addresses
     - Required if I(state=present).
     type: list
 
