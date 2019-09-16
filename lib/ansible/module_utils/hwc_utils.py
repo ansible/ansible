@@ -104,6 +104,10 @@ class _ServiceClient(object):
     def endpoint(self):
         return self._endpoint
 
+    @endpoint.setter
+    def endpoint(self, e):
+        self._endpoint = e
+
     @session_method_wrapper
     def get(self, url, body=None, header=None, timeout=None):
         return self._client.get(url, json=body, timeout=timeout,

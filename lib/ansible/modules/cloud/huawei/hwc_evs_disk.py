@@ -33,13 +33,6 @@ options:
         type: str
         choices: ['present', 'absent']
         default: 'present'
-    filters:
-        description:
-            - A list of filters to apply when deciding whether existing
-              resources match and should be altered. The item of filters
-              is the name of input options.
-        type: list
-        required: true
     timeouts:
         description:
             - The timeouts for each operations.
@@ -166,8 +159,6 @@ EXAMPLES = '''
 # test create disk
 - name: create a disk
   hwc_evs_disk:
-    filters:
-      - "name"
     availability_zone: "cn-north-1a"
     name: "ansible_evs_disk_test"
     volume_type: "SATA"
@@ -353,7 +344,6 @@ def build_module():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'],
                        type='str'),
-            filters=dict(required=True, type='list', elements='str'),
             timeouts=dict(type='dict', options=dict(
                 create=dict(default='30m', type='str'),
                 update=dict(default='30m', type='str'),
@@ -562,7 +552,7 @@ def search_resource(config):
     module = config.module
     client = config.client(get_region(module), "volumev3", "project")
     opts = user_input_parameters(module)
-    identity_obj = _build_identity_object(module, opts)
+    name = module.params.get("name")
     query_link = _build_query_link(opts)
     link = "os-vendor-volumes/detail" + query_link
 
@@ -575,8 +565,7 @@ def search_resource(config):
             break
 
         for item in r:
-            item = fill_list_resp_body(item)
-            if not are_different_dicts(identity_obj, item):
+            if name == item.get("name"):
                 result.append(item)
 
         if len(result) > 1:
@@ -1085,61 +1074,6 @@ def send_list_request(module, client, url):
         module.fail_json(msg=msg)
 
     return navigate_value(r, ["volumes"], None)
-
-
-def _build_identity_object(module, all_opts):
-    filters = module.params.get("filters")
-    opts = dict()
-    for k, v in all_opts.items():
-        opts[k] = v if k in filters else None
-
-    result = dict()
-
-    result["attachments"] = None
-
-    v = navigate_value(opts, ["availability_zone"], None)
-    result["availability_zone"] = v
-
-    result["bootable"] = None
-
-    result["created_at"] = None
-
-    v = navigate_value(opts, ["description"], None)
-    result["description"] = v
-
-    v = navigate_value(opts, ["enterprise_project_id"], None)
-    result["enterprise_project_id"] = v
-
-    result["id"] = None
-
-    v = expand_list_metadata(opts, None)
-    result["metadata"] = v
-
-    v = navigate_value(opts, ["enable_share"], None)
-    result["multiattach"] = v
-
-    v = navigate_value(opts, ["name"], None)
-    result["name"] = v
-
-    v = navigate_value(opts, ["size"], None)
-    result["size"] = v
-
-    v = navigate_value(opts, ["snapshot_id"], None)
-    result["snapshot_id"] = v
-
-    result["source_volid"] = None
-
-    result["status"] = None
-
-    result["tags"] = None
-
-    v = expand_list_volume_image_metadata(opts, None)
-    result["volume_image_metadata"] = v
-
-    v = navigate_value(opts, ["volume_type"], None)
-    result["volume_type"] = v
-
-    return result
 
 
 def expand_list_metadata(d, array_index):
