@@ -21,48 +21,40 @@ import pytest
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleExitJson
 
 from ansible.module_utils import basic
-from ansible.module_utils.network.checkpoint.checkpoint import api_call
-from ansible.modules.network.check_point import cp_mgmt_network
+from ansible.modules.network.check_point import cp_mgmt_address_range
 
 OBJECT = {
-    "name": "New Network 1",
-    "subnet": "192.0.2.0",
-    "subnet_mask": "255.255.255.0"
+    "name": "New Address Range 1",
+    "ip_address_first": "192.0.2.1",
+    "ip_address_last": "192.0.2.10"
 }
 
 CREATE_PAYLOAD = {
-    "name": "New Network 1",
-    "subnet": "192.0.2.0",
-    "subnet_mask": "255.255.255.0"
+    "name": "New Address Range 1",
+    "ip_address_first": "192.0.2.1",
+    "ip_address_last": "192.0.2.10"
 }
 
 UPDATE_PAYLOAD = {
-    "name": "New Network 1",
+    "name": "New Address Range 1",
     "color": "blue",
-    "subnet": "192.0.0.0",
-    "mask_length": 16
+    "ip_address_first": "192.0.2.1",
+    "ip_address_last": "192.0.2.1"
 }
 
 OBJECT_AFTER_UPDATE = UPDATE_PAYLOAD
 
 DELETE_PAYLOAD = {
-    "name": "New Network 1",
+    "name": "New Address Range 1",
     "state": "absent"
 }
 
-function_path = 'ansible.modules.network.check_point.cp_mgmt_network.api_call'
-api_call_object = 'network'
+function_path = 'ansible.modules.network.check_point.cp_mgmt_address_range.api_call'
+api_call_object = 'address-range'
 
 
-class TestCheckpointNetwork(object):
-    module = cp_mgmt_network
-
-    checkpoint_argument_spec_for_objects = dict(
-        auto_publish_session=dict(type='bool'),
-        wait_for_task=dict(type='bool', default=True),
-        state=dict(type='str', required=True, choices=['present', 'absent']),
-        version=dict(type='str')
-    )
+class TestCheckpointAddressRange(object):
+    module = cp_mgmt_address_range
 
     @pytest.fixture(autouse=True)
     def module_mock(self, mocker):
@@ -122,10 +114,3 @@ class TestCheckpointNetwork(object):
         with pytest.raises(AnsibleExitJson) as ex:
             self.module.main()
         return ex.value.args[0]
-
-    def _run_module_with_fail_json(self, module_args):
-        set_module_args(module_args)
-        with pytest.raises(AnsibleFailJson) as exc:
-            self.module.main()
-        result = exc.value.args[0]
-        return result
