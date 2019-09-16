@@ -7,6 +7,26 @@
       region: "{{ aws_region }}"
   no_log: true
 
+
+- name: Use wrong parameter to create EBS optimized instance
+  ec2_instance:
+    name: "{{ resource_prefix }}-test-wrong-ebs-optimized-instance-in-vpc"
+    image_id: "{{ ec2_ebs_optimized_ami_image[aws_region] }}"
+    tags:
+      TestId: "{{ resource_prefix }}"
+    security_groups: "{{ sg.group_id }}"
+    vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+    ebs_optimized: wrong
+    instance_type: t3.nano
+    wait: false
+    <<: *aws_connection_info
+  register: wrong_ebs_opt
+  ignore_errors: true
+
+- assert:
+    that:
+      wrong_ebs_opt is failed
+
 - name: Make EBS optimized instance in the testing subnet of the test VPC
   ec2_instance:
     name: "{{ resource_prefix }}-test-ebs-optimized-instance-in-vpc"
