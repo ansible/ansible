@@ -47,6 +47,18 @@
   ignore_errors: yes
   retries: 10
 
+- name: remove the second security group
+  ec2_group:
+    name: "{{ resource_prefix }}-sg-2"
+    description: a security group for ansible tests
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    state: absent
+    <<: *aws_connection_info
+  register: removed
+  until: removed is not failed
+  ignore_errors: yes
+  retries: 10
+
 - name: remove routing rules
   ec2_vpc_route_table:
     state: absent
@@ -109,4 +121,4 @@
   register: removed
   until: removed is not failed
   ignore_errors: yes
-  retries: 10
+  retries: 15

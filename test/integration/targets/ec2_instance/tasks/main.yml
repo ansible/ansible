@@ -56,6 +56,7 @@
     - include_tasks: checkmode_tests.yml
     - include_tasks: ebs_optimized.yml
     - include_tasks: instance_no_wait.yml
+    - include_tasks: security_group.yml
 
   always:
     - include_tasks: env_cleanup.yml
