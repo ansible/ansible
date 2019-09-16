@@ -77,7 +77,7 @@ EXAMPLES = """
         username: "{{ netapp username }}"
         password: "{{ netapp password }}"
 
-    - name: Destory firewall Policy
+    - name: Destroy firewall Policy
       na_ontap_firewall_policy:
         state: absent
         policy: pizza

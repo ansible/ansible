@@ -61,7 +61,7 @@ options:
     type: str
     version_added: 2.8
   now:
-    description: Whether to initiate a snapshot of the protection group immeadiately
+    description: Whether to initiate a snapshot of the protection group immediately
     type: bool
     default: False
     version_added: 2.9

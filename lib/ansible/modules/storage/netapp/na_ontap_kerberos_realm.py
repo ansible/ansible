@@ -85,7 +85,7 @@ options:
   admin_server_port:
     description:
     - The TCP port on the Kerberos administration server where the Kerberos administration service is running.
-    - The default for this parmater is '749'
+    - The default for this parameter is '749'
     type: str
 
   pw_server_ip:

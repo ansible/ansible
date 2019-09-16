@@ -53,7 +53,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = r'''
-- name: Delete exisitng syslog server entries
+- name: Delete existing syslog server entries
   purefa_syslog:
     address: syslog1.com
     protocol: tcp
