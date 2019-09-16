@@ -364,7 +364,7 @@ class ActionModule(ActionBase):
                     nxos_session = pexpect.spawn('ssh ' + nxos_username + '@' + nxos_hostname + ' -p' + str(port))
                     continue
                 self.results['failed'] = True
-                re.sub(nxos_password, '', outcome['error_data'])
+                outcome['error_data'] = re.sub(nxos_password, '', outcome['error_data'])
                 self.results['error_data'] = 'Failed to spawn expect session! ' + outcome['error_data']
                 nxos_session.close()
                 return
@@ -390,7 +390,7 @@ class ActionModule(ActionBase):
                     if outcome['error'] or outcome['expect_timeout']:
                         self.results['mkdir_cmd'] = mkdir_cmd
                         self.results['failed'] = True
-                        re.sub(nxos_password, '', outcome['error_data'])
+                        outcome['error_data'] = re.sub(nxos_password, '', outcome['error_data'])
                         self.results['error_data'] = outcome['error_data']
                         return
                     local_dir_root += each + '/'
@@ -415,8 +415,8 @@ class ActionModule(ActionBase):
                 break
             if outcome['error'] or outcome['expect_timeout']:
                 self.results['failed'] = True
-                re.sub(nxos_password, '', outcome['error_data'])
-                re.sub(self.playvals['remote_scp_server_password'], '', outcome['error_data'])
+                outcome['error_data'] = re.sub(nxos_password, '', outcome['error_data'])
+                outcome['error_data'] = re.sub(self.playvals['remote_scp_server_password'], '', outcome['error_data'])
                 self.results['error_data'] = outcome['error_data']
                 nxos_session.close()
                 return
