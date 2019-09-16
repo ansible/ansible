@@ -42,7 +42,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = r'''
-- name: Create new volune group
+- name: Create new volume group
   purefa_vg:
     vgroup: foo
     fa_url: 10.10.10.2
@@ -55,7 +55,7 @@ EXAMPLES = r'''
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
     state: absent
 
-- name: Recover deleted volune group
+- name: Recover deleted volume group
   purefa_vg:
     vgroup: foo
     fa_url: 10.10.10.2

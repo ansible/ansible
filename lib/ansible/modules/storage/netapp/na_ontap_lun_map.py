@@ -210,7 +210,7 @@ class NetAppOntapLUNMap(object):
         if result.get_child_by_name('num-records') and int(result.get_child_content('num-records')) >= 1:
             lun = result.get_child_by_name('attributes-list').get_child_by_name('lun-info')
 
-            # extract and assign lun infomation to return value
+            # extract and assign lun information to return value
             hexlify = codecs.getencoder('hex')
             naa_hex = to_text(hexlify(to_bytes(lun.get_child_content('serial-number')))[0])
             return_value = {

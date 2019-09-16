@@ -364,7 +364,7 @@ EXAMPLES = """
         snapshot_policy: default
         time_out: 0
 
-    - name: Create flexGroup volume auto provsion as flex group
+    - name: Create flexGroup volume auto provision as flex group
       na_ontap_volume:
         state: present
         name: ansibleVolume

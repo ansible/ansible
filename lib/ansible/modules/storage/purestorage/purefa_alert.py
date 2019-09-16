@@ -150,7 +150,7 @@ def main():
     try:
         emails = array.list_alert_recipients()
     except Exception:
-        module.fail_json(msg='Failed to get exisitng email list')
+        module.fail_json(msg='Failed to get existing email list')
     for email in range(0, len(emails)):
         if emails[email]['name'] == module.params['address']:
             exists = True

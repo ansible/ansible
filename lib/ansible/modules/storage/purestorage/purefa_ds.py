@@ -21,7 +21,7 @@ description:
   to SSL certificates at this time. Use the FlashArray GUI for this
   additional configuration work.
 - To modify an existing directory service configuration you must first delete
-  an exisitng configuration and then recreate with new settings.
+  an existing configuration and then recreate with new settings.
 author:
 - Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:

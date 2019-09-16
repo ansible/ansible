@@ -126,7 +126,7 @@ class NetAppOntapFCP(object):
         try:
             self.server.invoke_successfully(netapp_utils.zapi.NaElement('fcp-service-stop'), True)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg='Error Stoping FCP %s' %
+            self.module.fail_json(msg='Error Stopping FCP %s' %
                                       (to_native(error)),
                                   exception=traceback.format_exc())
 

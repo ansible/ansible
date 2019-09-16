@@ -80,7 +80,7 @@ options:
   shrink_threshold_percent:
     description:
     - Specifies the percentage of the flexible volume's capacity at which autoshrink is initiated.
-    - The default shrink theshold is 50%. It is an error for the shrink threshold to be greater than or equal to the grow threshold.
+    - The default shrink threshold is 50%. It is an error for the shrink threshold to be greater than or equal to the grow threshold.
     - Range between 0 and 100
     type: int
 '''
@@ -283,7 +283,7 @@ class NetAppOntapVolumeAutosize(object):
 
     def modify_to_kb(self, converted_parameters):
         """
-        Save a coverted parameter
+        Save a converted parameter
         :param converted_parameters: Dic of all parameters
         :return:
         """

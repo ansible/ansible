@@ -25,7 +25,7 @@ description:
     Purity//FA operating system. By default, the module will collect basic
     fact information including hosts, host groups, protection
     groups and volume counts. Additional fact information can be collected
-    based on the configured set of arguements.
+    based on the configured set of arguments.
 author:
   - Pure Storage ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
@@ -419,7 +419,7 @@ def generate_config_dict(array):
     config_facts['dns'] = array.get_dns()
     # SMTP
     config_facts['smtp'] = array.list_alert_recipients()
-    # SMNP
+    # SNMP
     config_facts['snmp'] = array.list_snmp_managers()
     config_facts['snmp_v3_engine_id'] = array.get_snmp_engine_id()['engine_id']
     # DS

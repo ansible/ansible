@@ -43,7 +43,7 @@ options:
     default: 'no'
   overwrite:
     description:
-    - Define whether to overwrite a target volume if it already exisits.
+    - Define whether to overwrite a target volume if it already exists.
     type: bool
     default: 'no'
   size:
