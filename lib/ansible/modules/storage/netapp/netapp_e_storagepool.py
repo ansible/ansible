@@ -272,7 +272,7 @@ class NetAppESeriesStoragePool(NetAppESeriesModule):
 
     @property
     def expandable_drive_count(self):
-        """Maximum number of drives that a storage pool can be expended at a given time."""
+        """Maximum number of drives that a storage pool can be expanded at a given time."""
         capabilities = None
         if self.raid_level == "raidDiskPool":
             return len(self.available_drives)

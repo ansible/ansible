@@ -50,7 +50,7 @@ options:
     type: str
   options:
     description:
-    - Additonal mount options for the NFS share
+    - Additional mount options for the NFS share
     - Supported mount options include I(port), I(rsize),
       I(wsize), I(nfsvers), and I(tcp) or I(udp)
     required: false
@@ -133,7 +133,7 @@ def get_target(module, array):
 def create_offload(module, array):
     """Create offload target"""
     changed = False
-    # First check if the offload network inteface is there and enabled
+    # First check if the offload network interface is there and enabled
     try:
         if not array.get_network_interface('@offload.data')['enabled']:
             module.fail_json(msg='Offload Network interface not enabled. Please resolve.')
