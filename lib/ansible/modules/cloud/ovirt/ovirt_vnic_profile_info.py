@@ -19,6 +19,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -89,7 +92,7 @@ def main():
 
     try:
         auth = module.params.pop('auth')
-        connection = create_connection(auth)    
+        connection = create_connection(auth)
         vnic_profiles_service = connection.system_service().vnic_profiles_service()
         vnic_profiles = vnic_profiles_service.list(max=module.params.get('max'))
         if module.params.get('name') and vnic_profiles:
