@@ -182,7 +182,7 @@ def is_config_exist(cmp_cfg, test_cfg):
 
 
 class EvpnBgpRr(object):
-    """Manange RR in BGP-EVPN address family view"""
+    """Manage RR in BGP-EVPN address family view"""
 
     def __init__(self, argument_spec):
         self.spec = argument_spec
@@ -462,7 +462,7 @@ class EvpnBgpRr(object):
         """Check all input params"""
 
         if self.cur_config['bgp_exist'] == 'false':
-            self.module.fail_json(msg="Error: BGP view doesnot exist.")
+            self.module.fail_json(msg="Error: BGP view does not exist.")
 
         if self.bgp_instance:
             if len(self.bgp_instance) < 1 or len(self.bgp_instance) > 31:
@@ -491,7 +491,7 @@ class EvpnBgpRr(object):
                     msg='Error: Ip address cannot be configured as group-name.')
 
     def work(self):
-        """Excute task"""
+        """Execute task"""
 
         self.get_current_config()
         self.check_params()

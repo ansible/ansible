@@ -111,7 +111,7 @@ options:
     choices: [ enforced, unenforced ]
   intersite_multicaste_source:
     description:
-    - Whether intersite multicase source is enabled.
+    - Whether intersite multicast source is enabled.
     - When not specified, this parameter defaults to C(no).
     type: bool
   state:

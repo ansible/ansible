@@ -182,7 +182,7 @@ options:
                     - Time in seconds before the logged out user is removed from the "user context list" of logged on users.
             rsso-endpoint-attribute:
                 description:
-                    - RADIUS attributes used to extract the user end point identifer from the RADIUS Start record.
+                    - RADIUS attributes used to extract the user end point identifier from the RADIUS Start record.
                 choices:
                     - User-Name
                     - NAS-IP-Address

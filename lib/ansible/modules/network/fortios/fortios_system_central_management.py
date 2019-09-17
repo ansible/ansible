@@ -141,8 +141,8 @@ options:
                     - Serial number.
             server-list:
                 description:
-                    - Additional severs that the FortiGate can use for updates (for AV, IPS, updates) and ratings (for web filter and antispam ratings)
-                       servers.
+                    - Additional servers that the FortiGate can use for updates (for AV, IPS, updates) and ratings (for web filter and antispam ratings)
+                      servers.
                 suboptions:
                     addr-type:
                         description:

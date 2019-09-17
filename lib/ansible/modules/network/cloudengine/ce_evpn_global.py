@@ -107,7 +107,7 @@ from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
 class EvpnGlobal(object):
-    """Manange global configuration of EVPN"""
+    """Manage global configuration of EVPN"""
 
     def __init__(self, argument_spec, ):
         self.spec = argument_spec
@@ -150,7 +150,7 @@ class EvpnGlobal(object):
             self.updates_cmd.append(cmd)   # show updates result
 
     def get_evpn_global_info(self):
-        """ get current EVPN global configration"""
+        """ get current EVPN global configuration"""
 
         self.global_info['evpnOverLay'] = 'disable'
         flags = list()
@@ -196,7 +196,7 @@ class EvpnGlobal(object):
         return False
 
     def config_evnp_global(self):
-        """ set global EVPN configration"""
+        """ set global EVPN configuration"""
         if not self.conf_exist:
             if self.overlay_enable == 'enable':
                 self.cli_add_command('evpn-overlay enable')
@@ -208,7 +208,7 @@ class EvpnGlobal(object):
                 self.changed = True
 
     def work(self):
-        """excute task"""
+        """execute task"""
         self.get_evpn_global_info()
         self.get_existing()
         self.get_proposed()

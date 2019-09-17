@@ -144,7 +144,7 @@ options:
                                 required: true
                             op:
                                 description:
-                                    - Comparision operater.
+                                    - Comparison operater.
                                 choices:
                                     - none
                                     - greater

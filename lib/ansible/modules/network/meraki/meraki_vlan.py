@@ -64,7 +64,7 @@ options:
       - The translated VPN subnet if VPN and VPN subnet translation are enabled on the VLAN.
     fixed_ip_assignments:
       description:
-      - Static IP address assignements to be distributed via DHCP by MAC address.
+      - Static IP address assignments to be distributed via DHCP by MAC address.
 author:
 - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki

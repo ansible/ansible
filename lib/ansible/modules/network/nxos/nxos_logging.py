@@ -47,7 +47,7 @@ options:
     aliases: ['level']
   facility_level:
     description:
-      - Set logging serverity levels for facility based log messages.
+      - Set logging severity levels for facility based log messages.
   aggregate:
     description: List of logging definitions.
   state:

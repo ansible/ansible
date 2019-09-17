@@ -309,7 +309,7 @@ options:
             - Instance/flavor type for se instance.
     iptables:
         description:
-            - Iptable rules.
+            - Iptables rules.
     least_load_core_selection:
         description:
             - Select core with least load for new flow.
