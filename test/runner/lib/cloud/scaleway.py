@@ -9,7 +9,10 @@ from lib.cloud import (
     CloudEnvironmentConfig,
 )
 
-from lib.util import ConfigParser
+from lib.util import (
+    ConfigParser,
+    display,
+)
 
 
 class ScalewayCloudProvider(CloudProvider):
@@ -55,6 +58,8 @@ class ScalewayCloudEnvironment(CloudEnvironment):
             SCW_API_KEY=parser.get('default', 'key'),
             SCW_ORG=parser.get('default', 'org')
         )
+
+        display.sensitive.add(env_vars['SCW_API_KEY'])
 
         ansible_vars = dict(
             scw_org=parser.get('default', 'org'),
