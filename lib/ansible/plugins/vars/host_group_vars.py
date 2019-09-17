@@ -22,11 +22,14 @@ DOCUMENTATION = '''
     vars: host_group_vars
     version_added: "2.4"
     short_description: In charge of loading group_vars and host_vars
+    requirements:
+        - whitelist in configuration
     description:
         - Loads YAML vars into corresponding groups/hosts in group_vars/ and host_vars/ directories.
         - Files are restricted by extension to one of .yaml, .json, .yml or no extension.
         - Hidden (starting with '.') and backup (ending with '~') files and directories are ignored.
         - Only applies to inventory sources that are existing paths.
+        - Starting in 2.10, this plugin requires whitelisting and is whitelisted by default.
     options:
       stage:
         ini:
