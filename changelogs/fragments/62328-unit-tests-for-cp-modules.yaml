@@ -1,0 +1,8 @@
+---
+bugfixes:
+- "Unit tests for cp_mgmt_access_rule"
+- "Unit tests for cp_mgmt_access_rule_facts"
+- "Unit tests for cp_mgmt_threat_rule"
+- "Unit tests for cp_mgmt_threat_rule_facts"
+- "Unit tests for cp_mgmt_threat_exception"
+- "Unit tests for cp_mgmt_threat_exception_facts (https://github.com/ansible/ansible/pull/62328)"
