@@ -27,6 +27,7 @@ options:
         description:
             - Name of the storage account to use.
         required: true
+        type: str
         aliases:
             - account_name
             - storage_account
@@ -35,10 +36,12 @@ options:
             - Name of a blob object within the container.
         aliases:
             - blob_name
+        type: str
     blob_type:
         description:
             - Type of blob object.
         default: block
+        type: str
         choices:
             - block
             - page
@@ -47,31 +50,39 @@ options:
         description:
             - Name of a blob container within the storage account.
         required: true
+        type: str
         aliases:
             - container_name
     content_type:
         description:
             - Set the blob content-type header. For example C(image/png).
+        type: str
     cache_control:
         description:
             - Set the blob cache-control header.
+        type: str
     content_disposition:
         description:
             - Set the blob content-disposition header.
+        type: str
     content_encoding:
         description:
             - Set the blob encoding header.
+        type: str
     content_language:
         description:
             - Set the blob content-language header.
+        type: str
     content_md5:
         description:
             - Set the blob md5 hash value.
+        type: str
     dest:
         description:
             - Destination file path. Use with state C(present) to download a blob.
         aliases:
             - destination
+        type: path
     force:
         description:
             - Overwrite existing blob or file when uploading or downloading. Force deletion of a container that contains blobs.
@@ -82,11 +93,13 @@ options:
             - Resource group name of the storage account.
             - If the storage account is in another subscription rather than AZURE_SUBSCRIPTION_ID, use I(shared_access_key) to access it.
             - Required when I(shared_access_key) not defined.
+        type: str
         aliases:
             - resource_group_name
     src:
         description:
             - Source file path. Use with state C(present) to upload a blob.
+        type: str
         aliases:
             - source
     state:
@@ -101,6 +114,7 @@ options:
               to download. If a blob (uploading) or a file (downloading) already exists, it will not be overwritten
               unless I(force=true).
         default: present
+        type: str
         choices:
             - absent
             - present
@@ -108,6 +122,7 @@ options:
         description:
             - A container's level of public access. By default containers are private.
             - Can only be set at time of container creation.
+        type: str
         choices:
             - container
             - blob
@@ -115,6 +130,7 @@ options:
         description:
             - Use shared access key to authenticate your applications.
             - Required when I(resource_group) not defined
+        type: str
         version_added: "2.9"
 
 extends_documentation_fragment:
