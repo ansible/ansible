@@ -99,14 +99,12 @@ class ActionModule(ActionBase):
                 raise AnsibleError('Playbook parameter <remote_scp_server> required when <file_pull> is True')
 
         if playvals['remote_scp_server'] or \
-           playvals['remote_scp_server_user'] or \
-           playvals['remote_scp_server_password']:
+           playvals['remote_scp_server_user']:
 
             if None in (playvals['remote_scp_server'],
-                        playvals['remote_scp_server_user'],
-                        playvals['remote_scp_server_password']):
-                params = '<remote_scp_server>, <remote_scp_server_user>, ,remote_scp_server_password>'
-                raise AnsibleError('Playbook parameters {0} must all be set together'.format(params))
+                        playvals['remote_scp_server_user']):
+                params = '<remote_scp_server>, <remote_scp_server_user>'
+                raise AnsibleError('Playbook parameters {0} must be set together'.format(params))
 
         return playvals
 
@@ -405,7 +403,12 @@ class ActionModule(ActionBase):
                 nxos_session.sendline('yes')
                 continue
             if outcome['password_prompt_detected']:
-                nxos_session.sendline(self.playvals['remote_scp_server_password'])
+                if self.playvals.get('remote_scp_server_password'):
+                    nxos_session.sendline(self.playvals['remote_scp_server_password'])
+                else:
+                    err_msg = 'Remote scp server {0} requires a password.'.format(rserver)
+                    err_msg += ' Set the <remote_scp_server_password> playbook parameter or configure nxos device for passwordless scp'
+                    raise AnsibleError(err_msg)
                 continue
             if outcome['existing_file_with_same_name']:
                 nxos_session.sendline('y')
