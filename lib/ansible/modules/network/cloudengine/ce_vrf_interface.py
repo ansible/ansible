@@ -260,7 +260,7 @@ def get_interface_type(interface):
 
 
 class VrfInterface(object):
-    """Manange vpn instance"""
+    """Manage vpn instance"""
 
     def __init__(self, argument_spec):
         self.spec = argument_spec
@@ -483,7 +483,7 @@ class VrfInterface(object):
             self.changed = True
 
     def work(self):
-        """excute task"""
+        """execute task"""
 
         self.get_intf_conf_info()
         self.check_params()

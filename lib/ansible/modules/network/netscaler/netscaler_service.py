@@ -863,7 +863,7 @@ def main():
         'weight',
     ]
 
-    # Translate module arguments to correspondign config oject attributes
+    # Translate module arguments to correspondign config object attributes
     if module.params['ip'] is None:
         module.params['ip'] = module.params['ipaddress']
 

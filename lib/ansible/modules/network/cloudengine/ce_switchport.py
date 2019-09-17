@@ -713,7 +713,7 @@ class SwitchPort(object):
 
         if not self.is_l2switchport():
             self.module.fail_json(
-                msg='Error: Interface is not layer2 swtich port.')
+                msg='Error: Interface is not layer2 switch port.')
 
     def get_proposed(self):
         """get proposed info"""
