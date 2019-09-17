@@ -77,7 +77,7 @@ options:
      - Number of seconds to wait before starting to poll.
      default: 0
      type: int
-     version_added: '2.9'
+     version_added: '2.10'
 extends_documentation_fragment: vmware.documentation
 '''
 
