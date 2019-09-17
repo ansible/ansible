@@ -1123,22 +1123,31 @@ class PyVmomiHelper(PyVmomi):
                                               % cdrom_spec['state'])
 
                 if cdrom_spec['state'] == 'present':
-                    if 'type' in cdrom_spec and cdrom_spec.get('type') not in ['none', 'client', 'iso']:
+                    if ('type' in cdrom_spec and cdrom_spec.get('type') not in ['none', 'client', 'iso']) or 'type' not in cdrom_spec:
                         self.module.fail_json(msg="Invalid cdrom.type: %s, valid value is 'none', 'client' or 'iso'."
                                                   % cdrom_spec.get('type'))
                     if cdrom_spec.get('type') == 'iso' and not cdrom_spec.get('iso_path'):
                         self.module.fail_json(msg="cdrom.iso_path is mandatory when cdrom.type is set to iso.")
 
+                configured_ctl_num = None
+                configured_unit_num = None
+                try:
+                    configured_ctl_num = int(cdrom_spec.get('controller_number'))
+                    configured_unit_num = int(cdrom_spec.get('unit_number'))
+                except ValueError:
+                    self.module.fail_json(msg="cdrom.controller_number and cdrom.unit_number attributes should be integer values.")
                 if cdrom_spec['controller_type'] == 'ide' and \
-                        (cdrom_spec.get('controller_number') not in [0, 1] or cdrom_spec.get('unit_number') not in [0, 1]):
+                        (configured_ctl_num not in [0, 1] or configured_unit_num not in [0, 1]):
                     self.module.fail_json(msg="Invalid cdrom.controller_number: %s or cdrom.unit_number: %s, valid"
                                               " values are 0 or 1 for IDE controller." % (cdrom_spec.get('controller_number'), cdrom_spec.get('unit_number')))
 
                 if cdrom_spec['controller_type'] == 'sata' and \
-                        (cdrom_spec.get('controller_number') not in range(0, 4) or cdrom_spec.get('unit_number') not in range(0, 30)):
+                        (configured_ctl_num not in range(0, 4) or configured_unit_num not in range(0, 30)):
                     self.module.fail_json(msg="Invalid cdrom.controller_number: %s or cdrom.unit_number: %s,"
                                               " valid controller_number value is 0-3, valid unit_number is 0-29"
                                               " for SATA controller." % (cdrom_spec.get('controller_number'), cdrom_spec.get('unit_number')))
+                cdrom_spec['controller_number'] = configured_ctl_num
+                cdrom_spec['unit_number'] = configured_unit_num
 
                 ctl_exist = False
                 for exist_spec in cdroms.get(cdrom_spec['controller_type']):
