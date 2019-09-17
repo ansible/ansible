@@ -662,7 +662,7 @@ class Display(object):
         self.rows = 0
         self.columns = 0
         self.truncate = 0
-        self.redact = False
+        self.redact = True
         self.sensitive = set()
 
         if os.isatty(0):
@@ -729,6 +729,9 @@ class Display(object):
         """
         if self.redact and self.sensitive:
             for item in self.sensitive:
+                if not item:
+                    continue
+
                 message = message.replace(item, '*' * len(item))
 
         if truncate:
@@ -814,9 +817,6 @@ class CommonConfig(object):
         self.debug = args.debug  # type: bool
         self.truncate = args.truncate  # type: int
         self.redact = args.redact  # type: bool
-
-        if is_shippable():
-            self.redact = True
 
         self.cache = {}
 
