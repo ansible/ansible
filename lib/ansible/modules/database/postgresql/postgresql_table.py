@@ -106,6 +106,7 @@ notes:
 - Unlogged tables are available from PostgreSQL server version 9.1.
 seealso:
 - module: postgresql_sequence
+- module: postgresql_idx
 - module: postgresql_info
 - module: postgresql_tablespace
 - module: postgresql_owner
