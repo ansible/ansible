@@ -48,8 +48,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_mode_1(self):
         # Playbook mode is basic
         # Switch has mode as enahnced
-        ignore_provider_arg = True
-        set_module_args(dict(mode='basic'), ignore_provider_arg)
+        set_module_args(dict(mode='basic'), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['terminal dont-ask', 'no device-alias mode enhanced', 'device-alias commit', 'no terminal dont-ask'])
@@ -57,7 +56,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_mode_2(self):
         # Playbook mode is enhanced
         # Switch has mode as enahnced
-        set_module_args(dict(mode='enhanced'))
+        set_module_args(dict(mode='enhanced'), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         result = self.execute_module(changed=False)
         self.assertEqual(result['commands'], [])
@@ -65,7 +64,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_distribute_1(self):
         # Playbook mode is enhanced , distrbute = True
         # Switch has mode as enahnced, distrbute = True
-        set_module_args(dict(distribute=True, mode='enhanced'))
+        set_module_args(dict(distribute=True, mode='enhanced'), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         result = self.execute_module(changed=False)
         self.assertEqual(result['commands'], [])
@@ -73,7 +72,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_distribute_2(self):
         # Playbook mode is enhanced , distrbute = False
         # Switch has mode as enhanced, distrbute = True
-        set_module_args(dict(distribute=False, mode='enhanced'))
+        set_module_args(dict(distribute=False, mode='enhanced'), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['no device-alias distribute'])
@@ -81,7 +80,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_distribute_3(self):
         # Playbook mode is basic , distrbute = False
         # Switch has mode as enahnced, distrbute = True
-        set_module_args(dict(distribute=False, mode='basic'))
+        set_module_args(dict(distribute=False, mode='basic'), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['no device-alias distribute', 'no device-alias mode enhanced'])
@@ -94,7 +93,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
                 distribute=True, mode='enhanced', da=[
                     dict(
                         name='somename', pwwn='10:00:00:00:89:a1:01:03'), dict(
-                        name='somename1', pwwn='10:00:00:00:89:a1:02:03')]))
+                        name='somename1', pwwn='10:00:00:00:89:a1:02:03')]), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         result = self.execute_module(changed=True)
@@ -106,7 +105,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_add_lower_upper_case_bug(self):
         # Playbook mode is enhanced , distrbute = true , some new da being added
         # Switch has mode as enahnced, distrbute = True, switch same pwwn present with different name
-        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(name='tieHost-2222', pwwn='10:00:00:00:89:A1:01:02')]))
+        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(name='tieHost-2222', pwwn='10:00:00:00:89:A1:01:02')]), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         result = self.execute_module(changed=False, failed=True)
@@ -114,7 +113,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_add_2(self):
         # Playbook mode is enhanced , distrbute = true , some new da being added
         # Switch has mode as enahnced, distrbute = True, switch already has the pwwn:name
-        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(name='tieHost-2', pwwn='10:00:00:00:89:a1:01:02')]))
+        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(name='tieHost-2', pwwn='10:00:00:00:89:a1:01:02')]), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         result = self.execute_module(changed=False)
@@ -123,7 +122,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_add_3(self):
         # Playbook mode is enhanced , distrbute = true , some new da being added
         # Switch has mode as enahnced, distrbute = True, switch same name present with different pwwn
-        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(name='tieHost-2', pwwn='10:00:00:00:89:a1:01:ff')]))
+        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(name='tieHost-2', pwwn='10:00:00:00:89:a1:01:ff')]), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         result = self.execute_module(changed=False, failed=True)
@@ -131,7 +130,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_add_4(self):
         # Playbook mode is enhanced , distrbute = true , some new da being added
         # Switch has mode as enahnced, distrbute = True, switch same pwwn present with different name
-        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(name='tieHost-2222', pwwn='10:00:00:00:89:a1:01:02')]))
+        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(name='tieHost-2222', pwwn='10:00:00:00:89:a1:01:02')]), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         result = self.execute_module(changed=False, failed=True)
@@ -139,7 +138,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_remove_1(self):
         # Playbook mode is enhanced , distrbute = true , some da being removed
         # Switch has mode as enahnced, distrbute = True, switch has the da that needs to be removed
-        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(name='tieHost-2', pwwn='10:00:00:00:89:a1:01:02', remove=True)]))
+        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(name='tieHost-2', pwwn='10:00:00:00:89:a1:01:02', remove=True)]), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         result = self.execute_module(changed=True)
@@ -150,7 +149,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_remove_2(self):
         # Playbook mode is enhanced , distrbute = true , some da being removed
         # Switch has mode as enahnced, distrbute = True, switch does NOT have the da that needs to be removed
-        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(name='somename', pwwn='10:00:00:00:89:a1:01:02', remove=True)]))
+        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(name='somename', pwwn='10:00:00:00:89:a1:01:02', remove=True)]), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         result = self.execute_module(changed=False)
@@ -158,14 +157,14 @@ class TestNxosDeviceAliasModule(TestNxosModule):
 
     def test_da_lock(self):
         # Playbook mode with some data, but switch has cfs lock acq
-        set_module_args(dict(distribute=True, mde='enhanced', da=[dict(name='somename', pwwn='10:00:00:00:89:a1:01:02', remove=True)]))
+        set_module_args(dict(distribute=True, mde='enhanced', da=[dict(name='somename', pwwn='10:00:00:00:89:a1:01:02', remove=True)]), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatuslock.cfg')
         self.execute_module(failed=True)
 
     def test_da_paramete_not_supported(self):
         # Playbook mode with some data, but switch has cfs lock acq
         # the below one instead of 'mode' we are passing 'mod', kind of typo in playbook
-        set_module_args(dict(distribute=True, mod='enhanced', da=[dict(name='somename', pwwn='10:00:00:00:89:a1:01:02', remove=True)]))
+        set_module_args(dict(distribute=True, mod='enhanced', da=[dict(name='somename', pwwn='10:00:00:00:89:a1:01:02', remove=True)]), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         with pytest.raises(AnsibleFailJson) as errinfo:
@@ -176,7 +175,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
 
     def test_da_name_parameter_missing(self):
         # Lets say you are trying to add a device alias but forgot to put 'name' in the 'da' parameter
-        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(pwwn='10:00:00:00:89:a1:01:02')]))
+        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(pwwn='10:00:00:00:89:a1:01:02')]), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         with pytest.raises(AnsibleFailJson) as errinfo:
@@ -188,7 +187,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_rename_1(self):
         # rename works
         set_module_args(dict(rename=[dict(old_name='test1_add', new_name='test234'),
-                                     dict(old_name='tieHost-1', new_name='tieTarget-1')]))
+                                     dict(old_name='tieHost-1', new_name='tieTarget-1')]), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         result = self.execute_module(changed=True)
@@ -200,7 +199,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_rename_2(self):
         # rename : oldname not present
         set_module_args(dict(rename=[dict(old_name='test1', new_name='test234'),
-                                     dict(old_name='tie', new_name='tieTarget-1')]))
+                                     dict(old_name='tie', new_name='tieTarget-1')]), True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         result = self.execute_module(changed=False, failed=True)
@@ -212,8 +211,7 @@ class TestNxosDeviceAliasModule(TestNxosModule):
             {
                 "distribute": True,
                 "mode": "enhanced",
-            }
-        )
+            }, True)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus_mansi.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         result = self.execute_module(changed=True)

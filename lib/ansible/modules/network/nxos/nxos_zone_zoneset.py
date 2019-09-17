@@ -217,7 +217,7 @@ commands:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 
 
 __metaclass__ = type
@@ -466,8 +466,6 @@ def main():
     argument_spec = dict(
         zone_zoneset_details=dict(type='list', elements='dict', options=zonedetails_spec)
     )
-
-    argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

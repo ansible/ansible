@@ -4,14 +4,15 @@
     commands: show version | grep MDS
   register: result
  
-- set_fact: skip_test=False
-- set_fact: skip_test=True
-  when: result.stdout[0] is not search('MDS')
+- name: Initalize skip_test flag as False
+  set_fact: skip_test=False 
+  
+- name: Set skip_test flag as True if switch is not MDS
+  set_fact: 
+    skip_test=True
+  when: 
+    result.stdout[0] is not search('MDS')
  
 - include: cli.yaml
   tags: 'cli'
-  when: not skip_test
- 
-- include: nxapi.yaml
-  tags: 'nxapi'
   when: not skip_test

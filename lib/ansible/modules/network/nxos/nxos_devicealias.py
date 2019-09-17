@@ -114,7 +114,7 @@ commands:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 import string
 
 __metaclass__ = type
@@ -149,10 +149,10 @@ class showDeviceAliasStatus(object):
         return self.locked
 
     def getDistribute(self):
-        return self.distribute.lower()
+        return self.distribute
 
     def getMode(self):
-        return self.mode.lower()
+        return self.mode
 
 
 class showDeviceAliasDatabase(object):
@@ -265,10 +265,6 @@ def main():
         rename=dict(type='list', elements='dict', options=element_spec_rename)
     )
 
-    #import pdb
-    #pdb.set_trace()
-    # argument_spec.update(nxos_argument_spec)
-
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
@@ -287,8 +283,10 @@ def main():
     if da is not None:
         for eachdict in da:
             name = eachdict['name']
-            pwwn = eachdict['pwwn'].lower()
+            pwwn = eachdict['pwwn']
             remove = eachdict['remove']
+            if pwwn is not None:
+                pwwn = pwwn.lower()
             if not remove:
                 if pwwn is None:
                     module.fail_json(
@@ -397,8 +395,10 @@ def main():
         da_add_list = []
         for eachdict in da:
             name = eachdict['name']
-            pwwn = eachdict['pwwn'].lower()
+            pwwn = eachdict['pwwn']
             remove = eachdict['remove']
+            if pwwn is not None:
+                pwwn = pwwn.lower()
             if remove:
                 if shDADatabaseObj.isNameInDaDatabase(name):
                     commands.append("no device-alias name " + name)

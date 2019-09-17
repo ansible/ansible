@@ -75,7 +75,7 @@ class TestNxosVsanModule(TestNxosModule):
                 }
             ]
         }
-        set_module_args(margs)
+        set_module_args(margs, True)
         self.execute_show_vsan_cmd.return_value = load_fixture('nxos_vsan', 'shvsan.cfg')
         self.execute_show_vsanmem_cmd.return_value = load_fixture('nxos_vsan', 'shvsanmem.cfg')
         result = self.execute_module(changed=False)
@@ -94,7 +94,7 @@ class TestNxosVsanModule(TestNxosModule):
                 }
             ]
         }
-        set_module_args(margs)
+        set_module_args(margs, True)
         self.execute_show_vsan_cmd.return_value = load_fixture('nxos_vsan', 'shvsan.cfg')
         self.execute_show_vsanmem_cmd.return_value = load_fixture('nxos_vsan', 'shvsanmem.cfg')
         result = self.execute_module(changed=True)
@@ -122,7 +122,7 @@ class TestNxosVsanModule(TestNxosModule):
                 }
             ]
         }
-        set_module_args(margs)
+        set_module_args(margs, True)
         self.execute_show_vsan_cmd.return_value = load_fixture('nxos_vsan', 'shvsan.cfg')
         self.execute_show_vsanmem_cmd.return_value = load_fixture('nxos_vsan', 'shvsanmem.cfg')
         result = self.execute_module(changed=True)
@@ -151,7 +151,7 @@ class TestNxosVsanModule(TestNxosModule):
                 }
             ]
         }
-        set_module_args(margs)
+        set_module_args(margs, True)
         self.execute_show_vsan_cmd.return_value = load_fixture('nxos_vsan', 'shvsan.cfg')
         self.execute_show_vsanmem_cmd.return_value = load_fixture('nxos_vsan', 'shvsanmem.cfg')
         result = self.execute_module(changed=True)
@@ -170,7 +170,7 @@ class TestNxosVsanModule(TestNxosModule):
                 }
             ]
         }
-        set_module_args(margs)
+        set_module_args(margs, True)
         self.execute_show_vsan_cmd.return_value = load_fixture('nxos_vsan', 'shvsan.cfg')
         self.execute_show_vsanmem_cmd.return_value = load_fixture('nxos_vsan', 'shvsanmem.cfg')
         with pytest.raises(AnsibleFailJson) as errinfo:
@@ -189,7 +189,7 @@ class TestNxosVsanModule(TestNxosModule):
                 }
             ]
         }
-        set_module_args(margs)
+        set_module_args(margs, True)
         self.execute_show_vsan_cmd.return_value = load_fixture('nxos_vsan', 'shvsan.cfg')
         self.execute_show_vsanmem_cmd.return_value = load_fixture('nxos_vsan', 'shvsanmem.cfg')
         result = self.execute_module(changed=False)
@@ -209,7 +209,7 @@ class TestNxosVsanModule(TestNxosModule):
                 },
             ]
         }
-        set_module_args(margs)
+        set_module_args(margs, True)
         self.execute_show_vsan_cmd.return_value = load_fixture('nxos_vsan', 'shvsan.cfg')
         self.execute_show_vsanmem_cmd.return_value = load_fixture('nxos_vsan', 'shvsanmem.cfg')
         result = self.execute_module(changed=True)
@@ -226,7 +226,7 @@ class TestNxosVsanModule(TestNxosModule):
                 },
             ]
         }
-        set_module_args(margs)
+        set_module_args(margs, True)
         self.execute_show_vsan_cmd.return_value = load_fixture('nxos_vsan', 'shvsan.cfg')
         self.execute_show_vsanmem_cmd.return_value = load_fixture('nxos_vsan', 'shvsanmem.cfg')
         result = self.execute_module(changed=False)
