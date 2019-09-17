@@ -34,6 +34,13 @@ or in the ``ansible.cfg`` file:
     [defaults]
     fact_caching=redis
 
+If the cache plugin is in a collection use the fully qualified name:
+
+.. code-block:: ini
+
+    [defaults]
+    fact_caching = namespace.collection_name.cache_plugin_name
+
 You will also need to configure other settings specific to each plugin. Consult the individual plugin documentation
 or the Ansible :ref:`configuration <ansible_configuration_settings>` for more details.
 
@@ -43,7 +50,7 @@ A custom cache plugin is enabled by dropping it into a ``cache_plugins`` directo
 Enabling Inventory Cache Plugins
 --------------------------------
 
-Inventory may be cached using a file-based cache plugin (like jsonfile). Check the specific inventory plugin to see if it supports caching.
+Inventory may be cached using a file-based cache plugin (like jsonfile). Check the specific inventory plugin to see if it supports caching. Cache plugins inside a collection are not supported for caching inventory.
 If an inventory-specific cache plugin is not specified Ansible will fall back to caching inventory with the fact cache plugin options.
 
 The inventory cache is disabled by default. You may enable it via environment variable:

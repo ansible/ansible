@@ -73,6 +73,15 @@ To access the configuration settings in your plugin, use ``self.get_option(<opti
 
 Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) must include well-formed doc strings to be considered for merge into the Ansible repo. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
+Importing common code in a collection
+=====================================
+
+You can import shared code from other namespaces or collections by using the format ``ansible_collections.namespace.collection_name.plugins.plugin_type.plugin_name``. To import something from an __init__.py file you will need to use the file name:
+
+.. code-block:: python
+
+    from ansible_collections.namespace.collection_name.plugins.callback.__init__ import CustomBaseClass
+
 Developing particular plugin types
 ==================================
 

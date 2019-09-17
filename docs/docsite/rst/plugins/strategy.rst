@@ -22,7 +22,7 @@ putting it in one of the lookup directory sources configured in :ref:`ansible.cf
 Using strategy plugins
 ----------------------
 
-Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or ansible run.
+Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or ansible run. You need to use the fully qualified name to use a strategy plugin in a collection.
 The default is the :ref:`linear <linear_strategy>` plugin. You can change this default in Ansible :ref:`configuration <ansible_configuration_settings>` using an environment variable:
 
 .. code-block:: shell
