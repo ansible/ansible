@@ -54,10 +54,10 @@ class ActionModule(ActionBase):
 
         modules = C.config.get_config_value('FACTS_MODULES', variables=task_vars)
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
-
         if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
-            modules.extend([connection_map.get(self._connection._load_name, 'setup')])
+            network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os', task_vars.get('ansible_facts', {}).get('network_os')))
+            modules.extend([connection_map.get(network_os or self._connection._load_name, 'setup')])
             modules.pop(modules.index('smart'))
 
         failed = {}
