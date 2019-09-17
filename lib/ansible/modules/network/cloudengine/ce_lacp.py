@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: ce_lacp
-version_added: "2.9"
+version_added: "2.10"
 short_description: Manages Eth-Trunk interfaces on HUAWEI CloudEngine switches
 description:
     - Manages Eth-Trunk specific configuration parameters on HUAWEI CloudEngine switches.
@@ -197,7 +197,7 @@ updates:
 import xml.etree.ElementTree as ET
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config
 
 LACP = {'trunk_id': 'ifName',
         'mode': 'workMode',
@@ -525,7 +525,6 @@ def main():
                    choices=['present', 'absent'])
     )
 
-    argument_spec.update(ce_argument_spec)
     module = Lacp(argument_spec)
     module.work()
 
