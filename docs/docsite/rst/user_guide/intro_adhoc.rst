@@ -14,7 +14,9 @@ Why use ad-hoc commands?
 
 Ad-hoc commands are great for tasks you repeat rarely. For example, if you want to power off all the machines in your lab for Christmas vacation, you could execute a quick one-liner in Ansible without writing a playbook. An ad-hoc command looks like this::
 
-    $ ansible [hosts] [general options] -m [module] -a "[module options]"
+    $ ansible [pattern] -m [module] -a "[module options]"
+
+You can learn more about :ref:`patterns<_intro_patterns>` and :ref:`modules<working_with_modules>` on other pages.
 
 Use cases for ad-hoc tasks
 ==========================
