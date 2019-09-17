@@ -167,6 +167,9 @@ class Netconf(NetconfBase):
     @ensure_connected
     def get(self, *args, **kwargs):
         try:
+            if_rpc_reply = kwargs.pop('if_rpc_reply', False)
+            if if_rpc_reply:
+                return self.m.get(*args, **kwargs).xml
             return self.m.get(*args, **kwargs).data_xml
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
