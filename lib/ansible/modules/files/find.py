@@ -206,12 +206,12 @@ files:
 matched:
     description: Number of matches
     returned: success
-    type: int
+    type: str
     sample: 14
 examined:
     description: Number of filesystem objects looked at
     returned: success
-    type: int
+    type: str
     sample: 34
 '''
 
@@ -378,7 +378,7 @@ def main():
             get_checksum=dict(type='bool', default=False),
             use_regex=dict(type='bool', default=False),
             min_depth=dict(type='int'),
-            max_depth=dict(type='int'),
+            depth=dict(type='int'),
         ),
         supports_check_mode=True,
     )
