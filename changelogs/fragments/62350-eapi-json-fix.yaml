@@ -1,0 +1,2 @@
+bugfixes:
+- Fixed intermittent "JSON object must be str, bytes or bytearray, not list" error with EOS over httpapi
