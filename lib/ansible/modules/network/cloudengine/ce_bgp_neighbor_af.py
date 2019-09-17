@@ -171,9 +171,9 @@ options:
             - Redirect ip.
         default: no_use
         choices: ['no_use','true','false']
-    redirect_ip_vaildation:
+    redirect_ip_validation:
         description:
-            - Redirect ip vaildation.
+            - Redirect ip validation.
         default: no_use
         choices: ['no_use','true','false']
     reflect_client:
@@ -1095,8 +1095,8 @@ class BgpNeighborAf(object):
                 else:
                     need_cfg = True
 
-        redirect_ip_vaildation = module.params['redirect_ip_vaildation']
-        if redirect_ip_vaildation != 'no_use':
+        redirect_ip_validation = module.params['redirect_ip_validation']
+        if redirect_ip_validation != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
                 vrf_name, af_type, remote_address) + "<redirectIPVaildation></redirectIPVaildation>" + CE_GET_BGP_PEER_AF_TAIL
@@ -1109,10 +1109,10 @@ class BgpNeighborAf(object):
                     r'.*<redirectIPVaildation>(.*)</redirectIPVaildation>.*', recv_xml)
 
                 if re_find:
-                    result["redirect_ip_vaildation"] = re_find
+                    result["redirect_ip_validation"] = re_find
                     result["vrf_name"] = vrf_name
                     result["af_type"] = af_type
-                    if re_find[0] != redirect_ip_vaildation:
+                    if re_find[0] != redirect_ip_validation:
                         need_cfg = True
                 else:
                     need_cfg = True
@@ -2064,9 +2064,9 @@ class BgpNeighborAf(object):
         if redirect_ip != 'no_use':
             conf_str += "<redirectIP>%s</redirectIP>" % redirect_ip
 
-        redirect_ip_vaildation = module.params['redirect_ip_vaildation']
-        if redirect_ip_vaildation != 'no_use':
-            conf_str += "<redirectIPVaildation>%s</redirectIPVaildation>" % redirect_ip_vaildation
+        redirect_ip_validation = module.params['redirect_ip_validation']
+        if redirect_ip_validation != 'no_use':
+            conf_str += "<redirectIPVaildation>%s</redirectIPVaildation>" % redirect_ip_validation
 
         reflect_client = module.params['reflect_client']
         if reflect_client != 'no_use':
@@ -2314,7 +2314,7 @@ def main():
         route_limit_idle_timeout=dict(type='str'),
         rt_updt_interval=dict(type='str'),
         redirect_ip=dict(type='str', default='no_use', choices=['no_use', 'true', 'false']),
-        redirect_ip_vaildation=dict(type='str', default='no_use', choices=['no_use', 'true', 'false']),
+        redirect_ip_validation=dict(type='str', default='no_use', choices=['no_use', 'true', 'false']),
         reflect_client=dict(type='str', default='no_use', choices=['no_use', 'true', 'false']),
         substitute_as_enable=dict(type='str', default='no_use', choices=['no_use', 'true', 'false']),
         import_rt_policy_name=dict(type='str'),
@@ -2377,7 +2377,7 @@ def main():
     route_limit_idle_timeout = module.params['route_limit_idle_timeout']
     rt_updt_interval = module.params['rt_updt_interval']
     redirect_ip = module.params['redirect_ip']
-    redirect_ip_vaildation = module.params['redirect_ip_vaildation']
+    redirect_ip_validation = module.params['redirect_ip_validation']
     reflect_client = module.params['reflect_client']
     substitute_as_enable = module.params['substitute_as_enable']
     import_rt_policy_name = module.params['import_rt_policy_name']
@@ -2460,8 +2460,8 @@ def main():
         proposed["rt_updt_interval"] = rt_updt_interval
     if redirect_ip != 'no_use':
         proposed["redirect_ip"] = redirect_ip
-    if redirect_ip_vaildation != 'no_use':
-        proposed["redirect_ip_vaildation"] = redirect_ip_vaildation
+    if redirect_ip_validation != 'no_use':
+        proposed["redirect_ip_validation"] = redirect_ip_validation
     if reflect_client != 'no_use':
         proposed["reflect_client"] = reflect_client
     if substitute_as_enable != 'no_use':
