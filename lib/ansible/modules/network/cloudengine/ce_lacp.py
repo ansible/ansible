@@ -124,11 +124,6 @@ options:
         default: present
         choices: ['present','absent']
         type: str
-    provider:
-        type: dict
-        description:
-            - A dict specified some options about connection  that is not required from version 2.9.
-            - And provider is unnecessary when using network_cli and will be ignored.
 '''
 EXAMPLES = r'''
 - name: eth_trunk module test
