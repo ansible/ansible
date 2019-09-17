@@ -1,0 +1,2 @@
+bugfixes:
+  - display - remove leading space when displaying WARNING messages
