@@ -1326,6 +1326,9 @@ files:
   $plugins/lookup/rabbitmq.py:
     maintainers: Im0
     support: community
+  $plugins/netconf/ce.py:
+    maintainers: $team_huawei
+    labels: networking
   $plugins/netconf/sros.py:
     maintainers: wisotzky $team_networking
     labels: networking
