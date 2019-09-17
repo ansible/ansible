@@ -182,7 +182,7 @@ EXAMPLES = """
 # }
 
 
-# Using overriden
+# Using overridden
 
 # Before state:
 # -------------
@@ -212,7 +212,7 @@ EXAMPLES = """
         mtu: 2800
       - name: ge-0/0/3
         description: 'Configured by Ansible-3'
-    state: overriden
+    state: overridden
 
 # After state:
 # ------------

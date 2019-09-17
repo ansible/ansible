@@ -158,7 +158,7 @@ EXAMPLES = """
 
 - name: Admin down all loopback interfaces
   nxos_interface:
-    name: looback 0-1023
+    name: loopback 0-1023
     admin_state: down
 
 - name: Check neighbors intent arguments

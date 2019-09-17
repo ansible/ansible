@@ -136,7 +136,7 @@ EXAMPLES = '''
       - Ethernet2/3
       - Ethernet2/5
 
-- name: Check interfaces assigend to VRF
+- name: Check interfaces assigned to VRF
   nxos_vrf:
     name: test1
     associated_interfaces:

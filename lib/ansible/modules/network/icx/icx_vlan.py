@@ -91,7 +91,7 @@ options:
     suboptions:
       type:
         description:
-          - Specifiy the type of spanning-tree
+          - Specify the type of spanning-tree
         type: str
         default: 802-1w
         choices: ['802-1w','rstp']
@@ -166,7 +166,7 @@ options:
         suboptions:
           type:
             description:
-              - Specifiy the type of spanning-tree
+              - Specify the type of spanning-tree
             type: str
             default: 802-1w
             choices: ['802-1w','rstp']
@@ -189,7 +189,7 @@ options:
       check_running_config:
         description:
           - Check running configuration. This can be set as environment variable.
-           Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
+           Module will use environment variable value(default:True), unless it is overridden, by specifying it as module parameter.
         type: bool
       associated_interfaces:
         description:
@@ -217,7 +217,7 @@ options:
   check_running_config:
     description:
       - Check running configuration. This can be set as environment variable.
-       Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
+       Module will use environment variable value(default:True), unless it is overridden, by specifying it as module parameter.
     type: bool
     default: yes
 """

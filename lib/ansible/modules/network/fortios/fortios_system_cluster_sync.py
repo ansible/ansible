@@ -120,8 +120,8 @@ options:
                 suboptions:
                     custom_service:
                         description:
-                            - Only sessions using these custom services are synchronized. Use source and destination port ranges to define these custome
-                               services.
+                            - Only sessions using these custom services are synchronized. Use source and destination port ranges to define these custom
+                              services.
                         type: list
                         suboptions:
                             dst_port_range:

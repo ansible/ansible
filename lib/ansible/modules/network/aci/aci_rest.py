@@ -50,7 +50,7 @@ options:
     type: raw
   src:
     description:
-    - Name of the absolute path of the filname that includes the body
+    - Name of the absolute path of the filename that includes the body
       of the HTTP request being sent to the ACI fabric.
     - If you require a templated payload, use the C(content) parameter
       together with the C(template) lookup plugin, or use M(template).
@@ -107,7 +107,7 @@ EXAMPLES = r'''
       fvTenant:
         attributes:
           name: Sales
-          descr: Sales departement
+          descr: Sales department
   delegate_to: localhost
 
 - name: Add a tenant using a JSON string
@@ -123,7 +123,7 @@ EXAMPLES = r'''
         "fvTenant": {
           "attributes": {
             "name": "Sales",
-            "descr": "Sales departement"
+            "descr": "Sales department"
           }
         }
       }

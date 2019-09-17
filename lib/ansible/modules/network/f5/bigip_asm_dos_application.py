@@ -77,7 +77,7 @@ options:
       latency_threshold:
         description:
           - Specifies the latency threshold for automatic heavy URL detection.
-          - The accepted range is between 0 and 4294967295 miliseconds inclusive.
+          - The accepted range is between 0 and 4294967295 milliseconds inclusive.
         type: int
       exclude:
         description:

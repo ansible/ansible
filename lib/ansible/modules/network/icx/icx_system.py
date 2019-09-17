@@ -54,7 +54,7 @@ options:
     suboptions:
       type:
         description:
-          - specifiy the type of the server
+          - specify the type of the server
         type: str
         choices: ['radius','tacacs']
       hostname:
@@ -101,7 +101,7 @@ options:
   check_running_config:
     description:
       - Check running configuration. This can be set as environment variable.
-       Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
+       Module will use environment variable value(default:True), unless it is overridden, by specifying it as module parameter.
     type: bool
     default: yes
 """

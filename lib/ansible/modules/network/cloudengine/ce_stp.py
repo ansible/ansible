@@ -579,7 +579,7 @@ class Stp(object):
 
         cmds = list()
 
-        # cofig stp global
+        # config stp global
         if self.stp_mode:
             if self.stp_mode != self.cur_cfg["stp_mode"]:
                 cmd = "stp mode %s" % self.stp_mode

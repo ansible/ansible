@@ -74,7 +74,7 @@ options:
       type: str
     fixed_ip_assignments:
       description:
-      - Static IP address assignements to be distributed via DHCP by MAC address.
+      - Static IP address assignments to be distributed via DHCP by MAC address.
       type: list
 author:
 - Kevin Breit (@kbreit)

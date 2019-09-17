@@ -48,7 +48,7 @@ options:
     choices: [ unknown, vlan, vxlan ]
   multicast_address:
     description:
-    - The muticast IP address to use for the virtual switch.
+    - The multicast IP address to use for the virtual switch.
     type: str
   state:
     description:

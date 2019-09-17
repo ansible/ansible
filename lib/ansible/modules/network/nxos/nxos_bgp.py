@@ -38,7 +38,7 @@ notes:
       C(vrf=default) or the whole VRF instance within the BGP process when
       using a different VRF.
     - Default when supported restores params default value.
-    - Configuring global parmas is only permitted if C(vrf=default).
+    - Configuring global params is only permitted if C(vrf=default).
 options:
     asn:
         description:

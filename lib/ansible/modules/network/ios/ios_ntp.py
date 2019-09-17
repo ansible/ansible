@@ -41,7 +41,7 @@ options:
             - md5 NTP authentication key of tye 7.
     key_id:
         description:
-            - auth_key id. Datat type string
+            - auth_key id. Data type string
     state:
         description:
             - Manage the state of the resource.

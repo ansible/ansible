@@ -15,7 +15,7 @@ DOCUMENTATION = r'''
 module: aci_tenant_span_src_group_to_dst_group
 short_description: Bind SPAN source groups to destination groups (span:SpanLbl)
 description:
-- Bind SPAN source groups to associated destinaton groups on Cisco ACI fabrics.
+- Bind SPAN source groups to associated destination groups on Cisco ACI fabrics.
 version_added: '2.4'
 options:
   description:

@@ -27,7 +27,7 @@ options:
   src:
     description:
       - The C(src) argument takes a single path, or a list of paths to be
-        transfered. The argument C(recursive) must be C(true) to transfer
+        transferred. The argument C(recursive) must be C(true) to transfer
         directories.
     required: true
   dest:

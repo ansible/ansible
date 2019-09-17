@@ -1932,37 +1932,37 @@ gtm_pools:
       type: int
     qos_lcs:
       description:
-        - Weight assign to the Link Capacity performance factor when load balacing option
+        - Weight assign to the Link Capacity performance factor when load balancing option
           is QoS.
       returned: queried
       type: int
     qos_packet_rate:
       description:
-        - Weight assign to the Packet Rate performance factor when load balacing option
+        - Weight assign to the Packet Rate performance factor when load balancing option
           is QoS.
       returned: queried
       type: int
     qos_rtt:
       description:
-        - Weight assign to the Round Trip Time performance factor when load balacing option
+        - Weight assign to the Round Trip Time performance factor when load balancing option
           is QoS.
       returned: queried
       type: int
     qos_topology:
       description:
-        - Weight assign to the Topology performance factor when load balacing option
+        - Weight assign to the Topology performance factor when load balancing option
           is QoS.
       returned: queried
       type: int
     qos_vs_capacity:
       description:
-        - Weight assign to the Virtual Server performance factor when load balacing option
+        - Weight assign to the Virtual Server performance factor when load balancing option
           is QoS.
       returned: queried
       type: int
     qos_vs_score:
       description:
-        - Weight assign to the Virtual Server Score performance factor when load balacing
+        - Weight assign to the Virtual Server Score performance factor when load balancing
           option is QoS.
       returned: queried
       type: int
@@ -6070,7 +6070,7 @@ udp_profiles:
       description:
         - The Quality of Service level that the system assigns to
           UDP packets when sending them to clients.
-        - May be either numberic, or the value C(pass-through).
+        - May be either numeric, or the value C(pass-through).
       returned: queried
       type: str
       sample: pass-through

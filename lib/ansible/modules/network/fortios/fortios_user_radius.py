@@ -227,7 +227,7 @@ options:
                 type: int
             rsso_endpoint_attribute:
                 description:
-                    - RADIUS attributes used to extract the user end point identifer from the RADIUS Start record.
+                    - RADIUS attributes used to extract the user end point identifier from the RADIUS Start record.
                 type: str
                 choices:
                     - User-Name

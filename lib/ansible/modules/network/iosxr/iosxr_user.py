@@ -74,7 +74,7 @@ options:
       - Configures the groups for the username in the device running
         configuration. The argument accepts a list of group names.
         This argument does not check if the group has been configured
-        on the device. It is similar to the aggregrate command for
+        on the device. It is similar to the aggregate command for
         usernames, but lets you configure multiple groups for the user(s).
   purge:
     description:

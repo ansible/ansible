@@ -1116,7 +1116,7 @@ class AaaServer(object):
         xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
         if "<ok/>" not in xml:
-            module.fail_json(msg='Error: Delete authorization domian failed.')
+            module.fail_json(msg='Error: Delete authorization domain failed.')
 
         cmds = []
         cmd = "undo authorization-scheme"

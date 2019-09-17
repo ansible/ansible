@@ -386,7 +386,7 @@ return_rowid:
   type: list
   sample: [1, 3]
 download:
-  description: Configuraton database and meta data
+  description: Configuration database and meta data
   returned: when C(download) is yes and success
   type: complex
   contains:

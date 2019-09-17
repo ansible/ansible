@@ -160,7 +160,7 @@ def build_config_xml(xmlstr):
 
 
 class Vrf(object):
-    """Manange vpn instance"""
+    """Manage vpn instance"""
 
     def __init__(self, argument_spec, ):
         self.spec = argument_spec

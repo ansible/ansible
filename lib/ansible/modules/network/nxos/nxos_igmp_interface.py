@@ -136,7 +136,7 @@ options:
               is a list of dict where each dict has source and prefix defined or just
               prefix if source is not needed. The specified values will be configured
               on the device and if any previous prefix/sources exist, they will be removed.
-              Keyword 'default' is also accpted which removes all existing prefix/sources.
+              Keyword 'default' is also accepted which removes all existing prefix/sources.
         version_added: 2.6
     restart:
         description:

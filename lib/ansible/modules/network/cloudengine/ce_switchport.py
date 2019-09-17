@@ -858,7 +858,7 @@ class SwitchPort(object):
 
         if not self.is_l2switchport():
             self.module.fail_json(
-                msg='Error: Interface is not layer2 swtich port.')
+                msg='Error: Interface is not layer2 switch port.')
         if self.state == "unconfigured":
             if any([self.mode, self.default_vlan, self.pvid_vlan, self.trunk_vlans, self.untagged_vlans, self.tagged_vlans]):
                 self.module.fail_json(

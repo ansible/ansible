@@ -335,7 +335,7 @@ class FileCopy(object):
         return False
 
     def work(self):
-        """Excute task """
+        """Execute task """
 
         if not HAS_SCP:
             self.module.fail_json(

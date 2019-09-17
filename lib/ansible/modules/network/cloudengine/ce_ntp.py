@@ -250,7 +250,7 @@ class Ntp(object):
         self.mutually_exclusive = [('server', 'peer')]
         self.init_module()
 
-        # ntp configration info
+        # ntp configuration info
         self.server = self.module.params['server'] or None
         self.peer = self.module.params['peer'] or None
         self.key_id = self.module.params['key_id']
@@ -362,7 +362,7 @@ class Ntp(object):
         if self.vpn_name:
             if (len(self.vpn_name) < 1) or (len(self.vpn_name) > 31):
                 self.module.fail_json(
-                    msg='Error: VPN name length is beetween 1 and 31.')
+                    msg='Error: VPN name length is between 1 and 31.')
 
         if self.address:
             self.check_ipaddr_validate()
@@ -579,7 +579,7 @@ class Ntp(object):
         self.updates_cmd.append(cli_str)
 
     def work(self):
-        """Excute task"""
+        """Execute task"""
 
         self.get_existing()
         self.get_proposed()

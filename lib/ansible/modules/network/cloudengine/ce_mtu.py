@@ -46,7 +46,7 @@ options:
               and 1536 to 12288 for ToR switches.
     jumbo_min:
         description:
-            - Non-jumbo frame size threshod. The default value is 1518.
+            - Non-jumbo frame size threshold. The default value is 1518.
               The value is an integer that ranges from 1518 to jumbo_max, in bytes.
     state:
         description:

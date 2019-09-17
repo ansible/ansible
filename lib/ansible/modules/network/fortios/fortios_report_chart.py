@@ -183,7 +183,7 @@ options:
                                 type: int
                             op:
                                 description:
-                                    - Comparision operater.
+                                    - Comparison operator.
                                 type: str
                                 choices:
                                     - none

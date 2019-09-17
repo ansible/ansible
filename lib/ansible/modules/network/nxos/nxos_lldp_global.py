@@ -60,7 +60,7 @@ options:
         choices: [0, 1]
       reinit:
         description:
-          - Amount of time to delay the intialization of LLDP on any interface (in seconds)
+          - Amount of time to delay the initialization of LLDP on any interface (in seconds)
         type: int
       timer:
         description:

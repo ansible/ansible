@@ -109,7 +109,7 @@ options:
     description:
     - The interval between LSA retransmissions.
     - The retransmit interval occurs while the router is waiting for an acknowledgement from the neighbor router that it received the LSA.
-    - If no acknowlegment is received at the end of the interval, then the LSA is resent.
+    - If no acknowledgment is received at the end of the interval, then the LSA is resent.
     - Accepted values range between C(1) and C(65535).
     - The APIC defaults to C(5) when unset during creation.
     type: int

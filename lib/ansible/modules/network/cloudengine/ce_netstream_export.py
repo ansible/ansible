@@ -216,7 +216,7 @@ def is_config_exist(cmp_cfg, test_cfg):
 
 
 class NetstreamExport(object):
-    """Manange NetStream export"""
+    """Manage NetStream export"""
 
     def __init__(self, argument_spec):
         self.spec = argument_spec
@@ -519,7 +519,7 @@ class NetstreamExport(object):
             self.config_nets_export_ip_ver()
 
     def work(self):
-        """excute task"""
+        """execute task"""
 
         self.check_params()
         self.get_proposed()

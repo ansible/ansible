@@ -161,8 +161,8 @@ options:
                 type: str
             server_list:
                 description:
-                    - Additional severs that the FortiGate can use for updates (for AV, IPS, updates) and ratings (for web filter and antispam ratings)
-                       servers.
+                    - Additional servers that the FortiGate can use for updates (for AV, IPS, updates) and ratings (for web filter and antispam ratings)
+                      servers.
                 type: list
                 suboptions:
                     addr_type:

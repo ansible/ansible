@@ -271,7 +271,7 @@ EXAMPLES = """
 #     }
 # }
 # ge-0/0/2 {
-#     description "L3 interface whith ipv6";
+#     description "L3 interface with ipv6";
 #     unit 0 {
 #         family inet6 {
 #             address 2001:db8:3000::/64;
