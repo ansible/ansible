@@ -101,8 +101,8 @@ options:
         in the system and you want to run pip for the Python 3.3 installation.
       - Mutually exclusive with I(virtualenv) (added in 2.1).
       - Does not affect the Ansible Python interpreter.
-      - The setuptools package must be installed for the Ansible Python interpreter,
-        not for the version of Python specified by this option.
+      - The setuptools package must be installed for both the Ansible Python interpreter
+        and for the version of Python specified by this option.
     type: path
     version_added: "1.3"
   umask:
