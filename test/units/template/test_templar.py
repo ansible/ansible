@@ -286,9 +286,9 @@ class TestTemplarMisc(BaseTemplar, unittest.TestCase):
         # FIXME Use assertRaises() as a context manager (added in 2.7) once we do not run tests on Python 2.6 anymore.
         try:
             templar.available_variables = "foo=bam"
-        except AssertionError as e:
+        except AssertionError:
             pass
-        except Exception:
+        except Exception as e:
             self.fail(e)
 
     def test_templar_escape_backslashes(self):
