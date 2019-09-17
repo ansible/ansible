@@ -1,0 +1,235 @@
+#!/usr/bin/python
+#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = """
+---
+module: onyx_ntp
+version_added: "2.5"
+author: "Sara Touqan"
+short_description: Manage NTP general configurations and ntp keys configurations on Mellanox ONYX network devices
+description:
+  - This module provides declarative management of NTP & NTP Keys
+    on Mellanox ONYX network devices.
+options:
+  state:
+    description:
+      - State of the NTP configuration.
+    default: enabled
+    choices: ['enabled', 'disablde']
+  authenticate_state:
+    description:
+      - State of the NTP authentication configuration.
+    default: enabled
+    choices: ['enabled', 'disablde']
+  ntp_authentication_keys:
+    description:
+      - List of ntp authentication keys
+    suboptions:
+      auth_key_id:
+        description:
+          - Configures ntp key-id, range 1-65534
+        required: true
+      auth_key_encrypt_type:
+        description:
+          - encryption type used to configure ntp authentication key.
+        required: true
+      auth_key_password:
+        description:
+          - password used for ntp authentication key.
+        required: true
+      auth_key_delete:
+         description:
+             - Used to decide if you want to delete given ntp key or not
+         default: no
+         choices: ['yes', 'no']
+  trusted_keys:
+    description:
+      - List of ntp trusted keys
+"""
+
+EXAMPLES = """
+- name: configure NTP
+  onyx_ntp:
+    state: enabled
+    authenticate_state: enabled
+    ntp_authentication_keys:
+            - auth_key_id: 1
+              auth_key_encrypt_type: md5
+              auth_key_password: 12345
+              auth_key_delete: no
+    trusted_keys: 1,2,3
+"""
+
+RETURN = """
+commands:
+  description: The list of configuration mode commands to send to the device
+  returned: always.
+  type: list
+  sample:
+    - ntp enable
+    - ntp disable
+    - ntp authenticate
+    - no ntp authenticatee
+    - ntp authentication-key 1 md5 12345
+    - no ntp authentication-key 1
+    - ntp trusted-key 1,2,3
+"""
+
+from copy import deepcopy
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.network.common.utils import remove_default_spec
+
+from ansible.module_utils.network.onyx.onyx import BaseOnyxModule
+from ansible.module_utils.network.onyx.onyx import show_cmd
+
+
+class OnyxNTPModule(BaseOnyxModule):
+
+    def init_module(self):
+        """ module initialization
+        """
+        ntp_authentication_key_spec = dict(auth_key_id=dict(type='int', required=True),
+                                           auth_key_encrypt_type=dict(required=True, choices=['md5', 'sha1']),
+                                           auth_key_password=dict(type='int', required=True),
+                                           auth_key_delete=dict(default='no', choices=['yes', 'no']))
+        element_spec = dict(
+            state=dict(choices=['enabled', 'disabled']),
+            authenticate_state=dict(choices=['enabled', 'disabled']),
+            ntp_authentication_keys=dict(type='list', elements='dict', options=ntp_authentication_key_spec),
+            trusted_keys=dict(type='list', elements='int')
+        )
+        argument_spec = dict()
+        argument_spec.update(element_spec)
+        self._module = AnsibleModule(
+            argument_spec=argument_spec,
+            supports_check_mode=True)
+
+    def _validate_key_id(self):
+        if self._required_config.get("ntp_authentication_keys"):
+            keys_id_list = self._required_config.get("ntp_authentication_keys")
+            for key_item in keys_id_list:
+                key_id = key_item.get("auth_key_id")
+                if (key_id < 1) or (key_id > 65534):
+                    self._module.fail_json(
+                        msg='% Maximum 16 keys in the range 1-65534')
+
+    def get_required_config(self):
+        module_params = self._module.params
+        self._required_config = dict(module_params)
+        self.validate_param_values(self._required_config)
+        self._validate_key_id()
+
+    def _show_ntp_config(self):
+        show_cmds = []
+        cmd = "show ntp"
+        show_cmds.append(show_cmd(self._module, cmd, json_fmt=True, fail_on_error=False))
+        cmd = "show ntp keys"
+        show_cmds.append(show_cmd(self._module, cmd, json_fmt=True, fail_on_error=False))
+        return show_cmds
+
+    def _set_ntp_keys_config(self, ntp_config):
+        if not ntp_config:
+            return
+        for req_ntp_auth_key in ntp_config:
+            ecryption_type = req_ntp_auth_key.get("Encryption Type")
+            self._current_config[req_ntp_auth_key.get("header")] = ecryption_type
+
+    def _set_ntp_config(self, ntp_config):
+        ntp_config = ntp_config[0]
+        if not ntp_config:
+            return
+        self._current_config['state'] = ntp_config.get("NTP is administratively")
+        self._current_config['authenticate_state'] = ntp_config.get("NTP Authentication administratively")
+
+    def load_current_config(self):
+        self._current_config = dict()
+        ntp_config = self._show_ntp_config()
+        if ntp_config:
+            if ntp_config[0]:
+                self._set_ntp_config(ntp_config[0])
+            if ntp_config[1]:
+                self._set_ntp_keys_config(ntp_config[1])
+
+    def generate_commands(self):
+        current_state = self._current_config.get("state")
+        state = current_state
+        if self._required_config.get("state"):
+            state = self._required_config.get("state")
+        if state is not None:
+            if current_state != state:
+                if (state == 'enabled'):
+                    self._commands.append('ntp enable')
+                else:
+                    self._commands.append('no ntp enable')
+        if self._required_config.get("authenticate_state"):
+            authenticate_state = self._required_config.get("authenticate_state")
+            current_authenticate_state = self._current_config.get("authenticate_state")
+            if authenticate_state is not None:
+                if current_authenticate_state != authenticate_state:
+                    if authenticate_state == 'enabled':
+                        self._commands.append('ntp authenticate')
+                    else:
+                        self._commands.append('no ntp authenticate')
+        if self._required_config.get('ntp_authentication_keys'):
+            req_ntp_auth_keys = self._required_config.get('ntp_authentication_keys')
+            if req_ntp_auth_keys is not None:
+                for req_ntp_auth_key in req_ntp_auth_keys:
+                    req_key = 'NTP Key ' + str(req_ntp_auth_key.get('auth_key_id'))
+                    if self._current_config.get(req_key):
+                        if req_ntp_auth_key.get('auth_key_encrypt_type') == self._current_config.get(req_key):
+                            if req_ntp_auth_key.get('auth_key_delete'):
+                                if req_ntp_auth_key.get('auth_key_delete') == 'yes':
+                                    self._commands.append('no ntp authentication-key {0}' .format(req_ntp_auth_key.get('auth_key_id')))
+                            else:
+                                continue
+                        else:
+                            if req_ntp_auth_key.get('auth_key_delete'):
+                                if req_ntp_auth_key.get('auth_key_delete') == 'no':
+                                    self._commands.append('ntp authentication-key {0} {1} {2}'
+                                                          .format(req_ntp_auth_key.get('auth_key_id'),
+                                                                  req_ntp_auth_key.get('auth_key_encrypt_type'),
+                                                                  req_ntp_auth_key.get('auth_key_password')))
+                            else:
+                                self._commands.append('ntp authentication-key {0} {1} {2}'
+                                                      .format(req_ntp_auth_key.get('auth_key_id'),
+                                                              req_ntp_auth_key.get('auth_key_encrypt_type'),
+                                                              req_ntp_auth_key.get('auth_key_password')))
+
+                    else:
+                        if req_ntp_auth_key.get('auth_key_delete'):
+                            if req_ntp_auth_key.get('auth_key_delete') == 'no':
+                                self._commands.append('ntp authentication-key {0} {1} {2}'
+                                                      .format(req_ntp_auth_key.get('auth_key_id'),
+                                                              req_ntp_auth_key.get('auth_key_encrypt_type'),
+                                                              req_ntp_auth_key.get('auth_key_password')))
+                        else:
+                            self._commands.append('ntp authentication-key {0} {1} {2}'
+                                                  .format(req_ntp_auth_key.get('auth_key_id'),
+                                                          req_ntp_auth_key.get('auth_key_encrypt_type'),
+                                                          req_ntp_auth_key.get('auth_key_password')))
+        if self._required_config.get('trusted_keys'):
+            req_trusted_keys = self._required_config.get('trusted_keys')
+            if req_trusted_keys:
+                for key in req_trusted_keys:
+                    self._commands.append('ntp trusted-key {0}' .format(key))
+
+
+def main():
+    """ main entry point for module execution
+    """
+    OnyxNTPModule.main()
+
+
+if __name__ == '__main__':
+    main()
