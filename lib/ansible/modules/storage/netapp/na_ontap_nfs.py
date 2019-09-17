@@ -29,7 +29,7 @@ options:
     default: present
   service_state:
     description:
-    - Whether the specified NFS should be enabled or disabled. Creates NFS service if doesnt exist.
+    - Whether the specified NFS should be enabled or disabled. Creates NFS service if does not exist.
     choices: ['started', 'stopped']
   vserver:
     description:

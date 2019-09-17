@@ -317,7 +317,7 @@ class ElementSWAccessGroup(object):
                 self.delete_access_group()
                 changed = True
             else:
-                # If state - present, check for any parameter of exising group needs modification.
+                # If state - present, check for any parameter of existing group needs modification.
                 if self.volumes is not None and len(self.volumes) > 0:
                     # Compare the volume list
                     for volumeID in group_detail.volumes:
