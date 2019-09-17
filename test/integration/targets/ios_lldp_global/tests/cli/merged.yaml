@@ -9,7 +9,7 @@
       ios_lldp_global: &merged
         config:
           holdtime: 10
-          enable: True
+          enabled: True
           reinit: 3
           timer: 20
         state: merged

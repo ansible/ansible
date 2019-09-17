@@ -69,7 +69,7 @@ options:
             For any other reinit value, idempotency will be maintained
             since any other reinit value is recorded in the Cisco device.
         type: int
-      enable:
+      enabled:
         description:
           - Enable LLDP
         type: bool
@@ -150,7 +150,7 @@ EXAMPLES = """
   ios_lldp_global:
     config:
       holdtime: 10
-      run: True
+      enabled: True
       reinit: 3
       timer: 10
     state: merged
