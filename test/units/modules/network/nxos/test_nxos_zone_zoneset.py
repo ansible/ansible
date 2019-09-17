@@ -191,7 +191,7 @@ class TestNxosZoneZonesetModule(TestNxosModule):
     # Test zone mem add/removal
     def test_zonemem_add_rem(self):
         mem1 = {'pwwn': '10:00:10:94:00:00:00:01'}
-        mem2 = {'device-alias': 'somename'}
+        mem2 = {'device_alias': 'somename'}
         a = dict(zone_zoneset_details=[dict(
             vsan=923,
             zone=[
@@ -215,7 +215,7 @@ class TestNxosZoneZonesetModule(TestNxosModule):
     # Test zone mem add/removal
     def test_zonemem_add_rem_1(self):
         mem1 = {'pwwn': '11:11:11:11:11:11:11:11', 'remove': True}
-        mem2 = {'device-alias': 'test123', 'remove': True}
+        mem2 = {'device_alias': 'test123', 'remove': True}
         a = dict(zone_zoneset_details=[dict(
             vsan=923,
             zone=[
@@ -239,7 +239,7 @@ class TestNxosZoneZonesetModule(TestNxosModule):
     # Test zone mem add/removal
     def test_zonemem_add_rem_2(self):
         mem1 = {'pwwn': '11:11:11:11:11:11:11:11', 'remove': True}
-        mem2 = {'device-alias': 'test123', 'remove': True}
+        mem2 = {'device_alias': 'test123', 'remove': True}
         a = dict(zone_zoneset_details=[dict(
             vsan=923,
             zone=[
@@ -258,8 +258,8 @@ class TestNxosZoneZonesetModule(TestNxosModule):
 
     def test_zonemem_add_rem_3(self):
         mem1 = {'pwwn': '10:00:10:94:00:00:00:01', 'devtype': 'initiator'}
-        mem2 = {'device-alias': 'somename', 'devtype': 'target'}
-        mem3 = {'device-alias': 'somenameWithBoth', 'devtype': 'both'}
+        mem2 = {'device_alias': 'somename', 'devtype': 'target'}
+        mem3 = {'device_alias': 'somenameWithBoth', 'devtype': 'both'}
 
         a = dict(zone_zoneset_details=[dict(
             vsan=922,
@@ -283,7 +283,7 @@ class TestNxosZoneZonesetModule(TestNxosModule):
 
     # Test zone mem add/removal with devtype
     def test_zonemem_add_rem_4(self):
-        mem2 = {'device-alias': 'test123', 'devtype': 'both', 'remove': True}
+        mem2 = {'device_alias': 'test123', 'devtype': 'both', 'remove': True}
 
         a = dict(zone_zoneset_details=[dict(
             vsan=922,

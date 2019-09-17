@@ -35,12 +35,11 @@ options:
                 description:
                     - mode of the zone for the vsan
                 choices: ['enhanced', 'basic']
-                default: 'basic'
+                type: str
             default_zone:
                 description:
                     - default zone behaviour for the vsan
                 choices: ['permit', 'deny']
-                default: 'deny'
                 type: str
             smart_zoning:
                 description:
@@ -70,8 +69,8 @@ options:
                         suboptions:
                             pwwn:
                                 description:
-                                   - pwwn member of the zone, use alias 'device-alias' as option for device-alias member
-                                aliases: [device-alias]
+                                   - pwwn member of the zone, use alias 'device_alias' as option for device_alias member
+                                aliases: [device_alias]
                                 required: true
                                 type: str
                             remove:
@@ -96,6 +95,7 @@ options:
                             - name of the zoneset
                         required:
                             True
+                        type: str
                     remove:
                         description:
                             - Removes zoneset if True
@@ -105,7 +105,6 @@ options:
                         description:
                             - activates/de-activates the zoneset
                         choices: ['activate', 'deactivate']
-                        default: 'deactivate'
                         type: str
                     members:
                         description:
@@ -139,7 +138,7 @@ EXAMPLES = '''
               -
                 pwwn: "11:11:11:11:11:11:11:11"
               -
-                device-alias: test123
+                device_alias: test123
               -
                 pwwn: "61:61:62:62:12:12:12:12"
                 remove: true
@@ -329,7 +328,7 @@ class ShowZone(object):
                 continue
             else:
                 # For now we support only pwwn and device-alias under zone
-                # Ideally should use 'supported_choices'..maybe next time.
+                # Ideally should use 'supported_choices'....but maybe next time.
                 if "pwwn" in line or "device-alias" in line:
                     v = self.zDetails[zonename]
                     v.append(line)
@@ -435,9 +434,9 @@ def getMemType(supported_choices, allmemkeys, default='pwwn'):
 
 def main():
 
-    supported_choices = ['device-alias']
+    supported_choices = ['device_alias']
     zone_member_spec = dict(
-        pwwn=dict(required=True, type='str', aliases=['device-alias']),
+        pwwn=dict(required=True, type='str', aliases=['device_alias']),
         devtype=dict(type='str', choices=['initiator', 'target', 'both']),
         remove=dict(type='bool', default=False)
     )
@@ -457,13 +456,13 @@ def main():
         name=dict(type='str', required=True),
         members=dict(type='list', elements='dict', options=zoneset_member_spec),
         remove=dict(type='bool', default=False),
-        action=dict(type='str', choices=['activate', 'deactivate'],default='deactivate')
+        action=dict(type='str', choices=['activate', 'deactivate'])
     )
 
     zonedetails_spec = dict(
         vsan=dict(required=True, type='int'),
-        mode=dict(type='str', choices=['enhanced', 'basic'],default='basic'),
-        default_zone=dict(type='str', choices=['permit', 'deny'],default='deny'),
+        mode=dict(type='str', choices=['enhanced', 'basic']),
+        default_zone=dict(type='str', choices=['permit', 'deny']),
         smart_zoning=dict(type='bool'),
         zone=dict(type='list', elements='dict', options=zone_spec),
         zoneset=dict(type='list', elements='dict', options=zoneset_spec),
@@ -570,7 +569,7 @@ def main():
                         cmdmemlist = []
                         for eachmem in zmembers:
                             memtype = getMemType(supported_choices, eachmem.keys())
-                            cmd = memtype + " " + eachmem[memtype]
+                            cmd = memtype.replace('_', '-') + " " + eachmem[memtype]
                             if op_smart_zoning or sw_smart_zoning_bool:
                                 if eachmem['devtype'] is not None:
                                     cmd = cmd + " " + eachmem['devtype']
