@@ -279,11 +279,11 @@ class AnsibleHcloudFloatingIP(Hcloud):
             if self.module.params.get("force") or self.hcloud_floating_ip.server is None:
                 if not self.module.check_mode:
                     self.client.floating_ips.delete(self.hcloud_floating_ip)
-                else:
-                    self.module.warn(
-                        "Floating IP is currently assigned to server %s. You need to unassign the Floating IP or use force=yes."
-                        % self.hcloud_floating_ip.server.name
-                    )
+            else:
+                self.module.warn(
+                    "Floating IP is currently assigned to server %s. You need to unassign the Floating IP or use force=yes."
+                    % self.hcloud_floating_ip.server.name
+                )
             self._mark_as_changed()
         self.hcloud_floating_ip = None
 
