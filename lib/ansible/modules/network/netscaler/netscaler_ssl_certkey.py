@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: netscaler_ssl_certkey
-short_description: Manage ssl cerificate keys.
+short_description: Manage ssl certificate keys.
 description:
-    - Manage ssl cerificate keys.
+    - Manage ssl certificate keys.
 
 version_added: "2.4.0"
 

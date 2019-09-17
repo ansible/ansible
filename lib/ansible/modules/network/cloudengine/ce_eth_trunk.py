@@ -399,7 +399,7 @@ class EthTrunk(object):
         return False
 
     def get_mode_xml_str(self):
-        """trunk mode netconf xml fromat string"""
+        """trunk mode netconf xml format string"""
 
         return MODE_CLI2XML.get(self.mode)
 

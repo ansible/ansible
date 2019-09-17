@@ -98,7 +98,7 @@ options:
                 type: str
           ipv6:
             description:
-              - List of IPv6 addresses of the virual interface.
+              - List of IPv6 addresses of the virtual interface.
             type: list
             elements: dict
             suboptions:
