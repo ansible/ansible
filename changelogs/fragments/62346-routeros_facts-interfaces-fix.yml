@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - Fix regular expression to support parsing more than 10 network interfaces in RouterOS output (https://github.com/ansible/ansible/pull/62346)
+  - Unit tests for the case with more than 10 network interfaces
