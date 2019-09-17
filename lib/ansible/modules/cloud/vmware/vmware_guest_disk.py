@@ -399,6 +399,7 @@ class PyVmomiHelper(PyVmomi):
                 disk_spec = self.create_scsi_disk(scsi_controller, disk['disk_unit_number'], disk['disk_mode'], disk['filename'])
                 if disk['filename'] is None:
                     disk_spec.device.capacityInKB = disk['size']
+
                 if disk['disk_type'] == 'thin':
                     disk_spec.device.backing.thinProvisioned = True
                 elif disk['disk_type'] == 'eagerzeroedthick':
@@ -415,7 +416,14 @@ class PyVmomiHelper(PyVmomi):
                         str(scsi_controller),
                         str(disk['disk_unit_number']))
                 else:
-                    disk_spec.device.backing.fileName = disk['filename']
+                    disk_spec.device.backing.fileName = disk['filename']    
+
+                if disk['disk_type'] != 'raw':
+                    disk_spec.device.capacityInKB = disk['size']
+                    disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (disk['datastore'].name,
+                                                                                   vm_name, vm_name,
+                                                                                   str(scsi_controller),
+                                                                                   str(disk['disk_unit_number']))
                 disk_spec.device.backing.datastore = disk['datastore']
                 
                 if disk['disk_type'] != 'raw':
@@ -424,7 +432,6 @@ class PyVmomiHelper(PyVmomi):
                                                                                    vm_name, vm_name,
                                                                                    str(scsi_controller),
                                                                                    str(disk['disk_unit_number']))
-                    disk_spec.device.backing.datastore = disk['datastore']
 
                 self.config_spec.deviceChange.append(disk_spec)
                 disk_change = True
