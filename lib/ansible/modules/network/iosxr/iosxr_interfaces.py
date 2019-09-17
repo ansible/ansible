@@ -350,6 +350,7 @@ def main():
     :returns: the result form module invocation
     """
     module = AnsibleModule(argument_spec=InterfacesArgs.argument_spec,
+                           required_if=required_if,
                            supports_check_mode=True)
 
     result = Interfaces(module).execute_module()
