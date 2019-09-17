@@ -13,14 +13,6 @@ cleanup() {
 
 trap 'cleanup' EXIT
 
-# https://github.com/ansible/ansible/issues/61964
-ansible-playbook -i ../../inventory --limit testhost,, playbook.yml
-empty_inventory_exit_code="$?"
-if [ "$empty_inventory_exit_code" != "0" ]; then
-    echo "Inventory limit failed"
-    exit 1
-fi
-
 # https://github.com/ansible/ansible/issues/52152
 # Ensure that non-matching limit causes failure with rc 1
 ansible-playbook -i ../../inventory --limit foo playbook.yml
