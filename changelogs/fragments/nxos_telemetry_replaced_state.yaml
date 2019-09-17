@@ -1,0 +1,2 @@
+bugfixes:
+- Add nxos_telemetry replaced state (https://github.com/ansible/ansible/pull/62368).
