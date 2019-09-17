@@ -59,9 +59,9 @@ options:
             - Required if Floating IP does not exists
         choices: [ ipv4, ipv6 ]
         type: str
-    force_assign:
+    force:
         description:
-            - Force the assignment of the Floating IP.
+            - Force the assignment or deletion of the Floating IP.
         type: bool
     labels:
         description:
@@ -87,10 +87,26 @@ EXAMPLES = """
     home_location: fsn1
     type: ipv4
     state: present
-
-- name: Ensure the Network is absent (remove if needed)
+- name: Create a basic IPv6 Floating IP
   hcloud_floating_ip:
-    name: my-network
+    name: my-floating-ip
+    home_location: fsn1
+    type: ipv6
+    state: present
+- name: Assign a Floating IP to a server
+  hcloud_floating_ip:
+    name: my-floating-ip
+    server: 1234
+    state: present
+- name: Assign a Floating IP to another server
+  hcloud_floating_ip:
+    name: my-floating-ip
+    server: 1234
+    force_assign: yes
+    state: present
+- name: Floating IP should be absent
+  hcloud_floating_ip:
+    name: my-floating-ip
     state: absent
 """
 
@@ -189,6 +205,9 @@ class AnsibleHcloudFloatingIP(Hcloud):
             self.module.fail_json(msg=e.message)
 
     def _create_floating_ip(self):
+        self.module.fail_on_missing_params(
+            required_params=["type"]
+        )
         params = {
             "description": self.module.params.get("description"),
             "type": self.module.params.get("type"),
@@ -203,7 +222,7 @@ class AnsibleHcloudFloatingIP(Hcloud):
                 self.module.params.get("server")
             )
         else:
-            self.module.fail_json(msg="server or home_location is required")
+            self.module.fail_json(msg="one of the following is required: home_location, server")
 
         if self.module.params.get("labels") is not None:
             params["labels"] = self.module.params.get("labels")
@@ -229,16 +248,16 @@ class AnsibleHcloudFloatingIP(Hcloud):
 
         server = self.module.params.get("server")
         if server is not None:
-            if not self.module.check_mode:
-                if self.module.params.get("force_assign") or self.hcloud_floating_ip.server is None:
+            if self.module.params.get("force") or self.hcloud_floating_ip.server is None:
+                if not self.module.check_mode:
                     self.hcloud_floating_ip.assign(
                         self.client.servers.get_by_name(self.module.params.get("server"))
                     )
-                else:
-                    self.module.warn(
-                        "Floating IP is already assigned to server %s. You need to unassign the Floating IP or use force_assign=yes."
-                        % self.hcloud_floating_ip.server.name
-                    )
+            else:
+                self.module.warn(
+                    "Floating IP is already assigned to server %s. You need to unassign the Floating IP or use force=yes."
+                    % self.hcloud_floating_ip.server.name
+                )
             self._mark_as_changed()
         elif server is None and self.hcloud_floating_ip.server is not None:
             if not self.module.check_mode:
@@ -257,8 +276,14 @@ class AnsibleHcloudFloatingIP(Hcloud):
     def delete_floating_ip(self):
         self._get_floating_ip()
         if self.hcloud_floating_ip is not None:
-            if not self.module.check_mode:
-                self.client.floating_ips.delete(self.hcloud_floating_ip)
+            if self.module.params.get("force") or self.hcloud_floating_ip.server is None:
+                if not self.module.check_mode:
+                    self.client.floating_ips.delete(self.hcloud_floating_ip)
+                else:
+                    self.module.warn(
+                        "Floating IP is currently assigned to server %s. You need to unassign the Floating IP or use force=yes."
+                        % self.hcloud_floating_ip.server.name
+                    )
             self._mark_as_changed()
         self.hcloud_floating_ip = None
 
@@ -271,8 +296,8 @@ class AnsibleHcloudFloatingIP(Hcloud):
                 description={"type": "str"},
                 server={"type": "str"},
                 home_location={"type": "str"},
-                force_assign={"type": "bool"},
-                type={"choices": ["ipv4", "ipv6"], "required": True},
+                force={"type": "bool"},
+                type={"choices": ["ipv4", "ipv6"]},
                 labels={"type": "dict"},
                 state={
                     "choices": ["absent", "present"],
@@ -280,7 +305,7 @@ class AnsibleHcloudFloatingIP(Hcloud):
                 },
                 **Hcloud.base_module_arguments()
             ),
-            required_one_of=[['home_location', 'server'], ['id', 'name']],
+            required_one_of=[['id', 'name']],
             mutually_exclusive=[['home_location', 'server']],
             supports_check_mode=True,
         )

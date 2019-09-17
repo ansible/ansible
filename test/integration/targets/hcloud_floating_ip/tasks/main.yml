@@ -215,7 +215,7 @@
   hcloud_floating_ip:
     name: "{{ hcloud_floating_ip_name }}"
     type: ipv4
-    force_assign: yes
+    force: yes
     server: "{{ main_server2.hcloud_server.name }}"
   register: floatingIP
 - name: verify test already assigned Floating IP assign with force
@@ -227,8 +227,6 @@
 - name: test delete floating ip
   hcloud_floating_ip:
     name: "{{ hcloud_floating_ip_name }}"
-    type: ipv4
-    home_location: "fsn1"
     state: "absent"
   register: result
 - name: verify test delete floating ip
@@ -251,8 +249,6 @@
 - name: test delete ipv6 floating ip
   hcloud_floating_ip:
     name: "{{ hcloud_floating_ip_name }}"
-    type: ipv6
-    home_location: "fsn1"
     state: "absent"
   register: result
 - name: verify test delete ipv6 floating ip
