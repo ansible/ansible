@@ -206,7 +206,14 @@ def parse_args():
     common.add_argument('--redact',
                         dest='redact',
                         action='store_true',
+                        default=True,
                         help='redact sensitive values in output')
+
+    common.add_argument('--no-redact',
+                        dest='redact',
+                        action='store_false',
+                        default=False,
+                        help='show sensitive values in output')
 
     common.add_argument('--check-python',
                         choices=SUPPORTED_PYTHON_VERSIONS,
