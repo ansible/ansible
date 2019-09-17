@@ -419,7 +419,8 @@ class ActionModule(ActionBase):
             if outcome['error'] or outcome['expect_timeout']:
                 self.results['failed'] = True
                 outcome['error_data'] = re.sub(nxos_password, '', outcome['error_data'])
-                outcome['error_data'] = re.sub(self.playvals['remote_scp_server_password'], '', outcome['error_data'])
+                if self.playvals.get('remote_scp_server_password'):
+                    outcome['error_data'] = re.sub(self.playvals['remote_scp_server_password'], '', outcome['error_data'])
                 self.results['error_data'] = outcome['error_data']
                 nxos_session.close()
                 return
@@ -430,7 +431,8 @@ class ActionModule(ActionBase):
             msg += 'BEFORE: {2}, AFTER: {3}, CMD: {4}'
             error_msg = msg.format(copy_attempt, nxos_hostname, nxos_session.before, nxos_session.before, copy_cmd)
             re.sub(nxos_password, '', error_msg)
-            re.sub(self.playvals['remote_scp_server_password'], '', error_msg)
+            if self.playvals.get('remote_scp_server_password'):
+                re.sub(self.playvals['remote_scp_server_password'], '', error_msg)
             nxos_session.close()
             raise AnsibleError(error_msg)
 
