@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: onyx_ntp
-version_added: "2.5"
+version_added: "2.9"
 author: "Sara Touqan"
 short_description: Manage NTP general configurations and ntp keys configurations on Mellanox ONYX network devices
 description:
@@ -23,13 +23,12 @@ options:
   state:
     description:
       - State of the NTP configuration.
-    default: enabled
-    choices: ['enabled', 'disablde']
+    choices: ['enabled', 'disabled']
   authenticate_state:
     description:
       - State of the NTP authentication configuration.
     default: enabled
-    choices: ['enabled', 'disablde']
+    choices: ['enabled', 'disabled']
   ntp_authentication_keys:
     description:
       - List of ntp authentication keys
@@ -84,11 +83,8 @@ commands:
     - ntp trusted-key 1,2,3
 """
 
-from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.network.common.utils import remove_default_spec
 
 from ansible.module_utils.network.onyx.onyx import BaseOnyxModule
 from ansible.module_utils.network.onyx.onyx import show_cmd

@@ -13,14 +13,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: onyx_ntp_servers_peers
-version_added: "2.5"
-author: "Sara Touqan"
-short_description: Manage NTP peers and servers on Mellanox ONYX network devices
+version_added: '2.9'
+author: Sara Touqan
+short_description: Configures NTP peers and servers parameters
 description:
-  - This module provides declarative management of NTP servers and peers
-    on Mellanox ONYX network devices.
+  - This module provides declarative management of NTP peers and servers configuration on Mellanox ONYX network devices.
 options:
- peers:
+  peers:
     description:
       - List of ntp peers.
     suboptions:
@@ -30,55 +29,51 @@ options:
         required: true
       state_enabled:
         description:
-          - disables/enables ntp server.
-        default: no
-        choices: ['yes', 'no']
+          - Disables/Enables ntp peer state
+        choices: ['yes','no']
       version:
         description:
-          - version number for the ntp peer.
-        choices: ['3', '4']
+          - version number for the ntp peer
+        choices: ['3','4']
       key_id:
-         description:
-             - Used to configure the key-id for the ntp peer
+        description:
+          - Used to configure the key-id for the ntp peer
       delete:
-         description:
-             - Used to decide if you want to delete given peer or not.
-         default: no
-         choices: ['yes', 'no']
- ntp_servers:
+        description:
+          - Used to decide if you want to delete the given ntp peer or not.
+        choices: ['yes','no']
+        default: 'no'
+  servers:
     description:
       - List of ntp servers.
     suboptions:
       ip_or_name:
         description:
-          - Configures the name or ip of the ntp server.
+          - Configures ntp server name or ip.
         required: true
       state_enabled:
         description:
-          - disables/enables ntp server.
-         default: no
-         choices: ['yes', 'no']
+          - Disables/Enables ntp server
+        choices: ['yes','no']
+      trusted_enable:
+        description:
+          - Disables/Enables the trusted state for the ntp server.
+        choices: ['yes','no']
       version:
         description:
-          - version number for the ntp server.
-        choices: ['3', '4']
-      trusted_enable:
-         description:
-             - Enables/Disables the trusted state for the ntp server
-         default: no
-         choices: ['yes', 'no']
+          - version number for the ntp server
+        choices: ['3','4']
       key_id:
-         description:
-             - Used to configure the key-id for the ntp server
+        description:
+          - Used to configure the key-id for the ntp server
       delete:
-         description:
-             - Used to decide if you want to delete given server or not.
-         default: no
-         choices: ['yes', 'no']
- ntpdate:
+        description:
+          - Used to decide if you want to delete the given ntp server or not.
+        choices: ['yes','no']
+        default: 'no'
+  ntpdate:
     description:
       - Sets system clock once from a remote server using NTP.
-
 """
 
 EXAMPLES = """
