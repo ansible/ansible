@@ -391,11 +391,13 @@ class DataLoader:
             except Exception as e:
                 display.warning("Unable to cleanup temp files: %s" % to_text(e))
 
-    def find_vars_files(self, path, name, extensions=None, allow_dir=True):
+    def find_vars_files(self, path, name, extensions=None, allow_dir=True, depth=None):
         """
         Find vars files in a given path with specified name. This will find
         files in a dir named <name>/ or a file called <name> ending in known
         extensions.
+        <depth> allows specifying a list of integers which control at what
+        directory depths files are loaded from, 0 being files located in <path>.
         """
 
         b_path = to_bytes(os.path.join(path, name))
@@ -417,15 +419,15 @@ class DataLoader:
             if self.path_exists(full_path):
                 if self.is_directory(full_path):
                     if allow_dir:
-                        found.extend(self._get_dir_vars_files(to_text(full_path), extensions))
+                        found.extend(self._get_dir_vars_files(to_text(full_path), extensions, depth, 1))
                     else:
                         continue
-                else:
+                elif not depth or 0 in depth:
                     found.append(full_path)
                 break
         return found
 
-    def _get_dir_vars_files(self, path, extensions):
+    def _get_dir_vars_files(self, path, extensions, depth=None, cur_depth=0):
         found = []
         for spath in sorted(self.list_directory(path)):
             if not spath.startswith(u'.') and not spath.endswith(u'~'):  # skip hidden and backups
@@ -434,8 +436,8 @@ class DataLoader:
                 full_spath = os.path.join(path, spath)
 
                 if self.is_directory(full_spath) and not ext:  # recursive search if dir
-                    found.extend(self._get_dir_vars_files(full_spath, extensions))
-                elif self.is_file(full_spath) and (not ext or to_text(ext) in extensions):
+                    found.extend(self._get_dir_vars_files(full_spath, extensions, depth, cur_depth + 1))
+                elif self.is_file(full_spath) and (not ext or to_text(ext) in extensions) and (not depth or cur_depth in depth):
                     # only consider files with valid extensions or no extension
                     found.append(full_spath)
 

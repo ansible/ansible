@@ -8,14 +8,12 @@ DOCUMENTATION = '''
     description:
         - In comparison to host_group_vars plugin, this plugin traverses the `r_group_vars` directory
           and instead of matching all files and directories within the first matching directory it
-          traverses the directory tree and recursively matches directories and files to groups during
-          directory traversal.
-        - During traversal in a directory first matching files are applied and then matching directories
-          traversed. The existing priorities for groups apply for both files and directories,
-          respectively.
+          traverses the directory tree and recursively matches directories to groups during directory
+          traversal and applies all files within a matching directory.
+        - During traversal in a directory first all files are applied and then matching directories
+          traversed. The existing priorities for groups apply during directory traversal.
         - If several matching directories are found on the same directory level they are traversed
           consecutively in a depth-first fashion.
-        - Only files that match a group name are applied. Any other files are ignored.
         - The following points are identical to host_group_vars plugin -
         - Files are restricted by extension to one of .yaml, .json, .yml or no extension.
         - Hidden (starting with '.') and backup (ending with '~') files and directories are ignored.
@@ -35,6 +33,7 @@ DOCUMENTATION = '''
 '''
 
 import os
+from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.errors import AnsibleParserError
 from ansible.plugins.vars import BaseVarsPlugin
@@ -46,22 +45,25 @@ class VarsModule(BaseVarsPlugin):
 
     FOUND = {}
 
+    def load_vars_files(self, loader, group, path):
+        data = {}
+
+        found_files = loader.find_vars_files(path, group, allow_dir=True, depth=[1])
+        for found in found_files:
+            self._display.debug("recursive_group_vars - Loading file : %s" % to_text(found))
+            try:
+                new_data = loader.load_from_file(found, cache=True, unsafe=True)
+                if new_data:
+                    data = combine_vars(data, new_data)
+            except Exception as e:
+                raise AnsibleParserError("Failed to apply variable file %s : %s" % (found, to_native(e)))
+
+        return data
+
     def find_vars_recurse(self, loader, groups, path):
         data = {}
 
         self._display.debug("recursive_group_vars - Traversing dir : %s with groups : %s" % (path, to_text(groups)))
-
-        # Apply matching files in path
-        for group in groups:
-            found_files = loader.find_vars_files(path, group, allow_dir=False)
-            for found in found_files:
-                self._display.debug("recursive_group_vars - Matched file : %s" % to_text(found))
-                try:
-                    new_data = loader.load_from_file(found, cache=True, unsafe=True)
-                    if new_data:
-                        data = combine_vars(data, new_data)
-                except Exception as e:
-                    raise AnsibleParserError("Failed to apply variable file %s : %s" % (found, to_native(e)))
 
         # Recurse into directories
         for group in groups:
@@ -69,6 +71,9 @@ class VarsModule(BaseVarsPlugin):
                 b_opath = os.path.realpath(to_bytes(os.path.join(path, group)))
                 if os.path.exists(b_opath):
                     if os.path.isdir(b_opath):
+                        # Load all files from matched group directory
+                        data = combine_vars(data, self.load_vars_files(loader, group, path))
+                        # Traversing further down
                         data = combine_vars(data, self.find_vars_recurse(loader, groups, to_text(b_opath)))
             except Exception as e:
                 raise AnsibleParserError("Failure during traversal of group directory '%s' in '%s' : %s" % (group, path, to_native(e)))
