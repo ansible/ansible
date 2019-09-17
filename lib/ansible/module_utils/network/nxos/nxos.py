@@ -739,13 +739,14 @@ class NxosCmdRef:
           multiplier: 3
     """
 
-    def __init__(self, module, cmd_ref_str):
+    def __init__(self, module, cmd_ref_str, ref_only=False):
         """Initialize cmd_ref from yaml data."""
+
         self._module = module
         self._check_imports()
         self._yaml_load(cmd_ref_str)
         self.cache_existing = None
-        self.present_states = ['present', 'merged']
+        self.present_states = ['present', 'merged', 'replaced']
         self.absent_states = ['absent', 'deleted']
         ref = self._ref
 
@@ -754,10 +755,12 @@ class NxosCmdRef:
         ref['_proposed'] = []
         ref['_context'] = []
         ref['_resource_key'] = None
-        ref['_state'] = module.params.get('state', 'present')
-        self.feature_enable()
-        self.get_platform_defaults()
-        self.normalize_defaults()
+
+        if not ref_only:
+            ref['_state'] = module.params.get('state', 'present')
+            self.feature_enable()
+            self.get_platform_defaults()
+            self.normalize_defaults()
 
     def __getitem__(self, key=None):
         if key is None:
@@ -1116,6 +1119,8 @@ class NxosCmdRef:
 
             # Multiple Instances:
             if isinstance(existing, dict) and multiple:
+                item_found = False
+
                 for ekey, evalue in existing.items():
                     if isinstance(evalue, dict):
                         # Remove values set to string 'None' from dvalue
@@ -1148,7 +1153,8 @@ class NxosCmdRef:
 
         # Remove any duplicate commands before returning.
         # pylint: disable=unnecessary-lambda
-        return sorted(set(proposed), key=lambda x: proposed.index(x))
+        cmds = sorted(set(proposed), key=lambda x: proposed.index(x))
+        return cmds
 
 
 def nxosCmdRef_import_check():
