@@ -99,7 +99,7 @@ options:
      - '     - C(independent_nonpersistent) Changes to virtual disk are made to a redo log and discarded at power off, but not affected by snapshots.'
      - ' - C(raw_device) (string): Raw device path. Required if disk type is raw.'
      - ' - C(compatibility_mode) (string): Compatibility mode for raw devices. Valid values are:'
-     - '     - C(physicalMode)
+     - '     - C(physicalMode)'
      - ' - C(datastore) (string): Name of datastore or datastore cluster to be used for the disk.'
      - ' - C(autoselect_datastore) (bool): Select the less used datastore. Specify only if C(datastore) is not specified.'
      - ' - C(scsi_controller) (integer): SCSI controller number. Valid value range from 0 to 3.'
@@ -159,18 +159,18 @@ EXAMPLES = '''
 
 - name: Add raw device to virtual machine using name
   vmware_guest_disk:
-  hostname: "{{ vcenter_hostname }}"
-  username: "{{ vcenter_username }}"
-  password: "{{ vcenter_password }}"
-  datacenter: "{{ datacenter_name }}"
-  validate_certs: no
-  name: "VM_225"
-  disk:
-    - type: raw
-      state: present
-      scsi_controller: 1
-      unit_number: 0
-      raw_device: /vmfs/devices/disks/naa.55cd2e414e3df6e5
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    name: VM_123
+    disk:
+      - type: raw
+        state: present
+        scsi_controller: 1
+        unit_number: 0
+        raw_device: /vmfs/devices/disks/naa.55cd2e414e3df6e5
 
 - name: Remove disks from virtual machine using name
   vmware_guest_disk:
