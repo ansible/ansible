@@ -304,18 +304,13 @@ class DocCLI(CLI):
         # If the plugin existed but did not have a DOCUMENTATION element and was not removed, it's
         # an error
         if doc is None:
-            # Backwards compat.  Probably should make this an error in 2.10
-            if os.stat(filename).st_size == 0:
-                # Modules that are empty display nothing
-                return {}, {}, {}, {}
-
             # doc may be None when the module has been removed.  Calling code may choose to
             # handle that but we can't.
             if 'status' in metadata and isinstance(metadata['status'], Container):
                 if 'removed' in metadata['status']:
                     raise RemovedPlugin('%s has been removed' % plugin)
 
-                # Backwards compat: no documentation but valid metadata.
+                # Backwards compat: no documentation but valid metadata (or no metadata, which results in using the default metadata).
                 # Probably should make this an error in 2.10
                 return {}, {}, {}, metadata
             else:
