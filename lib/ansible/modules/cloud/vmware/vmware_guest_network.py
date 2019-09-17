@@ -184,7 +184,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.network import is_mac
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task, get_all_objs, get_parent_datacenter
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task, get_all_objs, get_parent_datacenter, find_dvs_by_name, find_dvspg_by_name
 
 
 class PyVmomiHelper(PyVmomi):
@@ -252,13 +252,54 @@ class PyVmomiHelper(PyVmomi):
         """ Get network adapter with the specified label """
         return self.get_network_device(vm=vm, device_label=device_label)
 
+    def find_dvs_by_uuid(self, uuid=None):
+        """ Return vDS name by uuid """
+        dvs_obj = None
+        if uuid is None:
+            return dvs_obj
+
+        dvswitches = get_all_objs(self.content, [vim.DistributedVirtualSwitch])
+        for dvs in dvswitches:
+            if dvs.uuid == uuid:
+                dvs_obj = dvs
+                break
+
+        return dvs_obj
+
     def create_network_adapter(self, device_info):
         nic = vim.vm.device.VirtualDeviceSpec()
         nic.device = self.get_device_type(device_type=device_info.get('device_type', 'vmxnet3'))
         nic.device.deviceInfo = vim.Description()
         nic.device.deviceInfo.summary = device_info['name']
-        nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
-        nic.device.backing.deviceName = device_info['name']
+
+        if 'dvswitch_name' in device_info:
+            pg_obj = None
+            dvs_name = device_info['dvswitch_name']
+            dvs_obj = find_dvs_by_name(self.content, dvs_name)
+            if dvs_obj is None:
+                self.module.fail_json(msg="Unable to find distributed virtual switch %s" % dvs_name)
+            network_name = device_info['name']
+            pg_obj = find_dvspg_by_name(dvs_obj, network_name)
+            if pg_obj is None:
+                self.module.fail_json(msg="Unable to find distributed port group %s" % network_name)
+            if not pg_obj.config.distributedVirtualSwitch:
+                self.module.fail_json(msg="Failed to find distributed virtual switch which is associated with"
+                                          " distributed virtual portgroup '%s'. Make sure hostsystem is associated with"
+                                          " the given distributed virtual portgroup. Also, check if user has correct"
+                                          " permission to access distributed virtual switch in the given portgroup." % pg_obj.name)
+            dvs_port_connection = vim.dvs.PortConnection()
+            dvs_port_connection.portgroupKey = pg_obj.key
+            host_system = self.params.get('esxi_hostname')
+            if host_system and host_system not in [host.config.host.name for host in pg_obj.config.distributedVirtualSwitch.config.host]:
+                self.module.fail_json(msg="It seems that host system '%s' is not associated with distributed"
+                                          " virtual portgroup '%s'. Please make sure host system is associated"
+                                          " with given distributed virtual portgroup" % (host_system, pg_obj.name))
+            dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
+            nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
+            nic.device.backing.port = dvs_port_connection
+        else:
+            nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
+            nic.device.backing.deviceName = device_info['name']
         nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
         nic.device.connectable.startConnected = device_info.get('start_connected', True)
         nic.device.connectable.allowGuestControl = True
@@ -279,6 +320,7 @@ class PyVmomiHelper(PyVmomi):
         nic_index = 0
         for nic in vm_obj.config.hardware.device:
             nic_type = None
+
             if isinstance(nic, vim.vm.device.VirtualPCNet32):
                 nic_type = 'PCNet32'
             elif isinstance(nic, vim.vm.device.VirtualVmxnet2):
@@ -291,19 +333,43 @@ class PyVmomiHelper(PyVmomi):
                 nic_type = 'E1000E'
             elif isinstance(nic, vim.vm.device.VirtualSriovEthernetCard):
                 nic_type = 'SriovEthernetCard'
+
             if nic_type is not None:
-                network_info[nic_index] = dict(
-                    device_type=nic_type,
-                    label=nic.deviceInfo.label,
-                    name=nic.deviceInfo.summary,
-                    mac_addr=nic.macAddress,
-                    unit_number=nic.unitNumber,
-                    wake_onlan=nic.wakeOnLanEnabled,
-                    allow_guest_ctl=nic.connectable.allowGuestControl,
-                    connected=nic.connectable.connected,
-                    start_connected=nic.connectable.startConnected,
-                )
-                nic_index += 1
+                if isinstance(nic, vim.vm.device.VirtualEthernetCard):
+                    if hasattr(nic.backing, 'port'):
+                        portgroupKey = nic.backing.port.portgroupKey
+                        dvs_uuid = nic.backing.port.switchUuid
+                        dvs_obj = self.find_dvs_by_uuid(uuid=dvs_uuid)
+                        if dvs_obj is None:
+                            self.module.fail_json(msg="Unable to find distributed virtual switch %s" % dvs_uuid)
+
+                        pg_obj = dvs_obj.LookupDvPortGroup(portgroupKey)
+                        network_info[nic_index] = dict(
+                            device_type=nic_type,
+                            label=nic.deviceInfo.label,
+                            name=pg_obj.config.name,
+                            dvswitch_name=str(dvs_obj.name),
+                            mac_addr=nic.macAddress,
+                            unit_number=nic.unitNumber,
+                            wake_onlan=nic.wakeOnLanEnabled,
+                            allow_guest_ctl=nic.connectable.allowGuestControl,
+                            connected=nic.connectable.connected,
+                            start_connected=nic.connectable.startConnected,
+                        )
+                        nic_index += 1
+                    else:
+                        network_info[nic_index] = dict(
+                            device_type=nic_type,
+                            label=nic.deviceInfo.label,
+                            name=nic.deviceInfo.summary,
+                            mac_addr=nic.macAddress,
+                            unit_number=nic.unitNumber,
+                            wake_onlan=nic.wakeOnLanEnabled,
+                            allow_guest_ctl=nic.connectable.allowGuestControl,
+                            connected=nic.connectable.connected,
+                            start_connected=nic.connectable.startConnected,
+                        )
+                        nic_index += 1
 
         return network_info
 
