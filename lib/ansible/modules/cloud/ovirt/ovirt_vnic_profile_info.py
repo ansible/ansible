@@ -29,7 +29,7 @@ DOCUMENTATION = '''
 module: ovirt_vnic_profile_info
 short_description: Retrieve information about one or more oVirt/RHV vnic profiles
 author: "Martin Necas (@mnecas)"
-version_added: "2.9"
+version_added: "2.10"
 description:
     - "Retrieve information about one or more oVirt/RHV vnic profiles."
 notes:
@@ -40,6 +40,11 @@ options:
     max:
       description:
         - "The maximum number of results to return."
+        type: int
+    name:
+      description:
+        - "Name of vnic profile."
+        type: str
 extends_documentation_fragment: ovirt_info
 '''
 
@@ -77,6 +82,7 @@ from ansible.module_utils.ovirt import (
 def main():
     argument_spec = ovirt_info_full_argument_spec(
         max=dict(default=None, type='int'),
+        name=dict(default=None),
     )
     module = AnsibleModule(argument_spec)
     check_sdk(module)
@@ -86,6 +92,9 @@ def main():
         connection = create_connection(auth)    
         vnic_profiles_service = connection.system_service().vnic_profiles_service()
         vnic_profiles = vnic_profiles_service.list(max=module.params.get('max'))
+        if module.params.get('name') and vnic_profiles:
+            vnic_profiles = [vnic_profile for vnic_profile in vnic_profiles if vnic_profile.name == module.params.get("name")]
+
         result = dict(
             ovirt_vnic_profiles=[
                 get_dict_of_struct(
@@ -105,4 +114,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
