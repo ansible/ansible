@@ -57,7 +57,7 @@ options:
         type: bool
     maximum_throughput_units:
         description:
-            - Upper limit of throughput units when I(auto_inflate_enabled=true), value should be within 0 to 20 throughput units.
+            - Upper limit of throughput units when I(auto_inflate_enabled=true), value should be within C(0) to C(20) throughput units.
             - The value is C(0) if I(auto_inflate_enabled=false).
             - Only can be set when the I(auto_inflate_enabled=true).
         type: int
