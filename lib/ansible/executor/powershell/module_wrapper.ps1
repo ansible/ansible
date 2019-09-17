@@ -136,9 +136,9 @@ try {
     # Be more defensive when trying to find the InnerException in case it isn't
     # set. This shouldn't ever be the case but if it is then it makes it more
     # difficult to track down the problem.
-    if ($_.Exception.PSObject.Properties -contains "InnerException") {
+    if ($_.Exception.PSObject.Properties.Name -contains "InnerException") {
         $inner_exception = $_.Exception.InnerException
-        if ($inner_exception.PSObject.Properties -contains "ErrorRecord") {
+        if ($inner_exception.PSObject.Properties.Name -contains "ErrorRecord") {
             $error_params.ErrorRecord = $inner_exception.ErrorRecord
         }
     }
@@ -165,7 +165,7 @@ if ($ps.InvocationStateInfo.State -eq "Failed" -and $ModuleName -ne "script") {
     # options.
     if ($null -eq $reason) {
         $error_params.Message += ": Unknown error"
-    } elseif ($reason.PSObject.Properties -contains "ErrorRecord") {
+    } elseif ($reason.PSObject.Properties.Name -contains "ErrorRecord") {
         $error_params.ErrorRecord = $reason.ErrorRecord
     } else {
         $error_params.Message += ": $($reason.ToString())"
