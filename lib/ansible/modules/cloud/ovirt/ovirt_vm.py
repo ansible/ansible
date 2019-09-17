@@ -838,7 +838,7 @@ options:
     custom_emulated_machine:
         description:
             - "Sets the value of the custom_emulated_machine attribute"
-        version_added: "2.9"
+        version_added: "2.10"
 
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
