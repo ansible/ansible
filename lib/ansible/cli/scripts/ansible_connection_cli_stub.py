@@ -196,6 +196,9 @@ class ConnectionProcess(object):
                     self.sock.close()
                 if self.connection:
                     self.connection.close()
+                    if self.connection.get_option("persistent_log_messages"):
+                        for _level, message in self.connection.pop_messages():
+                            display.display(message, log_only=True)
             except Exception:
                 pass
             finally:
