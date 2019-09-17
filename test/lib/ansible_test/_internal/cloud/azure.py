@@ -125,6 +125,8 @@ class AzureCloudProvider(CloudProvider):
                 RESOURCE_GROUP_SECONDARY=response['resourceGroupNames'][1],
             )
 
+            display.sensitive.add(values['AZURE_SECRET'])
+
             config = '\n'.join('%s: %s' % (key, values[key]) for key in sorted(values))
 
             config = '[default]\n' + config
@@ -145,6 +147,9 @@ class AzureCloudEnvironment(CloudEnvironment):
         :rtype: CloudEnvironmentConfig
         """
         env_vars = get_config(self.config_path)
+
+        display.sensitive.add(env_vars.get('AZURE_SECRET'))
+        display.sensitive.add(env_vars.get('AZURE_PASSWORD'))
 
         ansible_vars = dict(
             resource_prefix=self.resource_prefix,

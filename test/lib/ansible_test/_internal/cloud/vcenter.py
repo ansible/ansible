@@ -257,6 +257,10 @@ class VcenterEnvironment(CloudEnvironment):
                 vcsim=self._get_cloud_config('vcenter_host'),
             )
 
+        for key, value in ansible_vars.items():
+            if key.endswith('_password'):
+                display.sensitive.add(value)
+
         return CloudEnvironmentConfig(
             env_vars=env_vars,
             ansible_vars=ansible_vars,
