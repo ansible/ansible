@@ -91,7 +91,7 @@ options:
     version_added: "2.7"
   error_option:
     description:
-    - This option control the netconf server action after a error is occured while editing the configuration.
+    - This option controls the netconf server action after an error occurs while editing the configuration.
       If the value is I(stop-on-error) abort the config edit on first error, if value is I(continue-on-error)
       it continues to process configuration data on error, error is recorded and negative response is generated
       if any errors occur. If value is C(rollback-on-error) it rollback to the original configuration in case
@@ -135,7 +135,7 @@ options:
   validate:
     description:
       - This boolean flag if set validates the content of datastore given in C(target) option.
-        For this option to work remote Netconf server shoule support :validate capability.
+        For this option to work remote Netconf server should support :validate capability.
     type: bool
     default: False
     version_added: "2.7"

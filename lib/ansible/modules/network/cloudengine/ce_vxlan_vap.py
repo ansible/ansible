@@ -79,7 +79,7 @@ EXAMPLES = '''
 
   tasks:
 
-  - name: Create a papping between a VLAN and a BD
+  - name: Create a mapping between a VLAN and a BD
     ce_vxlan_vap:
       bridge_domain_id: 100
       bind_vlan_id: 99

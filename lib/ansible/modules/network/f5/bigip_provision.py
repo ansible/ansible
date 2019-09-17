@@ -85,7 +85,7 @@ options:
         level provided that there are sufficient resources on the device (such
         as physical RAM) to support the provisioned module.
       - When C(absent), de-provision the module.
-      - C(absent), is not a relevent option to C(mgmt) module as module can not be de-provisioned.
+      - C(absent), is not a relevant option to C(mgmt) module as module can not be de-provisioned.
     type: str
     choices:
       - present

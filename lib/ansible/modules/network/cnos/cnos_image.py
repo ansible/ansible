@@ -116,7 +116,7 @@ msg:
   description: Success or failure message
   returned: always
   type: str
-  sample: "Image file tranferred to device"
+  sample: "Image file transferred to device"
 '''
 
 import sys
@@ -231,7 +231,7 @@ def main():
     # Logic to check when changes occur or not
     errorMsg = cnos.checkOutputForError(output)
     if(errorMsg is None):
-        module.exit_json(changed=True, msg="Image file tranferred to device")
+        module.exit_json(changed=True, msg="Image file transferred to device")
     else:
         module.fail_json(msg=errorMsg)
 

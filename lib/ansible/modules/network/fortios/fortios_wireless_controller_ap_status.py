@@ -101,7 +101,7 @@ options:
                 type: str
             status:
                 description:
-                    - "Access Point's (AP's) status: rogue, accepted, or supressed."
+                    - "Access Point's (AP's) status: rogue, accepted, or suppressed."
                 type: str
                 choices:
                     - rogue

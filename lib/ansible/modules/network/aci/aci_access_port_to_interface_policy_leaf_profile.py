@@ -100,7 +100,7 @@ options:
     aliases: [ policy_group_name ]
   interface_type:
     description:
-    - The type of interface for the static EPG deployement.
+    - The type of interface for the static EPG deployment.
     type: str
     choices: [ breakout, fex, port_channel, switch_port, vpc ]
     default: switch_port
@@ -327,7 +327,7 @@ def main():
     interface_type = module.params['interface_type']
     state = module.params['state']
 
-    # Build child_configs dyanmically
+    # Build child_configs dynamically
     child_configs = [dict(
         infraPortBlk=dict(
             attributes=dict(
