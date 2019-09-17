@@ -19,9 +19,6 @@
   # Test postgresql_set
   - postgresql_set.yml
 
-  # Test postgresql_copy module
-  - postgresql_copy.yml
-
   # Test postgresql_slot module.
   # Physical replication slots are available from PostgreSQL 9.4
   - postgresql_slot.yml

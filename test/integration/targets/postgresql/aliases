@@ -1,6 +1,5 @@
 destructive
 shippable/posix/group4
-postgresql_copy
 postgresql_db
 postgresql_ext
 postgresql_idx
