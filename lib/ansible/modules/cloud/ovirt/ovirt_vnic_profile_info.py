@@ -57,7 +57,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ovirt_vnic_profiles:
-    description: "List of dictionaries describing the vnic profiles. Storage_domain attributes are mapped to dictionary keys,
+    description: "List of dictionaries describing the vnic profiles. Vnic_profile attributes are mapped to dictionary keys,
                   all vnic profiles attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vnic_profile."
     returned: On success.
     type: list
