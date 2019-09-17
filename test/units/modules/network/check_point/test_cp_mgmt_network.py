@@ -21,7 +21,6 @@ import pytest
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleExitJson
 
 from ansible.module_utils import basic
-from ansible.module_utils.network.checkpoint.checkpoint import api_call
 from ansible.modules.network.check_point import cp_mgmt_network
 
 OBJECT = {
@@ -56,13 +55,6 @@ api_call_object = 'network'
 
 class TestCheckpointNetwork(object):
     module = cp_mgmt_network
-
-    checkpoint_argument_spec_for_objects = dict(
-        auto_publish_session=dict(type='bool'),
-        wait_for_task=dict(type='bool', default=True),
-        state=dict(type='str', required=True, choices=['present', 'absent']),
-        version=dict(type='str')
-    )
 
     @pytest.fixture(autouse=True)
     def module_mock(self, mocker):
@@ -122,10 +114,3 @@ class TestCheckpointNetwork(object):
         with pytest.raises(AnsibleExitJson) as ex:
             self.module.main()
         return ex.value.args[0]
-
-    def _run_module_with_fail_json(self, module_args):
-        set_module_args(module_args)
-        with pytest.raises(AnsibleFailJson) as exc:
-            self.module.main()
-        result = exc.value.args[0]
-        return result
