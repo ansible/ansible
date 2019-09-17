@@ -27,6 +27,8 @@ description:
 version_added: 2.8
 author:
     - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
+    - Christian Sandrini (@sandrich) <mail@chrissandrini.ch>
+    - Radu Domnu (@radudd) <rdomnu@redhat.com>
 notes:
     - Tested on vSphere 6.0 and 6.5
 requirements:
@@ -89,11 +91,15 @@ options:
      - '     - C(thin) thin disk'
      - '     - C(eagerzeroedthick) eagerzeroedthick disk'
      - '     - C(thick) thick disk'
+     - '     - C(raw) raw disk'
      - '     Default: C(thick) thick disk, no eagerzero.'
      - ' - C(disk_mode) (string): Type of disk mode. Valid values are:'
      - '     - C(persistent) Changes are immediately and permanently written to the virtual disk. This is default.'
      - '     - C(independent_persistent) Same as persistent, but not affected by snapshots.'
      - '     - C(independent_nonpersistent) Changes to virtual disk are made to a redo log and discarded at power off, but not affected by snapshots.'
+     - ' - C(raw_device) (string): Raw device path. Required if disk type is raw.'
+     - ' - C(compatibility_mode) (string): Compatibility mode for raw devices. Valid values are:'
+     - '     - C(physicalMode)
      - ' - C(datastore) (string): Name of datastore or datastore cluster to be used for the disk.'
      - ' - C(autoselect_datastore) (bool): Select the less used datastore. Specify only if C(datastore) is not specified.'
      - ' - C(scsi_controller) (integer): SCSI controller number. Valid value range from 0 to 3.'
@@ -150,6 +156,21 @@ EXAMPLES = '''
         disk_mode: 'independent_nonpersistent'
   delegate_to: localhost
   register: disk_facts
+
+- name: Add raw device to virtual machine using name
+  vmware_guest_disk:
+  hostname: "{{ vcenter_hostname }}"
+  username: "{{ vcenter_username }}"
+  password: "{{ vcenter_password }}"
+  datacenter: "{{ datacenter_name }}"
+  validate_certs: no
+  name: "VM_225"
+  disk:
+    - type: raw
+      state: present
+      scsi_controller: 1
+      unit_number: 0
+      raw_device: /vmfs/devices/disks/naa.55cd2e414e3df6e5
 
 - name: Remove disks from virtual machine using name
   vmware_guest_disk:
@@ -348,39 +369,50 @@ class PyVmomiHelper(PyVmomi):
             if disk['disk_unit_number'] not in current_scsi_info[scsi_controller]['disks'] and disk['state'] == 'present':
                 # Add new disk
                 disk_spec = self.create_scsi_disk(scsi_controller, disk['disk_unit_number'], disk['disk_mode'])
-                disk_spec.device.capacityInKB = disk['size']
                 if disk['disk_type'] == 'thin':
                     disk_spec.device.backing.thinProvisioned = True
                 elif disk['disk_type'] == 'eagerzeroedthick':
                     disk_spec.device.backing.eagerlyScrub = True
-                disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (disk['datastore'].name,
-                                                                               vm_name, vm_name,
-                                                                               str(scsi_controller),
-                                                                               str(disk['disk_unit_number']))
-                disk_spec.device.backing.datastore = disk['datastore']
+                elif disk['disk_type'] == 'raw':
+                    disk_spec.device.backing = vim.vm.device.VirtualDisk.RawDiskMappingVer1BackingInfo()
+                    disk_spec.device.backing.deviceName = disk['disk_raw_device']
+                    disk_spec.device.backing.compatibilityMode = disk['disk_compatibility_mode']
+
+                if disk['disk_type'] != 'raw':
+                    disk_spec.device.capacityInKB = disk['size']
+                    disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (disk['datastore'].name,
+                                                                                   vm_name, vm_name,
+                                                                                   str(scsi_controller),
+                                                                                   str(disk['disk_unit_number']))
+                    disk_spec.device.backing.datastore = disk['datastore']
+
                 self.config_spec.deviceChange.append(disk_spec)
                 disk_change = True
                 current_scsi_info[scsi_controller]['disks'][disk['disk_unit_number']] = disk_spec.device
                 results['disk_changes'][disk['disk_index']] = "Disk created."
             elif disk['disk_unit_number'] in current_scsi_info[scsi_controller]['disks']:
                 if disk['state'] == 'present':
-                    disk_spec = vim.vm.device.VirtualDeviceSpec()
-                    # set the operation to edit so that it knows to keep other settings
-                    disk_spec.device = current_scsi_info[scsi_controller]['disks'][disk['disk_unit_number']]
-                    # Edit and no resizing allowed
-                    if disk['size'] < disk_spec.device.capacityInKB:
-                        self.module.fail_json(msg="Given disk size at disk index [%s] is smaller than found (%d < %d)."
-                                                  " Reducing disks is not allowed." % (disk['disk_index'],
-                                                                                       disk['size'],
-                                                                                       disk_spec.device.capacityInKB))
-                    if disk['size'] != disk_spec.device.capacityInKB:
-                        disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
-                        disk_spec.device.capacityInKB = disk['size']
-                        self.config_spec.deviceChange.append(disk_spec)
-                        disk_change = True
-                        results['disk_changes'][disk['disk_index']] = "Disk size increased."
-                    else:
+                    # Resizing is not allowed on raw device mapping
+                    if disk['disk_type'] == 'raw':
                         results['disk_changes'][disk['disk_index']] = "Disk already exists."
+                    else:
+                        disk_spec = vim.vm.device.VirtualDeviceSpec()
+                        # set the operation to edit so that it knows to keep other settings
+                        disk_spec.device = current_scsi_info[scsi_controller]['disks'][disk['disk_unit_number']]
+                        # Edit and no resizing allowed
+                        if disk['size'] < disk_spec.device.capacityInKB:
+                            self.module.fail_json(msg="Given disk size at disk index [%s] is smaller than found (%d < %d)."
+                                                      " Reducing disks is not allowed." % (disk['disk_index'],
+                                                                                           disk['size'],
+                                                                                           disk_spec.device.capacityInKB))
+                        if disk['size'] != disk_spec.device.capacityInKB:
+                            disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+                            disk_spec.device.capacityInKB = disk['size']
+                            self.config_spec.deviceChange.append(disk_spec)
+                            disk_change = True
+                            results['disk_changes'][disk['disk_index']] = "Disk size increased."
+                        else:
+                            results['disk_changes'][disk['disk_index']] = "Disk already exists."
 
                 elif disk['state'] == 'absent':
                     # Disk already exists, deleting
@@ -469,7 +501,7 @@ class PyVmomiHelper(PyVmomi):
                             datastore_freespace = ds.summary.freeSpace
                     current_disk['datastore'] = datastore
 
-                if 'datastore' not in disk and 'autoselect_datastore' not in disk:
+                if 'datastore' not in disk and 'autoselect_datastore' not in disk and disk['type'] != 'raw':
                     self.module.fail_json(msg="Either 'datastore' or 'autoselect_datastore' is"
                                               " required parameter while creating disk for "
                                               "disk index [%s]." % disk_index)
@@ -530,8 +562,9 @@ class PyVmomiHelper(PyVmomi):
                                                                                     "', '".join(disk_units.keys())))
 
                 else:
-                    # No size found but disk, fail
-                    self.module.fail_json(msg="No size, size_kb, size_mb, size_gb or size_tb"
+                    if disk['type'] != 'raw':
+                        # No size found but disk and not raw device, fail
+                        self.module.fail_json(msg="No size, size_kb, size_mb, size_gb or size_tb"
                                               " attribute found into disk index [%s] configuration." % disk_index)
             # Check SCSI controller key
             if 'scsi_controller' in disk:
@@ -572,7 +605,7 @@ class PyVmomiHelper(PyVmomi):
 
             # Type of Disk
             disk_type = disk.get('type', 'thick').lower()
-            if disk_type not in ['thin', 'thick', 'eagerzeroedthick']:
+            if disk_type not in ['thin', 'thick', 'eagerzeroedthick', 'raw']:
                 self.module.fail_json(msg="Invalid 'disk_type' specified for disk index [%s]. Please specify"
                                           " 'disk_type' value from ['thin', 'thick', 'eagerzeroedthick']." % disk_index)
             current_disk['disk_type'] = disk_type
@@ -590,9 +623,25 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg="Invalid 'scsi_type' specified for disk index [%s]. Please specify"
                                           " 'scsi_type' value from ['%s']" % (disk_index,
                                                                               "', '".join(self.scsi_device_type.keys())))
+
             current_disk['scsi_type'] = scsi_contrl_type
 
-            disks_data.append(current_disk)
+            # Todo some useful checks
+            if disk.get('type') == 'raw':
+                compatibility_mode = disk.get('compatibility_mode', 'physicalMode')
+
+                if compatibility_mode not in ['physicalMode']:
+                    self.module.fail_json(msg="Invalid 'compatibility_mode' specified for disk index [%s]. Please specify"
+                                          "'compatibility_mode' value from ['physicalMode']." % disk_index)
+
+                    current_disk['disk_compatibility_mode'] = compatibility_mode
+
+                if 'raw_device' not in disk:
+                    self.module.fail_json(msg="raw_device needs to be defined when using disk type 'raw' for disk index [%s]" % disk_index)
+                else:
+                    current_disk['disk_raw_device'] = disk.get('raw_device')
+
+                disks_data.append(current_disk)
         return disks_data
 
     def get_recommended_datastore(self, datastore_cluster_obj):
@@ -650,21 +699,37 @@ class PyVmomiHelper(PyVmomi):
         disk_index = 0
         for disk in vm_obj.config.hardware.device:
             if isinstance(disk, vim.vm.device.VirtualDisk):
-                disks_facts[disk_index] = dict(
-                    key=disk.key,
-                    label=disk.deviceInfo.label,
-                    summary=disk.deviceInfo.summary,
-                    backing_filename=disk.backing.fileName,
-                    backing_datastore=disk.backing.datastore.name,
-                    backing_disk_mode=disk.backing.diskMode,
-                    backing_writethrough=disk.backing.writeThrough,
-                    backing_thinprovisioned=disk.backing.thinProvisioned,
-                    backing_eagerlyscrub=bool(disk.backing.eagerlyScrub),
-                    controller_key=disk.controllerKey,
-                    unit_number=disk.unitNumber,
-                    capacity_in_kb=disk.capacityInKB,
-                    capacity_in_bytes=disk.capacityInBytes,
-                )
+                if isinstance(disk.backing, vim.vm.device.VirtualDisk.RawDiskMappingVer1BackingInfo):
+                    disks_facts[disk_index] = dict(
+                        key=disk.key,
+                        label=disk.deviceInfo.label,
+                        summary=disk.deviceInfo.summary,
+                        backing_filename=disk.backing.fileName,
+                        backing_datastore=disk.backing.datastore.name,
+                        backing_disk_mode=disk.backing.diskMode,
+                        backing_compatibility_mode=disk.backing.compatibilityMode,
+                        controller_key=disk.controllerKey,
+                        unit_number=disk.unitNumber,
+                        capacity_in_kb=disk.capacityInKB,
+                        capacity_in_bytes=disk.capacityInBytes,
+
+                    )
+                else:
+                    disks_facts[disk_index] = dict(
+                        key=disk.key,
+                        label=disk.deviceInfo.label,
+                        summary=disk.deviceInfo.summary,
+                        backing_filename=disk.backing.fileName,
+                        backing_datastore=disk.backing.datastore.name,
+                        backing_disk_mode=disk.backing.diskMode,
+                        backing_writethrough=disk.backing.writeThrough,
+                        backing_thinprovisioned=disk.backing.thinProvisioned,
+                        backing_eagerlyscrub=bool(disk.backing.eagerlyScrub),
+                        controller_key=disk.controllerKey,
+                        unit_number=disk.unitNumber,
+                        capacity_in_kb=disk.capacityInKB,
+                        capacity_in_bytes=disk.capacityInBytes,
+                    )
                 disk_index += 1
         return disks_facts
 
