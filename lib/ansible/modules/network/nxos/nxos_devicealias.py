@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 module: nxos_devicealias
 extends_documentation_fragment: nxos
-version_added: 2.9
+version_added: 2.10
 short_description: Configuration of device alias.
 description:
     - Configuration of device alias for Cisco MDS NXOS.
@@ -43,6 +43,7 @@ options:
             pwwn:
                 description:
                     - pwwn to which the name needs to be associated with
+                type: str
             remove:
                 description:
                     - Removes the device-alias if set to True
@@ -65,8 +66,6 @@ options:
                 required:
                     True
                 type: str
-
-
 '''
 
 EXAMPLES = '''

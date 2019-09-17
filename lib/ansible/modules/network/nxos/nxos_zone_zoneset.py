@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 ---
 module: nxos_zone_zoneset
 extends_documentation_fragment: nxos
-version_added: 2.9
+version_added: 2.10
 short_description: Configuration of zone/zoneset.
 description:
     - Configuration of zone/zoneset for Cisco MDS NXOS.
@@ -30,6 +30,7 @@ options:
                     - vsan id
                 required:
                     True
+                type: int
             mode:
                 description:
                     - mode of the zone for the vsan
@@ -40,6 +41,7 @@ options:
                     - default zone behaviour for the vsan
                 choices: ['permit', 'deny']
                 default: 'deny'
+                type: str
             smart_zoning:
                 description:
                     - Removes the vsan if True
@@ -48,6 +50,7 @@ options:
             zone:
                 description:
                     - List of zone options for that vsan
+                type: list
                 suboptions:
                     name:
                         description:
@@ -70,6 +73,7 @@ options:
                                    - pwwn member of the zone, use alias 'device-alias' as option for device-alias member
                                 aliases: [device-alias]
                                 required: true
+                                type: str
                             remove:
                                 description:
                                     - Removes member from the zone if True
@@ -79,6 +83,7 @@ options:
                                 description:
                                     - devtype of the zone member used along with Smart zoning config
                                 choices: ['initiator', 'target', 'both']
+                                type: str
 
 
             zoneset:
@@ -101,6 +106,7 @@ options:
                             - activates/de-activates the zoneset
                         choices: ['activate', 'deactivate']
                         default: 'deactivate'
+                        type: str
                     members:
                         description:
                             - Members of the zoneset that needs to be removed or added
@@ -451,13 +457,13 @@ def main():
         name=dict(type='str', required=True),
         members=dict(type='list', elements='dict', options=zoneset_member_spec),
         remove=dict(type='bool', default=False),
-        action=dict(type='str', choices=['activate', 'deactivate'])
+        action=dict(type='str', choices=['activate', 'deactivate'],default='deactivate')
     )
 
     zonedetails_spec = dict(
         vsan=dict(required=True, type='int'),
-        mode=dict(type='str', choices=['enhanced', 'basic']),
-        default_zone=dict(type='str', choices=['permit', 'deny']),
+        mode=dict(type='str', choices=['enhanced', 'basic'],default='basic'),
+        default_zone=dict(type='str', choices=['permit', 'deny'],default='deny'),
         smart_zoning=dict(type='bool'),
         zone=dict(type='list', elements='dict', options=zone_spec),
         zoneset=dict(type='list', elements='dict', options=zoneset_spec),

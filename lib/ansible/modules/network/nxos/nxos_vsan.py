@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 module: nxos_vsan
 extends_documentation_fragment: nxos
-version_added: 2.9
+version_added: 2.10
 short_description: Configuration of vsan.
 description:
     - Configuration of vsan for Cisco MDS NXOS.
@@ -28,9 +28,11 @@ options:
                 description:
                     - Vsan id
                 required: True
+                type: int
             name:
                 description:
                     - Name of the vsan
+                type: str
             suspend:
                 description:
                     - suspend the vsan if True
