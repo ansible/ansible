@@ -176,6 +176,7 @@ options:
             - Redirect ip validation.
         default: no_use
         choices: ['no_use','true','false']
+        version_added: '2.10'
     reflect_client:
         description:
             - If the value is true, the local device functions as the route reflector and a peer functions
