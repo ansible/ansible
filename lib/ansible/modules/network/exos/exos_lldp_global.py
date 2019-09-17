@@ -39,7 +39,7 @@ DOCUMENTATION = """
 ---
 module: exos_lldp_global
 version_added: 2.9
-short_description: Configure and manage Link Layer Discovery Protocol(LLDP) attribures on EXOS platforms.
+short_description: Configure and manage Link Layer Discovery Protocol(LLDP) attributes on EXOS platforms.
 description: This module configures and manages the Link Layer Discovery Protocol(LLDP) attributes on Extreme Networks EXOS platforms.
 author: Ujwal Komarla (@ujwalkomarla)
 notes:

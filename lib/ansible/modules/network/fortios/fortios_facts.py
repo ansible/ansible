@@ -121,7 +121,7 @@ EXAMPLES = '''
       gather_subset:
         - fact: 'system_status_select'
 
-  - name: gather all pysical interfaces status facts
+  - name: gather all physical interfaces status facts
     fortios_facts:
       host:  "{{ host }}"
       username: "{{ username }}"
@@ -130,7 +130,7 @@ EXAMPLES = '''
       gather_subset:
         - fact: 'system_interface_select'
 
-  - name: gather gather all pysical and vlan interfaces status facts
+  - name: gather gather all physical and vlan interfaces status facts
     fortios_facts:
       host:  "{{ host }}"
       username: "{{ username }}"

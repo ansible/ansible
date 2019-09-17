@@ -58,7 +58,7 @@ options:
        - This set the hour of execution
   minute:
     description:
-       - This sets the minute of execution, used in conjuntion with hour
+       - This sets the minute of execution, used in conjunction with hour
   day:
     description:
        - This sets the day when execution will take place
