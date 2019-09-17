@@ -199,6 +199,8 @@ class CsCloudProvider(CloudProvider):
                 SECRET=credentials['secretkey'],
             )
 
+            display.sensitive.add(values['SECRET'])
+
         config = self._populate_config_template(config, values)
 
         self._write_config(config)
