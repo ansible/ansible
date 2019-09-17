@@ -122,6 +122,8 @@ class AzureCloudProvider(CloudProvider):
                 RESOURCE_GROUP_SECONDARY=response['resourceGroupNames'][1],
             )
 
+            display.sensitive.add(values['AZURE_SECRET'])
+
             config = '\n'.join('%s: %s' % (key, values[key]) for key in sorted(values))
 
         self._write_config(config)
@@ -141,6 +143,9 @@ class AzureCloudEnvironment(CloudEnvironment):
         :type cmd: list[str]
         """
         config = get_config(self.config_path)
+
+        display.sensitive.add(config.get('AZURE_SECRET'))
+        display.sensitive.add(config.get('AZURE_PASSWORD'))
 
         cmd.append('-e')
         cmd.append('resource_prefix=%s' % self.resource_prefix)
