@@ -176,7 +176,7 @@ options:
             - Redirect ip validation.
         default: no_use
         choices: ['no_use','true','false']
-        version_added: '2.10'
+        aliases: ['redirect_ip_vaildation']
     reflect_client:
         description:
             - If the value is true, the local device functions as the route reflector and a peer functions
@@ -2315,7 +2315,9 @@ def main():
         route_limit_idle_timeout=dict(type='str'),
         rt_updt_interval=dict(type='str'),
         redirect_ip=dict(type='str', default='no_use', choices=['no_use', 'true', 'false']),
-        redirect_ip_validation=dict(type='str', default='no_use', choices=['no_use', 'true', 'false']),
+        redirect_ip_validation=dict(
+            type='str', default='no_use',
+            choices=['no_use', 'true', 'false'], aliases=['redirect_ip_vaildation']),
         reflect_client=dict(type='str', default='no_use', choices=['no_use', 'true', 'false']),
         substitute_as_enable=dict(type='str', default='no_use', choices=['no_use', 'true', 'false']),
         import_rt_policy_name=dict(type='str'),
