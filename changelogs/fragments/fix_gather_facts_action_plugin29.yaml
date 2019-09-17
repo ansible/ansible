@@ -1,0 +1,2 @@
+bugfixes:
+- Fix loading network facts modules for smart gathering (https://github.com/ansible/ansible/pull/59856).
