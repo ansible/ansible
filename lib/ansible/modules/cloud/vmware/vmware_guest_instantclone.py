@@ -239,11 +239,6 @@ def main():
 
     result = {'failed': False, 'changed': False}
 
-    if module.params['folder']:
-        # FindByInventoryPath() does not require an absolute path
-        # so we should leave the input folder path unmodified
-        module.params['folder'] = module.params['folder'].rstrip('/')
-
     pyv = PyVmomiHelper(module)
     vm = pyv.get_vm()
 
