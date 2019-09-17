@@ -89,7 +89,6 @@ EXAMPLES = '''
         remove: true
     distribute: true
     mode: enhanced
-    provider: "{{ creds }}"
     rename:
       -
         new_name: bcd
@@ -266,7 +265,9 @@ def main():
         rename=dict(type='list', elements='dict', options=element_spec_rename)
     )
 
-    argument_spec.update(nxos_argument_spec)
+    #import pdb
+    #pdb.set_trace()
+    # argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

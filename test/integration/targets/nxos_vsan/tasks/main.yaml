@@ -1,7 +1,17 @@
 ---
-# Use block to ensure that both cli and nxapi tests
-# will run even if there are failures or errors.
-- block:
-  - { include: cli.yaml, tags: ['cli'] }
-  # always:
-  # - { include: nxapi.yaml, tags: ['nxapi'] }
+- name: Check platform type and skip if not MDS
+  nxos_command:
+    commands: show version | grep MDS
+  register: result
+ 
+- set_fact: skip_test=False
+- set_fact: skip_test=True
+  when: result.stdout[0] is not search('MDS')
+ 
+- include: cli.yaml
+  tags: 'cli'
+  when: not skip_test
+ 
+- include: nxapi.yaml
+  tags: 'nxapi'
+  when: not skip_test

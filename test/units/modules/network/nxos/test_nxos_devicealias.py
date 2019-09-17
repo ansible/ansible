@@ -48,7 +48,8 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_mode_1(self):
         # Playbook mode is basic
         # Switch has mode as enahnced
-        set_module_args(dict(mode='basic'))
+        ignore_provider_arg = True
+        set_module_args(dict(mode='basic'), ignore_provider_arg)
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['terminal dont-ask', 'no device-alias mode enhanced', 'device-alias commit', 'no terminal dont-ask'])

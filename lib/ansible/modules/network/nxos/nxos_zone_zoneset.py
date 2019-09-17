@@ -123,7 +123,6 @@ EXAMPLES = '''
 -
   name: "Test that zone/zoneset module works"
   nxos_zone_zoneset:
-    provider: "{{ creds }}"
     zone_zoneset_details:
       -
         mode: enhanced
