@@ -91,7 +91,6 @@ class Lldp_InterfacesFacts(object):
 
         if get_interface_type(intf) == 'unknown':
             return {}
-
         if intf.lower().startswith('gi'):
             config['name'] = normalize_interface(intf)
             receive = utils.parse_conf_arg(conf, 'Rx:')
