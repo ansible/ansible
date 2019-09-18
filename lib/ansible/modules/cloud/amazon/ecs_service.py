@@ -158,13 +158,13 @@ options:
           - Specifies whether to propagate the tags from the task definition or the service to the tasks in the service.
             This option requires botocore >= 1.12.46.
         required: false
-        version_added: 2.9
+        version_added: 2.10
         choices: ["SERVICE", "TASK_DEFINITION"]
     tags:
         description:
           - A dictionary of one or more tags to assign to the load balancer. This option requires botocore >= 1.12.46.
         required: false
-        version_added: 2.9
+        version_added: 2.10
 extends_documentation_fragment:
     - aws
     - ec2
@@ -660,7 +660,7 @@ def main():
                         loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
 
                 if update:
-                    # check various parameters and boto versions and give a helpful error if boto is not new enough for feature
+                    # check various parameters and boto versions and give a helpful error in boto is not new enough for feature
                     if module.params['scheduling_strategy']:
                         if not module.botocore_at_least('1.10.37'):
                             module.fail_json(msg='botocore needs to be version 1.10.37 or higher to use scheduling_strategy')
