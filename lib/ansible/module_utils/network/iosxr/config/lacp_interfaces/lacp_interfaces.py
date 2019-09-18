@@ -105,6 +105,9 @@ class Lacp_interfaces(ConfigBase):
         commands = []
         state = self._module.params['state']
 
+        if state in ('overridden', 'merged', 'replaced') and not want:
+            self._module.fail_json(msg='value of config parameter must not be empty for state {0}'.format(state))
+
         if state == 'overridden':
             commands.extend(
                 Lacp_interfaces._state_overridden(
