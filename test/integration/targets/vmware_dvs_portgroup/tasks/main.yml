@@ -206,3 +206,42 @@
     that:
         - not dvs_pg_result_0009.changed
         - "'vlan_id range 1-4096 specified is incorrect. The valid vlan_id range is from 0 to 4094.' == '{{ dvs_pg_result_0009.msg }}'"
+
+- name: Change VLAN on basic VLAN portgroup
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    switch_name: "{{ dvswitch1 }}"
+    portgroup_name: "basic-vlan10"
+    vlan_id: 20
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+  register: dvs_pg_result_0010
+
+- name: ensure dvs portgroup is changed
+  assert:
+    that:
+        - dvs_pg_result_0010.changed
+
+- name: Change VLAN range on basic trunk portgroup
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    switch_name: "{{ dvswitch1 }}"
+    portgroup_name: "basic-trunk"
+    vlan_id: 1000-2000
+    vlan_trunk: True
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+  register: dvs_pg_result_0011
+
+- name: ensure dvs portgroup is changed
+  assert:
+    that:
+        - dvs_pg_result_0011.changed
