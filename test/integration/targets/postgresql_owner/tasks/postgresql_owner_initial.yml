@@ -90,6 +90,29 @@
     query: "CREATE MATERIALIZED VIEW test_mat_view AS SELECT * FROM my_table"
   when: postgres_version_resp.stdout is version('9.4', '>=')
 
+# Create test tablespace:
+- name: postgresql_owner - drop dir for test tablespace
+  become: yes
+  file:
+    path: "{{ test_tablespace_path }}"
+    state: absent
+  ignore_errors: yes
+
+- name: postgresql_owner - disable selinux
+  become: yes
+  shell: setenforce 0
+  ignore_errors: yes
+
+- name: postgresql_owner - create dir for test tablespace
+  become: yes
+  file:
+    path: "{{ test_tablespace_path }}"
+    state: directory
+    owner: "{{ pg_user }}"
+    group: "{{ pg_user }}"
+    mode: 0700
+  ignore_errors: yes
+
 # Create test tablespace
 - name: postgresql_owner - create a new tablespace called acme and set bob as an its owner
   become_user: "{{ pg_user }}"
@@ -99,7 +122,7 @@
     login_user: "{{ pg_user }}"
     name: acme
     owner: alice
-    location: /ssd
+    location: "{{ test_tablespace_path }}"
 
 ################
 # Do main tests:
