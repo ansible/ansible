@@ -102,7 +102,7 @@ EXAMPLES = """
   hcloud_floating_ip:
     name: my-floating-ip
     server: 1234
-    force_assign: yes
+    force: yes
     state: present
 - name: Floating IP should be absent
   hcloud_floating_ip:
