@@ -350,12 +350,10 @@ class JinjaPluginIntercept(MutableMapping):
 
             for f in iteritems(method_map()):
                 fq_name = '.'.join((parent_prefix, f[0]))
+                # FIXME: detect/warn on intra-collection function name collisions
                 self._collection_jinja_func_cache[fq_name] = f[1]
 
-            function_impl = self._collection_jinja_func_cache[key]
-
-        # FIXME: detect/warn on intra-collection function name collisions
-
+        function_impl = self._collection_jinja_func_cache[key]
         return function_impl
 
     def __setitem__(self, key, value):
