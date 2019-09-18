@@ -667,32 +667,36 @@ nodes inside the "test" environment when you actually wanted to update
 some "staging" servers.
 
 For the example mentioned above you could have an
-:file:`inventory_test` file::
+:file:`inventory_test` file:
 
-  [database-servers]
+.. code-block:: ini
+
+  [dbservers]
   db01.test.example.com
   db02.test.example.com
 
-  [app-servers]
+  [appservers]
   app01.test.example.com
   app02.test.example.com
   app03.test.example.com
 
 That file only includes hosts that are part of the "test"
 environment. Define the "staging" machines in another file
-called :file:`inventory_staging`::
+called :file:`inventory_staging`:
 
-  [database-servers]
+.. code-block:: ini
+
+  [dbservers]
   db01.staging.example.com
   db02.staging.example.com
 
-  [app-servers]
+  [appservers]
   app01.staging.example.com
   app02.staging.example.com
   app03.staging.example.com
 
 To apply a playbook called :file:`site.yml`
-to all the app-servers in the test environment, use the
+to all the app servers in the test environment, use the
 following command::
 
   ansible-playbook -i inventory_test site.yml -l app-servers
@@ -705,9 +709,11 @@ Example: Group by function
 In the previous section you already saw an example for using groups in
 order to cluster hosts that have the same function. This allows you,
 for instance, to define firewall rules inside a playbook or role
-without affecting database servers::
+without affecting database servers:
 
-  - hosts: database-servers
+.. code-block:: yaml
+
+  - hosts: dbservers
     tasks:
     - name: allow access from 10.0.0.1
       iptables:
@@ -722,7 +728,9 @@ Example: Group by location
 
 Other tasks might be focused on where a certain host is located. Let's
 say that ``db01.test.example.com`` and ``app01.test.example.com`` are
-located in DC1 while ``db02.test.example.com`` is in DC2::
+located in DC1 while ``db02.test.example.com`` is in DC2:
+
+.. code-block:: ini
 
   [dc1]
   db01.test.example.com
