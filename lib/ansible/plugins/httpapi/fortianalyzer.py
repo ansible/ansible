@@ -30,8 +30,6 @@ short_description: HttpApi Plugin for Fortinet FortiAnalyzer Appliance or VM
 description:
   - This HttpApi plugin provides methods to connect to Fortinet FortiAnalyzer Appliance or VM via JSON RPC API.
 version_added: "2.8"
-v
-
 """
 
 import json
