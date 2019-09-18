@@ -113,7 +113,7 @@ class Lldp_interfaces(ConfigBase):
         if state in ('merged', 'replaced', 'overridden') and not want:
             self._module.fail_json(msg='config is required for state {0}'.format(state))
         if state == 'overridden':
-            commands.extend(self._state_overridden(want=want, have=have))
+            self._module.fail_json(msg='value of config parameter must not be empty for state {0}'.format(state))
         elif state == 'deleted':
             if want:
                 for item in want:
