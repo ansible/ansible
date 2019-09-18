@@ -374,8 +374,14 @@ def main():
     Main entry point for module execution
     :returns: the result form module invocation
     """
+    required_if = [('state', 'merged', ('config',)),
+                   ('state', 'replaced', ('config',)),
+                   ('state', 'overridden', ('config',))]
+
     module = AnsibleModule(argument_spec=Lag_interfacesArgs.argument_spec,
+                           required_if=required_if,
                            supports_check_mode=True)
+
     result = Lag_interfaces(module).execute_module()
     module.exit_json(**result)
 
