@@ -221,6 +221,7 @@ class OnyxNTPModule(BaseOnyxModule):
                                                   .format(req_ntp_auth_key.get('auth_key_id'),
                                                           req_ntp_auth_key.get('auth_key_encrypt_type'),
                                                           req_ntp_auth_key.get('auth_key_password')))
+
         if self._required_config.get('trusted_keys'):
             req_trusted_keys = self._required_config.get('trusted_keys')
             if req_trusted_keys:
