@@ -158,13 +158,13 @@ options:
           - Specifies whether to propagate the tags from the task definition or the service to the tasks in the service.
             This option requires botocore >= 1.12.46.
         required: false
-        version_added: 2.10
+        version_added: "2.10"
         choices: ["SERVICE", "TASK_DEFINITION"]
     tags:
         description:
           - A dictionary of one or more tags to assign to the load balancer. This option requires botocore >= 1.12.46.
         required: false
-        version_added: 2.10
+        version_added: "2.10"
 extends_documentation_fragment:
     - aws
     - ec2
