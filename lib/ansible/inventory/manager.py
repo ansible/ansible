@@ -110,7 +110,6 @@ def split_host_pattern(pattern):
     # comma-separated list of patterns.
     if u',' in pattern:
         patterns = pattern.split(u',')
-        patterns = [p.strip() for p in patterns]
 
     # If it doesn't, it could still be a single pattern. This accounts for
     # non-separator uses of colons: IPv6 addresses and [x:y] host ranges.
@@ -130,7 +129,8 @@ def split_host_pattern(pattern):
                     )+              # occurring once or more
                 '''), pattern, re.X
             )
-    return [p for p in patterns if p]
+
+    return [p.strip() for p in patterns if p.strip()]
 
 
 class InventoryManager(object):
