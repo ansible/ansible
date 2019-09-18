@@ -295,7 +295,10 @@ def main():
 
     service_mgr = CloudFormationServiceManager(module)
 
-    result = {'ansible_facts': {'cloudformation': {}}}
+    if is_old_facts:
+        result = {'ansible_facts': {'cloudformation': {}}}
+    else:
+        result = {'cloudformation': {}}
 
     for stack_description in service_mgr.describe_stacks(module.params.get('stack_name')):
         facts = {'stack_description': stack_description}
