@@ -679,7 +679,7 @@ For the example mentioned above you could have an
   app03.test.example.com
 
 That file only includes hosts that are part of the "test"
-environment. "Staging" machines would be defined in another file
+environment. Define the "staging" machines in another file
 called :file:`inventory_staging`::
 
   [database-servers]
