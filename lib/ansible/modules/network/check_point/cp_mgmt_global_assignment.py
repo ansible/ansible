@@ -35,6 +35,10 @@ description:
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
+  uid:
+    description:
+      - Object unique identifier.
+    type: str
   dependent_domain:
     description:
       - N/A
@@ -110,6 +114,7 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 
 def main():
     argument_spec = dict(
+        uid=dict(type='str'),
         dependent_domain=dict(type='str'),
         global_access_policy=dict(type='str'),
         global_domain=dict(type='str'),
