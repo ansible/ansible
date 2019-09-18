@@ -678,7 +678,7 @@ For the example mentioned above you could have an
   app02.test.example.com
   app03.test.example.com
 
-In there are only host that are part of the "test"
+That file only includes hosts that are part of the "test"
 environment. "Staging" machines would be defined in another file
 called :file:`inventory_staging`::
 
