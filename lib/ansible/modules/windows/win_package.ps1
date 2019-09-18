@@ -137,7 +137,7 @@ Function Test-RegistryProperty($path, $name) {
     # will validate if the registry key contains the property, returns true
     # if the property exists and false if the property does not
     try {
-        $value = (Get-Item -Path $path).GetValue($name)
+        $value = (Get-Item -LiteralPath $path).GetValue($name)
         # need to do it this way return ($null -eq $value) does not work
         if ($null -eq $value) {
             return $false
@@ -230,9 +230,9 @@ Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credenti
     if ($null -ne $metadata.product_id) {
         $uninstall_key = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$($metadata.product_id)"
         $uninstall_key_wow64 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$($metadata.product_id)"
-        if (Test-Path -Path $uninstall_key) {
+        if (Test-Path -LiteralPath $uninstall_key) {
             $metadata.installed = $true
-        } elseif (Test-Path -Path $uninstall_key_wow64) {
+        } elseif (Test-Path -LiteralPath $uninstall_key_wow64) {
             $metadata.installed = $true
             $uninstall_key = $uninstall_key_wow64
         }
@@ -250,11 +250,11 @@ Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credenti
 
     # use the creates_* to determine if the program is installed
     if ($null -ne $creates_path) {
-        $path_exists = Test-Path -Path $creates_path
+        $path_exists = Test-Path -LiteralPath $creates_path
         $metadata.installed = $path_exists
 
         if ($null -ne $creates_version -and $path_exists -eq $true) {
-            if (Test-Path -Path $creates_path -PathType Leaf) {
+            if (Test-Path -LiteralPath $creates_path -PathType Leaf) {
                 $existing_version = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($creates_path).FileVersion
                 $version_matched = $creates_version -eq $existing_version
                 $metadata.installed = $version_matched
@@ -363,7 +363,7 @@ if ($state -eq "absent") {
                     Fail-Json -obj $result -message "failed to run uninstall process ($($command_args['command'])): $($_.Exception.Message)"
                 }
 
-                if (($null -ne $log_path) -and (Test-Path -Path $log_path)) {
+                if (($null -ne $log_path) -and (Test-Path -LiteralPath $log_path)) {
                     $log_content = Get-Content -Path $log_path | Out-String
                 } else {
                     $log_content = $null
@@ -388,7 +388,7 @@ if ($state -eq "absent") {
         } finally {
             # make sure we cleanup any remaining artifacts
             foreach ($cleanup_artifact in $cleanup_artifacts) {
-                if (Test-Path -Path $cleanup_artifact) {
+                if (Test-Path -LiteralPath $cleanup_artifact) {
                     Remove-Item -Path $cleanup_artifact -Recurse -Force -WhatIf:$check_mode
                 }
             }
@@ -451,7 +451,7 @@ if ($state -eq "absent") {
                     Fail-Json -obj $result -message "failed to run install process ($($command_args['command'])): $($_.Exception.Message)"
                 }
 
-                if (($null -ne $log_path) -and (Test-Path -Path $log_path)) {
+                if (($null -ne $log_path) -and (Test-Path -LiteralPath $log_path)) {
                     $log_content = Get-Content -Path $log_path | Out-String
                 } else {
                     $log_content = $null
@@ -476,7 +476,7 @@ if ($state -eq "absent") {
         } finally {
             # make sure we cleanup any remaining artifacts
             foreach ($cleanup_artifact in $cleanup_artifacts) {
-                if (Test-Path -Path $cleanup_artifact) {
+                if (Test-Path -LiteralPath $cleanup_artifact) {
                     Remove-Item -Path $cleanup_artifact -Recurse -Force -WhatIf:$check_mode
                 }
             }
