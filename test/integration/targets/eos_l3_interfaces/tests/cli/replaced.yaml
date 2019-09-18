@@ -46,3 +46,16 @@
 - assert:
     that:
       - "ansible_facts.network_resources.l3_interfaces|symmetric_difference(expected_config) == []"
+
+- name: Ensure empty config does not traceback
+  eos_interfaces:
+    config:
+    state: replaced
+  become: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == True"
+      - "result.msg == 'config is required for state replaced'"

@@ -32,3 +32,16 @@
 - assert:
     that:
       - "config|symmetric_difference(ansible_facts.network_resources.lldp_interfaces) == []"
+
+- name: Ensure empty config does not traceback
+  eos_interfaces:
+    config:
+    state: overridden
+  become: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == True"
+      - "result.msg == 'config is required for state overridden'"

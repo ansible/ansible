@@ -51,3 +51,16 @@
 - assert:
     that:
       - "expected_config|difference(ansible_facts.network_resources.interfaces)|length == 0"
+
+- name: Ensure empty config does not traceback
+  eos_interfaces:
+    config:
+    state: merged
+  become: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == True"
+      - "result.msg == 'config is required for state merged'"
