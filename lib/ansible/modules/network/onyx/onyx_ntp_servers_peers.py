@@ -13,13 +13,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: onyx_ntp_servers_peers
-version_added: '2.9'
-author: Sara Touqan
+version_added: "2.10"
+author: "Sara-Touqan (@sarato)"
 short_description: Configures NTP peers and servers parameters
 description:
   - This module provides declarative management of NTP peers and servers configuration on Mellanox ONYX network devices.
 options:
   peers:
+    type: list
     description:
       - List of ntp peers.
     suboptions:
@@ -27,23 +28,28 @@ options:
         description:
           - Configures ntp peer name or ip.
         required: true
+        type: str
       state_enabled:
         description:
           - Disables/Enables ntp peer state
         choices: ['yes','no']
+        type: str
       version:
         description:
           - version number for the ntp peer
         choices: ['3','4']
+        type: int
       key_id:
         description:
           - Used to configure the key-id for the ntp peer
+        type: int
       delete:
         description:
           - Used to decide if you want to delete the given ntp peer or not.
         choices: ['yes','no']
-        default: 'no'
+        type: str
   servers:
+    type: list
     description:
       - List of ntp servers.
     suboptions:
@@ -51,29 +57,35 @@ options:
         description:
           - Configures ntp server name or ip.
         required: true
+        type: str
       state_enabled:
         description:
           - Disables/Enables ntp server
         choices: ['yes','no']
+        type: str
       trusted_enable:
         description:
           - Disables/Enables the trusted state for the ntp server.
         choices: ['yes','no']
+        type: str
       version:
         description:
           - version number for the ntp server
         choices: ['3','4']
+        type: int
       key_id:
         description:
           - Used to configure the key-id for the ntp server
+        type: int
       delete:
         description:
           - Used to decide if you want to delete the given ntp server or not.
         choices: ['yes','no']
-        default: 'no'
+        type: str
   ntpdate:
     description:
       - Sets system clock once from a remote server using NTP.
+    type: str
 """
 
 EXAMPLES = """
