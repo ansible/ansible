@@ -1,0 +1,2 @@
+bugfixes:
+- ce_vxlan_arp - update to fix some bugs - Modifying regular expressions. (https://github.com/ansible/ansible/pull/61995)
