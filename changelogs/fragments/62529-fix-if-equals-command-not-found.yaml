@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "fix if equals error code command is not found(https://github.com/ansible/ansible/pull/62529)"
