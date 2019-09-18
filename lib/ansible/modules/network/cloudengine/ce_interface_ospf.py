@@ -474,7 +474,7 @@ class InterfaceOSPF(object):
 
         # interface view
         self.updates_cmd.append("interface %s" % self.interface)
-        self.updates_cmd.append("ospf enable process %s area %s" % (
+        self.updates_cmd.append("ospf enable %s area %s" % (
             self.process_id, self.get_area_ip()))
         if self.cost:
             xml_intf += CE_NC_XML_SET_COST % self.cost
