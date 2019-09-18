@@ -80,6 +80,14 @@ options:
         type: bool
         default: no
         version_added: "2.3"
+    hide_status:
+        description:
+            - Do not return C(status). This makes the default output from the module less verbose.
+        type: bool
+        default: no
+        version_added: '2.10'
+        aliases:
+            - quiet_output
 notes:
     - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', ('daemon_reexec' since 2.8),
       and all except 'daemon_reload' (and 'daemon_reexec' since 2.8) also require 'name'.
@@ -334,6 +342,7 @@ def main():
             user=dict(type='bool'),
             scope=dict(type='str', choices=['system', 'user', 'global']),
             no_block=dict(type='bool', default=False),
+            hide_status=dict(type='bool', default=False, aliases=['quiet_output']),
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled', 'masked', 'daemon_reload', 'daemon_reexec']],
@@ -524,6 +533,9 @@ def main():
             else:
                 # this should not happen?
                 module.fail_json(msg="Service is in unknown state", status=result['status'])
+
+    if module.params['hide_status']:
+        result.pop('status')
 
     module.exit_json(**result)
 

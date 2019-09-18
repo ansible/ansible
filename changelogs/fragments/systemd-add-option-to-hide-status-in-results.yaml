@@ -1,0 +1,2 @@
+minor_changes:
+  - systemd - add ``hide_status`` option to hide service status in default results
