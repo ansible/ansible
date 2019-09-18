@@ -235,6 +235,7 @@ class CronTab(object):
         self.lines = None
         self.ansible = "#Ansible: "
         self.existing = ''
+        self.cron_cmd = self.module.get_bin_path('crontab', required=True)
 
         if cron_file:
             if os.path.isabs(cron_file):
@@ -509,30 +510,29 @@ class CronTab(object):
         Returns the command line for reading a crontab
         """
         user = ''
-        cron_cmd = self.module.get_bin_path('crontab', required=True)
         if self.user:
             if platform.system() == 'SunOS':
-                return "su %s -c '%s -l'" % (shlex_quote(self.user), shlex_quote(cron_cmd))
+                return "su %s -c '%s -l'" % (shlex_quote(self.user), shlex_quote(self.cron_cmd))
             elif platform.system() == 'AIX':
-                return "%s -l %s" % (shlex_quote(cron_cmd), shlex_quote(self.user))
+                return "%s -l %s" % (shlex_quote(self.cron_cmd), shlex_quote(self.user))
             elif platform.system() == 'HP-UX':
-                return "%s %s %s" % (cron_cmd, '-l', shlex_quote(self.user))
+                return "%s %s %s" % (self.cron_cmd, '-l', shlex_quote(self.user))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % shlex_quote(self.user)
-        return "%s %s %s" % (cron_cmd, user, '-l')
+        return "%s %s %s" % (self.cron_cmd, user, '-l')
 
     def _write_execute(self, path):
         """
         Return the command line for writing a crontab
         """
-        cron_cmd = self.module.get_bin_path('crontab', required=True)
         user = ''
         if self.user:
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
-                return "chown %s %s ; su '%s' -c '%s %s'" % (shlex_quote(self.user), shlex_quote(path), shlex_quote(self.user), cron_cmd, shlex_quote(path))
+                return "chown %s %s ; su '%s' -c '%s %s'" % (
+                    shlex_quote(self.user), shlex_quote(path), shlex_quote(self.user), self.cron_cmd, shlex_quote(path))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % shlex_quote(self.user)
-        return "%s %s %s" % (cron_cmd, user, shlex_quote(path))
+        return "%s %s %s" % (self.cron_cmd, user, shlex_quote(path))
 
 
 def main():
