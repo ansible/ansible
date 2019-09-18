@@ -519,7 +519,7 @@ def get_collection_name_from_path(path):
             # strip off the common prefix (handle weird testing cases of nested collection roots, eg)
             collection_remnant = n_path[len(coll_path):]
             # commonprefix may include the trailing /, prepend to the remnant if necessary (eg trailing / on root)
-            if collection_remnant[0] != '/':
+            if collection_remnant and collection_remnant[0] != '/':
                 collection_remnant = '/' + collection_remnant
             # the path lives under this collection root, see if it maps to a collection
             found_collection = _N_COLLECTION_PATH_RE.search(collection_remnant)
