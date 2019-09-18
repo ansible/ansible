@@ -186,7 +186,7 @@ def api_call(module, api_call_object):
     payload = get_payload_from_parameters(module.params)
     connection = Connection(module._socket_path)
 
-    result = {'changed': False, 'checkpoint_session_uid': connection.get_session_uid()}
+    result = {'changed': False}
     if module.check_mode:
         return result
 
@@ -195,6 +195,8 @@ def api_call(module, api_call_object):
 
     payload_for_equals = {'type': api_call_object, 'params': payload}
     equals_code, equals_response = send_request(connection, version, 'equals', payload_for_equals)
+
+    result['checkpoint_session_uid'] = connection.get_session_uid()
 
     # if code is 400 (bad request) or 500 (internal error) - fail
     if equals_code == 400 or equals_code == 500:
@@ -343,7 +345,7 @@ def api_call_for_rule(module, api_call_object):
     payload = get_payload_from_parameters(module.params)
     connection = Connection(module._socket_path)
 
-    result = {'changed': False, 'checkpoint_session_uid': connection.get_session_uid()}
+    result = {'changed': False}
     if module.check_mode:
         return result
 
@@ -356,6 +358,9 @@ def api_call_for_rule(module, api_call_object):
         copy_payload_without_some_params = get_copy_payload_without_some_params(payload, ['position'])
     payload_for_equals = {'type': api_call_object, 'params': copy_payload_without_some_params}
     equals_code, equals_response = send_request(connection, version, 'equals', payload_for_equals)
+
+    result['checkpoint_session_uid'] = connection.get_session_uid()
+
     # if code is 400 (bad request) or 500 (internal error) - fail
     if equals_code == 400 or equals_code == 500:
         module.fail_json(msg=equals_response)
