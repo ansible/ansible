@@ -74,4 +74,3 @@ class TestOnyxNTP(TestOnyxModule):
         set_module_args(dict(trusted_keys='22'))
         commands = ['ntp trusted-key 22']
         self.execute_module(changed=True, commands=commands)
-

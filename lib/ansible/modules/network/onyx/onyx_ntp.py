@@ -13,8 +13,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: onyx_ntp
-version_added: "2.9"
-author: "Sara Touqan"
+version_added: "2.10"
+author: "Sara-Touqan (@sarato)"
 short_description: Manage NTP general configurations and ntp keys configurations on Mellanox ONYX network devices
 description:
   - This module provides declarative management of NTP & NTP Keys
@@ -24,12 +24,14 @@ options:
     description:
       - State of the NTP configuration.
     choices: ['enabled', 'disabled']
+    type: str
   authenticate_state:
     description:
       - State of the NTP authentication configuration.
-    default: enabled
     choices: ['enabled', 'disabled']
+    type: str
   ntp_authentication_keys:
+    type: list
     description:
       - List of ntp authentication keys
     suboptions:
@@ -37,10 +39,13 @@ options:
         description:
           - Configures ntp key-id, range 1-65534
         required: true
+        type: int
       auth_key_encrypt_type:
         description:
           - encryption type used to configure ntp authentication key.
         required: true
+        choices: ['md5', 'sha1']
+        type: str
       auth_key_password:
         description:
           - password used for ntp authentication key.
@@ -48,9 +53,11 @@ options:
       auth_key_delete:
          description:
              - Used to decide if you want to delete given ntp key or not
-         default: no
+         default: 'no'
          choices: ['yes', 'no']
+         type: str
   trusted_keys:
+    type: list
     description:
       - List of ntp trusted keys
 """
@@ -97,7 +104,7 @@ class OnyxNTPModule(BaseOnyxModule):
         """
         ntp_authentication_key_spec = dict(auth_key_id=dict(type='int', required=True),
                                            auth_key_encrypt_type=dict(required=True, choices=['md5', 'sha1']),
-                                           auth_key_password=dict(type='int', required=True),
+                                           auth_key_password=dict(required=True),
                                            auth_key_delete=dict(default='no', choices=['yes', 'no']))
         element_spec = dict(
             state=dict(choices=['enabled', 'disabled']),
