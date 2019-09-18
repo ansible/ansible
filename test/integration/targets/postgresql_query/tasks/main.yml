@@ -1,0 +1,2 @@
+# Initial CI tests of postgresql_query module
+- import_tasks: postgresql_query_initial.yml
