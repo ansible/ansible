@@ -60,6 +60,6 @@
 
 - assert:
     that:
-      - result is search('Playbook parameters <remote_scp_server>, <remote_scp_server_user>, ,remote_scp_server_password> must all be set together')
+      - result is search('Playbook parameters <remote_scp_server>, <remote_scp_server_user> must be set together')
 
 - debug: msg="END nxos_file_copy input_validation test"
