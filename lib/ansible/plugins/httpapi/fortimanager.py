@@ -17,6 +17,7 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -92,7 +93,7 @@ class HttpApi(HttpApiBase):
         """
         self._logged_in_user = username
         self.send_request(FMGRMethods.EXEC, self._tools.format_request(FMGRMethods.EXEC, "sys/login/user",
-                                                                       passwd=password, user=username,))
+                                                                       passwd=password, user=username, ))
 
         if "FortiManager object connected to FortiManager" in self.__str__():
             # If Login worked, then inspect the FortiManager for Workspace Mode, and it's system information.
@@ -411,7 +412,7 @@ class HttpApi(HttpApiBase):
                 self._module.fail_json(msg=("An error occurred trying to get the ADOM Info. Error: " + str(resp_obj)))
             elif code == 0:
                 num_of_adoms = len(resp_obj[1])
-                append_list = ['root',]
+                append_list = ['root', ]
                 for adom in resp_obj[1]:
                     if adom["tab_status"] != "":
                         append_list.append(str(adom["name"]))
@@ -445,7 +446,6 @@ class HttpApi(HttpApiBase):
         except BaseException as err:
             raise FMGBaseException(msg=("An error occurred while trying to get the locked adom list. Error: "
                                         + str(err)))
-
 
     ################################
     # END DATABASE LOCK CONTEXT CODE
