@@ -108,8 +108,6 @@ import tempfile
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import shlex_quote
 
-CRONCMD = "/usr/bin/crontab"
-
 
 class CronVarError(Exception):
     pass
@@ -292,30 +290,32 @@ class CronVar(object):
         """
         Returns the command line for reading a crontab
         """
+        cron_cmd = self.module.get_bin_path('crontab', required=True)
         user = ''
 
         if self.user:
             if platform.system() == 'SunOS':
-                return "su %s -c '%s -l'" % (shlex_quote(self.user), shlex_quote(CRONCMD))
+                return "su %s -c '%s -l'" % (shlex_quote(self.user), shlex_quote(cron_cmd))
             elif platform.system() == 'AIX':
-                return "%s -l %s" % (shlex_quote(CRONCMD), shlex_quote(self.user))
+                return "%s -l %s" % (shlex_quote(cron_cmd), shlex_quote(self.user))
             elif platform.system() == 'HP-UX':
-                return "%s %s %s" % (CRONCMD, '-l', shlex_quote(self.user))
+                return "%s %s %s" % (cron_cmd, '-l', shlex_quote(self.user))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % shlex_quote(self.user)
-        return "%s %s %s" % (CRONCMD, user, '-l')
+        return "%s %s %s" % (cron_cmd, user, '-l')
 
     def _write_execute(self, path):
         """
         Return the command line for writing a crontab
         """
+        cron_cmd = self.module.get_bin_path('crontab', required=True)
         user = ''
         if self.user:
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
-                return "chown %s %s ; su '%s' -c '%s %s'" % (shlex_quote(self.user), shlex_quote(path), shlex_quote(self.user), CRONCMD, shlex_quote(path))
+                return "chown %s %s ; su '%s' -c '%s %s'" % (shlex_quote(self.user), shlex_quote(path), shlex_quote(self.user), cron_cmd, shlex_quote(path))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % shlex_quote(self.user)
-        return "%s %s %s" % (CRONCMD, user, shlex_quote(path))
+        return "%s %s %s" % (cron_cmd, user, shlex_quote(path))
 
 
 # ==================================================
