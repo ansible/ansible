@@ -167,14 +167,23 @@ updates:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import load_config, ce_argument_spec
-from ansible.module_utils.network.cloudengine.ce import get_config as get_cli_config
+from ansible.module_utils.network.cloudengine.ce import exec_command, load_config, ce_argument_spec
 
 
 def get_config(module, flags):
 
-    cfg = get_cli_config(module, flags)
-    config = cfg.strip() if cfg else ""
+    """Retrieves the current config from the device or cache"""
+
+    flags = [] if flags is None else flags
+
+    cmd = 'display current-configuration '
+    cmd += ' '.join(flags)
+    cmd = cmd.strip()
+
+    rc, out, err = exec_command(module, cmd)
+    if rc != 0:
+        module.fail_json(msg=err)
+    config = str(out).strip()
     if config.startswith("display"):
         configs = config.split("\n")
         if len(configs) > 1:
