@@ -1119,8 +1119,6 @@ class NxosCmdRef:
 
             # Multiple Instances:
             if isinstance(existing, dict) and multiple:
-                item_found = False
-
                 for ekey, evalue in existing.items():
                     if isinstance(evalue, dict):
                         # Remove values set to string 'None' from dvalue
