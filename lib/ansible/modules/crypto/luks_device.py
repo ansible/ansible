@@ -132,8 +132,7 @@ requirements:
     - "lsblk"
     - "blkid (when I(label) or I(uuid) options are used)"
 
-author:
-    "Jan Pokorny (@japokorn)"
+author: Jan Pokorny (@japokorn)
 '''
 
 EXAMPLES = '''
