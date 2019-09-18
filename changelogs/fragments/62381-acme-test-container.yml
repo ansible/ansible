@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-test - Bump version of ACME test container to 1.8.0. Fixes a typo in the API and adds a newer Pebble version."
