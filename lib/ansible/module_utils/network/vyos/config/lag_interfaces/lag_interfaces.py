@@ -107,6 +107,8 @@ class Lag_interfaces(ConfigBase):
         """
         commands = []
         state = self._module.params['state']
+        if state in ('merged', 'replaced', 'overridden') and not want:
+            self._module.fail_json(msg='config is required for state {0}'.format(state))
         if state == 'overridden':
             commands.extend(self._state_overridden(want, have))
         elif state == 'deleted':

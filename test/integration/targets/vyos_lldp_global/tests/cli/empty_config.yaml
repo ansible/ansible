@@ -1,0 +1,25 @@
+---
+- debug:
+      msg: "START vyos_lldp_global empty_config integration tests on connection={{ ansible_connection }}"
+
+- name: Merged with empty config should give appropriate error message
+  vyos_lldp_global:
+    config:
+    state: merged
+  register: result
+  ignore_errors: True
+
+- assert:
+    that:
+      - result.msg == 'config is required for state merged'
+
+- name: Replaced with empty config should give appropriate error message
+  vyos_lldp_global:
+    config:
+    state: replaced
+  register: result
+  ignore_errors: True
+
+- assert:
+    that:
+      - result.msg == 'config is required for state replaced'
