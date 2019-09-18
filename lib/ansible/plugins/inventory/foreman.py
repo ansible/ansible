@@ -17,6 +17,7 @@ DOCUMENTATION = '''
         - "Uses a configuration file as an inventory source, it must end in ``.foreman.yml`` or ``.foreman.yaml`` and has a ``plugin: foreman`` entry."
     extends_documentation_fragment:
         - inventory_cache
+        - constructed
     options:
       plugin:
         description: the name of this plugin, it should always be set to 'foreman' for this plugin to recognize it as it's own.
@@ -74,7 +75,9 @@ from distutils.version import LooseVersion
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping
-from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name
+from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name, Constructable
+from ansible.utils.vars import combine_vars
+from ansible.inventory.helpers import get_group_vars
 
 # 3rd party imports
 try:
@@ -87,7 +90,7 @@ except ImportError:
 from requests.auth import HTTPBasicAuth
 
 
-class InventoryModule(BaseInventoryPlugin, Cacheable):
+class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
     ''' Host inventory parser for ansible using foreman as source. '''
 
     NAME = 'foreman'
@@ -229,6 +232,12 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 # set host vars from facts
                 if self.get_option('want_facts'):
                     self.inventory.set_variable(host['name'], 'ansible_facts', self._get_facts(host))
+
+                hostvars = combine_vars(get_group_vars(self.inventory.hosts[host['name']].get_groups()), self.inventory.hosts[host['name']].get_vars())
+                self._set_composite_vars(self.get_option('compose'), hostvars, host['name'], strict=True)
+                self._add_host_to_composed_groups(self.get_option('groups'), dict(), host['name'], strict=True)
+                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), dict(), host['name'], strict=True)
+
 
     def parse(self, inventory, loader, path, cache=True):
 
