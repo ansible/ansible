@@ -41,12 +41,12 @@ notes:
        the I(register) keyword to use it."
 options:
     max:
-      description:
-        - "The maximum number of results to return."
+        description:
+            - "The maximum number of results to return."
         type: int
     name:
-      description:
-        - "Name of vnic profile."
+        description:
+            - "Name of vnic profile."
         type: str
 extends_documentation_fragment: ovirt_info
 '''
