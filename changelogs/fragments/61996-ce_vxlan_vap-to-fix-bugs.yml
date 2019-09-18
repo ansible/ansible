@@ -1,0 +1,2 @@
+bugfixes:
+- ce_vxlan_vap - update to fix some bugs - Modify the Operator Difference between Python 2 and Python 3. (https://github.com/ansible/ansible/pull/61996)
