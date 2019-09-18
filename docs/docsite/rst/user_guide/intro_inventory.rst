@@ -692,7 +692,7 @@ called :file:`inventory_staging`::
   app03.staging.example.com
 
 To apply a playbook called :file:`site.yml`
-that to all the app-servers in the test environment using the
+to all the app-servers in the test environment, use the
 following command::
 
   ansible-playbook -i inventory_test site.yml -l app-servers
