@@ -105,11 +105,11 @@ class GcpSession(object):
         kwargs = {'json': body}
         return self.full_delete(url, **kwargs)
 
-    def put(self, url, body=None):
+    def put(self, url, body=None, **kwargs):
         """
         This method should be avoided in favor of full_put
         """
-        kwargs = {'json': body}
+        kwargs.update({'json': body})
         return self.full_put(url, **kwargs)
 
     def patch(self, url, body=None, **kwargs):
