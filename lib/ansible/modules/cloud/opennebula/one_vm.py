@@ -179,6 +179,14 @@ options:
     default: NO
     type: bool
     version_added: '2.10'
+  datastore_id:
+    description:
+      - Name of Datastore to use to create a new instace
+    version_added: '2.10'
+  datastore_name:
+    description:
+      - Name of Datastore to use to create a new instace
+    version_added: '2.10'
 author:
     - "Milan Ilic (@ilicmilan)"
     - "Jan Meerkamp (@meerkampdvv)"
@@ -624,6 +632,41 @@ def get_template_id(module, client, requested_id, requested_name):
     template = get_template_by_id(module, client, requested_id) if requested_id else get_template_by_name(module, client, requested_name)
     if template:
         return template.ID
+    else:
+        return None
+
+
+def get_datastore(module, client, predicate):
+    pool = client.datastorepool.info()
+    found = 0
+    found_datastore = None
+    datastore_name = ''
+
+    for datastore in pool.DATASTORE:
+        if predicate(datastore):
+            found = found + 1
+            found_datastore = datastore
+            datastore_name = datastore.NAME
+
+    if found == 0:
+        return None
+    elif found > 1:
+        module.fail_json(msg='There are more datastores with name: ' + datastore_name)
+    return found_datastore
+
+
+def get_datastore_by_name(module, client, datastore_name):
+    return get_datastore(module, client, lambda datastore: (datastore.NAME == datastore_name))
+
+
+def get_datastore_by_id(module, client, datastore_id):
+    return get_datastore(module, client, lambda datastore: (datastore.ID == datastore_id))
+
+
+def get_datastore_id(module, client, requested_id, requested_name):
+    datastore = get_datastore_by_id(module, client, requested_id) if requested_id else get_datastore_by_name(module, client, requested_name)
+    if datastore:
+        return datastore.ID
     else:
         return None
 
@@ -1257,6 +1300,8 @@ def main():
         "cpu": {"required": False, "type": "float"},
         "vcpu": {"required": False, "type": "int"},
         "disk_size": {"required": False, "type": "str"},
+        "datastore_name": {"required": False, "type": "str"},
+        "datastore_id": {"required": False, "type": "int"},
         "networks": {"default": [], "type": "list"},
         "count": {"default": 1, "type": "int"},
         "exact_count": {"required": False, "type": "int"},
@@ -1308,6 +1353,8 @@ def main():
     cpu = params.get('cpu')
     vcpu = params.get('vcpu')
     disk_size = params.get('disk_size')
+    requested_datastore_id = params.get('datastore_id')
+    requested_datastore_name = params.get('datastore_name')
     networks = params.get('networks')
     count = params.get('count')
     exact_count = params.get('exact_count')
@@ -1348,6 +1395,18 @@ def main():
                 module.fail_json(msg='There is no template with template_id: ' + str(requested_template_id))
             elif requested_template_name:
                 module.fail_json(msg="There is no template with name: " + requested_template_name)
+
+    # Fetch datastore
+    datastore_id = None
+    if requested_datastore_id or requested_datastore_name:
+        datastore_id = get_datastore_id(module, one_client, requested_datastore_id, requested_datastore_name)
+        if datastore_id is None:
+            if requested_datastore_id:
+                module.fail_json(msg='There is no datastore with template_id: ' + str(requested_datastore_id))
+            elif requested_datastore_name:
+                module.fail_json(msg="There is no datastore with name: " + requested_datastore_name)
+        else:
+            attributes['SCHED_DS_REQUIREMENTS'] = 'ID=' + str(datastore_id)
 
     if exact_count and template_id is None:
         module.fail_json(msg='Option `exact_count` needs template_id or template_name')
