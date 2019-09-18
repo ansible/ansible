@@ -235,6 +235,7 @@ class CronTab(object):
         self.lines = None
         self.ansible = "#Ansible: "
         self.existing = ''
+        self.cron_cmd = self.module.get_bin_path('crontab', required=True)
 
         if cron_file:
             if os.path.isabs(cron_file):
@@ -509,30 +510,29 @@ class CronTab(object):
         Returns the command line for reading a crontab
         """
         user = ''
-        cron_cmd = self.module.get_bin_path('crontab', required=True)
         if self.user:
             if platform.system() == 'SunOS':
-                return "su %s -c '%s -l'" % (pipes.quote(self.user), pipes.quote(cron_cmd))
+                return "su %s -c '%s -l'" % (pipes.quote(self.user), pipes.quote(self.cron_cmd))
             elif platform.system() == 'AIX':
-                return "%s -l %s" % (pipes.quote(cron_cmd), pipes.quote(self.user))
+                return "%s -l %s" % (pipes.quote(self.cron_cmd), pipes.quote(self.user))
             elif platform.system() == 'HP-UX':
-                return "%s %s %s" % (cron_cmd, '-l', pipes.quote(self.user))
+                return "%s %s %s" % (self.cron_cmd, '-l', pipes.quote(self.user))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (cron_cmd, user, '-l')
+        return "%s %s %s" % (self.cron_cmd, user, '-l')
 
     def _write_execute(self, path):
         """
         Return the command line for writing a crontab
         """
-        cron_cmd = self.module.get_bin_path('crontab', required=True)
         user = ''
         if self.user:
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
-                return "chown %s %s ; su '%s' -c '%s %s'" % (pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), cron_cmd, pipes.quote(path))
+                return "chown %s %s ; su '%s' -c '%s %s'" % (
+                    pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), self.cron_cmd, pipes.quote(path))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (cron_cmd, user, pipes.quote(path))
+        return "%s %s %s" % (self.cron_cmd, user, pipes.quote(path))
 
 
 def main():
