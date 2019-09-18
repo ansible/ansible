@@ -193,13 +193,13 @@ Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credenti
                 $test_path = $path
             }
 
-            $valid_path = Test-Path -Path $test_path -PathType Leaf
+            $valid_path = Test-Path -LiteralPath $test_path -PathType Leaf
             if ($valid_path -ne $true) {
                 $metadata.path_error = "the file at the UNC path $path cannot be reached, ensure the user_name account has access to this path or use an auth transport with credential delegation"
             }
         } else {
             $metadata.location_type = [LocationType]::Local
-            $valid_path = Test-Path -Path $path -PathType Leaf
+            $valid_path = Test-Path -LiteralPath $path -PathType Leaf
             if ($valid_path -ne $true) {
                 $metadata.path_error = "the file at the local path $path cannot be reached"
             }
