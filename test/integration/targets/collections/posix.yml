@@ -369,9 +369,56 @@
       # ensure that the connection var we overrode above made it into the running config
       - connection_out.stderr == "connectionvar is from_play"
 
-- hosts: testhost
+- hosts: localhost
+  tasks:
+    - assert:
+        that:
+        - hostvars['dynamic_host_a'] is defined
+        - hostvars['dynamic_host_a'].connection_out.stdout == "localconn ran echo 'hello world'"
+
+- hosts: localhost
+  tasks:
+  # create a couple of dynamic hosts to exercise collection-hosted connection plugin config/delegation
+  - add_host:
+      name: localconn_main
+      ansible_connection: testns.testcoll.localconn
+      ansible_localconn_connectionvar: main hostvar
+  - add_host:
+      name: localconn_delegated
+      ansible_connection: testns.testcoll.localconn
+      ansible_localconn_connectionvar: delegated hostvar
+
+- hosts: localconn_main
+  tasks:
+    - raw: main value
+      register: main_out
+    - raw: delegated value
+      delegate_to: localconn_delegated
+      register: delegated_out
+
+- hosts: localhost
   tasks:
   - assert:
       that:
-      - hostvars['dynamic_host_a'] is defined
-      - hostvars['dynamic_host_a'].connection_out.stdout == "localconn ran echo 'hello world'"
+      - hostvars['localconn_main'].main_out.stdout == "localconn ran main value"
+      - hostvars['localconn_main'].delegated_out.stdout == "localconn ran delegated value"
+
+
+# ensure that plugins are loaded/stored under their qualified name to prevent cross-collection clobbering
+- name: validate fully qualified plugin names
+  hosts: testhost
+  tasks:
+  - name: store loaded plugin names
+    set_fact:
+      filter_name: "{{ 1 | testns.testcoll.filter_name }}"
+      lookup_name: "{{ lookup('testns.testcoll.lookup_name') }}"
+      lookup_no_future_boilerplate: "{{ lookup('testns.testcoll.lookup_no_future_boilerplate') }}"
+      test_name_ok: "{{ 1 is testns.testcoll.test_name_ok }}"
+
+  - name: validate loaded plugin names are properly qualified
+    assert:
+      that:
+        - filter_name == 'ansible_collections.testns.testcoll.plugins.filter.test_filter'
+        - lookup_name == 'ansible_collections.testns.testcoll.plugins.lookup.lookup_name'
+        - lookup_no_future_boilerplate == 'ansible_collections.testns.testcoll.plugins.lookup.lookup_no_future_boilerplate'
+        - test_name_ok

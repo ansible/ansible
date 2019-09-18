@@ -2,3 +2,14 @@
   my_ns.my_col.my_module:
 - name: collection relative module usage with relative imports
   my_module:
+- name: make a host using a connection with a relative import and no absolute_import boilerplate
+  add_host:
+    name: relimp_conn_testhost
+    ansible_connection: my_ns.my_col.relimp_conn
+- name: exercise the relative import connection
+  raw: some stuff
+  delegate_to: relimp_conn_testhost
+  register: relimp_conn_out
+- assert:
+    that:
+    - relimp_conn_out.stdout == 'localconn ran some stuff'

@@ -104,8 +104,19 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
 
     def find_module(self, fullname, path=None):
         # this loader is only concerned with items under the Ansible Collections namespace hierarchy, ignore others
-        if fullname and fullname.split('.', 1)[0] == 'ansible_collections':
-            return self
+        if fullname and fullname.split('.', 1)[0] != 'ansible_collections':
+            return None
+
+        # PEP302 says we can only return ourselves as the loader if we can load something, so just try to load it
+        # FUTURE: optimize away some of the actual loading work?
+        try:
+            mod = self.load_module(fullname)
+            if mod:
+                return self
+        except ImportError:
+            pass
+        except KeyError:
+            pass
 
         return None
 
