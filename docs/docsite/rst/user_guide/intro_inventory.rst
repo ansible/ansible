@@ -691,7 +691,7 @@ called :file:`inventory_staging`::
   app02.staging.example.com
   app03.staging.example.com
 
-If you then have a playbook called :file:`site.yml`, then you'd apply
+To apply a playbook called :file:`site.yml`
 that to all the app-servers in the test environment using the
 following command::
 
