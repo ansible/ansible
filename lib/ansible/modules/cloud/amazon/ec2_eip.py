@@ -600,7 +600,7 @@ def main():
                     )
                 result = {'changed': changed}
                 if not module.check_mode:
-                    result['public_ip'] = address['PublicIp'],
+                    result['public_ip'] = address['PublicIp']
                     result['allocation_id'] = address['AllocationId']
         else:
             if device_id:

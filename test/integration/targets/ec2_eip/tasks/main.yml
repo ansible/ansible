@@ -35,15 +35,15 @@
         that:
           - new_eip is defined
           - new_eip is changed
-          - new_eip.public_ip is defined and new_eip.public_ip != ""
-          - new_eip.allocation_id is defined and new_eip.allocation_id != ""
+          - new_eip.public_ip is defined and new_eip.public_ip is match("^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
+          - new_eip.allocation_id is defined and new_eip.allocation_id is match("^eipalloc-.*")
 
     - name: Match an existing eip (changed == false)
       ec2_eip:
         state: present
         in_vpc: yes
         <<: *aws_connection_info
-        public_ip: "{{ eip.public_ip[0] }}"
+        public_ip: "{{ eip.public_ip }}"
       register: existing_eip
 
     - assert:
@@ -73,7 +73,7 @@
         state: present
         in_vpc: yes
         <<: *aws_connection_info
-        public_ip: "{{ eip.public_ip[0] }}"
+        public_ip: "{{ eip.public_ip }}"
         reuse_existing_ip_allowed: yes
         tag_name: Team
         tag_value: Backend
@@ -161,7 +161,7 @@
     - name: Cleanup newly allocated eip
       ec2_eip:
         state: absent
-        public_ip: "{{ item.public_ip[0] }}"
+        public_ip: "{{ item.public_ip }}"
         in_vpc: yes
         <<: *aws_connection_info
       when: item is defined and item is changed and item.public_ip is defined and item.public_ip != ""
