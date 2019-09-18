@@ -60,7 +60,7 @@ EXAMPLES = """
 - debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '192.0.2.5/PTR') }}"
 - debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '5.2.0.192.in-addr.arpa./PTR') }}"
 - debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '5.2.0.192.in-addr.arpa.', 'qtype=PTR') }}"
-- debug: msg="Querying 198.51.100.23 for IPv4 address for example.com. produces {{ lookup('dig', 'example.com', '@198.51.100.23') }}"
+- debug: msg="Querying 198.51.100.23 for IPv4 address for example.com. produces {{ lookup('dig', '198.51.100.23', 'example.com') }}"
 
 - debug: msg="XMPP service for gmail.com. is available at {{ item.target }} on port {{ item.port }}"
   with_items: "{{ lookup('dig', '_xmpp-server._tcp.gmail.com./SRV', 'flat=0', wantlist=True) }}"
