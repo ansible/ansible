@@ -36,7 +36,7 @@
 
   - assert:
       that:
-        - "ansible_facts.network_resources.l3_interfaces|symmetric_difference(result.before)|length == 0"
+        - "result.before|length == (ansible_facts.network_resources.l3_interfaces|length - 1)"
         - "result.changed == true"
         - "'interface {{ test_int1 }}' in result.commands"
         - "'no ip address' in result.commands"
@@ -48,7 +48,7 @@
 
   - assert:
       that:
-        - "ansible_facts.network_resources.l3_interfaces|symmetric_difference(result.after)|length == 0"
+        - "result.after|length == (ansible_facts.network_resources.l3_interfaces|length - 1)"
 
   - name: Idempotence - Replaced
     nxos_l3_interfaces: *replaced

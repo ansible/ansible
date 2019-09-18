@@ -40,9 +40,13 @@
         - '!min'
       gather_network_resources: l3_interfaces
 
+  # The nxos_l3_interfaces module should never attempt to modify the mgmt interface ip.
+  # The module will still collect facts about the interface however so in this case
+  # the facts will contain all l3 enabled interfaces including mgmt) but the after state in
+  # result will only contain the modification
   - assert:
       that:
-        - "ansible_facts.network_resources.l3_interfaces|symmetric_difference(result.after)|length == 0"
+        - "result.after|length == (ansible_facts.network_resources.l3_interfaces|length - 1)"
 
   - name: Idempotence - Merged
     nxos_l3_interfaces: *merged
