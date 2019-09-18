@@ -62,6 +62,19 @@
       - result is failed
       - 'result.msg == "one of the following is required: id, name"'
 
+- name: test create Floating IP with check mode
+  hcloud_floating_ip:
+    name: "{{ hcloud_floating_ip_name }}"
+    description: "Web Server"
+    type: ipv4
+    home_location: "fsn1"
+  register: floatingIP
+  check_mode: yes
+- name: verify test create Floating IP with check mode
+  assert:
+    that:
+      - floatingIP is changed
+
 - name: test create Floating IP
   hcloud_floating_ip:
     name: "{{ hcloud_floating_ip_name }}"
@@ -72,10 +85,22 @@
 - name: verify test create Floating IP
   assert:
     that:
-      - floatingIP is success
-      - floatingIP.hcloud_floating_ip.name == "{{ hcloud_floating_ip_name }}"
+      - floatingIP is changed
+      - floatingIP.hcloud_floating_ip.name ==hcloud_floating_ip_name
       - floatingIP.hcloud_floating_ip.description == "Web Server"
       - floatingIP.hcloud_floating_ip.home_location == "fsn1"
+
+- name: test create Floating IP idempotency
+  hcloud_floating_ip:
+    name: "{{ hcloud_floating_ip_name }}"
+    description: "Web Server"
+    type: ipv4
+    home_location: "fsn1"
+  register: floatingIP
+- name: verify test create Floating IP idempotency
+  assert:
+    that:
+      - floatingIP is not changed
 
 - name: test update Floating IP with check mode
   hcloud_floating_ip:
@@ -103,8 +128,22 @@
 - name: verify test update Floating IP
   assert:
     that:
-      - floatingIP is success
+      - floatingIP is changed
       - floatingIP.hcloud_floating_ip.description == "changed-description"
+
+- name: test update Floating IP idempotency
+  hcloud_floating_ip:
+    name: "{{ hcloud_floating_ip_name }}"
+    description: "changed-description"
+    type: ipv4
+    home_location: "fsn1"
+    labels:
+      key: value
+  register: floatingIP
+- name: verify test update Floating IP idempotency
+  assert:
+    that:
+      - floatingIP is not changed
 
 - name: test update Floating IP with same labels
   hcloud_floating_ip:
@@ -174,7 +213,6 @@
       - floatingIP is changed
       - floatingIP.hcloud_floating_ip.server == "{{ main_server.hcloud_server.name }}"
 
-
 - name: test unassign Floating IP
   hcloud_floating_ip:
     name: "{{ hcloud_floating_ip_name }}"
@@ -184,8 +222,19 @@
 - name: verify test unassign Floating IP
   assert:
     that:
-      - floatingIP is success
+      - floatingIP is changed
       - floatingIP.hcloud_floating_ip.server != "{{ main_server.hcloud_server.name }}"
+
+- name: test unassign Floating IP idempotency
+  hcloud_floating_ip:
+    name: "{{ hcloud_floating_ip_name }}"
+    type: ipv4
+    home_location: "fsn1"
+  register: floatingIP
+- name: verify test unassign Floating IPidempotency
+  assert:
+    that:
+      - floatingIP is not changed
 
 - name: test assign Floating IP again
   hcloud_floating_ip:
@@ -196,7 +245,7 @@
 - name: verify test assign Floating IP again
   assert:
     that:
-      - floatingIP is success
+      - floatingIP is changed
       - floatingIP.hcloud_floating_ip.server == "{{ main_server.hcloud_server.name }}"
 
 - name: test already assigned Floating IP assign without force
@@ -232,7 +281,7 @@
 - name: verify test delete floating ip
   assert:
     that:
-      - result is success
+      - result is changed
 
 - name: test create ipv6 floating ip
   hcloud_floating_ip:
@@ -244,7 +293,7 @@
 - name: verify test create ipv6 floating ip
   assert:
     that:
-      - result is success
+      - result is changed
 
 - name: test delete ipv6 floating ip
   hcloud_floating_ip:
@@ -254,7 +303,7 @@
 - name: verify test delete ipv6 floating ip
   assert:
     that:
-      - result is success
+      - result is changed
 
 - name: cleanup
   hcloud_server:
@@ -264,7 +313,7 @@
 - name: verify cleanup
   assert:
     that:
-    - result is success
+    - result is changed
 - name: cleanup another server
   hcloud_server:
     name: "{{ main_server2.hcloud_server.name }}"
@@ -273,4 +322,4 @@
 - name: verify cleanup another server
   assert:
     that:
-    - result is success
+    - result is changed
