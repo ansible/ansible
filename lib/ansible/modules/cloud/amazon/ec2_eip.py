@@ -372,12 +372,10 @@ def allocate_address(ec2, module, domain, reuse_existing_ip_allowed, check_mode,
 
     try:
         result = ec2.allocate_address(DryRun=check_mode, Domain=domain, aws_retry=True), True
-    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-        if e.response['Error']['Code'] == "DryRunOperation":
-            result = "Would have allocated the Elastic IP address if not in check_mode", True
-        else:
-            module.fail_json_aws(e, msg="Couldn't allocate Elastic IP address")
-
+    except is_boto3_error_code('DryRunOperation') as e:
+        result = "Would have allocated the Elastic IP address if not in check_mode", True
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:  # pylint: disable=duplicate-except
+        module.fail_json_aws(e, msg="Couldn't allocate Elastic IP address")
     return result
 
 
@@ -498,11 +496,10 @@ def allocate_address_from_pool(ec2, module, domain, check_mode, public_ipv4_pool
 
     try:
         result = ec2.allocate_address(aws_retry=True, **params)
-    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-        if e.response['Error']['Code'] == "DryRunOperation":
-            result = "Would have allocated the Elastic IP address if not in check_mode"
-        else:
-            module.fail_json_aws(e, msg="Couldn't allocate Elastic IP address")
+    except is_boto3_error_code('DryRunOperation') as e:
+        result = "Would have allocated the Elastic IP address if not in check_mode"
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:  # pylint: disable=duplicate-except
+        module.fail_json_aws(e, msg="Couldn't allocate Elastic IP address")
     return result
 
 
