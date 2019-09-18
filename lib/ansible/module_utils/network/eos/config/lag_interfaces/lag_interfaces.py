@@ -13,9 +13,8 @@ created
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils.network.common.utils import to_list, dict_diff
-
 from ansible.module_utils.network.common.cfg.base import ConfigBase
+from ansible.module_utils.network.common.utils import to_list, dict_diff
 from ansible.module_utils.network.eos.facts.facts import Facts
 from ansible.module_utils.network.eos.utils.utils import normalize_interface
 
@@ -96,6 +95,9 @@ class Lag_interfaces(ConfigBase):
                   to the desired configuration
         """
         state = self._module.params['state']
+        if state in ('overridden', 'merged', 'replaced') and not want:
+            self._module.fail_json(msg='config is required for state {0}'.format(state))
+
         if state == 'overridden':
             commands = self._state_overridden(want, have)
         elif state == 'deleted':

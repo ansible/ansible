@@ -95,6 +95,9 @@ class Lldp_interfaces(ConfigBase):
                   to the desired configuration
         """
         state = self._module.params['state']
+        if state in ('overridden', 'merged', 'replaced') and not want:
+            self._module.fail_json(msg='config is required for state {0}'.format(state))
+
         want = param_list_to_dict(want, remove_key=False)
         have = param_list_to_dict(have, remove_key=False)
         if state == 'overridden':
