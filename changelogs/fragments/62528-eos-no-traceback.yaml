@@ -1,0 +1,2 @@
+bugfixes:
+- "EOS resource modules - do not traceback when run with an empty config parameter"
