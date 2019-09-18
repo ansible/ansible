@@ -322,7 +322,8 @@ class PluginLoader:
         acr = AnsibleCollectionRef.from_fqcr(fq_name, plugin_type)
 
         n_resource = to_native(acr.resource, errors='strict')
-        full_name = '{0}.{1}'.format(package, resource)
+        # we want this before the extension is added
+        full_name = '{0}.{1}'.format(acr.n_python_package_name, n_resource)
 
         if extension:
             n_resource += extension

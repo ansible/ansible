@@ -256,7 +256,7 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
         # even if we didn't find one on disk, fall back to a synthetic package if we have one...
         if newmod:
             sys.modules[fullname] = newmod
-            return newmod
+            return True, newmod
 
         # FIXME: need to handle the "no dirs present" case for at least the root and synthetic internal collections like ansible.builtin
 
