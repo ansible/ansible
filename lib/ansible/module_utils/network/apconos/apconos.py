@@ -93,7 +93,6 @@ def run_commands(module, commands, check_rc=True):
 def load_config(module, config):
     try:
         conn = get_connection(module)
-        conn.get('enable')
         conn.edit_config(config)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))

@@ -59,8 +59,7 @@ class Cliconf(CliconfBase):
 
     @enable_mode
     def get_config(self, source='running', format='text'):
-        cmd = b''
-        return self.send_command(cmd)
+        pass
 
     @enable_mode
     def edit_config(self, command):
@@ -71,5 +70,4 @@ class Cliconf(CliconfBase):
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def get_capabilities(self):
-        result = {}
-        return json.dumps(result)
+        return json.dumps(self.get_device_info())
