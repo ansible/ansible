@@ -52,4 +52,4 @@
 - assert:
     that:
       - "result.failed == True"
-      - "result.msg == 'config is required for state merged'"
+      - "result.msg == 'value of config parameter must not be empty for state merged'"
