@@ -48,6 +48,8 @@ checkpoint_argument_spec_for_commands = dict(
     version=dict(type='str')
 )
 
+delete_params = ['name', 'uid', 'layer', 'exception-group-name', 'layer', 'rule-name']
+
 
 # send the request to checkpoint
 def send_request(connection, version, url, payload=None):
@@ -227,7 +229,8 @@ def api_call(module, api_call_object):
             result[api_call_object] = response
     elif module.params['state'] == 'absent':
         if equals_code == 200:
-            code, response = send_request(connection, version, 'delete-' + api_call_object, payload)
+            payload_for_delete = get_copy_payload_with_some_params(payload, delete_params)
+            code, response = send_request(connection, version, 'delete-' + api_call_object, payload_for_delete)
             if code != 200:
                 module.fail_json(msg=response)
 
@@ -392,7 +395,8 @@ def api_call_for_rule(module, api_call_object):
             result[api_call_object] = response
     elif module.params['state'] == 'absent':
         if equals_code == 200:
-            code, response = send_request(connection, version, 'delete-' + api_call_object, payload)
+            payload_for_delete = get_copy_payload_with_some_params(payload, delete_params)
+            code, response = send_request(connection, version, 'delete-' + api_call_object, payload_for_delete)
             if code != 200:
                 module.fail_json(msg=response)
 
