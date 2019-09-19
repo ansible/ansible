@@ -837,7 +837,7 @@ options:
         version_added: "2.9"
     custom_emulated_machine:
         description:
-            - "Sets the value of the custom_emulated_machine attribute"
+            - "Sets the value of the custom_emulated_machine attribute."
         version_added: "2.10"
 
 notes:
