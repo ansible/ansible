@@ -1,0 +1,2 @@
+bugfixes:
+  - k8s - ensure that apply works with check mode. Bumps minimum openshift version for apply to 0.9.2.
