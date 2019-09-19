@@ -16,13 +16,37 @@
 
   # Start tablespace option tests:
   block:
-  # create tablespace for tests
-  - name: postgresql_db_tablespace - Create tablespace
-    <<: *task_parameters
+  # Preparation for tests.
+  - name: postgresql_db - drop dir for test tablespace
+    become: yes
+    become_user: root
+    file:
+      path: "{{ tblspc_location }}"
+      state: absent
+    ignore_errors: yes
+
+  - name: postgresql_db - disable selinux
+    become: yes
+    become_user: root
+    shell: setenforce 0
+    ignore_errors: yes
+
+  - name: postgresql_db - create dir for test tablespace
+    become: yes
+    become_user: root
+    file:
+      path: "{{ tblspc_location }}"
+      state: directory
+      owner: "{{ pg_user }}"
+      group: "{{ pg_user }}"
+      mode: 0700
+
+  # Create tablespace:
+  - name: postgresql_db_ - create a new tablespace
     postgresql_tablespace:
       <<: *pg_parameters
       login_db: postgres
-      name: "{{ db_tablespace }}"
+      name: "{{ db_tablespace }}" 
       location: "{{ tblspc_location }}"
 
   # Check mode for DB creation with tablespace option:
