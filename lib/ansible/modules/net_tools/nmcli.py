@@ -890,7 +890,7 @@ class Nmcli(object):
             'gw4': self.gw4,
             'ip6': self.ip6,
             'gw6': self.gw6,
-            'connection.autoconnect': self.bool_to_string(self.autoconnect),
+            'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
             'miimon': self.miimon,
