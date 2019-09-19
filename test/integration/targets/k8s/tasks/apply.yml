@@ -132,6 +132,7 @@
               - name: http
                 port: 8080
                 targetPort: 8080
+            type: NodePort
         apply: yes
       register: k8s_service
 
@@ -150,6 +151,7 @@
               - name: http
                 port: 8080
                 targetPort: 8080
+            type: NodePort
         apply: yes
       register: k8s_service_2
 
@@ -173,6 +175,7 @@
               - name: http
                 port: 8081
                 targetPort: 8081
+            type: NodePort
         apply: yes
       register: k8s_service_3
 
@@ -182,6 +185,36 @@
           - k8s_service_3 is changed
           - k8s_service_3.result.spec.ports | length == 1
           - k8s_service_3.result.spec.ports[0].port == 8081
+
+    - name: insert new service port
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: apply-svc
+            namespace: "{{ apply_namespace }}"
+          spec:
+            selector:
+              app: whatever
+            ports:
+              - name: mesh
+                port: 8080
+                targetPort: 8080
+              - name: http
+                port: 8081
+                targetPort: 8081
+            type: NodePort
+        apply: yes
+      register: k8s_service_4
+
+    - name: check ports are correct
+      assert:
+        that:
+          - k8s_service_4 is changed
+          - k8s_service_4.result.spec.ports | length == 2
+          - k8s_service_4.result.spec.ports[0].port == 8080
+          - k8s_service_4.result.spec.ports[1].port == 8081
 
   always:
     - name: remove namespace
