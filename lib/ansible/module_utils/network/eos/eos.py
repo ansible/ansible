@@ -578,12 +578,10 @@ def is_json(cmd):
 
 
 def is_local_eapi(module):
-    transports = []
-    transports.append(module.params.get('transport', ""))
     provider = module.params.get('provider')
     if provider:
-        transports.append(provider.get('transport', ""))
-    return 'eapi' in transports
+        return provider.get('transport') == 'eapi'
+    return False
 
 
 def to_command(module, commands):
