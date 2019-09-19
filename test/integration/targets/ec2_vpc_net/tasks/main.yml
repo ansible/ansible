@@ -1,5 +1,13 @@
 ---
-- block:
+- name: Setup AWS Environment
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+
+  block:
 
     # ============================================================
 
@@ -7,7 +15,7 @@
       ec2_vpc_net:
       ignore_errors: yes
       register: result
-    
+
     - name: assert failure
       assert:
         that:
@@ -17,6 +25,7 @@
     # ============================================================
 
     - name: attempt to create a VPC without providing connnection information
+      module_defaults: { group/aws: {} }
       ec2_vpc_net:
         cidr_block: 20.0.0.0/24
         name: "{{ resource_prefix }}"
@@ -33,23 +42,11 @@
 
     # ============================================================
 
-    - name: set connection information for subsequent tasks
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: yes
-
-    # ============================================================
-
     - name: test check mode creating a VPC
       ec2_vpc_net:
         cidr_block: 20.0.0.0/24
         name: "{{ resource_prefix }}"
         state: present
-        <<: *aws_connection_info
       check_mode: true
       register: result
 
@@ -66,7 +63,6 @@
         ipv6_cidr: True
         name: "{{ resource_prefix }}"
         state: present
-        <<: *aws_connection_info
       register: result
 
     - name: assert the VPC was created successfully
@@ -106,7 +102,6 @@
         name: "{{ resource_prefix }}"
         state: present
         multi_ok: no
-        <<: *aws_connection_info
       register: result
 
     - name: Assert no changes made
@@ -124,7 +119,6 @@
         name: "{{ resource_prefix }}"
         state: present
         multi_ok: yes
-        <<: *aws_connection_info
       check_mode: true
       register: result
 
@@ -143,7 +137,6 @@
         tenancy: dedicated
         state: present
         multi_ok: yes
-        <<: *aws_connection_info
       register: result
 
     - name: assert a new VPC was created
@@ -163,7 +156,6 @@
         name: "{{ resource_prefix }}"
         state: present
         multi_ok: no
-        <<: *aws_connection_info
       register: result
       ignore_errors: yes
 
@@ -183,7 +175,6 @@
         state: absent
         tags:
           Name: "{{ resource_prefix }}"
-        <<: *aws_connection_info
 
     - name: add a unique name tag
       ec2_tag:
@@ -191,14 +182,12 @@
         state: present
         tags:
           Name: "{{ resource_prefix }}-changed"
-        <<: *aws_connection_info
 
     - name: delete one of the VPCs
       ec2_vpc_net:
         cidr_block: 20.0.0.0/24
         name: "{{ resource_prefix }}-changed"
         state: absent
-        <<: *aws_connection_info
       register: result
 
     - name: assert success
@@ -214,7 +203,6 @@
         cidr_block: 20.0.0.0/24
         name: "{{ resource_prefix }}-changed"
         state: absent
-        <<: *aws_connection_info
       register: result
 
     - name: assert no changes were made
@@ -232,7 +220,6 @@
           - 8.8.8.8
         tags:
           Name: "{{ resource_prefix }}"
-        <<: *aws_connection_info
       register: new_dhcp
 
     - name: modify the DHCP options set for a VPC
@@ -242,7 +229,6 @@
         state: present
         multi_ok: no
         dhcp_opts_id: "{{ new_dhcp.dhcp_options_id }}"
-        <<: *aws_connection_info 
       register: result
 
     - name: assert the DHCP option set changed
@@ -261,7 +247,6 @@
         dns_hostnames: True
         state: present
         multi_ok: no
-        <<: *aws_connection_info
       register: result
 
     - name: assert a change was made
@@ -284,7 +269,6 @@
         multi_ok: no
         tags:
           Ansible: Test
-        <<: *aws_connection_info
       register: result
 
     - name: assert the VPC has Name and Ansible tags
@@ -301,7 +285,6 @@
         cidr_block: 20.0.0.0/24
         name: "{{ resource_prefix }}"
         state: absent
-        <<: *aws_connection_info
       check_mode: true
       register: result
 
@@ -321,14 +304,12 @@
         state: present
         multi_ok: no
         dhcp_opts_id: "{{ default_dhcp_options_id }}"
-        <<: *aws_connection_info
       ignore_errors: true
 
     - name: remove the DHCP option set
       ec2_vpc_dhcp_option:
         dhcp_options_id: "{{ new_dhcp.dhcp_options_id }}"
         state: absent
-        <<: *aws_connection_info
       ignore_errors: true
 
     - name: remove the VPC
@@ -336,6 +317,5 @@
         cidr_block: 20.0.0.0/24
         name: "{{ resource_prefix }}"
         state: absent
-        <<: *aws_connection_info
 
     # ============================================================
