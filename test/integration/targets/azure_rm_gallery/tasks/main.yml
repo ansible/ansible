@@ -78,7 +78,7 @@
   azure_rm_gallery:
     resource_group: "{{ resource_group }}"
     name: myGallery{{ rpfx }}
-    location: West US
+    location: eastus
     description: This is the gallery description.
   register: output
 
@@ -90,7 +90,7 @@
   azure_rm_gallery:
     resource_group: "{{ resource_group }}"
     name: myGallery{{ rpfx }}
-    location: West US
+    location: eastus
     description: This is the gallery description.
   register: output
 
@@ -102,7 +102,7 @@
   azure_rm_gallery:
     resource_group: "{{ resource_group }}"
     name: myGallery{{ rpfx }}
-    location: West US
+    location: eastus
     description: This is the gallery description - xxx.
   register: output
 
@@ -130,7 +130,7 @@
     resource_group: "{{ resource_group }}"
     gallery_name: myGallery{{ rpfx }}
     name: myImage
-    location: West US
+    location: eastus
     os_type: linux
     os_state: generalized
     identifier:
@@ -149,7 +149,7 @@
     resource_group: "{{ resource_group }}"
     gallery_name: myGallery{{ rpfx }}
     name: myImage
-    location: West US
+    location: eastus
     os_type: linux
     os_state: generalized
     identifier:
@@ -168,7 +168,7 @@
     resource_group: "{{ resource_group }}"
     gallery_name: myGallery{{ rpfx }}
     name: myImage
-    location: West US
+    location: eastus
     os_type: linux
     os_state: generalized
     identifier:
@@ -205,16 +205,16 @@
     gallery_name: myGallery{{ rpfx }}
     gallery_image_name: myImage
     name: 10.1.3
-    location: West US
+    location: eastus
     publishing_profile:
       end_of_life_date: "2020-10-01t00:00:00+00:00"
       exclude_from_latest: yes
       replica_count: 3
       storage_account_type: Standard_LRS
       target_regions:
-        - name: West US
+        - name: eastus
           regional_replica_count: 1
-        - name: East US
+        - name: westus
           regional_replica_count: 2
           storage_account_type: Standard_ZRS
       managed_image:
@@ -232,16 +232,16 @@
     gallery_name: myGallery{{ rpfx }}
     gallery_image_name: myImage
     name: 10.1.3
-    location: West US
+    location: eastus
     publishing_profile:
       end_of_life_date: "2020-10-01t00:00:00+00:00"
       exclude_from_latest: yes
       replica_count: 3
       storage_account_type: Standard_LRS
       target_regions:
-        - name: West US
+        - name: eastus
           regional_replica_count: 1
-        - name: East US
+        - name: westus
           regional_replica_count: 2
           storage_account_type: Standard_ZRS
       managed_image:
@@ -259,16 +259,16 @@
     gallery_name: myGallery{{ rpfx }}
     gallery_image_name: myImage
     name: 10.1.3
-    location: West US
+    location: eastus
     publishing_profile:
       end_of_life_date: "2021-10-01t00:00:00+00:00"
       exclude_from_latest: yes
       replica_count: 3
       storage_account_type: Standard_LRS
       target_regions:
-        - name: West US
+        - name: eastus
           regional_replica_count: 1
-        - name: East US
+        - name: westus
           regional_replica_count: 2
           storage_account_type: Standard_ZRS
       managed_image:
