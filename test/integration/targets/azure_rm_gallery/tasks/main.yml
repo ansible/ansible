@@ -241,7 +241,7 @@
       target_regions:
         - name: eastus
           regional_replica_count: 1
-        - name: East US
+        - name: westus
           regional_replica_count: 2
           storage_account_type: Standard_ZRS
       managed_image:

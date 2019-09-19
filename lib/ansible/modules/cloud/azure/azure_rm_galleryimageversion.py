@@ -395,7 +395,6 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
 
         if response:
             self.results["id"] = response["id"]
-            self.results["old_response"] = response
 
         return self.results
 
