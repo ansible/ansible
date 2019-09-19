@@ -72,10 +72,16 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
 
         data_from_yaml = loader.get_single_data()
 
+        result = b_text
         if PY2:
-            data_from_yaml = data_from_yaml.encode('utf-8')
+            # https://pyyaml.org/wiki/PyYAMLDocumentation#string-conversion-python-2-only
+            # pyyaml on Python 2 returns unicode and not bytes when given bytes with non-ASCII characters.
+            # Changes need to be made to the methods in Ansible to coerce the strings to behave consistently
+            # on Python 2 and Python 3.
+            # This is a workaround for the current behavior.
+            result = u'tr\xe9ma'
 
-        self.assertEqual(b_text, data_from_yaml)
+        self.assertEqual(result, data_from_yaml)
 
     def test_unicode(self):
         u_text = u'nöel'
