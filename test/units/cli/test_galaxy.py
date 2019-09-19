@@ -712,7 +712,8 @@ def test_collection_build(collection_artifact):
             if file_entry['name'] == 'plugins/README.md':
                 assert file_entry['ftype'] == 'file'
                 assert file_entry['chksum_type'] == 'sha256'
-                assert file_entry['chksum_sha256'] == '5be7ec7b71096d56e1cc48311b6a2266b77b5fdb9d1985b5bc625787b1e857c5'
+                # Can't test the actual checksum as the html link changes based on the version.
+                assert file_entry['chksum_sha256'] is not None
             elif file_entry['name'] == 'README.md':
                 assert file_entry['ftype'] == 'file'
                 assert file_entry['chksum_type'] == 'sha256'
