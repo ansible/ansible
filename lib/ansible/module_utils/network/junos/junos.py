@@ -50,16 +50,6 @@ junos_provider_spec = {
 junos_argument_spec = {
     'provider': dict(type='dict', options=junos_provider_spec),
 }
-junos_top_spec = {
-    'host': dict(removed_in_version=2.9),
-    'port': dict(removed_in_version=2.9, type='int'),
-    'username': dict(removed_in_version=2.9),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
-    'timeout': dict(removed_in_version=2.9, type='int'),
-    'transport': dict(removed_in_version=2.9)
-}
-junos_argument_spec.update(junos_top_spec)
 
 
 def tostring(element, encoding='UTF-8'):
