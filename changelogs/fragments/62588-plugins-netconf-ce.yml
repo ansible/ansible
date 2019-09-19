@@ -1,0 +1,2 @@
+bugfixes:
+  - "plugins/netconf/ce.py: add a dispatch rpc function to send and receive original rpc-reply"
