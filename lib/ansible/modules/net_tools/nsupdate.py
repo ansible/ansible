@@ -24,7 +24,6 @@ module: nsupdate
 short_description: Manage DNS records.
 description:
     - Create, update and remove DNS records using DDNS updates
-    - DDNS works well with both bind and Microsoft DNS (see https://technet.microsoft.com/en-us/library/cc961412.aspx)
 version_added: "2.3"
 requirements:
   - dnspython
