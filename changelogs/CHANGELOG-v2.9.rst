@@ -5,6 +5,213 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.0rc1
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2019-09-19
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Bump version of ACME test container to 1.8.0. Fixes a typo in the API and adds a newer Pebble version.
+- ansible-test defaults to redacting sensitive values (disable with the ``--no-redact`` option)
+- meraki_organization - Removed the absent option for state due to the possibly catastrophic mistakes. Parameter will be added in 2.10 with safeguards.
+- update ansible-test default-test-container from version 1.9.1 to 1.9.2
+- update ansible-test default-test-container from version 1.9.2 to 1.9.3
+
+Bugfixes
+--------
+
+- **security issue** - Redact cloud plugin secrets in ansible-test when running integration tests using cloud plugins. Only present in 2.9.0b1.
+
+- **security issue** - TaskExecutor - Ensure we don't erase unsafe context in TaskExecutor.run on bytes. Only present in 2.9.0beta1 (https://github.com/ansible/ansible/issues/62237)
+
+- Add nxos_telemetry replaced state (https://github.com/ansible/ansible/pull/62368).
+- AnsibleDumper - Add a representer for AnsibleUnsafeBytes (https://github.com/ansible/ansible/issues/62562).
+- Change enable to enabled for junos_interfaces and junos_lldp_interfaces module (https://github.com/ansible/ansible/issues/62319)
+- Check action plugin names for network (eos, ios, iosxr, junos, netconf, nxos) modules properly load with collections.
+- Ensure connection with remote host is created before invoking execute_command() from module side (https://github.com/ansible/ansible/issues/61596)
+- Fix delete to pass the right parameters(https://github.com/ansible/ansible/pull/62525)
+- Fix for junos cli_config replace option (https://github.com/ansible/ansible/pull/62131).
+- Fix ios_lldp_global enable to enabled(https://github.com/ansible/ansible/pull/62420)
+- Fix issue where the collection loader tracebacks if ``collections_paths = ./`` is set in the config
+- Fix loading network facts modules for smart gathering (https://github.com/ansible/ansible/pull/59856).
+- Fix negated all,min for network_facts and remove choices (https://github.com/ansible/ansible/pull/61362).
+- Fix nxos_bfd_global cmd order and tests (https://github.com/ansible/ansible/pull/61943).
+- Fix regular expression to support parsing more than 10 network interfaces in RouterOS output (https://github.com/ansible/ansible/pull/62346)
+- Fix support for Specialized images in Azure Shared Image Gallery
+- Fix the upstream rpm spec file.  The ansible-test package requirement on the main ansible package was formatted incorrectly.
+- Fix traceback error in IOS and IOSXR when ran with empty config (https://github.com/ansible/ansible/pull/62400)
+- Fix traceback session uid error(https://github.com/ansible/ansible/pull/62523)
+- Fix traceback with empty config error msg(https://github.com/ansible/ansible/pull/62538)
+- Fixed intermittent "JSON object must be str, bytes or bytearray, not list" error with EOS over httpapi
+- Make EOS / FRR / IOS / IOSXR bgp modules collection safe
+- Remove case sensitivity on interface names from eos_interfaces, eos_l2_interfaces, eos_l3_interfaces, eos_lacp_interfaces, eos_lag_interfaces, and eos_lldp_interfaces.
+- Remove unused import from iosxr l3_interfaces facts library.
+- Removed unused FactArgs imports from eos / ios / iosxr / junos / vyos facts modules
+- Return commands key instead of xml in result for junos resource module (https://github.com/ansible/ansible/issues/61773)
+- Stabilize nxos initiated copy for nxos_file_copy plugin (https://github.com/ansible/ansible/pull/62355).
+- To fix ios_l3_interfaces resource module round trip failure(https://github.com/ansible/ansible/pull/61642)
+- Unit tests for cp_cp_mgmt_discard
+- Unit tests for cp_mgmt_access_layer
+- Unit tests for cp_mgmt_access_layer_facts
+- Unit tests for cp_mgmt_access_role
+- Unit tests for cp_mgmt_access_role_facts
+- Unit tests for cp_mgmt_access_rule
+- Unit tests for cp_mgmt_access_rule_facts
+- Unit tests for cp_mgmt_address_range
+- Unit tests for cp_mgmt_address_range_facts(https://github.com/ansible/ansible/pull/62338)
+- Unit tests for cp_mgmt_administrator
+- Unit tests for cp_mgmt_administrator_facts
+- Unit tests for cp_mgmt_application_group
+- Unit tests for cp_mgmt_application_group_facts
+- Unit tests for cp_mgmt_application_site
+- Unit tests for cp_mgmt_application_site_catagory
+- Unit tests for cp_mgmt_application_site_catagory_facts
+- Unit tests for cp_mgmt_application_site_facts
+- Unit tests for cp_mgmt_assign_global_assignment
+- Unit tests for cp_mgmt_dns_domain
+- Unit tests for cp_mgmt_dns_domain_facts
+- Unit tests for cp_mgmt_dynamic_object
+- Unit tests for cp_mgmt_dynamic_object_facts
+- Unit tests for cp_mgmt_exception_group
+- Unit tests for cp_mgmt_exception_group_facts(https://github.com/ansible/ansible/pull/62216)
+- Unit tests for cp_mgmt_global_assignment
+- Unit tests for cp_mgmt_global_assignment
+- Unit tests for cp_mgmt_global_assignment_facts
+- Unit tests for cp_mgmt_global_assignment_facts
+- Unit tests for cp_mgmt_group
+- Unit tests for cp_mgmt_group
+- Unit tests for cp_mgmt_group_facts
+- Unit tests for cp_mgmt_group_facts
+- Unit tests for cp_mgmt_group_with_exclusion
+- Unit tests for cp_mgmt_group_with_exclusion
+- Unit tests for cp_mgmt_group_with_exclusion_facts
+- Unit tests for cp_mgmt_group_with_exclusion_facts
+- Unit tests for cp_mgmt_host
+- Unit tests for cp_mgmt_host
+- Unit tests for cp_mgmt_host_facts
+- Unit tests for cp_mgmt_host_facts
+- Unit tests for cp_mgmt_install_policy
+- Unit tests for cp_mgmt_multicast_address_range
+- Unit tests for cp_mgmt_multicast_address_range_facts
+- Unit tests for cp_mgmt_multicast_address_range_facts
+- Unit tests for cp_mgmt_network
+- Unit tests for cp_mgmt_package
+- Unit tests for cp_mgmt_package
+- Unit tests for cp_mgmt_package_facts
+- Unit tests for cp_mgmt_package_facts
+- Unit tests for cp_mgmt_publish
+- Unit tests for cp_mgmt_put_file
+- Unit tests for cp_mgmt_run_ips_update
+- Unit tests for cp_mgmt_run_script(https://github.com/ansible/ansible/pull/62322)
+- Unit tests for cp_mgmt_security_zone
+- Unit tests for cp_mgmt_security_zone
+- Unit tests for cp_mgmt_security_zone_facts
+- Unit tests for cp_mgmt_security_zone_facts
+- Unit tests for cp_mgmt_service_dce_rpc
+- Unit tests for cp_mgmt_service_dce_rpc
+- Unit tests for cp_mgmt_service_dce_rpc_facts
+- Unit tests for cp_mgmt_service_dce_rpc_facts
+- Unit tests for cp_mgmt_service_group
+- Unit tests for cp_mgmt_service_group
+- Unit tests for cp_mgmt_service_group_facts(https://github.com/ansible/ansible/pull/62213)
+- Unit tests for cp_mgmt_service_group_facts(https://github.com/ansible/ansible/pull/62214)
+- Unit tests for cp_mgmt_service_icmp
+- Unit tests for cp_mgmt_service_icmp6
+- Unit tests for cp_mgmt_service_icmp6_facts
+- Unit tests for cp_mgmt_service_icmp_facts
+- Unit tests for cp_mgmt_service_other
+- Unit tests for cp_mgmt_service_other_facts
+- Unit tests for cp_mgmt_service_rpc
+- Unit tests for cp_mgmt_service_rpc_facts
+- Unit tests for cp_mgmt_service_sctp
+- Unit tests for cp_mgmt_service_sctp_facts
+- Unit tests for cp_mgmt_service_tcp
+- Unit tests for cp_mgmt_service_tcp_facts
+- Unit tests for cp_mgmt_service_udp
+- Unit tests for cp_mgmt_service_udp_facts
+- Unit tests for cp_mgmt_simple_gateway
+- Unit tests for cp_mgmt_simple_gateway_facts
+- Unit tests for cp_mgmt_tag
+- Unit tests for cp_mgmt_tag_facts(https://github.com/ansible/ansible/pull/62215)
+- Unit tests for cp_mgmt_threat_exception
+- Unit tests for cp_mgmt_threat_exception_facts
+- Unit tests for cp_mgmt_threat_protection_override(https://github.com/ansible/ansible/pull/62328)
+- Unit tests for cp_mgmt_threat_rule
+- Unit tests for cp_mgmt_threat_rule_facts
+- Unit tests for cp_mgmt_verfiy_policy
+- Unit tests for the case with more than 10 network interfaces
+- _purefa_facts - Fix missing API version check when calling I(admins) or I(all) as the subset
+- allow external collections to be created in the 'ansible' collection namespace (https://github.com/ansible/ansible/issues/59988)
+- ansible-connection persists even after playbook run is completed (https://github.com/ansible/ansible/pull/61591)
+- ansible-doc now properly handles removed modules/plugins
+- ansible-inventory - Properly hide arguments that should not be shown (https://github.com/ansible/ansible/issues/61604)
+- ansible-inventory - Restore functionality to allow ``--graph`` to be limited by a host pattern
+- ansible-test coverage - Fix the ``--all`` argument when generating coverage reports - https://github.com/ansible/ansible/issues/62096
+- ansible-test now correctly installs the requirements specified by the collection's unit and integration tests instead of the requirements specified for Ansible's own unit and integration tests
+- ansible-test now loads the collection loader plugin early enough for ansible_collections imports to work in unit test conftest.py modules
+- ansible-test now properly activates the vcenter plugin for vcenter tests when docker is available
+- ansible-test now properly activates virtual environments created using the --venv option
+- ansible-test now properly creates a virtual environment using ``venv`` when running in a ``virtualenv`` created virtual environment
+- ansible-test now properly excludes the ``tests/output/`` directory from code coverage
+- ansible-test now properly handles creation of Python execv wrappers when the selected interpreter is a script
+- ansible-test now properly handles warnings for removed modules/plugins
+- ansible-test now properly ignores the ``tests/output//`` directory when not using git
+- ansible-test now properly installs requirements for multiple Python versions when running sanity tests
+- ansible-test now properly registers its own code in a virtual environment when running from an install
+- ansible-test now shows sanity test doc links when installed (previously the links were only visible when running from source)
+- azure - fix for specialized images in vmss
+- ce_ospf - update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61684)
+- ce_snmp_target_host - update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61842)
+- ce_snmp_traps - update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61843)
+- ce_static_route - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/62498)
+- ce_stp - update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61774)
+- ce_vxlan_arp - update to fix some bugs - Modifying regular expressions. (https://github.com/ansible/ansible/pull/61995)
+- ce_vxlan_vap - update to fix some bugs - Modify the Operator Difference between Python 2 and Python 3. (https://github.com/ansible/ansible/pull/61996)
+- cloudformation_info - Fix a KeyError returning information about the stack(s).
+- collection loader - ensure Jinja function cache is fully-populated before lookup
+- collection loader - fixed relative imports on Python 2.7, ensure pluginloader caches use full name to prevent names from being clobbered (https://github.com/ansible/ansible/pull/60317)
+- cron and cronvar - use get_bin_path utility to locate the default crontab executable instead of the hardcoded /usr/bin/crontab. (https://github.com/ansible/ansible/pull/59765)
+- cron cronvar - only run ``get_bin_path()`` once
+- display - remove leading space when displaying WARNING messages
+- docker_compose - fix issue where docker deprecation warning results in ansible erroneously reporting a failure
+- docker_container - improve error behavior when parsing port ranges fails.
+- ecs_certificate - Always specify header ``connection: keep-alive`` for ECS API connections.
+- ecs_certificate - Fix formatting of contents of ``full_chain_path``.
+- fix if equals error code command is not found(https://github.com/ansible/ansible/pull/62529)
+- get_url - Don't treat no checksum as a checksum match (https://github.com/ansible/ansible/issues/61978)
+- iosxr - support cases where a normal commit operation also throws a prompt (https://github.com/ansible/ansible/pull/62132)
+- iosxr_l3_interfaces - Fixes IOSXR L3 which was having idempotent issue raised in issue #61844, also adding a RTT for iosxr_l3_interfaces resource module
+- junos_config - Add commands alias to lines option to be in sync with other platforms (https://github.com/ansible/ansible/pull/62221)
+- junos_config - allow validate config before committing to running configuration (https://github.com/ansible/ansible/pull/61969)
+- junos_user - Add no_log=True to junos_user `encrypted_password` (https://github.com/ansible/ansible/pull/62184)
+- k8s - ensure that apply works with check mode. Bumps minimum openshift version for apply to 0.9.2.
+- mysql - Fix ``mysql_connect`` function's logic related to the ``cursor_class`` keyword argument (https://github.com/ansible/ansible/pull/61832).
+- network_cli - ensure connection is established before returning the current prompt
+- nxos_file_copy call get_capabilities to initiate device connection (https://github.com/ansible/ansible/pull/62103).
+- nxos_l2_interfaces fix for integration tests failing to setup layer2 (https://github.com/ansible/ansible/pull/61887).
+- nxos_lacp_interfaces fix integration test dependencies (https://github.com/ansible/ansible/pull/61947).
+- openssh_keypair - public key's file attributes (permissions, owner, group, etc.) are now set to the same values as the private key.
+- openssl_certificate - When provider is ``entrust``, use a ``connection: keep-alive`` header for ECS API connections.
+- psexec - Fix issue where the Kerberos package was not detected as being available.
+- psexec - Fix issue where the ``interactive`` option was not being passed down to the library.
+- purefa_info - Fix missing API version check when calling I(admins) or I(all) as the subset
+- rabbitmq lookup plugin - Fix for rabbitmq lookups failing when using pika v1.0.0 and newer.
+- rabbitmq_publish - Fix to ensure the module works correctly for pika v1.0.0 and later. (https://github.com/ansible/ansible/pull/61960)
+- this fix result in no more traceback on empty config when state is 'merged', 'replaced' or 'overridden'. (https://github.com/ansible/ansible/pull/62518).
+- tower inventory plugin - fix TypeError when giving inventory_id as integer (https://github.com/ansible/ansible/issues/61333)
+- user - update docs to reflect proper way to remove account from all groups
+- vmware - Ensure we can use the modules with Python < 2.7.9 or RHEL/CentOS < 7.4, this as soon as ``validate_certs`` is disabled.
+- vmware_vcenter_statistics - Fix some corner cases like increasing some interval and decreasing another at the same time.
+- win_become - Do not dispose of one of the logon tokens until after the process has run
+- win_exec_wrapper - Be more defensive when it comes to getting unhandled exceptions
+
 v2.9.0b1
 ========
 
@@ -1140,98 +1347,98 @@ avi
 
 - avi_user - Avi User Module
 
-checkpoint
-^^^^^^^^^^
+check_point
+^^^^^^^^^^^
 
-- cp_mgmt_access_layer - Manages access-layer objects on Checkpoint over Web Services API
-- cp_mgmt_access_layer_facts - Get access-layer objects facts on Checkpoint over Web Services API
-- cp_mgmt_access_role - Manages access-role objects on Checkpoint over Web Services API
-- cp_mgmt_access_role_facts - Get access-role objects facts on Checkpoint over Web Services API
-- cp_mgmt_access_rule - Manages access-rule objects on Checkpoint over Web Services API
-- cp_mgmt_access_rule_facts - Get access-rule objects facts on Checkpoint over Web Services API
-- cp_mgmt_address_range - Manages address-range objects on Checkpoint over Web Services API
-- cp_mgmt_address_range_facts - Get address-range objects facts on Checkpoint over Web Services API
-- cp_mgmt_administrator - Manages administrator objects on Checkpoint over Web Services API
-- cp_mgmt_administrator_facts - Get administrator objects facts on Checkpoint over Web Services API
-- cp_mgmt_application_site - Manages application-site objects on Checkpoint over Web Services API
-- cp_mgmt_application_site_category - Manages application-site-category objects on Checkpoint over Web Services API
-- cp_mgmt_application_site_category_facts - Get application-site-category objects facts on Checkpoint over Web Services API
-- cp_mgmt_application_site_facts - Get application-site objects facts on Checkpoint over Web Services API
-- cp_mgmt_application_site_group - Manages application-site-group objects on Checkpoint over Web Services API
-- cp_mgmt_application_site_group_facts - Get application-site-group objects facts on Checkpoint over Web Services API
-- cp_mgmt_assign_global_assignment - assign global assignment on Checkpoint over Web Services API
+- cp_mgmt_access_layer - Manages access-layer objects on Check Point over Web Services API
+- cp_mgmt_access_layer_facts - Get access-layer objects facts on Check Point over Web Services API
+- cp_mgmt_access_role - Manages access-role objects on Check Point over Web Services API
+- cp_mgmt_access_role_facts - Get access-role objects facts on Check Point over Web Services API
+- cp_mgmt_access_rule - Manages access-rule objects on Check Point over Web Services API
+- cp_mgmt_access_rule_facts - Get access-rule objects facts on Check Point over Web Services API
+- cp_mgmt_address_range - Manages address-range objects on Check Point over Web Services API
+- cp_mgmt_address_range_facts - Get address-range objects facts on Check Point over Web Services API
+- cp_mgmt_administrator - Manages administrator objects on Check Point over Web Services API
+- cp_mgmt_administrator_facts - Get administrator objects facts on Check Point over Web Services API
+- cp_mgmt_application_site - Manages application-site objects on Check Point over Web Services API
+- cp_mgmt_application_site_category - Manages application-site-category objects on Check Point over Web Services API
+- cp_mgmt_application_site_category_facts - Get application-site-category objects facts on Check Point over Web Services API
+- cp_mgmt_application_site_facts - Get application-site objects facts on Check Point over Web Services API
+- cp_mgmt_application_site_group - Manages application-site-group objects on Check Point over Web Services API
+- cp_mgmt_application_site_group_facts - Get application-site-group objects facts on Check Point over Web Services API
+- cp_mgmt_assign_global_assignment - assign global assignment on Check Point over Web Services API
 - cp_mgmt_discard - All changes done by user are discarded and removed from database.
-- cp_mgmt_dns_domain - Manages dns-domain objects on Checkpoint over Web Services API
-- cp_mgmt_dns_domain_facts - Get dns-domain objects facts on Checkpoint over Web Services API
-- cp_mgmt_dynamic_object - Manages dynamic-object objects on Checkpoint over Web Services API
-- cp_mgmt_dynamic_object_facts - Get dynamic-object objects facts on Checkpoint over Web Services API
-- cp_mgmt_exception_group - Manages exception-group objects on Checkpoint over Web Services API
-- cp_mgmt_exception_group_facts - Get exception-group objects facts on Checkpoint over Web Services API
-- cp_mgmt_global_assignment - Manages global-assignment objects on Checkpoint over Web Services API
-- cp_mgmt_global_assignment_facts - Get global-assignment objects facts on Checkpoint over Web Services API
-- cp_mgmt_group - Manages group objects on Checkpoint over Web Services API
-- cp_mgmt_group_facts - Get group objects facts on Checkpoint over Web Services API
-- cp_mgmt_group_with_exclusion - Manages group-with-exclusion objects on Checkpoint over Web Services API
-- cp_mgmt_group_with_exclusion_facts - Get group-with-exclusion objects facts on Checkpoint over Web Services API
-- cp_mgmt_host - Manages host objects on Checkpoint over Web Services API
-- cp_mgmt_host_facts - Get host objects facts on Checkpoint over Web Services API
-- cp_mgmt_install_policy - install policy on Checkpoint over Web Services API
-- cp_mgmt_mds_facts - Get Multi-Domain Server (mds) objects facts on Checkpoint over Web Services API
-- cp_mgmt_multicast_address_range - Manages multicast-address-range objects on Checkpoint over Web Services API
-- cp_mgmt_multicast_address_range_facts - Get multicast-address-range objects facts on Checkpoint over Web Services API
-- cp_mgmt_network - Manages network objects on Checkpoint over Web Services API
-- cp_mgmt_network_facts - Get network objects facts on Checkpoint over Web Services API
-- cp_mgmt_package - Manages package objects on Checkpoint over Web Services API
-- cp_mgmt_package_facts - Get package objects facts on Checkpoint over Web Services API
+- cp_mgmt_dns_domain - Manages dns-domain objects on Check Point over Web Services API
+- cp_mgmt_dns_domain_facts - Get dns-domain objects facts on Check Point over Web Services API
+- cp_mgmt_dynamic_object - Manages dynamic-object objects on Check Point over Web Services API
+- cp_mgmt_dynamic_object_facts - Get dynamic-object objects facts on Check Point over Web Services API
+- cp_mgmt_exception_group - Manages exception-group objects on Check Point over Web Services API
+- cp_mgmt_exception_group_facts - Get exception-group objects facts on Check Point over Web Services API
+- cp_mgmt_global_assignment - Manages global-assignment objects on Check Point over Web Services API
+- cp_mgmt_global_assignment_facts - Get global-assignment objects facts on Check Point over Web Services API
+- cp_mgmt_group - Manages group objects on Check Point over Web Services API
+- cp_mgmt_group_facts - Get group objects facts on Check Point over Web Services API
+- cp_mgmt_group_with_exclusion - Manages group-with-exclusion objects on Check Point over Web Services API
+- cp_mgmt_group_with_exclusion_facts - Get group-with-exclusion objects facts on Check Point over Web Services API
+- cp_mgmt_host - Manages host objects on Check Point over Web Services API
+- cp_mgmt_host_facts - Get host objects facts on Check Point over Web Services API
+- cp_mgmt_install_policy - install policy on Check Point over Web Services API
+- cp_mgmt_mds_facts - Get Multi-Domain Server (mds) objects facts on Check Point over Web Services API
+- cp_mgmt_multicast_address_range - Manages multicast-address-range objects on Check Point over Web Services API
+- cp_mgmt_multicast_address_range_facts - Get multicast-address-range objects facts on Check Point over Web Services API
+- cp_mgmt_network - Manages network objects on Check Point over Web Services API
+- cp_mgmt_network_facts - Get network objects facts on Check Point over Web Services API
+- cp_mgmt_package - Manages package objects on Check Point over Web Services API
+- cp_mgmt_package_facts - Get package objects facts on Check Point over Web Services API
 - cp_mgmt_publish - All the changes done by this user will be seen by all users only after publish is called.
-- cp_mgmt_put_file - put file on Checkpoint over Web Services API
+- cp_mgmt_put_file - put file on Check Point over Web Services API
 - cp_mgmt_run_ips_update - Runs IPS database update. If "package-path" is not provided server will try to get the latest package from the User Center.
 - cp_mgmt_run_script - Executes the script on a given list of targets.
-- cp_mgmt_security_zone - Manages security-zone objects on Checkpoint over Web Services API
-- cp_mgmt_security_zone_facts - Get security-zone objects facts on Checkpoint over Web Services API
-- cp_mgmt_service_dce_rpc - Manages service-dce-rpc objects on Checkpoint over Web Services API
-- cp_mgmt_service_dce_rpc_facts - Get service-dce-rpc objects facts on Checkpoint over Web Services API
-- cp_mgmt_service_group - Manages service-group objects on Checkpoint over Web Services API
-- cp_mgmt_service_group_facts - Get service-group objects facts on Checkpoint over Web Services API
-- cp_mgmt_service_icmp - Manages service-icmp objects on Checkpoint over Web Services API
-- cp_mgmt_service_icmp6 - Manages service-icmp6 objects on Checkpoint over Web Services API
-- cp_mgmt_service_icmp6_facts - Get service-icmp6 objects facts on Checkpoint over Web Services API
-- cp_mgmt_service_icmp_facts - Get service-icmp objects facts on Checkpoint over Web Services API
-- cp_mgmt_service_other - Manages service-other objects on Checkpoint over Web Services API
-- cp_mgmt_service_other_facts - Get service-other objects facts on Checkpoint over Web Services API
-- cp_mgmt_service_rpc - Manages service-rpc objects on Checkpoint over Web Services API
-- cp_mgmt_service_rpc_facts - Get service-rpc objects facts on Checkpoint over Web Services API
-- cp_mgmt_service_sctp - Manages service-sctp objects on Checkpoint over Web Services API
-- cp_mgmt_service_sctp_facts - Get service-sctp objects facts on Checkpoint over Web Services API
-- cp_mgmt_service_tcp - Manages service-tcp objects on Checkpoint over Web Services API
-- cp_mgmt_service_tcp_facts - Get service-tcp objects facts on Checkpoint over Web Services API
-- cp_mgmt_service_udp - Manages service-udp objects on Checkpoint over Web Services API
-- cp_mgmt_service_udp_facts - Get service-udp objects facts on Checkpoint over Web Services API
-- cp_mgmt_session_facts - Get session objects facts on Checkpoint over Web Services API
-- cp_mgmt_simple_gateway - Manages simple-gateway objects on Checkpoint over Web Services API
-- cp_mgmt_simple_gateway_facts - Get simple-gateway objects facts on Checkpoint over Web Services API
-- cp_mgmt_tag - Manages tag objects on Checkpoint over Web Services API
-- cp_mgmt_tag_facts - Get tag objects facts on Checkpoint over Web Services API
-- cp_mgmt_threat_exception - Manages threat-exception objects on Checkpoint over Web Services API
-- cp_mgmt_threat_exception_facts - Get threat-exception objects facts on Checkpoint over Web Services API
-- cp_mgmt_threat_indicator - Manages threat-indicator objects on Checkpoint over Web Services API
-- cp_mgmt_threat_indicator_facts - Get threat-indicator objects facts on Checkpoint over Web Services API
-- cp_mgmt_threat_layer - Manages threat-layer objects on Checkpoint over Web Services API
-- cp_mgmt_threat_layer_facts - Get threat-layer objects facts on Checkpoint over Web Services API
-- cp_mgmt_threat_profile - Manages threat-profile objects on Checkpoint over Web Services API
-- cp_mgmt_threat_profile_facts - Get threat-profile objects facts on Checkpoint over Web Services API
+- cp_mgmt_security_zone - Manages security-zone objects on Check Point over Web Services API
+- cp_mgmt_security_zone_facts - Get security-zone objects facts on Check Point over Web Services API
+- cp_mgmt_service_dce_rpc - Manages service-dce-rpc objects on Check Point over Web Services API
+- cp_mgmt_service_dce_rpc_facts - Get service-dce-rpc objects facts on Check Point over Web Services API
+- cp_mgmt_service_group - Manages service-group objects on Check Point over Web Services API
+- cp_mgmt_service_group_facts - Get service-group objects facts on Check Point over Web Services API
+- cp_mgmt_service_icmp - Manages service-icmp objects on Check Point over Web Services API
+- cp_mgmt_service_icmp6 - Manages service-icmp6 objects on Check Point over Web Services API
+- cp_mgmt_service_icmp6_facts - Get service-icmp6 objects facts on Check Point over Web Services API
+- cp_mgmt_service_icmp_facts - Get service-icmp objects facts on Check Point over Web Services API
+- cp_mgmt_service_other - Manages service-other objects on Check Point over Web Services API
+- cp_mgmt_service_other_facts - Get service-other objects facts on Check Point over Web Services API
+- cp_mgmt_service_rpc - Manages service-rpc objects on Check Point over Web Services API
+- cp_mgmt_service_rpc_facts - Get service-rpc objects facts on Check Point over Web Services API
+- cp_mgmt_service_sctp - Manages service-sctp objects on Check Point over Web Services API
+- cp_mgmt_service_sctp_facts - Get service-sctp objects facts on Check Point over Web Services API
+- cp_mgmt_service_tcp - Manages service-tcp objects on Check Point over Web Services API
+- cp_mgmt_service_tcp_facts - Get service-tcp objects facts on Check Point over Web Services API
+- cp_mgmt_service_udp - Manages service-udp objects on Check Point over Web Services API
+- cp_mgmt_service_udp_facts - Get service-udp objects facts on Check Point over Web Services API
+- cp_mgmt_session_facts - Get session objects facts on Check Point over Web Services API
+- cp_mgmt_simple_gateway - Manages simple-gateway objects on Check Point over Web Services API
+- cp_mgmt_simple_gateway_facts - Get simple-gateway objects facts on Check Point over Web Services API
+- cp_mgmt_tag - Manages tag objects on Check Point over Web Services API
+- cp_mgmt_tag_facts - Get tag objects facts on Check Point over Web Services API
+- cp_mgmt_threat_exception - Manages threat-exception objects on Check Point over Web Services API
+- cp_mgmt_threat_exception_facts - Get threat-exception objects facts on Check Point over Web Services API
+- cp_mgmt_threat_indicator - Manages threat-indicator objects on Check Point over Web Services API
+- cp_mgmt_threat_indicator_facts - Get threat-indicator objects facts on Check Point over Web Services API
+- cp_mgmt_threat_layer - Manages threat-layer objects on Check Point over Web Services API
+- cp_mgmt_threat_layer_facts - Get threat-layer objects facts on Check Point over Web Services API
+- cp_mgmt_threat_profile - Manages threat-profile objects on Check Point over Web Services API
+- cp_mgmt_threat_profile_facts - Get threat-profile objects facts on Check Point over Web Services API
 - cp_mgmt_threat_protection_override - Edit existing object using object name or uid.
-- cp_mgmt_threat_rule - Manages threat-rule objects on Checkpoint over Web Services API
-- cp_mgmt_threat_rule_facts - Get threat-rule objects facts on Checkpoint over Web Services API
-- cp_mgmt_time - Manages time objects on Checkpoint over Web Services API
-- cp_mgmt_time_facts - Get time objects facts on Checkpoint over Web Services API
+- cp_mgmt_threat_rule - Manages threat-rule objects on Check Point over Web Services API
+- cp_mgmt_threat_rule_facts - Get threat-rule objects facts on Check Point over Web Services API
+- cp_mgmt_time - Manages time objects on Check Point over Web Services API
+- cp_mgmt_time_facts - Get time objects facts on Check Point over Web Services API
 - cp_mgmt_verify_policy - Verifies the policy of the selected package.
-- cp_mgmt_vpn_community_meshed - Manages vpn-community-meshed objects on Checkpoint over Web Services API
-- cp_mgmt_vpn_community_meshed_facts - Get vpn-community-meshed objects facts on Checkpoint over Web Services API
-- cp_mgmt_vpn_community_star - Manages vpn-community-star objects on Checkpoint over Web Services API
-- cp_mgmt_vpn_community_star_facts - Get vpn-community-star objects facts on Checkpoint over Web Services API
-- cp_mgmt_wildcard - Manages wildcard objects on Checkpoint over Web Services API
-- cp_mgmt_wildcard_facts - Get wildcard objects facts on Checkpoint over Web Services API
+- cp_mgmt_vpn_community_meshed - Manages vpn-community-meshed objects on Check Point over Web Services API
+- cp_mgmt_vpn_community_meshed_facts - Get vpn-community-meshed objects facts on Check Point over Web Services API
+- cp_mgmt_vpn_community_star - Manages vpn-community-star objects on Check Point over Web Services API
+- cp_mgmt_vpn_community_star_facts - Get vpn-community-star objects facts on Check Point over Web Services API
+- cp_mgmt_wildcard - Manages wildcard objects on Check Point over Web Services API
+- cp_mgmt_wildcard_facts - Get wildcard objects facts on Check Point over Web Services API
 - cp_publish - All the changes done by this user will be seen by all users only after publish is called.
 
 eos
