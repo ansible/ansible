@@ -2520,13 +2520,10 @@ class AIX(User):
                 # Sanity check the lines because sometimes both are not present
                 if b' = ' in b_passwd_line:
                     b_passwd = b_passwd_line.split(b' = ', 1)[-1].strip()
-                else:
-                    b_passwd = b''
 
                 if b' = ' in b_expires_line:
                     b_expires = b_expires_line.split(b' = ', 1)[-1].strip()
-                else:
-                    b_expires = b''
+
             except IndexError:
                 self.module.fail_json(msg='Failed to parse shadow file %s' % self.SHADOWFILE)
 
