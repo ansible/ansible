@@ -11,8 +11,8 @@ based on the configuration.
 import platform
 
 from ansible.module_utils.network.common.netconf import exec_rpc
-from ansible.module_utils.network.junos.junos import get_param, tostring
-from ansible.module_utils.network.junos.junos import get_configuration, get_capabilities
+from ansible.module_utils.network.junos.junos import tostring
+from ansible.module_utils.network.junos.junos import get_configuration, get_capabilities, get_device
 from ansible.module_utils._text import to_text
 
 
@@ -20,13 +20,6 @@ try:
     from lxml.etree import Element, SubElement
 except ImportError:
     from xml.etree.ElementTree import Element, SubElement
-
-try:
-    from jnpr.junos import Device
-    from jnpr.junos.exception import ConnectError
-    HAS_PYEZ = True
-except ImportError:
-    HAS_PYEZ = False
 
 
 class FactsBase(object):
@@ -184,33 +177,9 @@ class Interfaces(FactsBase):
 
 
 class OFacts(FactsBase):
-    def _connect(self, module):
-        host = get_param(module, 'host')
-
-        kwargs = {
-            'port': get_param(module, 'port') or 830,
-            'user': get_param(module, 'username')
-        }
-
-        if get_param(module, 'password'):
-            kwargs['passwd'] = get_param(module, 'password')
-
-        if get_param(module, 'ssh_keyfile'):
-            kwargs['ssh_private_key_file'] = get_param(module, 'ssh_keyfile')
-
-        kwargs['gather_facts'] = False
-        try:
-            device = Device(host, **kwargs)
-            device.open()
-            device.timeout = get_param(module, 'timeout') or 10
-        except ConnectError as exc:
-            module.fail_json('unable to connect to %s: %s' % (host, to_text(exc)))
-
-        return device
-
     def populate(self):
 
-        device = self._connect(self.module)
+        device = get_device(self.module)
         facts = dict(device.facts)
 
         if '2RE' in facts:
