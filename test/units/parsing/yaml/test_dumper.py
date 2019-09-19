@@ -87,7 +87,7 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
         self.assertEqual(u_text, data_from_yaml)
 
     def test_native_text(self):
-        n_text = 'some unicode'
+        n_text = 'some native text'
         f = AnsibleUnsafeText(n_text)
         yaml_out = self._dump_string(f, dumper=self.dumper)
 
