@@ -245,13 +245,15 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                         type='raw',
                         pattern=('/subscriptions/{subscription_id}/resourceGroups'
                                  '/{resource_group}/providers/Microsoft.Compute'
-                                 '/images/{name}')
+                                 '/images/{name}'),
+                        comparison='ignore'
                     ),
                     snapshot=dict(
                         type='raw',
                         pattern=('/subscriptions/{subscription_id}/resourceGroups'
                                  '/{resource_group}/providers/Microsoft.Compute'
-                                 '/snapshots/{name}')
+                                 '/snapshots/{name}'),
+                        comparison='ignore'
                     ),
                     replica_count=dict(
                         type='int',
