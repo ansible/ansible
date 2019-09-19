@@ -20,9 +20,8 @@
 
     - assert:
         that:
-          - eip is defined
-          - eip.public_ip is defined and eip.public_ip != ""
-          - eip.allocation_id is defined and eip.allocation_id != ""
+          - eip is defined and (eip.public_ip | ipaddr)
+          - eip.allocation_id is defined and eip.allocation_id.startswith("eipalloc-")
 
     - name: Allocate a new eip
       ec2_eip:
@@ -33,10 +32,8 @@
 
     - assert:
         that:
-          - new_eip is defined
-          - new_eip is changed
-          - new_eip.public_ip is defined and new_eip.public_ip is match("^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
-          - new_eip.allocation_id is defined and new_eip.allocation_id is match("^eipalloc-.*")
+          - new_eip is defined and (new_eip.public_ip | ipaddr)
+          - new_eip.allocation_id is defined and new_eip.allocation_id.startswith("eipalloc-")
 
     - name: Match an existing eip (changed == false)
       ec2_eip:
@@ -48,10 +45,8 @@
 
     - assert:
         that:
-          - existing_eip is defined
-          - existing_eip is not changed
-          - existing_eip.public_ip is defined and existing_eip.public_ip != ""
-          - existing_eip.allocation_id is defined and existing_eip.allocation_id != ""
+          - existing_eip is defined and (existing_eip.public_ip == eip.public_ip)
+          - existing_eip.allocation_id is defined and (existing_eip.allocation_id == eip.allocation_id)
 
     - name: attempt reusing an existing eip with a tag (or allocate a new one)
       ec2_eip:
@@ -64,9 +59,8 @@
 
     - assert:
         that:
-          - tagged_eip is defined
-          - tagged_eip.public_ip is defined and tagged_eip.public_ip != ""
-          - tagged_eip.allocation_id is defined and tagged_eip.allocation_id != ""
+          - tagged_eip is defined and (tagged_eip.public_ip | ipaddr)
+          - tagged_eip.allocation_id is defined and tagged_eip.allocation_id.startswith("eipalloc-")
 
     - name: attempt reusing an existing eip with a tag and it's value (or allocate a new one)
       ec2_eip:
@@ -81,9 +75,8 @@
 
     - assert:
         that:
-          - backend_eip is defined
-          - backend_eip.public_ip is defined and backend_eip.public_ip != ""
-          - backend_eip.allocation_id is defined and backend_eip.allocation_id != ""
+          - backend_eip is defined and (backend_eip.public_ip == eip.public_ip)
+          - backend_eip.allocation_id is defined and (backend_eip.allocation_id == eip.allocation_id)
 
     - name: attempt reusing an existing eip with a tag and it's value (or allocate a new one from pool)
       ec2_eip:
@@ -98,9 +91,8 @@
 
     - assert:
         that:
-          - amazon_eip is defined
-          - amazon_eip.public_ip is defined and amazon_eip.public_ip != ""
-          - amazon_eip.allocation_id is defined and amazon_eip.allocation_id != ""
+          - amazon_eip is defined and (amazon_eip.public_ip | ipaddr)
+          - amazon_eip.allocation_id is defined and amazon_eip.allocation_id.startswith("eipalloc-")
 
     - name: allocate a new eip from a pool
       ec2_eip:
@@ -112,10 +104,8 @@
 
     - assert:
         that:
-          - pool_eip is defined
-          - pool_eip is changed
-          - pool_eip.public_ip is defined and pool_eip.public_ip != ""
-          - pool_eip.allocation_id is defined and pool_eip.allocation_id != ""
+          - pool_eip is defined and (pool_eip.public_ip | ipaddr)
+          - pool_eip.allocation_id is defined and pool_eip.allocation_id.startswith("eipalloc-")
 
     - name: Gather existing eips before check_mode allocation
       ec2_eip_info:
