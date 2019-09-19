@@ -50,7 +50,7 @@ Headers should be written in sentence case. For example, this section's title is
 
 
 Avoid using latin phrases
------------
+-------------------------
 
 Latin words and phrases like ``e.g.`` or ``etc.``
 are easily understood by native English speakers and some European who speak English.
