@@ -1204,10 +1204,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     self.log("Create virtual machine {0}".format(self.name))
                     self.results['actions'].append('Created VM {0}'.format(self.name))
 
-                    # Validate parameters
-                    if not self.admin_username:
-                        self.fail("Parameter error: admin_username required when creating a virtual machine.")
-
                     if self.os_type == 'Linux':
                         if disable_ssh_password and not self.ssh_public_keys:
                             self.fail("Parameter error: ssh_public_keys required when disabling SSH password.")
@@ -1272,13 +1268,16 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if self.boot_diagnostics_present and self.boot_diagnostics['enabled']:
                         boot_diag_storage_account = self.get_boot_diagnostics_storage_account()
 
+                    os_profile = None
+                    if self.admin_username:
+                        os_profile = self.compute_models.OSProfile(
+                            admin_username=self.admin_username,
+                            computer_name=self.short_hostname,
+                        )
                     vm_resource = self.compute_models.VirtualMachine(
                         location=self.location,
                         tags=self.tags,
-                        os_profile=self.compute_models.OSProfile(
-                            admin_username=self.admin_username,
-                            computer_name=self.short_hostname,
-                        ),
+                        os_profile=os_profile,
                         hardware_profile=self.compute_models.HardwareProfile(
                             vm_size=self.vm_size
                         ),
@@ -1354,7 +1353,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         # Azure SDK (erroneously?) wants native string type for this
                         vm_resource.os_profile.custom_data = to_native(base64.b64encode(to_bytes(self.custom_data)))
 
-                    if self.os_type == 'Linux':
+                    if self.os_type == 'Linux' and os_profile:
                         vm_resource.os_profile.linux_configuration = self.compute_models.LinuxConfiguration(
                             disable_password_authentication=disable_ssh_password
                         )
