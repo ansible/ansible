@@ -486,6 +486,22 @@ groupings:
   - aws
   sts_session_token:
   - aws
+  gcp_bigquery_dataset:
+  - gcp
+  gcp_bigquery_dataset_facts:
+  - gcp
+  gcp_bigquery_table:
+  - gcp
+  gcp_bigquery_table_facts:
+  - gcp
+  gcp_cloudbuild_trigger:
+  - gcp
+  gcp_cloudbuild_trigger_facts:
+  - gcp
+  gcp_cloudscheduler_job:
+  - gcp
+  gcp_cloudscheduler_job_facts:
+  - gcp
   gcp_compute_address:
   - gcp
   gcp_compute_address_facts:
@@ -550,13 +566,23 @@ groupings:
   - gcp
   gcp_compute_instance_template_facts:
   - gcp
+  gcp_compute_interconnect_attachment:
+  - gcp
+  gcp_compute_interconnect_attachment_facts:
+  - gcp
   gcp_compute_network:
   - gcp
   gcp_compute_network_facts:
   - gcp
+  gcp_compute_region_disk:
+  - gcp
+  gcp_compute_region_disk_facts:
+  - gcp
   gcp_compute_route:
   - gcp
   gcp_compute_route_facts:
+  - gcp
+  gcp_compute_router:
   - gcp
   gcp_compute_router_facts:
   - gcp
@@ -606,19 +632,75 @@ groupings:
   - gcp
   gcp_container_cluster:
   - gcp
+  gcp_container_cluster_facts:
+  - gcp
   gcp_container_node_pool:
+  - gcp
+  gcp_container_node_pool_facts:
   - gcp
   gcp_dns_managed_zone:
   - gcp
+  gcp_dns_managed_zone_facts:
+  - gcp
   gcp_dns_resource_record_set:
+  - gcp
+  gcp_dns_resource_record_set_facts:
+  - gcp
+  gcp_iam_role:
+  - gcp
+  gcp_iam_role_facts:
+  - gcp
+  gcp_iam_service_account:
+  - gcp
+  gcp_iam_service_account_facts:
+  - gcp
+  gcp_iam_service_account_key:
   - gcp
   gcp_pubsub_subscription:
   - gcp
+  gcp_pubsub_subscription_facts:
+  - gcp
   gcp_pubsub_topic:
+  - gcp
+  gcp_pubsub_topic_facts:
+  - gcp
+  gcp_redis_instance:
+  - gcp
+  gcp_redis_instance_facts:
+  - gcp
+  gcp_resourcemanager_project:
+  - gcp
+  gcp_resourcemanager_project_facts:
+  - gcp
+  gcp_sourcerepo_repository:
+  - gcp
+  gcp_sourcerepo_repository_facts:
+  - gcp
+  gcp_spanner_database:
+  - gcp
+  gcp_spanner_database_facts:
+  - gcp
+  gcp_spanner_instance:
+  - gcp
+  gcp_spanner_instance_facts:
+  - gcp
+  gcp_sql_database:
+  - gcp
+  gcp_sql_database_facts:
+  - gcp
+  gcp_sql_instance:
+  - gcp
+  gcp_sql_instance_facts:
+  - gcp
+  gcp_sql_user:
+  - gcp
+  gcp_sql_user_facts:
   - gcp
   gcp_storage_bucket:
   - gcp
   gcp_storage_bucket_access_control:
+  - gcp
+  gcp_storage_object:
   - gcp
   azure_rm_acs:
   - azure
