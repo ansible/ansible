@@ -230,3 +230,4 @@ class Netconf(NetconfBase):
         resp = self.m.dispatch(fromstring(rpc_command), source=source, filter=filter)
         # just return rpc-reply xml
         return resp.xml
+    
