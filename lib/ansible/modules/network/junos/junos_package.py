@@ -114,42 +114,13 @@ EXAMPLES = """
     reboot: no
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param
-from ansible.module_utils._text import to_native
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_device
 
 try:
-    from jnpr.junos import Device
     from jnpr.junos.utils.sw import SW
-    from jnpr.junos.exception import ConnectError
     HAS_PYEZ = True
 except ImportError:
     HAS_PYEZ = False
-
-
-def connect(module):
-    host = get_param(module, 'host')
-
-    kwargs = {
-        'port': get_param(module, 'port') or 830,
-        'user': get_param(module, 'username')
-    }
-
-    if get_param(module, 'password'):
-        kwargs['passwd'] = get_param(module, 'password')
-
-    if get_param(module, 'ssh_keyfile'):
-        kwargs['ssh_private_key_file'] = get_param(module, 'ssh_keyfile')
-
-    kwargs['gather_facts'] = False
-
-    try:
-        device = Device(host, **kwargs)
-        device.open()
-        device.timeout = get_param(module, 'timeout') or 10
-    except ConnectError as exc:
-        module.fail_json(msg='unable to connect to %s: %s' % (host, to_native(exc)))
-
-    return device
 
 
 def install_package(module, device):
@@ -208,7 +179,7 @@ def main():
 
     do_upgrade = module.params['force'] or False
 
-    device = connect(module)
+    device = get_device(module)
 
     if not module.params['force']:
         device.facts_refresh()
