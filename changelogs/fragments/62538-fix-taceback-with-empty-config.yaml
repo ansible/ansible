@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "Fix traceback with empty config error msg(https://github.com/ansible/ansible/pull/62538)"
