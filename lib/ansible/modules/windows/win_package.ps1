@@ -240,7 +240,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credenti
         # if the reg key exists, try and get the uninstall string and check if it is an MSI
         if ($metadata.installed -eq $true -and $metadata.location_type -eq [LocationType]::Empty) {
             if (Test-RegistryProperty -path $uninstall_key -name "UninstallString") {
-                $metadata.uninstall_string = (Get-ItemProperty -Path $uninstall_key -Name "UninstallString").UninstallString
+                $metadata.uninstall_string = (Get-ItemProperty -LiteralPath $uninstall_key -Name "UninstallString").UninstallString
                 if ($metadata.uninstall_string.StartsWith("MsiExec")) {
                     $metadata.msi = $true
                 }
