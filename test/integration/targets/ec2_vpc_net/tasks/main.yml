@@ -27,7 +27,7 @@
     - name: attempt to create a VPC without providing connnection information
       module_defaults: { group/aws: {} }
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         name: "{{ resource_prefix }}"
         state: present
         region: us-east-1
@@ -44,7 +44,7 @@
 
     - name: test check mode creating a VPC
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         name: "{{ resource_prefix }}"
         state: present
       check_mode: true
@@ -59,7 +59,7 @@
 
     - name: create a VPC
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         ipv6_cidr: True
         name: "{{ resource_prefix }}"
         state: present
@@ -97,7 +97,7 @@
 
     - name: Try to add IPv6 CIDR when one already exists
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         ipv6_cidr: True
         name: "{{ resource_prefix }}"
         state: present
@@ -114,7 +114,7 @@
 
     - name: test check mode creating an identical VPC
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         ipv6_cidr: True
         name: "{{ resource_prefix }}"
         state: present
@@ -131,7 +131,7 @@
 
     - name: create a VPC with a dedicated tenancy using the same CIDR and name
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         name: "{{ resource_prefix }}"
         ipv6_cidr: True
         tenancy: dedicated
@@ -151,7 +151,7 @@
 
     - name: attempt to create another VPC with the same CIDR and name without multi_ok
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         ipv6_cidr: True
         name: "{{ resource_prefix }}"
         state: present
@@ -185,7 +185,7 @@
 
     - name: delete one of the VPCs
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         name: "{{ resource_prefix }}-changed"
         state: absent
       register: result
@@ -200,7 +200,7 @@
 
     - name: attempt to delete a VPC that doesn't exist
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         name: "{{ resource_prefix }}-changed"
         state: absent
       register: result
@@ -224,7 +224,7 @@
 
     - name: modify the DHCP options set for a VPC
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         name: "{{ resource_prefix }}"
         state: present
         multi_ok: no
@@ -241,7 +241,7 @@
 
     - name: modify classic_link_enabled
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         name: "{{ resource_prefix }}"
         dns_support: True
         dns_hostnames: True
@@ -261,7 +261,7 @@
 
     - name: modify tags
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         name: "{{ resource_prefix }}"
         dns_support: True
         dns_hostnames: True
@@ -282,7 +282,7 @@
 
     - name: test check mode to delete a VPC
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         name: "{{ resource_prefix }}"
         state: absent
       check_mode: true
@@ -299,7 +299,7 @@
 
     - name: replace the DHCP options set so the new one can be deleted
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         name: "{{ resource_prefix }}"
         state: present
         multi_ok: no
@@ -314,7 +314,7 @@
 
     - name: remove the VPC
       ec2_vpc_net:
-        cidr_block: 20.0.0.0/24
+        cidr_block: "{{ vpc_cidr }}"
         name: "{{ resource_prefix }}"
         state: absent
 
