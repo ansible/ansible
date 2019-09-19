@@ -993,7 +993,8 @@ class Nmcli(object):
             if value is not None and conn_type == 'ethernet':
                 cmd.extend([key, to_text(value)])
             elif value is not None and conn_type == 'generic':
-                if key != 'connection.autoconnect':
+                if key == 'connection.autoconnect':
+                    value: 'false'
                     cmd.extend([key, to_text(value)])
 
         return cmd
@@ -1478,10 +1479,10 @@ def main():
             slavepriority=dict(type='int', default=32),
             forwarddelay=dict(type='int', default=15),
             hellotime=dict(type='int', default=2),
-            maxage=dict(type='int', default=20),
+            maxage=dict(type='int'),
             ageingtime=dict(type='int', default=300),
             hairpin=dict(type='bool', default=True),
-            path_cost=dict(type='int', default=100),
+            path_cost=dict(type='int'),
             # vlan specific vars
             vlanid=dict(type='int'),
             vlandev=dict(type='str'),
