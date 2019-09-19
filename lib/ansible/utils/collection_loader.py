@@ -103,15 +103,29 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
         return self._default_collection
 
     def find_module(self, fullname, path=None):
-        # this loader is only concerned with items under the Ansible Collections namespace hierarchy, ignore others
-        if fullname and fullname.split('.', 1)[0] == 'ansible_collections':
+        if self._find_module(fullname, path, load=False)[0]:
             return self
 
         return None
 
     def load_module(self, fullname):
+        mod = self._find_module(fullname, None, load=True)[1]
+
+        if not mod:
+            raise ImportError('module {0} not found'.format(fullname))
+
+        return mod
+
+    def _find_module(self, fullname, path, load):
+        # this loader is only concerned with items under the Ansible Collections namespace hierarchy, ignore others
+        if not fullname.startswith('ansible_collections.') and fullname != 'ansible_collections':
+            return False, None
+
         if sys.modules.get(fullname):
-            return sys.modules[fullname]
+            if not load:
+                return True, None
+
+            return True, sys.modules[fullname]
 
         newmod = None
 
@@ -153,14 +167,21 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
 
                 if not map_package:
                     raise KeyError('invalid synthetic map package definition (no target "map" defined)')
+
+                if not load:
+                    return True, None
+
                 mod = import_module(map_package + synpkg_remainder)
 
                 sys.modules[fullname] = mod
 
-                return mod
+                return True, mod
             elif pkg_type == 'flatmap':
                 raise NotImplementedError()
             elif pkg_type == 'pkg_only':
+                if not load:
+                    return True, None
+
                 newmod = ModuleType(fullname)
                 newmod.__package__ = fullname
                 newmod.__file__ = '<ansible_synthetic_collection_package>'
@@ -170,7 +191,7 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
                 if not synpkg_def.get('allow_external_subpackages'):
                     # if external subpackages are NOT allowed, we're done
                     sys.modules[fullname] = newmod
-                    return newmod
+                    return True, newmod
 
                 # if external subpackages ARE allowed, check for on-disk implementations and return a normal
                 # package if we find one, otherwise return the one we created here
@@ -195,6 +216,9 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
                                     candidate_child_path + '.py']:
                     if not os.path.isfile(to_bytes(source_path)):
                         continue
+
+                    if not load:
+                        return True, None
 
                     with open(to_bytes(source_path), 'rb') as fd:
                         source = fd.read()
@@ -227,16 +251,16 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
                 # FIXME: decide cases where we don't actually want to exec the code?
                 exec(code_object, newmod.__dict__)
 
-            return newmod
+            return True, newmod
 
         # even if we didn't find one on disk, fall back to a synthetic package if we have one...
         if newmod:
             sys.modules[fullname] = newmod
-            return newmod
+            return True, newmod
 
         # FIXME: need to handle the "no dirs present" case for at least the root and synthetic internal collections like ansible.builtin
 
-        raise ImportError('module {0} not found'.format(fullname))
+        return False, None
 
     @staticmethod
     def _extend_path_with_ns(path, ns):
