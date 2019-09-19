@@ -42,12 +42,10 @@
       mode: 0700
 
   # Create tablespace:
-  - name: postgresql_db_ - create a new tablespace and set bob as an its owner
-    become_user: "{{ pg_user }}"
-    become: yes
+  - name: postgresql_db_ - create a new tablespace
     postgresql_tablespace:
-      db: postgres
-      login_user: "{{ pg_user }}"
+      <<: *pg_parameters
+      login_db: postgres
       name: "{{ db_tablespace }}" 
       location: "{{ tblspc_location }}"
 
