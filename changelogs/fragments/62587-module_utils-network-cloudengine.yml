@@ -1,0 +1,2 @@
+bugfixes:
+  - "The 'set-id' may change over the time althougth 'set-id' is the indentify of next rpc packet and also RPC xml attribute."
