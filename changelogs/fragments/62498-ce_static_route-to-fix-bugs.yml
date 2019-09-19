@@ -1,0 +1,2 @@
+bugfixes:
+- ce_static_route - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/62498)
