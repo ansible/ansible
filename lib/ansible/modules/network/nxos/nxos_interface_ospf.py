@@ -145,7 +145,7 @@ import re
 import struct
 import socket
 from ansible.module_utils.network.nxos.nxos import get_config, load_config
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 
@@ -457,7 +457,6 @@ def main():
         module.params['interface'] = module.params['interface'].capitalize()
 
     warnings = list()
-    check_args(module, warnings)
     result = {'changed': False, 'commands': [], 'warnings': warnings}
 
     for param in ['message_digest_encryption_type',
