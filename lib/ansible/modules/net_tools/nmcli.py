@@ -993,7 +993,7 @@ class Nmcli(object):
             if value is not None and conn_type == 'ethernet':
                 cmd.extend([key, to_text(value)])
             elif value is not None and conn_type == 'generic':
-                if key is not 'connection.autoconnect':
+                if key != 'connection.autoconnect':
                     cmd.extend([key, to_text(value)])
 
         return cmd
