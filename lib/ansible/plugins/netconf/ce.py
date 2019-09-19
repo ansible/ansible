@@ -231,7 +231,6 @@ class Netconf(NetconfBase):
         """
         if rpc_command is None:
             raise ValueError('rpc_command value must be provided')
-
         resp = self.m.dispatch(fromstring(rpc_command), source=source, filter=filter)
         # just return rpc-reply xml
         return resp.xml
