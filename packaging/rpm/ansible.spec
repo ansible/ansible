@@ -4,6 +4,14 @@
 # ansible-test munges the shebangs itself.
 %global __brp_mangle_shebangs_exclude_from /usr/lib/python[0-9]+\.[0-9]+/site-packages/ansible_test/_data/.*
 
+# RHEL and Fedora add -s to the shebang line.  We do *not* use -s -E -S or -I
+# with ansible because it has many optional features which users need to
+# install libraries on their own to use.  For instance, paramiko for the
+# network connection plugins or winrm to talk to windows hosts.
+# Set this to nil to remove -s
+%define py_shbang_opts %{nil}
+%define py2_shbang_opts %{nil}
+%define py3_shbang_opts %{nil}
 
 %if 0%{?fedora} || 0%{?rhel} >= 8
 %global with_python2 0
@@ -150,7 +158,6 @@ Requires: sshpass
 %endif
 
 
-
 %description
 Ansible is a radically simple model-driven configuration management,
 multi-node deployment, and remote task execution system. Ansible works
@@ -192,7 +199,7 @@ developed for ansible.
 
 %build
 %if %{with_python2}
-%{__python2} setup.py build
+%py2_build
 %endif
 
 %if %{with_python3}
@@ -260,6 +267,7 @@ for location in $DATADIR_LOCATIONS ; do
 done
 mkdir -p %{buildroot}%{_sysconfdir}/ansible/
 mkdir -p %{buildroot}%{_sysconfdir}/ansible/roles/
+
 cp examples/hosts %{buildroot}%{_sysconfdir}/ansible/
 cp examples/ansible.cfg %{buildroot}%{_sysconfdir}/ansible/
 mkdir -p %{buildroot}/%{_mandir}/man1/
