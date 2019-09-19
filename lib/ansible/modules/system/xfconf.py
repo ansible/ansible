@@ -19,10 +19,9 @@ author:
     - "Joseph Benden (@jbenden)"
 short_description: Edit XFCE4 Configurations
 description:
-  - This module allows for the manipulation of Xfce 4 Configuration via
-    xfconf-query.  Please see the xfconf-query(1) man pages for more details.
-    
-    TO-DO: add unit tests, add a 'list' state to retrieve properties, add recursive reset
+  - This module allows for the manipulation of Xfce 4 Configuration via xfconf-query.
+  - Please see the xfconf-query(1) man pages for more details.
+  - "TO-DO: unit tests, list state to retrieve properties, recursive reset."
 version_added: "2.8"
 options:
   channel:
@@ -55,6 +54,12 @@ options:
     - Force array even if only one element
     type: bool
     default: 'no'
+    aliases:
+    - array
+seealso:
+  - name: XFCE documentation on xfconf-query
+    description: Manual page for the command
+    link: https://docs.xfce.org/xfce/xfconf/xfconf-query
 """
 
 EXAMPLES = """
@@ -133,9 +138,9 @@ class XfConfProperty(object):
         self.force_array = module.params['force_array']
 
         self.cmd = "{0} --channel {1} --property {2}".format(
-                module.get_bin_path('xfconf-query', True),
-                shlex_quote(self.channel),
-                shlex_quote(self.property)
+            module.get_bin_path('xfconf-query', True),
+            shlex_quote(self.channel),
+            shlex_quote(self.property)
         )
         self.method_map = dict(zip((self.SET, self.GET, self.RESET),
                                    (self.set, self.get, self.reset)))
@@ -181,7 +186,7 @@ class XfConfProperty(object):
     def reset(self):
         self._execute_xfconf_query("--reset")
         return None
-        
+
     @staticmethod
     def _fix_bool(value):
         if value.lower() in ("true", "false"):
