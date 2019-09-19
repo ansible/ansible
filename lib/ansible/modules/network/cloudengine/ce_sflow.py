@@ -33,13 +33,13 @@ author: QijunPan (@QijunPan)
 options:
     agent_ip:
         description:
-            - Specifies the IPv4/IPv6 address of an sFlow agent.
+            - Specifies the IPv4/IPv6 address of a sFlow agent.
     source_ip:
         description:
             - Specifies the source IPv4/IPv6 address of sFlow packets.
     collector_id:
         description:
-            - Specifies the ID of an sFlow collector. This ID is used when you specify
+            - Specifies the ID of a sFlow collector. This ID is used when you specify
               the collector in subsequent sFlow configuration.
         choices: ['1', '2']
     collector_ip:
@@ -72,7 +72,7 @@ options:
         choices: ['meth', 'enhanced']
     collector_description:
         description:
-            - Specifies the description of an sFlow collector.
+            - Specifies the description of a sFlow collector.
               The value is a string of 1 to 255 case-sensitive characters without spaces.
     sflow_interface:
         description:
