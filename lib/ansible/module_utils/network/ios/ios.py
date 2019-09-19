@@ -48,11 +48,6 @@ ios_argument_spec = {
     'provider': dict(type='dict', options=ios_provider_spec),
 }
 
-ios_top_spec = {
-    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-}
-ios_argument_spec.update(ios_top_spec)
-
 
 def get_provider_argspec():
     return ios_provider_spec
