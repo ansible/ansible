@@ -41,4 +41,6 @@
 - name: Wait for mongod to start responding
   wait_for:
     port: "{{ item }}"
+    delay: 3
+    connect_timeout: 10
   with_items: "{{ mongodb_nodes }}"
