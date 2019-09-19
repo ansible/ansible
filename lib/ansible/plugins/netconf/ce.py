@@ -36,6 +36,11 @@ try:
 except (ImportError, AttributeError):  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
     HAS_NCCLIENT = False
 
+try:
+    from lxml.etree import fromstring
+except ImportError:
+    from xml.etree.ElementTree import fromstring
+
 
 class Netconf(NetconfBase):
 
