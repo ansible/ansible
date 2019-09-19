@@ -1608,7 +1608,7 @@ macros:
   team_ovirt: machacekondra mwperina mnecas
   team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem tcraxs
   team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych opslounge dnix101
-  team_rabbitmq: chrishoffman manuel-sousa hyperized
+  team_rabbitmq: chrishoffman manuel-sousa
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt FlossWare vritant
   team_scaleway: remyleone abarbare DenBeke jerome-quere kindermoumoute QuentinBrosse
