@@ -89,18 +89,9 @@ def get_provider_argspec():
     return nxos_provider_spec
 
 
-def load_params(module):
-    provider = module.params.get('provider') or dict()
-    for key, value in iteritems(provider):
-        if key in nxos_provider_spec:
-            if module.params.get(key) is None and value is not None:
-                module.params[key] = value
-
-
 def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
-        load_params(module)
         if is_local_nxapi(module):
             conn = LocalNxapi(module)
         else:
@@ -1156,10 +1147,10 @@ def is_text(cmd):
 
 
 def is_local_nxapi(module):
-    transport = module.params.get('transport')
     provider = module.params.get('provider')
-    provider_transport = provider['transport'] if provider else None
-    return 'nxapi' in (transport, provider_transport)
+    if provider:
+        return provider.get("transport") == 'nxapi'
+    return False
 
 
 def to_command(module, commands):
