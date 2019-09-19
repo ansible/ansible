@@ -695,11 +695,6 @@ def main():
             )
 
     result = {'changed': False, 'warnings': []}
-    if module.params['password'] and not module.params['configured_password']:
-        result['warnings'].append(
-            'The "password" argument is used to authenticate the current connection. ' +
-            'To set a user password use "configured_password" instead.'
-        )
 
     config_object = None
     if is_cliconf(module):
