@@ -31,7 +31,6 @@ short_description: HttpApi Plugin for Fortinet FortiManager Appliance or VM
 description:
   - This HttpApi plugin provides methods to connect to Fortinet FortiManager Appliance or VM via JSON RPC API.
 version_added: "2.9"
-
 """
 
 import json
