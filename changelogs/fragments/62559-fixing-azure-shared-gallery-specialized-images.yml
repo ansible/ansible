@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix support for Specialized images in Azure Shared Image Gallery
