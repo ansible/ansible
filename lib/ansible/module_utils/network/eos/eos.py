@@ -84,10 +84,6 @@ def get_provider_argspec():
     return eos_provider_spec
 
 
-def check_args(module, warnings):
-    pass
-
-
 def load_params(module):
     provider = module.params.get('provider') or dict()
     for key, value in iteritems(provider):
