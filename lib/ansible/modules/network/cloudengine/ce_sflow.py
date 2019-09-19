@@ -186,10 +186,8 @@ changed:
 
 import re
 from xml.etree import ElementTree
-from ncclient.xml_ import to_xml
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import get_nc_connection, set_nc_config, ce_argument_spec, check_ip_addr, to_string
-from ansible.module_utils.network.cloudengine.ce import exec_command, load_config, ce_provider_spec
 
 CE_NC_GET_SFLOW = """
 <filter type="subtree">
@@ -333,16 +331,6 @@ def get_interface_type(interface):
     return iftype.lower()
 
 
-def get_forward_enp(config):
-    """get assign forward enp sflow enable slot info"""
-
-    get = re.findall(r"assign forward enp sflow enable slot (\S+)", config)
-    if not get:
-        return None
-    else:
-        return list(get)
-
-
 class Sflow(object):
     """Manages sFlow"""
 
@@ -409,38 +397,8 @@ class Sflow(object):
     def netconf_get_config(self, xml_str):
         """netconf set config"""
 
-        conn = get_nc_connection(self.module)
         if xml_str is not None:
-            try:
-                response = conn.get(xml_str)
-            except Exception as exp:
-                if '<filter type=\"subtree\">' in str(exp):
-                    msg = "Please change the connection method to netconf or local, and" \
-                          " delete the module in CLI_SUPPORTED_MODULES."
-                    self.module.fail_json(msg=msg)
-                self.module.fail_json(msg=str(exp))
-        else:
-            return None
-        return to_string(to_xml(response))
-
-    def cli_load_config(self, commands):
-        """load config by cli"""
-
-        if not self.module.check_mode:
-            load_config(self.module, commands)
-
-    def cli_get_config(self, cmd):
-        """Retrieves the current config from the device or cache"""
-
-        rc, out, err = exec_command(self.module, cmd)
-        if rc != 0:
-            if "Start tag expected, '<' not found" in err.strip():
-                msg = "Please change the connection method to network_cli or local, and " \
-                      "add the module in CLI_SUPPORTED_MODULES."
-                self.module.fail_json(msg=msg)
-            self.module.fail_json(msg=err)
-        cfg = str(out).strip()
-        return cfg
+            return get_nc_config(self.module, xml_str)
 
     def get_sflow_dict(self):
         """ sflow config dict"""
@@ -1117,10 +1075,6 @@ class Sflow(object):
                 xml_str += self.config_counter()
             if self.collector_id:
                 xml_str += self.config_collector()
-
-        if self.commands:
-            self.cli_load_config(self.commands)
-            self.changed = True
 
         if xml_str:
             self.netconf_load_config(xml_str)
