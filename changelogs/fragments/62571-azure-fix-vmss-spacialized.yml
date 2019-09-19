@@ -1,0 +1,2 @@
+bugfixes:
+- azure - fix for specialized images in vmss 
