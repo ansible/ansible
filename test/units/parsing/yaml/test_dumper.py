@@ -63,9 +63,9 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
         self.assertEqual(plaintext, data_from_yaml.data)
 
     def test_bytes(self):
-        b_text = u'some bytés'.encode('utf-8')
-        f = AnsibleUnsafeBytes(b_text)
-        yaml_out = self._dump_string(f, dumper=self.dumper)
+        b_text = u'tréma'.encode('utf-8')
+        unsafe_object = AnsibleUnsafeBytes(b_text)
+        yaml_out = self._dump_string(unsafe_object, dumper=self.dumper)
 
         stream = self._build_stream(yaml_out)
         loader = self._loader(stream)
@@ -77,11 +77,10 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
 
         self.assertEqual(b_text, data_from_yaml)
 
-
     def test_unicode(self):
-        u_text = u'some unicodé'
-        f = AnsibleUnsafeText(u_text)
-        yaml_out = self._dump_string(f, dumper=self.dumper)
+        u_text = u'nöel'
+        unsafe_object = AnsibleUnsafeText(u_text)
+        yaml_out = self._dump_string(unsafe_object, dumper=self.dumper)
 
         stream = self._build_stream(yaml_out)
         loader = self._loader(stream)
