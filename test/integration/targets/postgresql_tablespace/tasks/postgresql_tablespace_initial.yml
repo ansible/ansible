@@ -5,7 +5,7 @@
 - name: postgresql_tablespace - drop dir for test tablespace
   become: yes
   file:
-    path: /ssd
+    path: "{{ test_tablespace_path }}"
     state: absent
   ignore_errors: yes
 
@@ -17,7 +17,7 @@
 - name: postgresql_tablespace - create dir for test tablespace
   become: yes
   file:
-    path: /ssd
+    path: "{{ test_tablespace_path }}"
     state: directory
     owner: "{{ pg_user }}"
     group: "{{ pg_user }}"
