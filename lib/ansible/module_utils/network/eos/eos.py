@@ -67,18 +67,9 @@ def get_provider_argspec():
     return eos_provider_spec
 
 
-def load_params(module):
-    provider = module.params.get('provider') or dict()
-    for key, value in iteritems(provider):
-        if key in eos_argument_spec:
-            if module.params.get(key) is None and value is not None:
-                module.params[key] = value
-
-
 def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
-        load_params(module)
         if is_local_eapi(module):
             conn = LocalEapi(module)
         else:
