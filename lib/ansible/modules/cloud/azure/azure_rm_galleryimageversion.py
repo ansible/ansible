@@ -215,7 +215,8 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
             location=dict(
                 type='str',
                 updatable=False,
-                disposition='/'
+                disposition='/',
+                comparison='location'
             ),
             publishing_profile=dict(
                 type='dict',
@@ -227,7 +228,8 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                         options=dict(
                             name=dict(
                                 type='str',
-                                required=True
+                                required=True,
+                                comparison='location'
                             ),
                             regional_replica_count=dict(
                                 type='int',
