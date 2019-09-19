@@ -115,13 +115,12 @@ def dict_merge(a, b):
         return b
     result = deepcopy(a)
     for k, v in b.items():
-        if k in result and isinstance(result[k], dict):
+        if isinstance(result.get(k), dict):
             result[k] = dict_merge(result[k], v)
+        elif isinstance(result.get(k), list):
+            result[k] = [dict_merge(result[k][i], v[i]) if isinstance(result[k][i], dict) else deepcopy(v[i]) for i in range(len(result[k]))]
         else:
-            if isinstance(result[k], list):
-                result[k] = [dict_merge(result[k][i], v[i]) if isinstance(result[k][i], dict) else deepcopy(v[i]) for i in range(len(result[k]))]
-            else:
-                result[k] = deepcopy(v)
+            result[k] = deepcopy(v)
     return result
 
 
