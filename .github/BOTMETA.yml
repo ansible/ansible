@@ -45,7 +45,7 @@ files:
   $modules:
     ignored: ryansb
   $modules/cloud/amazon/:
-    ignored: erydo seiffert simplesteph nadirollo tedder
+    ignored: erydo seiffert simplesteph nadirollo tedder joshsouza
   $modules/cloud/amazon/aws_kms.py:
     ignored: tedder
   $modules/cloud/amazon/cloudformation.py:
