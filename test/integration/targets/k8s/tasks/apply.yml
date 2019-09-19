@@ -216,6 +216,33 @@
           - k8s_service_4.result.spec.ports[0].port == 8080
           - k8s_service_4.result.spec.ports[1].port == 8081
 
+    - name: remove new service port (check mode)
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: apply-svc
+            namespace: "{{ apply_namespace }}"
+          spec:
+            selector:
+              app: whatever
+            ports:
+              - name: http
+                port: 8081
+                targetPort: 8081
+            type: NodePort
+        apply: yes
+      check_mode: yes
+      register: k8s_service_check
+
+    - name: check ports are correct
+      assert:
+        that:
+          - k8s_service_check is changed
+          - k8s_service_check.result.spec.ports | length == 1
+          - k8s_service_check.result.spec.ports[0].port == 8081
+
     - name: remove new service port
       k8s:
         definition:
