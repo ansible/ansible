@@ -5949,6 +5949,7 @@ test/integration/targets/async_fail/library/async_test.py future-import-boilerpl
 test/integration/targets/async_fail/library/async_test.py metaclass-boilerplate
 test/integration/targets/aws_lambda/files/mini_lambda.py future-import-boilerplate
 test/integration/targets/aws_lambda/files/mini_lambda.py metaclass-boilerplate
+test/integration/targets/collections_plugin_namespace/collection_root/ansible_collections/my_ns/my_col/plugins/lookup/lookup_no_future_boilerplate.py future-import-boilerplate
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util2.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util3.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/modules/my_module.py pylint:relative-beyond-top-level
