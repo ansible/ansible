@@ -1049,7 +1049,7 @@ class Nmcli(object):
             'bridge.forward-delay': self.forwarddelay,
             'bridge.hello-time': self.hellotime,
             'bridge.mac-address': self.mac,
-            #'bridge.max-age': self.maxage,
+            'bridge.max-age': self.maxage,
             'bridge.priority': self.priority,
             'bridge.stp': self.bool_to_string(self.stp)
         }
@@ -1077,7 +1077,7 @@ class Nmcli(object):
             'bridge.forward-delay': self.forwarddelay,
             'bridge.hello-time': self.hellotime,
             'bridge.mac-address': self.mac,
-            #'bridge.max-age': self.maxage,
+            'bridge.max-age': self.maxage,
             'bridge.priority': self.priority,
             'bridge.stp': self.bool_to_string(self.stp)
         }
