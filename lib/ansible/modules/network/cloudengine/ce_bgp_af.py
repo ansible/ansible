@@ -2809,7 +2809,7 @@ class BgpAf(object):
         cmds = []
         cmd = "import-route %s %s" % (import_protocol, import_process_id)
         if import_protocol == "direct" or import_protocol == "static":
-            cmd = "import-route %s" % import_protoco
+            cmd = "import-route %s" % import_protocol
         cmds.append(cmd)
 
         return cmds
@@ -2839,7 +2839,7 @@ class BgpAf(object):
         cmds = []
         cmd = "import-route %s %s" % (import_protocol, import_process_id)
         if import_protocol == "direct" or import_protocol == "static":
-            cmd = "import-route %s" % import_protoco
+            cmd = "import-route %s" % import_protocol
         cmds.append(cmd)
 
         return cmds
