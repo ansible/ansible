@@ -215,7 +215,8 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
             location=dict(
                 type='str',
                 updatable=False,
-                disposition='/'
+                disposition='/',
+                comparison='location'
             ),
             publishing_profile=dict(
                 type='dict',
@@ -227,7 +228,8 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                         options=dict(
                             name=dict(
                                 type='str',
-                                required=True
+                                required=True,
+                                comparison='location'
                             ),
                             regional_replica_count=dict(
                                 type='int',
@@ -244,14 +246,14 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                         pattern=('/subscriptions/{subscription_id}/resourceGroups'
                                  '/{resource_group}/providers/Microsoft.Compute'
                                  '/images/{name}'),
-                        disposition='source/managedImage/id'
+                        comparison='ignore'
                     ),
                     snapshot=dict(
                         type='raw',
                         pattern=('/subscriptions/{subscription_id}/resourceGroups'
                                  '/{resource_group}/providers/Microsoft.Compute'
                                  '/snapshots/{name}'),
-                        disposition='source/managedImage/id'
+                        comparison='ignore'
                     ),
                     replica_count=dict(
                         type='int',
@@ -295,7 +297,7 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
 
         self.body = {}
         self.query_parameters = {}
-        self.query_parameters['api-version'] = '2019-03-01'
+        self.query_parameters['api-version'] = '2019-07-01'
         self.header_parameters = {}
         self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
@@ -363,9 +365,13 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                 if not self.default_compare(modifiers, self.body, old_response, '', self.results):
                     self.to_do = Actions.Update
 
-        # fix leftovers (if empty structures were left)
-        self.body.get('properties', {}).get('publishingProfile', {}).pop('snapshot', None)
-        self.body.get('properties', {}).get('publishingProfile', {}).pop('managed_image', None)
+        # fix for differences between version 2019-03-01 and 2019-07-01
+        snapshot = self.body.get('properties', {}).get('publishingProfile', {}).pop('snapshot', None)
+        if snapshot is not None:
+            self.body['properties'].setdefault('storageProfile', {}).setdefault('osDiskImage', {}).setdefault('source', {})['id'] = snapshot
+        managed_image = self.body.get('properties', {}).get('publishingProfile', {}).pop('managed_image', None)
+        if managed_image:
+            self.body['properties'].setdefault('storageProfile', {}).setdefault('source', {})['id'] = managed_image
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log('Need to Create / Update the GalleryImageVersion instance')
@@ -393,7 +399,6 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
 
         if response:
             self.results["id"] = response["id"]
-            self.results["old_response"] = response
 
         return self.results
 
