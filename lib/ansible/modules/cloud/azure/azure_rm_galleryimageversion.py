@@ -243,8 +243,7 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                         type='raw',
                         pattern=('/subscriptions/{subscription_id}/resourceGroups'
                                  '/{resource_group}/providers/Microsoft.Compute'
-                                 '/images/{name}'),
-                        disposition='source/managedImage/id'
+                                 '/images/{name}')
                     ),
                     snapshot=dict(
                         type='raw',
