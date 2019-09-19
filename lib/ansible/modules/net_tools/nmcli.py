@@ -566,7 +566,7 @@ NM_CLIENT_IMP_ERR = None
 try:
     import gi
     gi.require_version('NM', '1.0')
-    
+
     from gi.repository import NM
     HAVE_NM_CLIENT = True
 except (ImportError, ValueError):
@@ -585,6 +585,7 @@ from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 from ansible.module_utils._text import to_text
+
 
 class Nmcli(object):
     """
