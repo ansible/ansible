@@ -11,7 +11,7 @@
 
 - assert:
     that:
-      - result.msg == 'config is required for state merged'
+      - result.msg == 'value of config parameter must not be empty for state merged'
 
 - name: Replaced with empty config should give appropriate error message
   vyos_lag_interfaces:
@@ -22,7 +22,7 @@
 
 - assert:
     that:
-      - result.msg == 'config is required for state replaced'
+      - result.msg == 'value of config parameter must not be empty for state replaced'
 
 - name: Overridden with empty config should give appropriate error message
   vyos_lag_interfaces:
@@ -33,4 +33,4 @@
 
 - assert:
     that:
-      - result.msg == 'config is required for state overridden'
+      - result.msg == 'value of config parameter must not be empty for state overridden'
