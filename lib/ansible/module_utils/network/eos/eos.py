@@ -61,10 +61,6 @@ eos_provider_spec = {
 eos_argument_spec = {
     'provider': dict(type='dict', options=eos_provider_spec),
 }
-eos_top_spec = {
-    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-}
-eos_argument_spec.update(eos_top_spec)
 
 
 def get_provider_argspec():

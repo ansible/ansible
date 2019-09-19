@@ -83,10 +83,6 @@ nxos_provider_spec = {
 nxos_argument_spec = {
     'provider': dict(type='dict', options=nxos_provider_spec),
 }
-nxos_top_spec = {
-    'authorize': dict(type='bool', fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE'])),
-}
-nxos_argument_spec.update(nxos_top_spec)
 
 
 def get_provider_argspec():
