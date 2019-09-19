@@ -22,7 +22,7 @@ description:
   - This module allows for the manipulation of Xfce 4 Configuration via xfconf-query.
   - Please see the xfconf-query(1) man pages for more details.
   - "TO-DO: unit tests, list state to retrieve properties, recursive reset."
-version_added: "2.10"
+version_added: "2.8"
 options:
   channel:
     description:
@@ -56,6 +56,7 @@ options:
     default: 'no'
     aliases:
     - array
+    version_added: "2.10"
 seealso:
   - name: XFCE documentation on xfconf-query
     description: Manual page for the command
