@@ -990,11 +990,7 @@ class Nmcli(object):
         }
 
         for key, value in options.items():
-            if value is not None and conn_type == 'ethernet':
-                cmd.extend([key, to_text(value)])
-            elif value is not None and conn_type == 'generic':
-                if key == 'connection.autoconnect':
-                    options.update(key=False)
+            if value is not None:
                 cmd.extend([key, to_text(value)])
 
         return cmd
@@ -1053,7 +1049,7 @@ class Nmcli(object):
             'bridge.forward-delay': self.forwarddelay,
             'bridge.hello-time': self.hellotime,
             'bridge.mac-address': self.mac,
-            'bridge.max-age': self.maxage,
+            #'bridge.max-age': self.maxage,
             'bridge.priority': self.priority,
             'bridge.stp': self.bool_to_string(self.stp)
         }
@@ -1081,7 +1077,7 @@ class Nmcli(object):
             'bridge.forward-delay': self.forwarddelay,
             'bridge.hello-time': self.hellotime,
             'bridge.mac-address': self.mac,
-            'bridge.max-age': self.maxage,
+            #'bridge.max-age': self.maxage,
             'bridge.priority': self.priority,
             'bridge.stp': self.bool_to_string(self.stp)
         }
