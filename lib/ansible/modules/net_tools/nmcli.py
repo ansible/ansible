@@ -994,7 +994,7 @@ class Nmcli(object):
                 cmd.extend([key, to_text(value)])
             elif value is not None and conn_type == 'generic':
                 if key == 'connection.autoconnect':
-                    options[key] = false
+                    options[key] = self.bool_to_string(False)
                 cmd.extend([key, to_text(value)])
 
         return cmd
