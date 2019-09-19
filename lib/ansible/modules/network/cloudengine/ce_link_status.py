@@ -55,7 +55,7 @@ notes:
 options:
     interface:
         description:
-            - For the interface parameter, you can enter C(all) to display information about all interface,
+            - For the interface parameter, you can enter C(all) to display information about all interfaces,
               an interface type such as C(40GE) to display information about interfaces of the specified type,
               or full name of an interface such as C(40GE1/0/22) or C(vlanif10)
               to display information about the specific interface.
@@ -88,7 +88,7 @@ EXAMPLES = '''
       interface: 40GE
       provider: "{{ cli }}"
 
-  - name: Get all interface link status information
+  - name: Get all interfaces link status information
     ce_link_status:
       interface: all
       provider: "{{ cli }}"
@@ -128,7 +128,7 @@ result:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, get_nc_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, get_nc_config, get_nc_next
 
 CE_NC_GET_PORT_SPEED = """
 <filter type="subtree">
@@ -393,10 +393,10 @@ class LinkStatus(object):
                             'Outbound rate(pkts/sec)'] = eles.text
 
     def get_all_interface_info(self, intf_type=None):
-        """Get interface information all or by interface type"""
+        """Get interface information by all or by interface type"""
 
         xml_str = CE_NC_GET_INT_STATISTICS % ''
-        con_obj = get_nc_config(self.module, xml_str)
+        con_obj = get_nc_next(self.module, xml_str)
         if "<data/>" in con_obj:
             return
 
@@ -406,7 +406,7 @@ class LinkStatus(object):
 
         # get link status information
         root = ElementTree.fromstring(xml_str)
-        intfs_info = root.find("ifm/interfaces")
+        intfs_info = root.findall("ifm/interfaces/interface")
         if not intfs_info:
             return
 
