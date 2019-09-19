@@ -1,12 +1,8 @@
 .. _collections_galaxy_meta:
 
 ************************************
-Collection Galaxy Metadata Structure
+Collection Galaxy metadata structure
 ************************************
-
-.. important::
-    This feature is available in Ansible 2.8 as a *Technology Preview* and therefore is not fully supported. It should only be used for testing  and should not be deployed in a production environment.
-    Future Galaxy or Ansible releases may introduce breaking changes.
 
 A key component of an Ansible collection is the ``galaxy.yml`` file placed in the root directory of a collection. This
 file contains the metadata of the collection that is used to generate a collection artifact.
@@ -78,3 +74,16 @@ Examples
         - demo
         - collection
     repository: "https://www.github.com/my_org/my_collection"
+
+.. seealso::
+
+  :ref:`developing_collections`
+       Develop or modify a collection.
+  :ref:`developing_modules_general`
+       Learn about how to write Ansible modules
+  :ref:`collections`
+       Learn how to install and use collections.
+  `Mailing List <https://groups.google.com/group/ansible-devel>`_
+       The development mailing list
+  `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
