@@ -874,7 +874,7 @@ class RedfishUtils(object):
         uri = response['uri']
         data = response['data']
 
-        if data.get('Enabled'):
+        if data.get('Enabled', True):
             # account already enabled, nothing to do
             return {'ret': True, 'changed': False}
 
