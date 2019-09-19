@@ -100,6 +100,8 @@ class Lldp_global(ConfigBase):
         """
         commands = []
         state = self._module.params['state']
+        if state in ('merged', 'replaced') and not want:
+            self._module.fail_json(msg='config is required for state {0}'.format(state))
         if state == 'deleted':
             commands.extend(self._state_deleted(want=None, have=have))
         elif state == 'merged':
