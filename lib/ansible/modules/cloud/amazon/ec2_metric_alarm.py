@@ -71,6 +71,10 @@ options:
           - 'LessThanThreshold'
           - 'GreaterThanThreshold'
           - 'GreaterThanOrEqualToThreshold'
+          - '<='
+          - '<'
+          - '>='
+          - '>'
     threshold:
         description:
           - Sets the min/max bound for triggering the alarm.
@@ -202,9 +206,10 @@ EXAMPLES = '''
 
 '''
 
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+
 try:
-    from ansible.module_utils.aws.core import AnsibleAWSModule
-    from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
     import botocore
     HAS_BOTO3 = True
 except ImportError:
@@ -414,7 +419,6 @@ def main():
         create_metric_alarm(connection, module)
     elif state == 'absent':
         delete_metric_alarm(connection, module)
-
 
 
 if __name__ == '__main__':
