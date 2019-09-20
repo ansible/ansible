@@ -183,12 +183,17 @@ class AzureRMVirtualMachineScaleSetVMInfo(AzureRMModuleBase):
             response = self.mgmt_client.virtual_machine_scale_set_vms.get(resource_group_name=self.resource_group,
                                                                           vm_scale_set_name=self.vmss_name,
                                                                           instance_id=self.instance_id)
+
+            iv = self.mgmt_client.virtual_machine_scale_set_vms.get_instance_view(resource_group_name=self.resource_group,
+                                                                                  vm_scale_set_name=self.vmss_name,
+                                                                                  instance_id=self.instance_id).as_dict()
+
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Virtual Machine Scale Set VM.')
 
         if response and self.has_tags(response.tags, self.tags):
-            results.append(self.format_response(response))
+            results.append(self.format_response(response, iv))
 
         return results
 
@@ -196,7 +201,7 @@ class AzureRMVirtualMachineScaleSetVMInfo(AzureRMModuleBase):
         items = None
         try:
             items = self.mgmt_client.virtual_machine_scale_set_vms.list(resource_group_name=self.resource_group,
-                                                                        virtual_machine_scale_set_name=self.vmss_name)
+                                                                        virtual_machine_scale_set_name=self.vmss_name, expand='instanceView')
             self.log("Response : {0}".format(items))
         except CloudError as e:
             self.log('Could not get facts for Virtual Machine ScaleSet VM.')
@@ -204,15 +209,14 @@ class AzureRMVirtualMachineScaleSetVMInfo(AzureRMModuleBase):
         results = []
         for item in items:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.format_response(item))
+                iv = item.as_dict().get('instance_view', None)
+
+                results.append(self.format_response(item, iv))
         return results
 
-    def format_response(self, item):
+    def format_response(self, item, iv):
         d = item.as_dict()
 
-        iv = self.mgmt_client.virtual_machine_scale_set_vms.get_instance_view(resource_group_name=self.resource_group,
-                                                                              vm_scale_set_name=self.vmss_name,
-                                                                              instance_id=d.get('instance_id', None)).as_dict()
         power_state = ""
         for index in range(len(iv['statuses'])):
             code = iv['statuses'][index]['code'].split('/')
