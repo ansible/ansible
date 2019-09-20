@@ -23,7 +23,8 @@ $path = Get-AnsibleParam -obj $params -name 'path'
 $start_mode = Get-AnsibleParam -obj $params -name 'start_mode' -type 'str' -validateset 'auto','manual','disabled','delayed'
 $state = Get-AnsibleParam -obj $params -name 'state' -type 'str' -validateset 'started','stopped','restarted','absent','paused'
 $username = Get-AnsibleParam -obj $params -name 'username' -type 'str'
-$recovery_params = Get-AnsibleParam -obj $params -name 'recovery' -type 'dict' -default $null
+$recovery_reset_interval = Get-AnsibleParam -obj $params -name 'recovery_reset_interval' -type 'int' -default 1
+$recovery_actions = Get-AnsibleParam -obj $params -name 'recovery_actions' -type 'list' -default $null
 
 $result = @{
     changed = $false
@@ -455,7 +456,7 @@ Function Set-ServiceState($svc, $wmi_svc, $state) {
     }
 }
 
-Function Set-ServiceRecovery($name, $actions) {
+Function Set-ServiceRecovery($name, $reset_interval, $actions) {
 
     # https://stackoverflow.com/questions/36462623/what-reg-binary-to-set-for-failureaction-for-service
 
@@ -497,16 +498,22 @@ Function Set-ServiceRecovery($name, $actions) {
     $ca_actions = '03000000'
     $lpsaActions = '14000000'
 
-    $reset_fail_count_after = ReversedHexValue $actions.reset_fail_count_after
+    $reset_fail_count_after = ReversedHexValue $reset_interval
 
-    $on_first_failure = ReversedHexValue (RecoveryActionMapping($actions.on_first_failure))
-    $first_failure_timeout = ReversedHexValue $actions.first_failure_timeout
+    if ($actions.Count -ge 1) {
+      $on_first_failure = ReversedHexValue (RecoveryActionMapping($actions[0].action))
+      $first_failure_timeout = ReversedHexValue $actions[0].delay
+    }
 
-    $on_second_failure = ReversedHexValue (RecoveryActionMapping($actions.on_second_failure))
-    $second_failure_timeout = ReversedHexValue $actions.second_failure_timeout
+    if ($actions.Count -ge 2) {
+      $on_second_failure = ReversedHexValue (RecoveryActionMapping($actions[1].action))
+      $second_failure_timeout = ReversedHexValue $actions[1].delay
+    }
 
-    $on_subsequent_failure = ReversedHexValue (RecoveryActionMapping($actions.on_subsequent_failure))
-    $subsequent_failure_timeout = ReversedHexValue $actions.subsequent_failure_timeout
+    if ($actions.Count -ge 3) {
+      $on_subsequent_failure = ReversedHexValue (RecoveryActionMapping($actions[2].action))
+      $subsequent_failure_timeout = ReversedHexValue $actions[2].delay
+    }
 
     $processed_actions = ($reset_fail_count_after + $lp_reboot_msg + $lp_command + $ca_actions + $lpsaActions `
                         + $on_first_failure + $first_failure_timeout `
@@ -515,10 +522,10 @@ Function Set-ServiceRecovery($name, $actions) {
 
     $recovery_actions = Get-RecoveryActions($svc.Name)
 
-    $actions_string=$actions.on_first_failure + '/' + $actions.first_failure_timeout `
-                + '/' + $actions.on_second_failure + '/' + $actions.second_failure_timeout `
-                + '/' + $actions.on_subsequent_failure + '/' + $actions.subsequent_failure_timeout
-    $reset=$actions.reset_fail_count_after
+    $actions_string=$actions[0].action + '/' + $actions[0].delay `
+                + '/' + $actions[1].action + '/' + $actions[1].delay `
+                + '/' + $actions[2].action + '/' + $actions[2].delay
+    $reset=$reset_interval
 
     if ($recovery_actions -ne $processed_actions) {
 
@@ -573,8 +580,8 @@ Function Set-ServiceConfiguration($svc) {
         Set-ServiceState -svc $svc -wmi_svc $wmi_svc -state $state
     }
 
-    if ($null -ne $recovery_params) {
-        Set-ServiceRecovery -name $svc.Name -actions $recovery_params
+    if (($null -ne $recovery_actions) -and ($null -ne $recovery_reset_interval)) {
+        Set-ServiceRecovery -name $svc.Name -reset_interval $recovery_reset_interval -actions $recovery_actions
     }
 }
 

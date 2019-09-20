@@ -113,45 +113,20 @@ options:
     - A newly created service will default to C(LocalSystem).
     type: str
     version_added: '2.3'
-  recovery:
+  recovery_reset_interval:
+		description:
+			- Reset failure counter after this number of seconds.
+		type: int
+		default: 1
+		version_added: '2.9'
+	recovery_actions:
     description:
-      - A dictionary representing the recovery actions you want to set.
-    suboptions:
-      reset_fail_count_after:
-        description:
-          - Reset failure counter after this number of seconds.
-        type: int
-      on_first_failure:
-        description:
-          - Action to take on first failure of the service.
-        choices: [ restart, reboot, no_action ]
-        default: no_action
-        type: str
-      first_failure_timeout:
-        description:
-          - Time to wait to execute first failure action in ms.
-        type: int
-      on_second_failure:
-        description:
-          - Action to take on second failure of the service.
-        choices: [ restart, reboot, no_action ]
-        default: no_action
-        type: str
-      second_failure_timeout:
-        description:
-          - Time to wait to execute second failure action in ms.
-        type: int
-      on_subsequent_failure:
-        description:
-          - Action to take on subsequent failure of the service.
-        choices: [ restart, reboot, no_action ]
-        default: no_action
-        type: str
-      subsequent_failure_timeout:
-        description:
-          - Time to wait to execute subsequent failure action in ms.
-        type: int
-    type: dict
+      - A list representing the recovery actions you want to set.
+			- First element of the list is the first failure actions/delay...
+			- This can go up to a count of three for subsequent failures.
+			- ie: - action: restart
+              delay: 60000
+		type: list
     version_added: '2.9'
 
 seealso:
