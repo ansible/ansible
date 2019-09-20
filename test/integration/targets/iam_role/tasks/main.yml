@@ -1,0 +1,1218 @@
+---
+# Tests for iam_role and iam_role_info
+#
+# Tests:
+# - Minimal Role creation
+# - Role deletion
+# - Fetching a specific role
+# - Creating roles w/ and w/o instance profiles
+# - Creating roles w/ a path
+# - Updating Max Session Duration
+# - Updating Description
+# - Managing list of managed policies
+# - Managing list of inline policies (for testing _info)
+# - Managing boundary policy
+#
+# Notes:
+# - Only tests *documented* return values ( RESULT.iam_role )
+# - There are some known timing issues with boto3 returning before actions
+#   complete in the case of problems with "changed" status it's worth enabling
+#   the standard_pauses and paranoid_pauses options as a first step in debugging
+#
+# Possible Bugs:
+# - Fails to delete role if inline policies not removed first
+
+- name: 'Setup AWS connection info'
+  module_defaults:
+    group/aws:
+      aws_access_key: '{{ aws_access_key }}'
+      aws_secret_key: '{{ aws_secret_key }}'
+      security_token: '{{ security_token | default(omit) }}'
+      region: '{{ aws_region }}'
+    iam_role:
+      assume_role_policy_document: '{{ lookup("file", "deny-assume.json") }}'
+  block:
+  # ===================================================================
+  # Parameter Checks
+  - name: 'Friendly message when creating an instance profile and adding a boundary profile'
+    iam_role:
+      name: '{{ test_role }}'
+      boundary: '{{ boundary_policy }}'
+    register: iam_role
+    ignore_errors: yes
+  - assert:
+      that:
+      - iam_role is failed
+      - '"boundary policy" in iam_role.msg'
+      - '"create_instance_profile" in iam_role.msg'
+      - '"false" in iam_role.msg'
+
+  - name: 'Friendly message when boundary profile is not an ARN'
+    iam_role:
+      name: '{{ test_role }}'
+      boundary: 'AWSDenyAll'
+      create_instance_profile: no
+    register: iam_role
+    ignore_errors: yes
+  - assert:
+      that:
+      - iam_role is failed
+      - '"Boundary policy" in iam_role.msg'
+      - '"ARN" in iam_role.msg'
+
+  - name: 'Friendly message when "present" without assume_role_policy_document'
+    module_defaults: { iam_role: {} }
+    iam_role:
+      name: '{{ test_role }}'
+    register: iam_role
+    ignore_errors: yes
+  - assert:
+      that:
+      - iam_role is failed
+      - 'iam_role.msg.startswith("state is present but all of the following are missing")'
+      - '"assume_role_policy_document" in iam_role.msg'
+
+  - name: 'Maximum Session Duration needs to be between 1 and 12 hours'
+    iam_role:
+      name: '{{ test_role }}'
+      max_session_duration: 3599
+    register: iam_role
+    ignore_errors: yes
+  - assert:
+      that:
+      - iam_role is failed
+      - '"max_session_duration must be between" in iam_role.msg'
+
+  - name: 'Maximum Session Duration needs to be between 1 and 12 hours'
+    iam_role:
+      name: '{{ test_role }}'
+      max_session_duration: 43201
+    register: iam_role
+    ignore_errors: yes
+  - assert:
+      that:
+      - iam_role is failed
+      - '"max_session_duration must be between" in iam_role.msg'
+
+  - name: 'Role Paths must start with /'
+    iam_role:
+      name: '{{ test_role }}'
+      path: 'test/'
+    register: iam_role
+    ignore_errors: yes
+  - assert:
+      that:
+      - iam_role is failed
+      - '"path must begin and end with /" in iam_role.msg'
+
+  - name: 'Role Paths must end with /'
+    iam_role:
+      name: '{{ test_role }}'
+      path: '/test'
+    register: iam_role
+    ignore_errors: yes
+  - assert:
+      that:
+      - iam_role is failed
+      - '"path must begin and end with /" in iam_role.msg'
+
+  # ===================================================================
+  # Supplemental resource pre-creation
+  - name: 'Create Safe IAM Managed Policy'
+    iam_managed_policy:
+      state: present
+      policy_name: '{{ custom_policy_name }}'
+      policy_description: "A safe (deny-all) managed policy"
+      policy: "{{ lookup('file', 'deny-all.json') }}"
+    register: create_managed_policy
+  - assert:
+      that:
+       - create_managed_policy is succeeded
+
+  # ===================================================================
+  # Rapid Role Creation and deletion
+  - name: Try running some rapid fire create/delete tests
+    # We've previously seen issues with iam_role returning before creation's
+    # actually complete, if we think the issue's gone, let's try creating and
+    # deleting things in quick succession
+    when: not (standard_pauses | bool)
+    block:
+    - name: 'Minimal IAM Role without instance profile (rapid)'
+      iam_role:
+        name: '{{ test_role }}'
+        create_instance_profile: no
+      register: iam_role
+    - name: 'Minimal IAM Role without instance profile (rapid)'
+      iam_role:
+        name: '{{ test_role }}'
+        create_instance_profile: no
+      register: iam_role_again
+    - assert:
+        that:
+        - iam_role is changed
+        - iam_role_again is not changed
+    - name: 'Remove IAM Role (rapid)'
+      iam_role:
+        state: absent
+        name: '{{ test_role }}'
+      register: iam_role
+    - name: 'Remove IAM Role (rapid)'
+      iam_role:
+        state: absent
+        name: '{{ test_role }}'
+      register: iam_role_again
+    - assert:
+        that:
+        - iam_role is changed
+        - iam_role_again is not changed
+
+    - name: 'Minimal IAM Role without instance profile (rapid)'
+      iam_role:
+        name: '{{ test_role }}'
+        create_instance_profile: no
+      register: iam_role
+    - name: 'Remove IAM Role (rapid)'
+      iam_role:
+        state: absent
+        name: '{{ test_role }}'
+      register: iam_role_again
+    - assert:
+        that:
+        - iam_role is changed
+        - iam_role_again is changed
+
+  # ===================================================================
+  # Role Creation
+  # (without Instance profile)
+  - name: 'iam_role_info before Role creation (no args)'
+    iam_role_info:
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+
+  - name: 'iam_role_info before Role creation (search for test role)'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 0
+
+  - name: 'Minimal IAM Role (CHECK MODE)'
+    iam_role:
+      name: '{{ test_role }}'
+      create_instance_profile: no
+    check_mode: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+  # Pause this first time, just in case we actually created something...
+  - name: Short pause for role creation to finish
+    pause:
+      seconds: 10
+    when: standard_pauses | bool
+
+  - name: 'iam_role_info after Role creation in check_mode'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 0
+
+  - name: 'Minimal IAM Role without instance profile'
+    iam_role:
+      name: '{{ test_role }}'
+      create_instance_profile: no
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+      - 'iam_role.iam_role.arn.startswith("arn")'
+      - 'iam_role.iam_role.arn.endswith("role/" + test_role )'
+      # Would be nice to test the contents...
+      - '"assume_role_policy_document" in iam_role.iam_role'
+      - iam_role.iam_role.attached_policies | length == 0
+      - iam_role.iam_role.max_session_duration == 3600
+      - iam_role.iam_role.path == '/'
+      - iam_role.iam_role.role_name == test_role
+      - '"create_date" in iam_role.iam_role'
+      - '"role_id" in iam_role.iam_role'
+  - name: Short pause for role creation to finish
+    pause:
+      seconds: 10
+    when: standard_pauses | bool
+
+  - name: 'Minimal IAM Role without instance profile (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      create_instance_profile: no
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+
+  - name: 'iam_role_info after Role creation'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role/" + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - '"description" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 0
+      - role_info.iam_roles[0].managed_policies | length == 0
+      - role_info.iam_roles[0].max_session_duration == 3600
+      - role_info.iam_roles[0].path == '/'
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+
+  - name: 'Remove IAM Role'
+    iam_role:
+      state: absent
+      name: '{{ test_role }}'
+      delete_instance_profile: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+  - name: Short pause for role removal to finish
+    pause:
+      seconds: 10
+    when: paranoid_pauses | bool
+
+  - name: 'iam_role_info after Role deletion'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 0
+
+  # (with path)
+  - name: 'Minimal IAM Role with path (CHECK MODE)'
+    iam_role:
+      name: '{{ test_role }}'
+      path: '{{ test_path }}'
+    register: iam_role
+    check_mode: yes
+  - assert:
+      that:
+      - iam_role is changed
+
+  - name: 'Minimal IAM Role with path'
+    iam_role:
+      name: '{{ test_role }}'
+      path: '{{ test_path }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+      - 'iam_role.iam_role.arn.startswith("arn")'
+      - 'iam_role.iam_role.arn.endswith("role" + test_path + test_role )'
+      # Would be nice to test the contents...
+      - '"assume_role_policy_document" in iam_role.iam_role'
+      - iam_role.iam_role.attached_policies | length == 0
+      - iam_role.iam_role.max_session_duration == 3600
+      - iam_role.iam_role.path == '{{ test_path }}'
+      - iam_role.iam_role.role_name == test_role
+      - '"create_date" in iam_role.iam_role'
+      - '"role_id" in iam_role.iam_role'
+  - name: Short pause for role creation to finish
+    pause:
+      seconds: 10
+    when: standard_pauses | bool
+
+  - name: 'Minimal IAM Role with path (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      path: '{{ test_path }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+
+  - name: 'iam_role_info after Role creation'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role" + test_path + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - '"description" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 1
+      - role_info.iam_roles[0].instance_profiles[0].instance_profile_name == test_role
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.endswith("instance-profile" + test_path + test_role)'
+      - role_info.iam_roles[0].managed_policies | length == 0
+      - role_info.iam_roles[0].max_session_duration == 3600
+      - role_info.iam_roles[0].path == '{{ test_path }}'
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+
+  - name: 'iam_role_info after Role creation (searching a path)'
+    iam_role_info:
+      path_prefix: '{{ test_path }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role" + test_path + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - '"description" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 1
+      - role_info.iam_roles[0].instance_profiles[0].instance_profile_name == test_role
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.endswith("instance-profile" + test_path + test_role)'
+      - role_info.iam_roles[0].managed_policies | length == 0
+      - role_info.iam_roles[0].max_session_duration == 3600
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].path == '{{ test_path }}'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+
+  - name: 'Remove IAM Role'
+    iam_role:
+      state: absent
+      name: '{{ test_role }}'
+      path: '{{ test_path }}'
+      # If we don't delete the existing profile it'll be reused (with the path)
+      # by the test below.
+      delete_instance_profile: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+  - name: Short pause for role removal to finish
+    pause:
+      seconds: 10
+    when: paranoid_pauses | bool
+
+  - name: 'iam_role_info after Role deletion'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 0
+
+  # (with Instance profile)
+  - name: 'Minimal IAM Role with instance profile'
+    iam_role:
+      name: '{{ test_role }}'
+      create_instance_profile: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+      - 'iam_role.iam_role.arn.startswith("arn")'
+      - 'iam_role.iam_role.arn.endswith("role/" + test_role )'
+      # Would be nice to test the contents...
+      - '"assume_role_policy_document" in iam_role.iam_role'
+      - iam_role.iam_role.attached_policies | length == 0
+      - iam_role.iam_role.max_session_duration == 3600
+      - iam_role.iam_role.path == '/'
+      - iam_role.iam_role.role_name == test_role
+      - '"create_date" in iam_role.iam_role'
+      - '"role_id" in iam_role.iam_role'
+  - name: Short pause for role creation to finish
+    pause:
+      seconds: 10
+    when: standard_pauses | bool
+
+  - name: 'Minimal IAM Role wth instance profile (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      create_instance_profile: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+
+  - name: 'iam_role_info after Role creation'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role/" + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - '"description" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 1
+      - role_info.iam_roles[0].instance_profiles[0].instance_profile_name == test_role
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.endswith("instance-profile/" + test_role)'
+      - role_info.iam_roles[0].managed_policies | length == 0
+      - role_info.iam_roles[0].max_session_duration == 3600
+      - role_info.iam_roles[0].path == '/'
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+
+  # ===================================================================
+  # Max Session Duration Manipulation
+
+  - name: 'Update Max Session Duration (CHECK MODE)'
+    iam_role:
+      name: '{{ test_role }}'
+      max_session_duration: 43200
+    check_mode: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+
+  - name: 'Update Max Session Duration'
+    iam_role:
+      name: '{{ test_role }}'
+      max_session_duration: 43200
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+      - iam_role.iam_role.max_session_duration == 43200
+
+  - name: 'Update Max Session Duration (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      max_session_duration: 43200
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+
+  - name: 'iam_role_info after updating Max Session Duration'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role/" + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - '"description" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 1
+      - role_info.iam_roles[0].instance_profiles[0].instance_profile_name == test_role
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.endswith("instance-profile/" + test_role)'
+      - role_info.iam_roles[0].managed_policies | length == 0
+      - role_info.iam_roles[0].max_session_duration == 43200
+      - role_info.iam_roles[0].path == '/'
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+
+  # ===================================================================
+  # Description Manipulation
+
+  - name: 'Add Description (CHECK MODE)'
+    iam_role:
+      name: '{{ test_role }}'
+      description: 'Ansible Test Role {{ resource_prefix }}'
+    check_mode: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+
+  - name: 'Add Description'
+    iam_role:
+      name: '{{ test_role }}'
+      description: 'Ansible Test Role {{ resource_prefix }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+      - iam_role.iam_role.description == 'Ansible Test Role {{ resource_prefix }}'
+
+  - name: 'Add Description (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      description: 'Ansible Test Role {{ resource_prefix }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+      - iam_role.iam_role.description == 'Ansible Test Role {{ resource_prefix }}'
+
+  - name: 'iam_role_info after adding Description'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role/" + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - 'role_info.iam_roles[0].description == "Ansible Test Role {{ resource_prefix }}"'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 1
+      - role_info.iam_roles[0].instance_profiles[0].instance_profile_name == test_role
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.endswith("instance-profile/" + test_role)'
+      - role_info.iam_roles[0].managed_policies | length == 0
+      - role_info.iam_roles[0].max_session_duration == 43200
+      - role_info.iam_roles[0].path == '/'
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+
+  - name: 'Update Description (CHECK MODE)'
+    iam_role:
+      name: '{{ test_role }}'
+      description: 'Ansible Test Role (updated) {{ resource_prefix }}'
+    check_mode: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+
+  - name: 'Update Description'
+    iam_role:
+      name: '{{ test_role }}'
+      description: 'Ansible Test Role (updated) {{ resource_prefix }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+      - iam_role.iam_role.description == 'Ansible Test Role (updated) {{ resource_prefix }}'
+
+  - name: 'Update Description (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      description: 'Ansible Test Role (updated) {{ resource_prefix }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+      - iam_role.iam_role.description == 'Ansible Test Role (updated) {{ resource_prefix }}'
+
+  - name: 'iam_role_info after updating Description'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role/" + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - 'role_info.iam_roles[0].description == "Ansible Test Role (updated) {{ resource_prefix }}"'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 1
+      - role_info.iam_roles[0].instance_profiles[0].instance_profile_name == test_role
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.endswith("instance-profile/" + test_role)'
+      - role_info.iam_roles[0].managed_policies | length == 0
+      - role_info.iam_roles[0].max_session_duration == 43200
+      - role_info.iam_roles[0].path == '/'
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+
+
+  # ===================================================================
+  # Policy Manipulation
+
+  - name: 'Add Managed Policy (CHECK MODE)'
+    iam_role:
+      name: '{{ test_role }}'
+      purge_policies: no
+      managed_policy:
+      - '{{ safe_managed_policy }}'
+    check_mode: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+
+  - name: 'Add Managed Policy'
+    iam_role:
+      name: '{{ test_role }}'
+      purge_policies: no
+      managed_policy:
+      - '{{ safe_managed_policy }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+
+  - name: 'Add Managed Policy (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      purge_policies: no
+      managed_policy:
+      - '{{ safe_managed_policy }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+
+  - name: 'iam_role_info after adding Managed Policy'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role/" + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - 'role_info.iam_roles[0].description == "Ansible Test Role (updated) {{ resource_prefix }}"'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 1
+      - role_info.iam_roles[0].instance_profiles[0].instance_profile_name == test_role
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.endswith("instance-profile/" + test_role)'
+      - role_info.iam_roles[0].managed_policies | length == 1
+      - safe_managed_policy in ( role_info | json_query("iam_roles[*].managed_policies[*].policy_name") | list | flatten )
+      - custom_policy_name not in ( role_info | json_query("iam_roles[*].managed_policies[*].policy_name") | list | flatten )
+      - role_info.iam_roles[0].max_session_duration == 43200
+      - role_info.iam_roles[0].path == '/'
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+
+  - name: 'Update Managed Policy without purge (CHECK MODE)'
+    iam_role:
+      name: '{{ test_role }}'
+      purge_policies: no
+      managed_policy:
+      - '{{ custom_policy_name }}'
+    check_mode: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+
+  - name: 'Update Managed Policy without purge'
+    iam_role:
+      name: '{{ test_role }}'
+      purge_policies: no
+      managed_policy:
+      - '{{ custom_policy_name }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+
+  - name: 'Update Managed Policy without purge (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      purge_policies: no
+      managed_policy:
+      - '{{ custom_policy_name }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+
+  - name: 'iam_role_info after updating Managed Policy without purge'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role/" + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - 'role_info.iam_roles[0].description == "Ansible Test Role (updated) {{ resource_prefix }}"'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 1
+      - role_info.iam_roles[0].instance_profiles[0].instance_profile_name == test_role
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.endswith("instance-profile/" + test_role)'
+      - role_info.iam_roles[0].managed_policies | length == 2
+      - safe_managed_policy in ( role_info | json_query("iam_roles[*].managed_policies[*].policy_name") | list | flatten )
+      - custom_policy_name in ( role_info | json_query("iam_roles[*].managed_policies[*].policy_name") | list | flatten )
+      - role_info.iam_roles[0].max_session_duration == 43200
+      - role_info.iam_roles[0].path == '/'
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+
+  # Managed Policies are purged by default
+  - name: 'Update Managed Policy with purge (CHECK MODE)'
+    iam_role:
+      name: '{{ test_role }}'
+      managed_policy:
+      - '{{ custom_policy_name }}'
+    check_mode: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+
+  - name: 'Update Managed Policy with purge'
+    iam_role:
+      name: '{{ test_role }}'
+      managed_policy:
+      - '{{ custom_policy_name }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+
+  - name: 'Update Managed Policy with purge (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      managed_policy:
+      - '{{ custom_policy_name }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+
+  - name: 'iam_role_info after updating Managed Policy with purge'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role/" + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - 'role_info.iam_roles[0].description == "Ansible Test Role (updated) {{ resource_prefix }}"'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 1
+      - role_info.iam_roles[0].instance_profiles[0].instance_profile_name == test_role
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.endswith("instance-profile/" + test_role)'
+      - role_info.iam_roles[0].managed_policies | length == 1
+      - safe_managed_policy not in ( role_info | json_query("iam_roles[*].managed_policies[*].policy_name") | list | flatten )
+      - custom_policy_name in ( role_info | json_query("iam_roles[*].managed_policies[*].policy_name") | list | flatten )
+      - role_info.iam_roles[0].max_session_duration == 43200
+      - role_info.iam_roles[0].path == '/'
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+
+  # ===================================================================
+  # Inline Policy (test _info behaviour)
+
+  # XXX Not sure if it's a bug in Ansible or a "quirk" of AWS, but these two
+  # policies need to have at least different Sids or the second doesn't show
+  # up...
+
+  - name: 'Attach inline policy a'
+    iam_policy:
+      state: present
+      iam_type: 'role'
+      iam_name: '{{ test_role }}'
+      policy_name: 'inline-policy-a'
+      policy_json: '{{ lookup("file", "deny-all-a.json") }}'
+
+  - name: 'Attach inline policy b'
+    iam_policy:
+      state: present
+      iam_type: 'role'
+      iam_name: '{{ test_role }}'
+      policy_name: 'inline-policy-b'
+      policy_json: '{{ lookup("file", "deny-all-b.json") }}'
+
+  - name: 'iam_role_info after attaching inline policies (using iam_policy)'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role/" + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - 'role_info.iam_roles[0].description == "Ansible Test Role (updated) {{ resource_prefix }}"'
+      - role_info.iam_roles[0].inline_policies | length == 2
+      - '"inline-policy-a" in role_info.iam_roles[0].inline_policies'
+      - '"inline-policy-b" in role_info.iam_roles[0].inline_policies'
+      - role_info.iam_roles[0].instance_profiles | length == 1
+      - role_info.iam_roles[0].instance_profiles[0].instance_profile_name == test_role
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.endswith("instance-profile/" + test_role)'
+      - role_info.iam_roles[0].managed_policies | length == 1
+      - safe_managed_policy not in ( role_info | json_query("iam_roles[*].managed_policies[*].policy_name") | list | flatten )
+      - custom_policy_name in ( role_info | json_query("iam_roles[*].managed_policies[*].policy_name") | list | flatten )
+      - role_info.iam_roles[0].max_session_duration == 43200
+      - role_info.iam_roles[0].path == '/'
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+
+  # XXX iam_role fails to remove inline policies before deleting the role
+  - name: 'Detach inline policy a'
+    iam_policy:
+      state: absent
+      iam_type: 'role'
+      iam_name: '{{ test_role }}'
+      policy_name: 'inline-policy-a'
+
+  - name: 'Detach inline policy b'
+    iam_policy:
+      state: absent
+      iam_type: 'role'
+      iam_name: '{{ test_role }}'
+      policy_name: 'inline-policy-b'
+
+  # ===================================================================
+  # Role Removal
+  - name: 'Remove IAM Role (CHECK MODE)'
+    iam_role:
+      state: absent
+      name: '{{ test_role }}'
+      delete_instance_profile: yes
+    check_mode: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+  - name: 'Short pause for role removal to finish'
+    pause:
+      seconds: 10
+    when: paranoid_pauses | bool
+
+  - name: 'iam_role_info after deleting role in check mode'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+
+  - name: 'Remove IAM Role'
+    iam_role:
+      state: absent
+      name: '{{ test_role }}'
+      delete_instance_profile: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+  - name: 'Short pause for role removal to finish'
+    pause:
+      seconds: 10
+    when: paranoid_pauses | bool
+
+  - name: 'iam_role_info after deleting role'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 0
+
+  - name: 'Remove IAM Role (should be gone already)'
+    iam_role:
+      state: absent
+      name: '{{ test_role }}'
+      delete_instance_profile: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+  - name: 'Short pause for role removal to finish'
+    pause:
+      seconds: 10
+    when: paranoid_pauses | bool
+
+  # ===================================================================
+  # Boundary Policy (requires create_instance_profile: no)
+  - name: 'Create minimal role with no boundary policy'
+    iam_role:
+      name: '{{ test_role }}'
+      create_instance_profile: no
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+
+  - name: 'Configure Boundary Policy (CHECK MODE)'
+    iam_role:
+      name: '{{ test_role }}'
+      create_instance_profile: no
+      boundary: '{{ boundary_policy }}'
+    check_mode: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+
+  - name: 'Configure Boundary Policy'
+    iam_role:
+      name: '{{ test_role }}'
+      create_instance_profile: no
+      boundary: '{{ boundary_policy }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+
+  - name: 'Configure Boundary Policy (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      create_instance_profile: no
+      boundary: '{{ boundary_policy }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+
+  - name: 'iam_role_info after adding boundary policy'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role/" + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - '"description" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 0
+      - role_info.iam_roles[0].managed_policies | length == 0
+      - role_info.iam_roles[0].max_session_duration == 3600
+      - role_info.iam_roles[0].path == '/'
+      - role_info.iam_roles[0].permissions_boundary.permissions_boundary_arn == boundary_policy
+      - role_info.iam_roles[0].permissions_boundary.permissions_boundary_type == 'Policy'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+
+  - name: 'Remove IAM Role'
+    iam_role:
+      state: absent
+      name: '{{ test_role }}'
+      delete_instance_profile: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+  - name: Short pause for role removal to finish
+    pause:
+      seconds: 10
+    when: paranoid_pauses | bool
+
+  # ===================================================================
+  # Complex role Creation
+  - name: 'Complex IAM Role (CHECK MODE)'
+    iam_role:
+      name: '{{ test_role }}'
+      assume_role_policy_document: '{{ lookup("file", "deny-assume.json") }}'
+      boundary: '{{ boundary_policy }}'
+      create_instance_profile: no
+      description: 'Ansible Test Role {{ resource_prefix }}'
+      managed_policy:
+      - '{{ safe_managed_policy }}'
+      - '{{ custom_policy_name }}'
+      max_session_duration: 43200
+      path: '{{ test_path }}'
+    check_mode: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+  - name: Short pause for role creation to finish
+    pause:
+      seconds: 10
+    when: standard_pauses | bool
+
+  - name: 'iam_role_info after Complex Role creation in check_mode'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 0
+
+  - name: 'Complex IAM Role'
+    iam_role:
+      name: '{{ test_role }}'
+      assume_role_policy_document: '{{ lookup("file", "deny-assume.json") }}'
+      boundary: '{{ boundary_policy }}'
+      create_instance_profile: no
+      description: 'Ansible Test Role {{ resource_prefix }}'
+      managed_policy:
+      - '{{ safe_managed_policy }}'
+      - '{{ custom_policy_name }}'
+      max_session_duration: 43200
+      path: '{{ test_path }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+      - 'iam_role.iam_role.arn.startswith("arn")'
+      - 'iam_role.iam_role.arn.endswith("role" + test_path + test_role )'
+      # Would be nice to test the contents...
+      - '"assume_role_policy_document" in iam_role.iam_role'
+      - iam_role.iam_role.attached_policies | length == 2
+      - iam_role.iam_role.max_session_duration == 43200
+      - iam_role.iam_role.path == test_path
+      - iam_role.iam_role.role_name == test_role
+      - '"create_date" in iam_role.iam_role'
+      - '"role_id" in iam_role.iam_role'
+  - name: Short pause for role creation to finish
+    pause:
+      seconds: 10
+    when: standard_pauses | bool
+
+  - name: 'Complex IAM role (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      assume_role_policy_document: '{{ lookup("file", "deny-assume.json") }}'
+      boundary: '{{ boundary_policy }}'
+      create_instance_profile: no
+      description: 'Ansible Test Role {{ resource_prefix }}'
+      managed_policy:
+      - '{{ safe_managed_policy }}'
+      - '{{ custom_policy_name }}'
+      max_session_duration: 43200
+      path: '{{ test_path }}'
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+
+  - name: 'iam_role_info after Role creation'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role" + test_path + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - 'role_info.iam_roles[0].description == "Ansible Test Role {{ resource_prefix }}"'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 0
+      - role_info.iam_roles[0].managed_policies | length == 2
+      - safe_managed_policy in ( role_info | json_query("iam_roles[*].managed_policies[*].policy_name") | list | flatten )
+      - custom_policy_name in ( role_info | json_query("iam_roles[*].managed_policies[*].policy_name") | list | flatten )
+      - role_info.iam_roles[0].max_session_duration == 43200
+      - role_info.iam_roles[0].path == test_path
+      - role_info.iam_roles[0].permissions_boundary.permissions_boundary_arn == boundary_policy
+      - role_info.iam_roles[0].permissions_boundary.permissions_boundary_type == 'Policy'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+
+  always:
+  # ===================================================================
+  # Cleanup
+
+  # XXX iam_role fails to remove inline policies before deleting the role
+  - name: 'Detach inline policy a'
+    iam_policy:
+      state: absent
+      iam_type: 'role'
+      iam_name: '{{ test_role }}'
+      policy_name: 'inline-policy-a'
+    ignore_errors: true
+
+  - name: 'Detach inline policy b'
+    iam_policy:
+      state: absent
+      iam_type: 'role'
+      iam_name: '{{ test_role }}'
+      policy_name: 'inline-policy-b'
+    ignore_errors: true
+
+  - name: 'Remove IAM Role'
+    iam_role:
+      state: absent
+      name: '{{ test_role }}'
+      delete_instance_profile: yes
+    ignore_errors: true
+
+  - name: 'Remove IAM Role (with path)'
+    iam_role:
+      state: absent
+      name: '{{ test_role }}'
+      path: '{{ test_path }}'
+      delete_instance_profile: yes
+    ignore_errors: true
+
+  - name: 'iam_role_info after Role deletion'
+    iam_role_info:
+      name: '{{ test_role }}'
+    ignore_errors: true
+
+  - name: 'Remove test managed policy'
+    iam_managed_policy:
+      state: absent
+      policy_name: '{{ custom_policy_name }}'

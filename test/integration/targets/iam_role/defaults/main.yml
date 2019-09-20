@@ -1,0 +1,8 @@
+---
+test_role: '{{ resource_prefix }}-role'
+test_path: '/{{ resource_prefix }}/'
+safe_managed_policy: 'AWSDenyAll'
+custom_policy_name: '{{ resource_prefix }}-denyall'
+boundary_policy: 'arn:aws:iam::aws:policy/AWSDenyAll'
+paranoid_pauses: no
+standard_pauses: no

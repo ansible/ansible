@@ -29,12 +29,29 @@
         },
         {
             "Action": [
+                "iam:CreatePolicy",
+                "iam:ListPolicyVersions",
+                "iam:ListEntitiesForPolicy",
+                "iam:DeletePolicy"
+             ],
+            "Resource": "arn:aws:iam::{{ aws_account }}:policy/ansible-test-*",
+            "Effect": "Allow",
+            "Sid": "AllowManagementOfSpecificPolicies"
+        },
+        {
+            "Action": [
                 "iam:AttachRolePolicy",
                 "iam:CreateRole",
                 "iam:DeleteRole",
+                "iam:DeleteRolePolicy",
+                "iam:DeleteRolePermissionsBoundary",
                 "iam:DetachRolePolicy",
                 "iam:PassRole",
+                "iam:PutRolePolicy",
+                "iam:PutRolePermissionsBoundary",
                 "iam:UpdateAssumeRolePolicy",
+                "iam:UpdateRole",
+                "iam:UpdateRoleDescription",
                 "sts:AssumeRole"
              ],
             "Resource": "arn:aws:iam::{{ aws_account }}:role/ansible-test-*",
