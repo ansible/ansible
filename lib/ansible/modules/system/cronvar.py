@@ -108,8 +108,6 @@ import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
 
-CRONCMD = "/usr/bin/crontab"
-
 
 class CronVarError(Exception):
     pass
@@ -128,6 +126,7 @@ class CronVar(object):
         self.user = user
         self.lines = None
         self.wordchars = ''.join(chr(x) for x in range(128) if chr(x) not in ('=', "'", '"',))
+        self.cron_cmd = self.module.get_bin_path('cronvar', required=True)
 
         if cron_file:
             self.cron_file = ""
@@ -296,14 +295,14 @@ class CronVar(object):
 
         if self.user:
             if platform.system() == 'SunOS':
-                return "su %s -c '%s -l'" % (pipes.quote(self.user), pipes.quote(CRONCMD))
+                return "su %s -c '%s -l'" % (pipes.quote(self.user), pipes.quote(self.cron_cmd))
             elif platform.system() == 'AIX':
-                return "%s -l %s" % (pipes.quote(CRONCMD), pipes.quote(self.user))
+                return "%s -l %s" % (pipes.quote(self.cron_cmd), pipes.quote(self.user))
             elif platform.system() == 'HP-UX':
-                return "%s %s %s" % (CRONCMD, '-l', pipes.quote(self.user))
+                return "%s %s %s" % (self.cron_cmd, '-l', pipes.quote(self.user))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD, user, '-l')
+        return "%s %s %s" % (self.cron_cmd, user, '-l')
 
     def _write_execute(self, path):
         """
@@ -312,10 +311,11 @@ class CronVar(object):
         user = ''
         if self.user:
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
-                return "chown %s %s ; su '%s' -c '%s %s'" % (pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), CRONCMD, pipes.quote(path))
+                return "chown %s %s ; su '%s' -c '%s %s'" % (
+                    pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), self.cron_cmd, pipes.quote(path))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD, user, pipes.quote(path))
+        return "%s %s %s" % (self.cron_cmd, user, pipes.quote(path))
 
 
 # ==================================================
