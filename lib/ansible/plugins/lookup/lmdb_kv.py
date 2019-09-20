@@ -5,11 +5,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: lmdb
+    lookup: lmdb_kv
     author:
-      - Jan-Piet Mens (@jpmens) <jpmens(at)gmail.com>
-      - Ansible Core
-    version_added: "2.5"
+      - Jan-Piet Mens (@jpmens)
+    version_added: "2.10"
     short_description: fetch data from LMDB
     description:
       - This lookup returns a list of results from an LMDB DB corresponding to a list of items given to it
@@ -25,13 +24,25 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: query LMDB for a list of country codes
-  debug: msg="{{ lookup('lmdb_kv', 'nl', 'be', 'lu', db='jp.mdb') }}"
+  debug:
+    msg: "{{ query('lmdb_kv', 'nl', 'be', 'lu', db='jp.mdb') }}"
 
-- name: use list of values in a loop
-  debug: msg="Hello from {{ item.0 }} a.k.a. {{ item.1 }}"
+- name: use list of values in a loop by key wildcard
+  debug:
+    msg: "Hello from {{ item.0 }} a.k.a. {{ item.1 }}"
+  vars:
+    - lmdb_kv_db: jp.mdb
   with_lmdb_kv:
      - "n*"
 
+- name: get an item by key
+  assert:
+    that:
+      - item == 'Belgium'
+    vars:
+      - lmdb_kv_db: jp.mdb
+    with_lmdb_kv:
+      - be
 """
 
 RETURN = """
@@ -42,7 +53,7 @@ _raw:
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-
+from ansible.module_utils._text import to_native, to_text
 HAVE_LMDB = True
 try:
     import lmdb
@@ -78,7 +89,7 @@ class LookupModule(LookupBase):
         try:
             env = lmdb.open(db, readonly=True)
         except Exception as e:
-            raise AnsibleError("LMDB can't open database %s: %s" % (db, str(e)))
+            raise AnsibleError("LMDB can't open database %s: %s" % (db, to_native(e)))
 
         ret = []
         if len(terms) == 0:
@@ -86,22 +97,22 @@ class LookupModule(LookupBase):
                 cursor = txn.cursor()
                 cursor.first()
                 for key, value in cursor:
-                    ret.append((key, value))
+                    ret.append((to_text(key), to_native(value)))
 
         else:
             for term in terms:
                 with env.begin() as txn:
                     if term.endswith('*'):
                         cursor = txn.cursor()
-                        prefix = term[:-1]           # strip asterisk
-                        # cursor.set_range(prefix)
-                        cursor.set_range(term)
-                        while cursor.key().startswith(prefix):
-                            ret.append(cursor.item())
+                        prefix = term[:-1]  # strip asterisk
+                        cursor.set_range(to_text(term).encode())
+                        while cursor.key().startswith(to_text(prefix).encode()):
+                            for key, value in cursor:
+                                ret.append((to_text(key), to_native(value)))
                             cursor.next()
                     else:
-                        value = txn.get(term)
+                        value = txn.get(to_text(term).encode())
                         if value is not None:
-                            ret.append(value)
+                            ret.append(to_native(value))
 
         return ret
