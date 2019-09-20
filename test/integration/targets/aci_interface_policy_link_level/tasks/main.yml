@@ -1,0 +1,295 @@
+# Test code for the ACI modules
+# Copyright: (c) 2019, Vasily Prokopov (@vasilyprokopov)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+
+# CLEAN ENVIRONMENT
+- name: Remove Link Level Policy
+  aci_interface_policy_link_level: &interface_policy_link_level_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    link_level_policy: ansible_test
+    state: absent
+
+
+# ADD LINK LEVEL POLICY
+- name: Add Link Level Policy (check mode)
+  aci_interface_policy_link_level: &interface_policy_link_level_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    link_level_policy: ansible_test
+    state: present
+  check_mode: yes
+  register: cm_add_policy
+
+- name: Add Link Level Policy (normal mode)
+  aci_interface_policy_link_level: *interface_policy_link_level_present
+  register: nm_add_policy
+
+- name: Verify Add Link Level Policy
+  assert:
+    that:
+    - cm_add_policy is changed
+    - nm_add_policy is changed
+    - nm_add_policy.previous == cm_add_policy.previous == cm_add_policy.current == []
+    - 'nm_add_policy.current == [{"fabricHIfPol": {"attributes": {"dn": "uni/infra/hintfpol-ansible_test", "ownerKey": "", "name": "ansible_test", "descr": "", "annotation": "", "fecMode": "inherit", "nameAlias": "", "ownerTag": "", "autoNeg": "on", "speed": "inherit", "linkDebounce": "100"}}}]'
+    - 'nm_add_policy.proposed == cm_add_policy.proposed == nm_add_policy.sent == cm_add_policy.sent == {"fabricHIfPol": {"attributes": {"name": "ansible_test"}}}'
+
+- name: Add Link Level Policy again (check mode)
+  aci_interface_policy_link_level: *interface_policy_link_level_present
+  check_mode: yes
+  register: cm_add_policy_again
+
+- name: Add Link Level Policy again (normal mode)
+  aci_interface_policy_link_level: *interface_policy_link_level_present
+  register: nm_add_policy_again
+
+- name: Verify Add Link Level Policy again
+  assert:
+    that:
+    - cm_add_policy_again is not changed
+    - nm_add_policy_again is not changed
+    - 'nm_add_policy_again.previous == cm_add_policy_again.previous == nm_add_policy_again.current == cm_add_policy_again.current == [{"fabricHIfPol": {"attributes": {"dn": "uni/infra/hintfpol-ansible_test", "ownerKey": "", "name": "ansible_test", "descr": "", "annotation": "", "fecMode": "inherit", "nameAlias": "", "ownerTag": "", "autoNeg": "on", "speed": "inherit", "linkDebounce": "100"}}}]'
+    - 'nm_add_policy.proposed == cm_add_policy.proposed == nm_add_policy.sent == cm_add_policy.sent == {"fabricHIfPol": {"attributes": {"name": "ansible_test"}}}'
+    - nm_add_policy_again.sent == cm_add_policy_again.sent == {}
+
+
+# CHANGE LINK LEVEL POLICY
+- name: Change description of Link Level Policy (check mode)
+  aci_interface_policy_link_level:
+    <<: *interface_policy_link_level_present
+    description: Ansible test Link Level Policy
+  check_mode: yes
+  register: cm_add_policy_descr
+
+- name: Change description of Link Level Policy (normal mode)
+  aci_interface_policy_link_level:
+    <<: *interface_policy_link_level_present
+    description: Ansible test Link Level Policy
+  register: nm_add_policy_descr
+
+- name: Verify add_policy_descr
+  assert:
+    that:
+    - cm_add_policy_descr is changed
+    - nm_add_policy_descr is changed
+    - 'cm_add_policy_descr.proposed == nm_add_policy_descr.proposed == {"fabricHIfPol": {"attributes": {"name": "ansible_test", "descr": "Ansible test Link Level Policy"}}}'
+    - 'cm_add_policy_descr.sent == nm_add_policy_descr.sent == {"fabricHIfPol": {"attributes": {"descr": "Ansible test Link Level Policy"}}}'
+    - 'cm_add_policy_descr.previous == nm_add_policy_descr.previous == cm_add_policy_descr.current == [{"fabricHIfPol": {"attributes": {"dn": "uni/infra/hintfpol-ansible_test", "ownerKey": "", "name": "ansible_test", "descr": "", "annotation": "", "fecMode": "inherit", "nameAlias": "", "ownerTag": "", "autoNeg": "on", "speed": "inherit", "linkDebounce": "100"}}}]'
+    - 'nm_add_policy_descr.current == [{"fabricHIfPol": {"attributes": {"dn": "uni/infra/hintfpol-ansible_test", "ownerKey": "", "name": "ansible_test", "descr": "Ansible test Link Level Policy", "annotation": "", "fecMode": "inherit", "nameAlias": "", "ownerTag": "", "autoNeg": "on", "speed": "inherit", "linkDebounce": "100"}}}]'
+
+- name: Change description of Link Level Policy again (check mode)
+  aci_interface_policy_link_level:
+    <<: *interface_policy_link_level_present
+    description: Ansible test Link Level Policy
+  check_mode: yes
+  register: cm_add_policy_descr_again
+
+- name: Change description of Link Level Policy again (normal mode)
+  aci_interface_policy_link_level:
+    <<: *interface_policy_link_level_present
+    description: Ansible test Link Level Policy
+  register: nm_add_policy_descr_again
+
+- name: Verify add_policy_descr_again
+  assert:
+    that:
+    - cm_add_policy_descr_again is not changed
+    - nm_add_policy_descr_again is not changed
+    - 'cm_add_policy_descr_again.proposed == nm_add_policy_descr_again.proposed == {"fabricHIfPol": {"attributes": {"name": "ansible_test", "descr": "Ansible test Link Level Policy"}}}'
+    - 'cm_add_policy_descr_again.sent == nm_add_policy_descr_again.sent == {}'
+    - 'cm_add_policy_descr_again.previous == nm_add_policy_descr_again.previous == cm_add_policy_descr_again.current == nm_add_policy_descr_again.current == [{"fabricHIfPol": {"attributes": {"dn": "uni/infra/hintfpol-ansible_test", "ownerKey": "", "name": "ansible_test", "descr": "Ansible test Link Level Policy", "annotation": "", "fecMode": "inherit", "nameAlias": "", "ownerTag": "", "autoNeg": "on", "speed": "inherit", "linkDebounce": "100"}}}]'
+
+
+# ADD LINK LEVEL POLICY AGAIN WITH NO DESCRIPTION
+- name: Add Link Level Policy again with no description (check mode)
+  aci_interface_policy_link_level: *interface_policy_link_level_present
+  check_mode: yes
+  register: cm_add_policy_again_no_descr
+
+- name: Add Link Level Policy again with no description (normal mode)
+  aci_interface_policy_link_level: *interface_policy_link_level_present
+  register: nm_add_policy_again_no_descr
+
+- name: Verify add_policy_again_no_descr
+  assert:
+    that:
+    - cm_add_policy_again_no_descr is not changed
+    - nm_add_policy_again_no_descr is not changed
+    - 'cm_add_policy_again_no_descr.proposed == nm_add_policy_again_no_descr.proposed == {"fabricHIfPol": {"attributes": {"name": "ansible_test"}}}'
+    - cm_add_policy_again_no_descr.sent == nm_add_policy_again_no_descr.sent == {}
+    - 'cm_add_policy_again_no_descr.previous == nm_add_policy_again_no_descr.previous == cm_add_policy_again_no_descr.current == nm_add_policy_again_no_descr.current == [{"fabricHIfPol": {"attributes": {"dn": "uni/infra/hintfpol-ansible_test", "ownerKey": "", "name": "ansible_test", "descr": "Ansible test Link Level Policy", "annotation": "", "fecMode": "inherit", "nameAlias": "", "ownerTag": "", "autoNeg": "on", "speed": "inherit", "linkDebounce": "100"}}}]'
+
+
+# QUERY ALL LINK LEVEL POLICIES
+- name: Query all Link Level Policies (check mode)
+  aci_interface_policy_link_level: &interface_policy_link_level_query
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: query
+  check_mode: yes
+  register: cm_query_all_policies
+
+- name: Query all Link Level Policies (normal mode)
+  aci_interface_policy_link_level: *interface_policy_link_level_query
+  register: nm_query_all_policies
+
+- name: Verify query_all_policies
+  assert:
+    that:
+    - cm_query_all_policies is not changed
+    - nm_query_all_policies is not changed
+    - cm_query_all_policies == nm_query_all_policies
+    - nm_query_all_policies.current|length >= 1
+
+
+# QUERY A LINK LEVEL POLICY
+- name: Query our Link Level Policy (check mode)
+  aci_interface_policy_link_level:
+    <<: *interface_policy_link_level_query
+    link_level_policy: ansible_test
+  check_mode: yes
+  register: cm_query_policy
+
+- name: Query our Link Level Policy (normal mode)
+  aci_interface_policy_link_level:
+    <<: *interface_policy_link_level_query
+    link_level_policy: ansible_test
+  register: nm_query_policy
+
+- name: Verify query_policy
+  assert:
+    that:
+    - cm_query_policy is not changed
+    - nm_query_policy is not changed
+    - cm_query_policy == nm_query_policy
+    - nm_query_policy.current.0.fabricHIfPol.attributes.descr == "Ansible test Link Level Policy"
+    - nm_query_policy.current.0.fabricHIfPol.attributes.dn == "uni/infra/hintfpol-ansible_test"
+    - nm_query_policy.current.0.fabricHIfPol.attributes.name == "ansible_test"
+
+
+# REMOVE LINK LEVEL POLICY
+- name: Remove Link Level Policy (check mode)
+  aci_interface_policy_link_level: *interface_policy_link_level_absent
+  check_mode: yes
+  register: cm_remove_policy
+
+- name: Remove Link Level Policy (normal mode)
+  aci_interface_policy_link_level: *interface_policy_link_level_absent
+  register: nm_remove_policy
+
+- name: Verify remove_policy
+  assert:
+    that:
+    - cm_remove_policy is changed
+    - nm_remove_policy is changed
+    - cm_remove_policy.proposed == nm_remove_policy.proposed == {}
+    - cm_remove_policy.sent == nm_remove_policy.sent == {}
+    - 'cm_remove_policy.previous == nm_remove_policy.previous == cm_remove_policy.current == [{"fabricHIfPol": {"attributes": {"dn": "uni/infra/hintfpol-ansible_test", "ownerKey": "", "name": "ansible_test", "descr": "Ansible test Link Level Policy", "annotation": "", "fecMode": "inherit", "nameAlias": "", "ownerTag": "", "autoNeg": "on", "speed": "inherit", "linkDebounce": "100"}}}]'
+    - nm_remove_policy.current == []
+
+- name: Remove Link Level Policy again (check mode)
+  aci_interface_policy_link_level: *interface_policy_link_level_absent
+  check_mode: yes
+  register: cm_remove_policy_again
+
+- name: Remove Link Level Policy again (normal mode)
+  aci_interface_policy_link_level: *interface_policy_link_level_absent
+  register: nm_remove_policy_again
+
+- name: Verify remove_policy_again
+  assert:
+    that:
+    - cm_remove_policy_again is not changed
+    - nm_remove_policy_again is not changed
+    - cm_remove_policy_again.proposed == nm_remove_policy_again.proposed == {}
+    - cm_remove_policy_again.sent == nm_remove_policy_again.sent == {}
+    - cm_remove_policy_again.previous == nm_remove_policy_again.previous == cm_remove_policy_again.current == nm_remove_policy_again.current == []
+
+
+# QUERY NON-EXISTING LINK LEVEL POLICY
+- name: Query non-existing Link Level Policy (check mode)
+  aci_interface_policy_link_level:
+    <<: *interface_policy_link_level_query
+    link_level_policy: ansible_test
+  check_mode: yes
+  register: cm_query_non_policy
+
+- name: Query non-existing Link Level Policy (normal mode)
+  aci_interface_policy_link_level:
+    <<: *interface_policy_link_level_query
+    link_level_policy: ansible_test
+  register: nm_query_non_policy
+
+- name: Verify query_non_policy
+  assert:
+    that:
+    - cm_query_non_policy is not changed
+    - nm_query_non_policy is not changed
+    - cm_query_non_policy == nm_query_non_policy
+    - cm_query_non_policy.current == nm_query_non_policy.current == []
+
+
+# PROVOKE ERRORS - REQUIRED PARAMETER MISSING
+- name: Error when required parameter is missing
+  aci_interface_policy_link_level:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: present
+  ignore_errors: yes
+  register: error_on_missing_required_param
+
+- name: Verify error_on_missing_required_param
+  assert:
+    that:
+    - error_on_missing_required_param is failed
+    - 'error_on_missing_required_param.msg == "state is present but all of the following are missing: link_level_policy"'
+
+
+# PROVOKE ERRORS - DEBOUNCE OUT OF RANGE
+- name: Error when link debounce interval is out of range
+  aci_interface_policy_link_level:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: present
+    link_level_policy: ansible_test
+    link_debounce_interval: 5005
+  ignore_errors: yes
+  register: error_on_debounce_out_of_range
+
+- name: Verify error_on_debounce_out_of_range
+  assert:
+    that:
+    - error_on_debounce_out_of_range is failed
+    - 'error_on_debounce_out_of_range.msg == "The \"link_debounce_interval\" must be a value between 0 and 5000"'
