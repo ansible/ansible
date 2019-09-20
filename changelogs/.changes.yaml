@@ -1237,6 +1237,7 @@ releases:
     - junos_config_lines_alias.yaml
     - junos_rm_commands_key.yaml
     - junos_rm_modules_enable_option_fix.yaml
+    - k8s-apply.yml
     - lookup_rabbitmq-is_closing-bug.yml
     - meraki_org_remove_del.yml
     - network_execute_command_fix.yaml

@@ -11,13 +11,14 @@ v2.9.0rc1
 Release Summary
 ---------------
 
-| Release Date: 2019-09-19
+| Release Date: 2019-09-20
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
 Minor Changes
 -------------
 
+- Revert apply as the default of kubernetes modules such as k8s.  This restores the 2.8 and previous behaviour as the default.  apply can still be explicitly enabled https://github.com/ansible/ansible/issues/62661
 - ansible-test - Bump version of ACME test container to 1.8.0. Fixes a typo in the API and adds a newer Pebble version.
 - ansible-test defaults to redacting sensitive values (disable with the ``--no-redact`` option)
 - meraki_organization - Removed the absent option for state due to the possibly catastrophic mistakes. Parameter will be added in 2.10 with safeguards.
