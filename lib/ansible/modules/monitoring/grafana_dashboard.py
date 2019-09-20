@@ -26,19 +26,16 @@ options:
     description:
       - The Grafana URL.
     required: true
-    aliases: [ grafana_url ]
     version_added: 2.7
   grafana_user:
     description:
       - The Grafana API user.
     default: admin
-    aliases: [ grafana_user ]
     version_added: 2.7
   grafana_password:
     description:
       - The Grafana API password.
     default: admin
-    aliases: [ grafana_password ]
     version_added: 2.7
   grafana_api_key:
     description:
