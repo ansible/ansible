@@ -15,6 +15,9 @@
 #
 # Notes:
 # - Only tests *documented* return values ( RESULT.iam_role )
+# - There are some known timing issues with boto3 returning before actions
+#   complete in the case of problems with "changed" status it's worth enabling
+#   the standard_pauses and paranoid_pauses options as a first step in debugging
 #
 # Possible Bugs:
 # - Fails to delete role if inline policies not removed first
@@ -127,6 +130,58 @@
        - create_managed_policy is succeeded
 
   # ===================================================================
+  # Rapid Role Creation and deletion
+  - name: Try running some rapid fire create/delete tests
+    # We've previously seen issues with iam_role returning before creation's
+    # actually complete, if we think the issue's gone, let's try creating and
+    # deleting things in quick succession
+    when: not (standard_pauses | bool)
+    block:
+    - name: 'Minimal IAM Role without instance profile (rapid)'
+      iam_role:
+        name: '{{ test_role }}'
+        create_instance_profile: no
+      register: iam_role
+    - name: 'Minimal IAM Role without instance profile (rapid)'
+      iam_role:
+        name: '{{ test_role }}'
+        create_instance_profile: no
+      register: iam_role_again
+    - assert:
+        that:
+        - iam_role is changed
+        - iam_role_again is not changed
+    - name: 'Remove IAM Role (rapid)'
+      iam_role:
+        state: absent
+        name: '{{ test_role }}'
+      register: iam_role
+    - name: 'Remove IAM Role (rapid)'
+      iam_role:
+        state: absent
+        name: '{{ test_role }}'
+      register: iam_role_again
+    - assert:
+        that:
+        - iam_role is changed
+        - iam_role_again is not changed
+
+    - name: 'Minimal IAM Role without instance profile (rapid)'
+      iam_role:
+        name: '{{ test_role }}'
+        create_instance_profile: no
+      register: iam_role
+    - name: 'Remove IAM Role (rapid)'
+      iam_role:
+        state: absent
+        name: '{{ test_role }}'
+      register: iam_role_again
+    - assert:
+        that:
+        - iam_role is changed
+        - iam_role_again is changed
+
+  # ===================================================================
   # Role Creation
   # (without Instance profile)
   - name: 'iam_role_info before Role creation (no args)'
@@ -154,9 +209,11 @@
   - assert:
       that:
       - iam_role is changed
+  # Pause this first time, just in case we actually created something...
   - name: Short pause for role creation to finish
     pause:
       seconds: 10
+    when: standard_pauses | bool
 
   - name: 'iam_role_info after Role creation in check_mode'
     iam_role_info:
@@ -189,6 +246,7 @@
   - name: Short pause for role creation to finish
     pause:
       seconds: 10
+    when: standard_pauses | bool
 
   - name: 'Minimal IAM Role without instance profile (no change)'
     iam_role:
@@ -234,6 +292,7 @@
   - name: Short pause for role removal to finish
     pause:
       seconds: 10
+    when: paranoid_pauses | bool
 
   - name: 'iam_role_info after Role deletion'
     iam_role_info:
@@ -277,6 +336,7 @@
   - name: Short pause for role creation to finish
     pause:
       seconds: 10
+    when: standard_pauses | bool
 
   - name: 'Minimal IAM Role with path (no change)'
     iam_role:
@@ -353,6 +413,7 @@
   - name: Short pause for role removal to finish
     pause:
       seconds: 10
+    when: paranoid_pauses | bool
 
   - name: 'iam_role_info after Role deletion'
     iam_role_info:
@@ -386,6 +447,7 @@
   - name: Short pause for role creation to finish
     pause:
       seconds: 10
+    when: standard_pauses | bool
 
   - name: 'Minimal IAM Role wth instance profile (no change)'
     iam_role:
@@ -795,6 +857,7 @@
   # XXX Not sure if it's a bug in Ansible or a "quirk" of AWS, but these two
   # policies need to have at least different Sids or the second doesn't show
   # up...
+
   - name: 'Attach inline policy a'
     iam_policy:
       state: present
@@ -870,6 +933,16 @@
   - name: 'Short pause for role removal to finish'
     pause:
       seconds: 10
+    when: paranoid_pauses | bool
+
+  - name: 'iam_role_info after deleting role in check mode'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
 
   - name: 'Remove IAM Role'
     iam_role:
@@ -883,6 +956,7 @@
   - name: 'Short pause for role removal to finish'
     pause:
       seconds: 10
+    when: paranoid_pauses | bool
 
   - name: 'iam_role_info after deleting role'
     iam_role_info:
@@ -905,6 +979,7 @@
   - name: 'Short pause for role removal to finish'
     pause:
       seconds: 10
+    when: paranoid_pauses | bool
 
   # ===================================================================
   # Boundary Policy (requires create_instance_profile: no)
@@ -986,6 +1061,7 @@
   - name: Short pause for role removal to finish
     pause:
       seconds: 10
+    when: paranoid_pauses | bool
 
   # ===================================================================
   # Complex role Creation
@@ -1009,6 +1085,7 @@
   - name: Short pause for role creation to finish
     pause:
       seconds: 10
+    when: standard_pauses | bool
 
   - name: 'iam_role_info after Complex Role creation in check_mode'
     iam_role_info:
@@ -1049,6 +1126,7 @@
   - name: Short pause for role creation to finish
     pause:
       seconds: 10
+    when: standard_pauses | bool
 
   - name: 'Complex IAM role (no change)'
     iam_role:
