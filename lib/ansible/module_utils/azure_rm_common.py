@@ -78,43 +78,6 @@ class ResourceType(Enum):  # pylint: disable=too-few-public-methods
     # when related commands start to support Multi-API
     DATA_STORAGE = ('azure.multiapi.storage', None)
     DATA_COSMOS_TABLE = ('azure.multiapi.cosmosdb', None)
-    MGMT_CONTAINERSERVICE = ('azure.mgmt.containerservice', None)
-    MGMT_ADVISOR = ('azure.mgmt.advisor', None)
-    MGMT_MEDIA = ('azure.mgmt.media', None)
-    MGMT_BACKUP = ('azure.mgmt.recoveryservicesbackup', None)
-    MGMT_BATCH = ('azure.mgmt.batch', None)
-    MGMT_BATCHAI = ('azure.mgmt.batchai', None)
-    MGMT_BILLING = ('azure.mgmt.billing', None)
-    MGMT_BOTSERVICE = ('azure.mgmt.botservice', None)
-    MGMT_CDN = ('azure.mgmt.cdn', None)
-    MGMT_COGNITIVESERVICES = ('azure.mgmt.cognitiveservices', None)
-    MGMT_CONSUMPTION = ('azure.mgmt.consumption', None)
-    MGMT_CONTAINERINSTANCE = ('azure.mgmt.containerinstance', None)
-    MGMT_COSMOSDB = ('azure.mgmt.cosmosdb', None)
-    MGMT_DEPLOYMENTMANAGER = ('azure.mgmt.deploymentmanager', None)
-    MGMT_DATALAKE_ANALYTICS = ('azure.mgmt.datalake.analytics', None)
-    MGMT_DATALAKE_STORE = ('azure.mgmt.datalake.store', None)
-    MGMT_DATAMIGRATION = ('azure.mgmt.datamigration', None)
-    MGMT_EVENTGRID = ('azure.mgmt.eventgrid', None)
-    MGMT_IOT = ('azure.mgmt.iothub', None)
-    MGMT_IOTCENTRAL = ('azure.mgmt.iotcentral', None)
-    MGMT_DEVTESTLABS = ('azure.mgmt.devtestlabs', None)
-    MGMT_MAPS = ('azure.mgmt.maps', None)
-    MGMT_MONITOR = ('azure.mgmt.monitor', None)
-    MGMT_POLICYINSIGHTS = ('azure.mgmt.policyinsights', None)
-    MGMT_RDBMS = ('azure.mgmt.rdbms', None)
-    MGMT_REDIS = ('azure.mgmt.redis', None)
-    MGMT_RELAY = ('azure.mgmt.relay', None)
-    MGMT_RESERVATIONS = ('azure.mgmt.reservations', None)
-    MGMT_SEARCH = ('azure.mgmt.search', None)
-    MGMT_SERVICEBUS = ('azure.mgmt.servicebus', None)
-    MGMT_SERVICEFABRIC = ('azure.mgmt.servicefabric', None)
-    MGMT_SIGNALR = ('azure.mgmt.signalr', None)
-    MGMT_SQL = ('azure.mgmt.sql', None)
-    MGMT_SQLVM = ('azure.mgmt.sqlvirtualmachine', None)
-    MGMT_MANAGEDSERVICES = ('azure.mgmt.managedservices', None)
-    MGMT_NETAPPFILES = ('azure.mgmt.netappfiles', None)
-    MGMT_APPSERVICE = ('azure.mgmt.web', None)
 
     def __init__(self, import_prefix, client_name):
         """Constructor.
@@ -149,31 +112,22 @@ class SDKProfile(object):  # pylint: disable=too-few-public-methods
 # For now, we have to copy from azure-cli
 AZURE_API_PROFILES = {
     'latest': {
-        ResourceType.MGMT_STORAGE: '2019-04-01',
-        ResourceType.MGMT_NETWORK: '2019-04-01',
-        ResourceType.MGMT_COMPUTE: SDKProfile('2019-03-01', {
-            'resource_skus': '2019-04-01',
-            'disks': '2019-03-01',
-            'snapshots': '2019-03-01'
-        }),
-        ResourceType.MGMT_RESOURCE_FEATURES: '2015-12-01',
-        ResourceType.MGMT_RESOURCE_LINKS: '2016-09-01',
-        ResourceType.MGMT_RESOURCE_LOCKS: '2016-09-01',
-        ResourceType.MGMT_RESOURCE_POLICY: '2019-06-01',
-        ResourceType.MGMT_RESOURCE_RESOURCES: '2019-05-10',
-        ResourceType.MGMT_RESOURCE_SUBSCRIPTIONS: '2016-06-01',
-        ResourceType.MGMT_NETWORK_DNS: '2018-05-01',
-        ResourceType.MGMT_KEYVAULT: '2018-02-14',
-        ResourceType.MGMT_AUTHORIZATION: SDKProfile('2018-09-01-preview', {
-            'classic_administrators': '2015-06-01',
-            'role_definitions': '2018-01-01-preview',
-            'provider_operations_metadata': '2018-01-01-preview'
-        }),
-        ResourceType.MGMT_CONTAINERREGISTRY: '2019-06-01-preview',
-        ResourceType.DATA_KEYVAULT: '7.0',
-        ResourceType.DATA_STORAGE: '2018-11-09',
-        ResourceType.DATA_COSMOS_TABLE: '2017-04-17',
-        ResourceType.MGMT_EVENTHUB: '2017-04-01'
+        'ContainerInstanceManagementClient': '2018-02-01-preview',
+        'ComputeManagementClient': dict(
+            default_api_version='2018-10-01',
+            resource_skus='2018-10-01',
+            disks='2018-06-01',
+            snapshots='2018-10-01',
+            virtual_machine_run_commands='2018-10-01'
+        ),
+        'NetworkManagementClient': '2018-08-01',
+        'ResourceManagementClient': '2017-05-10',
+        'StorageManagementClient': '2017-10-01',
+        'WebSiteManagementClient': '2018-02-01',
+        'PostgreSQLManagementClient': '2017-12-01',
+        'MySQLManagementClient': '2017-12-01',
+        'MariaDBManagementClient': '2019-03-01',
+        'ManagementLockClient': '2016-09-01'
     },
     '2019-03-01-hybrid': {
         ResourceType.MGMT_STORAGE: '2017-10-01',
