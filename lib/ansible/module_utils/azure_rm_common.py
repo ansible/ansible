@@ -20,6 +20,7 @@ except Exception:
     ANSIBLE_VERSION = 'unknown'
 from ansible.module_utils.six.moves import configparser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
+from enum import Enum
 
 AZURE_COMMON_ARGS = dict(
     auth_source=dict(
@@ -51,6 +52,7 @@ AZURE_CREDENTIAL_ENV_MAPPING = dict(
     cert_validation_mode='AZURE_CERT_VALIDATION_MODE',
     adfs_authority_url='AZURE_ADFS_AUTHORITY_URL'
 )
+
 
 class ResourceType(Enum):  # pylint: disable=too-few-public-methods
 
