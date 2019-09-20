@@ -359,6 +359,7 @@ EXAMPLES = '''
     event_source: 'trigger'
     state: present
     status: enabled
+    esc_period: 60
     conditions:
       - type: 'trigger_severity'
         operator: '>='
@@ -381,6 +382,7 @@ EXAMPLES = '''
     event_source: 'trigger'
     state: present
     status: enabled
+    esc_period: 60
     conditions:
       - type: 'trigger_name'
         operator: 'like'
@@ -398,6 +400,8 @@ EXAMPLES = '''
           - 'Admin'
       - type: remote_command
         command: 'systemctl restart zabbix-agent'
+        command_type: custom_script
+        execute_on: server
         run_on_hosts:
           - 0
 
@@ -411,6 +415,7 @@ EXAMPLES = '''
     event_source: 'trigger'
     state: present
     status: enabled
+    esc_period: 60
     conditions:
       - type: 'trigger_severity'
         operator: '>='
