@@ -1,0 +1,19 @@
+# Initial CI tests of postgresql_ext module.
+# pg_extension system view is available from PG 9.1.
+# The tests are restricted by Fedora because there will be errors related with
+# attempts to change the environment during postgis installation or
+# missing postgis package in repositories.
+# Anyway, these tests completely depend on Postgres version,
+# not specific distributions.
+- import_tasks: postgresql_ext_initial.yml
+  when:
+  - postgres_version_resp.stdout is version('9.1', '>=')
+  - ansible_distribution == 'Fedora'
+
+# CI tests of "version" option.
+# It uses a mock extension, see test/integration/targets/setup_postgresql_db/.
+# TODO: change postgresql_ext_initial.yml to use the mock extension too.
+- import_tasks: postgresql_ext_version_opt.yml
+  when:
+  - ansible_distribution == 'Ubuntu'
+  - postgres_version_resp.stdout is version('9.1', '>=')
