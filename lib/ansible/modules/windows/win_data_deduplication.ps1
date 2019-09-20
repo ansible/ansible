@@ -40,10 +40,10 @@ function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
   $current_state = 'absent'
 
   try {
-		$dedup_info = Get-DedupVolume -Volume "$($volume.DriveLetter):"
-	} catch {
-		$dedup_info = $null
-	}
+    $dedup_info = Get-DedupVolume -Volume "$($volume.DriveLetter):"
+  } catch {
+    $dedup_info = $null
+  }
 
   if ($dedup_info.Enabled) {
     $current_state = 'present'
@@ -71,10 +71,10 @@ function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
 function Set-DataDedupJobSettings ($volume, $settings) {
 
   try {
-		$dedup_info = Get-DedupVolume -Volume "$($volume.DriveLetter):"
-	} catch {
-		$dedup_info = $null
-	}
+    $dedup_info = Get-DedupVolume -Volume "$($volume.DriveLetter):"
+  } catch {
+    $dedup_info = $null
+  }
 
   ForEach ($key in $settings.keys) {
 
