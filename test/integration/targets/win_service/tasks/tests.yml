@@ -914,14 +914,14 @@
 - name: check recovery settings for the service
   win_service:
     name: "{{test_win_service_name}}"
-    recovery:
-      reset_fail_count_after: 300
-      on_first_failure: restart
-      first_failure_timeout: 60000
-      on_second_failure: restart
-      second_failure_timeout: 60000
-      on_subsequent_failure: restart
-      subsequent_failure_timeout: 60000
+    recovery_reset_interval: 300
+    recovery_actions:
+      - action: restart
+        delay: 60000
+      - action: restart
+        delay: 60000
+      - action: restart
+        delay: 60000
   register: check_win_service_recovery_settings
   check_mode: yes
 
@@ -933,14 +933,14 @@
 - name: set recovery settings for the service
   win_service:
     name: "{{test_win_service_name}}"
-    recovery:
-      reset_fail_count_after: 300
-      on_first_failure: restart
-      first_failure_timeout: 60000
-      on_second_failure: restart
-      second_failure_timeout: 60000
-      on_subsequent_failure: restart
-      subsequent_failure_timeout: 60000
+    recovery_reset_interval: 300
+    recovery_actions:
+      - action: restart
+        delay: 60000
+      - action: restart
+        delay: 60000
+      - action: restart
+        delay: 60000
   register: win_service_recovery_settings
 
 - name: check that the recovery settings succeeded
@@ -958,14 +958,14 @@
 - name: set recovery settings for the service again
   win_service:
     name: "{{test_win_service_name}}"
-    recovery:
-      reset_fail_count_after: 300
-      on_first_failure: restart
-      first_failure_timeout: 60000
-      on_second_failure: restart
-      second_failure_timeout: 60000
-      on_subsequent_failure: restart
-      subsequent_failure_timeout: 60000
+    recovery_reset_interval: 300
+    recovery_actions:
+      - action: restart
+        delay: 60000
+      - action: restart
+        delay: 60000
+      - action: restart
+        delay: 60000
   register: win_service_recovery_settings_again
 
 - name: check that the recovery settings again brings no changes
