@@ -12,6 +12,7 @@
 
 - pip:
     name:
+      - urllib3<=1.25.3
       - openshift>=0.9.2
       - coverage
     virtualenv: "{{ virtualenv }}"
