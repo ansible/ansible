@@ -23,7 +23,6 @@ __metaclass__ = type
 import os
 import json
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
-from units.modules.utils import set_module_args as _set_module_args
 
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -48,13 +47,6 @@ def load_fixture(module_name, name, device=''):
 
     fixture_data[path] = data
     return data
-
-
-def set_module_args(args):
-    if 'provider' not in args:
-        args['provider'] = {'transport': args.get('transport') or 'cli'}
-
-    return _set_module_args(args)
 
 
 class TestCloudEngineModule(ModuleTestCase):
