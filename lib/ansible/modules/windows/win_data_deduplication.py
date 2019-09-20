@@ -25,7 +25,6 @@ options:
   state:
     description:
     - Wether to enable or disable data deduplication on the selected volume.
-    required: yes
     default: present
     type: str
     choices: [ present, absent ]
