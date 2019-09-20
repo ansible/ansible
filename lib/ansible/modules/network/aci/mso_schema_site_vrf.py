@@ -41,6 +41,16 @@ options:
     - The name of the VRF to manage.
     type: str
     aliases: [ name ]
+  region:
+    description:
+    - Cloud Region for VRF.
+    type: str
+    version_added: '2.10'
+  primary_cidr:
+    description:
+    - Primary CIDR in the mentioned region.
+    type: str
+    version_added: '2.10'
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -64,6 +74,8 @@ EXAMPLES = r'''
     site: Site1
     template: Template1
     vrf: VRF1
+    region: us-east-1
+    primary_cidr: 10.0.1.0/24
     state: present
   delegate_to: localhost
 
@@ -120,6 +132,8 @@ def main():
         template=dict(type='str', required=True),
         vrf=dict(type='str', aliases=['name']),  # This parameter is not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        region=dict(type='str', required=True),
+        primary_cidr=dict(type='str', required=True),
     )
 
     module = AnsibleModule(
@@ -136,6 +150,8 @@ def main():
     template = module.params['template']
     vrf = module.params['vrf']
     state = module.params['state']
+    region = module.params['region']
+    primary_cidr = module.params['primary_cidr']
 
     mso = MSOModule(module)
 
@@ -185,12 +201,18 @@ def main():
             ops.append(dict(op='remove', path=vrf_path))
 
     elif state == 'present':
+        region_lst = []
+        cidr_lst = []
+        cidr_lst.append({"ip": primary_cidr, "primary": True})
+        region_lst.append({"name": region, "cidrs": cidr_lst})
         payload = dict(
             vrfRef=dict(
                 schemaId=schema_id,
                 templateName=template,
                 vrfName=vrf,
             ),
+            regions=region_lst,
+
         )
 
         mso.sanitize(payload, collate=True)
