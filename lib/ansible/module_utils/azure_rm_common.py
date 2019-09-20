@@ -111,7 +111,7 @@ AZURE_API_PROFILES = {
             'policy_assignments': '2016-12-01',
             'policy_definitions': '2016-12-01'
         }),
-        'KeyVaultManagementClient': '2016-10-01',
+        'KeyVaultClient': '2016-10-01',
         'azure.multiapi.storage': '2017-11-09',
         'azure.multiapi.cosmosdb': '2017-04-17'
     },
