@@ -13,6 +13,7 @@
 %define py2_shbang_opts %{nil}
 %define py3_shbang_opts %{nil}
 
+
 %if 0%{?fedora} || 0%{?rhel} >= 8
 %global with_python2 0
 %global with_python3 1
@@ -46,13 +47,6 @@ Provides: bundled(python-six) = 1.12.0
 
 %if 0%{?rhel} >= 8
 
-# Bundled provides
-Provides: bundled(python-backports-ssl_match_hostname) = 3.7.0.1
-Provides: bundled(python-distro) = 1.4.0
-Provides: bundled(python-ipaddress) = 1.0.22
-Provides: bundled(python-selectors2) = 1.1.1
-Provides: bundled(python-six) = 1.12.0
-
 BuildRequires: python3-devel
 BuildRequires: python3-setuptools
 
@@ -85,11 +79,11 @@ Requires: python3-six
 Requires: sshpass
 
 %else
-
 %if 0%{?rhel} >= 7
 # RHEL 7
 BuildRequires: python2-devel
 BuildRequires: python-setuptools
+
 # For building docs
 BuildRequires: python-sphinx
 
@@ -121,9 +115,9 @@ Requires: python2-cryptography
 Requires: python-six
 Requires: sshpass
 
-Requires: python-passlib
+# As of Ansible-2.9.0, we no longer depend on the optional dependencies jmespath or passlib
+# Users have to install those on their own
 Requires: python-paramiko
-Requires: python2-jmespath
 
 # The ansible-doc package is no longer provided as of Ansible Engine 2.6.0
 Obsoletes: ansible-doc < 2.6.0
@@ -191,6 +185,7 @@ multi-node deployment, and remote task execution system. Ansible works
 over SSH and does not require any software or daemons to be installed
 on remote nodes. Extension modules can be written in any language and
 are transferred to managed machines automatically.
+
 This package installs the ansible-test command for testing modules and plugins
 developed for ansible.
 
