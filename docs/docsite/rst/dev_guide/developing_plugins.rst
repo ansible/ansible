@@ -73,15 +73,6 @@ To access the configuration settings in your plugin, use ``self.get_option(<opti
 
 Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) must include well-formed doc strings to be considered for merge into the Ansible repo. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
-Importing common code in a collection
-=====================================
-
-You can import shared code from other namespaces or collections by using the format ``ansible_collections.namespace.collection_name.plugins.plugin_type.plugin_name``. To import something from an __init__.py file you will need to use the file name:
-
-.. code-block:: python
-
-    from ansible_collections.namespace.collection_name.plugins.callback.__init__ import CustomBaseClass
-
 Developing particular plugin types
 ==================================
 
@@ -159,7 +150,7 @@ see the source code for the `action plugins included with Ansible Core <https://
 Cache plugins
 -------------
 
-Cache plugins store gathered facts and data retrieved by inventory plugins.
+Cache plugins store gathered facts and data retrieved by inventory plugins. Only fact caching is currently supported by cache plugins in collections.
 
 Import cache plugins using the cache_loader so you can use ``self.set_options()`` and ``self.get_option(<option_name>)``. If you import a cache plugin directly in the code base, you can only access options via ``ansible.constants``, and you break the cache plugin's ability to be used by an inventory plugin.
 
@@ -255,7 +246,7 @@ but with an extra option so you can see how configuration works in Ansible versi
       """
       CALLBACK_VERSION = 2.0
       CALLBACK_TYPE = 'aggregate'
-      CALLBACK_NAME = 'timer'
+      CALLBACK_NAME = 'namespace.collection_name.timer'
 
       # only needed if you ship it and don't want to enable by default
       CALLBACK_NEEDS_WHITELIST = True
@@ -398,7 +389,7 @@ The following is an example of how this lookup is called::
   ---
   - hosts: all
     vars:
-       contents: "{{ lookup('file', '/etc/foo.txt') }}"
+       contents: "{{ lookup('namespace.collection_name.file', '/etc/foo.txt') }}"
 
     tasks:
 
@@ -425,35 +416,7 @@ For example test plugins, see the source code for the `test plugins included wit
 Vars plugins
 ------------
 
-Vars plugins inject additional variable data into Ansible runs that did not come from an inventory source, playbook, or command line. Playbook constructs like 'host_vars' and 'group_vars' work using vars plugins.
-
-Vars plugins were partially implemented in Ansible 2.0 and rewritten to be fully implemented starting with Ansible 2.4.
-
-Older plugins used a ``run`` method as their main body/work:
-
-.. code-block:: python
-
-    def run(self, name, vault_password=None):
-        pass # your code goes here
-
-
-Ansible 2.0 did not pass passwords to older plugins, so vaults were unavailable.
-Most of the work now  happens in the ``get_vars`` method which is called from the VariableManager when needed.
-
-.. code-block:: python
-
-    def get_vars(self, loader, path, entities):
-        pass # your code goes here
-
-The parameters are:
-
- * loader: Ansible's DataLoader. The DataLoader can read files, auto-load JSON/YAML and decrypt vaulted data, and cache read files.
- * path: this is 'directory data' for every inventory source and the current play's playbook directory, so they can search for data in reference to them. ``get_vars`` will be called at least once per available path.
- * entities: these are host or group names that are pertinent to the variables needed. The plugin will get called once for hosts and again for groups.
-
-This ``get vars`` method just needs to return a dictionary structure with the variables.
-
-Since Ansible version 2.4, vars plugins only execute as needed when preparing to execute a task. This avoids the costly 'always execute' behavior that occurred during inventory construction in older versions of Ansible.
+Vars plugins are unsupported by collections in Ansible version 2.9.
 
 For example vars plugins, see the source code for the `vars plugins included with Ansible Core
 <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/vars>`_.

@@ -46,13 +46,6 @@ Lookup plugins can be used anywhere you can use templating in Ansible: in a play
   vars:
     file_contents: "{{lookup('file', 'path/to/file.txt')}}"
 
-Use the fully qualified name for lookup plugins in collections.
-
-.. code-block:: YAML+Jinja
-
-  vars:
-    custom_data: "{{ lookup('namespace.collection_name.lookup_plugin') }}"
-
 Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup.
 This is also the reason most lookups output lists and take lists as input; for example, ``with_items`` uses the :ref:`items <items_lookup>` lookup::
 
