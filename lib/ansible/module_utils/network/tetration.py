@@ -31,6 +31,7 @@ __metaclass__ = type
 import os
 import json
 from functools import partial
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems, iterkeys
 from ansible.module_utils._text import to_text
@@ -65,9 +66,9 @@ TETRATION_COLUMN_NAMES = '/assets/cmdb/attributenames'
 TETRATION_API_EXT_ORCHESTRATORS = '/orchestrator'
 
 TETRATION_PROVIDER_SPEC = {
-    'server_endpoint': dict(type='str', required=True, aliases=['endpoint', 'host']),
-    'api_key': dict(type='str', required=True),
-    'api_secret': dict(type='str', required=True, no_log=True),
+    'server_endpoint': dict(type='str', required=True, aliases=['endpoint', 'host'], fallback=(env_fallback, ['TETRATION_SERVER_ENDPOINT'])),
+    'api_key': dict(type='str', required=True, fallback=(env_fallback, ['TETRATION_API_KEY'])),
+    'api_secret': dict(type='str', required=True, no_log=True, fallback=(env_fallback, ['TETRATION_API_SECRET'])),
     'verify': dict(type='bool', default=False),
     'silent_ssl_warnings': dict(type='bool', default=True),
     'timeout': dict(type='int', default=10),
@@ -81,7 +82,7 @@ class TetrationApiBase(object):
     provider_spec = {'provider': dict(type='dict',
                                       options=TETRATION_PROVIDER_SPEC)}
 
-    def __init__(self, provider, module):
+    def __init__(self, provider):
         if not HAS_TETRATION_CLIENT:
             raise Exception('tetpyclient is required but does not appear '
                             'to be installed.  It can be installed using the '
@@ -90,20 +91,6 @@ class TetrationApiBase(object):
             for key in provider.keys():
                 if key not in TETRATION_PROVIDER_SPEC.keys():
                     del provider[key]
-        for key, value in iteritems(TETRATION_PROVIDER_SPEC):
-            if key not in provider:
-                # apply default values from NIOS_PROVIDER_SPEC since we cannot just
-                # assume the provider values are coming from AnsibleModule
-                if 'default' in value:
-                    provider[key] = value['default']
-                # override any values with env variables unless they were
-                # explicitly set
-                env = ('TETRATION_%s' % key).upper()
-                if env in os.environ:
-                    provider[key] = os.environ.get(env)
-                # if key is required but still not defined raise Exception
-                if key not in provider and 'required' in value and value['required']:
-                    raise ValueError('option: %s is required' % key)
         self.rc = RestClient(**provider)
 
 
@@ -113,7 +100,7 @@ class TetrationApiModule(TetrationApiBase):
         self.module = module
         provider = module.params.get('provider') if module.params.get('provider') else dict()
         try:
-            super(TetrationApiModule, self).__init__(provider, module)
+            super(TetrationApiModule, self).__init__(provider)
         except Exception as exc:
             self.module.fail_json(msg=to_text(exc))
 
