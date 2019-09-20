@@ -560,8 +560,11 @@ tagged_instances:
             sample: 4096 MB
         disk_size:
             description: The size of the disk in MB
-            type: str
-            sample: 20480 MB
+            type: list
+            sample: [
+                        "20480 MB",
+                        "10240 MB"
+                    ]
         networks:
             description: a list of dictionaries with info about IP, NAME, MAC, SECURITY_GROUPS for each NIC
             type: list
@@ -709,13 +712,22 @@ def get_vm_info(client, vm):
 
     networks_info = []
 
-    disk_size = ''
-    if hasattr(vm.TEMPLATE, 'disks'):
-        disk_size = vm.template.disks[0].size + ' MB'
+    disk_size = []
+    if 'DISK' in vm.TEMPLATE:
+        if isinstance(vm.TEMPLATE['DISK'], list):
+            for disk in vm.TEMPLATE['DISK']:
+                disk_size.append(disk['SIZE'] + ' MB')
+        else:
+            disk_size.append(vm.TEMPLATE['DISK']['SIZE'] + ' MB')
 
-    if hasattr(vm.TEMPLATE, 'nics'):
-        for nic in vm.template.nics:
-            networks_info.append({'ip': nic.ip, 'mac': nic.mac, 'name': nic.network, 'security_groups': nic.security_groups})
+    if 'NIC' in vm.TEMPLATE:
+        if isinstance(vm.TEMPLATE['NIC'], list):
+            for nic in vm.TEMPLATE['NIC']:
+                networks_info.append({'ip': nic['IP'], 'mac': nic['MAC'], 'name': nic['NETWORK'], 'security_groups': nic['SECURITY_GROUPS']})
+        else:
+            networks_info.append(
+                {'ip': vm.TEMPLATE['NIC']['IP'], 'mac': vm.TEMPLATE['NIC']['MAC'],
+                    'name': vm.TEMPLATE['NIC']['NETWORK'], 'security_groups': vm.TEMPLATE['NIC']['SECURITY_GROUPS']})
     import time
 
     current_time = time.localtime()
