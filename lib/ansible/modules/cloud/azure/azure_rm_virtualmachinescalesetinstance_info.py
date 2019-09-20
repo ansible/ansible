@@ -221,7 +221,8 @@ class AzureRMVirtualMachineScaleSetVMInfo(AzureRMModuleBase):
             'name': d.get('name', None),
             'provisioning_state': d.get('provisioning_state', None),
             'power_state': power_state,
-            'vm_id': d.get('vm_id', None)
+            'vm_id': d.get('vm_id', None),
+            'computer_name': d.get('os_profile').get('computer_name', None)
         }
         return d
 
