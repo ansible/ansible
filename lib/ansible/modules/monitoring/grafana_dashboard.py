@@ -22,19 +22,19 @@ short_description: Manage Grafana dashboards
 description:
   - Create, update, delete, export Grafana dashboards via API.
 options:
-  url:
+  grafana_url:
     description:
       - The Grafana URL.
     required: true
     aliases: [ grafana_url ]
     version_added: 2.7
-  url_username:
+  grafana_user:
     description:
       - The Grafana API user.
     default: admin
     aliases: [ grafana_user ]
     version_added: 2.7
-  url_password:
+  grafana_password:
     description:
       - The Grafana API password.
     default: admin
