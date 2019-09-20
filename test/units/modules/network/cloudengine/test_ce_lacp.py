@@ -22,7 +22,7 @@ __metaclass__ = type
 
 from units.compat.mock import patch
 from ansible.modules.network.cloudengine import ce_lacp
-from units.modules.utils import set_module_args 
+from units.modules.utils import set_module_args
 from .ce_module import TestCloudEngineModule, load_fixture
 
 
