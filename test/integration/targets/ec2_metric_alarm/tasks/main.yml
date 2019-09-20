@@ -1,0 +1,173 @@
+- block:
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: True
+
+      # Well, guess we need awscli...
+    - name: install awscli
+      pip:
+        state: present
+        name: awscli
+
+    - name: set up environment for testing.
+      include_tasks: env_setup.yml
+
+      ## Test pattern, do something, assert something, tear down.
+    - name: get info on alarms
+      command: aws cloudwatch describe-alarms --alarm-names {{ resource_prefix }}-cpu-low
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token | default('') }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+      register: alarm_info_query
+
+
+    - name: Make instance in a default subnet of the VPC
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-default-vpc"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        tags:
+          TestId: "{{ resource_prefix }}"
+        security_groups: "{{ sg.group_id }}"
+        instance_type: t2.micro
+        wait: true
+        <<: *aws_connection_info
+      register: ec2_instance_results
+
+    - name: verify that thing.
+      debug:
+        var: ec2_instance_results
+
+
+
+    - name: create ec2 metric alarm on ec2 instance
+      ec2_metric_alarm:
+        dimensions:
+          InstanceId: "{{ ec2_instance_results.instances[0].instance_id }}"
+        state: present
+        name: "{{ resource_prefix }}-cpu-low"
+        metric: "CPUUtilization"
+        namespace: "AWS/EC2"
+        treat_missing_data: missing
+        statistic: Average
+        comparison: "<="
+        threshold: 5.0
+        period: 300
+        evaluation_periods: 3
+        unit: "Percent"
+        description: "This will alarm when an instance's cpu usage average is lower than 5% for 15 minutes "
+        <<: *aws_connection_info
+
+      register: ec2_instance_metric_alarm
+
+    - name: get info on alarms
+      command: aws cloudwatch describe-alarms --alarm-names {{ resource_prefix }}-cpu-low
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token | default('') }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+      register: alarm_info_query
+
+    - name: convert it to an object
+      set_fact:
+        alarm_info: "{{ alarm_info_query.stdout |from_json }}"
+
+    - name: verify that thing.
+      debug:
+        var: alarm_info
+
+    - name: verify that thing.
+      debug:
+        var: ec2_instance_metric_alarm
+
+    - name: "verify that an alarm was created"
+      assert:
+        that:
+          - 'ec2_instance_metric_alarm.changed'
+          - 'ec2_instance_metric_alarm.alarm_arn'
+          - 'ec2_instance_metric_alarm.statistic == alarm_info["MetricAlarms"][0].Statistic'
+          - 'ec2_instance_metric_alarm.name  == alarm_info["MetricAlarms"][0].AlarmName'
+          - 'ec2_instance_metric_alarm.metric== alarm_info["MetricAlarms"][0].MetricName'
+          - 'ec2_instance_metric_alarm.namespace == alarm_info["MetricAlarms"][0].Namespace'
+          - 'ec2_instance_metric_alarm.statistic == alarm_info["MetricAlarms"][0].Statistic'
+          - 'ec2_instance_metric_alarm.comparison == alarm_info["MetricAlarms"][0].ComparisonOperator'
+          - 'ec2_instance_metric_alarm.threshold == alarm_info["MetricAlarms"][0].Threshold'
+          - 'ec2_instance_metric_alarm.period == alarm_info["MetricAlarms"][0].Period'
+          - 'ec2_instance_metric_alarm.unit == alarm_info["MetricAlarms"][0].Unit'
+          - 'ec2_instance_metric_alarm.evaluation_periods == alarm_info["MetricAlarms"][0].EvaluationPeriods'
+          - 'ec2_instance_metric_alarm.description == alarm_info["MetricAlarms"][0].AlarmDescription'
+          - 'ec2_instance_metric_alarm.treat_missing_data == alarm_info["MetricAlarms"][0].TreatMissingData'
+
+
+
+
+
+    - name: update alarm
+      ec2_metric_alarm:
+        dimensions:
+          InstanceId: "{{ ec2_instance_results.instances[0].instance_id }}"
+        state: present
+        name: "{{ resource_prefix }}-cpu-low"
+        metric: "CPUUtilization"
+        namespace: "AWS/EC2"
+        statistic: Average
+        comparison: "<="
+        threshold: 5.0
+        period: 60
+        evaluation_periods: 3
+        unit: "Percent"
+        description: "This will alarm when an instance's cpu usage average is lower than 5% for 3 minutes "
+        <<: *aws_connection_info
+
+    - name: "verify that an alarm registers as updated"
+      assert:
+        that:
+          - 'ec2_instance_metric_alarm.changed'
+
+    - name: try to remove the alarm
+      ec2_metric_alarm:
+        state: absent
+        name: "{{ resource_prefix }}-cpu-low"
+        <<: *aws_connection_info
+      register: ec2_instance_metric_alarm_deletion
+
+    - name: Verify that the alarm was deleted
+      assert:
+        that:
+          - 'ec2_instance_metric_alarm_deletion.changed'
+
+
+    - name: get info on alarms
+      command: aws cloudwatch describe-alarms --alarm-names {{ resource_prefix }}-cpu-low
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token | default('') }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+      register: alarm_info_query
+
+    - name: convert it to an object
+      set_fact:
+        alarm_info: "{{ alarm_info_query.stdout |from_json }}"
+
+
+    - name: Verify that the alarm was deleted
+      assert:
+        that:
+          - 'alarm_info["MetricAlarms"]|length == 0'
+  always:
+    - name: try to stop the ec2 instance
+      ec2_instance:
+        instance_ids: "{{ ec2_instance_results.instances[0].instance_id }}"
+        state: terminated
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - include_tasks: env_cleanup.yml

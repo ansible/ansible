@@ -159,7 +159,7 @@ options:
           - 'ignore'
           - 'missing'
         default: 'missing'
-        version_added: "2.4"
+        version_added: "2.9"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -207,6 +207,7 @@ try:
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
+
 
 def create_metric_alarm(connection, module):
 
@@ -275,17 +276,17 @@ def create_metric_alarm(connection, module):
         if 'TreatMissingData' not in alarm.keys():
             alarm['TreatMissingData'] = 'missing'
 
-        for key, value in { 'MetricName': metric,
-                            'Namespace': namespace,
-                            'Statistic': statistic,
-                            'ComparisonOperator': comparison,
-                            'Threshold': threshold,
-                            'Period': period,
-                            'EvaluationPeriods': evaluation_periods,
-                            'Unit': unit,
-                            'AlarmDescription': description,
-                            'Dimensions': dimensions,
-                            'TreatMissingData': treat_missing_data }.items():
+        for key, value in {'MetricName': metric,
+                           'Namespace': namespace,
+                           'Statistic': statistic,
+                           'ComparisonOperator': comparison,
+                           'Threshold': threshold,
+                           'Period': period,
+                           'EvaluationPeriods': evaluation_periods,
+                           'Unit': unit,
+                           'AlarmDescription': description,
+                           'Dimensions': dimensions,
+                           'TreatMissingData': treat_missing_data}.items():
             try:
                 if alarm[key] != value:
                     changed = True
@@ -295,9 +296,9 @@ def create_metric_alarm(connection, module):
 
             alarm[key] = value
 
-        for key, value in { 'AlarmActions': alarm_actions,
-                            'InsufficientDataActions': insufficient_data_actions,
-                            'OKActions': ok_actions }.items():
+        for key, value in {'AlarmActions': alarm_actions,
+                           'InsufficientDataActions': insufficient_data_actions,
+                           'OKActions': ok_actions}.items():
             action = value or []
             if alarm[key] != action:
                 changed = True
@@ -325,25 +326,27 @@ def create_metric_alarm(connection, module):
 
     result = alarms['MetricAlarms'][0]
     module.exit_json(changed=changed, warnings=warnings,
-        name=result['AlarmName'],
-        actions_enabled=result['ActionsEnabled'],
-        alarm_actions=result['AlarmActions'],
-        alarm_arn=result['AlarmArn'],
-        comparison=result['ComparisonOperator'],
-        description=result['AlarmDescription'],
-        dimensions=result['Dimensions'],
-        evaluation_periods=result['EvaluationPeriods'],
-        insufficient_data_actions=result['InsufficientDataActions'],
-        last_updated=result['AlarmConfigurationUpdatedTimestamp'],
-        metric=result['MetricName'],
-        namespace=result['Namespace'],
-        ok_actions=result['OKActions'],
-        period=result['Period'],
-        state_reason=result['StateReason'],
-        state_value=result['StateValue'],
-        statistic=result['Statistic'],
-        threshold=result['Threshold'],
-        unit=result['Unit'])
+                     name=result['AlarmName'],
+                     actions_enabled=result['ActionsEnabled'],
+                     alarm_actions=result['AlarmActions'],
+                     alarm_arn=result['AlarmArn'],
+                     comparison=result['ComparisonOperator'],
+                     description=result['AlarmDescription'],
+                     dimensions=result['Dimensions'],
+                     evaluation_periods=result['EvaluationPeriods'],
+                     insufficient_data_actions=result['InsufficientDataActions'],
+                     last_updated=result['AlarmConfigurationUpdatedTimestamp'],
+                     metric=result['MetricName'],
+                     namespace=result['Namespace'],
+                     ok_actions=result['OKActions'],
+                     period=result['Period'],
+                     state_reason=result['StateReason'],
+                     state_value=result['StateValue'],
+                     statistic=result['Statistic'],
+                     threshold=result['Threshold'],
+                     treat_missing_data=result['TreatMissingData'],
+                     unit=result['Unit'])
+
 
 def delete_metric_alarm(connection, module):
     name = module.params.get('name')
@@ -357,6 +360,7 @@ def delete_metric_alarm(connection, module):
             module.fail_json(msg=str(e))
     else:
         module.exit_json(changed=False)
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -378,9 +382,9 @@ def main():
             evaluation_periods=dict(type='int'),
             description=dict(type='str'),
             dimensions=dict(type='dict', default={}),
-            alarm_actions=dict(type='list'),
-            insufficient_data_actions=dict(type='list'),
-            ok_actions=dict(type='list'),
+            alarm_actions=dict(type='list', default=[]),
+            insufficient_data_actions=dict(type='list', default=[]),
+            ok_actions=dict(type='list', default=[]),
             treat_missing_data=dict(type='str', choices=['breaching', 'notBreaching', 'ignore', 'missing'], default='missing'),
             state=dict(default='present', choices=['present', 'absent']),
         )
