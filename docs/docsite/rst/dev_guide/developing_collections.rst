@@ -17,7 +17,7 @@ Collection structure
 ====================
 
 Collections follow a simple data structure. None of the directories are required unless you have specific content that belongs in one of them. A collection does require a ``galaxy.yml`` file at the root level of the collection. This file contains all of the metadata that Galaxy
-and other tools need in order to package, build and publish the collection.::
+and other tools need in order to package, build and publish the collection::
 
     collection/
     ├── docs/
@@ -291,7 +291,7 @@ Once you upload a version of a collection, you cannot delete or modify that vers
 uploading. The only way to change a collection is to release a new version. The latest version of a collection (by highest version number)
 will be the version displayed everywhere in Galaxy; however, users will still be able to download older versions.
 
-Collection versions use `Sematic Versioning <https://semver.org/>` for version numbers. Please read the official documentation for details and examples. In summary:
+Collection versions use `Sematic Versioning <https://semver.org/>`_ for version numbers. Please read the official documentation for details and examples. In summary:
 
 * Increment major (for example: x in `x.y.z`) version number for an incompatible API change.
 * Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner.
