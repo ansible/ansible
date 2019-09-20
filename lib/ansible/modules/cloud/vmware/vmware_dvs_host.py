@@ -267,7 +267,7 @@ def main():
         dict(
             esxi_hostname=dict(required=True, type='str'),
             switch_name=dict(required=True, type='str'),
-            vmnics=dict(required=True, type='list'),
+            vmnics=dict(required=False, type='list'),
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             vendor_specific_config=dict(
                 type='list',
