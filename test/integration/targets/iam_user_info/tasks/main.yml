@@ -1,0 +1,105 @@
+---
+- name: set up aws connection info
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  block:
+  - name: ensure ansible user exists
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+
+  - name: get info on IAM user(s) on path
+    iam_user_info:
+      path: '{{ test_path }}'
+      name: '{{ test_user }}'
+    register: iam_user_info
+
+  - name: assert correct number of users on path are returned
+    assert:
+      that:
+        - iam_user_info.iam_users | length == 1
+
+  - name: assert correct keys for path are returned
+    assert:
+      that:
+        - iam_user_info.iam_users[0].arn is not none
+        - iam_user_info.iam_users[0].createDate is not none
+        - iam_user_info.iam_users[0].path == '{{ test_path }}'
+        - iam_user_info.iam_users[0].user_id is not none
+        - iam_user_info.iam_users[0].user_name == '{{ test_user }}'
+
+  - name: ensure group exists
+    iam_group:
+      name: '{{ test_group }}'
+      users:
+        - '{{ test_user }}'
+      state: present
+    register: iam_group
+
+  - name: get info on IAM user(s) in group
+    iam_user_info:
+      group: '{{ test_group }}'
+      name: '{{ test_user }}'
+    register: iam_user_info
+
+  - name: assert correct number of users in group are returned
+    assert:
+      that:
+        - iam_user_info.iam_users | length == 1
+
+  - name: assert correct keys for group are returned
+    assert:
+      that:
+        - iam_user_info.iam_users[0].arn is not none
+        - iam_user_info.iam_users[0].createDate is not none
+        - iam_user_info.iam_users[0].path == '{{ test_path }}'
+        - iam_user_info.iam_users[0].user_id is not none
+        - iam_user_info.iam_users[0].user_name == '{{ test_user }}'
+
+  - name: attempt using both a path and group
+    iam_user_info:
+      path: '{{ test_path }}'
+      group: '{{ test_group }}'
+      name: '{{ test_user }}'
+    ignore_errors: yes
+    register: iam_user_info_path_group
+
+  - name: assert improper usage of parameters fails gracefully
+    assert:
+      that:
+        - iam_user_info_path_group is failed
+        - 'iam_user_info_path_group.msg == "parameters are mutually exclusive: group|path"'
+
+  - name: remove user from group
+    iam_group:
+      name: '{{ test_group }}'
+      purge_users: True
+      users: []
+      state: present
+    register: iam_group
+
+  - name: get info on IAM user(s) after removing from group
+    iam_user_info:
+      group: '{{ test_group }}'
+      name: '{{ test_user }}'
+    register: iam_user_info
+
+  - name: assert empty list of users for group are returned
+    assert:
+      that:
+        - iam_user_info.iam_users | length == 0
+
+  always:
+  - name: remove group
+    iam_group:
+      name: '{{ test_group }}'
+      state: absent
+
+  - name: remove ansible user
+    iam_user:
+      name: '{{ test_user }}'
+      state: absent
