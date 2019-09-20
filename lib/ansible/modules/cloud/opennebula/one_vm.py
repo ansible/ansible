@@ -152,8 +152,8 @@ options:
   disk_size:
     description:
       - The size of the disk created for new instances (in MB, GB, TB,...).
-      - NOTE':' This option can be used only if the VM template specified with
-      - C(template_id)/C(template_name) has exactly one disk.
+      - NOTE':' If The Template hats Mutiple Disks the Order of the Sizes is
+      - matched against the order specified in C(template_id)/C(template_name).
   cpu:
     description:
       - Percentage of CPU divided by 100 required for the new instance. Half a
@@ -244,6 +244,18 @@ EXAMPLES = '''
         SECURITY_GROUPS: "120,124"
       - NETWORK_ID: 27
         SECURITY_GROUPS: "10"
+
+# Deploy a new instance which uses a Template with two Disks
+- one_vm:
+    template_id: 42
+    disk_size:
+      - 35.2 GB
+      - 50 GB
+    memory: 4 GB
+    vcpu: 4
+    count: 1
+    networks:
+      - NETWORK_ID: 27
 
 # Deploy an new instance with attribute 'bar: bar1' and set its name to 'foo'
 - one_vm:
@@ -825,23 +837,41 @@ def get_size_in_MB(module, size_str):
     return size_in_MB
 
 
-def create_disk_str(module, client, template_id, disk_size_str):
+def create_disk_str(module, client, template_id, disk_size_list):
 
-    if not disk_size_str:
+    if not disk_size_list:
         return ''
 
     template = client.template.info(template_id)
-
     if isinstance(template.TEMPLATE['DISK'], list):
-        module.fail_json(msg='You can pass disk_size only if template has exact one disk. This template has ' + str(len(template.TEMPLATE['DISK'])) + ' disks.')
-
-    disk = {}
-    # Get all info about existed disk e.g. IMAGE_ID,...
-    for key, value in template.TEMPLATE['DISK'].items():
-        disk[key] = value
-
-    result = 'DISK = [' + ','.join('{key}="{val}"'.format(key=key, val=val) for key, val in disk.items() if key != 'SIZE')
-    result += ', SIZE=' + str(int(get_size_in_MB(module, disk_size_str))) + ']\n'
+        # check if the number of disks is correct
+        if len(template.TEMPLATE['DISK']) != len(disk_size_list):
+            module.fail_json(msg='This template has ' + str(len(template.TEMPLATE['DISK'])) + ' disks but you defined ' + str(len(disk_size_list)))
+        result = ''
+        index = 0
+        for DISKS in template.TEMPLATE['DISK']:
+            disk = {}
+            diskresult = ''
+            # Get all info about existed disk e.g. IMAGE_ID,...
+            for key, value in DISKS.items():
+                disk[key] = value
+            # copy disk attributes if it is not the size attribute
+            diskresult += 'DISK = [' + ','.join('{key}="{val}"'.format(key=key, val=val) for key, val in disk.items() if key != 'SIZE')
+            # Set the Disk Size
+            diskresult += ', SIZE=' + str(int(get_size_in_MB(module, disk_size_list[index]))) + ']\n'
+            result += diskresult
+            index += 1
+    else:
+        if len(disk_size_list) > 1:
+            module.fail_json(msg='This template has one disk but you defined ' + str(len(disk_size_list)))
+        disk = {}
+        # Get all info about existed disk e.g. IMAGE_ID,...
+        for key, value in template.TEMPLATE['DISK'].items():
+            disk[key] = value
+        # copy disk attributes if it is not the size attribute
+        result = 'DISK = [' + ','.join('{key}="{val}"'.format(key=key, val=val) for key, val in disk.items() if key != 'SIZE')
+        # Set the Disk Size
+        result += ', SIZE=' + str(int(get_size_in_MB(module, disk_size_list[0]))) + ']\n'
 
     return result
 
@@ -1299,7 +1329,7 @@ def main():
         "memory": {"required": False, "type": "str"},
         "cpu": {"required": False, "type": "float"},
         "vcpu": {"required": False, "type": "int"},
-        "disk_size": {"required": False, "type": "str"},
+        "disk_size": {"required": False, "type": "list"},
         "datastore_name": {"required": False, "type": "str"},
         "datastore_id": {"required": False, "type": "int"},
         "networks": {"default": [], "type": "list"},
