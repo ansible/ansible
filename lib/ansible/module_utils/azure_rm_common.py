@@ -20,7 +20,6 @@ except Exception:
     ANSIBLE_VERSION = 'unknown'
 from ansible.module_utils.six.moves import configparser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
-from enum import Enum
 
 AZURE_COMMON_ARGS = dict(
     auth_source=dict(
@@ -52,43 +51,6 @@ AZURE_CREDENTIAL_ENV_MAPPING = dict(
     cert_validation_mode='AZURE_CERT_VALIDATION_MODE',
     adfs_authority_url='AZURE_ADFS_AUTHORITY_URL'
 )
-
-
-class ResourceType(Enum):  # pylint: disable=too-few-public-methods
-
-    MGMT_APIMANAGEMENT = ('azure.mgmt.apimanagement', 'ApiManagementClient')
-    MGMT_KUSTO = ('azure.mgmt.kusto', 'KustoManagementClient')
-    MGMT_KEYVAULT = ('azure.mgmt.keyvault', 'KeyVaultManagementClient')
-    MGMT_STORAGE = ('azure.mgmt.storage', 'StorageManagementClient')
-    MGMT_COMPUTE = ('azure.mgmt.compute', 'ComputeManagementClient')
-    MGMT_NETWORK = ('azure.mgmt.network', 'NetworkManagementClient')
-    MGMT_NETWORK_DNS = ('azure.mgmt.dns', 'DnsManagementClient')
-    MGMT_AUTHORIZATION = ('azure.mgmt.authorization', 'AuthorizationManagementClient')
-    MGMT_CONTAINERREGISTRY = ('azure.mgmt.containerregistry', 'ContainerRegistryManagementClient')
-    MGMT_RESOURCE_FEATURES = ('azure.mgmt.resource.features', 'FeatureClient')
-    MGMT_RESOURCE_LINKS = ('azure.mgmt.resource.links', 'ManagementLinkClient')
-    MGMT_RESOURCE_LOCKS = ('azure.mgmt.resource.locks', 'ManagementLockClient')
-    MGMT_RESOURCE_POLICY = ('azure.mgmt.resource.policy', 'PolicyClient')
-    MGMT_RESOURCE_RESOURCES = ('azure.mgmt.resource.resources', 'ResourceManagementClient')
-    MGMT_RESOURCE_SUBSCRIPTIONS = ('azure.mgmt.resource.subscriptions', 'SubscriptionClient')
-    DATA_KEYVAULT = ('azure.keyvault', 'KeyVaultClient')
-    MGMT_EVENTHUB = ('azure.mgmt.eventhub', 'EventHubManagementClient')
-    # the "None" below will stay till a command module fills in the type so "get_mgmt_service_client"
-    # can be provided with "ResourceType.XXX" to initialize the client object. This usually happens
-    # when related commands start to support Multi-API
-    DATA_STORAGE = ('azure.multiapi.storage', None)
-    DATA_COSMOS_TABLE = ('azure.multiapi.cosmosdb', None)
-
-    def __init__(self, import_prefix, client_name):
-        """Constructor.
-
-        :param import_prefix: Path to the (unversioned) module.
-        :type import_prefix: str.
-        :param client_name: Name the client for this resource type.
-        :type client_name: str.
-        """
-        self.import_prefix = import_prefix
-        self.client_name = client_name
 
 
 class SDKProfile(object):  # pylint: disable=too-few-public-methods
@@ -130,63 +92,63 @@ AZURE_API_PROFILES = {
         'ManagementLockClient': '2016-09-01'
     },
     '2019-03-01-hybrid': {
-        ResourceType.MGMT_STORAGE: '2017-10-01',
-        ResourceType.MGMT_NETWORK: '2017-10-01',
-        ResourceType.MGMT_COMPUTE: SDKProfile('2017-12-01', {
+        'StorageManagementClient': '2017-10-01',
+        'NetworkManagementClient': '2017-10-01',
+        'ComputeManagementClient': SDKProfile('2017-12-01', {
             'resource_skus': '2017-09-01',
             'disks': '2017-03-30',
             'snapshots': '2017-03-30'
         }),
-        ResourceType.MGMT_RESOURCE_LINKS: '2016-09-01',
-        ResourceType.MGMT_RESOURCE_LOCKS: '2016-09-01',
-        ResourceType.MGMT_RESOURCE_POLICY: '2016-12-01',
-        ResourceType.MGMT_RESOURCE_RESOURCES: '2018-05-01',
-        ResourceType.MGMT_RESOURCE_SUBSCRIPTIONS: '2016-06-01',
-        ResourceType.MGMT_NETWORK_DNS: '2016-04-01',
-        ResourceType.MGMT_KEYVAULT: '2016-10-01',
-        ResourceType.MGMT_AUTHORIZATION: SDKProfile('2015-07-01', {
+        'ManagementLinkClient': '2016-09-01',
+        'ManagementLockClient': '2016-09-01',
+        'PolicyClient': '2016-12-01',
+        'ResourceManagementClient': '2018-05-01',
+        'SubscriptionClient': '2016-06-01',
+        'DnsManagementClient': '2016-04-01',
+        'KeyVaultManagementClient': '2016-10-01',
+        'AuthorizationManagementClient': SDKProfile('2015-07-01', {
             'classic_administrators': '2015-06-01',
             'policy_assignments': '2016-12-01',
             'policy_definitions': '2016-12-01'
         }),
-        ResourceType.DATA_KEYVAULT: '2016-10-01',
-        ResourceType.DATA_STORAGE: '2017-11-09',
-        ResourceType.DATA_COSMOS_TABLE: '2017-04-17'
+        'KeyVaultManagementClient': '2016-10-01',
+        'azure.multiapi.storage': '2017-11-09',
+        'azure.multiapi.cosmosdb': '2017-04-17'
     },
     '2018-03-01-hybrid': {
-        ResourceType.MGMT_STORAGE: '2016-01-01',
-        ResourceType.MGMT_NETWORK: '2017-10-01',
-        ResourceType.MGMT_COMPUTE: SDKProfile('2017-03-30'),
-        ResourceType.MGMT_RESOURCE_LINKS: '2016-09-01',
-        ResourceType.MGMT_RESOURCE_LOCKS: '2016-09-01',
-        ResourceType.MGMT_RESOURCE_POLICY: '2016-12-01',
-        ResourceType.MGMT_RESOURCE_RESOURCES: '2018-02-01',
-        ResourceType.MGMT_RESOURCE_SUBSCRIPTIONS: '2016-06-01',
-        ResourceType.MGMT_NETWORK_DNS: '2016-04-01',
-        ResourceType.MGMT_KEYVAULT: '2016-10-01',
-        ResourceType.MGMT_AUTHORIZATION: SDKProfile('2015-07-01', {
+        'StorageManagementClient': '2016-01-01',
+        'NetworkManagementClient': '2017-10-01',
+        'ComputeManagementClient': SDKProfile('2017-03-30'),
+        'ManagementLinkClient': '2016-09-01',
+        'ManagementLockClient': '2016-09-01',
+        'PolicyClient': '2016-12-01',
+        'ResourceManagementClient': '2018-02-01',
+        'SubscriptionClient': '2016-06-01',
+        'DnsManagementClient': '2016-04-01',
+        'KeyVaultManagementClient': '2016-10-01',
+        'AuthorizationManagementClient': SDKProfile('2015-07-01', {
             'classic_administrators': '2015-06-01'
         }),
-        ResourceType.DATA_KEYVAULT: '2016-10-01',
-        ResourceType.DATA_STORAGE: '2017-04-17',
-        ResourceType.DATA_COSMOS_TABLE: '2017-04-17'
+        'KeyVaultClient': '2016-10-01',
+        'azure.multiapi.storage': '2017-04-17',
+        'azure.multiapi.cosmosdb': '2017-04-17'
     },
     '2017-03-09-profile': {
-        ResourceType.MGMT_STORAGE: '2016-01-01',
-        ResourceType.MGMT_NETWORK: '2015-06-15',
-        ResourceType.MGMT_COMPUTE: SDKProfile('2016-03-30'),
-        ResourceType.MGMT_RESOURCE_LINKS: '2016-09-01',
-        ResourceType.MGMT_RESOURCE_LOCKS: '2015-01-01',
-        ResourceType.MGMT_RESOURCE_POLICY: '2015-10-01-preview',
-        ResourceType.MGMT_RESOURCE_RESOURCES: '2016-02-01',
-        ResourceType.MGMT_RESOURCE_SUBSCRIPTIONS: '2016-06-01',
-        ResourceType.MGMT_NETWORK_DNS: '2016-04-01',
-        ResourceType.MGMT_KEYVAULT: '2016-10-01',
-        ResourceType.MGMT_AUTHORIZATION: SDKProfile('2015-07-01', {
+        'StorageManagementClient': '2016-01-01',
+        'NetworkManagementClient': '2015-06-15',
+        'ComputeManagementClient': SDKProfile('2016-03-30'),
+        'ManagementLinkClient': '2016-09-01',
+        'ManagementLockClient': '2015-01-01',
+        'PolicyClient': '2015-10-01-preview',
+        'ResourceManagementClient': '2016-02-01',
+        'SubscriptionClient': '2016-06-01',
+        'DnsManagementClient': '2016-04-01',
+        'KeyVaultManagementClient': '2016-10-01',
+        'AuthorizationManagementClient': SDKProfile('2015-07-01', {
             'classic_administrators': '2015-06-01'
         }),
-        ResourceType.DATA_KEYVAULT: '2016-10-01',
-        ResourceType.DATA_STORAGE: '2015-04-05'
+        'KeyVaultClient': '2016-10-01',
+        'azure.multiapi.storage': '2015-04-05'
     }
 }
 

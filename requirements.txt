@@ -6,4 +6,3 @@
 jinja2
 PyYAML
 cryptography
-enum34
