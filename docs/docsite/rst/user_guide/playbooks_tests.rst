@@ -68,7 +68,9 @@ Testing Truthiness
 
 .. versionadded:: 2.10
 
-As of Ansible 2.10, you can now perform python like truthy and falsy checks::
+As of Ansible 2.10, you can now perform Python like truthy and falsy checks.
+
+.. code-block:: yaml
 
     - debug:
         msg: "Truthy"
@@ -83,7 +85,9 @@ As of Ansible 2.10, you can now perform python like truthy and falsy checks::
         value: ""
 
 Additionally, the ``truthy`` and ``falsy`` tests accept an optional parameter called ``convert_bool`` that will attempt
-to convert boolean indicators to actual booleans::
+to convert boolean indicators to actual booleans.
+
+.. code-block:: yaml
 
     - debug:
         msg: "Truthy"
