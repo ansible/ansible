@@ -1,0 +1,31 @@
+---
+- hosts: localhost
+  tasks:
+    - debug:
+        msg: "{{ query('lmdb_kv', 'nl', 'be', 'lu', db='jp.mdb') }}"
+
+    - debug:
+        var: item.1
+      loop: "{{ query('lmdb_kv', db='jp.mdb') }}"
+
+    - assert:
+        that:
+          - query('lmdb_kv', 'nl', 'be', 'lu', db='jp.mdb') == ['Netherlands', 'Belgium', 'Luxembourg']
+          - query('lmdb_kv', db='jp.mdb')|length == 5
+
+    - assert:
+        that:
+          - item.0 == 'nl'
+          - item.1 == 'Netherlands'
+      vars:
+        - lmdb_kv_db: jp.mdb
+      with_lmdb_kv:
+        - "n*"
+
+    - assert:
+        that:
+          - item == 'Belgium'
+      vars:
+        - lmdb_kv_db: jp.mdb
+      with_lmdb_kv:
+        - be
