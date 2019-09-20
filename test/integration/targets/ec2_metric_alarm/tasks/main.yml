@@ -8,7 +8,7 @@
           region: "{{ aws_region }}"
       no_log: True
 
-      # Well, guess we need awscli...
+      # until there's a module to get info about alarms, awscli is needed
     - name: install awscli
       pip:
         state: present
@@ -17,7 +17,6 @@
     - name: set up environment for testing.
       include_tasks: env_setup.yml
 
-      ## Test pattern, do something, assert something, tear down.
     - name: get info on alarms
       command: aws cloudwatch describe-alarms --alarm-names {{ resource_prefix }}-cpu-low
       environment:
@@ -40,11 +39,6 @@
         <<: *aws_connection_info
       register: ec2_instance_results
 
-    - name: verify that thing.
-      debug:
-        var: ec2_instance_results
-
-
 
     - name: create ec2 metric alarm on ec2 instance
       ec2_metric_alarm:
@@ -63,7 +57,6 @@
         unit: "Percent"
         description: "This will alarm when an instance's cpu usage average is lower than 5% for 15 minutes "
         <<: *aws_connection_info
-
       register: ec2_instance_metric_alarm
 
     - name: get info on alarms
@@ -78,14 +71,6 @@
     - name: convert it to an object
       set_fact:
         alarm_info: "{{ alarm_info_query.stdout |from_json }}"
-
-    - name: verify that thing.
-      debug:
-        var: alarm_info
-
-    - name: verify that thing.
-      debug:
-        var: ec2_instance_metric_alarm
 
     - name: "verify that an alarm was created"
       assert:
@@ -105,10 +90,6 @@
           - 'ec2_instance_metric_alarm.description == alarm_info["MetricAlarms"][0].AlarmDescription'
           - 'ec2_instance_metric_alarm.treat_missing_data == alarm_info["MetricAlarms"][0].TreatMissingData'
 
-
-
-
-
     - name: update alarm
       ec2_metric_alarm:
         dimensions:
@@ -125,11 +106,30 @@
         unit: "Percent"
         description: "This will alarm when an instance's cpu usage average is lower than 5% for 3 minutes "
         <<: *aws_connection_info
+        register: ec2_instance_metric_alarm_update
 
     - name: "verify that an alarm registers as updated"
       assert:
         that:
           - 'ec2_instance_metric_alarm.changed'
+
+    - name: "verify that properties were changed"
+      assert:
+        that:
+          - 'ec2_instance_metric_alarm_update.changed'
+          - 'ec2_instance_metric_alarm.alarm_arn == ec2_instance_metric_alarm_update.alarm_arn'
+          - 'ec2_instance_metric_alarm_update.statistic == alarm_info["MetricAlarms"][0].Statistic'
+          - 'ec2_instance_metric_alarm_update.name  == alarm_info["MetricAlarms"][0].AlarmName'
+          - 'ec2_instance_metric_alarm_update.metric== alarm_info["MetricAlarms"][0].MetricName'
+          - 'ec2_instance_metric_alarm_update.namespace == alarm_info["MetricAlarms"][0].Namespace'
+          - 'ec2_instance_metric_alarm_update.statistic == alarm_info["MetricAlarms"][0].Statistic'
+          - 'ec2_instance_metric_alarm_update.comparison == alarm_info["MetricAlarms"][0].ComparisonOperator'
+          - 'ec2_instance_metric_alarm_update.threshold == alarm_info["MetricAlarms"][0].Threshold'
+          - 'ec2_instance_metric_alarm_update.period == alarm_info["MetricAlarms"][0].Period'
+          - 'ec2_instance_metric_alarm_update.unit == alarm_info["MetricAlarms"][0].Unit'
+          - 'ec2_instance_metric_alarm_update.evaluation_periods == alarm_info["MetricAlarms"][0].EvaluationPeriods'
+          - 'ec2_instance_metric_alarm_update.description == alarm_info["MetricAlarms"][0].AlarmDescription'
+          - 'ec2_instance_metric_alarm_update.treat_missing_data == alarm_info["MetricAlarms"][0].TreatMissingData'
 
     - name: try to remove the alarm
       ec2_metric_alarm:
@@ -138,11 +138,10 @@
         <<: *aws_connection_info
       register: ec2_instance_metric_alarm_deletion
 
-    - name: Verify that the alarm was deleted
+    - name: Verify that the alarm reports deleted/changed
       assert:
         that:
           - 'ec2_instance_metric_alarm_deletion.changed'
-
 
     - name: get info on alarms
       command: aws cloudwatch describe-alarms --alarm-names {{ resource_prefix }}-cpu-low
@@ -157,8 +156,7 @@
       set_fact:
         alarm_info: "{{ alarm_info_query.stdout |from_json }}"
 
-
-    - name: Verify that the alarm was deleted
+    - name: Verify that the alarm was deleted using cli
       assert:
         that:
           - 'alarm_info["MetricAlarms"]|length == 0'
