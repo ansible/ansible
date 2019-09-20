@@ -10,20 +10,7 @@
   - ansible_os_family == 'Debian'
   - postgres_version_resp.stdout is version('9.4', '>=')
 
-# Test postgresql_publication
-- import_tasks: postgresql_publication.yml
-  when: postgres_version_resp.stdout is version('10', '>=')
-
-- include_tasks: '{{ loop_item }}'
-  loop:
-  # Test postgresql_set
-  - postgresql_set.yml
-
-  # Test postgresql_slot module.
-  # Physical replication slots are available from PostgreSQL 9.4
-  - postgresql_slot.yml
-  loop_control:
-    loop_var: loop_item
+- include_tasks: postgresql_set.yml
   when: postgres_version_resp.stdout is version('9.4', '>=')
 
 - include_tasks: '{{ loop_item }}'
@@ -58,21 +45,6 @@
 # Test postgresql_sequence module
 - import_tasks: postgresql_sequence.yml
   when: postgres_version_resp.stdout is version('9.0', '>=')
-
-# Test postgresql_ext.
-# pg_extension system view is available from PG 9.1.
-# The tests are restricted by Fedora because there will be errors related with
-# attempts to change the environment during postgis installation or
-# missing postgis package in repositories.
-# Anyway, these tests completely depend on Postgres version,
-# not specific distributions.
-- import_tasks: postgresql_ext.yml
-  when:
-  - postgres_version_resp.stdout is version('9.1', '>=')
-  - ansible_distribution == 'Fedora'
-
-- import_tasks: postgresql_ext_version_opt.yml
-  when: ansible_distribution == 'Ubuntu'
 
 # Test postgresql_lang module.
 # To implement tests, it needs to install some additional packages
