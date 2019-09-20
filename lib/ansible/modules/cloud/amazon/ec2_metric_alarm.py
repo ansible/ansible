@@ -159,7 +159,7 @@ options:
           - 'ignore'
           - 'missing'
         default: 'missing'
-        version_added: "2.9"
+        version_added: "2.10"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -203,7 +203,9 @@ EXAMPLES = '''
 '''
 
 try:
-    import boto3
+    from ansible.module_utils.aws.core import AnsibleAWSModule
+    from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+    import botocore
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -356,7 +358,7 @@ def delete_metric_alarm(connection, module):
         try:
             connection.delete_alarms(AlarmNames=[name])
             module.exit_json(changed=True)
-        except (botocore.exceptions.ClientError, BotoServerError) as e:
+        except (botocore.exceptions.ClientError) as e:
             module.fail_json(msg=str(e))
     else:
         module.exit_json(changed=False)
@@ -390,7 +392,7 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
@@ -414,8 +416,6 @@ def main():
         delete_metric_alarm(connection, module)
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

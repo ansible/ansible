@@ -106,7 +106,7 @@
         unit: "Percent"
         description: "This will alarm when an instance's cpu usage average is lower than 5% for 3 minutes "
         <<: *aws_connection_info
-        register: ec2_instance_metric_alarm_update
+      register: ec2_instance_metric_alarm_update
 
     - name: "verify that an alarm registers as updated"
       assert:
@@ -117,7 +117,8 @@
       assert:
         that:
           - 'ec2_instance_metric_alarm_update.changed'
-          - 'ec2_instance_metric_alarm.alarm_arn == ec2_instance_metric_alarm_update.alarm_arn'
+          - 'ec2_instance_metric_alarm_update.period == 60' #Period should be 60, not matching old value
+          - 'ec2_instance_metric_alarm_update.alarm_arn == ec2_instance_metric_alarm.alarm_arn'
           - 'ec2_instance_metric_alarm_update.statistic == alarm_info["MetricAlarms"][0].Statistic'
           - 'ec2_instance_metric_alarm_update.name  == alarm_info["MetricAlarms"][0].AlarmName'
           - 'ec2_instance_metric_alarm_update.metric== alarm_info["MetricAlarms"][0].MetricName'
@@ -125,10 +126,8 @@
           - 'ec2_instance_metric_alarm_update.statistic == alarm_info["MetricAlarms"][0].Statistic'
           - 'ec2_instance_metric_alarm_update.comparison == alarm_info["MetricAlarms"][0].ComparisonOperator'
           - 'ec2_instance_metric_alarm_update.threshold == alarm_info["MetricAlarms"][0].Threshold'
-          - 'ec2_instance_metric_alarm_update.period == alarm_info["MetricAlarms"][0].Period'
           - 'ec2_instance_metric_alarm_update.unit == alarm_info["MetricAlarms"][0].Unit'
           - 'ec2_instance_metric_alarm_update.evaluation_periods == alarm_info["MetricAlarms"][0].EvaluationPeriods'
-          - 'ec2_instance_metric_alarm_update.description == alarm_info["MetricAlarms"][0].AlarmDescription'
           - 'ec2_instance_metric_alarm_update.treat_missing_data == alarm_info["MetricAlarms"][0].TreatMissingData'
 
     - name: try to remove the alarm
