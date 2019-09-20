@@ -142,7 +142,7 @@ The directory name of the role is used as the role name. Therefore, the director
 above role name rules.
 The collection import into Galaxy will fail if a role name does not comply with these rules.
 
-You can migrate 'traditional roles' into a collection but they must follow the rules above. You man need to rename roles if they don't conform. You will have to move or link any role-based plugins to the collection specific directories.
+You can migrate 'traditional roles' into a collection but they must follow the rules above. You may need to rename roles if they don't conform. You will have to move or link any role-based plugins to the collection specific directories.
 
 .. note::
 
