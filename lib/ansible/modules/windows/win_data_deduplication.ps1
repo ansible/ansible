@@ -101,7 +101,7 @@ function Set-DataDedupJobSettings ($volume, $settings) {
       #                 -NoCompress <bool> `
       #                 -MinimumFileAgeDays <UInt32> `
       #                 -MinimumFileSize <UInt32> (minimum 32768)
-      if( -not $check_mode) {
+      if( -not $module.CheckMode ) {
         Set-DedupVolume -Volume "$($volume.DriveLetter):" @command_param
       }
 
