@@ -1635,8 +1635,8 @@ class AnsibleModule(object):
                 msg = common_msg.capitalize()
                 raise TypeError(to_native(msg))
             elif self._string_conversion_action == 'warn':
-                msg = ("The value '{0}' (type {1.__class__.__name__}) was converted to '{2}' (type string). "
-                       "If this does not look like what you expect, {3}").format(from_msg, value, to_msg, common_msg)
+                msg = ('The value "{0}" (type {1.__class__.__name__}) was converted to "{2}" (type string). '
+                       'If this does not look like what you expect, {3}').format(from_msg, value, to_msg, common_msg)
                 self.warn(to_native(msg))
                 return to_native(value, errors='surrogate_or_strict')
 
