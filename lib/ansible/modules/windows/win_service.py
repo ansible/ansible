@@ -114,19 +114,19 @@ options:
     type: str
     version_added: '2.3'
   recovery_reset_interval:
-		description:
-			- Reset failure counter after this number of seconds.
-		type: int
-		default: 1
-		version_added: '2.9'
-	recovery_actions:
+    description:
+      - Reset failure counter after this number of seconds.
+    type: int
+    default: 1
+    version_added: '2.9'
+  recovery_actions:
     description:
       - A list representing the recovery actions you want to set.
-			- First element of the list is the first failure actions/delay...
-			- This can go up to a count of three for subsequent failures.
-			- ie: - action: restart
+      - First element of the list is the first failure actions/delay...
+      - This can go up to a count of three for subsequent failures.
+      - ie: - action: restart
               delay: 60000
-		type: list
+    type: list
     version_added: '2.9'
 
 seealso:
