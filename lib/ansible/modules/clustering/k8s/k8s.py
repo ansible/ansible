@@ -142,7 +142,6 @@ options:
     - C(apply) compares the desired resource definition with the previously supplied resource definition,
       ignoring properties that are automatically generated
     - C(apply) works better with Services than 'force=yes'
-    - C(apply) defaults to True if the openshift library is new enough to support it (0.9.0 or newer)
     - mutually exclusive with C(merge_type)
     type: bool
     version_added: "2.9"
