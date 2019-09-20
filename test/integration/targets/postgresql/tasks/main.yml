@@ -19,9 +19,6 @@
   # Test postgresql_set
   - postgresql_set.yml
 
-  # Test postgresql_copy module
-  - postgresql_copy.yml
-
   # Test postgresql_slot module.
   # Physical replication slots are available from PostgreSQL 9.4
   - postgresql_slot.yml
@@ -37,45 +34,22 @@
   # Verify different session_role scenarios
   - session_role.yml
 
-  # Test postgresql_idx module
-  - postgresql_idx.yml
-
-  # Test postgresql_query module
-  - postgresql_query.yml
-
-  # Test postgresql_tablespace module
-  - postgresql_tablespace.yml
-
   # Test postgresql_db module, specific options
   - postgresql_db.yml
 
   # Test postgresql_privs
   - postgresql_privs.yml
 
-  # Test postgresql_info module
-  - postgresql_info.yml
-
   # Test postgresql_schema module
   - postgresql_schema.yml
 
-  # Test postgresql_membership module
-  - postgresql_membership.yml
-
   # Test postgresql_table module
   - postgresql_table.yml
-
-  # Test postgresql_owner module
-  - postgresql_owner.yml
 
   # Test postgres_pg_hba module
   - postgresql_pg_hba.yml
   loop_control:
     loop_var: loop_item
-
-# Test postgresql_ping module
-- import_tasks: postgresql_ping.yml
-  vars:
-    db_name_nonexist: fake_db
 
 # Test default_privs with target_role
 - import_tasks: test_target_role.yml

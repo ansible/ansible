@@ -1606,7 +1606,6 @@ lib/ansible/modules/cloud/openstack/os_keystone_domain.py validate-modules:doc-m
 lib/ansible/modules/cloud/openstack/os_keystone_domain_info.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/openstack/os_keystone_domain_info.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/openstack/os_keystone_endpoint.py validate-modules:undocumented-parameter
-lib/ansible/modules/cloud/openstack/os_keystone_endpoint.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/cloud/openstack/os_keystone_endpoint.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/openstack/os_keystone_endpoint.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/openstack/os_keystone_role.py validate-modules:doc-missing-type
@@ -5950,6 +5949,7 @@ test/integration/targets/async_fail/library/async_test.py future-import-boilerpl
 test/integration/targets/async_fail/library/async_test.py metaclass-boilerplate
 test/integration/targets/aws_lambda/files/mini_lambda.py future-import-boilerplate
 test/integration/targets/aws_lambda/files/mini_lambda.py metaclass-boilerplate
+test/integration/targets/collections_plugin_namespace/collection_root/ansible_collections/my_ns/my_col/plugins/lookup/lookup_no_future_boilerplate.py future-import-boilerplate
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util2.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util3.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/modules/my_module.py pylint:relative-beyond-top-level
@@ -6288,8 +6288,6 @@ test/units/modules/network/check_point/test_checkpoint_session.py future-import-
 test/units/modules/network/check_point/test_checkpoint_session.py metaclass-boilerplate
 test/units/modules/network/check_point/test_checkpoint_task_facts.py future-import-boilerplate
 test/units/modules/network/check_point/test_checkpoint_task_facts.py metaclass-boilerplate
-test/units/modules/network/check_point/test_cp_mgmt_network.py future-import-boilerplate
-test/units/modules/network/check_point/test_cp_mgmt_network.py metaclass-boilerplate
 test/units/modules/network/cloudvision/test_cv_server_provision.py future-import-boilerplate
 test/units/modules/network/cloudvision/test_cv_server_provision.py metaclass-boilerplate
 test/units/modules/network/cumulus/test_nclu.py future-import-boilerplate

@@ -16,6 +16,7 @@ Find the task that best describes what you want to do:
 
    * I want to :ref:`add a custom plugin or module locally <developing_locally>`.
    * I want to figure out if :ref:`developing a module is the right approach <module_dev_should_you>` for my use case.
+   * I want to :ref:`develop a collection <developing_collections>`.
 
 * I've read the info above, and I'm sure I want to develop a module:
 
@@ -81,6 +82,6 @@ If you prefer to read the entire guide, here's a list of the pages in order.
    developing_api
    developing_rebasing
    developing_module_utilities
-   collections_tech_preview
+   developing_collections
    collections_galaxy_meta
    overview_architecture

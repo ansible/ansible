@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: netscaler_save_config
 short_description: Save Netscaler configuration.
 description:
-    - This module uncoditionally saves the configuration on the target netscaler node.
+    - This module unconditionally saves the configuration on the target netscaler node.
     - This module does not support check mode.
     - This module is intended to run either on the ansible  control node or a bastion (jumpserver) with access to the actual netscaler instance.
 

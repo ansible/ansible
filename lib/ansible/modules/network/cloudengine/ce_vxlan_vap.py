@@ -79,7 +79,7 @@ EXAMPLES = '''
 
   tasks:
 
-  - name: Create a papping between a VLAN and a BD
+  - name: Create a mapping between a VLAN and a BD
     ce_vxlan_vap:
       bridge_domain_id: 100
       bind_vlan_id: 99
@@ -291,7 +291,7 @@ def vlan_vid_to_bitmap(vid):
 
     vlan_bit = ['0'] * 1024
     int_vid = int(vid)
-    j = int_vid / 4
+    j = int_vid // 4
     bit_int = 0x8 >> (int_vid % 4)
     vlan_bit[j] = str(hex(bit_int))[2]
 
@@ -341,7 +341,7 @@ def is_vlan_in_bitmap(vid, bitmap):
     if is_vlan_bitmap_empty(bitmap):
         return False
 
-    i = int(vid) / 4
+    i = int(vid) // 4
     if i > len(bitmap):
         return False
 

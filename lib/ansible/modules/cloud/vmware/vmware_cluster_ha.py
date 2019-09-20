@@ -197,7 +197,6 @@ EXAMPLES = r"""
     cluster_name: "{{ cluster_name }}"
     enable_ha: True
     ha_vm_monitoring: vmMonitoringOnly
-    enable_vsan: True
   delegate_to: localhost
 
 - name: Enable HA with admission control reserving 50% of resources for HA

@@ -268,7 +268,7 @@ class NetAppOntapSnapshot(object):
 
     def rename_snapshot(self):
         """
-        Rename the sanpshot
+        Rename the snapshot
         """
         snapshot_obj = netapp_utils.zapi.NaElement("snapshot-rename")
 
