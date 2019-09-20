@@ -124,8 +124,6 @@ options:
       - A list representing the recovery actions you want to set.
       - First element of the list is the first failure actions/delay...
       - This can go up to a count of three for subsequent failures.
-      - ie: - action: restart
-              delay: 60000
     type: list
     version_added: '2.9'
 
@@ -249,14 +247,14 @@ EXAMPLES = r'''
 - name: Set recovery actions
   win_service:
     name: service name
-    recovery:
-      reset_fail_count_after: 300
-      on_first_failure: restart
-      first_failure_timeout: 60000
-      on_second_failure: restart
-      second_failure_timeout: 60000
-      on_subsequent_failure: reboot
-      subsequent_failure_timeout: 60000
+    recovery_reset_interval: 300
+    recovery_actions:
+      - action: restart
+        delay: 60000
+      - action: restart
+        delay: 60000
+      - action: reboot
+        delay: 60000
 '''
 
 RETURN = r'''
