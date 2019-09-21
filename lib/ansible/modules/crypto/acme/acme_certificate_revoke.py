@@ -123,27 +123,27 @@ RETURN = '''
 '''
 
 from ansible.module_utils.acme import (
-    ModuleFailException, ACMEAccount, nopad_b64, pem_to_der, set_crypto_backend,
+    ModuleFailException,
+    ACMEAccount,
+    nopad_b64,
+    pem_to_der,
+    handle_standard_module_arguments,
+    get_default_argspec,
 )
 
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
+    argument_spec = get_default_argspec()
+    argument_spec.update(dict(
+        private_key_src=dict(type='path'),
+        private_key_content=dict(type='str', no_log=True),
+        certificate=dict(type='path', required=True),
+        revoke_reason=dict(type='int'),
+    ))
     module = AnsibleModule(
-        argument_spec=dict(
-            account_key_src=dict(type='path', aliases=['account_key']),
-            account_key_content=dict(type='str', no_log=True),
-            account_uri=dict(type='str'),
-            acme_directory=dict(type='str', default='https://acme-staging.api.letsencrypt.org/directory'),
-            acme_version=dict(type='int', default=1, choices=[1, 2]),
-            validate_certs=dict(type='bool', default=True),
-            private_key_src=dict(type='path'),
-            private_key_content=dict(type='str', no_log=True),
-            certificate=dict(type='path', required=True),
-            revoke_reason=dict(type='int'),
-            select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
-        ),
+        argument_spec=argument_spec,
         required_one_of=(
             ['account_key_src', 'account_key_content', 'private_key_src', 'private_key_content'],
         ),
@@ -152,12 +152,7 @@ def main():
         ),
         supports_check_mode=False,
     )
-    set_crypto_backend(module)
-
-    if not module.params.get('validate_certs'):
-        module.warn(warning='Disabling certificate validation for communications with ACME endpoint. ' +
-                            'This should only be done for testing against a local ACME server for ' +
-                            'development purposes, but *never* for production purposes.')
+    handle_standard_module_arguments(module)
 
     try:
         account = ACMEAccount(module)
