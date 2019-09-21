@@ -1,0 +1,2 @@
+bugfixes:
+- ce_evpn_bgp - update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61136)
