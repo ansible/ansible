@@ -22,9 +22,9 @@ short_description: Create SSL/TLS certificates with the ACME protocol
 description:
    - "Create and renew SSL/TLS certificates with a CA supporting the
       L(ACME protocol,https://tools.ietf.org/html/rfc8555),
-      such as L(Let's Encrypt,https://letsencrypt.org/). The current
-      implementation supports the C(http-01), C(dns-01) and C(tls-alpn-01)
-      challenges."
+      such as L(Let's Encrypt,https://letsencrypt.org/) or
+      L(Buypass,https://www.buypass.com/). The current implementation
+      supports the C(http-01), C(dns-01) and C(tls-alpn-01) challenges."
    - "To use this module, it has to be executed twice. Either as two
       different tasks in the same run or during two runs. Note that the output
       of the first run needs to be recorded and passed to the second run as the
@@ -54,6 +54,10 @@ seealso:
     description: Documentation for the Let's Encrypt Certification Authority.
                  Provides useful information for example on rate limits.
     link: https://letsencrypt.org/docs/
+  - name: Buypass Go SSL
+    description: Documentation for the Buypass Certification Authority.
+                 Provides useful information for example on rate limits.
+    link: https://www.buypass.com/ssl/products/acme
   - name: Automatic Certificate Management Environment (ACME)
     description: The specification of the ACME protocol (RFC 8555).
     link: https://tools.ietf.org/html/rfc8555
@@ -638,6 +642,7 @@ class ACMEClient(object):
                 keyauthorization = self.account.get_keyauthorization(token)
                 challenge_response["resource"] = "challenge"
                 challenge_response["keyAuthorization"] = keyauthorization
+                challenge_response["type"] = self.challenge
             result, info = self.account.send_signed_request(uri, challenge_response)
             if info['status'] not in [200, 202]:
                 raise ModuleFailException("Error validating challenge: CODE: {0} RESULT: {1}".format(info['status'], result))
