@@ -388,7 +388,9 @@ def main():
         'next_hop_self': dict(type='bool'),
         'route_reflector_client': dict(type='bool'),
         'route_server_client': dict(type='bool'),
-        'maximum_prefix': dict(type='int')
+        'maximum_prefix': dict(type='int'),
+        'prefix_list_in': dict(),
+        'prefix_list_out': dict()
     }
 
     address_family_spec = {

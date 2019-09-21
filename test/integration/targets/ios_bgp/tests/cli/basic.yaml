@@ -180,6 +180,11 @@
               - neighbor: 192.0.2.15
                 activate: yes
                 route_reflector_client: True
+
+              - neighbor: 10.10.20.20
+                activate: yes
+                prefix_list_in: incoming-prefixes
+                prefix_list_out: outgoing-prefixes
     register: result
 
   - assert:
@@ -192,6 +197,10 @@
         - "'neighbor 203.0.113.10 advertisement-interval 120' in result.commands"
         - "'neighbor 192.0.2.15 activate' in result.commands"
         - "'neighbor 192.0.2.15 route-reflector-client' in result.commands"
+        - "'neighbor 10.10.20.20 activate' in result.commands"
+        - "'neighbor 10.10.20.20 route-reflector-client' in result.commands"
+        - "'neighbor 10.10.20.20 prefix-list incoming-prefixes in' in result.commands"
+        - "'neighbor 10.10.20.20 prefix-list outgoing-prefixes out' in result.commands"
 
   - name: Configure BGP neighbors under address family mode (idempotent)
     ios_bgp: *af_nbr
