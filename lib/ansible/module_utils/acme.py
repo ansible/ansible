@@ -20,6 +20,7 @@ import copy
 import datetime
 import hashlib
 import json
+import locale
 import os
 import re
 import shutil
@@ -941,3 +942,47 @@ def process_links(info, callback):
         link = info['link']
         for url, relation in re.findall(r'<([^>]+)>;rel="(\w+)"', link):
             callback(unquote(url), relation)
+
+
+def get_default_argspec():
+    '''
+    Provides default argument spec for the options documented in the acme doc fragment.
+    '''
+    return dict(
+        account_key_src=dict(type='path', aliases=['account_key']),
+        account_key_content=dict(type='str', no_log=True),
+        account_uri=dict(type='str'),
+        acme_directory=dict(type='str'),
+        acme_version=dict(type='int', choices=[1, 2]),
+        validate_certs=dict(type='bool', default=True),
+        select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
+    )
+
+
+def handle_standard_module_arguments(module, needs_acme_v2=False):
+    '''
+    Do standard module setup, argument handling and warning emitting.
+    '''
+    set_crypto_backend(module)
+
+    if not module.params['validate_certs']:
+        module.warn(
+            'Disabling certificate validation for communications with ACME endpoint. '
+            'This should only be done for testing against a local ACME server for '
+            'development purposes, but *never* for production purposes.'
+        )
+
+    if module.params['acme_version'] is None:
+        module.params['acme_version'] = 1
+        module.deprecate("The option 'acme_version' will be required from Ansible 2.14 on", version='2.14')
+
+    if module.params['acme_directory'] is None:
+        module.params['acme_directory'] = 'https://acme-staging.api.letsencrypt.org/directory'
+        module.deprecate("The option 'acme_directory' will be required from Ansible 2.14 on", version='2.14')
+
+    if needs_acme_v2 and module.params['acme_version'] < 2:
+        module.fail_json(msg='The {0} module requires the ACME v2 protocol!'.format(module._name))
+
+    # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+    locale.setlocale(locale.LC_ALL, 'C')
