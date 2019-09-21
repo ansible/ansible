@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_login - correct broken fix for https://github.com/ansible/ansible/pull/60381 which crashes for Python 3."
