@@ -484,9 +484,7 @@ class Distribution(object):
                      'Darwin': ['MacOSX'],
                      'FreeBSD': ['FreeBSD', 'TrueOS'],
                      'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix'],
-                     'DragonFly': ['DragonflyBSD', 'Gentoo/DragonflyBSD'],
-                     'OpenBSD': ['OpenBSD'],
-                     'NetBSD': ['NetBSD']}
+                     'DragonFly': ['DragonflyBSD', 'Gentoo/DragonflyBSD']}
 
     OS_FAMILY = {}
     for family, names in OS_FAMILY_MAP.items():
