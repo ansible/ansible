@@ -1,2 +1,3 @@
 bugfixes:
-  - "Cloudengine modules: the 'set-id' may change over the time althougth 'set-id' is the indentity of next RPC packet and also RPC XML attribute."
+  - "Cloudengine module_utils - the 'set-id'(RPC-REPLY XML attribute) may change over the time althougth 'set-id' is the indentity of next RPC packet."
+  - "Cloudengine netconf plugin - add a dispatch RPC function to send and receive original RPC reply."
