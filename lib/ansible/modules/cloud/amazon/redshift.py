@@ -96,7 +96,7 @@ options:
     aliases: ['retention_period']
   port:
     description:
-      - which port the cluster is listining
+      - which port the cluster is listening
   cluster_version:
     description:
       - which version the cluster should have
@@ -172,7 +172,7 @@ cluster:
             type: float
             sample: 1430158536.308
         status:
-            description: Stutus of the cluster.
+            description: Status of the cluster.
             returned: success
             type: str
             sample: "available"
@@ -226,7 +226,7 @@ from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 
 
 def _collect_facts(resource):
-    """Transfrom cluster information to dict."""
+    """Transform cluster information to dict."""
     facts = {
         'identifier': resource['ClusterIdentifier'],
         'status': resource['ClusterStatus'],
@@ -516,7 +516,7 @@ def main():
     final_cluster_snapshot_identifier = module.params.get('final_cluster_snapshot_identifier')
     # can't use module basic required_if check for this case
     if command == 'delete' and skip_final_cluster_snapshot is False and final_cluster_snapshot_identifier is None:
-        module.fail_json(msg="Need to specifiy final_cluster_snapshot_identifier if skip_final_cluster_snapshot is False")
+        module.fail_json(msg="Need to specify final_cluster_snapshot_identifier if skip_final_cluster_snapshot is False")
 
     conn = module.client('redshift')
 

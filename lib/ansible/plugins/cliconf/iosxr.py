@@ -191,6 +191,11 @@ class Cliconf(CliconfBase):
                 cmd_obj['command'] = 'commit label {0}'.format(label)
             else:
                 cmd_obj['command'] = 'commit show-error'
+            # In some cases even a normal commit, i.e., !replace,
+            # throws a prompt and we need to handle it before
+            # proceeding further
+            cmd_obj['prompt'] = '(C|c)onfirm'
+            cmd_obj['answer'] = 'y'
 
         self.send_command(**cmd_obj)
 

@@ -127,8 +127,8 @@ EXAMPLES = """
         username: "{{ destination_cluster_username }}"
         password: "{{ destination_cluster_password }}"
 
-    # existing snapmirror relation with status 'snapmirrored' will be initiailzed
-    - name: Inititalize ONTAP/ONTAP SnapMirror
+    # existing snapmirror relation with status 'snapmirrored' will be initialized
+    - name: Initialize ONTAP/ONTAP SnapMirror
       na_ontap_snapmirror:
         state: present
         source_path: 'ansible:test'

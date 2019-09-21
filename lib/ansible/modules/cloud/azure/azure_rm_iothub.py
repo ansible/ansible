@@ -139,7 +139,7 @@ options:
             connection_string:
                 description:
                     - Connection string of the custom endpoint.
-                    - The connection string should have send priviledge.
+                    - The connection string should have send privilege.
                 type: str
                 required: yes
             container:
@@ -819,7 +819,6 @@ class AzureRMIoTHub(AzureRMModuleBase):
         try:
             return self.IoThub_client.iot_hub_resource.get(self.resource_group, self.name)
         except Exception:
-            pass
             return None
 
     def create_or_update_hub(self, hub):

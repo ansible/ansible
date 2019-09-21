@@ -1,0 +1,2 @@
+bugfixes:
+  - vmware - Ensure we can use the modules with Python < 2.7.9 or RHEL/CentOS < 7.4, this as soon as ``validate_certs`` is disabled.

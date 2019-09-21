@@ -1,0 +1,2 @@
+# Initial CI tests of postgresql_idx module
+- import_tasks: postgresql_idx_initial.yml

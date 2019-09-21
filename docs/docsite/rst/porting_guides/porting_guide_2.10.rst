@@ -45,7 +45,7 @@ Modules removed
 
 The following modules no longer exist:
 
-* No notable changes
+* letsencrypt use :ref:`acme_certificate <acme_certificate_module>` instead.
 
 
 Deprecation notices
@@ -57,7 +57,11 @@ No notable changes
 Noteworthy module changes
 -------------------------
 
-No notable changes
+* :ref:`vmware_datastore_maintenancemode <vmware_datastore_maintenancemode_module>` now returns ``datastore_status`` instead of Ansible internal key ``results``.
+* :ref:`vmware_host_kernel_manager <vmware_host_kernel_manager_module>` now returns ``host_kernel_status`` instead of Ansible internal key ``results``.
+* :ref:`vmware_host_ntp <vmware_host_ntp_module>` now returns ``host_ntp_status`` instead of Ansible internal key ``results``.
+* :ref:`vmware_host_service_manager <vmware_host_service_manager_module>` now returns ``host_service_status`` instead of Ansible internal key ``results``.
+* :ref:`vmware_tag <vmware_tag_module>` now returns ``tag_status`` instead of Ansible internal key ``results``.
 
 
 Plugins

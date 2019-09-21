@@ -130,7 +130,7 @@ def split_host_pattern(pattern):
                 '''), pattern, re.X
             )
 
-    return [p.strip() for p in patterns]
+    return [p.strip() for p in patterns if p.strip()]
 
 
 class InventoryManager(object):

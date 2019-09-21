@@ -155,7 +155,7 @@ cdnendpoints:
             sample: xxxxxxxx.blob.core.windows.net
         origin_path:
             description:
-                - A directory path on the origin that CDN can use to retreive content from.
+                - A directory path on the origin that CDN can use to retrieve content from.
             type: str
             sample: /pic/
         tags:

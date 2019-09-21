@@ -177,7 +177,7 @@ Function Assert-Size($info) {
         $size_pattern = '^(-?\d+)(b|k|m|g|t)?$'
         $match = $size -match $size_pattern
         if ($match) {
-            [int]$specified_size = $matches[1]
+            [int64]$specified_size = $matches[1]
             if ($null -eq $matches[2]) {
                 $chosen_byte = 'b'
             } else {
@@ -238,13 +238,12 @@ Function Get-FileStat($file) {
     }
 
     $islnk = $false
-    $isdir = $false
+    $isdir = $attributes -contains 'Directory'
     $isshared = $false
 
     if ($attributes -contains 'ReparsePoint') {
         # TODO: Find a way to differenciate between soft and junction links
         $islnk = $true
-        $isdir = $true
 
         # Try and get the symlink source, can result in failure if link is broken
         try {

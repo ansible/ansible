@@ -39,7 +39,7 @@ notes:
     - "   Resource > Assign Virtual Machine to Resource Pool"
     - "Module may require additional privileges as well, which may be required for gathering facts - e.g. ESXi configurations."
     - Tested on vSphere 5.5, 6.0, 6.5 and 6.7
-    - Use SCSI disks instead of IDE when you want to expand online disks by specifing a SCSI controller
+    - Use SCSI disks instead of IDE when you want to expand online disks by specifying a SCSI controller
     - "For additional information please visit Ansible VMware community wiki - U(https://github.com/ansible/community/wiki/VMware)."
 options:
   state:
@@ -165,12 +165,12 @@ options:
     - This parameter is case sensitive.
     - 'Examples:'
     - "  virtual machine with RHEL7 64 bit, will be 'rhel7_64Guest'"
-    - "  virtual machine with CensOS 64 bit, will be 'centos64Guest'"
+    - "  virtual machine with CentOS 64 bit, will be 'centos64Guest'"
     - "  virtual machine with Ubuntu 64 bit, will be 'ubuntu64Guest'"
     - This field is required when creating a virtual machine, not required when creating from the template.
     - >
          Valid values are referenced here:
-         U(https://code.vmware.com/apis/358/vsphere#/doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html)
+         U(https://code.vmware.com/apis/358/doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html)
     version_added: '2.3'
   disk:
     description:
@@ -295,7 +295,7 @@ options:
     description:
     - A list of networks (in the order of the NICs).
     - Removing NICs is not allowed, while reconfiguring the virtual machine.
-    - All parameters and VMware object names are case sensetive.
+    - All parameters and VMware object names are case sensitive.
     - 'One of the below parameters is required per entry:'
     - ' - C(name) (string): Name of the portgroup or distributed virtual portgroup for this interface.
           When specifying distributed virtual portgroup make sure given C(esxi_hostname) or C(cluster) is associated with it.'
@@ -782,7 +782,7 @@ class PyVmomiDeviceHelper(object):
         """
         Function to return int value for given input, else return error
         Args:
-            input_value: Input value to retrive int value from
+            input_value: Input value to retrieve int value from
             name:  Name of the Input value (used to build error message)
         Returns: (int) if integer value can be obtained, otherwise will send a error message.
         """

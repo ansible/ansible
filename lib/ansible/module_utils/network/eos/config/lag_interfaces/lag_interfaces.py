@@ -17,6 +17,7 @@ from ansible.module_utils.network.common.utils import to_list, dict_diff
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.eos.facts.facts import Facts
+from ansible.module_utils.network.eos.utils.utils import normalize_interface
 
 
 class Lag_interfaces(ConfigBase):
@@ -114,11 +115,12 @@ class Lag_interfaces(ConfigBase):
         """
         commands = []
         for interface in want:
+            interface_name = normalize_interface(interface["name"])
             for extant in have:
-                if extant["name"] == interface["name"]:
+                if extant["name"] == interface_name:
                     break
             else:
-                extant = dict(name=interface["name"])
+                extant = dict(name=interface_name)
 
             commands.extend(set_config(interface, extant))
             commands.extend(remove_config(interface, extant))
@@ -135,18 +137,19 @@ class Lag_interfaces(ConfigBase):
         commands = []
         for extant in have:
             for interface in want:
-                if interface["name"] == extant["name"]:
+                if normalize_interface(interface["name"]) == extant["name"]:
                     break
             else:
                 interface = dict(name=extant["name"])
             commands.extend(remove_config(interface, extant))
 
         for interface in want:
+            interface_name = normalize_interface(interface["name"])
             for extant in have:
-                if extant["name"] == interface["name"]:
+                if extant["name"] == interface_name:
                     break
             else:
-                extant = dict(name=interface["name"])
+                extant = dict(name=interface_name)
             commands.extend(set_config(interface, extant))
 
         return commands
@@ -160,11 +163,12 @@ class Lag_interfaces(ConfigBase):
         """
         commands = []
         for interface in want:
+            interface_name = normalize_interface(interface["name"])
             for extant in have:
-                if extant["name"] == interface["name"]:
+                if extant["name"] == interface_name:
                     break
             else:
-                extant = dict(name=interface["name"])
+                extant = dict(name=interface_name)
 
             commands.extend(set_config(interface, extant))
 
@@ -179,14 +183,15 @@ class Lag_interfaces(ConfigBase):
         """
         commands = []
         for interface in want:
+            interface_name = normalize_interface(interface["name"])
             for extant in have:
-                if extant["name"] == interface["name"]:
+                if extant["name"] == interface_name:
                     break
             else:
-                continue
+                extant = dict(name=interface_name)
 
             # Clearing all args, send empty dictionary
-            interface = dict(name=interface["name"])
+            interface = dict(name=interface_name)
             commands.extend(remove_config(interface, extant))
 
         return commands

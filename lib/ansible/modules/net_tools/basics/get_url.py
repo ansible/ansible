@@ -224,7 +224,7 @@ EXAMPLES = r'''
     dest: /tmp/afilecopy.txt
 
 - name: < Fetch file that requires authentication.
-        username/password only availabe since 2.8, in older versions you need to use url_username/url_password
+        username/password only available since 2.8, in older versions you need to use url_username/url_password
   get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
@@ -540,7 +540,7 @@ def main():
                 checksum_mismatch = True
 
         # Not forcing redownload, unless checksum does not match
-        if not force and not checksum_mismatch:
+        if not force and checksum and not checksum_mismatch:
             # Not forcing redownload, unless checksum does not match
             # allow file attribute changes
             module.params['path'] = dest

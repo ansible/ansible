@@ -116,11 +116,28 @@
   win_file:
     path: T:\path\to\directory
     state: directory
+
+- name: Format volume with file inside without force and same fs
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+  register: format_volume_without_force_same_fs
+
+- name: Format volume (forced) - to test case for files existing and a different fs
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    file_system: ntfs
+    force: True
+
+- name: Add a file
+  win_file:
+    path: T:\path\to\directory
+    state: directory
   register: add_file_to_volume
 
 - name: Format volume with file inside without force
   win_format:
     path: "{{ shell_partition_result.stdout | trim }}"
+    file_system: refs
   register: format_volume_without_force
   ignore_errors: True
 
@@ -134,5 +151,6 @@
     that:
       - add_file_to_volume is changed
       - format_volume_without_force is failed
+      - format_volume_without_force_same_fs is not changed
       - 'format_volume_without_force.msg == "Force format must be specified to format non-pristine volumes"'
       - format_volume_with_force is changed

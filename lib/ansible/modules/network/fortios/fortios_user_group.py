@@ -209,7 +209,7 @@ options:
                 type: int
             member:
                 description:
-                    - Names of users, peers, LDAP severs, or RADIUS servers to add to the user group.
+                    - Names of users, peers, LDAP servers, or RADIUS servers to add to the user group.
                 type: list
                 suboptions:
                     name:

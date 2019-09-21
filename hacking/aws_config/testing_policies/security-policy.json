@@ -29,14 +29,30 @@
         },
         {
             "Action": [
+                "iam:CreatePolicy",
+                "iam:ListPolicyVersions",
+                "iam:ListEntitiesForPolicy",
+                "iam:DeletePolicy"
+             ],
+            "Resource": "arn:aws:iam::{{ aws_account }}:policy/ansible-test-*",
+            "Effect": "Allow",
+            "Sid": "AllowManagementOfSpecificPolicies"
+        },
+        {
+            "Action": [
                 "iam:AttachRolePolicy",
                 "iam:CreateRole",
                 "iam:DeleteRole",
                 "iam:DeleteRolePolicy",
+                "iam:DeleteRolePermissionsBoundary",
                 "iam:DetachRolePolicy",
                 "iam:PutRolePolicy",
                 "iam:PassRole",
+                "iam:PutRolePolicy",
+                "iam:PutRolePermissionsBoundary",
                 "iam:UpdateAssumeRolePolicy",
+                "iam:UpdateRole",
+                "iam:UpdateRoleDescription",
                 "sts:AssumeRole"
              ],
             "Resource": "arn:aws:iam::{{ aws_account }}:role/ansible-test-*",
@@ -146,21 +162,24 @@
             "Sid": "AllowAccessToServerCertificates",
             "Effect": "Allow",
             "Action": [
-                "iam:ListServerCertificates",
-                "iam:UploadServerCertificate",
-                "iam:UpdateServerCertificate",
-                "iam:DeleteServerCertificate",
-                "iam:GetServerCertificate"
+                "iam:*ServerCertificates",
+                "iam:*ServerCertificate"
             ],
             "Resource": "*"
+        },
+        {
+            "Sid": "AllowAccessToSecrets",
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:*"
+            ],
+            "Resource": "arn:aws:secretsmanager:{{aws_region}}:{{aws_account}}:secret:ansible-test*"
         },
         {
             "Sid": "AllowAccessToManagePasswordPolicy",
             "Effect": "Allow",
             "Action": [
-                "iam:GetAccountPasswordPolicy",
-                "iam:DeleteAccountPasswordPolicy",
-                "iam:UpdateAccountPasswordPolicy"
+                "iam:*AccountPasswordPolicy"
             ],
             "Resource": "*"
         },

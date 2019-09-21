@@ -165,7 +165,7 @@ notes:
     is "stopped" and the container does not exist it will be first created,
     "started", the command executed, and then "stopped". If you use a "|"
     in the variable you can use common script formatting within the variable
-    iteself The "container_command" option will always execute as BASH.
+    itself The "container_command" option will always execute as BASH.
     When using "container_command" a log file is created in the /tmp/ directory
     which contains both stdout and stderr of any command executed.
   - If "archive" is **true** the system will attempt to create a compressed

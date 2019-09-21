@@ -1,0 +1,2 @@
+bugfixes:
+  - cloudformation_info - Fix a KeyError returning information about the stack(s).

@@ -77,6 +77,8 @@ class HcloudCloudProvider(CloudProvider):
                 TOKEN=token,
             )
 
+            display.sensitive.add(values['TOKEN'])
+
             config = self._populate_config_template(config, values)
 
         self._write_config(config)
@@ -103,6 +105,8 @@ class HcloudCloudEnvironment(CloudEnvironment):
         env_vars = dict(
             HCLOUD_TOKEN=parser.get('default', 'hcloud_api_token'),
         )
+
+        display.sensitive.add(env_vars['HCLOUD_TOKEN'])
 
         ansible_vars = dict(
             hcloud_prefix=self.resource_prefix,

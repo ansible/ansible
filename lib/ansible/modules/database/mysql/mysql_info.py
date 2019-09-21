@@ -183,7 +183,7 @@ class MySQL_Info(object):
 
     Arguments:
         module (AnsibleModule): Object of AnsibleModule class.
-        cursor (pymysql/mysql-python): Cursor class for interraction with
+        cursor (pymysql/mysql-python): Cursor class for interaction with
             the database.
 
     Note:

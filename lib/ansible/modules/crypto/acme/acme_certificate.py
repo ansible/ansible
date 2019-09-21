@@ -532,7 +532,7 @@ class ACMEClient(object):
 
     def _add_or_update_auth(self, identifier_type, identifier, auth):
         '''
-        Add or update the given authroization in the global authorizations list.
+        Add or update the given authorization in the global authorizations list.
         Return True if the auth was updated/added and False if no change was
         necessary.
         '''
@@ -1020,8 +1020,6 @@ def main():
         ),
         supports_check_mode=True,
     )
-    if module._name == 'letsencrypt':
-        module.deprecate("The 'letsencrypt' module is being renamed 'acme_certificate'", version='2.10')
     set_crypto_backend(module)
 
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.

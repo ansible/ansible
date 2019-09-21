@@ -35,6 +35,7 @@ from ansible.module_utils.common.dict_transformations import dict_merge
 try:
     import yaml
     from openshift.dynamic.exceptions import DynamicApiError, NotFoundError, ConflictError, ForbiddenError, KubernetesValidateMissing
+    import urllib3
 except ImportError:
     # Exceptions handled in common
     pass
@@ -52,6 +53,13 @@ try:
 except ImportError:
     K8S_CONFIG_HASH_IMP_ERR = traceback.format_exc()
     HAS_K8S_CONFIG_HASH = False
+
+HAS_K8S_APPLY = None
+try:
+    from openshift.dynamic.apply import apply_object
+    HAS_K8S_APPLY = True
+except ImportError:
+    HAS_K8S_APPLY = False
 
 
 class KubernetesRawModule(KubernetesAnsibleModule):
@@ -83,7 +91,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         argument_spec['wait_condition'] = dict(type='dict', default=None, options=self.condition_spec)
         argument_spec['validate'] = dict(type='dict', default=None, options=self.validate_spec)
         argument_spec['append_hash'] = dict(type='bool', default=False)
-        argument_spec['apply'] = dict(type='bool')
+        argument_spec['apply'] = dict(type='bool', default=False)
         return argument_spec
 
     def __init__(self, k8s_kind=None, *args, **kwargs):
@@ -116,12 +124,10 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         if self.params['merge_type']:
             if LooseVersion(self.openshift_version) < LooseVersion("0.6.2"):
                 self.fail_json(msg=missing_required_lib("openshift >= 0.6.2", reason="for merge_type"))
-        if self.params.get('apply') is not None:
-            if LooseVersion(self.openshift_version) < LooseVersion("0.9.0"):
-                self.fail_json(msg=missing_required_lib("openshift >= 0.9.0", reason="for apply"))
-            self.apply = self.params['apply']
-        else:
-            self.apply = LooseVersion(self.openshift_version) >= LooseVersion("0.9.0")
+        self.apply = self.params.get('apply', False)
+        if self.apply:
+            if not HAS_K8S_APPLY:
+                self.fail_json(msg=missing_required_lib("openshift >= 0.9.2", reason="for apply"))
 
         if resource_definition:
             if isinstance(resource_definition, string_types):
@@ -163,7 +169,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
     def execute_module(self):
         changed = False
         results = []
-        self.client = self.get_api_client()
+        try:
+            self.client = self.get_api_client()
+        # Hopefully the kubernetes client will provide its own exception class one day
+        except (urllib3.exceptions.RequestError) as e:
+            self.fail_json(msg="Couldn't connect to Kubernetes: %s" % str(e))
 
         flattened_definitions = []
         for definition in self.resource_definitions:
@@ -288,7 +298,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         else:
             if self.apply:
                 if self.check_mode:
-                    k8s_obj = definition
+                    ignored, k8s_obj = apply_object(resource, definition)
                 else:
                     try:
                         k8s_obj = resource.apply(definition, namespace=namespace).to_dict()

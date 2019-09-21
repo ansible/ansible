@@ -285,7 +285,7 @@ def main():
                 module.fail_json(msg="Failed to remove storage array. Id[%s]. Error[%s]." % (ssid, to_native(err)))
 
             if rc == 422:
-                module.exit_json(changed=changed, msg="Storage system was not presnt.")
+                module.exit_json(changed=changed, msg="Storage system was not presented.")
             if rc == 204:
                 module.exit_json(changed=changed, msg="Storage system removed.")
 

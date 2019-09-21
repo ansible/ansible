@@ -7,7 +7,7 @@
 - name: verify test gather hcloud floating ip infos in check mode
   assert:
     that:
-      - hcloud_floating_ips.hcloud_floating_ip_info| list | count == 1
+      - hcloud_floating_ips.hcloud_floating_ip_info| list | count >= 1
 
 - name: test gather hcloud floating ip infos in check mode
   hcloud_floating_ip_info:
@@ -17,7 +17,7 @@
 - name: verify test gather hcloud floating ip infos in check mode
   assert:
     that:
-      - hcloud_floating_ips.hcloud_floating_ip_info| list | count == 1
+      - hcloud_floating_ips.hcloud_floating_ip_info| list | count >= 1
 
 
 - name: test gather hcloud floating ip infos with correct label selector

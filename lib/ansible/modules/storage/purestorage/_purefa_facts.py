@@ -25,7 +25,7 @@ description:
     Purity//FA operating system. By default, the module will collect basic
     fact information including hosts, host groups, protection
     groups and volume counts. Additional fact information can be collected
-    based on the configured set of arguements.
+    based on the configured set of arguments.
 author:
   - Pure Storage ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
@@ -340,6 +340,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pure import get_system, purefa_argument_spec
 
 
+ADMIN_API_VERSION = '1.14'
 S3_REQUIRED_API_VERSION = '1.16'
 LATENCY_REQUIRED_API_VERSION = '1.16'
 AC_REQUIRED_API_VERSION = '1.14'
@@ -418,7 +419,7 @@ def generate_config_dict(array):
     config_facts['dns'] = array.get_dns()
     # SMTP
     config_facts['smtp'] = array.list_alert_recipients()
-    # SMNP
+    # SNMP
     config_facts['snmp'] = array.list_snmp_managers()
     config_facts['snmp_v3_engine_id'] = array.get_snmp_engine_id()['engine_id']
     # DS
@@ -461,14 +462,16 @@ def generate_config_dict(array):
 
 
 def generate_admin_dict(array):
+    api_version = array._list_available_rest_versions()
     admin_facts = {}
-    admins = array.list_admins()
-    for admin in range(0, len(admins)):
-        admin_name = admins[admin]['name']
-        admin_facts[admin_name] = {
-            'type': admins[admin]['type'],
-            'role': admins[admin]['role'],
-        }
+    if ADMIN_API_VERSION in api_version:
+        admins = array.list_admins()
+        for admin in range(0, len(admins)):
+            admin_name = admins[admin]['name']
+            admin_facts[admin_name] = {
+                'type': admins[admin]['type'],
+                'role': admins[admin]['role'],
+            }
     return admin_facts
 
 

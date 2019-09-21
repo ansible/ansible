@@ -15,7 +15,7 @@ module: cs_zone_facts
 short_description: Gathering facts of zones from Apache CloudStack based clouds.
 description:
   - Gathering facts from the API of a zone.
-  - Sets Ansible facts accessable by the key C(cloudstack_zone) and since version 2.6 also returns results.
+  - Sets Ansible facts accessible by the key C(cloudstack_zone) and since version 2.6 also returns results.
 deprecated:
   removed_in: "2.13"
   why: Transformed into an info module.

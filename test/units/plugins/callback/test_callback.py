@@ -365,6 +365,34 @@ class TestCallbackDiff(unittest.TestCase):
 
             '''))
 
+    def test_diff_before_none(self):
+        self.assertMultiLineEqual(
+            self._strip_color(self.cb._get_diff({
+                'before': None,
+                'after': 'one line\n',
+            })),
+            textwrap.dedent('''\
+                --- before
+                +++ after
+                @@ -0,0 +1 @@
+                +one line
+
+            '''))
+
+    def test_diff_after_none(self):
+        self.assertMultiLineEqual(
+            self._strip_color(self.cb._get_diff({
+                'before': 'one line\n',
+                'after': None,
+            })),
+            textwrap.dedent('''\
+                --- before
+                +++ after
+                @@ -1 +0,0 @@
+                -one line
+
+            '''))
+
 
 class TestCallbackOnMethods(unittest.TestCase):
     def _find_on_methods(self, callback):

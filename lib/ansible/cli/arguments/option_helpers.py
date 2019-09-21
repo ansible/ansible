@@ -36,6 +36,15 @@ class AnsibleVersion(argparse.Action):
         parser.exit()
 
 
+class UnrecognizedArgument(argparse.Action):
+    def __init__(self, option_strings, dest, const=True, default=None, required=False, help=None, metavar=None, nargs=0):
+        super(UnrecognizedArgument, self).__init__(option_strings=option_strings, dest=dest, nargs=nargs, const=const,
+                                                   default=default, required=required, help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        parser.error('unrecognized arguments: %s' % option_string)
+
+
 class PrependListAction(argparse.Action):
     """A near clone of ``argparse._AppendAction``, but designed to prepend list values
     instead of appending.

@@ -1,0 +1,3 @@
+# Initial CI tests of postgresql_copy module
+- import_tasks: postgresql_copy_initial.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')

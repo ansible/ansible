@@ -1,0 +1,2 @@
+bugfixes:
+- Fix issue where the collection loader tracebacks if ``collections_paths = ./`` is set in the config
