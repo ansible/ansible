@@ -46,6 +46,7 @@
                 "iam:DeleteRolePolicy",
                 "iam:DeleteRolePermissionsBoundary",
                 "iam:DetachRolePolicy",
+                "iam:PutRolePolicy",
                 "iam:PassRole",
                 "iam:PutRolePolicy",
                 "iam:PutRolePermissionsBoundary",
@@ -99,6 +100,28 @@
             ]
         },
         {
+            "Sid": "AllowModifyingCloudtrail",
+            "Effect": "Allow",
+            "Action": [
+                "cloudtrail:*"
+            ],
+            "Resource": [
+                "arn:aws:cloudtrail:{{aws_region}}:{{aws_account}}:trail/ansible-test-*"
+            ]
+        },
+        {
+            "Sid": "AllowDescribingCloudtrails",
+            "Effect": "Allow",
+            "Action": [
+                "cloudtrail:DescribeTrails",
+                "cloudtrail:ListTags",
+                "cloudtrail:ListPublicKeys"
+            ],
+            "Resource": [
+                "*"
+            ]
+        },
+        {
             "Sid": "AllowModifyingCloudwatchLogs",
             "Effect": "Allow",
             "Action": [
@@ -107,7 +130,7 @@
                 "logs:DeleteLogGroup"
             ],
             "Resource": [
-                "arn:aws:logs:{{aws_region}}:{{aws_account}}:log-group:ansible-testing*"
+                "arn:aws:logs:{{aws_region}}:{{aws_account}}:log-group:ansible-test*"
             ]
         },
         {

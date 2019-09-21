@@ -1,0 +1,7 @@
+cloudtrail_name: '{{ resource_prefix }}-cloudtrail'
+s3_bucket_name: '{{ resource_prefix }}-cloudtrail-bucket'
+kms_alias: '{{ resource_prefix }}-cloudtrail'
+sns_topic: '{{ resource_prefix }}-cloudtrail-notifications'
+cloudtrail_prefix: 'test-prefix'
+cloudwatch_log_group: '{{ resource_prefix }}-cloudtrail'
+cloudwatch_role: '{{ resource_prefix }}-cloudtrail'

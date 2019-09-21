@@ -1,0 +1,17 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CloudTrail2CloudWatch",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": [
+        "arn:aws:logs:{{ aws_region }}:{{ aws_caller_info.account }}:log-group:{{ cloudwatch_log_group }}:log-stream:*",
+        "arn:aws:logs:{{ aws_region }}:{{ aws_caller_info.account }}:log-group:{{ cloudwatch_log_group }}-2:log-stream:*"
+      ]
+    }
+  ]
+}
