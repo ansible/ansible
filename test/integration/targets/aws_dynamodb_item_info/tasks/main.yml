@@ -1,0 +1,115 @@
+---
+# tasks file for testing aws aws_dynamodb_item_info module
+
+- block:
+
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ ec2_region }}"
+      no_log: yes
+
+    - name: create dynamodb database
+      dynamodb_table:
+        name: "{{ dynamo_db_table }}"
+        hash_key_name: bank
+        hash_key_type: STRING
+        range_key_name: quantity
+        range_key_type: NUMBER
+        # tag necessary so it waits until table creation
+        tags:
+          ansible_test: integration
+        <<: *aws_connection_info
+      register: result
+    - name: assert status
+      assert:
+        that:
+          - result.changed
+
+    - name: inserting db record
+      aws_dynamodb_item:
+        table: "{{ dynamo_db_table }}"
+        state: present
+        primary_key: {"bank": {"S": "hsbc"}}
+        update_expression: "SET person =:person"
+        expression_attribute_values: {":person": {"S": "ochoa"}}
+        <<: *aws_connection_info
+      register: result
+    - name: assert status
+      assert:
+        that:
+          - result.changed
+
+    - name: reads an item
+      aws_dynamodb_item_info:
+        table: "{{ dynamo_db_table }}"
+        primary_key: {"bank": {"S": "hsbc"}}
+        <<: *aws_connection_info
+      register: result
+    - name: assert data is correct
+      assert:
+        that:
+          - '''[{"bank": {"s": "hsbc"}, "person": {"s": "ochoa"}}] in result.returned_items'''
+
+    - name: reads previous item returning consumed capacity
+      aws_dynamodb_item_info:
+        table: narcos
+        primary_key: {"bank": {"S": "hsbc"}}
+        return_consumed_capacity: TOTAL
+      register: result
+    - name: assert data is correct
+      assert:
+        that:
+          - '''[ConsumedCapacity] in result'''
+
+    - name: reads an item that does not exist
+      aws_dynamodb_item_info:
+        table: "{{ dynamo_db_table }}"
+        primary_key: {"bank": {"S": "doesNOTexist"}}
+        <<: *aws_connection_info
+      register: result
+    - name: assert data is correct
+      assert:
+        that:
+          - '''[] in result.returned_items'''
+
+    - name: adding protected field status (protected word)
+      aws_dynamodb_item:
+        table: "{{ dynamo_db_table }}"
+        state: present
+        primary_key: {"bank": {"S": "hsbc"}}
+        update_expression: 'SET #s =:status'
+        expression_attribute_values: {":status": {"S": "red"}}
+        expression_attribute_names: {"#s": "status"}
+        <<: *aws_connection_info
+      register: result
+    - name: assert status
+      assert:
+        that:
+          - result.changed
+
+    - name: reads an item only returning the value for status field (where 'status' is a dynamodb protected keyword)
+      aws_dynamodb_item_info:
+        table: narcos
+        primary_key: {"bank": {"S": "hsbc"}}
+        projection_expression: "#s"
+        expression_attribute_names: {"#s" : "status"}
+      register: result
+    - name: assert data is correct
+      assert:
+        that:
+          - '''[{"status": {"s": "red"}}] in result.returned_items'''
+
+  always:
+    ###### TEARDOWN STARTS HERE ######
+
+    - name: delete the test dynamo db
+      dynamodb_table:
+        name: "{{ dynamo_db_table }}"
+        region: "{{ ec2_region }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
