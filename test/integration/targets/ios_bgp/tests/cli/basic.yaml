@@ -86,6 +86,11 @@
             remote_as: 64511
             description: EBGP_NBR_1
             local_as: 64497
+
+          - neighbor: 10.10.20.20
+            remote_as: 65012
+            description: EBGP_NBR_2
+            ebgp_multihop: 100
     register: result
 
   - assert:
