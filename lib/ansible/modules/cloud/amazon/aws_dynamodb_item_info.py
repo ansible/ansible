@@ -48,6 +48,7 @@ options:
         description:
             - Determines the level of detail about provisioned throughput
               consumption that is returned in the response.
+              More info U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.get_item)
         required: false
         choices: ["INDEXES", "TOTAL", "NONE"]
         default: null
@@ -83,12 +84,12 @@ EXAMPLES = '''
     table: narcos
     primary_key: {"bank": {"S": "hsbc"}}
 
-- name: Gets a single item returning the value for project field (where 'project' is a dynamodb protected keyword)
+- name: Gets a single item only returning the value for project field (where 'project' is a dynamodb protected keyword)
   aws_dynamodb_item_info:
     table: narcos
     primary_key: {"bank": {"S": "hsbc"}}
-    projection_expression: #p
-    expression_attribute_names: {"#p" : "project"}
+    projection_expression: "#p"
+    expression_attribute_names: {"#p": "project"}
 '''
 
 RETURN = '''
@@ -158,7 +159,7 @@ def get_with_backoff(connection, **kwargs):
 def get(connection, module, response, **params):
     response = get_with_backoff(connection, **params)
     response['returned_items'] = response.pop('Items')
-    return response, changed
+    return response
 
 
 def main():
@@ -193,9 +194,8 @@ def main():
     response = {}
 
     try:
-        if not module.check_mode:
-            response, changed = get(connection, module, response, **params)
-        return response, changed
+        response = get(connection, module, response, **params)
+        return response
 
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'ResourceNotFoundException':

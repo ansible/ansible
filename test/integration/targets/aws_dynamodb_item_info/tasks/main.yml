@@ -96,7 +96,7 @@
         table: narcos
         primary_key: {"bank": {"S": "hsbc"}}
         projection_expression: "#s"
-        expression_attribute_names: {"#s" : "status"}
+        expression_attribute_names: {"#s": "status"}
       register: result
     - name: assert data is correct
       assert:
