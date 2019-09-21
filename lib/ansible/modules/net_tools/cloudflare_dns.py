@@ -31,13 +31,14 @@ options:
     type: str
     required: false
     version_added: '2.10'
-  account_api_token:
+  account_api_key:
     description:
     - Account API key.
     - Required for api keys authentication.
     - "You can obtain your API key from the bottom of the Cloudflare 'My Account' page, found here: U(https://dash.cloudflare.com/)"
     type: str
     required: false
+    aliases: [ account_api_token ]
   account_email:
     description:
     - Account email. Required for api keys authentication.
@@ -168,7 +169,7 @@ EXAMPLES = r'''
     type: A
     value: 127.0.0.1
     account_email: test@example.com
-    account_api_token: dummyapitoken
+    account_api_key: dummyapitoken
   register: record
 
 - name: Create a record using api token
@@ -185,7 +186,7 @@ EXAMPLES = r'''
     type: CNAME
     value: example.com
     account_email: test@example.com
-    account_api_token: dummyapitoken
+    account_api_key: dummyapitoken
     state: present
 
 - name: Change its TTL
@@ -195,7 +196,7 @@ EXAMPLES = r'''
     value: example.com
     ttl: 600
     account_email: test@example.com
-    account_api_token: dummyapitoken
+    account_api_key: dummyapitoken
     state: present
 
 - name: Delete the record
@@ -204,7 +205,7 @@ EXAMPLES = r'''
     type: CNAME
     value: example.com
     account_email: test@example.com
-    account_api_token: dummyapitoken
+    account_api_key: dummyapitoken
     state: absent
 
 - name: create a my.com CNAME record to example.com and proxy through Cloudflare's network
@@ -214,7 +215,7 @@ EXAMPLES = r'''
     value: example.com
     proxied: yes
     account_email: test@example.com
-    account_api_token: dummyapitoken
+    account_api_key: dummyapitoken
     state: present
 
 # This deletes all other TXT records named "test.my.com"
@@ -226,7 +227,7 @@ EXAMPLES = r'''
     value: unique value
     solo: true
     account_email: test@example.com
-    account_api_token: dummyapitoken
+    account_api_key: dummyapitoken
     state: present
 
 - name: Create an SRV record _foo._tcp.my.com
@@ -385,7 +386,7 @@ class CloudflareAPI(object):
     def __init__(self, module):
         self.module = module
         self.api_token = module.params['api_token']
-        self.account_api_token = module.params['account_api_token']
+        self.account_api_key = module.params['account_api_key']
         self.account_email = module.params['account_email']
         self.algorithm = module.params['algorithm']
         self.cert_usage = module.params['cert_usage']
@@ -444,7 +445,7 @@ class CloudflareAPI(object):
         else:
             headers = {
                 'X-Auth-Email': self.account_email,
-                'X-Auth-Key': self.account_api_token,
+                'X-Auth-Key': self.account_api_key,
                 'Content-Type': 'application/json',
             }
         data = None
@@ -793,7 +794,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             api_token=dict(type='str', required=False, no_log=True),
-            account_api_token=dict(type='str', required=False, no_log=True),
+            account_api_key=dict(type='str', required=False, no_log=True, aliases=['account_api_token']),
             account_email=dict(type='str', required=False),
             algorithm=dict(type='int'),
             cert_usage=dict(type='int', choices=[0, 1, 2, 3]),
@@ -824,8 +825,8 @@ def main():
         ],
     )
 
-    if not module.params['api_token'] and not (module.params['account_api_token'] and module.params['account_email']):
-        module.fail_json(msg="Either api_token or account_api_token and account_email params are required.")
+    if not module.params['api_token'] and not (module.params['account_api_key'] and module.params['account_email']):
+        module.fail_json(msg="Either api_token or account_api_key and account_email params are required.")
     if module.params['type'] == 'SRV':
         if not ((module.params['weight'] is not None and module.params['port'] is not None
                  and not (module.params['value'] is None or module.params['value'] == ''))
