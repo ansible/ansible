@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2019, Maciej Delmanowski <drybjed@gmail.com>
 # Copyright: (c) 2017, Alexander Korinek <noles@a3k.net>
 # Copyright: (c) 2016, Peter Sagerson <psagers@ignorare.net>
 # Copyright: (c) 2016, Jiri Tyr <jiri.tyr@gmail.com>
@@ -38,7 +39,7 @@ notes:
     rules. This should work out in most cases, but it is theoretically
     possible to see spurious changes when target and actual values are
     semantically identical but lexically distinct.
-version_added: '2.9'
+version_added: '2.10'
 author:
   - Jiri Tyr (@jtyr)
   - Alexander Korinek (@noles)
@@ -47,6 +48,7 @@ requirements:
 options:
   state:
     required: false
+    type: str
     choices: [present, absent, exact]
     default: present
     description:
@@ -58,9 +60,18 @@ options:
         attribute will be removed.
   attributes:
     required: true
+    type: dict
     description:
       - The attribute(s) and value(s) to add or remove. The complex argument format is required in order to pass
         a list of strings (see examples).
+  ordered:
+    required: false
+    type: bool
+    default: 'no'
+    description:
+      - If C(yes), prepend list values with X-ORDERED index numbers in all
+        attributes specified in the current task. This is useful mostly with
+        I(olcAccess) attribute to easily manage LDAP Access Control Lists.
   params:
     description:
     - Additional module parameters.
@@ -94,6 +105,25 @@ EXAMPLES = r'''
             {1}to dn.base="dc=example,dc=com"
             by dn="cn=admin,dc=example,dc=com" write
             by * read
+    state: exact
+
+# An alternative approach with automatic X-ORDERED numbering
+- name: Set up the ACL
+  ldap_attrs:
+    dn: olcDatabase={1}hdb,cn=config
+    attributes:
+        olcAccess:
+          - >-
+            to attrs=userPassword,shadowLastChange
+            by self write
+            by anonymous auth
+            by dn="cn=admin,dc=example,dc=com" write
+            by * none'
+          - >-
+            to dn.base="dc=example,dc=com"
+            by dn="cn=admin,dc=example,dc=com" write
+            by * read
+    ordered: yes
     state: exact
 
 - name: Declare some indexes
@@ -153,6 +183,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.ldap import LdapGeneric, gen_specs
+import re
 
 LDAP_IMP_ERR = None
 try:
@@ -171,15 +202,32 @@ class LdapAttrs(LdapGeneric):
         # Shortcuts
         self.attrs = self.module.params['attributes']
         self.state = self.module.params['state']
+        self.ordered = self.module.params['ordered']
+
+    def _order_values(self, values):
+        """ Preprend X-ORDERED index numbers to attribute's values. """
+        ordered_values = []
+
+        if isinstance(values, list):
+            for index, value in enumerate(values):
+                cleaned_value = re.sub(r'^\{\d+\}', '', value)
+                ordered_values.append('{' + str(index) + '}' + cleaned_value)
+
+        return ordered_values
 
     def _normalize_values(self, values):
         """ Normalize attribute's values. """
         norm_values = []
 
         if isinstance(values, list):
-            norm_values = list(map(to_bytes, values))
-        else:
-            norm_values = [to_bytes(values)]
+            if self.ordered:
+                norm_values = list(map(to_bytes,
+                                   self._order_values(list(map(str,
+                                                               values)))))
+            else:
+                norm_values = list(map(to_bytes, values))
+        elif values != "":
+            norm_values = [to_bytes(str(values))]
 
         return norm_values
 
@@ -245,6 +293,7 @@ def main():
         argument_spec=gen_specs(
             params=dict(type='dict'),
             attributes=dict(type='dict', required=True),
+            ordered=dict(type='bool', default=False, required=False),
             state=dict(type='str', default='present', choices=['absent', 'exact', 'present']),
         ),
         supports_check_mode=True,

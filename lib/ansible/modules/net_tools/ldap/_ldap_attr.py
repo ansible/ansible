@@ -57,6 +57,7 @@ options:
       - If C(absent), all given values will be removed if present.
       - If C(exact), the set of values will be forced to exactly those provided and no others.
       - If I(state=exact) and I(value) is an empty list, all values for this attribute will be removed.
+    type: str
     choices: [ absent, exact, present ]
     default: present
   values:
