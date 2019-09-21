@@ -1,0 +1,2 @@
+bugfixes:
+- ce_bgp - update to fix some bugs - When the vrf_name parameter is in the module and the configuration is repeatedly sent to the device, the module displays change = True. (https://github.com/ansible/ansible/pull/60573)
