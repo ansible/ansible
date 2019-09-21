@@ -198,7 +198,6 @@
         - "'neighbor 192.0.2.15 activate' in result.commands"
         - "'neighbor 192.0.2.15 route-reflector-client' in result.commands"
         - "'neighbor 10.10.20.20 activate' in result.commands"
-        - "'neighbor 10.10.20.20 route-reflector-client' in result.commands"
         - "'neighbor 10.10.20.20 prefix-list incoming-prefixes in' in result.commands"
         - "'neighbor 10.10.20.20 prefix-list outgoing-prefixes out' in result.commands"
 
