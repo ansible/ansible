@@ -1,0 +1,2 @@
+bugfixes:
+- ce_interface_ospf- update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/61431)
