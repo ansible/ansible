@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = r'''
 ---
 module: osquery_facts
-version_added: "2.9"
+version_added: "2.10"
 short_description: get facts from osquery selects
 requirements:
   - osqueryi
