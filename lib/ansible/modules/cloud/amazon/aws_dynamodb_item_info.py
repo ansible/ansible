@@ -35,17 +35,27 @@ options:
         required: true
         default: null
         type: dict
-    update_expression:
+    consistent_read:
         description:
-            - An expression that defines one or more attributes to be updated,
-              the action to be performed on them, and new value(s) for them.
+            - Determines the read consistency model.
+              If set to true, then the operation uses strongly consistent
+              reads; otherwise, the operation uses eventually consistent reads.
         required: false
+        choices: ["True", "False"]
+        default: null
+        type: bool
+    return_consumed_capacity:
+        description:
+            - Determines the level of detail about provisioned throughput
+              consumption that is returned in the response.
+        required: false
+        choices: ["INDEXES", "TOTAL", "NONE"]
         default: null
         type: str
-    condition_expression:
+    projection_expression:
         description:
-            - A condition that must be satisfied in order for a conditional
-              update to succeed.
+            - A string that identifies one or more attributes to retrieve from the table.
+              More info U(https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
         required: false
         default: null
         type: str
@@ -55,14 +65,6 @@ options:
               expression to access an attribute whose name conflicts with a
               DynamoDB reserved word.
               Reserved keywords list U(https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
-        required: false
-        default: null
-        type: dict
-    expression_attribute_values:
-        description:
-            - One or more values that can be substituted in an expression self.
-              Use the ':' (colon) character in an expression to dereference
-              an attribute value.
         required: false
         default: null
         type: dict
@@ -78,74 +80,20 @@ EXAMPLES = '''
 # Returns a set of attributes for the item with the given primary key.
 - name: Gets a single item
   aws_dynamodb_item_info:
-    profile: pre
     table: narcos
-    action: get
-    filter_expression: 'bank = :bank_name AND quantity = :number'
-    expression_attribute_values: {":bank_name": {"S": "hsbc"}, ":number": {"N": "2000"}}
+    primary_key: {"bank": {"S": "hsbc"}}
 
-- name: Gets a single item (where 'project' is a dynamodb protected keyword)
+- name: Gets a single item returning the value for project field (where 'project' is a dynamodb protected keyword)
   aws_dynamodb_item_info:
-    profile: pre
     table: narcos
-    action: get
-    filter_expression: '#p = :project'
-    expression_attribute_values: {":project": {"S": "narcos"}}
+    primary_key: {"bank": {"S": "hsbc"}}
+    projection_expression: #p
     expression_attribute_names: {"#p" : "project"}
-
-# Creates a single item in 'narcos' DynamoDB table where column 'bank' equals 'hsbc' string,
-# column 'quantity' equals '1000' numeric and column 'person' equals 'ochoa' string
-- name: Creates a new record
-  aws_dynamodb_item_info:
-    table: narcos
-    action: put
-    item: {"bank": {"S": "hsbc"},"quantity": {"N": "1000"},"person": {"S": "ochoa"}}
-
-# Updates the 'quantity' attibute value from a single item.
-- name: Updates arribute 'number'
-  aws_dynamodb_item_info:
-    table: narcos
-    action: update
-    primary_key: {"bank": {"S": "hsbc"}}
-    update_expression: 'SET quantity = :number'
-    expression_attribute_values: {":number": {"N": "2000"}}
-
-# Updates the 'status' (dynamodb protected keyword) attibute value from a single item.
-- name: Updates arribute 'status'
-  aws_dynamodb_item_info:
-    table: narcos
-    action: update
-    primary_key: {"bank": {"S": "hsbc"}}
-    update_expression: 'SET #s = :number'
-    expression_attribute_values: {":number": {"N": "2000"}}
-    expression_attribute_names: {"#s" : "status"}
-
-# Deletes the 'person' attibute value from a single item. The table has a composite
-# primary key. 'bank' is the primary key and 'quantity' is the sort key.
-- name: Deletes arribute 'person'
-  aws_dynamodb_item_info:
-    table: narcos
-    action: update
-    primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
-    update_expression: 'REMOVE person'
-
-# Connects with awscli profile 'development' and
-# deletes a single item from 'releases' DynamoDB table
-# where the column 'project' equals string 'potatoes' (also primary key)
-# and column 'version' equals numeric '123456'
-- name: Delete a single item
-  aws_dynamodb_item_info:
-    profile: development
-    table: releases
-    action: delete
-    primary_key: {"project": {"S": "potatoes"}}
-    condition_expression: version = :number
-    expression_attribute_values: {":number": {"N": "123456"}}
 '''
 
 RETURN = '''
 returned_items:
-    description: item when you peform a 'get' action
+    description: item returned
     returned: success
     type: list
     sample:
@@ -163,16 +111,16 @@ returned_items:
             }
         ]
 scanned_count:
-    description: the number of total items evaluated when you peform a 'get' action
+    description: the number of total items evaluated
     returned: success
     type: int
     sample: 9589
 consumed_capacity:
-    description: the capacity units when you peform a 'get' action
+    description: the capacity units when you set 'return_consumed_capacity' to a value
     returned: success
     type: dict
 count:
-    description: the number of items in the response when you perform a 'get' action
+    description: the number of items in the response
     returned: success
     type: int
     sample: 13
@@ -208,13 +156,8 @@ def get_with_backoff(connection, **kwargs):
 
 
 def get(connection, module, response, **params):
-
     response = get_with_backoff(connection, **params)
-
-    changed = False
-
     response['returned_items'] = response.pop('Items')
-
     return response, changed
 
 
@@ -228,16 +171,7 @@ def main():
         expression_attribute_names=dict(type='dict')
     )
 
-    required_if = [
-        ["action", "get", ['filter_expression', 'expression_attribute_values']],
-        ["action", "put", ['item']],
-        ["action", "update", ['primary_key', 'update_expression']],
-        ["action", "delete", ['condition_expression', 'expression_attribute_values']]
-    ]
-
-    module = AnsibleAWSModule(argument_spec=argument_spec,
-                              supports_check_mode=True,
-                              required_if=required_if)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     connection = module.client('dynamodb')
 
@@ -249,7 +183,7 @@ def main():
     if module.params.get('consistent_read') is not None:
         params['ConsistentRead'] = module.params.get('consistent_read')
     if module.params.get('return_consumed_capacity') is not None:
-        params['ReturnConsumedCapacity'] = module.params.get('return_consumed_capacity')
+        params['ReturnConsumedCapacity'] = module.params.get('return_consumed_capacity').upper()
     if module.params.get('projection_expression') is not None:
         params['ProjectionExpression'] = module.params.get('projection_expression')
     if module.params.get('expression_attribute_names') is not None:
@@ -259,7 +193,9 @@ def main():
     response = {}
 
     try:
-        response, changed = get(connection, module, response, **params)
+        if not module.check_mode:
+            response, changed = get(connection, module, response, **params)
+        return response, changed
 
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'ResourceNotFoundException':
