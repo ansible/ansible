@@ -1,0 +1,2 @@
+bugfixes:
+- ce_mtu- update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61442)
