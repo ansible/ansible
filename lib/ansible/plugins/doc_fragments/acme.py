@@ -92,7 +92,7 @@ options:
       - "For Buypass, the production directory URL for ACME v1 is
          U(https://api.buypass.com/acme/directory)."
       - "*Warning:* So far, the module has only been tested against Let's Encrypt
-         (staging and production) and against the
+         (staging and production), Buypass (staging and production), and
          L(Pebble testing server,https://github.com/letsencrypt/Pebble)."
     type: str
   validate_certs:
