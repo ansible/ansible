@@ -65,7 +65,7 @@ options:
     description:
       - Command to run that returns a unique string indicating the last time the system was booted.
       - Setting this to a command that has different output each time it is run will cause the task to fail.
-    type: string
+    type: str
     default: '(Get-WmiObject -ClassName Win32_OperatingSystem).LastBootUpTime'
     version_added: '2.10'
 notes:
