@@ -1,5 +1,17 @@
 version: '1.0'
 groupings:
+  acme_account:
+  - acme
+  acme_account_info:
+  - acme
+  acme_account_facts:
+  - acme
+  acme_certificate:
+  - acme
+  acme_certificate_revoke:
+  - acme
+  acme_inspect:
+  - acme
   aws_acm_facts:
   - aws
   aws_acm_info:

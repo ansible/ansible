@@ -98,6 +98,8 @@ it easier to author playbooks making heavy use of API-based modules such as clou
 +-------+---------------------------+-----------------+
 | os    | OpenStack                 | 2.8             |
 +-------+---------------------------+-----------------+
+| acme  | ACME                      | 2.10            |
++-------+---------------------------+-----------------+
 
 Use the groups with `module_defaults` by prefixing the group name with `group/` - e.g. `group/aws`
 
