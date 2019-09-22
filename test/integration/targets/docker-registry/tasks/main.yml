@@ -3,11 +3,13 @@
   set_fact:
     name_prefix: "{{ 'ansible-test-%0x' % ((2**32) | random) }}"
     registry_name: "{{ 'ansible-test-registry-%0x' % ((2**32) | random) }}"
+    nginx_name: "{{ 'ansible-test-registry-frontend-%0x' % ((2**32) | random) }}"
 - name: Create image and container list
   set_fact:
     inames: []
     cnames:
     - "{{ registry_name }}"
+    - "{{ nginx_name }}"
 
 - debug:
     msg: "Using name prefix {{ name_prefix }} and test registry name {{ registry_name }}"
@@ -18,12 +20,60 @@
       name: "{{ registry_name }}"
       image: registry:2.6.1
       ports: 5000
+    register: registry_container
 
   - name: Get registry URL
     set_fact:
-      registry_address: "localhost:{{ docker_container.NetworkSettings.Ports['5000/tcp'].0.HostPort }}"
+      registry_address: "localhost:{{ registry_container.container.NetworkSettings.Ports['5000/tcp'].0.HostPort }}"
 
-  - debug: msg="Registry available under {{ registry_address }}"
+  - name: Create private key for frontend certificate
+    openssl_privatekey:
+      path: "{{ output_dir }}/cert.key"
+      type: ECC
+      curve: secp256r1
+  - name: Create CSR for frontend certificate
+    openssl_csr:
+      path: "{{ output_dir }}/cert.csr"
+      privatekey_path: "{{ output_dir }}/cert.key"
+      subject_alt_name:
+        - "DNS:test-registry.ansible.com"
+  - name: Create frontend certificate
+    openssl_certificate:
+      path: "{{ output_dir }}/cert.pem"
+      csr_path: "{{ output_dir }}/cert.csr"
+      privatekey_path: "{{ output_dir }}/cert.key"
+      provider: selfsigned
+
+  - name: Start nginx frontend for registry
+    docker_container:
+      name: "{{ nginx_name }}"
+      image: nginx:alpine
+      ports: 5000
+      links:
+        - "{{ registry_name }}:real-registry"
+      volumes:
+        - "{{ role_path }}/files/nginx.conf:/etc/nginx/nginx.conf:ro"
+        - "{{ role_path }}/files/nginx.htpasswd:/etc/nginx/nginx.htpasswd:ro"
+        - "{{ output_dir }}/cert.pem:/etc/nginx/cert.pem:ro"
+        - "{{ output_dir }}/cert.key:/etc/nginx/cert.key:ro"
+    register: nginx_container
+
+  - name: Wait for registry frontend
+    uri:
+      url: "https://localhost:{{ nginx_container.container.NetworkSettings.Ports['5000/tcp'].0.HostPort }}/v2/"
+      url_username: testuser
+      url_password: hunter2
+      validate_certs: no
+    register: result
+    until: result is success
+    retries: 5
+    delay: 1
+
+  - name: Get registry URL
+    set_fact:
+      registry_frontend_address: "localhost:{{ nginx_container.container.NetworkSettings.Ports['5000/tcp'].0.HostPort }}"
+
+  - debug: msg="Registry available under {{ registry_address }}, NGINX frontend available under {{ registry_frontend_address }}"
 
   - include_tasks: run-test.yml
     with_fileglob:
@@ -40,6 +90,11 @@
     register: registry_logs
   - name: "Printing registry logs"
     debug: var=registry_logs.stdout_lines
+  - name: "Get nginx logs"
+    command: "docker logs {{ nginx_name }}"
+    register: nginx_logs
+  - name: "Printing nginx logs"
+    debug: var=nginx_logs.stdout_lines
   - name: "Make sure all containers are removed"
     docker_container:
       name: "{{ item }}"
