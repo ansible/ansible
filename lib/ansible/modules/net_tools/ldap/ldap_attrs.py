@@ -43,6 +43,7 @@ version_added: '2.10'
 author:
   - Jiri Tyr (@jtyr)
   - Alexander Korinek (@noles)
+  - Maciej Delmanowski (@drybjed)
 requirements:
   - python-ldap
 options:
@@ -52,12 +53,12 @@ options:
     choices: [present, absent, exact]
     default: present
     description:
-      - The state of the attribute values. If C(present), all given
+      - The state of the attribute values. If C(present), all given attribute
         values will be added if they're missing. If C(absent), all given
-        values will be removed if present. If C(exact), the set of values
-        will be forced to exactly those provided and no others. If
-        I(state=exact) and I(value) is empty, all values for this
-        attribute will be removed.
+        attribute values will be removed if present. If C(exact), the set of
+        attribute values will be forced to exactly those provided and no others.
+        If I(state=exact) and the attribute I(value) is empty, all values for
+        this attribute will be removed.
   attributes:
     required: true
     type: dict
@@ -74,7 +75,9 @@ options:
         I(olcAccess) attribute to easily manage LDAP Access Control Lists.
   params:
     description:
-    - Additional module parameters.
+      - Additional module parameters. This parameter can be used to define
+        various LDAP connection options in a dictionary variable and reuse them in
+        separate Ansible tasks.
     type: dict
 extends_documentation_fragment:
 - ldap.documentation
