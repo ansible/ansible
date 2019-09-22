@@ -10,6 +10,8 @@
     cnames:
     - "{{ registry_name }}"
     - "{{ nginx_name }}"
+    vnames:
+    - "{{ nginx_name }}"
 
 - debug:
     msg: "Using name prefix {{ name_prefix }} and test registry name {{ registry_name }}"
@@ -25,6 +27,29 @@
   - name: Get registry URL
     set_fact:
       registry_address: "localhost:{{ registry_container.container.NetworkSettings.Ports['5000/tcp'].0.HostPort }}"
+
+  - name: Start nginx frontend for registry
+    docker_volume:
+      name: "{{ nginx_name }}"
+      state: present
+
+  - name: Create container for nginx frontend for registry
+    docker_container:
+      state: stopped
+      name: "{{ nginx_name }}"
+      image: nginx:alpine
+      ports: 5000
+      links:
+        - "{{ registry_name }}:real-registry"
+      volumes:
+        - "{{ nginx_name }}:/etc/nginx/"
+    register: nginx_container
+
+  - name: Copy static files into volume
+    command: docker cp {{ role_path }}/files/{{ item }} {{ nginx_name }}:/etc/nginx/{{ item }}
+    loop:
+      - "nginx.conf"
+      - "nginx.htpasswd"
 
   - name: Create private key for frontend certificate
     openssl_privatekey:
@@ -44,23 +69,24 @@
       privatekey_path: "{{ output_dir }}/cert.key"
       provider: selfsigned
 
+  - name: Copy dynamic files into volume
+    command: docker cp {{ output_dir }}/{{ item }} {{ nginx_name }}:/etc/nginx/{{ item }}
+    loop:
+      - "cert.pem"
+      - "cert.key"
+
   - name: Start nginx frontend for registry
     docker_container:
       name: "{{ nginx_name }}"
-      image: nginx:alpine
-      ports: 5000
-      links:
-        - "{{ registry_name }}:real-registry"
-      volumes:
-        - "{{ role_path }}/files/nginx.conf:/etc/nginx/nginx.conf:ro"
-        - "{{ role_path }}/files/nginx.htpasswd:/etc/nginx/nginx.htpasswd:ro"
-        - "{{ output_dir }}/cert.pem:/etc/nginx/cert.pem:ro"
-        - "{{ output_dir }}/cert.key:/etc/nginx/cert.key:ro"
+      state: started
+      restart: yes  # in case it was already running
     register: nginx_container
+
+  - debug: var=nginx_container.container.NetworkSettings
 
   - name: Wait for registry frontend
     uri:
-      url: "https://localhost:{{ nginx_container.container.NetworkSettings.Ports['5000/tcp'].0.HostPort }}/v2/"
+      url: "https://{{ nginx_container.container.NetworkSettings.IPAddress }}:5000/v2/"
       url_username: testuser
       url_password: hunter2
       validate_certs: no
@@ -101,6 +127,11 @@
       state: absent
       force_kill: yes
     with_items: "{{ cnames }}"
+  - name: "Make sure all volumes are removed"
+    docker_volume:
+      name: "{{ item }}"
+      state: absent
+    with_items: "{{ vnames }}"
 
   when: docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.20', '>=')
 

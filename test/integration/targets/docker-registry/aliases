@@ -5,5 +5,3 @@ destructive
 docker_image
 docker_image_info
 docker_login
-skip/docker  # The tests need to mount files into docker containers.
-             # This doesn't work for docker-in-docker.
