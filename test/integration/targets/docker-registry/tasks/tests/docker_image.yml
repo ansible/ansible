@@ -22,6 +22,11 @@
     state: absent
     force_absent: yes
 
+- name: Make sure we have hello-world:latest
+  docker_image:
+    name: hello-world:latest
+    source: pull
+
 - name: Push image to test registry
   docker_image:
     name: "hello-world:latest"
