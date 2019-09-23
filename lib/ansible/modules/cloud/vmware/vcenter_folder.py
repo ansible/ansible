@@ -181,9 +181,9 @@ class VmwareFolderManager(PyVmomi):
                     p_folder_obj = None
                     for part in parent_folder_parts:
                         part_folder_obj = self.get_folder(datacenter_name=datacenter_name,
-                                                         folder_name=part,
-                                                         folder_type=folder_type,
-                                                         parent_folder=p_folder_obj)
+                                                          folder_name=part,
+                                                          folder_type=folder_type,
+                                                          parent_folder=p_folder_obj)
                         if not part_folder_obj:
                             self.module.fail_json(msg="Could not find folder %s" % part)
                         p_folder_obj = part_folder_obj
