@@ -500,19 +500,15 @@ Function Set-ServiceRecovery($name, $reset_interval, $actions) {
 
     $reset_fail_count_after = ReversedHexValue $reset_interval
 
-    if ($actions.Count -ge 1) {
+    if ($actions.Count -ge 3) {
       $on_first_failure = ReversedHexValue (RecoveryActionMapping($actions[0].action))
       $first_failure_timeout = ReversedHexValue $actions[0].delay
-    }
-
-    if ($actions.Count -ge 2) {
       $on_second_failure = ReversedHexValue (RecoveryActionMapping($actions[1].action))
       $second_failure_timeout = ReversedHexValue $actions[1].delay
-    }
-
-    if ($actions.Count -ge 3) {
       $on_subsequent_failure = ReversedHexValue (RecoveryActionMapping($actions[2].action))
       $subsequent_failure_timeout = ReversedHexValue $actions[2].delay
+    } else {
+      Fail-Json $result ("You need to specify the three states of recovery_actions.")
     }
 
     $processed_actions = ($reset_fail_count_after + $lp_reboot_msg + $lp_command + $ca_actions + $lpsaActions `
@@ -525,6 +521,7 @@ Function Set-ServiceRecovery($name, $reset_interval, $actions) {
     $actions_string=$actions[0].action + '/' + $actions[0].delay `
                 + '/' + $actions[1].action + '/' + $actions[1].delay `
                 + '/' + $actions[2].action + '/' + $actions[2].delay
+
     $reset=$reset_interval
 
     if ($recovery_actions -ne $processed_actions) {
