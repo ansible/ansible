@@ -49,6 +49,7 @@ options:
     - This is case sensitive parameter.
     - Please specify unique folder name as there is no way to detect duplicate names.
     - "If user wants to create a folder under '/DC0/vm/vm_folder', this value will be 'vm_folder'."
+    - "If user wants to create a folder under '/DC0/vm/folder1/folder2', this value will be 'folder1/folder2'."
     required: False
     type: str
   folder_type:
@@ -175,23 +176,36 @@ class VmwareFolderManager(PyVmomi):
             # Check if the folder already exists
             p_folder_obj = None
             if parent_folder:
-                p_folder_obj = self.get_folder(datacenter_name=datacenter_name,
-                                               folder_name=parent_folder,
-                                               folder_type=folder_type)
+                if "/" in parent_folder:
+                    parent_folder_parts = parent_folder.strip('/').split('/')
+                    p_folder_obj = None
+                    for part in parent_folder_parts:
+                        part_folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                                         folder_name=part,
+                                                         folder_type=folder_type,
+                                                         parent_folder=p_folder_obj)
+                        if not part_folder_obj:
+                            self.module.fail_json(msg="Could not find folder %s" % part)
+                        p_folder_obj = part_folder_obj
 
-                if not p_folder_obj:
-                    self.module.fail_json(msg="Parent folder %s does not exist" % parent_folder)
+                else:
+                    p_folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                                   folder_name=parent_folder,
+                                                   folder_type=folder_type)
 
-                # Check if folder exists under parent folder
-                child_folder_obj = self.get_folder(datacenter_name=datacenter_name,
-                                                   folder_name=folder_name,
-                                                   folder_type=folder_type,
-                                                   parent_folder=p_folder_obj)
-                if child_folder_obj:
-                    results['result']['path'] = self.get_folder_path(child_folder_obj)
-                    results['result']['msg'] = "Folder %s already exists under" \
-                        " parent folder %s" % (folder_name, parent_folder)
-                    self.module.exit_json(**results)
+                    if not p_folder_obj:
+                        self.module.fail_json(msg="Parent folder %s does not exist" % parent_folder)
+
+                    # Check if folder exists under parent folder
+                    child_folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                                       folder_name=folder_name,
+                                                       folder_type=folder_type,
+                                                       parent_folder=p_folder_obj)
+                    if child_folder_obj:
+                        results['result']['path'] = self.get_folder_path(child_folder_obj)
+                        results['result'] = "Folder %s already exists under" \
+                                            " parent folder %s" % (folder_name, parent_folder)
+                        self.module.exit_json(**results)
             else:
                 folder_obj = self.get_folder(datacenter_name=datacenter_name,
                                              folder_name=folder_name,
