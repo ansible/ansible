@@ -349,7 +349,7 @@ Module argspec
 Facts
     * ``module_utils/<ansible_network_os>/facts/<resource>/``.
     * Populate facts for the resource.
-    * Entry in ``module_utils/<ansible_network_os>/facts/facts.py`` for *``get_facts`` API to keep ``<ansible_network_os>_facts`` module and facts gathered for the resource module in sync for every subset.
+    * Entry in ``module_utils/<ansible_network_os>/facts/facts.py`` for ``get_facts`` API to keep ``<ansible_network_os>_facts`` module and facts gathered for the resource module in sync for every subset.
     *  Entry of Resource subset in FACTS_RESOURCE_SUBSETS list in ``module_utils/<ansible_network_os>/facts/facts.py`` to make facts collection work.
 
 Module package in module_utils
@@ -360,9 +360,8 @@ Module package in module_utils
     * Generate final configuration.
 
 Utils
-    ``module_utils/<ansible_network_os>/utils``.
-
-    - Utilities for the ``<ansible_network_os>`` platform.
+    * ``module_utils/<ansible_network_os>/utils``.
+    * Utilities for the ``<ansible_network_os>`` platform.
 
 Developer notes
 ===============
