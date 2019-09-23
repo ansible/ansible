@@ -16,6 +16,9 @@ DOCUMENTATION = r'''
         - By default, sets C(ansible_host) to the first public IP address found (preferring the primary NIC). If no
           public IPs are found, the first private IP (also preferring the primary NIC). The default may be overridden
           via C(hostvar_expressions); see examples.
+        - Select hosts for specific tag key by assigning a comma separated list of tag keys to and export is as
+          environment variables(AZURE_TAGS=key1,key2,key3). Or select hosts for specific tag key:value pairs by
+          assigning a comma separated list key:value pairs to(AZURE_TAGS=key1:value1,key2:value2)
     options:
         plugin:
             description: marks this as an instance of the 'azure_rm' plugin
@@ -166,6 +169,7 @@ exclude_host_filters:
 
 import hashlib
 import json
+import os
 import re
 import uuid
 
@@ -187,6 +191,10 @@ from msrest import ServiceClient, Serializer, Deserializer
 from msrestazure import AzureConfiguration
 from msrestazure.polling.arm_polling import ARMPolling
 from msrestazure.tools import parse_resource_id
+
+AZURE_CONFIG_SETTINGS = dict(
+    tags='AZURE_TAGS',
+)
 
 
 class AzureRMRestConfiguration(AzureConfiguration):
@@ -223,6 +231,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self._hosts = []
         self._filters = None
 
+        self.tags = None
+
         # FUTURE: use API profiles with defaults
         self._compute_api_version = '2017-03-30'
         self._network_api_version = '2015-06-15'
@@ -234,6 +244,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.azure_auth = None
 
         self._batch_fetch = False
+
+        self._get_settings()
 
     def verify_file(self, path):
         '''
@@ -376,6 +388,48 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         except Empty:
             pass
 
+    def _get_env_settings(self):
+        env_settings = dict()
+        for attribute, env_variable in AZURE_CONFIG_SETTINGS.items():
+            env_settings[attribute] = os.environ.get(env_variable, None)
+        return env_settings
+
+    def _get_settings(self):
+        # Load settings from environment values.
+        env_settings = self._get_env_settings()
+        for key in AZURE_CONFIG_SETTINGS:
+            if key == 'tags' and env_settings.get(key):
+                values = env_settings.get(key).split(',')
+                if len(values) > 0:
+                    setattr(self, key, values)
+            elif env_settings.get(key, None) is not None:
+                val = self._to_boolean(env_settings[key])
+                setattr(self, key, val)
+
+    def _tags_match(self, tag_obj, tag_args):
+        """
+        Return True if the tags object from a VM contains the requested tag values.
+        :param tag_obj:  Dictionary of string:string pairs
+        :param tag_args: List of strings in the form key=value
+        :return: boolean
+        """
+        if not tag_obj:
+            return False
+
+        matches = 0
+        for arg in tag_args:
+            arg_key = arg
+            arg_value = None
+            if re.search(r':', arg):
+                arg_key, arg_value = arg.split(':')
+            if arg_value and tag_obj.get(arg_key, None) == arg_value:
+                matches += 1
+            elif not arg_value and tag_obj.get(arg_key, None) is not None:
+                matches += 1
+        if matches == len(tag_args):
+            return True
+        return False
+
     def _on_vm_page_response(self, response, vmss=None):
         next_link = response.get('nextLink')
 
@@ -384,7 +438,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         if 'value' in response:
             for h in response['value']:
-                # FUTURE: add direct VM filtering by tag here (performance optimization)?
+                if self.tags:
+                    tags_matched = self._tags_match(h['tags'], self.tags)
+                    if not tags_matched:
+                        continue
                 self._hosts.append(AzureHost(h, self, vmss=vmss, legacy_name=self._legacy_hostnames))
 
     def _on_vmss_page_response(self, response):
