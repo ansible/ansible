@@ -101,6 +101,12 @@ options:
     type: bool
     default: 'no'
     aliases: ['enable_socket']
+  timeout:
+    description:
+      - The time (in seconds) to wait for the eAPI configuration to be
+        reflected in the running-config.
+    type: int
+    default: 30
   vrf:
     description:
       - The C(vrf) argument will configure eAPI to listen for connections
@@ -333,7 +339,7 @@ def verify_state(updates, module):
                      ('local_http', 'localHttpServer'),
                      ('socket', 'unixSocketServer')]
 
-    timeout = module.params['timeout'] or 30
+    timeout = module.params["timeout"]
     state = module.params['state']
 
     while invalid_state:
@@ -380,6 +386,7 @@ def main():
         local_http_port=dict(type='int'),
 
         socket=dict(aliases=['enable_socket'], type='bool'),
+        timeout=dict(type="int", default=30),
 
         vrf=dict(default='default'),
 
