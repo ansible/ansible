@@ -127,6 +127,7 @@ options:
             - In the case of certificates of type C(STANDARD_SSL) certificates, if the CN of the certificate is <domain>.<tld> only the www.<domain>.<tld> value
               is accepted. If the CN of the certificate is www.<domain>.<tld> only the <domain>.<tld> value is accepted.
         type: list
+        elements: str
     eku:
         description:
             - If specified, overrides the key usage in the I(csr).
@@ -166,6 +167,7 @@ options:
               parameter can be used to force failure if an unapproved organizational unit is provided.
             - A maximum of one OU may be specified for current products. Multiple OUs are reserved for future products.
         type: list
+        elements: str
     end_user_key_storage_agreement:
         description:
             - The end user of the Code Signing certificate must generate and store the private key for this request on cryptographically secure
@@ -192,6 +194,7 @@ options:
     additional_emails:
         description: A list of additional email addresses to receive the delivery notice and expiry notification for the certificate.
         type: list
+        elements: str
     custom_fields:
         description:
             - Mapping of custom fields to associate with the certificate request and certificate.

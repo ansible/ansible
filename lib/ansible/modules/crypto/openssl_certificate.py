@@ -277,6 +277,7 @@ options:
             - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
               For alternatives, see the example on replacing C(assertonly).
         type: list
+        elements: str
 
     issuer:
         description:
@@ -390,6 +391,7 @@ options:
             - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
               For alternatives, see the example on replacing C(assertonly).
         type: list
+        elements: str
         aliases: [ keyUsage ]
 
     key_usage_strict:
@@ -409,6 +411,7 @@ options:
             - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
               For alternatives, see the example on replacing C(assertonly).
         type: list
+        elements: str
         aliases: [ extendedKeyUsage ]
 
     extended_key_usage_strict:
@@ -428,6 +431,7 @@ options:
             - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
               For alternatives, see the example on replacing C(assertonly).
         type: list
+        elements: str
         aliases: [ subjectAltName ]
 
     subject_alt_name_strict:

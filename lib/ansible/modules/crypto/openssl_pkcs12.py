@@ -33,6 +33,7 @@ options:
         description:
             - List of other certificates to include. Pre 2.8 this parameter was called C(ca_certificates)
         type: list
+        elements: path
         aliases: [ ca_certificates ]
     certificate_path:
         description:
