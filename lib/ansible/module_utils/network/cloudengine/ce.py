@@ -357,12 +357,13 @@ def get_nc_next(module, xml_str):
         response = conn.get(xml_str, if_rpc_reply=True)
         result = response.find('./*')
         set_id = response.get('set-id')
-        fetch_node = new_ele_ns('get-next', 'http://www.huawei.com/netconf/capability/base/1.0', {'set-id': set_id})
-        while True:
+        while True and set_id is not None:
             try:
-                next = conn.dispatch(etree.tostring(fetch_node))
-                if next is not None:
-                    result.extend(next)
+                fetch_node = new_ele_ns('get-next', 'http://www.huawei.com/netconf/capability/base/1.0', {'set-id': set_id})
+                next_xml = conn.dispatch_rpc(etree.tostring(fetch_node))
+                if next_xml is not None:
+                    result.extend(next_xml.find('./*'))
+                set_id = next_xml.get('set-id')
             except ConnectionError:
                 break
     if result is not None:
