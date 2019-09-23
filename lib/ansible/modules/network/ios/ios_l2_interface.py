@@ -46,7 +46,7 @@ options:
     description:
       - Configure given Voice VLAN in access port.
         If C(mode=voice-access), used as the voice VLAN ID.
-    version_added: '2.8'
+    version_added: '2.9'
   trunk_vlans:
     description:
       - List of VLANs to be configured in trunk port.
