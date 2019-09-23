@@ -184,7 +184,7 @@ class LocalEapi:
         self._session_support = None
         self._device_configs = {}
 
-        provider = module.params.get('provider', {})
+        provider = module.params.get("provider") or {}
         host = provider.get('host')
         port = provider.get('port')
 

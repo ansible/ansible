@@ -99,7 +99,7 @@ def get_capabilities(module):
 
 
 def get_device(module):
-    provider = module.params.get("provider", {})
+    provider = module.params.get("provider") or {}
     host = provider.get('host')
 
     kwargs = {
