@@ -116,6 +116,7 @@ try:
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
+
 def list_iam_users(connection, module):
 
     name = module.params.get('name')
@@ -138,7 +139,7 @@ def list_iam_users(connection, module):
         try:
             iam_users = connection.get_group(**params)['Users']
         except (ClientError, ParamValidationError) as e:
-             module.fail_json_aws(e, msg="Couldn't get IAM user info for group %s" % group)
+            module.fail_json_aws(e, msg="Couldn't get IAM user info for group %s" % group)
         if name:
             iam_users = [user for user in iam_users if user['UserName'] == name]
 
