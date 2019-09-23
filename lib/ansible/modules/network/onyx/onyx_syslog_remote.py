@@ -33,7 +33,6 @@ options:
     port:
         description:
           - Set remote server destination port for log messages
-        constraints: <1-65535>
         type: int
     trap:
         description:
