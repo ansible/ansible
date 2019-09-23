@@ -226,7 +226,7 @@ class LocalEapi:
         data = self._module.jsonify(body)
 
         headers = {'Content-Type': 'application/json-rpc'}
-        timeout = self._module.params['timeout']
+        timeout = self._module.params['provider']['timeout']
         use_proxy = self._module.params['provider']['use_proxy']
 
         response, headers = fetch_url(
