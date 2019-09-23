@@ -7,10 +7,20 @@
       security_token: "{{ security_token | default(omit) }}"
       region: "{{ aws_region }}"
   block:
+
   - name: ensure ansible user exists
     iam_user:
       name: '{{ test_user }}'
       state: present
+
+  - name: get info on IAM user(s)
+    iam_user_info:
+    register: iam_user_info
+
+  - name: assert correct number of users on path are returned
+    assert:
+      that:
+        - iam_user_info.iam_users | length != 0
 
   - name: get info on IAM user(s) on path
     iam_user_info:

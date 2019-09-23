@@ -127,8 +127,9 @@ def list_iam_users(connection, module):
     params = dict(MaxItems=1000)
     iam_users = []
 
-    if name and not path:
-        params['UserName'] = name
+    if not group and not path:
+        if name:
+            params['UserName'] = name
         try:
             iam_users.append(connection.get_user(**params)['User'])
         except (ClientError, ParamValidationError) as e:
