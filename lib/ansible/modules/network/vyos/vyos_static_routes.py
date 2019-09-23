@@ -59,15 +59,15 @@ options:
           - for example, 192.168.0.1/32,  2001:db8:2201:1::0/64.
         type: str
         required: True
-      blackhole:
+      blackhole_config:
         description:
           - Configured to silently discard packets.
         type: dict
         suboptions:
-          enabled:
+          type:
             description:
-              - Configured to discard packets.
-            type: bool
+              - Configured to discard packets in blackhole mode.
+            type: str
           distance:
             description:
               - Distance for the route.
@@ -118,14 +118,14 @@ EXAMPLES = """
   vyos_static_routes:
     config:
      - address: 192.0.0.0/24
-       blackhole:
-         enabled: True
+       blackhole_config:
+         type: "blackhole"
        next_hop:
          - address: 192.11.11.11
          - address: 192.11.11.12
      - address:  2001:db8::0/32
-       blackhole:
-         distance: 2 
+       blackhole_config:
+         distance: 2
        next_hop:
          - address: 2001:db8::5
          - address: 2001:db8::1
@@ -151,8 +151,8 @@ EXAMPLES = """
 # "after": [
 #     {
 #            "address": "192.0.0.0/24",
-#            "blackhole": {
-#                "enabled": true
+#            "blackhole_config": {
+#                "type": "blackhole"
 #            },
 #            "next_hop": [
 #                {
@@ -165,7 +165,7 @@ EXAMPLES = """
 #        },
 #        {
 #            "address": "2001:db8::0/32",
-#            "blackhole": {
+#            "blackhole_config": {
 #                "distance": 2
 #            },
 #            "next_hop": [
@@ -208,7 +208,7 @@ EXAMPLES = """
   vyos_static_routes:
     config:
       - address: 192.0.0.0/24
-        blackhole:
+        blackhole_config:
           distance: 2
         next_hop:
           - address: 192.1.1.11
@@ -224,8 +224,8 @@ EXAMPLES = """
 #    "before": [
 #        {
 #            "address": "192.0.0.0/24",
-#            "blackhole": {
-#                "enabled": true
+#            "blackhole_config": {
+#                "type": "blackhole"
 #            },
 #            "next_hop": [
 #                {
@@ -238,7 +238,7 @@ EXAMPLES = """
 #        },
 #        {
 #            "address": "2001:db8::0/32",
-#            "blackhole": {
+#            "blackhole_config": {
 #                "distance": 2
 #            },
 #            "next_hop": [
@@ -263,7 +263,7 @@ EXAMPLES = """
 #    "after": [
 #        {
 #            "address": "192.0.0.0/24",
-#            "blackhole": {
+#            "blackhole_config": {
 #                "distance": 2
 #            },
 #            "next_hop": [
@@ -280,7 +280,7 @@ EXAMPLES = """
 #        },
 #        {
 #            "address": "2001:db8::0/32",
-#            "blackhole": {
+#            "blackhole_config": {
 #                "distance": 2
 #            },
 #            "next_hop": [
@@ -327,8 +327,6 @@ EXAMPLES = """
       - address: 198.0.0.0/24
         next_hop:
           - address: 198.98.98.98
-                     
-                    
     state: overridden
 #
 #
@@ -339,7 +337,7 @@ EXAMPLES = """
 # "before": [
 #        {
 #            "address": "192.0.0.0/24",
-#            "blackhole": {
+#            "blackhole_config": {
 #                "distance": 2
 #            },
 #            "next_hop": [
@@ -356,7 +354,7 @@ EXAMPLES = """
 #        },
 #        {
 #            "address": "2001:db8:1000::0/38",
-#            "blackhole": {
+#            "blackhole_config": {
 #                "distance": 2
 #            },
 #            "next_hop": [
@@ -379,13 +377,13 @@ EXAMPLES = """
 #
 #    "after": [
 #        {
-            "address": "198.0.0.0/24",
-            "next_hop": [
-                {
-                    "address": "198.98.98.98"
-                }
-            ]
-        }
+#            "address": "198.0.0.0/24",
+#            "next_hop": [
+#                {
+#                    "address": "198.98.98.98"
+#                }
+#            ]
+#        }
 #    ]
 #
 #
@@ -409,7 +407,7 @@ EXAMPLES = """
 # set protocols static route6 2001:db8::0/32 next-hop '2001:db8::1'
 # set protocols static route6 2001:db8::0/32 next-hop '2001:db8::5''
 #
-- name: Delete LLDP attributes of given interfaces (Note: This won't delete other LLDP configuration).
+- name: Delete attributes of given static routes.
   vyos_static_routes:
     config:
     state: deleted
@@ -422,8 +420,8 @@ EXAMPLES = """
 #    "before": [
 #        {
 #            "address": "192.0.0.0/24",
-#            "blackhole": {
-#                "enabled": true
+#            "blackhole_config": {
+#                "type": "blackhole"
 #            },
 #            "next_hop": [
 #                {
@@ -436,7 +434,7 @@ EXAMPLES = """
 #        },
 #        {
 #            "address": "2001:db8::0/32",
-#            "blackhole": {
+#            "blackhole_config": {
 #                "distance": 2
 #            },
 #            "next_hop": [
@@ -450,11 +448,11 @@ EXAMPLES = """
 #        }
 #    ]
 #    "commands": [
-#        "delete protocols static route 192.0.0.0/24", 
+#        "delete protocols static route 192.0.0.0/24",
 #        "delete protocols static route6 2001:db8::0/32"
 #    ]
 #
-# "after": [] 
+# "after": []
 # After state
 # ------------
 # vyos@vyos# run show configuration commands | grep static

@@ -39,7 +39,7 @@ class Static_routesArgs(object):  # pylint: disable=R0903
 
     argument_spec = {'config': {'elements': 'dict',
             'options': {'address': {'required': True, 'type': 'str'},
-                        'blackhole': {'options': {'enabled': {'type': 'bool'},
+                        'blackhole_config': {'options': {'type': {'type': 'str'},
                                                   'distance': {'type': 'int'}},
                                       'type': 'dict'},
                         'next_hop': {'elements': 'dict',

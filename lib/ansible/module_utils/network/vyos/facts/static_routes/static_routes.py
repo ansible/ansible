@@ -87,7 +87,7 @@ class Static_routesFacts(object):
         config = {}
         next_hop_conf = '\n'.join(filter(lambda x: ('next-hop' in x), conf))
         blackhole_conf = '\n'.join(filter(lambda x: ('blackhole' in x), conf))
-        config['blackhole'] = self.parse_blackhole(blackhole_conf)
+        config['blackhole_config'] = self.parse_blackhole(blackhole_conf)
         config['next_hop'] = self.parse_next_hop(next_hop_conf)
         return utils.remove_empties(config)
 
@@ -104,7 +104,7 @@ class Static_routesFacts(object):
                 blackhole['distance'] = int(value)
             elif bh:
                 blackhole = {}
-                blackhole['enabled'] = True
+                blackhole['type'] = 'blackhole'
         return blackhole
 
     def parse_next_hop(self, conf):

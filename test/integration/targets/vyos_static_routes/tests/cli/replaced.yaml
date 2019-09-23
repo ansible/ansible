@@ -11,7 +11,7 @@
     vyos_static_routes: &replaced
         config:
            - address: 192.0.0.0/24
-             blackhole:
+             blackhole_config:
                distance: 2
              next_hop:
                - address: 192.1.1.11

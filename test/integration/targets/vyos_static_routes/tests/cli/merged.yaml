@@ -9,13 +9,13 @@
     vyos_static_routes: &merged
       config:
        - address: 192.0.0.0/24
-         blackhole:
-           enabled: true
+         blackhole_config:
+           type: 'blackhole'
          next_hop:
            - address: 192.11.11.11
            - address: 192.11.11.12
        - address:  2001:db8::0/32
-         blackhole:
+         blackhole_config:
            distance: 2 
          next_hop:
            - address: 2001:db8::5

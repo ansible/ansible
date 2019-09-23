@@ -37,7 +37,7 @@ class Static_routes(ConfigBase):
         'static_routes',
     ]
 
-    params = ['address', 'blackhole', 'next_hop']
+    params = ['address', 'blackhole_config', 'next_hop']
 
     def __init__(self, module):
         super(Static_routes, self).__init__(module)
@@ -194,7 +194,7 @@ class Static_routes(ConfigBase):
             for attrib in params:
                 if attrib == 'next_hop':
                     commands.extend(self._update_next_hop(want, have))
-                elif attrib == 'blackhole':
+                elif attrib == 'blackhole_config':
                     commands.extend(self._update_blackhole(attrib, want, have))
         elif have:
             commands.append(
@@ -211,7 +211,7 @@ class Static_routes(ConfigBase):
                         commands.append(
                             self._compute_command(address=want['address'])
                         )
-                elif key == 'blackhole':
+                elif key == 'blackhole_config':
                     commands.extend(self._add_blackhole(key, want, have))
 
                 elif key == 'next_hop':
@@ -233,12 +233,12 @@ class Static_routes(ConfigBase):
                 if value:
                     if attrib == 'distance':
                         commands.append(
-                            self._compute_command(address=want['address'], key=key,
+                            self._compute_command(address=want['address'], key='blackhole',
                                                   attrib=attrib, remove=False, value=str(value))
                         )
-                    elif attrib == 'enabled' and value == True:
+                    elif attrib == 'type':
                         commands.append(
-                            self._compute_command(address=want['address'], key=key)
+                            self._compute_command(address=want['address'], key='blackhole')
                         )
         return commands
 
@@ -255,12 +255,12 @@ class Static_routes(ConfigBase):
                             self._compute_command(address=want['address'],
                                                   key='next-hop', value=hop[element])
                         )
-                    elif element=='enabled' and hop[element] == False:
+                    elif element == 'enabled' and not hop[element]:
                         commands.append(
                             self._compute_command(address=want['address'],
                                                   key='next-hop', attrib=hop['address'], value='disable')
                         )
-                    elif element=='distance':
+                    elif element == 'distance':
                         commands.append(
                             self._compute_command(address=want['address'], key='next-hop',
                                                   attrib=hop['address'] + element, value=str(hop[element]))
@@ -280,12 +280,12 @@ class Static_routes(ConfigBase):
                 if value:
                     if attrib == 'distance':
                         commands.append(
-                            self._compute_command(address=want['address'], key=key,
+                            self._compute_command(address=want['address'], key='blackhole',
                                                   attrib=attrib, remove=True, value=str(value))
                         )
-                    elif attrib == 'enabled' and value == True:
+                    elif attrib == 'type':
                         commands.append(
-                            self._compute_command(address=want['address'], key=key, remove=True)
+                            self._compute_command(address=want['address'], key='blackhole', remove=True)
                         )
         return commands
 
@@ -303,12 +303,12 @@ class Static_routes(ConfigBase):
                         commands.append(
                             self._compute_command(address=want['address'], key='next-hop', value=hop[element], remove=True)
                         )
-                    elif element=='enabled':
+                    elif element == 'enabled':
                         commands.append(
                             self._compute_command(address=want['address'],
                                                   key='next-hop', attrib=hop['address'], value='disable', remove=True)
                         )
-                    elif element=='distance':
+                    elif element =='distance':
                         commands.append(
                             self._compute_command(address=want['address'], key='next-hop',
                                                   attrib=hop['address'] + element, value=str(hop[element]), remove=True)
@@ -319,7 +319,7 @@ class Static_routes(ConfigBase):
         commands = []
 
         temp_have_next_hops = have.pop('next_hop', None)
-        temp_want_next_hops= want.pop('next_hop', None)
+        temp_want_next_hops = want.pop('next_hop', None)
 
         updates = dict_diff(have, want)
 
@@ -333,7 +333,7 @@ class Static_routes(ConfigBase):
         if updates:
             for key, value in iteritems(updates):
                 if value:
-                    if key == 'blackhole':
+                    if key == 'blackhole_config':
                         commands.extend(
                             self._add_blackhole(key, want, have)
                         )

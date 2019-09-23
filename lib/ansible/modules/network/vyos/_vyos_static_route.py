@@ -20,7 +20,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -50,7 +50,7 @@ options:
   mask:
     description:
       - Network prefix mask of the static route.
-    type: int
+    type: str
   next_hop:
     description:
       - Next hop IP of the static route.

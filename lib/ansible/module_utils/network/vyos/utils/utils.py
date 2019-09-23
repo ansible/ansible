@@ -164,13 +164,17 @@ def is_dict_element_present(dict, key):
             return True
     return False
 
+
 def get_ip_address_version(address):
     """
     This function returns the version of IP address
     :param address: IP address
     :return:
     """
-    address = unicode(address)
+    try:
+        address = unicode(address)
+    except:
+        address = unicode(address)
     version = ipaddress.ip_address(address.split("/")[0]).version
     return version
 
@@ -186,4 +190,3 @@ def get_route_type(address):
         return 'route6'
     elif version == 4:
         return 'route'
-
