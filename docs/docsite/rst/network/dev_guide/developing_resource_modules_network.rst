@@ -267,13 +267,11 @@ This example displays the role directory layout for the following:
         │           │       ├── __init__.py
         │           │       └── interfaces.py
         │           ├── config
-        │           │   ├── base.py
         │           │   ├── __init__.py
         │           │   └── interfaces
         │           │       ├── __init__.py
         │           │       └── interfaces.py
         │           ├── facts
-        │           │   ├── base.py
         │           │   ├── facts.py
         │           │   ├── __init__.py
         │           │   └── interfaces
@@ -335,32 +333,33 @@ Resource module structure and workflow
 
 The resource module structure includes the following components:
 
-  Module
-    ``library/<ansible_network_os>_<resource>.py``.
-    Imports the ``module_utils`` resource package and calls ``execute_module`` API
+Module
+    * ``library/<ansible_network_os>_<resource>.py``.
+    * Imports the ``module_utils`` resource package and calls ``execute_module`` API
 
     .. code-block:: python
 
       def main():
           result = <resource_package>(module).execute_module()
 
-  Module argspec
-    ``module_utils/<ansible_network_os>/argspec/<resource>/``.
-    Argspec for the resource.
+Module argspec
+    * ``module_utils/<ansible_network_os>/argspec/<resource>/``.
+    * Argspec for the resource.
 
-  Facts
-    ``module_utils/<ansible_network_os>/facts/<resource>/``.
-    - Populate facts for the resource.
-    - Entry in ``module_utils/<ansible_network_os>/facts/facts.py`` for ``get_facts`` API to keep ``<ansible_network_os>_facts`` module and facts gathered for the resource module in sync for every subset.
+Facts
+    * ``module_utils/<ansible_network_os>/facts/<resource>/``.
+    * Populate facts for the resource.
+    * Entry in ``module_utils/<ansible_network_os>/facts/facts.py`` for *``get_facts`` API to keep ``<ansible_network_os>_facts`` module and facts gathered for the resource module in sync for every subset.
+    *  Entry of Resource subset in FACTS_RESOURCE_SUBSETS list in ``module_utils/<ansible_network_os>/facts/facts.py`` to make facts collection work.
 
-  Module package in module_utils
-    ``module_utils/<ansible_network_os>/<config>/<resource>/``.
-    - Implement ``execute_module`` API that loads the configuration to device and generates the result with ``changed``, ``commands``, ``before`` and ``after`` keys.
-    - Call ``get_facts`` API that returns the ``<resource>`` configuration facts or return the difference if the device has onbox diff support.
-    - Compare facts gathered and given key-values if diff is not supported.
-    - Generate final configuration.
+Module package in module_utils
+    * ``module_utils/<ansible_network_os>/<config>/<resource>/``.
+    * Implement ``execute_module`` API that loads the configuration to device and generates the result with ``changed``, ``commands``, ``before`` and ``after`` keys.
+    * Call ``get_facts`` API that returns the ``<resource>`` configuration facts or return the difference if the device has onbox diff support.
+    * Compare facts gathered and given key-values if diff is not supported.
+    * Generate final configuration.
 
-  Utils
+Utils
     ``module_utils/<ansible_network_os>/utils``.
 
     - Utilities for the ``<ansible_network_os>`` platform.
