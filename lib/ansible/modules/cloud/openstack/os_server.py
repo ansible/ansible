@@ -729,7 +729,6 @@ def main():
             ['image', 'boot_volume'],
             ['boot_from_volume', 'boot_volume'],
             ['nics', 'network'],
-            ['nics', 'security_groups'],
         ],
         required_if=[
             ('boot_from_volume', True, ['volume_size', 'image']),
