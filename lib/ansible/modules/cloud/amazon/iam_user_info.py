@@ -131,15 +131,14 @@ def list_iam_users(connection, module):
         try:
             iam_users.append(connection.get_user(**params)['User'])
         except (ClientError, ParamValidationError) as e:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="Couldn't get IAM user info for user %s" % name)
 
     if group:
         params['GroupName'] = group
         try:
             iam_users = connection.get_group(**params)['Users']
         except (ClientError, ParamValidationError) as e:
-            module.fail_json(msg="Failed while listing IAM groups %s " % e.message,
-                             **camel_dict_to_snake_dict(e.response))
+             module.fail_json_aws(e, msg="Couldn't get IAM user info for group %s" % group)
         if name:
             iam_users = [user for user in iam_users if user['UserName'] == name]
 
@@ -148,8 +147,7 @@ def list_iam_users(connection, module):
         try:
             iam_users = connection.list_users(**params)['Users']
         except (ClientError, ParamValidationError) as e:
-            module.fail_json(msg="Failed while listing IAM users %s " % e.message,
-                             **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="Couldn't get IAM user info for path %s" % path)
         if name:
             iam_users = [user for user in iam_users if user['UserName'] == name]
 
