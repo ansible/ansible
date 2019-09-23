@@ -923,7 +923,7 @@ class Sflow(object):
 
             # check sample_collector
             if 0 < len(self.sample_collector) < 3:
-                self.sample_collector = [str(i) i for i in self.sample_collector]
+                self.sample_collector = [str(i) for i in self.sample_collector]
                 for id in self.sample_collector:
                     if id not in ("1", "2"):
                         self.module.fail_json(
@@ -949,7 +949,7 @@ class Sflow(object):
 
             # check counter_collector
             if 0 < len(self.counter_collector) < 3:
-                self.counter_collector = [str(i) i for i in self.counter_collector]
+                self.counter_collector = [str(i) for i in self.counter_collector]
                 for id in self.counter_collector:
                     if id not in ("1", "2"):
                         self.module.fail_json(
