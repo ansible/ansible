@@ -1419,7 +1419,7 @@ class RedfishUtils(object):
             return response
         return {'ret': True, 'changed': True}
 
-    def set_bios_attributes(self, attr):
+    def set_bios_attributes(self, attributes):
         result = {}
         key = "Bios"
 
@@ -1442,19 +1442,27 @@ class RedfishUtils(object):
         result['ret'] = True
         data = response['data']
 
-        # First, check if BIOS attribute exists
-        if attr['bios_attr_name'] not in data[u'Attributes']:
-            return {'ret': False, 'msg': "BIOS attribute not found"}
+        # Make a copy of the attributes dict
+        attrs_to_patch = dict(attributes)
 
-        # Find out if value is already set to what we want. If yes, return
-        if data[u'Attributes'][attr['bios_attr_name']] == attr['bios_attr_value']:
-            return {'ret': True, 'changed': False, 'msg': "BIOS attribute already set"}
+        # Check the attributes
+        for attr in attributes:
+            if attr not in data[u'Attributes']:
+                return {'ret': False, 'msg': "BIOS attribute %s not found" % attr}
+            # If already set to requested value, remove it from PATCH payload
+            if data[u'Attributes'][attr] == attributes[attr]:
+                del attrs_to_patch[attr]
 
+        # Return success w/ changed=False if no attrs need to be changed
+        if not attrs_to_patch:
+            return {'ret': True, 'changed': False,
+                    'msg': "BIOS attributes already set"}
+
+        # Get the SettingsObject URI
         set_bios_attr_uri = data["@Redfish.Settings"]["SettingsObject"]["@odata.id"]
 
-        # Example: bios_attr = {\"name\":\"value\"}
-        bios_attr = "{\"" + attr['bios_attr_name'] + "\":\"" + attr['bios_attr_value'] + "\"}"
-        payload = {"Attributes": json.loads(bios_attr)}
+        # Construct payload and issue PATCH command
+        payload = {"Attributes": attrs_to_patch}
         response = self.patch_request(self.root_uri + set_bios_attr_uri, payload)
         if response['ret'] is False:
             return response
