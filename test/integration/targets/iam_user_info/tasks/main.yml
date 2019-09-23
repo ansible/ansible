@@ -22,21 +22,30 @@
       that:
         - iam_user_info.iam_users | length != 0
 
+  - name: get info on IAM user(s) with name
+    iam_user_info:
+      name: '{{ test_user }}'
+    register: iam_user_info
+  - assert:
+      that:
+        - iam_user_info.iam_users | length == 1
+        - 'iam_user_info.iam_users[0].arn.startswith("arn:aws:iam")'
+        - 'iam_user_info.iam_users[0].arn.endswith("user/" + test_user )'
+        - iam_user_info.iam_users[0].createDate is not none
+        - iam_user_info.iam_users[0].path == '{{ test_path }}'
+        - iam_user_info.iam_users[0].user_id is not none
+        - iam_user_info.iam_users[0].user_name == '{{ test_user }}'
+
   - name: get info on IAM user(s) on path
     iam_user_info:
       path: '{{ test_path }}'
       name: '{{ test_user }}'
     register: iam_user_info
-
-  - name: assert correct number of users on path are returned
-    assert:
+  - assert:
       that:
         - iam_user_info.iam_users | length == 1
-
-  - name: assert correct keys for path are returned
-    assert:
-      that:
-        - iam_user_info.iam_users[0].arn is not none
+        - 'iam_user_info.iam_users[0].arn.startswith("arn:aws:iam")'
+        - 'iam_user_info.iam_users[0].arn.endswith("user/" + test_user )'
         - iam_user_info.iam_users[0].createDate is not none
         - iam_user_info.iam_users[0].path == '{{ test_path }}'
         - iam_user_info.iam_users[0].user_id is not none
@@ -55,16 +64,11 @@
       group: '{{ test_group }}'
       name: '{{ test_user }}'
     register: iam_user_info
-
-  - name: assert correct number of users in group are returned
-    assert:
+  - assert:
       that:
         - iam_user_info.iam_users | length == 1
-
-  - name: assert correct keys for group are returned
-    assert:
-      that:
-        - iam_user_info.iam_users[0].arn is not none
+        - 'iam_user_info.iam_users[0].arn.startswith("arn:aws:iam")'
+        - 'iam_user_info.iam_users[0].arn.endswith("user/" + test_user )'
         - iam_user_info.iam_users[0].createDate is not none
         - iam_user_info.iam_users[0].path == '{{ test_path }}'
         - iam_user_info.iam_users[0].user_id is not none
