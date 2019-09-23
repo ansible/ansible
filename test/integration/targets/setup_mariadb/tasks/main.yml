@@ -1,0 +1,5 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_tasks: setup_mariadb.yml
+  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version >= '7'
