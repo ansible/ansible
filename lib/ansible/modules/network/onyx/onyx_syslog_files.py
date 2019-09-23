@@ -27,7 +27,8 @@ options:
       type: str
     rotation:
       description:
-        - rotation related attributes 
+        - rotation related attributes
+      type: dict
       suboptions:
         frequancy:
           description:
