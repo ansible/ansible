@@ -162,9 +162,9 @@ options:
 '''
 
 EXAMPLES = r'''
-- name: Create a test.my.com A record to point to 127.0.0.1
+- name: Create a test.example.net A record to point to 127.0.0.1
   cloudflare_dns:
-    zone: my.com
+    zone: example.net
     record: test
     type: A
     value: 127.0.0.1
@@ -174,15 +174,15 @@ EXAMPLES = r'''
 
 - name: Create a record using api token
   cloudflare_dns:
-    zone: my.com
+    zone: example.net
     record: test
     type: A
     value: 127.0.0.1
     api_token: dummyapitoken
 
-- name: Create a my.com CNAME record to example.com
+- name: Create a example.net CNAME record to example.com
   cloudflare_dns:
-    zone: my.com
+    zone: example.net
     type: CNAME
     value: example.com
     account_email: test@example.com
@@ -191,7 +191,7 @@ EXAMPLES = r'''
 
 - name: Change its TTL
   cloudflare_dns:
-    zone: my.com
+    zone: example.net
     type: CNAME
     value: example.com
     ttl: 600
@@ -201,16 +201,16 @@ EXAMPLES = r'''
 
 - name: Delete the record
   cloudflare_dns:
-    zone: my.com
+    zone: example.net
     type: CNAME
     value: example.com
     account_email: test@example.com
     account_api_key: dummyapitoken
     state: absent
 
-- name: create a my.com CNAME record to example.com and proxy through Cloudflare's network
+- name: create a example.net CNAME record to example.com and proxy through Cloudflare's network
   cloudflare_dns:
-    zone: my.com
+    zone: example.net
     type: CNAME
     value: example.com
     proxied: yes
@@ -218,10 +218,10 @@ EXAMPLES = r'''
     account_api_key: dummyapitoken
     state: present
 
-# This deletes all other TXT records named "test.my.com"
-- name: Create TXT record "test.my.com" with value "unique value"
+# This deletes all other TXT records named "test.example.net"
+- name: Create TXT record "test.example.net" with value "unique value"
   cloudflare_dns:
-    domain: my.com
+    domain: example.net
     record: test
     type: TXT
     value: unique value
@@ -230,16 +230,16 @@ EXAMPLES = r'''
     account_api_key: dummyapitoken
     state: present
 
-- name: Create an SRV record _foo._tcp.my.com
+- name: Create an SRV record _foo._tcp.example.net
   cloudflare_dns:
-    domain: my.com
+    domain: example.net
     service: foo
     proto: tcp
     port: 3500
     priority: 10
     weight: 20
     type: SRV
-    value: fooserver.my.com
+    value: fooserver.example.net
 
 - name: Create a SSHFP record login.example.com
   cloudflare_dns:
