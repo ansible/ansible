@@ -852,3 +852,29 @@
     that:
       - result is changed
       - result.queries == ['ALTER TABLE "public"."test_schema_table" RENAME TO "new_test_schema_table"']
+
+#
+# Clean up
+#
+- name: postgresql_table - drop test schema
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_schema:
+    database: postgres
+    login_user: "{{ pg_user }}"
+    name: acme
+    state: absent
+    cascade_drop: yes
+
+- name: postgresql_table - drop test role
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: "{{ item }}"
+    state: absent
+  loop:
+  - test_user
+  - alice
+  ignore_errors: yes
