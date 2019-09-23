@@ -76,11 +76,13 @@ options:
         - PEM formatted certificate chain file to be used for SSL client
           authentication. This file can also include the key as well, and if
           the key is included, I(client_key) is not required
+      type: path
     client_key:
       description:
         - PEM formatted file that contains your private key to be used for SSL
           client authentication. If I(client_cert) contains both the certificate
           and key, this option is not required.
+      type: path
     searchguard_tenant:
       type: str
       description:
@@ -326,8 +328,8 @@ def main():
         kibana_url=dict(type='str', required=True),
         timeout=dict(type='int', default=30),
         overwrite=dict(type='bool', default=False),
-        url_username=dict(type='str', aliases=['user']),
-        url_password=dict(type='str', aliases=['password'], no_log=True),
+        user=dict(type='str', aliases=['url_username']),
+        password=dict(type='str', aliases=['url_password'], no_log=True),
 
         searchguard_tenant=dict(type='str'),
     ))
@@ -345,8 +347,8 @@ def main():
     timeout = module.params['timeout']
     overwrite = module.params['overwrite']
     searchguard_tenant = module.params['searchguard_tenant']
-    user = module.params['url_username']
-    password = module.params['url_password']
+    user = module.params['user']
+    password = module.params['password']
 
     present, existing_object = is_object_present(
         module=module,
@@ -446,6 +448,5 @@ def main():
                              msg="Object has been deleted: {0}".format(object_id))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
