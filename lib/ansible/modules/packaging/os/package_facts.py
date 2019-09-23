@@ -87,6 +87,35 @@ ansible_facts:
           description: Where information on the package came from.
           returned: always
           type: str
+      sample: |-
+        {
+          "packages": {
+            "kernel": [
+              {
+                "name": "kernel",
+                "source": "rpm",
+                "version": "3.10.0",
+                ...
+              },
+              {
+                "name": "kernel",
+                "source": "rpm",
+                "version": "3.10.0",
+                ...
+              },
+              ...
+            ],
+            "kernel-tools": [
+              {
+                "name": "kernel-tools",
+                "source": "rpm",
+                "version": "3.10.0",
+                ...
+              }
+            ],
+            ...
+          }
+        }
       sample_rpm:
         {
           "packages": {
