@@ -213,6 +213,7 @@ try:
 except ImportError:
     pass  # protected by AnsibleAWSModule
 
+
 def create_metric_alarm(connection, module):
 
     name = module.params.get('name')
