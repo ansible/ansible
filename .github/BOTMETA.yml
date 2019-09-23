@@ -356,7 +356,8 @@ files:
     ignored: chrishoffman
     maintainers: shane-walker xcambar
   $modules/packaging/language/pip.py: Lujeni webknjaz
-  $modules/packaging/language/pear.py: $team_ansible
+  $modules/packaging/language/pear.py:
+    ignored: jle64
   $modules/packaging/os/apk.py:
     ignored: kbrebanov
     maintainers: tdtrask
