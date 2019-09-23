@@ -10,9 +10,6 @@
   - ansible_os_family == 'Debian'
   - postgres_version_resp.stdout is version('9.4', '>=')
 
-- include_tasks: postgresql_set.yml
-  when: postgres_version_resp.stdout is version('9.4', '>=')
-
 - include_tasks: '{{ loop_item }}'
   loop:
   # Test postgresql_user module
@@ -30,9 +27,6 @@
   # Test postgresql_schema module
   - postgresql_schema.yml
 
-  # Test postgresql_table module
-  - postgresql_table.yml
-
   # Test postgres_pg_hba module
   - postgresql_pg_hba.yml
   loop_control:
@@ -41,10 +35,6 @@
 # Test default_privs with target_role
 - import_tasks: test_target_role.yml
   when: postgres_version_resp.stdout is version('9.1', '>=')
-
-# Test postgresql_sequence module
-- import_tasks: postgresql_sequence.yml
-  when: postgres_version_resp.stdout is version('9.0', '>=')
 
 # Test postgresql_lang module.
 # To implement tests, it needs to install some additional packages

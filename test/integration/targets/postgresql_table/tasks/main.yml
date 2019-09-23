@@ -1,0 +1,2 @@
+# Initial CI tests of postgresql_table module
+- import_tasks: postgresql_table_initial.yml

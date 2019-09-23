@@ -1,0 +1,3 @@
+# Initial CI tests of postgresql_sequence module
+- import_tasks: postgresql_sequence_initial.yml
+  when: postgres_version_resp.stdout is version('9.0', '>=')
