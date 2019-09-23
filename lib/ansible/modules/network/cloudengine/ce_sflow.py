@@ -922,7 +922,7 @@ class Sflow(object):
                     msg="Error: interface %s is not support sFlow." % self.sflow_interface)
 
             # check sample_collector
-            if self.sample_collector:
+            if 0 < len(self.sample_collector) <3:
                 self.sample_collector = [str(i) i for i in self.sample_collector]
                 for id in self.sample_collector:
                     if id not in ("1", "2"):
@@ -948,8 +948,8 @@ class Sflow(object):
                         msg="Error: sample_length is not ranges from 18 to 512.")
 
             # check counter_collector
-            if self.counter_collector:
-                self.counter_collector = [str(i) i for i in self.sample_collector]
+            if 0 < len(self.counter_collector) < 3:
+                self.counter_collector = [str(i) i for i in self.counter_collector]
                 for id in self.counter_collector:
                     if id not in ("1", "2"):
                         self.module.fail_json(
