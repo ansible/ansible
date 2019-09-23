@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 module: onyx_syslog_remote
-version_added: "2.9"
+version_added: "2.10"
 author: "Anas Shami (@anass)"
 short_description: Configure remote syslog module
 description:
@@ -35,12 +35,10 @@ options:
           - Set remote server destination port for log messages
         constraints: <1-65535>
         type: int
-        default: 514
     trap:
         description:
           - Minimum severity level for messages to this syslog server
         choices: ['alert', 'crit', 'debug', 'emerg', 'err', 'info', 'none', 'notice', 'warning', 'override']
-        default: 'notice'
         type: str
     override_class:
         description:
@@ -58,7 +56,6 @@ options:
         description:
           - Specify a filter type
         choices: ['include', 'exclude']
-        default: include
         type: str
     filter_str:
         description:
