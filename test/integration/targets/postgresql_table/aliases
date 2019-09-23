@@ -1,0 +1,4 @@
+destructive
+shippable/posix/group4
+postgresql_table
+skip/osx

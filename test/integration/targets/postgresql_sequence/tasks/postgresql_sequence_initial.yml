@@ -2,15 +2,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Preparation for tests.
-- name: postgresql_sequence - create DB
-  become_user: "{{ pg_user }}"
-  become: yes
-  postgresql_db:
-    state: present
-    name: "{{ db_name }}"
-    owner: "{{ db_user1 }}"
-    login_user: "{{ pg_user }}"
-
 - name: postgresql_sequence - create a user to be owner of a database
   become_user: "{{ pg_user }}"
   become: yes
@@ -20,7 +11,16 @@
     encrypted: yes
     password: password
     role_attr_flags: LOGIN
-    db: "{{ db_name }}"
+    db: "{{ db_default }}"
+    login_user: "{{ pg_user }}"
+
+- name: postgresql_sequence - create DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    state: present
+    name: "{{ db_name }}"
+    owner: "{{ db_user1 }}"
     login_user: "{{ pg_user }}"
 
 - name: Create a user to be owner of a sequence
@@ -694,3 +694,15 @@
     state: absent
     name: "{{ db_name }}"
     login_user: "{{ pg_user }}"
+
+- name: remove test roles
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    state: absent
+    login_db: "{{ db_default }}"
+    login_user: "{{ pg_user }}"
+    name: "{{ item }}"
+  loop:
+  - "{{ db_user1 }}"
+  - "{{ db_user2 }}"

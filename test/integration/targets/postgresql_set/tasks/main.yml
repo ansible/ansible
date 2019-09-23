@@ -1,0 +1,3 @@
+# Initial CI tests of postgresql_initial module
+- include_tasks: postgresql_set_initial.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')

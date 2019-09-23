@@ -5,8 +5,5 @@ postgresql_lang
 postgresql_pg_hba
 postgresql_privs
 postgresql_schema
-postgresql_sequence
-postgresql_set
-postgresql_table
 postgresql_user
 skip/osx
