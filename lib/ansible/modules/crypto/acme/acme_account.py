@@ -69,6 +69,7 @@ options:
       - "Must be specified when state is C(present). Will be ignored
          if state is C(absent) or C(changed_key)."
     type: list
+    elements: str
     default: []
   terms_agreed:
     description:

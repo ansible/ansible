@@ -122,6 +122,7 @@ options:
               set to I(false).
             - More at U(https://tools.ietf.org/html/rfc5280#section-4.2.1.6).
         type: list
+        elements: str
         aliases: [ subjectAltName ]
     subject_alt_name_critical:
         description:
@@ -141,6 +142,7 @@ options:
             - This defines the purpose (e.g. encipherment, signature, certificate signing)
               of the key contained in the certificate.
         type: list
+        elements: str
         aliases: [ keyUsage ]
     key_usage_critical:
         description:
@@ -152,6 +154,7 @@ options:
             - Additional restrictions (e.g. client authentication, server authentication)
               on the allowed purposes for which the public key may be used.
         type: list
+        elements: str
         aliases: [ extKeyUsage, extendedKeyUsage ]
     extended_key_usage_critical:
         description:
@@ -162,6 +165,7 @@ options:
         description:
             - Indicates basic constraints, such as if the certificate is a CA.
         type: list
+        elements: str
         version_added: '2.5'
         aliases: [ basicConstraints ]
     basic_constraints_critical:
@@ -254,6 +258,7 @@ options:
             - The C(AuthorityKeyIdentifier) will only be added if at least one of I(authority_key_identifier),
               I(authority_cert_issuer) and I(authority_cert_serial_number) is specified.
         type: list
+        elements: str
         version_added: "2.9"
     authority_cert_serial_number:
         description:
