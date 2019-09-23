@@ -16,50 +16,53 @@ version_added: "2.9"
 author: "Anas Shami (@anass)"
 short_description: Configure remote syslog module
 description:
-    - This module provides declarative management of syslog
+  - This module provides declarative management of syslog
     on Mellanox ONYX network devices.
 notes:
-
 options:
     enabled:
         description:
-            - Disable/Enable logging feature
+          - Disable/Enable logging feature
         default: true
         type: bool
     host:
         description:
-            - <IP4/IP6 Hostname> Send event logs to this server using the syslog protocol
+          - <IP4/IP6 Hostname> Send event logs to this server using the syslog protocol
         required: true
         type: str
     port:
         description:
-            - Set remote server destination port for log messages
+          - Set remote server destination port for log messages
         constraints: <1-65535>
         type: int
         default: 514
     trap:
         description:
-            - Minimum severity level for messages to this syslog server
+          - Minimum severity level for messages to this syslog server
         choices: ['alert', 'crit', 'debug', 'emerg', 'err', 'info', 'none', 'notice', 'warning', 'override']
         default: 'notice'
+        type: str
     override_class:
         description:
-            - Specify a class whose log level to override
+          - Specify a class whose log level to override
         choices: ['mgmt-front', 'mgmt-back', 'mgmt-core', 'events', 'debug-module', 'sx-sdk', 'mlx-daemons', 'protocol-stack']
         required: True
+        type: str
     override_priority:
         description:
-            -Specify a priority whose log level to override
+          -Specify a priority whose log level to override
         choices: ['alert', 'crit', 'debug', 'emerg', 'err', 'info', 'none', 'notice', 'warning']
         required: True
+        type: str
     filter:
         description:
-            - Specify a filter type
+          - Specify a filter type
         choices: ['include', 'exclude']
         default: include
+        type: str
     filter_str:
         description:
-            - Specify a regex filter string
+          - Specify a regex filter string
         type: str
 """
 
