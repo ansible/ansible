@@ -78,12 +78,11 @@ class TestOnyxSysLogRemoteModule(TestOnyxModule):
         commands = ['no logging 10.10.10.12 port']
         self.execute_module(changed=True, commands=commands)
 
-
     ''' nochange '''
     def test_syslog_no_port_no_change(self):
         set_module_args(dict(host="10.10.10.10", port="80", enabled=False))
         self.execute_module(changed=False)
-    
+
     def test_syslog_filter_no_change(self):
         set_module_args(dict(host="10.10.10.10", filter="exclude", filter_str=".*ERR.*"))
         self.execute_module(changed=False)
