@@ -51,14 +51,14 @@ options:
   bios_attribute_name:
     required: false
     description:
-      - name of BIOS attr to update (deprecated: use bios_attributes instead)
+      - name of BIOS attr to update (deprecated - use bios_attributes instead)
     default: 'null'
     type: str
     version_added: "2.8"
   bios_attribute_value:
     required: false
     description:
-      - value of BIOS attr to update (deprecated: use bios_attributes instead)
+      - value of BIOS attr to update (deprecated - use bios_attributes instead)
     default: 'null'
     type: str
     version_added: "2.8"
