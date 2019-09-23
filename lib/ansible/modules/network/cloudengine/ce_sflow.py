@@ -922,7 +922,7 @@ class Sflow(object):
                     msg="Error: interface %s is not support sFlow." % self.sflow_interface)
 
             # check sample_collector
-            if 0 < len(self.sample_collector) <3:
+            if 0 < len(self.sample_collector) < 3:
                 self.sample_collector = [str(i) i for i in self.sample_collector]
                 for id in self.sample_collector:
                     if id not in ("1", "2"):
