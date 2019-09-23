@@ -280,8 +280,6 @@ lib/ansible/module_utils/netapp_module.py future-import-boilerplate
 lib/ansible/module_utils/netapp_module.py metaclass-boilerplate
 lib/ansible/module_utils/network/a10/a10.py future-import-boilerplate
 lib/ansible/module_utils/network/a10/a10.py metaclass-boilerplate
-lib/ansible/module_utils/network/aci/aci.py future-import-boilerplate
-lib/ansible/module_utils/network/aci/aci.py metaclass-boilerplate
 lib/ansible/module_utils/network/aci/mso.py future-import-boilerplate
 lib/ansible/module_utils/network/aci/mso.py metaclass-boilerplate
 lib/ansible/module_utils/network/aireos/aireos.py future-import-boilerplate
