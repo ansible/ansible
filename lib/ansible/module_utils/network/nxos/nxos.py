@@ -251,7 +251,7 @@ class LocalNxapi:
         self._device_configs = {}
         self._module_context = {}
 
-        provider = self._module.params.get("provider")
+        provider = self._module.params.get("provider") or {}
         self._module.params['url_username'] = provider.get('username')
         self._module.params['url_password'] = provider.get('password')
 

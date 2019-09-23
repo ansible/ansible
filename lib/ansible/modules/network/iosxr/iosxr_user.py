@@ -251,7 +251,7 @@ class PublicKeyManager(object):
     def copy_key_to_node(self, base64keyfile):
         """ Copy key to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
         """
-        provider = self._module.params.get("provider", {})
+        provider = self._module.params.get("provider") or {}
         node = provider.get('host')
         if node is None:
             return False
@@ -285,7 +285,7 @@ class PublicKeyManager(object):
     def addremovekey(self, command):
         """ Add or remove key based on command
         """
-        provider = self._module.params.get("provider", {})
+        provider = self._module.params.get("provider") or {}
         node = provider.get('host')
         if node is None:
             return False
