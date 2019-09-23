@@ -25,27 +25,32 @@ options:
           - Delete certain log files
         choices: ['current', 'oldest']
         type: str
-    frequancy:
-        description:
+    
+    rotation:
+      description:
+        - rotation related attributes 
+      suboptions:
+        frequancy:
+          description:
           - Rotate log files on a fixed time-based schedule
-        choices: ['daily', 'weekly', 'monthly']
-        type: str
-    force:
-        description:
-          - force an immediate rotation of log files
-        type: bool
-    max_num:
-        description:
-          - Sepcify max_num of old log files to keep
-        type: int
-    size:
-        description:
-          - Rotate files when they pass max size
-        type: float
-    size_pct:
-        description:
-           - Rotatoe files when they pass percent of HD
-        type: float
+          choices: ['daily', 'weekly', 'monthly']
+          type: str
+        force:
+            description:
+            - force an immediate rotation of log files
+            type: bool
+        max_num:
+            description:
+            - Sepcify max_num of old log files to keep
+            type: int
+        size:
+            description:
+            - Rotate files when they pass max size
+            type: float
+        size_pct:
+            description:
+            - Rotatoe files when they pass percent of HD
+            type: float
     upload_url:
         description:
           - upload local log files to remote host (ftp, scp, sftp, tftp)
