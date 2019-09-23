@@ -184,23 +184,24 @@ class LocalEapi:
         self._session_support = None
         self._device_configs = {}
 
-        host = module.params['provider']['host']
-        port = module.params['provider']['port']
+        provider = module.params.get('provider', {})
+        host = provider.get('host')
+        port = provider.get('port')
 
-        self._module.params['url_username'] = self._module.params['username']
-        self._module.params['url_password'] = self._module.params['password']
+        self._module.params['url_username'] = provider.get('username')
+        self._module.params['url_password'] = provider.get('password')
 
-        if module.params['provider']['use_ssl']:
+        if provider.get('use_ssl'):
             proto = 'https'
         else:
             proto = 'http'
 
-        module.params['validate_certs'] = module.params['provider']['validate_certs']
+        module.params['validate_certs'] = provider.get('validate_certs')
 
         self._url = '%s://%s:%s/command-api' % (proto, host, port)
 
-        if module.params['auth_pass']:
-            self._enable = {'cmd': 'enable', 'input': module.params['auth_pass']}
+        if 'auth_pass' in provider:
+            self._enable = {'cmd': 'enable', 'input': provider.get('auth_pass')}
         else:
             self._enable = 'enable'
 

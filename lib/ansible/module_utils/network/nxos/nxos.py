@@ -251,13 +251,14 @@ class LocalNxapi:
         self._device_configs = {}
         self._module_context = {}
 
-        self._module.params['url_username'] = self._module.params['username']
-        self._module.params['url_password'] = self._module.params['password']
+        provider = self._module.params.get("provider")
+        self._module.params['url_username'] = provider.get('username')
+        self._module.params['url_password'] = provider.get('password')
 
-        host = self._module.params['host']
-        port = self._module.params['port']
+        host = provider.get('host')
+        port = provider.get('port')
 
-        if self._module.params['use_ssl']:
+        if provider.get('use_ssl'):
             proto = 'https'
             port = port or 443
         else:
