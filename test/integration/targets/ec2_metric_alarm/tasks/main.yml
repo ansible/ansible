@@ -24,7 +24,8 @@
         AWS_SESSION_TOKEN: "{{ security_token | default('') }}"
         AWS_DEFAULT_REGION: "{{ aws_region }}"
       register: alarm_info_query
-    - name: Find AMI to use 
+
+    - name: Find AMI to use
       ec2_ami_info:
         owners: 'amazon'
         filters:
