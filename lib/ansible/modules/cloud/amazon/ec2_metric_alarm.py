@@ -207,13 +207,7 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
 
-try:
-    import botocore
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
 
 
 def create_metric_alarm(connection, module):
@@ -370,8 +364,7 @@ def delete_metric_alarm(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
+    argument_spec = dict(
         dict(
             name=dict(required=True, type='str'),
             metric=dict(type='str'),
@@ -399,21 +392,9 @@ def main():
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
     state = module.params.get('state')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    if region:
-        try:
-            connection = boto3_conn(module, conn_type='client', resource='cloudwatch',
-                                    region=region, endpoint=ec2_url, **aws_connect_params)
-        except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-            module.fail_json(msg=str(e))
-    else:
-        module.fail_json(msg="region must be specified")
+    connection = module.client('cloudwatch')
 
     if state == 'present':
         create_metric_alarm(connection, module)
