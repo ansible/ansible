@@ -1,5 +1,5 @@
 
-.. _collections:
+.. _using_collections:
 
 *****************
 Using collections
