@@ -208,7 +208,10 @@ EXAMPLES = '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 
-
+try:
+    from botocore.exceptions import ClientError
+except ImportError:
+    pass  # protected by AnsibleAWSModule
 
 def create_metric_alarm(connection, module):
 
@@ -266,7 +269,7 @@ def create_metric_alarm(connection, module):
                                         TreatMissingData=treat_missing_data)
             changed = True
             alarms = connection.describe_alarms(AlarmNames=[name])
-        except botocore.exceptions.ClientError as e:
+        except ClientError as e:
             module.fail_json(msg=str(e))
 
     else:
@@ -322,7 +325,7 @@ def create_metric_alarm(connection, module):
                                             InsufficientDataActions=alarm['InsufficientDataActions'],
                                             OKActions=alarm['OKActions'],
                                             TreatMissingData=alarm['TreatMissingData'])
-        except botocore.exceptions.ClientError as e:
+        except ClientError as e:
             module.fail_json(msg=str(e))
 
     result = alarms['MetricAlarms'][0]
@@ -357,7 +360,7 @@ def delete_metric_alarm(connection, module):
         try:
             connection.delete_alarms(AlarmNames=[name])
             module.exit_json(changed=True)
-        except (botocore.exceptions.ClientError) as e:
+        except (ClientError) as e:
             module.fail_json(msg=str(e))
     else:
         module.exit_json(changed=False)
