@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "kubevirt: apply wait_sleep fix from devel to not fail on missing param"
