@@ -41,7 +41,9 @@ module: ios_l2_interfaces
 version_added: 2.9
 short_description: Manage Layer-2 interface on Cisco IOS devices.
 description: This module provides declarative management of Layer-2 interface on Cisco IOS devices.
-author: Sumit Jaiswal (@justjais)
+author: 
+  - Sumit Jaiswal (@justjais)
+  - Chris Smolen (@smolz)
 notes:
   - Tested against Cisco IOSv Version 15.2 on VIRL
   - This module works with connection C(network_cli).
@@ -65,6 +67,10 @@ options:
           vlan:
             description:
             - Configure given VLAN in access port. It's used as the access VLAN ID.
+            type: int
+          voice_vlan:
+            description:
+            - Configure given VOICE_VLAN in access port. It's used as the voice VLAN ID.
             type: int
       trunk:
         description:
@@ -126,6 +132,7 @@ EXAMPLES = """
       - name: GigabitEthernet0/1
         access:
           vlan: 10
+          voice_vlan: 30
       - name: GigabitEthernet0/2
         trunk:
           allowed_vlan: 10-20, 40
@@ -141,6 +148,7 @@ EXAMPLES = """
 # interface GigabitEthernet0/1
 #  description Configured by Ansible
 #  switchport access vlan 10
+#  switchport voice vlan 30
 #  negotiation auto
 # interface GigabitEthernet0/2
 #  description This is test
@@ -333,7 +341,7 @@ commands:
   description: The set of commands pushed to the remote device
   returned: always
   type: list
-  sample: ['interface GigabitEthernet0/1', 'switchport access vlan 20']
+  sample: ['interface GigabitEthernet0/1', 'switchport access vlan 20', 'switchport voice vlan 30']
 """
 
 
