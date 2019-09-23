@@ -21,11 +21,10 @@ description:
 notes:
 options:
     delete_group:
-        description:
-          - Delete certain log files
-        choices: ['current', 'oldest']
-        type: str
-    
+      description:
+        - Delete certain log files
+      choices: ['current', 'oldest']
+      type: str
     rotation:
       description:
         - rotation related attributes 
@@ -125,7 +124,7 @@ class OnyxSyslogFilesModule(BaseOnyxModule):
         self._module = AnsibleModule(
             argument_spec=argument_spec,
             supports_check_mode=True,
-            required_together=['upload_file', 'upload_url'])
+            required_together=[['upload_file', 'upload_url']])
 
     def validate_rotation(self, rotation):
         size_pct = rotation.get('size_pct', None)
