@@ -1,0 +1,2 @@
+bugfixes:
+- Fix ios terminal regex for privilege escalation (https://github.com/ansible/ansible/issues/61726)
