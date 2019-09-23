@@ -626,7 +626,7 @@ class Sflow(object):
         # update or delete
         if self.state == "absent":
             xml_str += '<collectors><collector operation="delete"><collectorID>%s</collectorID>' % self.collector_id
-            self.updates_cmd.append("undo collector %s" % self.collector_id)
+            self.updates_cmd.append("undo sflow collector %s" % self.collector_id)
         else:
             xml_str += '<collectors><collector operation="merge"><collectorID>%s</collectorID>' % self.collector_id
             cmd = "sflow collector %s" % self.collector_id
@@ -923,10 +923,11 @@ class Sflow(object):
 
             # check sample_collector
             if self.sample_collector:
-                self.sample_collector.sort()
-                if self.sample_collector not in [["1"], ["2"], ["1", "2"]]:
-                    self.module.fail_json(
-                        msg="Error: sample_collector is invalid.")
+                self.sample_collector = [str(i) i for i in self.sample_collector]
+                for id in self.sample_collector:
+                    if id not in ("1", "2"):
+                        self.module.fail_json(
+                            msg="Error: sample_collector is invalid.")
 
             # check sample_rate ranges from 1 to 4294967295
             if self.sample_rate:
@@ -948,10 +949,11 @@ class Sflow(object):
 
             # check counter_collector
             if self.counter_collector:
-                self.counter_collector.sort()
-                if self.counter_collector not in [["1"], ["2"], ["1", "2"]]:
-                    self.module.fail_json(
-                        msg="Error: counter_collector is invalid.")
+                self.counter_collector = [str(i) i for i in self.sample_collector]
+                for id in self.counter_collector:
+                    if id not in ("1", "2"):
+                        self.module.fail_json(
+                            msg="Error: counter_collector is invalid.")
 
             # counter_interval ranges from 10 to 4294967295
             if self.counter_interval:
