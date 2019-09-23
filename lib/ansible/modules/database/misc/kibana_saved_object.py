@@ -40,16 +40,16 @@ options:
       type: str
       description:
         - The URL of Kibana.
-    user:
+    url_username:
       type: str
       description:
         - A username for the module to use for Digest, Basic or WSSE authentication.
-      aliases: [url_username]
-    password:
+      aliases: [user]
+    url_password:
       type: str
       description:
         - A password for the module to use for Digest, Basic or WSSE authentication.
-      aliases: [url_password]
+      aliases: [password]
     force_basic_auth:
       type: bool
       description:
@@ -328,8 +328,8 @@ def main():
         kibana_url=dict(type='str', required=True),
         timeout=dict(type='int', default=30),
         overwrite=dict(type='bool', default=False),
-        user=dict(type='str', aliases=['url_username']),
-        password=dict(type='str', aliases=['url_password'], no_log=True),
+        url_username=dict(type='str', aliases=['user']),
+        url_password=dict(type='str', aliases=['password'], no_log=True),
 
         searchguard_tenant=dict(type='str'),
     ))
@@ -347,8 +347,8 @@ def main():
     timeout = module.params['timeout']
     overwrite = module.params['overwrite']
     searchguard_tenant = module.params['searchguard_tenant']
-    user = module.params['user']
-    password = module.params['password']
+    user = module.params['url_username']
+    password = module.params['url_password']
 
     present, existing_object = is_object_present(
         module=module,
