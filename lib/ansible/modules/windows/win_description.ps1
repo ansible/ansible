@@ -4,7 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #AnsibleRequires -CSharpUtil Ansible.Basic
-#AnsibleRequires -OSVersion 6.2
+#AnsibleRequires -OSVersion 6.0
 
 $ErrorActionPreference = "Stop"
 
@@ -27,87 +27,29 @@ $organization = $module.Params.organization
 $description = $module.Params.description
 $regPath="HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\"
 
-#Function to create a CIM object
-Function GetCimsObject {
-    param(
-        [Parameter(Position=0)][string]$class #Class to query
-    )
-    try {
-        $cimObj=Get-CimInstance -class $class
-    } catch {
-        $module.FailJson("There was an error retrieving Windows description $($_.Exception.Message)")
-    }
-    return $cimObj;
-}
-
-#Function to change CIM's object property. In this case used to change computer description
-Function SetWinDescription {
-    param(
-        [Parameter(Position=0)]$object, #CIMs Object to apply the change too
-        [Parameter(Position=0)]$property, #CIMs property to change
-        [Parameter(Position=2)][string]$value #New value for the property
-    )
-    try {
-        Set-CimInstance -InputObject $object -Property @{$property="$value"}
-    } catch {
-        $module.FailJson("There was an error changing Windows description $($_.Exception.Message)")
-    }
-}
-
-#Function to update registry, in order to change license Owner and Organization
-Function WinOwnership {
-    param(
-        [Parameter(Position=0)][ValidateSet("RegisteredOrganization","RegisteredOwner")][string]$type, #Organization or user
-        [Parameter(Position=1)][ValidateSet("set","get")][string]$action, #Get Information or set information
-        [Parameter(Position=2)][String]$value #Value to set
-    )
-	if ($action -eq "get") {
-        try {
-            $regObj=Get-ItemProperty -LiteralPath $regPath
-        } catch {
-            $module.FailJson("There was an error fetching registry $($_.Exception.Message)")
-        }
-		return $regObj.$type
-    }
-    #Upate Owner or Organization
-    if ($action -eq "set") {
-        try {
-            Set-ItemProperty -LiteralPath $regPath -Name $type -Value $value
-        } catch {
-            $module.FailJson("There was an error updating $type $($_.Exception.Message)")
-        }
-    }
-}
-
 #Change description
 if ($description -or $description -eq "") {
-    $descriptionObject=GetCimsObject -class "Win32_OperatingSystem"
+    $descriptionObject=Get-CimInstance -class "Win32_OperatingSystem"
     if ($description -cne $descriptionObject.description) {
-        if (-not $module.CheckMode) {
-            SetWinDescription -object $descriptionObject -property "Description" -value $description
-        }
+        Set-CimInstance -InputObject $descriptionObject -Property @{"Description"="$description"} -WhatIf:$module.CheckMode
         $module.Result.changed = $true
     }
 }
 
 #Change owner
 if ($owner -or $owner -eq "") {
-    $curentOwner=WinOwnership -type "RegisteredOwner"  -action "get"
+    $curentOwner=(Get-ItemProperty -LiteralPath $regPath -Name RegisteredOwner).RegisteredOwner
     if ($curentOwner -cne $owner) {
-        if (-not $module.CheckMode) {
-            WinOwnership -type "RegisteredOwner"  -action "set" -value $owner
-        }
+        Set-ItemProperty -LiteralPath $regPath -Name "RegisteredOwner" -Value $owner -WhatIf:$module.CheckMode
         $module.Result.changed = $true
     }
 }
 
 #Change organization
 if ($organization -or $organization -eq "") {
-    $curentOrganization=WinOwnership -type "RegisteredOrganization"  -action "get"
+    $curentOrganization=(Get-ItemProperty -LiteralPath $regPath -Name RegisteredOrganization).RegisteredOrganization
     if ($curentOrganization -cne $organization) {
-        if (-not $module.CheckMode) {
-            WinOwnership -type "RegisteredOrganization"  -action "set" -value $organization
-        }
+        Set-ItemProperty -LiteralPath $regPath -Name "RegisteredOrganization" -Value $organization -WhatIf:$module.CheckMode
         $module.Result.changed = $true
     }
 }
