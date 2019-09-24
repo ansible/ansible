@@ -115,7 +115,7 @@ options:
     type: str
     version_added: "2.1"
 notes:
-   - The virtualenv (U(http://www.virtualenv.org/)) must be
+   - The virtualenv (U(https://virtualenv.pypa.io/)) must be
      installed on the remote host if the virtualenv parameter is specified and
      the virtualenv needs to be created.
    - Although it executes using the Ansible Python interpreter, the pip module shells out to
