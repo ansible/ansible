@@ -73,7 +73,7 @@ options:
     description:
       - Specify additional options by passing in an array.
       - Each space-separated command-line option should be a new element of the array. See examples.
-    - Command-line options with multiple elements must use multiple lines in the array, one for each element. 
+      - Command-line options with multiple elements must use multiple lines in the array, one for each element. 
     type: list
     default: ""
     version_added: "2.1"
