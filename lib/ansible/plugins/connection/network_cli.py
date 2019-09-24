@@ -7,7 +7,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
 ---
-author: Ansible Networking Team
+author: Ansible Networking Team!
 connection: network_cli
 short_description: Use network_cli to run command on network appliances
 description:
