@@ -29,6 +29,9 @@ Ansible VMware modules leveraging latest vSphere(6.0+) features are using `vSphe
 
      $ pip install --upgrade git+https://github.com/vmware/vsphere-automation-sdk-python.git
 
+Note:
+   Installing vSphere Automation Python SDK also installs pyvmomi. A separate installation of pyvmomi is not required.
+   
 vmware_guest module
 ===================
 
