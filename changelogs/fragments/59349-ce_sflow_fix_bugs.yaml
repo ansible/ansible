@@ -1,0 +1,2 @@
+bugfixes:
+  - ce_sflow  - fix some bugs, result changed is always True, configuration can not be loaded.(https://github.com/ansible/ansible/pull/59349).
