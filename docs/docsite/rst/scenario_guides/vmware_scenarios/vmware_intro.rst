@@ -23,6 +23,11 @@ and vCenter infrastructure. You can install pyVmomi using pip:
 
     $ pip install pyvmomi
 
+Ansible VMware modules leveraging latest vSphere(6.0+) features are using `vSphere Automation Python SDK <https://github.com/vmware/vsphere-automation-sdk-python>`__. The vSphere Automation Python SDK also have client libraries, documentation and sample code for VMware Cloud on AWS Console APIs, NSX VMware Cloud on AWS integration APIs, VMware Cloud on AWS site recovery APIs and NSX-T APIs. You can install vSphere Automation Python SDK using pip:
+
+.. code-block:: bash
+
+     $ pip install --upgrade git+https://github.com/vmware/vsphere-automation-sdk-python.git
 
 vmware_guest module
 ===================
