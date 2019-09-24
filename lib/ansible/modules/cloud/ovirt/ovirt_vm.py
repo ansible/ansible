@@ -38,7 +38,7 @@ options:
             - Please check I(notes) to more detailed description of states.
             - I(exported) state will export the VM to export domain or as OVA.
             - I(registered) is supported since 2.4.
-            - I(reboot) is supported since 2.10.
+            - I(reboot) is supported since 2.10, virtual machine is rebooted only if it's in up state.
         choices: [ absent, next_run, present, registered, running, stopped, suspended, exported, reboot ]
         default: present
     cluster:
