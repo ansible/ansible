@@ -53,6 +53,11 @@ EXAMPLES = '''
   debug:
     var: ansible_facts.packages
 
+- name: Check whether a package called foobar is installed
+  debug:
+    msg: "{{ ansible_facts.packages['foobar'] | length }} versions of foobar are installed!"
+  when: "'foobar' in ansible_facts.packages"
+
 '''
 
 RETURN = '''
@@ -62,9 +67,55 @@ ansible_facts:
   type: complex
   contains:
     packages:
-      description: list of dicts with package information
+      description:
+        - Maps the package name to a non-empty list of dicts with package information.
+        - Every dict in the list corresponds to one installed version of the package.
+        - The fields described below are present for all package managers. Depending on the
+          package manager, there might be more fields for a package.
       returned: when operating system level package manager is specified or auto detected manager
       type: dict
+      contains:
+        name:
+          description: The package's name.
+          returned: always
+          type: str
+        version:
+          description: The package's version.
+          returned: always
+          type: str
+        source:
+          description: Where information on the package came from.
+          returned: always
+          type: str
+      sample: |-
+        {
+          "packages": {
+            "kernel": [
+              {
+                "name": "kernel",
+                "source": "rpm",
+                "version": "3.10.0",
+                ...
+              },
+              {
+                "name": "kernel",
+                "source": "rpm",
+                "version": "3.10.0",
+                ...
+              },
+              ...
+            ],
+            "kernel-tools": [
+              {
+                "name": "kernel-tools",
+                "source": "rpm",
+                "version": "3.10.0",
+                ...
+              }
+            ],
+            ...
+          }
+        }
       sample_rpm:
         {
           "packages": {
