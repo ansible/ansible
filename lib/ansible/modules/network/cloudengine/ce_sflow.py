@@ -506,8 +506,6 @@ class Sflow(object):
                 flag = True
             if flag is True:
                 xml_str += '<agents><agent operation="delete"></agent></agents>'
-                
-
         return xml_str
 
     def config_source(self):
