@@ -1,0 +1,3 @@
+# Initial CI tests of postgresql_lang module
+- import_tasks: postgresql_lang_initial.yml
+  when: ansible_distribution == 'CentOS'

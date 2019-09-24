@@ -1,6 +1,19 @@
 ---
 
 # Setup
+- name: Create test roles
+  postgresql_user:
+    name: "{{ item }}"
+    state: present
+    encrypted: yes
+    password: password
+    role_attr_flags: LOGIN
+    db: postgres
+    login_user: "{{ pg_user }}"
+  loop:
+  - "{{ db_user1 }}"
+  - "{{ db_user2 }}"
+
 - name: Create DB
   become_user: "{{ pg_user }}"
   become: yes
@@ -8,16 +21,6 @@
     state: present
     name: "{{ db_name }}"
     owner: "{{ db_user1 }}"
-    login_user: "{{ pg_user }}"
-
-- name: Create a user to be owner of a schema
-  postgresql_user:
-    name: "{{ db_user2 }}"
-    state: present
-    encrypted: yes
-    password: password
-    role_attr_flags: LOGIN
-    db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
 
 # Test: CREATE SCHEMA in checkmode
