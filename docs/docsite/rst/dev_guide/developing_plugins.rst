@@ -416,7 +416,35 @@ For example test plugins, see the source code for the `test plugins included wit
 Vars plugins
 ------------
 
-Vars plugins are unsupported by collections in Ansible version 2.9.
+Vars plugins inject additional variable data into Ansible runs that did not come from an inventory source, playbook, or command line. Playbook constructs like 'host_vars' and 'group_vars' work using vars plugins.
+
+Vars plugins were partially implemented in Ansible 2.0 and rewritten to be fully implemented starting with Ansible 2.4. Vars plugins are unsupported by collections.
+
+Older plugins used a ``run`` method as their main body/work:
+
+.. code-block:: python
+
+    def run(self, name, vault_password=None):
+        pass # your code goes here
+
+
+Ansible 2.0 did not pass passwords to older plugins, so vaults were unavailable.
+Most of the work now  happens in the ``get_vars`` method which is called from the VariableManager when needed.
+
+.. code-block:: python
+
+    def get_vars(self, loader, path, entities):
+        pass # your code goes here
+
+The parameters are:
+
+ * loader: Ansible's DataLoader. The DataLoader can read files, auto-load JSON/YAML and decrypt vaulted data, and cache read files.
+ * path: this is 'directory data' for every inventory source and the current play's playbook directory, so they can search for data in reference to them. ``get_vars`` will be called at least once per available path.
+ * entities: these are host or group names that are pertinent to the variables needed. The plugin will get called once for hosts and again for groups.
+
+This ``get vars`` method just needs to return a dictionary structure with the variables.
+
+Since Ansible version 2.4, vars plugins only execute as needed when preparing to execute a task. This avoids the costly 'always execute' behavior that occurred during inventory construction in older versions of Ansible.
 
 For example vars plugins, see the source code for the `vars plugins included with Ansible Core
 <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/vars>`_.
