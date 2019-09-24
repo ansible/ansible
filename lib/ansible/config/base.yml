@@ -192,7 +192,7 @@ CACHE_PLUGIN:
   yaml: {key: facts.cache.plugin}
 CACHE_PLUGIN_CONNECTION:
   name: Cache Plugin URI
-  default: ~
+  default: null
   description: Defines connection or path information for the cache plugin
   env: [{name: ANSIBLE_CACHE_PLUGIN_CONNECTION}]
   ini:
@@ -478,7 +478,7 @@ DEFAULT_BECOME_METHOD:
     - {section: privilege_escalation, key: become_method}
 DEFAULT_BECOME_EXE:
   name: Choose 'become' executable
-  default: ~
+  default: null
   description: 'executable to use for privilege escalation, otherwise Ansible will depend on PATH'
   env: [{name: ANSIBLE_BECOME_EXE}]
   ini:
@@ -584,7 +584,7 @@ DEFAULT_EXECUTABLE:
   - {key: executable, section: defaults}
 DEFAULT_FACT_PATH:
   name: local fact path
-  default: ~
+  default: null
   description:
     - "This option allows you to globally configure a custom path for 'local_facts' for the implied M(setup) task when using fact gathering."
     - "If not set, it will fallback to the default from the M(setup) module: ``/etc/ansible/facts.d``."
@@ -803,7 +803,7 @@ DEFAULT_LOCAL_TMP:
   type: tmppath
 DEFAULT_LOG_PATH:
   name: Ansible log file path
-  default: ~
+  default: null
   description: File to which Ansible will log on the controller. When empty logging is disabled.
   env: [{name: ANSIBLE_LOG_PATH}]
   ini:
@@ -901,7 +901,7 @@ DEFAULT_NO_TARGET_SYSLOG:
   yaml: {key: defaults.no_target_syslog}
 DEFAULT_NULL_REPRESENTATION:
   name: Represent a null
-  default: ~
+  default: null
   description: What templating should return as a 'null' value. When not set it will let Jinja2 decide.
   env: [{name: ANSIBLE_NULL_REPRESENTATION}]
   ini:
@@ -921,7 +921,7 @@ DEFAULT_POLL_INTERVAL:
   type: integer
 DEFAULT_PRIVATE_KEY_FILE:
   name: Private key file
-  default: ~
+  default: null
   description:
     - Option for connections using a certificate or key file to authenticate, rather than an agent or passwords,
       you can set the default value here to avoid re-specifying --private-key with every invocation.
@@ -943,7 +943,7 @@ DEFAULT_PRIVATE_ROLE_VARS:
   yaml: {key: defaults.private_role_vars}
 DEFAULT_REMOTE_PORT:
   name: Remote port
-  default: ~
+  default: null
   description: Port to use in remote connections, when blank it will use the connection plugin default.
   env: [{name: ANSIBLE_REMOTE_PORT}]
   ini:
@@ -1200,7 +1200,7 @@ DEFAULT_VAULT_IDENTITY_LIST:
   yaml: {key: defaults.vault_identity_list}
 DEFAULT_VAULT_PASSWORD_FILE:
   name: Vault password file
-  default: ~
+  default: null
   description: 'The vault password file to use. Equivalent to --vault-password-file or --vault-id'
   env: [{name: ANSIBLE_VAULT_PASSWORD_FILE}]
   ini:
@@ -1735,7 +1735,7 @@ RETRY_FILES_ENABLED:
   type: bool
 RETRY_FILES_SAVE_PATH:
   name: Retry files path
-  default: ~
+  default: null
   description: This sets the path in which Ansible will save .retry files when a playbook fails and retry files are enabled.
   env: [{name: ANSIBLE_RETRY_FILES_SAVE_PATH}]
   ini:
