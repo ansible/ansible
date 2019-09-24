@@ -271,8 +271,6 @@ def main():
         consumer_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        directive=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
-        filter=dict(type='str', aliases=['filter_name'], removed_in_version='2.4'),  # Deprecated starting from v2.4
     )
 
     module = AnsibleModule(
@@ -293,7 +291,6 @@ def main():
     dscp = module.params['dscp']
     description = module.params['description']
     filter_name = module.params['filter']
-    directive = module.params['directive']
     consumer_match = module.params['consumer_match']
     if consumer_match is not None:
         consumer_match = MATCH_MAPPING[consumer_match]
@@ -302,9 +299,6 @@ def main():
         provider_match = MATCH_MAPPING[provider_match]
     state = module.params['state']
     tenant = module.params['tenant']
-
-    if directive is not None or filter_name is not None:
-        module.fail_json(msg="Managing Contract Subjects to Filter bindings has been moved to module 'aci_subject_bind_filter'")
 
     aci.construct_url(
         root_class=dict(
