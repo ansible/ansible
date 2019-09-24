@@ -32,6 +32,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import base64
 import json
 import os
@@ -409,9 +412,9 @@ class ACIModule(object):
         ''' Build an APIC filter based on obj_class and key-value pairs '''
         accepted_params = dict((k, v) for (k, v) in params.items() if v is not None)
         if len(accepted_params) == 1:
-            return ','.join('eq({0}.{1}, "{2}")'.format(obj_class, k, v) for (k, v) in accepted_params.items())
+            return ','.join('eq({0}.{1},"{2}")'.format(obj_class, k, v) for (k, v) in accepted_params.items())
         elif len(accepted_params) > 1:
-            return 'and(' + ','.join(['eq({0}.{1}, "{2}")'.format(obj_class, k, v) for (k, v) in accepted_params.items()]) + ')'
+            return 'and(' + ','.join(['eq({0}.{1},"{2}")'.format(obj_class, k, v) for (k, v) in accepted_params.items()]) + ')'
 
     def _deep_url_path_builder(self, obj):
         target_class = obj['target_class']
