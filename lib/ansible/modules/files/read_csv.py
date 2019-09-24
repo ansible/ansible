@@ -72,6 +72,7 @@ options:
     - Fields containing line breaks are split into lists.
     type: bool
     default: no
+    version_added: '2.10'
 notes:
 - Ansible also ships with the C(csvfile) lookup plugin, which can be used to do selective lookups in CSV files from Jinja.
 '''
