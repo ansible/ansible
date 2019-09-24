@@ -80,7 +80,7 @@ The ``auto`` inventory plugin is enabled by default and works by using the ``plu
       |  |--ec2-98-765-432-10.compute-1.amazonaws.com
       |--@ungrouped:
 
-If you are using an inventory plugin in a playbook-adjacent collection and want to test your setup with ``ansible-inventory``, you will need to use the --playbook-dir flag.
+If you are using an inventory plugin in a playbook-adjacent collection and want to test your setup with ``ansible-inventory``, you will need to use the ``--playbook-dir`` flag.
 
 You can set the default inventory path (via ``inventory`` in the `ansible.cfg` [defaults] section or the :envvar:`ANSIBLE_INVENTORY` environment variable) to your inventory source(s). Now running ``ansible-inventory --graph`` should yield the same output as when you passed your YAML configuration source(s) directly. You can add custom inventory plugins to your plugin path to use in the same way.
 
