@@ -116,6 +116,83 @@
     - users_noheader.dict.jeroen.gid == '500'
 
 
+# Crate a CSV file with fields containing line breaks
+- name: Create security rules CSV file
+  copy:
+    content: |
+      name,protocol,source_address_prefix,destination_port_range,access,priority,direction
+      DenySSH,Tcp,Internet,22,Deny,100,Inbound
+      AllowSSH,Tcp,"174.109.158.0/24
+      174.109.159.0/24",22,Allow,101,Inbound
+      AllowMultiplePorts,Tcp,"174.109.158.0/24
+      174.109.159.0/24","80
+      443",Allow,102,Inbound
+    dest: security_rules.csv
+
+# Read a CSV file with fields containing line breaks
+- name: Read security rules from CSV file and return a list
+  read_csv:
+    path: security_rules.csv
+    splitlinebreaks: yes
+  register: security_rules
+
+- assert:
+    that:
+    - security_rules.list.0.name == 'DenySSH'
+    - security_rules.list.0.protocol == 'Tcp'
+    - security_rules.list.0.source_address_prefix == 'Internet'
+    - security_rules.list.0.destination_port_range == '22'
+    - security_rules.list.0.access == 'Deny'
+    - security_rules.list.0.priority == '100'
+    - security_rules.list.0.direction == 'Inbound'
+    - security_rules.list.1.name == 'AllowSSH'
+    - security_rules.list.1.protocol == 'Tcp'
+    - security_rules.list.1.source_address_prefix == ['174.109.158.0/24', '174.109.159.0/24']
+    - security_rules.list.1.destination_port_range == '22'
+    - security_rules.list.1.access == 'Allow'
+    - security_rules.list.1.priority == '101'
+    - security_rules.list.1.direction == 'Inbound'
+    - security_rules.list.2.name == 'AllowMultiplePorts'
+    - security_rules.list.2.protocol == 'Tcp'
+    - security_rules.list.2.source_address_prefix == ['174.109.158.0/24', '174.109.159.0/24']
+    - security_rules.list.2.destination_port_range == ['80', '443']
+    - security_rules.list.2.access == 'Allow'
+    - security_rules.list.2.priority == '102'
+    - security_rules.list.2.direction == 'Inbound'
+
+# Read a CSV file with fields containing line breaks
+- name: Read security rules from CSV file and return a dictionary
+  read_csv:
+    path: security_rules.csv
+    key: name
+    splitlinebreaks: yes
+  register: security_rules
+
+- assert:
+    that:
+    - security_rules.dict.DenySSH.name == 'DenySSH'
+    - security_rules.dict.DenySSH.protocol == 'Tcp'
+    - security_rules.dict.DenySSH.source_address_prefix == 'Internet'
+    - security_rules.dict.DenySSH.destination_port_range == '22'
+    - security_rules.dict.DenySSH.access == 'Deny'
+    - security_rules.dict.DenySSH.priority == '100'
+    - security_rules.dict.DenySSH.direction == 'Inbound'
+    - security_rules.dict.AllowSSH.name == 'AllowSSH'
+    - security_rules.dict.AllowSSH.protocol == 'Tcp'
+    - security_rules.dict.AllowSSH.source_address_prefix == ['174.109.158.0/24', '174.109.159.0/24']
+    - security_rules.dict.AllowSSH.destination_port_range == '22'
+    - security_rules.dict.AllowSSH.access == 'Allow'
+    - security_rules.dict.AllowSSH.priority == '101'
+    - security_rules.dict.AllowSSH.direction == 'Inbound'
+    - security_rules.dict.AllowMultiplePorts.name == 'AllowMultiplePorts'
+    - security_rules.dict.AllowMultiplePorts.protocol == 'Tcp'
+    - security_rules.dict.AllowMultiplePorts.source_address_prefix == ['174.109.158.0/24', '174.109.159.0/24']
+    - security_rules.dict.AllowMultiplePorts.destination_port_range == ['80', '443']
+    - security_rules.dict.AllowMultiplePorts.access == 'Allow'
+    - security_rules.dict.AllowMultiplePorts.priority == '102'
+    - security_rules.dict.AllowMultiplePorts.direction == 'Inbound'
+
+
 # Create broken file
 - name: Create unique CSV file
   copy:

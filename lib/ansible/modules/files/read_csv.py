@@ -67,6 +67,11 @@ options:
     - When using this parameter, you change the default value used by C(dialect).
     - The default value depends on the dialect used.
     type: bool
+  splitlinebreaks:
+    description:
+    - Fields containing line breaks are split into lists.
+    type: bool
+    default: no
 notes:
 - Ansible also ships with the C(csvfile) lookup plugin, which can be used to do selective lookups in CSV files from Jinja.
 '''
@@ -163,6 +168,15 @@ class unix_dialect(csv.Dialect):
 csv.register_dialect("unix", unix_dialect)
 
 
+def split_value_by_linebreaks(dict):
+    for k in dict.keys():
+        v = dict[k].splitlines()
+        if len(v) > 1:
+            dict[k] = v
+
+    return dict
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -174,6 +188,7 @@ def main():
             delimiter=dict(type='str'),
             skipinitialspace=dict(type='bool'),
             strict=dict(type='bool'),
+            splitlinebreaks=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -183,6 +198,7 @@ def main():
     key = module.params['key']
     fieldnames = module.params['fieldnames']
     unique = module.params['unique']
+    splitlinebreaks = module.params['splitlinebreaks']
 
     if dialect not in csv.list_dialects():
         module.fail_json(msg="Dialect '%s' is not supported by your version of python." % dialect)
@@ -226,6 +242,8 @@ def main():
     if key is None:
         try:
             for row in reader:
+                if splitlinebreaks:
+                    row = split_value_by_linebreaks(row)
                 data_list.append(row)
         except csv.Error as e:
             module.fail_json(msg="Unable to process file: %s" % to_text(e))
@@ -234,6 +252,8 @@ def main():
             for row in reader:
                 if unique and row[key] in data_dict:
                     module.fail_json(msg="Key '%s' is not unique for value '%s'" % (key, row[key]))
+                if splitlinebreaks:
+                    row = split_value_by_linebreaks(row)
                 data_dict[row[key]] = row
         except csv.Error as e:
             module.fail_json(msg="Unable to process file: %s" % to_text(e))
