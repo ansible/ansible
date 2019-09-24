@@ -230,8 +230,11 @@ class RedfishUtils(object):
             if response['ret'] is False:
                 return response
             data = response['data']
-            firmware_inventory = data['FirmwareInventory'][u'@odata.id']
-            self.firmware_uri = firmware_inventory
+            self.firmware_uri = self.software_uri = None
+            if 'FirmwareInventory' in data:
+                self.firmware_uri = data['FirmwareInventory'][u'@odata.id']
+            if 'SoftwareInventory' in data:
+                self.software_uri = data['SoftwareInventory'][u'@odata.id']
             return {'ret': True}
 
     def _find_chassis_resource(self):
@@ -1049,32 +1052,44 @@ class RedfishUtils(object):
             return {'ret': "False", 'msg': "Key Actions not found."}
         return result
 
-    def get_firmware_inventory(self):
+    def _software_inventory(self, uri):
         result = {}
-        response = self.get_request(self.root_uri + self.firmware_uri)
+        response = self.get_request(self.root_uri + uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
         data = response['data']
 
         result['entries'] = []
-        for device in data[u'Members']:
-            uri = self.root_uri + device[u'@odata.id']
-            # Get details for each device
+        for member in data[u'Members']:
+            uri = self.root_uri + member[u'@odata.id']
+            # Get details for each software or firmware member
             response = self.get_request(uri)
             if response['ret'] is False:
                 return response
             result['ret'] = True
             data = response['data']
-            firmware = {}
+            software = {}
             # Get these standard properties if present
             for key in ['Name', 'Id', 'Status', 'Version', 'Updateable',
                         'SoftwareId', 'LowestSupportedVersion', 'Manufacturer',
                         'ReleaseDate']:
                 if key in data:
-                    firmware[key] = data.get(key)
-            result['entries'].append(firmware)
+                    software[key] = data.get(key)
+            result['entries'].append(software)
         return result
+
+    def get_firmware_inventory(self):
+        if self.firmware_uri is None:
+            return {'ret': False, 'msg': 'No FirmwareInventory resource found'}
+        else:
+            return self._software_inventory(self.firmware_uri)
+
+    def get_software_inventory(self):
+        if self.software_uri is None:
+            return {'ret': False, 'msg': 'No SoftwareInventory resource found'}
+        else:
+            return self._software_inventory(self.software_uri)
 
     def get_bios_attributes(self, systems_uri):
         result = {}
