@@ -700,7 +700,7 @@ namespace Ansible.Basic
                 if ((bool)v["no_log"])
                 {
                     object noLogObject = parameters.Contains(k) ? parameters[k] : null;
-                    string noLogString = noLogObject == null ? "" : noLogObject.toString();
+                    string noLogString = noLogObject == null ? "" : noLogObject.ToString();
                     if (!String.IsNullOrEmpty(noLogString))
                         noLogValues.Add(noLogString);
                 }
