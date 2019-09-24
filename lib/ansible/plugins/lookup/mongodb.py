@@ -90,7 +90,8 @@ EXAMPLES = '''
       sort:  [ [ "startTime" , "ASCENDING" ] , [ "age", "DESCENDING" ] ]
   tasks:
     - debug: msg="Mongo has already started with the following PID [{{ item.pid }}]"
-      with_mongodb: "{{mongodb_parameters}}"
+      with_items:
+      - "{{ lookup('mongodb', mongodb_parameters) }}"
 '''
 
 import datetime
