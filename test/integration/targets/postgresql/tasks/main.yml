@@ -51,24 +51,6 @@
 
   # Test postgresql_privs
   - postgresql_privs.yml
-
-  # Test postgresql_info module
-  - postgresql_info.yml
-
-  # Test postgresql_schema module
-  - postgresql_schema.yml
-
-  # Test postgresql_membership module
-  - postgresql_membership.yml
-
-  # Test postgresql_table module
-  - postgresql_table.yml
-
-  # Test postgresql_owner module
-  - postgresql_owner.yml
-
-  # Test postgres_pg_hba module
-  - postgresql_pg_hba.yml
   loop_control:
     loop_var: loop_item
 
@@ -80,36 +62,6 @@
 # Test default_privs with target_role
 - import_tasks: test_target_role.yml
   when: postgres_version_resp.stdout is version('9.1', '>=')
-
-# Test postgresql_sequence module
-- import_tasks: postgresql_sequence.yml
-  when: postgres_version_resp.stdout is version('9.0', '>=')
-
-# Test postgresql_ext.
-# pg_extension system view is available from PG 9.1.
-# The tests are restricted by Fedora because there will be errors related with
-# attempts to change the environment during postgis installation or
-# missing postgis package in repositories.
-# Anyway, these tests completely depend on Postgres version,
-# not specific distributions.
-- import_tasks: postgresql_ext.yml
-  when:
-  - postgres_version_resp.stdout is version('9.1', '>=')
-  - ansible_distribution == 'Fedora'
-
-- import_tasks: postgresql_ext_version_opt.yml
-  when: ansible_distribution == 'Ubuntu'
-
-# Test postgresql_lang module.
-# To implement tests, it needs to install some additional packages
-# that may cause problems on different distributions,
-# so I restricted the tests using CentOS because the results
-# depend only on Postgres version
-# (CentOS 6 repo contains the oldest PG version in these tests - 9.0):
-- import_tasks: postgresql_lang.yml
-  when:
-  - ansible_distribution == 'CentOS'
-  - postgres_version_resp.stdout is version('9.4', '>=')
 
 # dump/restore tests per format
 # ============================================================

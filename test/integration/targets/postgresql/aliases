@@ -5,15 +5,12 @@ postgresql_db
 postgresql_ext
 postgresql_idx
 postgresql_info
-postgresql_lang
 postgresql_membership
 postgresql_owner
-postgresql_pg_hba
 postgresql_ping
 postgresql_privs
 postgresql_publication
 postgresql_query
-postgresql_schema
 postgresql_sequence
 postgresql_set
 postgresql_slot
