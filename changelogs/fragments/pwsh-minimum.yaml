@@ -1,0 +1,2 @@
+minor_changes:
+- Windows - Add a check for the minimum PowerShell version so we can create a friendly error message on older hosts
