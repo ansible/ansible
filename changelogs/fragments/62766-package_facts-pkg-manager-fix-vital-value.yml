@@ -1,0 +1,2 @@
+bugfixes:
+  - "package_facts - fix value of ``vital`` attribute which is returned when ``pkg`` manager is used"
