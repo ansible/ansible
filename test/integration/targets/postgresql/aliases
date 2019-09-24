@@ -1,9 +1,6 @@
 destructive
 shippable/posix/group4
 postgresql_db
-postgresql_lang
-postgresql_pg_hba
 postgresql_privs
-postgresql_schema
 postgresql_user
 skip/osx
