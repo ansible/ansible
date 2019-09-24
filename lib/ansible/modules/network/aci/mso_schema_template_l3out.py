@@ -44,6 +44,22 @@ options:
     description:
     - The VRF associated to this L3out.
     type: dict
+    suboptions:
+      name:
+        description:
+        - The name of the VRF to associate with.
+        required: true
+        type: str
+      schema:
+        description:
+        - The schema that defines the referenced VRF.
+        - If this parameter is unspecified, it defaults to the current schema.
+        type: str
+      template:
+        description:
+        - The template that defines the referenced VRF.
+        - If this parameter is unspecified, it defaults to the current schema.
+        type: str
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.

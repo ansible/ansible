@@ -27,15 +27,18 @@ options:
     group:
         description:
             - This is the name of the firmware group
+        type: str
         required: true
     node:
         description:
             - The node to be added to the firmware group - the value equals the NodeID
+        type: str
         required: true
     state:
         description:
             - Use C(present) or C(absent) for adding or removing.
             - Use C(query) for listing an object or multiple objects.
+        type: str
         default: present
         choices: [ absent, present, query ]
 

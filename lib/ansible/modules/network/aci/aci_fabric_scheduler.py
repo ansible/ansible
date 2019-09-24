@@ -27,11 +27,13 @@ options:
   name:
     description:
     - The name of the Scheduler.
+    type: str
     required: yes
     aliases: [ name, scheduler_name ]
   description:
     description:
     - Description for the Scheduler.
+    type: str
     aliases: [ descr ]
   recurring:
     description:
@@ -43,6 +45,7 @@ options:
   windowname:
     description:
        - This is the name for your what recurring or oneTime execution
+    type: str
   concurCap:
     description:
        - This is the amount of devices that can be executed on at a time
@@ -50,24 +53,30 @@ options:
   maxTime:
     description:
        - This is the amount MAX amount of time a process can be executed
+    type: str
   date:
     description:
        - This is the date and time that the scheduler will execute
+    type: str
   hour:
     description:
        - This set the hour of execution
+    type: int
   minute:
     description:
        - This sets the minute of execution, used in conjunction with hour
+    type: int
   day:
     description:
        - This sets the day when execution will take place
+    type: str
     default: "every-day"
     choices: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday','Sunday', 'even-day', 'odd-day', 'every-day']
   state:
     description:
        - Use C(present) or C(absent) for adding or removing.
        - Use C(query) for listing an object or multiple objects.
+    type: str
     default: present
     choices: [ absent, present, query ]
 

@@ -25,16 +25,18 @@ options:
     group:
         description:
             - This the name of the firmware group
+        type: str
         required: true
     firmwarepol:
         description:
             - This is the name of the firmware policy, which was create by aci_firmware_policy. It is important that
             - you use the same name as the policy created with aci_firmware_policy
-        required: false
+        type: str
     state:
         description:
             - Use C(present) or C(absent) for adding or removing.
             - Use C(query) for listing an object or multiple objects.
+        type: str
         default: present
         choices: [ absent, present, query ]
 

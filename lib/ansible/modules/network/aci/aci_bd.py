@@ -354,9 +354,6 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         vrf=dict(type='str', aliases=['vrf_name']),
-        gateway_ip=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
-        scope=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
-        subnet_mask=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
     )
 
     module = AnsibleModule(
@@ -397,11 +394,6 @@ def main():
     state = module.params['state']
     tenant = module.params['tenant']
     vrf = module.params['vrf']
-
-    # Give warning when fvSubnet parameters are passed as those have been moved to the aci_subnet module
-    if module.params['gateway_ip'] or module.params['subnet_mask'] or module.params['scope']:
-        module._warnings = ["The support for managing Subnets has been moved to its own module, aci_subnet. \
-                            The new modules still supports 'gateway_ip' and 'subnet_mask' along with more features"]
 
     aci.construct_url(
         root_class=dict(

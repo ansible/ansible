@@ -29,6 +29,7 @@ options:
     name:
         description:
             - Name of the firmware policy
+        type: str
         required: true
     version:
         description:
@@ -36,17 +37,19 @@ options:
             - it correctly. The syntax for this field is n9000-xx.x. If you look at the firmware repository using the UI
             - each version will have a "Full Version" column, this is the value you need to use. So, if the Full Version
             - is 13.1(1i), the value for this field would be n9000-13.1(1i)
+        type: str
         required: true
     ignoreCompat:
         description:
             - Check if compatibility checks should be ignored
-        required: false
+        type: bool
     state:
         description:
             - Use C(present) or C(absent) for adding or removing.
             - Use C(query) for listing an object or multiple objects.
+        type: str
+        choices: [absent, present, query]
         default: present
-        choices: ['absent', 'present', 'query']
 
 extends_documentation_fragment:
     - aci
@@ -184,7 +187,7 @@ def main():
     argument_spec.update(
         name=dict(type='str', aliases=['name']),  # Not required for querying all objects
         version=dict(type='str', aliases=['version']),
-        ignoreCompat=dict(type=bool),
+        ignoreCompat=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 

@@ -48,7 +48,7 @@ options:
     suboptions:
       name:
         description:
-        - The name of the COntract to associate with.
+        - The name of the Contract to associate with.
         required: true
         type: str
       schema:
