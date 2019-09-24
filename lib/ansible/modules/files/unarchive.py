@@ -71,7 +71,8 @@ options:
     version_added: "2.1"
   extra_opts:
     description:
-      - Specify additional options by passing in an array.  Each space-separated part of the archive program's command-line option should be a new element\
+      - Specify additional options by passing in an array.
+      - Each space-separated command-line option should be a new element of the array. See examples.
       of the array.
     type: list
     default: ""
