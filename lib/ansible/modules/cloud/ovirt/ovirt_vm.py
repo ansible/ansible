@@ -28,7 +28,7 @@ options:
             - ID of the Virtual Machine to manage.
     state:
         description:
-            - Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered/exported.
+            - Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered/exported/reboot.
               When C(state) is I(registered) and the unregistered VM's name
               belongs to an already registered in engine VM in the same DC
               then we fail to register the unregistered template.
@@ -38,7 +38,8 @@ options:
             - Please check I(notes) to more detailed description of states.
             - I(exported) state will export the VM to export domain or as OVA.
             - I(registered) is supported since 2.4.
-        choices: [ absent, next_run, present, registered, running, stopped, suspended, exported ]
+            - I(reboot) is supported since 2.10.
+        choices: [ absent, next_run, present, registered, running, stopped, suspended, exported, reboot ]
         default: present
     cluster:
         description:
@@ -2309,7 +2310,7 @@ def control_state(vm, vms_service, module):
 
 def main():
     argument_spec = ovirt_full_argument_spec(
-        state=dict(type='str', default='present', choices=['absent', 'next_run', 'present', 'registered', 'running', 'stopped', 'suspended', 'exported']),
+        state=dict(type='str', default='present', choices=['absent', 'next_run', 'present', 'registered', 'running', 'stopped', 'suspended', 'exported', 'reboot']),
         name=dict(type='str'),
         id=dict(type='str'),
         cluster=dict(type='str'),
@@ -2633,6 +2634,13 @@ def main():
                     directory=export_vm.get('directory'),
                     filename=export_vm.get('filename'),
                 )
+        elif state == 'reboot':
+            ret = vms_module.action(
+                action='reboot',
+                entity=vm,
+                action_condition=lambda vm: vm.status == otypes.VmStatus.UP,
+                wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
+            )
 
         module.exit_json(**ret)
     except Exception as e:
