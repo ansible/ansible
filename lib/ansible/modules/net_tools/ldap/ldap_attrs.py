@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: ldap_attrs
-short_description: Add or remove multiple LDAP attribute values.
+short_description: Add or remove multiple LDAP attribute values
 description:
   - Add or remove multiple LDAP attribute values.
 notes:

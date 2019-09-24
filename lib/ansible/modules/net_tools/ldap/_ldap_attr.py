@@ -38,7 +38,7 @@ notes:
 version_added: '2.3'
 deprecated:
   removed_in: '2.14'
-  why: 'The current "ldap_attr" module does not support LDAP attribute insertations or deletions with objectClass dependencies..'
+  why: 'The current "ldap_attr" module does not support LDAP attribute insertations or deletions with objectClass dependencies.'
   alternative: 'Use M(ldap_attrs) instead. Deprecated in 2.10.'
 author:
   - Jiri Tyr (@jtyr)
