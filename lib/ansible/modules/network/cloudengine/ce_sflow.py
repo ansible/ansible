@@ -366,6 +366,9 @@ class Sflow(object):
         self.source_ip = self.module.params['source_ip']
         self.source_version = None
         self.export_route = self.module.params['export_route']
+        self.rate_limit = self.module.params['rate_limit']
+        self.rate_limit_slot = self.module.params['rate_limit_slot']
+        self.forward_enp_slot = self.module.params['forward_enp_slot']
         self.collector_id = self.module.params['collector_id']
         self.collector_ip = self.module.params['collector_ip']
         self.collector_version = None
@@ -886,6 +889,10 @@ class Sflow(object):
     def check_params(self):
         """Check all input params"""
 
+        if any((self.rate_limit, self.rate_limit_slot, self.forward_enp_slot)):
+            self.module.fail_json(msg="""Error: rate_limit, rate_limit_slot orforward_enp_slot are not supported by NETCONF API,
+                please use ce_command or ce_config to have a try.""")
+
         # check agent_ip
         if self.agent_ip:
             self.agent_ip = self.agent_ip.upper()
@@ -1128,9 +1135,9 @@ def main():
         source_ip=dict(required=False, type='str'),
         export_route=dict(required=False, type='str',
                           choices=['enable', 'disable']),
-        rate_limit=dict(required=False, type='str', removed_in_version='2.11'),
-        rate_limit_slot=dict(required=False, type='str', removed_in_version='2.11'),
-        forward_enp_slot=dict(required=False, type='str', removed_in_version='2.11'),
+        rate_limit=dict(required=False, type='str', removed_in_version='2.13'),
+        rate_limit_slot=dict(required=False, type='str', removed_in_version='2.13'),
+        forward_enp_slot=dict(required=False, type='str', removed_in_version='2.13'),
         collector_id=dict(required=False, type='str', choices=['1', '2']),
         collector_ip=dict(required=False, type='str'),
         collector_ip_vpn=dict(required=False, type='str'),
