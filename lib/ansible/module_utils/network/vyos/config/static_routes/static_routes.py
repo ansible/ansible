@@ -208,9 +208,9 @@ class Static_routes(ConfigBase):
         for key, value in iteritems(want):
             if value:
                 if key == 'address':
-                        commands.append(
-                            self._compute_command(address=want['address'])
-                        )
+                    commands.append(
+                        self._compute_command(address=want['address'])
+                    )
                 elif key == 'blackhole_config':
                     commands.extend(self._add_blackhole(key, want, have))
 
@@ -308,7 +308,7 @@ class Static_routes(ConfigBase):
                             self._compute_command(address=want['address'],
                                                   key='next-hop', attrib=hop['address'], value='disable', remove=True)
                         )
-                    elif element =='distance':
+                    elif element == 'distance':
                         commands.append(
                             self._compute_command(address=want['address'], key='next-hop',
                                                   attrib=hop['address'] + element, value=str(hop[element]), remove=True)
@@ -356,6 +356,3 @@ class Static_routes(ConfigBase):
         if value:
             cmd += (" '" + value + "'")
         return cmd
-
-
-

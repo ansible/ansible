@@ -6436,7 +6436,7 @@ lib/ansible/modules/network/vyos/_vyos_static_route.py validate-modules:doc-defa
 lib/ansible/modules/network/vyos/_vyos_static_route.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/network/vyos/_vyos_static_route.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/vyos/_vyos_static_route.py validate-modules:doc-missing-type
-lib/ansible/modules/network/vyos/_vyos_static_route.py validate-modules:missing-subption-docs
+lib/ansible/modules/network/vyos/_vyos_static_route.py validate-modules:missing-suboption-docs
 lib/ansible/modules/network/vyos/vyos_system.py future-import-boilerplate
 lib/ansible/modules/network/vyos/vyos_system.py metaclass-boilerplate
 lib/ansible/modules/network/vyos/vyos_system.py validate-modules:doc-default-does-not-match-spec

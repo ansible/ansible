@@ -91,7 +91,6 @@ class Static_routesFacts(object):
         config['next_hop'] = self.parse_next_hop(next_hop_conf)
         return utils.remove_empties(config)
 
-
     def parse_blackhole(self, conf):
         blackhole = None
         if conf:
@@ -127,4 +126,3 @@ class Static_routesFacts(object):
                         next_hop_info['enabled'] = False
                     next_hop_list.append(next_hop_info)
         return next_hop_list
-

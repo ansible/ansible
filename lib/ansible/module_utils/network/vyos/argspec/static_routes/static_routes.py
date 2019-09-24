@@ -21,7 +21,6 @@
 #   builder template.
 #
 #############################################
-
 """
 The arg spec for the vyos_static_routes module
 """
@@ -33,23 +32,53 @@ __metaclass__ = type
 class Static_routesArgs(object):  # pylint: disable=R0903
     """The arg spec for the vyos_static_routes module
     """
-
     def __init__(self, **kwargs):
         pass
 
-    argument_spec = {'config': {'elements': 'dict',
-            'options': {'address': {'required': True, 'type': 'str'},
-                        'blackhole_config': {'options': {'type': {'type': 'str'},
-                                                  'distance': {'type': 'int'}},
-                                      'type': 'dict'},
-                        'next_hop': {'elements': 'dict',
-                                     'options': {'address': {'required': True,
-                                                             'type': 'str'},
-                                                 'distance': {'type': 'int'},
-                                                 'enabled': {'type': 'bool'},
-                                                 'interface': {'type': 'str'}},
-                                     'type': 'list'}},
-            'type': 'list'},
- 'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'],
-           'default': 'merged',
-           'type': 'str'}}  # pylint: disable=C0301
+    argument_spec = {
+        'config': {
+            'elements': 'dict',
+            'options': {
+                'address': {
+                    'required': True,
+                    'type': 'str'
+                },
+                'blackhole_config': {
+                    'options': {
+                        'type': {
+                            'type': 'str'
+                        },
+                        'distance': {
+                            'type': 'int'
+                        }
+                    },
+                    'type': 'dict'
+                },
+                'next_hop': {
+                    'elements': 'dict',
+                    'options': {
+                        'address': {
+                            'required': True,
+                            'type': 'str'
+                        },
+                        'distance': {
+                            'type': 'int'
+                        },
+                        'enabled': {
+                            'type': 'bool'
+                        },
+                        'interface': {
+                            'type': 'str'
+                        }
+                    },
+                    'type': 'list'
+                }
+            },
+            'type': 'list'
+        },
+        'state': {
+            'choices': ['merged', 'replaced', 'overridden', 'deleted'],
+            'default': 'merged',
+            'type': 'str'
+        }
+    }  # pylint: disable=C0301

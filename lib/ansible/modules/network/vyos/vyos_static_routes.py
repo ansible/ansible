@@ -416,7 +416,7 @@ EXAMPLES = """
 # ------------------------
 # Module Execution Results
 # ------------------------
-# 
+#
 #    "before": [
 #        {
 #            "address": "192.0.0.0/24",
@@ -439,7 +439,7 @@ EXAMPLES = """
 #            },
 #            "next_hop": [
 #                {
-3                    "address": "2001:db8::1"
+#                    "address": "2001:db8::1"
 #                },
 #                {
 #                    "address": "2001:db8::5"

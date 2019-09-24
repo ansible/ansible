@@ -173,8 +173,8 @@ def get_ip_address_version(address):
     """
     try:
         address = unicode(address)
-    except:
-        address = unicode(address)
+    except NameError:
+        address = str(address)
     version = ipaddress.ip_address(address.split("/")[0]).version
     return version
 
