@@ -23,12 +23,14 @@ options:
   name:
     description:
     - The name for the maintenance policy.
+    type: str
     required: true
     aliases: [ maintenance_policy ]
   runmode:
     description:
     - Whether the system pauses on error or just continues through it.
-    choices: ['pauseOnlyOnFailures', 'pauseNever']
+    type: str
+    choices: [ pauseOnlyOnFailures, pauseNever ]
     default: pauseOnlyOnFailures
   graceful:
     description:
@@ -43,6 +45,7 @@ options:
   adminst:
     description:
     - Will trigger an immediate upgrade for nodes if adminst is set to triggered.
+    type: str
     choices: [ triggered, untriggered ]
     default: untriggered
   ignoreCompat:
@@ -54,6 +57,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment:

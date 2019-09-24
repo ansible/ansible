@@ -93,11 +93,12 @@ options:
     - The subnets associated to this ANP.
     type: list
     suboptions:
-      ip:
+      subnet:
         description:
         - The IP range in CIDR notation.
         type: str
         required: true
+        aliases: [ ip ]
       description:
         description:
         - The description of this subnet.

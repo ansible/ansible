@@ -50,16 +50,27 @@ options:
         - The name of the VRF to associate with.
         required: true
         type: str
+      schema:
+        description:
+        - The schema that defines the referenced VRF.
+        - If this parameter is unspecified, it defaults to the current schema.
+        type: str
+      template:
+        description:
+        - The template that defines the referenced VRF.
+        - If this parameter is unspecified, it defaults to the current template.
+        type: str
   subnets:
     description:
     - The subnets associated to this BD.
     type: list
     suboptions:
-      ip:
+      subnet:
         description:
         - The IP range in CIDR notation.
         type: str
         required: true
+        aliases: [ ip ]
       description:
         description:
         - The description of this subnet.
