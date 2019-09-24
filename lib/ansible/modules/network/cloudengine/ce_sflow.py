@@ -497,10 +497,16 @@ class Sflow(object):
                 xml_str += '</agent></agents>'
 
         else:
-            if self.agent_ip == self.sflow_dict["agent"].get("ipv4Addr") \
-                    or self.agent_ip == self.sflow_dict["agent"].get("ipv6Addr"):
+            flag = False
+            if self.agent_ip == self.sflow_dict["agent"].get("ipv4Addr"):
+                self.updates_cmd.append("undo sflow agent ip %s" % self.agent_ip)
+                flag = True
+            elif self.agent_ip == self.sflow_dict["agent"].get("ipv6Addr"):
+                self.updates_cmd.append("undo sflow agent ipv6 %s" % self.agent_ip)
+                flag = True
+            if flag is True:
                 xml_str += '<agents><agent operation="delete"></agent></agents>'
-                self.updates_cmd.append("undo sflow agent")
+                
 
         return xml_str
 
