@@ -965,7 +965,7 @@ def main():
 
     info = {}
 
-    if 'minimum' in subset or 'all' in subset:
+    if 'minimum' in subset or 'all' in subset or 'apps' in subset:
         info['default'] = generate_default_dict(array)
     if 'performance' in subset or 'all' in subset:
         info['performance'] = generate_perf_dict(array)
@@ -1000,7 +1000,10 @@ def main():
         info['nfs_offload'] = generate_nfs_offload_dict(array)
         info['s3_offload'] = generate_s3_offload_dict(array)
     if 'apps' in subset or 'all' in subset:
-        info['apps'] = generate_apps_dict(array)
+        if 'CBS' not in info['default']['array_model']:
+            info['apps'] = generate_apps_dict(array)
+        else:
+            info['apps'] = {}
     if 'arrays' in subset or 'all' in subset:
         info['arrays'] = generate_conn_array_dict(array)
     if 'certs' in subset or 'all' in subset:
