@@ -104,6 +104,27 @@ options:
         description:
             - Configures the sFlow packets sent by the switch not to carry routing information.
         choices: ['enable', 'disable']
+    rate_limit:
+        description:
+            - Specifies the rate of sFlow packets sent from a card to the control plane.
+              The value is an integer that ranges from 100 to 1500, in pps.
+              Deprecated, will be removed in version 2.13.
+    rate_limit_slot:
+        description:
+            - Specifies the slot where the rate of output sFlow packets is limited.
+              If this parameter is not specified, the rate of sFlow packets sent from
+              all cards to the control plane is limited.
+              The value is an integer or a string of characters.
+              Deprecated, will be removed in version 2.13.
+    forward_enp_slot:
+        description:
+            - Enable the Embedded Network Processor (ENP) chip function.
+              The switch uses the ENP chip to perform sFlow sampling,
+              and the maximum sFlow sampling interval is 65535.
+              If you set the sampling interval to be larger than 65535,
+              the switch automatically restores it to 65535.
+              The value is an integer or 'all'.
+              Deprecated, will be removed in version 2.13.
     state:
         description:
             - Determines whether the config should be present or not
@@ -1107,6 +1128,9 @@ def main():
         source_ip=dict(required=False, type='str'),
         export_route=dict(required=False, type='str',
                           choices=['enable', 'disable']),
+        rate_limit=dict(required=False, type='str', removed_in_version='2.11'),
+        rate_limit_slot=dict(required=False, type='str', removed_in_version='2.11'),
+        forward_enp_slot=dict(required=False, type='str', removed_in_version='2.11'),
         collector_id=dict(required=False, type='str', choices=['1', '2']),
         collector_ip=dict(required=False, type='str'),
         collector_ip_vpn=dict(required=False, type='str'),
