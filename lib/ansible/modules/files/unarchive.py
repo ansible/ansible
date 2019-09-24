@@ -90,7 +90,7 @@ options:
       - This should only set to C(no) used on personally controlled sites using self-signed certificate.
       - Prior to 2.2 the code worked as if this was set to C(yes).
     type: bool
-    default: True
+    default: yes
     version_added: "2.2"
 extends_documentation_fragment:
 - decrypt
