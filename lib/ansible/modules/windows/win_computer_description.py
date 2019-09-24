@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r'''
 ---
-module: win_description
+module: win_computer_description
 short_description: Set windows description, owner and organization
 description:
  - This module sets Windows description that is shown under My Computer properties. Module also sets
@@ -46,24 +46,24 @@ author:
 
 EXAMPLES = r'''
 - name: Set Windows description, owner and organization
-  win_description:
+  win_computer_description:
    description: Best Box
    owner: RusoSova
    organization: MyOrg
   register: result
 
 - name: Set Windows description only
-  win_description:
+  win_computer_description:
    description: This is my Windows machine
   register: result
 
 - name: Set organization and clear owner field
-  win_description:
+  win_computer_description:
    owner: ''
    organization: Black Mesa
 
 - name: Clear organization, description and owner
-  win_description:
+  win_computer_description:
    organization: ""
    owner: ""
    description: ""
