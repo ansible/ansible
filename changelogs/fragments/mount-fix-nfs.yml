@@ -1,0 +1,2 @@
+bugfixes:
+    - Fix mount module usage with nfs or other network filesystems.
