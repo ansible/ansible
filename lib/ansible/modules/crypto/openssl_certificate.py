@@ -1871,11 +1871,11 @@ class AssertOnlyCertificateCryptography(AssertOnlyCertificateBase):
     def _validate_csr_extensions(self):
         cert_exts = self.cert.extensions
         csr_exts = self.csr.extensions
-        if len(cert_exts) != len(csr_exts):
+        if len(cert_exts) <= len(csr_exts):
             return False
-        for cert_ext in cert_exts:
+        for csr_ext in csr_exts:
             try:
-                csr_ext = csr_exts.get_extension_for_oid(cert_ext.oid)
+                cert_ext = cert_exts.get_extension_for_oid(csr_ext.oid)
                 if cert_ext != csr_ext:
                     return False
             except cryptography.x509.ExtensionNotFound as dummy:

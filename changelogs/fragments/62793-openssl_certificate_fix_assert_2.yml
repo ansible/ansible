@@ -1,0 +1,3 @@
+bugfixes:
+- "openssl_certificate - fix assertonly provider certificate verification, causing 'extensions mismatch' errors."
+
