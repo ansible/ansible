@@ -268,8 +268,10 @@ without waiting for the import result, use the ``--no-wait`` argument and manual
 The API key is a secret token used by Ansible Galaxy to protect your content. You can find your API key at your
 `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page.
 
-Upload from the Galaxy website
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _upload_collection_galaxy:
+
+Upload a collection from the Galaxy website
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To upload your collection artifact directly on Galaxy:
 
@@ -283,6 +285,7 @@ namespace, the upload request will fail.
 Once Galaxy uploads and accepts a collection, you will be redirected to the **My Imports** page, which displays output from the
 import process, including any errors or warnings about the metadata and content contained in the collection.
 
+.. _collection_versions:
 
 Collection versions
 -------------------
