@@ -1,0 +1,23 @@
+---
+pg_hba_test_ips:
+- contype: local
+  users: 'all,postgres,test'
+- source: '0000:ffff::'
+  netmask: 'ffff:fff0::'
+- source: '192.168.0.0/24'
+  netmask: ''
+  databases: 'all,replication'
+- source: '192.168.1.0/24'
+  netmask: ''
+  databases: 'all'
+  method: reject
+- source: '127.0.0.1/32'
+  netmask: ''
+- source: '::1/128'
+  netmask: ''
+- source: '0000:ff00::'
+  netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00'
+  method: scram-sha-256
+- source: '172.16.0.0'
+  netmask: '255.255.0.0'
+  method: trust

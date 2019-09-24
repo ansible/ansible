@@ -23,27 +23,12 @@
 
   # Test postgresql_privs
   - postgresql_privs.yml
-
-  # Test postgresql_schema module
-  - postgresql_schema.yml
-
-  # Test postgres_pg_hba module
-  - postgresql_pg_hba.yml
   loop_control:
     loop_var: loop_item
 
 # Test default_privs with target_role
 - import_tasks: test_target_role.yml
   when: postgres_version_resp.stdout is version('9.1', '>=')
-
-# Test postgresql_lang module.
-# To implement tests, it needs to install some additional packages
-# that may cause problems on different distributions,
-# so I restricted the tests using CentOS because the results
-# depend only on Postgres version
-# (CentOS 6 repo contains the oldest PG version in these tests - 9.0):
-- import_tasks: postgresql_lang.yml
-  when: ansible_distribution == 'CentOS'
 
 # dump/restore tests per format
 # ============================================================
