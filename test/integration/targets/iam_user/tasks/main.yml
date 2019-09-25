@@ -8,6 +8,17 @@
       region: "{{ aws_region }}"
   block:
 
+  - name: ensure improper usage of parameters fails gracefully
+    iam_user_info:
+      path: '{{ test_path }}'
+      group: '{{ test_group }}'
+    ignore_errors: yes
+    register: iam_user_info_path_group
+  - assert:
+      that:
+        - iam_user_info_path_group is failed
+        - 'iam_user_info_path_group.msg == "parameters are mutually exclusive: group|path"'
+
   - name: ensure ansible user exists
     iam_user:
       name: '{{ test_user }}'
@@ -73,20 +84,6 @@
         - iam_user_info.iam_users[0].path == '{{ test_path }}'
         - iam_user_info.iam_users[0].user_id is not none
         - iam_user_info.iam_users[0].user_name == '{{ test_user }}'
-
-  - name: attempt using both a path and group
-    iam_user_info:
-      path: '{{ test_path }}'
-      group: '{{ test_group }}'
-      name: '{{ test_user }}'
-    ignore_errors: yes
-    register: iam_user_info_path_group
-
-  - name: assert improper usage of parameters fails gracefully
-    assert:
-      that:
-        - iam_user_info_path_group is failed
-        - 'iam_user_info_path_group.msg == "parameters are mutually exclusive: group|path"'
 
   - name: remove user from group
     iam_group:
