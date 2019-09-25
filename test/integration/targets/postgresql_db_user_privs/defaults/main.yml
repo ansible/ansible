@@ -32,9 +32,3 @@ pg_hba_test_ips:
 - source: '172.16.0.0'
   netmask: '255.255.0.0'
   method: trust
-
-# defaults for test SSL
-ssl_db: 'ssl_db'
-ssl_user: 'ssl_user'
-ssl_pass: 'ssl_pass'
-ssl_rootcert: '~{{ pg_user }}/root.crt'

@@ -1,15 +1,6 @@
 # Unsorted tests that were moved from here to unsorted.yml
 - import_tasks: unsorted.yml
 
-# Test ssl.
-# Restricted using Debian family because of there are errors on other distributions
-# that not related with PostgreSQL or psycopg2 SSL support.
-# The tests' key point is to be sure that ssl options work in general
-- import_tasks: ssl.yml
-  when:
-  - ansible_os_family == 'Debian'
-  - postgres_version_resp.stdout is version('9.4', '>=')
-
 - include_tasks: '{{ loop_item }}'
   loop:
   # Test postgresql_user module
