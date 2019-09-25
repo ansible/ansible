@@ -2311,7 +2311,7 @@ def control_state(vm, vms_service, module):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(type='str', default='present', choices=[
-            'absent', 'next_run', 'present', 'registered', 'running','stopped', 'suspended', 'exported', 'reboot'
+            'absent', 'next_run', 'present', 'registered', 'running', 'stopped', 'suspended', 'exported', 'reboot'
         ]),
         name=dict(type='str'),
         id=dict(type='str'),
