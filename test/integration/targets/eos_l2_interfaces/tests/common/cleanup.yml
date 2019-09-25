@@ -1,12 +1,12 @@
 ---
 - name: Remove all vlans
-  cli_config:
-    config: no vlan 1-4094
+  eos_config:
+    lines: no vlan 1-4094
   become: yes
 
 - name: Completely remove vlans from interfaces
-  cli_config:
-    config: |
+  eos_config:
+    lines: |
       interface {{ item }}
         no switchport mode
         no switchport access vlan
