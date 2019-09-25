@@ -44,7 +44,7 @@ options:
        - Perform the given action. The lock and unlock actions always return
          changed as the servers API does not provide lock status.
      choices: [stop, start, pause, unpause, lock, unlock, suspend, resume,
-               rebuild]
+               rebuild, reboot]
      default: present
    image:
      description:
