@@ -38,6 +38,8 @@ groupings:
   - aws
   aws_config_rule:
   - aws
+  aws_dynamodb_item_info:
+  - aws
   aws_direct_connect_connection:
   - aws
   aws_direct_connect_gateway:
