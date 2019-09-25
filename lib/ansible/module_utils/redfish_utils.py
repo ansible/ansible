@@ -1997,8 +1997,8 @@ class RedfishUtils(object):
             return response
         data = response['data']
         protocol_services = ['SNMP', 'VirtualMedia', 'Telnet', 'SSDP', 'IPMI', 'SSH',
-                     'KVMIP', 'NTP', 'HTTP', 'HTTPS', 'DHCP', 'DHCPv6', 'RDP',
-                     'RFB']
+                             'KVMIP', 'NTP', 'HTTP', 'HTTPS', 'DHCP', 'DHCPv6', 'RDP',
+                             'RFB']
         for protocol_service in protocol_services:
             if protocol_service in data.keys():
                 service_result[protocol_service] = data[protocol_service]
@@ -2009,8 +2009,8 @@ class RedfishUtils(object):
 
     def set_manager_services(self, protocol_name, protocol_enabled=None, protocol_port=None):
         protocol_services = ['SNMP', 'VirtualMedia', 'Telnet', 'SSDP', 'IPMI', 'SSH',
-                     'KVMIP', 'NTP', 'HTTP', 'HTTPS', 'DHCP', 'DHCPv6', 'RDP',
-                     'RFB']
+                             'KVMIP', 'NTP', 'HTTP', 'HTTPS', 'DHCP', 'DHCPv6', 'RDP',
+                             'RFB']
         if protocol_name not in protocol_services:
             return {'ret': False, 'msg': "protocol_name %s is invalid" % protocol_name}
 
@@ -2033,16 +2033,16 @@ class RedfishUtils(object):
 
         # if the protocol is already enabled, nothing to do
         property_value = data.get(protocol_name)
-        if (protocol_enabled == None or protocol_enabled == property_value['ProtocolEnabled']) and (protocol_port == None or protocol_port == property_value['Port']):
-            return {'ret': True, 'changed': False, 'msg': "Manager services already set"}
+        if (protocol_enabled is None) or (protocol_enabled == property_value['ProtocolEnabled']):
+            if (protocol_port is None) or (protocol_port == property_value['Port']):
+                return {'ret': True, 'changed': False, 'msg': "Manager services already set"}
 
         payload = {protocol_name: {}}
-        if protocol_enabled != None:
+        if protocol_enabled is not None:
             payload[protocol_name]['ProtocolEnabled'] = protocol_enabled
-        if protocol_port != None:
+        if protocol_port is not None:
             payload[protocol_name]['Port'] = protocol_port
         response = self.patch_request(self.root_uri + networkprotocol_uri, payload)
         if response['ret'] is False:
             return response
         return {'ret': True, 'changed': True, 'msg': "Modified Manager services"}
-

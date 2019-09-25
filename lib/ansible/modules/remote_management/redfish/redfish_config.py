@@ -80,19 +80,19 @@ options:
     description:
       - protocol name of manager service to set
     type: str
-    version_added: "2.9"
+    version_added: "2.10"
   protocol_enabled:
     required: false
     description:
       - bool value for whether protocol_name is enanbled or not
     type: bool
-    version_added: "2.9"
+    version_added: "2.10"
   protocol_port:
     required: false
     description:
       - new port value for protocol_name
     type: int
-    version_added: "2.9"
+    version_added: "2.10"
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
