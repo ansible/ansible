@@ -36,7 +36,6 @@ from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list, ComplexList
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
 
 _DEVICE_CONNECTION = None
@@ -200,7 +199,7 @@ class LocalEapi:
 
         self._url = '%s://%s:%s/command-api' % (proto, host, port)
 
-        if 'auth_pass' in provider:
+        if provider.get("auth_pass"):
             self._enable = {'cmd': 'enable', 'input': provider.get('auth_pass')}
         else:
             self._enable = 'enable'
