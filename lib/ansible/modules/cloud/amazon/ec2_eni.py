@@ -649,7 +649,7 @@ def delete_eni(connection, module):
         module.exit_json(changed=changed)
     except is_boto3_error_code('InvalidNetworkInterfaceID.NotFound'):
         module.exit_json(changed=False)
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, "Failure during delete of {0}".format(eni_id))
 
 
