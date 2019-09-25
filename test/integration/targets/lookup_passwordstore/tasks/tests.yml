@@ -47,3 +47,21 @@
   assert:
     that:
       - readpass == newpass
+
+- name: Set a predefined value to be used as a new password
+  set_fact:
+    predefinedpass: "Zm9vYmFyMQ=="
+
+- name: Create password based on predefined value
+  set_fact:
+    newpredefinedpass: "{{ lookup('passwordstore', 'predefined-pass create=yes userpass={{ predefinedpass }}') }}"
+
+- name: Read password based on predefined value
+  set_fact:
+    readpredefinedpass: "{{ lookup('passwordstore', 'predefined-pass') }}"
+
+- name: Verify password based on predefined value
+  assert:
+    that:
+      - predefinedpass == newpredefinedpass
+      - predefinedpass == readpredefinedpass
