@@ -25,6 +25,7 @@ version_added: 2.8
 author:
 - Derek Rushing (@kryptsi)
 - Joseph Andreatta (@vmwjoseph)
+- Jan Meerkamp (@meerkampdvv)
 notes:
     - Tested on ESXi 6.5, vSphere 6.7
     - The ESXi login user must have the appropriate rights to administer permissions.
@@ -58,6 +59,7 @@ options:
     - The name of the parent object or a Path for non uniqe Object names.
     type: str
     required: False
+    version_added: "2.10"
   object_type:
     description:
     - The object type being targeted.
