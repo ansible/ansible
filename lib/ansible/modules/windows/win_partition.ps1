@@ -148,13 +148,8 @@ function New-AnsiblePartition {
         }
     }
 
-    switch ($SizeMax) {
-        $True {
-            $parameters.Add("UseMaximumSize", $True)
-        }
-        $False {
-            $parameters.Add("Size", $Size)
-        }
+    if ($null -ne $Size) {
+        $parameters.Add("Size", $Size)
     }
 
     if ($null -ne $MbrType) {
@@ -235,7 +230,7 @@ if ($ansible_partition) {
             if ($size_is_maximum) {
                 $ansible_partition_size = $max_supported_size
             }
-            if ($ansible_partition_size -ne $ansible_partition.Size -and $ansible_partition_size -le $max_supported_size) {
+            if ($ansible_partition_size -ne $ansible_partition.Size -and ($ansible_partition_size - $ansible_partition.Size -gt 1049000 -or $ansible_partition.Size - $ansible_partition_size -gt 1049000)) {
                 if ($ansible_partition.IsReadOnly) {
                     $module.FailJson("Unable to resize partition: Partition is read only")
                 } else {
@@ -281,6 +276,8 @@ else {
             if ($ansible_partition_size -gt $max_supported_size) {
                 $module.FailJson("Partition size is not supported by disk. Use partition_size: -1 to get maximum size")
             }
+        } else {
+            $ansible_partition_size = (Get-Disk -Number $disk_number).LargestFreeExtent
         }
 
         $supp_part_type = (Get-Disk -Number $disk_number).PartitionStyle
@@ -300,7 +297,7 @@ else {
         }
 
         if (-not $module.CheckMode) {
-            $ansible_partition = New-AnsiblePartition -DiskNumber $disk_number -Letter $drive_letter -SizeMax $size_is_maximum -Size $ansible_partition_size -MbrType $mbr_type -GptType $gpt_type -Style $partition_style
+            $ansible_partition = New-AnsiblePartition -DiskNumber $disk_number -Letter $drive_letter -Size $ansible_partition_size -MbrType $mbr_type -GptType $gpt_type -Style $partition_style
         }
         $module.Result.changed = $true
     }

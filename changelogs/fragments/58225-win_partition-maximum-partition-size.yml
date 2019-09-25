@@ -1,0 +1,2 @@
+bugfixes:
+  - win_partition - don't resize partitions if size difference is < 1 MiB
