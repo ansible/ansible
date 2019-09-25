@@ -18,7 +18,7 @@ from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, remove_empties
 from ansible.module_utils.network.nxos.facts.facts import Facts
 from ansible.module_utils.network.nxos.utils.utils import normalize_interface, search_obj_in_list
-from ansible.module_utils.network.nxos.utils.utils import remove_rsvd_interfaces
+from ansible.module_utils.network.nxos.utils.utils import remove_rsvd_interfaces, get_interface_type
 
 
 class L3_interfaces(ConfigBase):
@@ -97,8 +97,8 @@ class L3_interfaces(ConfigBase):
         if config:
             for w in config:
                 w.update({'name': normalize_interface(w['name'])})
-                if w['name'] == 'mgmt0':
-                    self._module.fail_json(msg="The 'mgmt0' interface is not allowed to be managed by this module")
+                if get_interface_type(w['name']) == 'management':
+                    self._module.fail_json(msg="The 'management' interface is not allowed to be managed by this module")
                 want.append(remove_empties(w))
         have = existing_l3_interfaces_facts
         resp = self.set_state(want, have)
