@@ -22,7 +22,7 @@ description:
 options:
   process_name_exact:
     description:
-    - The name of the process(es) for which to wait.
+    - The name of the process(es) for which to wait.  The name of the process(es) should not include the file extension suffix.
     type: list
   process_name_pattern:
     description:
