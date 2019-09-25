@@ -250,10 +250,10 @@ def main():
         elif action == 'reboot':
             if not _reboot_state(status):
                 module.exit_json(changed=False)
-                
+
             cloud.compute.post(
                 _action_url(server.id),
-                json={'reboot': {'type':'HARD'}})
+                json={'reboot': {'type': 'HARD'}})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
