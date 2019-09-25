@@ -92,8 +92,8 @@ EXAMPLES = r'''
     state: present
   delegate_to: localhost
 
-- name: Remove a site VRF region CIDR
-  mso_schema_template_vrf_region_cidr:
+- name: Remove a site VRF region CIDR subnet
+  mso_schema_site_vrf_region_cidr_subnet:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -107,8 +107,8 @@ EXAMPLES = r'''
     state: absent
   delegate_to: localhost
 
-- name: Query a specific site VRF region CIDR
-  mso_schema_template_vrf_region_cidr:
+- name: Query a specific site VRF region CIDR subnet
+  mso_schema_site_vrf_region_cidr_subnet:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -123,8 +123,8 @@ EXAMPLES = r'''
   delegate_to: localhost
   register: query_result
 
-- name: Query all site VRF region CIDR
-  mso_schema_template_vrf_region_cidr:
+- name: Query all site VRF region CIDR subnet
+  mso_schema_site_vrf_region_cidr_subnet:
     host: mso_host
     username: admin
     password: SomeSecretPassword
