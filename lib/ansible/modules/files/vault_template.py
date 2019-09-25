@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: consul_template
+module: vault_template
 short_description: Parses Go templates using consul-template and values from HashiCorp Vault
 version_added: 2.9
 author: Mikhail Morev <mmorev@live.ru>
@@ -33,7 +33,7 @@ description:
 options:
   src:
     description:
-    - Path of a Go-formatted consul-template file on the Ansible controller.
+    - Path of a Go-formatted template file on the Ansible controller.
     - This can be a relative or an absolute path.
     type: path
     required: yes
@@ -60,7 +60,7 @@ options:
     - name: VAULT_TOKEN
     type: str
 notes:
-- You can use the M(consul_template) module with the C(content:) option if you prefer the template inline,
+- You can use the M(vault_template) module with the C(content:) option if you prefer the template inline,
   as part of the playbook. In this case C(src:) parameter is not permitted
 - Any environment variables passed to Ansible executable or using task environment (see examples below) can
   be used inside template (for use single template in different environments like dev/test/prod, for example)
@@ -76,7 +76,7 @@ extends_documentation_fragment:
 
 EXAMPLES = r'''
 - name: Create file using inline template
-  consul_template:
+  vault_template:
     vault_addr: 'http://127.0.0.1:8200/'
     vault_token: '...'
     dest: /opt/rmcp/none/conf/none.properties
@@ -86,7 +86,7 @@ EXAMPLES = r'''
       {{- end }}
 
 - name: Create file with root-only access
-  consul_template:
+  vault_template:
     src: secretconfig.ctmpl
     dest: /etc/secretconfig.ini
     mode: 0600
@@ -94,7 +94,7 @@ EXAMPLES = r'''
     group: wheel
 
 - name: Use environment variables in template
-  consul_template:
+  vault_template:
     src: !unsafe |
       {{ with secret (printf "/kv/%s/secret" (env "ENV_NAME")) -}}
       secretkey={{ index .Data.data "secretkey" }}
@@ -103,3 +103,5 @@ EXAMPLES = r'''
   environment:
     ENV_NAME: dev
 '''
+
+RETURN = r''' # '''
