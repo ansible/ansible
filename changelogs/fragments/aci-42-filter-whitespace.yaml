@@ -1,0 +1,2 @@
+bugfixes:
+- "ACI modules - Fix a whitespace issue in filters for ACI 4.2 strict validation"
