@@ -64,7 +64,7 @@ options:
     required: true
 notes:
 - By default there are a few builtin resources that come with PowerShell 5.0,
-  see U(https://docs.microsoft.com/en-us/powershell/dsc/builtinresource) for
+  see U(https://docs.microsoft.com/en-us/powershell/dsc/resources/resources) for
   more information on these resources.
 - Custom DSC resources can be installed with M(win_psmodule) using the I(name)
   option.
