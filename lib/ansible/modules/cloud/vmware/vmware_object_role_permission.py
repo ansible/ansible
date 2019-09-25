@@ -27,7 +27,8 @@ author:
 - Joseph Andreatta (@vmwjoseph)
 notes:
     - Tested on ESXi 6.5, vSphere 6.7
-    - Be sure that the ESXi user used for login, has the appropriate rights to administer permissions
+    - The ESXi login user must have the appropriate rights to administer permissions.
+    - Permissions for a distributed switch must be defined and managed on either the datacenter or a folder containing the switch.
 requirements:
     - "python >= 2.7"
     - PyVmomi
@@ -36,18 +37,27 @@ options:
     description:
     - The role to be assigned permission.
     required: True
+    type: str
   principal:
     description:
     - The user to be assigned permission.
     - Required if C(group) is not specified.
+    type: str
   group:
     description:
     - The group to be assigned permission.
     - Required if C(principal) is not specified.
+    type: str
   object_name:
     description:
     - The object name to assigned permission.
+    type: str
     required: True
+  object_parent:
+    description:
+    - The name of the parent object or a Path for non uniqe Object names.
+    type: str
+    required: False
   object_type:
     description:
     - The object type being targeted.
@@ -55,6 +65,7 @@ options:
     choices: ['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool',
               'Datastore', 'Network', 'HostSystem', 'ComputeResource',
               'ClusterComputeResource', 'DistributedVirtualSwitch']
+    type: str
   recursive:
     description:
     - Should the permissions be recursively applied.
@@ -67,6 +78,7 @@ options:
     - When C(state=absent), the permission is removed if it exists.
     choices: ['present', 'absent']
     default: present
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -211,15 +223,43 @@ class VMwareObjectRolePermission(PyVmomi):
             object_type = getattr(vim, self.params['object_type'])
         except AttributeError:
             self.module.fail_json(msg="Object type %s is not valid." % self.params['object_type'])
-        self.current_obj = find_obj(content=self.content,
-                                    vimtype=[getattr(vim, self.params['object_type'])],
-                                    name=self.params['object_name'])
+        self.current_obj = None
+        obj_list = find_obj(content=self.content,
+                            vimtype=[getattr(vim, self.params['object_type'])],
+                            name=self.params['object_name'],
+                            first=False)
+        if len(obj_list) > 1:
+            if not self.params['object_parent']:
+                self.module.fail_json(msg="Object Name %s is not unique. Please specify object_parent" % self.params['object_name'])
+            if "/" in self.params['object_parent']:
+                parent_objects_parts = self.params['object_parent'].strip('/').split('/')
+                for obj in obj_list:
+                    parent = obj.parent
+                    # Reverse Path and go the Tree up
+                    path = parent_objects_parts[::-1]
+                    for part in path:
+                        if part == parent_objects_parts[0]:
+                            self.current_obj = obj
+                        if parent.name == part:
+                            parent = parent.parent
+            else:
+                for obj in obj_list:
+                    if obj.parent.name == self.params['object_parent']:
+                        self.current_obj = obj
 
+        else:
+            self.current_obj = obj_list[0]
         if self.current_obj is None:
             self.module.fail_json(
                 msg="Specified object %s of type %s was not found."
                 % (self.params['object_name'], self.params['object_type'])
             )
+        if self.params['object_type'] == 'DistributedVirtualSwitch':
+            msg = "You are applying permissions to a Distributed vSwitch. " \
+                  "This will probably fail, since Distributed vSwitches inherits permissions " \
+                  "from the datacenter or a folder level. " \
+                  "Define permissions on the datacenter or the folder containing the switch."
+            self.module.warn(msg)
 
 
 def main():
@@ -228,6 +268,7 @@ def main():
         dict(
             role=dict(required=True, type='str'),
             object_name=dict(required=True, type='str'),
+            object_parent=dict(type='str'),
             object_type=dict(
                 type='str',
                 default='Folder',
