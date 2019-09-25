@@ -4,7 +4,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os, shutil, stat, tempfile, subprocess
+import os
+import shutil
+import stat
+import tempfile
+import subprocess
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleAction, AnsibleActionFail
@@ -14,6 +18,7 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
 display = Display()
+
 
 class ActionModule(ActionBase):
 
