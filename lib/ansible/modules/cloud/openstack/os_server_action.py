@@ -116,6 +116,7 @@ def _system_state_change(action, status):
         return False
     return True
 
+
 def _reboot_state(status):
     """Check if system state is suitable for HARD reboot"""
     if status in _reboot_states:
