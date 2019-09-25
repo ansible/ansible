@@ -190,3 +190,12 @@
 - name: Print PostgreSQL server version
   debug:
     msg: "{{ postgres_version_resp.stdout }}"
+
+# SSL configuration.
+# Restricted using Debian family because of there are errors on other distributions
+# that not related with PostgreSQL or psycopg2 SSL support.
+# The tests key point is to be sure that ssl options work in general
+- import_tasks: ssl.yml
+  when:
+  - ansible_os_family == 'Debian'
+  - postgres_version_resp.stdout is version('9.4', '>=')

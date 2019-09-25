@@ -79,27 +79,3 @@
   service:
     name: "{{ postgresql_service }}"
     state: reloaded
-
-###############
-# Do main tests
-
-- name: postgresql SSL - ping DB with SSL
-  become_user: "{{ pg_user }}"
-  become: yes
-  postgresql_ping:
-    db: "{{ ssl_db }}"
-    login_user: "{{ ssl_user }}"
-    login_password: "{{ ssl_pass }}"
-    login_host: 127.0.0.1
-    login_port: 5432
-    ssl_mode: require
-    ca_cert: '{{ ssl_rootcert }}'
-  register: result
-
-- assert:
-    that: 
-    - result.is_available == true
-
-###################################################
-# I decided not to clean ssl_db, ssl_user and certs
-# for testing options related with SSL in other modules
