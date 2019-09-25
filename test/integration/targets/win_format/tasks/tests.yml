@@ -28,10 +28,11 @@
     drive_letter: T
     new_label: Formatted
     full: True
+    allocation_unit_size: 8192
   register: format_result_check
   check_mode: True
 
-- win_shell: $AnsiPart = Get-Partition -DriveLetter T; $AnsiVol = Get-Volume -DriveLetter T; "$($AnsiPart.Size),$($AnsiVol.Size),$($AnsiVol.FileSystemLabel)"
+- win_shell: $AnsiPart = Get-Partition -DriveLetter T; $AnsiVol = Get-Volume -DriveLetter T; "$($AnsiPart.Size),$($AnsiVol.Size),$($AnsiVol.FileSystemLabel),$((Get-CimInstance -ClassName Win32_Volume -Filter "DriveLetter = 'T:'" -Property BlockSize).BlockSize)"
   register: formatted_value_result_check
 
 - name: Fully format volume and assign label
@@ -39,17 +40,18 @@
     drive_letter: T
     new_label: Formatted
     full: True
+    allocation_unit_size: 8192
   register: format_result
 
-- win_shell: $AnsiPart = Get-Partition -DriveLetter T; $AnsiVol = Get-Volume -DriveLetter T; "$($AnsiPart.Size),$($AnsiVol.Size),$($AnsiVol.FileSystemLabel)"
+- win_shell: $AnsiPart = Get-Partition -DriveLetter T; $AnsiVol = Get-Volume -DriveLetter T; "$($AnsiPart.Size),$($AnsiVol.Size),$($AnsiVol.FileSystemLabel),$((Get-CimInstance -ClassName Win32_Volume -Filter "DriveLetter = 'T:'" -Property BlockSize).BlockSize)"
   register: formatted_value_result
 
 - assert:
     that:
       - format_result_check is changed
       - format_result is changed
-      - formatted_value_result_check.stdout | trim == "2096037888,0,"
-      - formatted_value_result.stdout | trim == "2096037888,2096033792,Formatted"
+      - formatted_value_result_check.stdout | trim == "2096037888,0,,"
+      - formatted_value_result.stdout | trim == "2096037888,2096029696,Formatted,8192"
 
 - name: Format NTFS volume with integrity streams enabled
   win_format:
@@ -154,3 +156,27 @@
       - format_volume_without_force_same_fs is not changed
       - 'format_volume_without_force.msg == "Force format must be specified to format non-pristine volumes"'
       - format_volume_with_force is changed
+
+- name: Reformat using different alu without force format
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    allocation_unit_size: 8192
+    file_system: ntfs
+  register: reformat_using_alu_without_force
+  ignore_errors: True
+
+- assert:
+    that:
+      - reformat_using_alu_without_force is failed
+
+- name: Reformat using different alu using force format
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    allocation_unit_size: 8192
+    file_system: ntfs
+    force: True
+  register: reformat_using_alu_with_force
+
+- assert:
+    that:
+      - reformat_using_alu_with_force is changed
