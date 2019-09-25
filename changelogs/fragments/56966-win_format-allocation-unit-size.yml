@@ -1,0 +1,2 @@
+bugfixes:
+  - win_format - fixed issue where module would not change allocation unit size (https://github.com/ansible/ansible/issues/56961)
