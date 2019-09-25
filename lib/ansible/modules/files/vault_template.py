@@ -66,8 +66,6 @@ notes:
   be used inside template (for use single template in different environments like dev/test/prod, for example)
 seealso:
 - module: copy
-author:
-- Mikhail Morev
 extends_documentation_fragment:
 - backup
 - files
