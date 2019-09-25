@@ -12,6 +12,8 @@ You can install and use collections through `Ansible Galaxy <https://galaxy.ansi
    :local:
    :depth: 2
 
+.. _collections_installing:
+
 Installing collections
 ======================
 
@@ -46,6 +48,10 @@ You can also keep a collection adjacent to the current playbook, under a ``colle
     │               └── my_namespace/
     │                   └── my_collection/<collection structure lives here>
 
+
+See :ref:`collection_structure` for details on the collection directory structure.
+
+.. _collections_older_version:
 
 Installing an older version of a collection
 -------------------------------------------
