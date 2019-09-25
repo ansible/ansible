@@ -710,6 +710,48 @@ test_no_log - Invoked with:
         $actual_event | Assert-DictionaryEquals -Expected $expected_event
     }
 
+    "No log value with an empty string" = {
+        $spec = @{
+            options = @{
+                password1 = @{type = "str"; no_log = $true}
+                password2 = @{type = "str"; no_log = $true}
+            }
+        }
+        $complex_args = @{
+            _ansible_module_name = "test_no_log"
+            password1 = ""
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $m.Result.data = $complex_args.dict
+
+        # verify params internally aren't masked
+        $m.Params.password1 | Assert-Equals -Expected ""
+        $m.Params.password2 | Assert-Equals -Expected $null
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            invocation = @{
+                module_args = @{
+                    password1 = ""
+                    password2 = $null
+                }
+            }
+            changed = $false
+            data = $complex_args.dict
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
     "Removed in version" = {
         $spec = @{
             options = @{
