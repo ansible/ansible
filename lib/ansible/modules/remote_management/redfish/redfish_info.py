@@ -222,6 +222,14 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
+  - name: Get Manager Services
+    redfish_command:
+      category: Manager
+      command: GetManagerServices
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Get all information available in all categories
     redfish_info:
       category: all
@@ -251,7 +259,7 @@ CATEGORY_COMMANDS_ALL = {
     "Accounts": ["ListUsers"],
     "Sessions": ["GetSessions"],
     "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities", "GetSoftwareInventory"],
-    "Manager": ["GetManagerNicInventory", "GetVirtualMedia", "GetLogs"],
+    "Manager": ["GetManagerNicInventory", "GetVirtualMedia", "GetLogs", "GetManagerServices"],
 }
 
 CATEGORY_COMMANDS_DEFAULT = {
@@ -418,6 +426,8 @@ def main():
                     result["virtual_media"] = rf_utils.get_multi_virtualmedia()
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
+                elif command == "GetManagerServices":
+                    result["manager_services"] = rf_utils.get_manager_services()
 
     # Return data back
     if is_old_facts:

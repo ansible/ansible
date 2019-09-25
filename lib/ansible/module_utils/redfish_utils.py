@@ -1979,3 +1979,70 @@ class RedfishUtils(object):
 
     def get_multi_system_inventory(self):
         return self.aggregate(self.get_system_inventory)
+
+    def get_manager_services(self):
+        result = {}
+        service_result = {}
+        # Find NetworkProtocol
+        response = self.get_request(self.root_uri + self.manager_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'NetworkProtocol' not in data:
+            return {'ret': False, 'msg': "NetworkProtocol resource not found"}
+        networkprotocol_uri = data["NetworkProtocol"]["@odata.id"]
+
+        response = self.get_request(self.root_uri + networkprotocol_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        protocol_services = ['SNMP', 'VirtualMedia', 'Telnet', 'SSDP', 'IPMI', 'SSH',
+                     'KVMIP', 'NTP', 'HTTP', 'HTTPS', 'DHCP', 'DHCPv6', 'RDP',
+                     'RFB']
+        for protocol_service in protocol_services:
+            if protocol_service in data.keys():
+                service_result[protocol_service] = data[protocol_service]
+
+        result['ret'] = True
+        result["entries"] = service_result
+        return result
+
+    def set_manager_services(self, protocol_name, protocol_enabled=None, protocol_port=None):
+        protocol_services = ['SNMP', 'VirtualMedia', 'Telnet', 'SSDP', 'IPMI', 'SSH',
+                     'KVMIP', 'NTP', 'HTTP', 'HTTPS', 'DHCP', 'DHCPv6', 'RDP',
+                     'RFB']
+        if protocol_name not in protocol_services:
+            return {'ret': False, 'msg': "protocol_name %s is invalid" % protocol_name}
+
+        # Find NetworkProtocol
+        response = self.get_request(self.root_uri + self.manager_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'NetworkProtocol' not in data:
+            return {'ret': False, 'msg': "NetworkProtocol resource not found"}
+        networkprotocol_uri = data["NetworkProtocol"]["@odata.id"]
+
+        # Check protocol property
+        response = self.get_request(self.root_uri + networkprotocol_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if protocol_name not in data:
+            return {'ret': False, 'msg': "%s property not found under %s" % (protocol_name, networkprotocol_uri)}
+
+        # if the protocol is already enabled, nothing to do
+        property_value = data.get(protocol_name)
+        if (protocol_enabled == None or protocol_enabled == property_value['ProtocolEnabled']) and (protocol_port == None or protocol_port == property_value['Port']):
+            return {'ret': True, 'changed': False, 'msg': "Manager services already set"}
+
+        payload = {protocol_name: {}}
+        if protocol_enabled != None:
+            payload[protocol_name]['ProtocolEnabled'] = protocol_enabled
+        if protocol_port != None:
+            payload[protocol_name]['Port'] = protocol_port
+        response = self.patch_request(self.root_uri + networkprotocol_uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True, 'msg': "Modified Manager services"}
+
