@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - ec2_eni - Port ec2_eni module to boto3 and add an integration test suite.
