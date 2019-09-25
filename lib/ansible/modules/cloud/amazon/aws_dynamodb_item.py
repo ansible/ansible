@@ -17,7 +17,7 @@ short_description: Creates, updates or deletes single items in AWS Dynamo DB tab
 description:
     - Creates, updates or deletes single items in AWS DynamoDB tables.
     - More infomation can be found here U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#client).
-version_added: "2.9"
+version_added: "2.10"
 author: "David C. Martin (@blastik)"
 options:
     table:
