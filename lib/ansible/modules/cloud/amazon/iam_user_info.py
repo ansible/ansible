@@ -108,7 +108,7 @@ iam_users:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, AWSRetry
 
 try:
     import botocore
@@ -117,13 +117,19 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 
+@AWSRetry.exponential_backoff()
+def list_iam_users_with_backoff(client, operation, **kwargs):
+    paginator = client.get_paginator(operation)
+    return paginator.paginate(**kwargs).build_full_result()
+
+
 def list_iam_users(connection, module):
 
     name = module.params.get('name')
     group = module.params.get('group')
     path = module.params.get('path')
 
-    params = dict(MaxItems=1000)
+    params = dict()
     iam_users = []
 
     if not group and not path:
@@ -137,7 +143,7 @@ def list_iam_users(connection, module):
     if group:
         params['GroupName'] = group
         try:
-            iam_users = connection.get_group(**params)['Users']
+            iam_users = list_iam_users_with_backoff(connection, 'get_group', **params)['Users']
         except (ClientError, ParamValidationError) as e:
             module.fail_json_aws(e, msg="Couldn't get IAM user info for group %s" % group)
         if name:
@@ -146,7 +152,7 @@ def list_iam_users(connection, module):
     if path and not group:
         params['PathPrefix'] = path
         try:
-            iam_users = connection.list_users(**params)['Users']
+            iam_users = list_iam_users_with_backoff(connection, 'list_users', **params)['Users']
         except (ClientError, ParamValidationError) as e:
             module.fail_json_aws(e, msg="Couldn't get IAM user info for path %s" % path)
         if name:
