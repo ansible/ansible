@@ -112,24 +112,27 @@ options:
     version_added: 2.7
   name:
     description:
-      - Name for the ENI.  This will create a tag called "Name" with the value assigned here.  This is used as another
-        means of identifying an ENI, so it works best if the name is unique within a subnet.  AWS does not enforce
-        unique Name tags, so duplicate names are possible if you configure it that way.  If the name is not
-        unique within a subnet, then you will need to provide other identifying information such as private_ip_address
-        or eni_id.
+      - Name for the ENI. This will create a tag called "Name" with the value assigned here.
+      - This can be used in conjunction with I(subnet_id) as another means of identifiying a network interface.
+      - AWS does not enforce unique Name tags, so duplicate names are possible if you configure it that way.
+        If that is the case, you will need to provide other identifying information such as I(private_ip_address) or I(eni_id).
     required: false
     version_added: "2.10"
   tags:
     description:
-      - A hash/dictionary of tags to add to the new ENI or to add/remove from an existing one.  Please note that
-        the name field sets the "Name" tag.  So if you clear all tags, you will also clear the name.
+      - A hash/dictionary of tags to add to the new ENI or to add/remove from an existing one. Please note that
+        the name field sets the "Name" tag.
+      - To clear all tags, set this option to an empty dictionary to use in conjunction with I(purge_tags).
+        If you provide I(name), that tag will not be removed.
+      - To prevent removing any tags set I(purge_tags) to false.
     required: false
     version_added: "2.10"
   purge_tags:
     description:
-      - Delete any tags not specified in the task that are on the instance.
-        This means you have to specify all the desired tags on each task affecting an instance.
-    default: false
+      - Indicates whether to remove tags not specified in I(tags) or I(name). This means you have to specify all
+        the desired tags on each task affecting a network interface.
+      - If I(tags) is omitted or None this option is disregarded.
+    default: true
     type: bool
     version_added: "2.10"
 extends_documentation_fragment:
@@ -312,7 +315,8 @@ from ansible.module_utils.ec2 import (
     ansible_dict_to_boto3_tag_list
 )
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
+from ansible.module_utils.aws.waiters import get_waiter
 
 
 def get_eni_info(interface):
@@ -328,15 +332,15 @@ def get_eni_info(interface):
         for group in interface["Groups"]:
             groups[group["GroupId"]] = group["GroupName"]
 
-    interface_info = {'id': get_value_with_default(interface, "NetworkInterfaceId"),
-                      'subnet_id': get_value_with_default(interface, "SubnetId"),
-                      'vpc_id': get_value_with_default(interface, "VpcId"),
-                      'description': get_value_with_default(interface, "Description"),
-                      'owner_id': get_value_with_default(interface, "OwnerId"),
-                      'status': get_value_with_default(interface, "Status"),
-                      'mac_address': get_value_with_default(interface, "MacAddress"),
-                      'private_ip_address': get_value_with_default(interface, "PrivateIpAddress"),
-                      'source_dest_check': get_value_with_default(interface, "SourceDestCheck"),
+    interface_info = {'id': interface.get("NetworkInterfaceId"),
+                      'subnet_id': interface.get("SubnetId"),
+                      'vpc_id': interface.get("VpcId"),
+                      'description': interface.get("Description"),
+                      'owner_id': interface.get("OwnerId"),
+                      'status': interface.get("Status"),
+                      'mac_address': interface.get("MacAddress"),
+                      'private_ip_address': interface.get("PrivateIpAddress"),
+                      'source_dest_check': interface.get("SourceDestCheck"),
                       'groups': groups,
                       'private_ip_addresses': private_addresses
                       }
@@ -355,36 +359,15 @@ def get_eni_info(interface):
 
     if "Attachment" in interface:
         interface_info['attachment'] = {
-            'attachment_id': get_value_with_default(interface["Attachment"], "AttachmentId"),
-            'instance_id': get_value_with_default(interface["Attachment"], "InstanceId"),
-            'device_index': get_value_with_default(interface["Attachment"], "DeviceIndex"),
-            'status': get_value_with_default(interface["Attachment"], "Status"),
-            'attach_time': get_value_with_default(interface["Attachment"], "AttachTime"),
-            'delete_on_termination': get_value_with_default(interface["Attachment"], "DeleteOnTermination"),
+            'attachment_id': interface["Attachment"].get("AttachmentId"),
+            'instance_id': interface["Attachment"].get("InstanceId"),
+            'device_index': interface["Attachment"].get("DeviceIndex"),
+            'status': interface["Attachment"].get("Status"),
+            'attach_time': interface["Attachment"].get("AttachTime"),
+            'delete_on_termination': interface["Attachment"].get("DeleteOnTermination"),
         }
 
     return interface_info
-
-
-def get_value_with_default(dictionary, key, default=None):
-    if key in dictionary:
-        return dictionary[key]
-    else:
-        return default
-
-
-def correct_status(connection, status, module, eni=None):
-
-    eni = uniquely_find_eni(connection, module, eni)
-    # If the status is detached we just need attachment to disappear
-    if "Attachment" in eni and status == "detached":
-        return False
-    elif "Attachment" not in eni and status == "detached":
-        return True
-    elif status == "attached" and eni["Attachment"]["Status"] == "attached":
-        return True
-    else:
-        return False
 
 
 def correct_ips(connection, ip_list, module, eni=None):
@@ -453,9 +436,6 @@ def create_eni(connection, vpc_id, module):
     name = module.params.get("name")
     purge_tags = module.params.get("purge_tags")
 
-    if name:
-        tags["Name"] = name
-
     try:
         args = {"SubnetId": subnet_id}
         if private_ip_address:
@@ -473,11 +453,11 @@ def create_eni(connection, vpc_id, module):
                     DeviceIndex=device_index,
                     NetworkInterfaceId=eni["NetworkInterfaceId"]
                 )
-            except botocore.exceptions.ClientError:
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
                 connection.delete_network_interface(NetworkInterfaceId=eni["NetworkInterfaceId"])
                 raise
             # Wait to allow creation / attachment to finish
-            wait_for(correct_status, connection, "attached", module, eni)
+            get_waiter(connection, 'network_interface_attached').wait(NetworkInterfaceIds=[eni["NetworkInterfaceId"]])
             eni = uniquely_find_eni(connection, module, eni)
 
         if secondary_private_ip_address_count is not None:
@@ -487,7 +467,7 @@ def create_eni(connection, vpc_id, module):
                     SecondaryPrivateIpAddressCount=secondary_private_ip_address_count
                 )
                 eni = uniquely_find_eni(connection, module, eni)
-            except botocore.exceptions.ClientError:
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
                 connection.delete_network_interface(NetworkInterfaceId=eni["NetworkInterfaceId"])
                 raise
 
@@ -498,18 +478,18 @@ def create_eni(connection, vpc_id, module):
                     PrivateIpAddresses=secondary_private_ip_addresses
                 )
                 eni = uniquely_find_eni(connection, module, eni)
-            except botocore.exceptions.ClientError:
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
                 connection.delete_network_interface(NetworkInterfaceId=eni["NetworkInterfaceId"])
                 raise
 
-        manage_tags(eni, tags, purge_tags, connection)
+        manage_tags(eni, name, tags, purge_tags, connection)
 
         # Refresh the eni data on last time
         eni = uniquely_find_eni(connection, module, eni)
 
         changed = True
 
-    except botocore.exceptions.ClientError as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(
             e,
             "Failed to create eni {0} for {1} in {2} with {3}".format(name, subnet_id, vpc_id, private_ip_address)
@@ -522,7 +502,6 @@ def modify_eni(connection, module, eni):
 
     instance_id = module.params.get("instance_id")
     attached = module.params.get("attached")
-    do_detach = module.params.get('state') == 'detached'
     device_index = module.params.get("device_index")
     description = module.params.get('description')
     security_groups = module.params.get('security_groups')
@@ -538,8 +517,7 @@ def modify_eni(connection, module, eni):
     name = module.params.get("name")
     purge_tags = module.params.get("purge_tags")
 
-    if name:
-        tags["Name"] = name
+    eni = uniquely_find_eni(connection, module, eni)
 
     try:
         if description is not None:
@@ -621,23 +599,23 @@ def modify_eni(connection, module, eni):
                     DeviceIndex=device_index,
                     NetworkInterfaceId=eni["NetworkInterfaceId"]
                 )
-                wait_for(correct_status, connection, "attached", module)
+                get_waiter(connection, 'network_interface_attached').wait(NetworkInterfaceIds=[eni["NetworkInterfaceId"]])
                 changed = True
-            if "Attachment" in eni:
+            if "Attachment" not in eni:
                 connection.attach_network_interface(
                     InstanceId=instance_id,
                     DeviceIndex=device_index,
                     NetworkInterfaceId=eni["NetworkInterfaceId"]
                 )
-                wait_for(correct_status, connection, "attached", module)
+                get_waiter(connection, 'network_interface_attached').wait(NetworkInterfaceIds=[eni["NetworkInterfaceId"]])
                 changed = True
 
         elif attached is False:
             detach_eni(connection, eni, module)
 
-        manage_tags(eni, tags, purge_tags, connection)
+        changed |= manage_tags(eni, name, tags, purge_tags, connection)
 
-    except botocore.exceptions.ClientError as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, "Failed to modify eni {0}".format(eni['NetworkInterfaceId']))
 
     eni = uniquely_find_eni(connection, module, eni)
@@ -654,14 +632,6 @@ def delete_eni(connection, module):
     force_detach = module.params.get("force_detach")
 
     try:
-        eni_result_set = connection.describe_network_interfaces(
-            Filters=[{
-                'Name': 'network-interface-id',
-                'Values': [eni_id]
-            }]
-        )
-        eni = eni_result_set
-
         if force_detach is True:
             if "Attachment" in eni:
                 connection.detach_network_interface(
@@ -669,7 +639,7 @@ def delete_eni(connection, module):
                     Force=True
                 )
                 # Wait to allow detachment to finish
-                wait_for(correct_status, connection, "detached", module)
+                connection.get_waiter('network_interface_available').wait(NetworkInterfaceIds=[eni["NetworkInterfaceId"]])
             connection.delete_network_interface(NetworkInterfaceId=eni_id)
             changed = True
         else:
@@ -677,12 +647,10 @@ def delete_eni(connection, module):
             changed = True
 
         module.exit_json(changed=changed)
-    except botocore.exceptions.ClientError as e:
-        regex = re.compile('The networkInterface ID \'.*\' does not exist')
-        if regex.search(e.message) is not None:
-            module.exit_json(changed=False)
-        else:
-            module.fail_json_aws(e, "Failure during delete of {0}".format(eni_id))
+    except is_boto3_error_code('InvalidNetworkInterfaceID.NotFound'):
+        module.exit_json(changed=False)
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, "Failure during delete of {0}".format(eni_id))
 
 
 def detach_eni(connection, eni, module):
@@ -695,7 +663,7 @@ def detach_eni(connection, eni, module):
             AttachmentId=eni["Attachment"]["AttachmentId"],
             Force=force_detach
         )
-        wait_for(correct_status, connection, "detached", module)
+        connection.get_waiter('network_interface_available').wait(NetworkInterfaceIds=[eni["NetworkInterfaceId"]])
         if attached:
             return
         eni = uniquely_find_eni(connection, module)
@@ -759,7 +727,7 @@ def uniquely_find_eni(connection, module, eni=None):
             return eni_result[0]
         else:
             return None
-    except botocore.exceptions.ClientError as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, "Failed to find unique eni with filters: {0}".format(filters))
 
     return None
@@ -780,12 +748,12 @@ def _get_vpc_id(connection, module, subnet_id):
     try:
         subnets = connection.describe_subnets(SubnetIds=[subnet_id])
         return subnets["Subnets"][0]["VpcId"]
-    except botocore.exceptions.ClientError as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, "Failed to get vpc_id for {0}".format(subnet_id))
 
 
 @AWSRetry.jittered_backoff()
-def manage_tags(eni, new_tags, purge_tags, connection):
+def manage_tags(eni, name, new_tags, purge_tags, connection):
     changed = False
 
     if "TagSet" in eni:
@@ -795,6 +763,14 @@ def manage_tags(eni, new_tags, purge_tags, connection):
     else:
         # No new tags and nothing in TagSet
         return False
+
+    # Do not purge tags unless tags is not None
+    if new_tags is None:
+        purge_tags = False
+        new_tags = {}
+
+    if name:
+        new_tags['Name'] = name
 
     tags_to_set, tags_to_delete = compare_aws_tags(
         old_tags, new_tags,
@@ -835,8 +811,8 @@ def main():
             allow_reassignment=dict(default=False, type='bool'),
             attached=dict(default=None, type='bool'),
             name=dict(default=None, type='str'),
-            tags=dict(default={}, type='dict'),
-            purge_tags=dict(default=False, type='bool')
+            tags=dict(type='dict'),
+            purge_tags=dict(default=True, type='bool')
         )
     )
 

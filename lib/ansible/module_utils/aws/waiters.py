@@ -9,6 +9,24 @@ except ImportError:
 ec2_data = {
     "version": 2,
     "waiters": {
+        "NetworkInterfaceAttached": {
+          "operation": "DescribeNetworkInterfaces",
+          "delay": 5,
+          "maxAttempts": 40,
+          "acceptors": [
+              {
+                  "expected": "attached",
+                  "matcher": "pathAll",
+                  "state": "success",
+                  "argument": "NetworkInterfaces[].Attachment.Status"
+              },
+              {
+                  "expected": "InvalidNetworkInterfaceID.NotFound",
+                  "matcher": "error",
+                  "state": "failure"
+              },
+          ]
+        },
         "RouteTableExists": {
             "delay": 5,
             "maxAttempts": 40,
@@ -263,6 +281,12 @@ def rds_model(name):
 
 
 waiters_by_name = {
+    ('EC2', 'network_interface_attached'): lambda ec2: core_waiter.Waiter(
+        'network_interface_attached',
+        ec2_model('NetworkInterfaceAttached'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_network_interfaces
+        )),
     ('EC2', 'route_table_exists'): lambda ec2: core_waiter.Waiter(
         'route_table_exists',
         ec2_model('RouteTableExists'),
