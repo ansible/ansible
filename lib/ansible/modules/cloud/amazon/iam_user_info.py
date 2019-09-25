@@ -156,13 +156,10 @@ def list_iam_users(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(),
-            group=dict(),
-            path=dict(default='/')
-        )
+    argument_spec = dict(
+        name=dict(),
+        group=dict(),
+        path=dict(default='/')
     )
 
     module = AnsibleAWSModule(
