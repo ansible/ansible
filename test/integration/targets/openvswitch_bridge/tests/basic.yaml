@@ -46,3 +46,18 @@
 
 - name: Tear down test bridges
   command: ovs-vsctl del-br br-test
+
+
+- name: Create bridge br0 and test confim external_ids works well
+  openvswitch_bridge:
+    bridge: br0
+    state: present
+    fail_mode: standalone
+  args:
+    external_ids:
+        bridge-id: "br0"
+  register: result
+
+- assert:
+    that:
+      - result is changed
