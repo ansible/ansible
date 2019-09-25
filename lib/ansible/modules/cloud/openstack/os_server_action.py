@@ -246,7 +246,7 @@ def main():
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
 
-         elif action == 'reboot':
+        elif action == 'reboot':
             if not _reboot_state(status):
                 module.exit_json(changed=False)
                 
@@ -255,7 +255,7 @@ def main():
                 json={'reboot': {'type':'HARD'}})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
-                module.exit_json(changed=True)
+            module.exit_json(changed=True)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
