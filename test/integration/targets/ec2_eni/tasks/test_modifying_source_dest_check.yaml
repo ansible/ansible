@@ -1,0 +1,50 @@
+  # ============================================================
+- name: test source_dest_check defaults to true
+  ec2_eni:
+    eni_id: "{{ eni_id_1 }}"
+    source_dest_check: true
+    state: present
+  register: result
+
+- assert:
+    that:
+      - not result.changed
+      - result.interface.source_dest_check == true
+
+  # ============================================================
+- name: disable source_dest_check
+  ec2_eni:
+    eni_id: "{{ eni_id_1 }}"
+    source_dest_check: false
+    state: present
+  register: result
+
+- assert:
+    that:
+      - result.changed
+      - result.interface.source_dest_check == false
+
+- name: test idempotence disabling source_dest_check
+  ec2_eni:
+    eni_id: "{{ eni_id_1 }}"
+    source_dest_check: false
+    state: present
+  register: result
+
+- assert:
+    that:
+      - not result.changed
+      - result.interface.source_dest_check == false
+
+  # ============================================================
+- name: enable source_dest_check
+  ec2_eni:
+    eni_id: "{{ eni_id_1 }}"
+    source_dest_check: true
+    state: present
+  register: result
+
+- assert:
+    that:
+      - result.changed
+      - result.interface.source_dest_check == true

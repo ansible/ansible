@@ -1,21 +1,19 @@
 ---
-- block:
-  - name: set up aws connection info
-    set_fact:
-      aws_connection_info: &aws_connection_info
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region }}"
-    no_log: yes
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+
+  block:
 
   # ============================================================
   - name: create a VPC
     ec2_vpc_net:
       name: "{{ resource_prefix }}-vpc"
       state: present
-      cidr_block: "10.232.232.128/26"
-      <<: *aws_connection_info
+      cidr_block: "{{ vpc_cidr }}"
       tags:
         Name: "{{ resource_prefix }}-vpc"
         Description: "Created by ansible-test"
@@ -24,10 +22,9 @@
   # ============================================================
   - name: create a subnet
     ec2_vpc_subnet:
-      cidr: "10.232.232.128/28"
+      cidr: "{{ vpc_cidr }}"
       az: "{{ aws_region }}a"
       vpc_id: "{{ vpc_result.vpc.id }}"
-      <<: *aws_connection_info
       tags:
         Name: "{{ resource_prefix }}-vpc"
         Description: "Created by ansible-test"
@@ -35,147 +32,468 @@
     register: vpc_subnet_result
 
   # ============================================================
-  - name: Try to delete an ENI that does not exist
-    ec2_eni:
-      eni_id: eni-0e8c90e60720481ab
-      region: "{{ aws_region }}"
-      <<: *aws_connection_info
-      state: absent
-    register: eni_absent_result
-
-  - debug:
-      var: eni_absent_result
-      verbosity: 2
-
-  - name: Ensure idempotent delete made no changes
-    assert:
-      that: "not eni_absent_result.changed"
-
-  # ============================================================
-  - name: create an ENI with 1 primary and 3 secondary IP addresses
-    ec2_eni:
-      name: "{{ resource_prefix }}-eni"
-      region: "{{ aws_region }}"
-      secondary_private_ip_address_count: 3
-      tags:
-        Description: "Created by ansible-test"
-      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
-      <<: *aws_connection_info
+  - name: create a security group
+    ec2_group:
+      name: "{{ resource_prefix }}-sg"
+      description: "Created by {{ resource_prefix }}"
+      rules: []
       state: present
-    register: eni_result
-
-  - debug:
-      var: eni_result
-      verbosity: 2
-
-  - name: ensure we can retrieve all of the IP addresses
-    assert:
-      that:
-        - eni_result.interface.private_ip_addresses | length == 4
-        - eni_result.interface.private_ip_addresses[0].primary_address
-        - not eni_result.interface.private_ip_addresses[1].primary_address
-        - not eni_result.interface.private_ip_addresses[2].primary_address
-        - not eni_result.interface.private_ip_addresses[3].primary_address
-
-  - name: ensure name and tags are set properly
-    assert:
-      that:
-        - '"name" in eni_result.interface'
-        - '"tags" in eni_result.interface'
-        - '"Created by ansible-test" == eni_result.interface.tags.Description'
-        - '"Name" in eni_result.interface.tags'
+      vpc_id: "{{ vpc_result.vpc.id }}"
+    register: vpc_sg_result
 
   # ============================================================
-  - name: change description and remove a private_ip
+  - name: Get a list of images
+    ec2_ami_info:
+      filters:
+        owner-alias: amazon
+        name: "amzn2-ami-minimal-hvm-*"
+        description: "Amazon Linux 2 AMI *"
+    register: images_info
+
+  - name: Set image_id to the latest image
+    set_fact:
+      image_id: "{{ images_info.images | sort(attribute='creation_date') | reverse | first | json_query('image_id') }}"
+
+  # ============================================================
+  - name: create a network interface
     ec2_eni:
-      name: "{{ resource_prefix }}-eni"
-      region: "{{ aws_region }}"
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: present
+    register: result
+
+  - assert:
+      that:
+        - result.changed
+        - result.interface.private_ip_addresses | length == 1
+
+  - set_fact:
+      eni_id_1: "{{ result.interface.id }}"
+
+  - name: test idempotence by using the same private_ip_address
+    ec2_eni:
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: present
+    register: result
+
+  - assert:
+      that:
+        - not result.changed
+        - result.interface.id == eni_id_1
+        - result.interface.private_ip_addresses | length == 1
+
+  # ============================================================
+  - name: add two implicit secondary IPs
+    ec2_eni:
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: present
       secondary_private_ip_address_count: 2
-      tags:
-        Description: "Createdbyansible"
+    register: result
+
+  - assert:
+      that:
+        - result.changed
+        - result.interface.id == eni_id_1
+        - result.interface.private_ip_addresses | length == 3
+
+  - name: test idempotence with two implicit secondary IPs
+    ec2_eni:
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
       subnet_id: "{{ vpc_subnet_result.subnet.id }}"
-      <<: *aws_connection_info
       state: present
-    register: eni_result2
+      secondary_private_ip_address_count: 2
+    register: result
 
-  - debug:
-      var: eni_result2
-      verbosity: 2
-
-  - name: ensure we can retrieve all of the IP addresses
-    assert:
+  - assert:
       that:
-        - eni_result2.interface.private_ip_addresses | length == 3
-        - eni_result2.interface.private_ip_addresses[0].primary_address
-        - not eni_result2.interface.private_ip_addresses[1].primary_address
-        - not eni_result2.interface.private_ip_addresses[2].primary_address
-
-  - name: ensure name and tags are set properly
-    assert:
-      that:
-        - '"name" in eni_result2.interface'
-        - '"tags" in eni_result2.interface'
-        - '"Createdbyansible" == eni_result2.interface.tags.Description'
-        - '"Name" in eni_result2.interface.tags'
-        - eni_result.interface.id == eni_result2.interface.id
+        - not result.changed
+        - result.interface.id == eni_id_1
+        - result.interface.private_ip_addresses | length == 3
 
   # ============================================================
-  - name: Add a two secondary ips, purge Description tag
+  - name: ensure secondary addresses are only removed if purge is set to true
     ec2_eni:
-      name: "{{ resource_prefix }}-eni"
-      region: "{{ aws_region }}"
-      secondary_private_ip_address_count: 4
-      purge_tags: true
+      purge_secondary_private_ip_addresses: false
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
       subnet_id: "{{ vpc_subnet_result.subnet.id }}"
-      <<: *aws_connection_info
       state: present
-    register: eni_result3
+      secondary_private_ip_addresses: []
+    register: result
 
-  - debug:
-      var: eni_result3
-      verbosity: 2
-
-  - name: ensure we can retrieve all of the IP addresses
-    assert:
+  - assert:
       that:
-        - eni_result3.interface.private_ip_addresses | length == 5
-        - eni_result3.interface.private_ip_addresses[0].primary_address
-        - not eni_result3.interface.private_ip_addresses[1].primary_address
-        - not eni_result3.interface.private_ip_addresses[2].primary_address
-        - not eni_result3.interface.private_ip_addresses[3].primary_address
-        - not eni_result3.interface.private_ip_addresses[4].primary_address
+        - not result.changed
+        - result.interface.id == eni_id_1
+        - result.interface.private_ip_addresses | length == 3
 
-  - name: ensure name and tags are set properly
-    assert:
+  # ============================================================
+
+  # Using secondary_private_ip_address_count leads to unpredicable IP assignment
+  # For the following test, first find an IP that has not been used yet
+
+  - name: save the list of private IPs in use
+    set_fact:
+      current_private_ips: "{{ result.interface | json_query('private_ip_addresses[*].private_ip_address') | list }}"
+
+  - name: set new_secondary_ip to an IP that has not been used
+    set_fact:
+      new_secondary_ip: "{{ [ip_2, ip_3, ip_4, ip_5] | difference(current_private_ips) | first }}"
+
+  - name: add an explicit secondary address without purging the ones added implicitly
+    ec2_eni:
+      purge_secondary_private_ip_addresses: false
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: present
+      secondary_private_ip_addresses:
+        - "{{ new_secondary_ip }}"
+    register: result
+
+  - assert:
       that:
-        - '"name" in eni_result3.interface'
-        - '"tags" in eni_result3.interface'
-        - '"Description" not in eni_result3.interface.tags'
-        - '"Name" in eni_result3.interface.tags'
-        - eni_result.interface.id == eni_result3.interface.id
+        - result.changed
+        - result.interface.id == eni_id_1
+        - result.interface.private_ip_addresses | length == 4
+
+  # ============================================================
+  - name: remove secondary address
+    ec2_eni:
+      purge_secondary_private_ip_addresses: true
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: present
+      secondary_private_ip_addresses: []
+    register: result
+
+  - assert:
+      that:
+        - result.changed
+        - result.interface.id == eni_id_1
+        - result.interface.private_ip_addresses | length == 1
+
+  - name: test idempotent behavior purging secondary addresses
+    ec2_eni:
+      purge_secondary_private_ip_addresses: true
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: present
+      secondary_private_ip_addresses: []
+    register: result
+
+  - assert:
+      that:
+        - not result.changed
+        - result.interface.id == eni_id_1
+        - result.interface.private_ip_addresses | length == 1
+
+  # ============================================================
+  - name: create a second network interface to test IP reassignment
+    ec2_eni:
+      device_index: 1
+      private_ip_address: "{{ ip_5 }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: present
+      secondary_private_ip_addresses:
+        - "{{ ip_4 }}"
+    register: result
+
+  - assert:
+      that:
+        - result.changed
+        - result.interface.id != eni_id_1
+
+  - name: save the second network interface ID for cleanup
+    set_fact:
+      eni_id_2: "{{ result.interface.id }}"
+
+  # ============================================================
+  - name: test that reassignment needs to be enabled by assigning an IP already in use
+    ec2_eni:
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: present
+      secondary_private_ip_addresses:
+        - "{{ ip_2 }}"
+        - "{{ ip_3 }}"
+        - "{{ ip_4 }}"
+    register: result
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - result.failed
+        - '"move is not allowed" in result.msg'
+
+  # ============================================================
+  - name: allow reassignment to add the list of secondary addresses
+    ec2_eni:
+      allow_reassignment: true
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: present
+      secondary_private_ip_addresses:
+        - "{{ ip_2 }}"
+        - "{{ ip_3 }}"
+        - "{{ ip_4 }}"
+    register: result
+
+  - assert:
+      that:
+        - result.changed
+        - result.interface.id == eni_id_1
+        - result.interface.private_ip_addresses | length == 4
+
+  - name: test reassigment is idempotent
+    ec2_eni:
+      allow_reassignment: true
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: present
+      secondary_private_ip_addresses:
+        - "{{ ip_2 }}"
+        - "{{ ip_3 }}"
+        - "{{ ip_4 }}"
+    register: result
+
+  - assert:
+      that:
+        - not result.changed
+        - result.interface.id == eni_id_1
+
+  # ============================================================
+
+  - name: purge all the secondary addresses before testing attachments
+    ec2_eni:
+      purge_secondary_private_ip_addresses: true
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: present
+      secondary_private_ip_addresses: []
+    register: result
+
+  - assert:
+      that:
+        - result.changed
+        - result.interface.private_ip_addresses | length == 1
+
+  # ============================================================
+
+  - name: Create 2 instances to test attaching and detaching network interfaces
+    ec2_instance:
+      name: "{{ resource_prefix }}-eni-instance-{{ item }}"
+      image_id: "{{ image_id }}"
+      vpc_subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      instance_type: t2.micro
+      wait: true
+      security_group: "{{ vpc_sg_result.group_id }}"
+    register: ec2_instances
+    loop:
+      - 1
+      - 2
+
+  - name: set variables for the instance IDs
+    set_fact:
+      instance_id_1: "{{ ec2_instances.results[0].instance_ids[0] }}"
+      instance_id_2: "{{ ec2_instances.results[1].instance_ids[0] }}"
+
+  # ============================================================
+  - name: test attaching and detaching network interfaces
+    include_tasks: ./test_attachment.yaml
+
+  # ============================================================
+  - name: delete an attached network interface with force_detach
+    ec2_eni:
+      force_detach: True
+      eni_id: "{{ eni_id_1 }}"
+      state: absent
+    register: result
+    ignore_errors: True
+
+  - assert:
+      that:
+        - result.changed
+        - result.interface.attachment is undefined
+
+  - name: test removing a network interface that does not exist
+    ec2_eni:
+      force_detach: True
+      eni_id: "{{ eni_id_1 }}"
+      state: absent
+    register: result
+
+  - assert:
+      that:
+        - not result.changed
+        - result.interface.attachment is undefined
+
+  # ============================================================
+  - name: recreate the network interface to test delete_on_termination
+    ec2_eni:
+      instance_id: "{{ instance_id_2 }}"
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: present
+      attached: True
+    register: result
+
+  - set_fact:
+      eni_id_1: "{{ result.interface.id }}"
+
+  # ============================================================
+  - name: test modifying delete_on_termination
+    include_tasks: ./test_modifying_delete_on_termination.yaml
+
+  - name: test modifying source_dest_check
+    include_tasks: ./test_modifying_source_dest_check.yaml
+
+  - name: test modifying tags
+    include_tasks: ./test_modifying_tags.yaml
+
+  # ============================================================
+  - name: ensure the network interface is attached
+    ec2_eni:
+      instance_id: "{{ instance_id_1 }}"
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: present
+      attached: True
+    register: result
+
+  - name: ensure delete_on_termination is true
+    ec2_eni:
+      instance_id: "{{ instance_id_1 }}"
+      device_index: 1
+      private_ip_address: "{{ ip_1 }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: present
+      attached: True
+      delete_on_termination: True
+    register: result
+
+  - name: test terminating the instance after setting delete_on_termination to true
+    ec2_instance:
+      state: absent
+      instance_ids:
+        - "{{ instance_id_1 }}"
+      wait: True
+
+  - name: verify the eni was also removed
+    ec2_eni:
+      eni_id: "{{ eni_id_1 }}"
+      state: absent
+    register: result
+
+  - assert:
+      that:
+        - not result.changed
+
+  # ============================================================
+  - name: add a name tag to the other network interface before deleting it
+    ec2_eni:
+      eni_id: "{{ eni_id_2 }}"
+      name: "{{ resource_prefix }}"
+      state: present
+
+  - name: test deleting the unattached network interface by using the name
+    ec2_eni:
+      name: "{{ resource_prefix }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: absent
+    register: result
+
+  - assert:
+      that:
+        - result.changed
+        - result.interface is undefined
+
+  - name: test removing the network interface by name is idempotent
+    ec2_eni:
+      name: "{{ resource_prefix }}"
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      state: absent
+    register: result
+
+  - assert:
+      that:
+        - not result.changed
+        - result.interface is undefined
+
+  - name: verify that the network interface ID does not exist
+    ec2_eni:
+      eni_id: "{{ eni_id_2 }}"
+      state: absent
+    register: result
+
+  - assert:
+      that:
+        - not result.changed
+        - result.interface is undefined
 
   always:
+
     # ============================================================
-    - name: tidy up ENI
-      ec2_eni:
-        eni_id: "{{ eni_result.interface.id }}"
-        <<: *aws_connection_info
-        state: absent
-      ignore_errors: true
+      - name: remove the network interfaces
+        ec2_eni:
+          eni_id: "{{ item }}"
+          force_detach: True
+          state: absent
+        ignore_errors: true
+        retries: 5
+        loop:
+          - "{{ eni_id_1 | default(omit) }}"
+          - "{{ eni_id_2 | default(omit) }}"
 
-    - name: tidy up subnet
-      ec2_vpc_subnet:
-        cidr: "10.232.232.128/28"
-        az: "{{ aws_region }}a"
-        vpc_id: "{{ vpc_result.vpc.id }}"
-        <<: *aws_connection_info
-        state: absent
-      ignore_errors: true
+      - name: terminate the instances
+        ec2_instance:
+          state: absent
+          instance_ids:
+            - "{{ instance_id_1 }}"
+            - "{{ instance_id_2 }}"
+          wait: True
+        ignore_errors: true
+        retries: 5
+        when: instance_id_1 is defined and instance_id_2 is defined
 
-    - name: tidy up VPC
-      ec2_vpc_net:
-        name: "{{ resource_prefix }}-vpc"
-        cidr_block: "10.232.232.128/26"
-        <<: *aws_connection_info
-        state: absent
-      ignore_errors: true
+      - name: remove the security group
+        ec2_group:
+          name: "{{ resource_prefix }}-sg"
+          description: "{{ resource_prefix }}"
+          rules: []
+          state: absent
+          vpc_id: "{{ vpc_result.vpc.id }}"
+        ignore_errors: true
+        retries: 5
+
+      - name: remove the subnet
+        ec2_vpc_subnet:
+          cidr: "{{ vpc_cidr }}"
+          az: "{{ aws_region }}a"
+          vpc_id: "{{ vpc_result.vpc.id }}"
+          state: absent
+        ignore_errors: true
+        retries: 5
+        when: vpc_subnet_result is defined
+
+      - name: remove the VPC
+        ec2_vpc_net:
+          name: "{{ resource_prefix }}-vpc"
+          cidr_block: "{{ vpc_cidr }}"
+          state: absent
+        ignore_errors: true
+        retries: 5

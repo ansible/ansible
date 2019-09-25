@@ -1,0 +1,86 @@
+  # ============================================================
+- name: ensure delete_on_termination defaults to False
+  ec2_eni:
+    instance_id: "{{ instance_id_2 }}"
+    device_index: 1
+    private_ip_address: "{{ ip_1 }}"
+    subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+    state: present
+    attached: True
+    delete_on_termination: False
+  register: result
+
+- assert:
+    that:
+      - not result.changed
+      - result.interface.attachment.delete_on_termination == false
+
+  # ============================================================
+- name: enable delete_on_termination
+  ec2_eni:
+    instance_id: "{{ instance_id_2 }}"
+    device_index: 1
+    private_ip_address: "{{ ip_1 }}"
+    subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+    state: present
+    attached: True
+    delete_on_termination: True
+  register: result
+
+- assert:
+    that:
+      - result.changed
+      - result.interface.attachment.delete_on_termination == true
+
+- name: test idempotent behavior enabling delete_on_termination
+  ec2_eni:
+    instance_id: "{{ instance_id_2 }}"
+    device_index: 1
+    private_ip_address: "{{ ip_1 }}"
+    subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+    state: present
+    attached: True
+    delete_on_termination: True
+  register: result
+
+- assert:
+    that:
+      - not result.changed
+      - result.interface.attachment.delete_on_termination == true
+
+  # ============================================================
+- name: disable delete_on_termination
+  ec2_eni:
+    instance_id: "{{ instance_id_2 }}"
+    device_index: 1
+    private_ip_address: "{{ ip_1 }}"
+    subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+    state: present
+    attached: True
+    delete_on_termination: False
+  register: result
+
+- assert:
+    that:
+      - result.changed
+      - result.interface.attachment.delete_on_termination == false
+
+  # ============================================================
+- name: terminate the instance to make sure the attached ENI remains
+  ec2_instance:
+    state: absent
+    instance_ids:
+      - "{{ instance_id_2 }}"
+    wait: True
+
+- name: verify the eni still exists
+  ec2_eni:
+    eni_id: "{{ eni_id_1 }}"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - not result.changed
+      - result.interface.id == eni_id_1
+      - result.interface.attachment is undefined

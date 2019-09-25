@@ -1,0 +1,109 @@
+  # ============================================================
+- name: attach the network interface to instance 1
+  ec2_eni:
+    instance_id: "{{ instance_id_1 }}"
+    device_index: 1
+    private_ip_address: "{{ ip_1 }}"
+    subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+    state: present
+    attached: True
+  register: result
+
+- assert:
+    that:
+      - result.changed
+      - result.interface.attachment is defined
+      - result.interface.attachment.instance_id == instance_id_1
+
+- name: verify the eni is attached
+  ec2_eni:
+    instance_id: "{{ instance_id_1 }}"
+    device_index: 1
+    private_ip_address: "{{ ip_1 }}"
+    subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+    state: present
+    attached: True
+  register: result
+
+- assert:
+    that:
+      - not result.changed
+      - result.interface.attachment is defined
+      - result.interface.attachment.instance_id == instance_id_1
+
+  # ============================================================
+- name: test attaching the network interface to a different instance
+  ec2_eni:
+    instance_id: "{{ instance_id_2 }}"
+    device_index: 1
+    private_ip_address: "{{ ip_1 }}"
+    subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+    state: present
+    attached: True
+  register: result
+
+- assert:
+    that:
+      - result.changed
+      - result.interface.attachment is defined
+      - result.interface.attachment.instance_id == instance_id_2
+
+  # ============================================================
+- name: detach the network interface
+  ec2_eni:
+    instance_id: "{{ instance_id_2 }}"
+    device_index: 1
+    private_ip_address: "{{ ip_1 }}"
+    subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+    state: present
+    attached: False
+  register: result
+
+- assert:
+    that:
+      - result.changed
+      - result.interface.attachment is undefined
+
+- name: verify the network interface was detached
+  ec2_eni:
+    instance_id: "{{ instance_id_2 }}"
+    device_index: 1
+    private_ip_address: "{{ ip_1 }}"
+    subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+    state: present
+    attached: False
+  register: result
+
+- assert:
+    that:
+      - not result.changed
+      - result.interface.attachment is undefined
+
+  # ============================================================
+- name: reattach the network interface to test deleting it
+  ec2_eni:
+    instance_id: "{{ instance_id_2 }}"
+    device_index: 1
+    private_ip_address: "{{ ip_1 }}"
+    subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+    state: present
+    attached: True
+  register: result
+
+- assert:
+    that:
+      - result.changed
+      - result.interface.attachment is defined
+      - result.interface.attachment.instance_id == instance_id_2
+
+- name: test that deleting the network interface while attached must be intentional
+  ec2_eni:
+    eni_id: "{{ eni_id_1 }}"
+    state: absent
+  register: result
+  ignore_errors: True
+
+- assert:
+    that:
+      - result.failed
+      - '"currently in use" in result.msg'

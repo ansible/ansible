@@ -1,0 +1,149 @@
+  # ============================================================
+- name: verify there are no tags associated with the network interface
+  ec2_eni:
+    eni_id: "{{ eni_id_1 }}"
+    state: present
+    tags: {}
+  register: result
+
+- assert:
+    that:
+      - not result.changed
+      - not result.interface.tags
+      - result.interface.name is undefined
+
+  # ============================================================
+- name: add tags to the network interface
+  ec2_eni:
+    eni_id: "{{ eni_id_1 }}"
+    state: present
+    name: "{{ resource_prefix }}"
+    tags:
+      CreatedBy: "{{ resource_prefix }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed
+      - result.interface.id == eni_id_1
+      - result.interface.tags | length == 2
+      - result.interface.tags.CreatedBy == resource_prefix
+      - result.interface.tags.Name == resource_prefix
+      - result.interface.name == resource_prefix
+
+  # ============================================================
+- name: test idempotence by using the Name tag and the subnet
+  ec2_eni:
+    name: "{{ resource_prefix }}"
+    state: present
+    subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+  register: result
+
+- assert:
+    that:
+      - not result.changed
+      - result.interface.id == eni_id_1
+
+  # ============================================================
+- name: test tags are not purged if tags are null even if name is provided
+  ec2_eni:
+    name: "{{ resource_prefix }}"
+    state: present
+    subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+  register: result
+
+- assert:
+    that:
+      - not result.changed
+      - result.interface.id == eni_id_1
+      - result.interface.tags | length == 2
+      - result.interface.tags.CreatedBy == resource_prefix
+      - result.interface.tags.Name == resource_prefix
+      - result.interface.name == resource_prefix
+
+  # ============================================================
+- name: test setting purge tags to false
+  ec2_eni:
+    eni_id: "{{ eni_id_1 }}"
+    state: present
+    purge_tags: false
+    tags: {}
+  register: result
+
+- assert:
+    that:
+      - not result.changed
+      - result.interface.tags | length == 2
+      - result.interface.tags.CreatedBy == resource_prefix
+      - result.interface.tags.Name == resource_prefix
+      - result.interface.name == resource_prefix
+
+  # ============================================================
+- name: test adding a new tag without removing any others
+  ec2_eni:
+    eni_id: "{{ eni_id_1 }}"
+    state: present
+    purge_tags: false
+    tags:
+      environment: test
+  register: result
+
+- assert:
+    that:
+      - result.changed
+      - result.interface.tags | length == 3
+      - result.interface.tags.environment == 'test'
+      - result.interface.tags.CreatedBy == resource_prefix
+      - result.interface.tags.Name == resource_prefix
+      - result.interface.name == resource_prefix
+
+  # ============================================================
+- name: test purging tags and adding a new one
+  ec2_eni:
+    name: "{{ resource_prefix }}"
+    state: present
+    subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+    tags:
+      Description: "{{ resource_prefix }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed
+      - result.interface.id == eni_id_1
+      - result.interface.tags | length == 2
+      - result.interface.tags.Description == resource_prefix
+      - result.interface.tags.Name == resource_prefix
+      - result.interface.name == resource_prefix
+
+- name: test purging tags and adding a new one is idempotent
+  ec2_eni:
+    name: "{{ resource_prefix }}"
+    state: present
+    subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+    tags:
+      Description: "{{ resource_prefix }}"
+  register: result
+
+- assert:
+    that:
+      - not result.changed
+      - result.interface.id == eni_id_1
+      - result.interface.tags | length == 2
+      - result.interface.tags.Description == resource_prefix
+      - result.interface.tags.Name == resource_prefix
+      - result.interface.name == resource_prefix
+
+  # ============================================================
+- name: test purging all tags
+  ec2_eni:
+    eni_id: "{{ eni_id_1 }}"
+    state: present
+    tags: {}
+  register: result
+
+- assert:
+    that:
+      - result.changed
+      - not result.interface.tags
+      - result.interface.name is undefined
