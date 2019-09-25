@@ -16,7 +16,10 @@ To get started, please select one of the following topics.
    ovirt_scenarios/ovirt_intro
    ovirt_scenarios/ovirt_concepts
    ovirt_scenarios/ovirt_requirements
+<<<<<<< HEAD
    ovirt_scenarios/ovirt_inventory
+=======
+>>>>>>> b2f160c369d26b7fc5dea65dae33eda7e6686620
    ovirt_scenarios/ovirt_scenarios
    ovirt_scenarios/ovirt_troubleshooting
    ovirt_scenarios/ovirt_external_doc_links

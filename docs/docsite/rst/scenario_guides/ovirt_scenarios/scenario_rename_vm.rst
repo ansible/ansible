@@ -89,7 +89,11 @@ This means that playbooks will not be running from the engine or host Server.
 
 Note that this play disables the ``gather_facts`` parameter, since you don't want to collect facts about localhost.
 
+<<<<<<< HEAD
 You can run these modules against another server that would then connect to the API if localhost does not have access to engine. If so, the required Python modules will need to be installed on that target server. We recommend installing the latest version with pip: ``pip install Pyvmomi`` (as the OS packages are usually out of date and incompatible).
+=======
+You can run these modules against another server that would then connect to the API if localhost does not have access to engine. If so, the required Python modules will need to be installed on that target server. We recommend installing the latest version with pip: ``pip install ovirt-engine-sdk-python`` (as the OS packages are usually out of date and incompatible).
+>>>>>>> b2f160c369d26b7fc5dea65dae33eda7e6686620
 
 Before you begin, make sure you have:
 
