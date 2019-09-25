@@ -776,7 +776,7 @@ def main():
             'username': {},
             'password': {'no_log': True},
             'server_hostname': {},
-            'server_insecure': {},
+            'server_insecure': {'type': 'bool'},
             'rhsm_baseurl': {},
             'rhsm_repo_ca_cert': {},
             'auto_attach': {'aliases': ['autosubscribe'], 'type': 'bool'},
