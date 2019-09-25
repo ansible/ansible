@@ -85,6 +85,7 @@ _action_map = {'stop': 'SHUTOFF',
                'rebuild': 'ACTIVE'}
 
 _admin_actions = ['pause', 'unpause', 'suspend', 'resume', 'lock', 'unlock']
+_reboot_states = ['ACTIVE', 'ERROR', 'HARD_REBOOT', 'PAUSED', 'REBOOT', 'SHUTOFF', 'SUSPENDED']
 
 
 def _action_url(server_id):
@@ -114,6 +115,12 @@ def _system_state_change(action, status):
     if status == _action_map[action]:
         return False
     return True
+
+def _reboot_state(status):
+    """Check if system state is suitable for HARD reboot"""
+    if status in _reboot_states:
+        return True
+    return False
 
 
 def main():
@@ -238,6 +245,17 @@ def main():
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
+
+         elif action == 'reboot':
+            if not _reboot_state(status):
+                module.exit_json(changed=False)
+                
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'reboot': {'type':'HARD'}})
+            if wait:
+                _wait(timeout, cloud, server, action, module, sdk)
+                module.exit_json(changed=True)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
