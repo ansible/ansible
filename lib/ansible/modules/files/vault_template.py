@@ -17,7 +17,7 @@ DOCUMENTATION = r'''
 ---
 module: vault_template
 short_description: Parses Go templates using consul-template and values from HashiCorp Vault
-version_added: 2.9
+version_added: 2.10
 author: Mikhail Morev <mmorev@live.ru>
 requirements:
   - consul-template (binary) in $PATH
