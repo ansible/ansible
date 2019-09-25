@@ -1,8 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+
 # Copyright: (c) 2018, Joris Weijters (@molekuul)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -13,7 +15,6 @@ ANSIBLE_METADATA = {
     'status': ['preview'],
     'supported_by': 'community'
 }
-
 
 
 DOCUMENTATION = r'''
@@ -58,7 +59,7 @@ EXAMPLES = r'''
 
 RETURN = r'''  '''
 
-# Import necessary libraries
+
 import re
 import os
 import tempfile
@@ -66,11 +67,10 @@ import shutil
 import glob
 from ansible.module_utils.basic import AnsibleModule
 
-# end import modules
-
 
 def nim_master(module):
     file = '/etc/niminfo'
+    rc = 0
 
     try:
         if os.path.exists(file):
@@ -102,6 +102,7 @@ def nfs_mount(module):
             rc=rc)
     return dirpath
 
+
 def nfs_umount(module, path):
     umount = module.get_bin_path('umount')
     (rc, err, out) = module.run_command("%s %s" % (umount, path))
@@ -110,6 +111,7 @@ def nfs_umount(module, path):
         module.fail_json(
             err=err, rc=rc)
     shutil.rmtree(path)
+
 
 def install_all_updates(module, path):
     nfsshare = module.params['nfs_share']
@@ -209,6 +211,6 @@ def main():
 
     module.exit_json(**result)
 
+
 if __name__ == '__main__':
     main()
-
