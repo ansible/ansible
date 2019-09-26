@@ -235,10 +235,8 @@ def check_args(module, warnings):
 def _load_config(module, config):
     """Sends configuration commands to the remote device
     """
-    rc, out, err = exec_command(module, 'mmi-mode enable')
-    if rc != 0:
-        module.fail_json(msg='unable to set mmi-mode enable', output=err)
-    rc, out, err = exec_command(module, 'system-view immediately')
+
+    rc, out, err = exec_command(module, 'system-view')
     if rc != 0:
         module.fail_json(msg='unable to enter system-view', output=err)
 
@@ -246,27 +244,12 @@ def _load_config(module, config):
         rc, out, err = exec_command(module, cmd)
         if rc != 0:
             print_msg = cli_err_msg(cmd.strip(), err)
-            exec_command(module, "quit")
-            rc, out, err = exec_command(module, cmd)
             if rc != 0:
-                print_msg1 = cli_err_msg(cmd.strip(), err)
-                if not re.findall(r"unrecognized command found", print_msg1):
-                    print_msg = print_msg1
-                exec_command(module, "return")
-                exec_command(module, "system-view immediately")
-                rc, out, err = exec_command(module, cmd)
-                if rc != 0:
-                    print_msg2 = cli_err_msg(cmd.strip(), err)
-                    if not re.findall(r"unrecognized command found", print_msg2):
-                        print_msg = print_msg2
-                    module.fail_json(msg=print_msg)
+                module.fail_json(msg=print_msg)
 
     rc, out, err = exec_command(module, 'return')
     if rc != 0:
         module.fail_json(msg='unable to return', output=err)
-    rc, out, err = exec_command(module, 'undo mmi-mode enable')
-    if rc != 0:
-        module.fail_json(msg='unable to undo mmi-mode enable', output=err)
 
 
 def conversion_src(module):
@@ -275,10 +258,11 @@ def conversion_src(module):
     if src_list[0].strip() == '#':
         src_list.pop(0)
     for per_config in src_list:
-        if per_config.strip() == '#':
-            src_list_organize.append('quit')
-        else:
+        if re.search(r'^#\s*$', per_config) is not None:
             src_list_organize.append(per_config)
+            src_list_organize.append('commit')
+        elif re.search(r'^\s+#\s*$', per_config)  is not None:
+            continue
     src_str = '\n'.join(src_list_organize)
     return src_str
 
@@ -329,7 +313,7 @@ def run(module, result):
 
         command_display = []
         for per_command in commands:
-            if per_command.strip() not in ['quit', 'return', 'system-view']:
+            if per_command.strip() not in ['quit', 'return', 'system-view', 'commit']:
                 command_display.append(per_command)
 
         result['commands'] = command_display
