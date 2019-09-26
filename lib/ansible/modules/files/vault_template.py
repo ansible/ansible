@@ -50,13 +50,15 @@ options:
   vault_addr:
     description:
     - Vault server URL
-    - Can be set via VAULT_ADDR environment variable
     type: str
+    env:
+      - name: VAULT_ADDR
   vault_token:
     description:
     - Vault authorization token
-    - Can be set via VAULT_TOKEN environment variable
     type: str
+    env:
+      - name: VAULT_TOKEN
 notes:
 - You can use the M(vault_template) module with the C(content:) option if you prefer the template inline,
   as part of the playbook. In this case C(src:) parameter is not permitted
