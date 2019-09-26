@@ -54,7 +54,7 @@ Avoid using Latin phrases
 
 Latin words and phrases like ``e.g.`` or ``etc.``
 are easily understood by English speakers.
-They are harder to understand for speakers of Asian languages who speak some English. They are also tricky for automated translation..
+They may be harder to understand for others and are also tricky for automated translation.
 
 Use the following English terms in place of Latin terms or abbreviations: 
 +-------------------------------+------------------------------+
