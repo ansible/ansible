@@ -16,6 +16,7 @@ DOCUMENTATION = """
     - retrieve secrets from HashiCorp's vault
   notes:
     - Due to a current limitation in the HVAC library there won't necessarily be an error if a bad endpoint is specified.
+    - As of Ansible 2.8, if you use KV v2 now you get only the last secret from a path.
   options:
     secret:
       description: query you are making.
@@ -98,11 +99,9 @@ EXAMPLES = """
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200 namespace=teama/admins')}}"
 
-# to work with kv v2 (vault api - for kv v2 -  GET method requires that PATH should be "secret/data/:path")
-- name: Return all kv v2 secrets from a path
+- name: Secrets engine v2 lookup - note 'data' in the path between the engine and secret
   debug:
-    msg: "{{ lookup('hashi_vault', 'secret=secret/data/hello token=my_vault_token url=http://myvault_url:8200') }}"
-
+    msg: "{{ lookup('hashi_vault', 'secret=secret/data/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
 
 """
 
@@ -196,10 +195,16 @@ class HashiVault:
 
     def get(self):
 
-        if 'data' in self.client.read(self.secret):
-            data = self.client.read(self.secret)['data']
-        else:
-            data = self.client.read(self.secret)
+        tmpdata = self.client.read(self.secret)
+
+        # The v1 and v2 secrets engines differ in the results they return.  v2 returns an
+        # extra nested data key.  Eg: res['data']['data']
+        if 'data' in tmpdata:
+            innerdata = tmpdata['data']
+            if 'data' in innerdata:
+                data = innerdata
+            else:
+                data = tmpdata
 
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % self.secret)
