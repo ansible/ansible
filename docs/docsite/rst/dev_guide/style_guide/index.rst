@@ -53,7 +53,7 @@ Avoid using Latin phrases
 -------------------------
 
 Latin words and phrases like ``e.g.`` or ``etc.``
-are easily understood by native English speakers and some European who speak English.
+are easily understood by English speakers.
 They are harder to understand for speakers of Asian languages who speak some English. They are also tricky for automated translation..
 
 Latin words/phrases: 
