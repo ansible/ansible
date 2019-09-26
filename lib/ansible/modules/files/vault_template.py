@@ -50,14 +50,12 @@ options:
   vault_addr:
     description:
     - Vault server URL
-    env:
-      - name: VAULT_ADDR
+    - Can be set via VAULT_ADDR environment variable
     type: str
   vault_token:
     description:
     - Vault authorization token
-    env:
-      - name: VAULT_TOKEN
+    - Can be set via VAULT_TOKEN environment variable
     type: str
 notes:
 - You can use the M(vault_template) module with the C(content:) option if you prefer the template inline,
@@ -73,33 +71,33 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = r'''
-- name: Create file using inline template
-  vault_template:
-    vault_addr: 'http://127.0.0.1:8200/'
-    vault_token: '...'
-    dest: '/opt/rmcp/none/conf/none.properties'
-    content: !unsafe |
-      {{ with secret "secret/test" -}}
-      app.name={{ index .Data.data "secretkey" }}
-      {{- end }}
+  - name: Create file using inline template
+    vault_template:
+      vault_addr: 'http://127.0.0.1:8200/'
+      vault_token: "..."
+      dest: "/opt/rmcp/none/conf/none.properties"
+      content: !unsafe |
+        \{\{ with secret "secret/test" -\}\}
+        app.name=\{\{ index .Data.data "secretkey" \}\}
+        \{\{- end \}\}
 
-- name: Create file with root-only access
-  vault_template:
-    src: 'secretconfig.ctmpl'
-    dest: '/etc/secretconfig.ini'
-    mode: '0600'
-    owner: root
-    group: wheel
+  - name: Create file with root-only access
+    vault_template:
+      src: "secretconfig.ctmpl"
+      dest: "/etc/secretconfig.ini"
+      mode: "0600"
+      owner: root
+      group: wheel
 
-- name: Use environment variables in template
-  vault_template:
-    src: !unsafe |
-      {{ with secret (printf "/kv/%s/secret" (env "ENV_NAME")) -}}
-      secretkey={{ index .Data.data "secretkey" }}
-      {{- end }}
-    dest: '/etc/secretconfig.ini'
-  environment:
-    ENV_NAME: dev
+  - name: Use environment variables in template
+    vault_template:
+      content: !unsafe |
+        \{\{ with secret (printf "/kv/%s/secret" (env "ENV_NAME")) -\}\}
+        secretkey=\{\{ index .Data.data "secretkey" \}\}
+        \{\{- end \}\}
+      dest: "/etc/secretconfig.ini"
+    environment:
+      ENV_NAME: dev
 '''
 
 RETURN = r''' # '''
