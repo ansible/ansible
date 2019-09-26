@@ -2018,7 +2018,7 @@ class RedfishUtils(object):
             if service_name not in protocol_services:
                 return {'ret': False, 'msg': "Service name %s is invalid" % service_name}
             for service_property in manager_services[service_name].keys():
-                value =  manager_services[service_name][service_property]
+                value = manager_services[service_name][service_property]
                 if service_property in ['ProtocolEnabled', 'state', 'State']:
                     if value in protocol_state_onlist:
                         manager_services[service_name][service_property] = True
@@ -2062,7 +2062,7 @@ class RedfishUtils(object):
         for service_name in manager_services.keys():
             payload[service_name] = {}
             for service_property in manager_services[service_name].keys():
-                if service_property in ['ProtocolEnabled', 'state', 'State']: 
+                if service_property in ['ProtocolEnabled', 'state', 'State']:
                     payload[service_name]['ProtocolEnabled'] = manager_services[service_name][service_property]
                 elif service_property in ['port', 'Port']:
                     payload[service_name]['Port'] = manager_services[service_name][service_property]
@@ -2074,7 +2074,7 @@ class RedfishUtils(object):
         for service_name in payload.keys():
             for service_property in payload[service_name].keys():
                 value = payload[service_name][service_property]
-                if value !=  data[service_name][service_property]:
+                if value != data[service_name][service_property]:
                     need_change = True
                     break
 
