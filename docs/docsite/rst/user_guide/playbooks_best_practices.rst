@@ -427,7 +427,7 @@ Alternatively, if only variables are needed::
 
     - hosts: all
       tasks:
-        - name: Set OS distribution dependant variables
+        - name: Set OS distribution dependent variables
           include_vars: "os_{{ ansible_facts['distribution'] }}.yml"
         - debug:
             var: asdf

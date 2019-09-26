@@ -67,7 +67,7 @@ Example CLI Task
 
 .. code-block:: yaml
 
-   - name: Retreive ENOS OS version
+   - name: Retrieve ENOS OS version
      enos_command:
        commands: show version
      when: ansible_network_os == 'enos'

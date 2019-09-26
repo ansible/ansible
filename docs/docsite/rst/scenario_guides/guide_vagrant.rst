@@ -136,7 +136,7 @@ Advanced Usages
 The "Tips and Tricks" chapter of the `Ansible Provisioner documentation
 <https://www.vagrantup.com/docs/provisioning/ansible.html>`_ provides detailed information about more advanced Ansible features like:
 
-  - how to parallely execute a playbook in a multi-machine environment
+  - how to execute a playbook in parallel within a multi-machine environment
   - how to integrate a local ``ansible.cfg`` configuration file
 
 .. seealso::
