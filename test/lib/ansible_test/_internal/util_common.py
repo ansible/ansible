@@ -19,6 +19,7 @@ from .util import (
     display,
     find_python,
     is_shippable,
+    remove_tree,
     MODE_DIRECTORY,
     MODE_FILE_EXECUTE,
     PYTHON_PATHS,
@@ -212,6 +213,13 @@ def get_python_path(args, interpreter):
     PYTHON_PATHS[interpreter] = python_path
 
     return python_path
+
+
+def create_temp_dir(prefix=None, suffix=None, base_dir=None):  # type: (t.Optional[str], t.Optional[str], t.Optional[str]) -> str
+    """Create a temporary directory that persists until the current process exits."""
+    temp_path = tempfile.mkdtemp(prefix=prefix or 'tmp', suffix=suffix or '', dir=base_dir)
+    atexit.register(remove_tree, temp_path)
+    return temp_path
 
 
 def create_interpreter_wrapper(interpreter, injected_interpreter):  # type: (str, str) -> None
