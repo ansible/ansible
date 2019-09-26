@@ -245,15 +245,19 @@ as a distribution method, but you can use it directly to install the collection 
 Trying collection locally
 -------------------------
 
-You can try your collection locally by installing it from the tarball.
+You can try your collection locally by installing it from the tarball. The following will enable an adjacent playbook to
+access the collection:
 
 .. code-block:: bash
 
-   ansible-galaxy collection install my_namespace-my_collection-1.0.0.tar.gz -p ./collections/ansible_collections
+   ansible-galaxy collection install my_namespace-my_collection-1.0.0.tar.gz -p ./collections
 
-You should use one of the values configured in :ref:`COLLECTIONS_PATHS` for your path. This is also where Ansible itself will expect to find collections when attempting to use them.
 
-Then try to use the local collection inside a playbook, for more details see :ref:`Using collections <using_collections>`
+You should use one of the values configured in :ref:`COLLECTIONS_PATHS` for your path. This is also where Ansible itself will
+expect to find collections when attempting to use them. If you don't specify a path value, ``ansible-galaxy collection install``
+installs the collection in the first path defined in :ref:`COLLECTIONS_PATHS`, which by default is ``~/.ansible/collections``.
+
+Next, try using the local collection inside a playbook. For examples and more details see :ref:`Using collections <using_collections>`
 
 .. _publishing_collections:
 
