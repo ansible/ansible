@@ -35,7 +35,7 @@ options:
     required: yes
   domain_id:
     description:
-    - The domina id to use for authentication.
+    - The domain id to use for authentication.
     type: str
     default: 0000ffff0000000000000090
   output_level:
