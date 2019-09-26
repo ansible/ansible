@@ -61,7 +61,7 @@
 - name: Get lacp config by ce_netconf.
   ce_netconf:
     rpc: get
-    cfg_xml: "<filter type="subtree">
+    cfg_xml: "<filter type=\"subtree\">
               <ifmtrunk xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
                 <lacpSysInfo>
                   <priority></priority>
