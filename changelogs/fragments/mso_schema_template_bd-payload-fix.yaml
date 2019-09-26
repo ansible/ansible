@@ -1,0 +1,2 @@
+bugfixes:
+- mso_schema_template_bd - Fix incorrect payload when setting intersiteBUMTrafficAllow.
