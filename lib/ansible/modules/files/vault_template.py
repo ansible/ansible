@@ -76,10 +76,10 @@ EXAMPLES = r'''
       vault_addr: 'http://127.0.0.1:8200/'
       vault_token: "..."
       dest: "/opt/rmcp/none/conf/none.properties"
-      content: |
-        \{\{ with secret "secret/test" -\}\}
-        app.name=\{\{ index .Data.data "secretkey" \}\}
-        \{\{- end \}\}
+      content: !unsafe |
+        {{ with secret "secret/test" -}}
+        app.name={{ index .Data.data "secretkey" }}
+        {{- end }}
 
   - name: Create file with root-only access
     vault_template:
@@ -91,10 +91,10 @@ EXAMPLES = r'''
 
   - name: Use environment variables in template
     vault_template:
-      content: |
-        \{\{ with secret (printf "/kv/%s/secret" (env "ENV_NAME")) -\}\}
-        secretkey=\{\{ index .Data.data "secretkey" \}\}
-        \{\{- end \}\}
+      content: !unsafe |
+        {{ with secret (printf "/kv/%s/secret" (env "ENV_NAME")) -}}
+        secretkey={{ index .Data.data "secretkey" }}
+        {{- end }}
       dest: "/etc/secretconfig.ini"
     environment:
       ENV_NAME: dev
