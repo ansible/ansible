@@ -19,7 +19,7 @@ module: vmware_guest_register_operation
 short_description: VM inventory registration operation
 author:
   - sky-joker (@sky-joker)
-version_added: '2.9'
+version_added: '2.10'
 description:
   - This module can register or unregister VMs to the inventory.
 requirements:
