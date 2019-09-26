@@ -17,9 +17,11 @@ from .util import (
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_BIN_PATH,
+    ANSIBLE_SOURCE_ROOT,
 )
 
 from .util_common import (
+    create_temp_dir,
     run_command,
     ResultType,
 )
@@ -68,7 +70,7 @@ def ansible_environment(args, color=True, ansible_config=None):
         ANSIBLE_RETRY_FILES_ENABLED='false',
         ANSIBLE_CONFIG=ansible_config,
         ANSIBLE_LIBRARY='/dev/null',
-        PYTHONPATH=os.path.dirname(ANSIBLE_LIB_ROOT),
+        PYTHONPATH=get_ansible_python_path(),
         PAGER='/bin/cat',
         PATH=path,
     )
@@ -92,6 +94,28 @@ def ansible_environment(args, color=True, ansible_config=None):
         ))
 
     return env
+
+
+def get_ansible_python_path():  # type: () -> str
+    """
+    Return a directory usable for PYTHONPATH, containing only the ansible package.
+    If a temporary directory is required, it will be cached for the lifetime of the process and cleaned up at exit.
+    """
+    if ANSIBLE_SOURCE_ROOT:
+        # when running from source there is no need for a temporary directory to isolate the ansible package
+        return os.path.dirname(ANSIBLE_LIB_ROOT)
+
+    try:
+        return get_ansible_python_path.python_path
+    except AttributeError:
+        pass
+
+    python_path = create_temp_dir(prefix='ansible-test-')
+    get_ansible_python_path.python_path = python_path
+
+    os.symlink(ANSIBLE_LIB_ROOT, os.path.join(python_path, 'ansible'))
+
+    return python_path
 
 
 def check_pyyaml(args, version):
