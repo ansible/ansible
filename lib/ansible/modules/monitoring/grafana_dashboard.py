@@ -49,10 +49,10 @@ options:
       - The Grafana Organisation ID where the dashboard will be imported / exported.
       - Not used when I(grafana_api_key) is set, because the grafana_api_key only belongs to one organisation..
     default: 1
-  folder_id:
+  folder:
     description:
       - The Grafana folder where this dashboard will be imported to.
-    default: 0
+    default: General
     version_added: '2.10'
   state:
     description:
@@ -200,20 +200,26 @@ def get_grafana_version(module, grafana_url, headers):
     return int(grafana_version)
 
 
-def grafana_folder_exists(module, grafana_url, grafana_version, id, headers):
-    if grafana_version < 5:
-        return False
+def grafana_folder_exists(module, grafana_url, folder_name, headers):
+    # the 'General' folder is a special case, it's ID is always '0'
+    if folder_name == 'General':
+        return True, 0
 
-    # 0 is a special case — the 'General' folder
-    if id == 0:
-        return True
+    try:
+        r, info = fetch_url(module, '%s/api/folders' % grafana_url, headers=headers, method='GET')
 
-    r, info = fetch_url(module, '%s/api/folders/id/%d' % (grafana_url, id), headers=headers, method='GET')
+        if info['status'] != 200:
+            raise GrafanaAPIException("Unable to query Grafana API for folders (name: %s): %d" % (folder_name, info['status']))
 
-    if info['status'] == 200:
-        return True
+        folders = json.load(r.read())
 
-    return False
+        for folder in folders:
+            if folder['title'] == folder_name:
+                return True, folder['id']
+    except Exception as e:
+        raise GrafanaAPIException(e)
+
+    return False, 0
 
 
 def grafana_dashboard_exists(module, grafana_url, uid, headers):
@@ -275,12 +281,15 @@ def grafana_create_dashboard(module, data):
     result = {}
 
     # test if the folder exists
-    folder_exists = grafana_folder_exists(module, data['grafana_url'], grafana_version, data['folder_id'], headers)
-    if folder_exists is False:
-        result['msg'] = "Dashboard folder %d does not exist." % data['folder_id']
-        result['uid'] = uid
-        result['changed'] = False
-        return result
+    if grafana_version >= 5:
+        folder_exists, folder_id = grafana_folder_exists(module, data['grafana_url'], data['folder'], headers)
+        if folder_exists is False:
+            result['msg'] = "Dashboard folder '%s' does not exist." % data['folder']
+            result['uid'] = uid
+            result['changed'] = False
+            return result
+
+        data['folder_id'] = folder_id
 
     # test if dashboard already exists
     dashboard_exists, dashboard = grafana_dashboard_exists(module, data['grafana_url'], uid, headers=headers)
@@ -427,7 +436,7 @@ def main():
         url_password=dict(aliases=['grafana_password'], default='admin', no_log=True),
         grafana_api_key=dict(type='str', no_log=True),
         org_id=dict(default=1, type='int'),
-        folder_id=dict(default=0, type='int'),
+        folder=dict(type='str', default='General'),
         uid=dict(type='str'),
         slug=dict(type='str'),
         path=dict(type='str'),
