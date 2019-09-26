@@ -303,8 +303,8 @@ class PublicKeyManager(object):
             ssh.connect(node, username=user, allow_agent=True)
         ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('%s \r' % (command))
         readmsg = ssh_stdout.read(100)  # We need to read a bit to actually apply for some reason
-        if ('already' in readmsg) or ('removed' in readmsg) or ('really' in readmsg):
-            ssh_stdin.write('yes\r')
+        if (b'already' in readmsg) or (b'removed' in readmsg) or (b'really' in readmsg):
+            ssh_stdin.write(b'yes\r')
         ssh_stdout.read(1)  # We need to read a bit to actually apply for some reason
         ssh.close()
 
