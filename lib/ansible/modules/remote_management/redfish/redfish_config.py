@@ -75,23 +75,11 @@ options:
     default: []
     type: list
     version_added: "2.10"
-  protocol_name:
+  manager_services:
     required: false
     description:
-      - protocol name of manager service to set
+      -  setting dict string of manager services to update
     type: str
-    version_added: "2.10"
-  protocol_enabled:
-    required: false
-    description:
-      - bool value for whether protocol_name is enanbled or not
-    type: bool
-    version_added: "2.10"
-  protocol_port:
-    required: false
-    description:
-      - new port value for protocol_name
-    type: int
     version_added: "2.10"
 
 author: "Jose Delarosa (@jose-delarosa)"
@@ -166,8 +154,7 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      protocol_name: IPMI
-      protocol_enabled: true
+      manager_services: {'SNMP':{'state':'on','port':161}}
 '''
 
 RETURN = '''
@@ -181,6 +168,7 @@ msg:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.redfish_utils import RedfishUtils
 from ansible.module_utils._text import to_native
+import ast
 
 
 # More will be added as module features are expanded
@@ -204,9 +192,7 @@ def main():
             bios_attribute_value=dict(default='null'),
             timeout=dict(type='int', default=10),
             boot_order=dict(type='list', elements='str', default=[])
-            protocol_name=dict(),
-            protocol_enabled=dict(type='bool'),
-            protocol_port=dict(type='int')
+            manager_services=dict()
         ),
         supports_check_mode=False
     )
@@ -267,7 +253,7 @@ def main():
 
         for command in command_list:
             if command == "SetManagerServices":
-                result = rf_utils.set_manager_services(module.params['protocol_name'], module.params['protocol_enabled'], module.params['protocol_port'])
+                result = rf_utils.set_manager_services(ast.literal_eval(module.params['manager_services']))
 
     # Return data back or fail with proper message
     if result['ret'] is True:

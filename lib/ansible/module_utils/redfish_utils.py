@@ -2007,12 +2007,32 @@ class RedfishUtils(object):
         result["entries"] = service_result
         return result
 
-    def set_manager_services(self, protocol_name, protocol_enabled=None, protocol_port=None):
+    def set_manager_services(self, manager_services):
+        # Check input data validity
         protocol_services = ['SNMP', 'VirtualMedia', 'Telnet', 'SSDP', 'IPMI', 'SSH',
                              'KVMIP', 'NTP', 'HTTP', 'HTTPS', 'DHCP', 'DHCPv6', 'RDP',
                              'RFB']
-        if protocol_name not in protocol_services:
-            return {'ret': False, 'msg': "protocol_name %s is invalid" % protocol_name}
+        protocol_state_onlist = ['true', 'True', True, 'on', 1]
+        protocol_state_offlist = ['false', 'False', False, 'off', 0]
+        for service_name in manager_services.keys():
+            if service_name not in protocol_services:
+                return {'ret': False, 'msg': "Service name %s is invalid" % service_name}
+            for service_property in manager_services[service_name].keys():
+                value =  manager_services[service_name][service_property]
+                if service_property in ['ProtocolEnabled', 'state', 'State']:
+                    if value in protocol_state_onlist:
+                        manager_services[service_name][service_property] = True
+                    elif value in protocol_state_offlist:
+                        manager_services[service_name][service_property] = False
+                    else:
+                        return {'ret': False, 'msg': "Value of property %s is invalid" % service_property}
+                elif service_property in ['port', 'Port']:
+                    if isinstance(value, int):
+                        continue
+                    elif isinstance(value, str) and value.isdigit():
+                        manager_services[service_name][service_property] = int(value)
+                    else:
+                        return {'ret': False, 'msg': "Value of property %s is invalid" % service_property}
 
         # Find NetworkProtocol
         response = self.get_request(self.root_uri + self.manager_uri)
@@ -2023,25 +2043,44 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': "NetworkProtocol resource not found"}
         networkprotocol_uri = data["NetworkProtocol"]["@odata.id"]
 
-        # Check protocol property
+        # Check service property support or not
         response = self.get_request(self.root_uri + networkprotocol_uri)
         if response['ret'] is False:
             return response
         data = response['data']
-        if protocol_name not in data:
-            return {'ret': False, 'msg': "%s property not found under %s" % (protocol_name, networkprotocol_uri)}
+        for service_name in manager_services.keys():
+            if service_name not in data:
+                return {'ret': False, 'msg': "%s service not support" % service_name}
+            for service_property in manager_services[service_name].keys():
+                if service_property in ['ProtocolEnabled', 'state', 'State', 'port', 'Port']:
+                    continue
+                if service_property not in data[service_name]:
+                    return {'ret': False, 'msg': "%s property for %s service not support" % (service_property, service_name)}
+
+        # convert dict to redfish format
+        payload = {}
+        for service_name in manager_services.keys():
+            payload[service_name] = {}
+            for service_property in manager_services[service_name].keys():
+                if service_property in ['ProtocolEnabled', 'state', 'State']: 
+                    payload[service_name]['ProtocolEnabled'] = manager_services[service_name][service_property]
+                elif service_property in ['port', 'Port']:
+                    payload[service_name]['Port'] = manager_services[service_name][service_property]
+                else:
+                    payload[service_name][service_property] = manager_services[service_name][service_property]
 
         # if the protocol is already enabled, nothing to do
-        property_value = data.get(protocol_name)
-        if (protocol_enabled is None) or (protocol_enabled == property_value['ProtocolEnabled']):
-            if (protocol_port is None) or (protocol_port == property_value['Port']):
-                return {'ret': True, 'changed': False, 'msg': "Manager services already set"}
+        need_change = False
+        for service_name in payload.keys():
+            for service_property in payload[service_name].keys():
+                value = payload[service_name][service_property]
+                if value !=  data[service_name][service_property]:
+                    need_change = True
+                    break
 
-        payload = {protocol_name: {}}
-        if protocol_enabled is not None:
-            payload[protocol_name]['ProtocolEnabled'] = protocol_enabled
-        if protocol_port is not None:
-            payload[protocol_name]['Port'] = protocol_port
+        if not need_change:
+            return {'ret': True, 'changed': False, 'msg': "Manager services already set"}
+
         response = self.patch_request(self.root_uri + networkprotocol_uri, payload)
         if response['ret'] is False:
             return response
