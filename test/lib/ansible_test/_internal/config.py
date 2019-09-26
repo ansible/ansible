@@ -46,14 +46,7 @@ class EnvironmentConfig(CommonConfig):
         self.local = args.local is True
         self.venv = args.venv
 
-        if args.tox is True or args.tox is False or args.tox is None:
-            self.tox = args.tox is True
-            self.tox_args = 0
-            self.python = args.python if 'python' in args else None  # type: str
-        else:
-            self.tox = True
-            self.tox_args = 1
-            self.python = args.tox  # type: str
+        self.python = args.python if 'python' in args else None  # type: str
 
         self.docker = docker_qualify_image(args.docker)  # type: str
         self.docker_raw = args.docker  # type: str
@@ -67,8 +60,6 @@ class EnvironmentConfig(CommonConfig):
 
         if self.docker_seccomp is None:
             self.docker_seccomp = get_docker_completion().get(self.docker_raw, {}).get('seccomp', 'default')
-
-        self.tox_sitepackages = args.tox_sitepackages  # type: bool
 
         self.remote_stage = args.remote_stage  # type: str
         self.remote_provider = args.remote_provider  # type: str
@@ -88,7 +79,7 @@ class EnvironmentConfig(CommonConfig):
         self.python_version = self.python or actual_major_minor
         self.python_interpreter = args.python_interpreter
 
-        self.delegate = self.tox or self.docker or self.remote or self.venv
+        self.delegate = self.docker or self.remote or self.venv
         self.delegate_args = []  # type: t.List[str]
 
         if self.delegate:

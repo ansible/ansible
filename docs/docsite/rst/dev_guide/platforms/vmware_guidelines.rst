@@ -149,7 +149,7 @@ following commands:
 .. code-block:: shell
 
     source hacking/env-setup
-    ansible-test units --tox --python 3.7 '.*vmware.*'
+    ansible-test units --venv --python 3.7 '.*vmware.*'
 
 Code style and best practice
 ============================
