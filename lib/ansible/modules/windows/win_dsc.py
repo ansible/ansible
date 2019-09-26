@@ -92,7 +92,7 @@ EXAMPLES = r'''
     Name: telnet-client
 
 - name: Edit HKCU reg key under specific user
-  win_regedit:
+  win_dsc:
     resource_name: Registry
     Ensure: Present
     Key: HKEY_CURRENT_USER\ExampleKey
