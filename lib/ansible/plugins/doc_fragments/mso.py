@@ -33,6 +33,11 @@ options:
     - This option is mutual exclusive with C(private_key). If C(private_key) is provided too, it will be used instead.
     type: str
     required: yes
+  domain_id:
+    description:
+    - The domina id to use for authentication.
+    type: str
+    default: 0000ffff0000000000000090
   output_level:
     description:
     - Influence the output of this ACI module.

@@ -82,6 +82,7 @@ def mso_argument_spec():
         port=dict(type='int', required=False),
         username=dict(type='str', default='admin'),
         password=dict(type='str', required=True, no_log=True),
+        domain_id=dict(type='str', default='0000ffff0000000000000090'),
         output_level=dict(type='str', default='normal', choices=['debug', 'info', 'normal']),
         timeout=dict(type='int', default=30),
         use_proxy=dict(type='bool', default=True),
@@ -166,7 +167,9 @@ class MSOModule(object):
 
         # Perform login request
         self.url = urljoin(self.baseuri, 'auth/login')
-        payload = {'username': self.params['username'], 'password': self.params['password']}
+        payload = {'username': self.params['username'],
+                   'password': self.params['password'],
+                   'domainId': self.params['domain_id']}
         resp, auth = fetch_url(self.module,
                                self.url,
                                data=json.dumps(payload),
