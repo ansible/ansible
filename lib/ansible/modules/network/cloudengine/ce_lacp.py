@@ -192,6 +192,7 @@ updates:
 import xml.etree.ElementTree as ET
 import re
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config
 
 LACP = {'trunk_id': 'ifName',
@@ -270,8 +271,8 @@ def bulid_xml(kwargs, operation='get'):
     root.attrib = attrib
     config = ET.tostring(root)
     if operation == 'merge' or operation == 'delete':
-        return '<config>%s</config>' % config
-    return '<filter type="subtree">%s</filter>' % config
+        return '<config>%s</config>' % to_native(config)
+    return '<filter type="subtree">%s</filter>' % to_native(config)
 
 
 def check_param(kwargs):
