@@ -308,7 +308,6 @@ from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands, get_connection
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
-from ansible.module_utils.network.nxos.nxos import check_args as nxos_check_args
 from ansible.module_utils.network.common.utils import to_list
 
 
@@ -408,7 +407,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    nxos_check_args(module, warnings)
 
     result = {'changed': False, 'warnings': warnings}
 
