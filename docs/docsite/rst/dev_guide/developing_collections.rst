@@ -77,7 +77,9 @@ The ``ansible-doc`` command requires the fully qualified collection name (FQCN) 
 plugins directory
 ------------------
 
-Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by any other plugin by using their FQCN. This is a way to distribute modules, lookups, filters, and so on, without having to import a role in every play.
+Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by most plugins by using their FQCN. This is a way to distribute modules, lookups, filters, and so on, without having to import a role in every play.
+
+Vars plugins are unsupported in collections. Cache plugins may be used in collections for fact caching, but are not supported for inventory plugins.
 
 module_utils
 ^^^^^^^^^^^^
@@ -114,6 +116,11 @@ In the Python example the ``module_util`` in question is called ``qradar`` such 
         not_rest_data_keys=['state']
     )
 
+Note that importing something from an ``__init__.py`` file requires using the file name:
+
+.. code-block:: python
+
+    from ansible_collections.namespace.collection_name.plugins.callback.__init__ import CustomBaseClass
 
 In the PowerShell example the ``module_util`` in question is called ``hyperv`` such that the FCQN is
 ``ansible_example.community.plugins.module_utils.hyperv``:
