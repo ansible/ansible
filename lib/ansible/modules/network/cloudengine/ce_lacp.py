@@ -106,13 +106,9 @@ options:
             - Select priority or speed to preempt.
         choices: ['Speed', 'Prority']
         type: str
-    member_if:
-        description:
-            - The member interface of eth-trunk that is selected is merge priority.
-        type: str
     priority:
         description:
-            - The priority of eth-trunk member interface,and 'member_if' is need when priority is not none.
+            - The priority of eth-trunk member interface.
         type: int
     global_priority:
         description:
@@ -209,7 +205,6 @@ LACP = {'trunk_id': 'ifName',
         'collector_delay': 'collectMaxDelay',
         'max_active_linknumber': 'maxActiveNum',
         'select': 'selectPortStd',
-        'member_if': 'memberIfName',
         'weight': 'weight',
         'priority': 'portPriority',
         'global_priority': 'priority'
@@ -245,8 +240,6 @@ def bulid_xml(kwargs, operation='get'):
     for key in kwargs.keys():
         if key in ('global_priority',):
             xpath = 'lacpSysInfo'
-        elif key in ('member_if',):
-            xpath = 'TrunkIfs/TrunkIf/TrunkMemberIfs/TrunkMemberIf'
         elif key in ('priority',):
             xpath = 'TrunkIfs/TrunkIf/TrunkMemberIfs/TrunkMemberIf/lacpPortInfo/lacpPort'
         elif key in ['preempt_enable', 'timeout_type', 'fast_timeout', 'select', 'preempt_delay',
@@ -261,8 +254,6 @@ def bulid_xml(kwargs, operation='get'):
             element = ET.SubElement(parent, LACP[key])
             if operation == 'merge':
                 parent.attrib = dict(operation=operation)
-                element.text = str(kwargs[key])
-            if key == 'member_if':
                 element.text = str(kwargs[key])
             if key == 'mode':
                 element.text = str(kwargs[key])
@@ -423,7 +414,6 @@ class Lacp(object):
             argument_spec=self.spec,
             mutually_exclusive=[['trunk_id', 'global_priority']],
             required_one_of=[['trunk_id', 'global_priority']],
-            required_together=[['member_if', 'priority']],
             supports_check_mode=True)
 
     def check_params(self):
@@ -514,7 +504,6 @@ def main():
         collector_delay=dict(required=False, type='int'),
         max_active_linknumber=dict(required=False, type='int'),
         select=dict(required=False, type='str', choices=['Speed', 'Prority']),
-        member_if=dict(required=False, type='str'),
         priority=dict(required=False, type='int'),
         global_priority=dict(required=False, type='int'),
         state=dict(required=False, default='present',
