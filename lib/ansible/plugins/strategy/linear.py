@@ -45,7 +45,6 @@ from ansible.utils.display import Display
 
 display = Display()
 
-
 class StrategyModule(StrategyBase):
 
     noop_task = None

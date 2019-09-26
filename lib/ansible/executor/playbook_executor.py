@@ -28,6 +28,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import become_loader, connection_loader, shell_loader
 from ansible.playbook import Playbook
+from ansible.playbook.base import post_validate
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
 from ansible.utils.path import makedirs_safe
@@ -141,7 +142,7 @@ class PlaybookExecutor:
                     # Post validate so any play level variables are templated
                     all_vars = self._variable_manager.get_vars(play=play)
                     templar = Templar(loader=self._loader, variables=all_vars)
-                    play.post_validate(templar)
+                    play.deserialize(post_validate(play.serialize(), templar))
 
                     if context.CLIARGS['syntax']:
                         continue

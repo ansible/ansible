@@ -85,7 +85,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         Implementors of action modules may find the following variables especially useful:
 
-        * Module parameters.  These are stored in self._task.args
+        * Module parameters.  These are stored in self._task['args']
         """
 
         result = {}
@@ -96,19 +96,19 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                  ' the tmpdir']
         del tmp
 
-        if self._task.async_val and not self._supports_async:
+        if self._task['async_val'] and not self._supports_async:
             raise AnsibleActionFail('async is not supported for this task.')
-        elif self._play_context.check_mode and not self._supports_check_mode:
+        elif self._play_context['check_mode'] and not self._supports_check_mode:
             raise AnsibleActionSkip('check mode is not supported for this task.')
-        elif self._task.async_val and self._play_context.check_mode:
+        elif self._task['async_val'] and self._play_context['check_mode']:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
         # Error if invalid argument is passed
         if self._VALID_ARGS:
-            task_opts = frozenset(self._task.args.keys())
+            task_opts = frozenset(self._task['args'].keys())
             bad_opts = task_opts.difference(self._VALID_ARGS)
             if bad_opts:
-                raise AnsibleActionFail('Invalid options for %s: %s' % (self._task.action, ','.join(list(bad_opts))))
+                raise AnsibleActionFail('Invalid options for %s: %s' % (self._task['action'], ','.join(list(bad_opts))))
 
         if self._connection._shell.tmpdir is None and self._early_needs_tmp_path():
             self._make_tmp_path()
@@ -168,7 +168,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # win_stat, win_file, and win_copy are not just like their
                 # python counterparts but they are compatible enough for our
                 # internal usage
-                if module_name in ('stat', 'file', 'copy') and self._task.action != module_name:
+                if module_name in ('stat', 'file', 'copy') and self._task['action'] != module_name:
                     module_name = 'win_%s' % module_name
 
                 # Remove extra quotes surrounding path parameters before sending to module.
@@ -177,7 +177,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         if key in module_args:
                             module_args[key] = self._connection._shell._unquote(module_args[key])
 
-            module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, mod_type, collection_list=self._task.collections)
+            module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, mod_type, collection_list=self._task['collections'])
             if module_path:
                 break
         else:  # This is a for-else: http://bit.ly/1ElPkyg
@@ -203,8 +203,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             try:
                 (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
                                                                             task_vars=task_vars,
-                                                                            module_compression=self._play_context.module_compression,
-                                                                            async_timeout=self._task.async_val,
+                                                                            module_compression=self._play_context['module_compression'],
+                                                                            async_timeout=self._task['async_val'],
                                                                             environment=final_environment,
                                                                             **become_kwargs)
                 break
@@ -233,8 +233,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         final_environment = dict()
-        if self._task.environment is not None:
-            environments = self._task.environment
+        if self._task['environment'] is not None:
+            environments = self._task['environment']
             if not isinstance(environments, list):
                 environments = [environments]
 
@@ -275,7 +275,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # any of these require a true
         for condition in [
             self._connection.has_pipelining,
-            self._play_context.pipelining or self._connection.always_pipeline_modules,  # pipelining enabled for play or connection requires it (eg winrm)
+            self._play_context['pipelining'] or self._connection.always_pipeline_modules,  # pipelining enabled for play or connection requires it (eg winrm)
             module_style == "new",                     # old style modules do not support pipelining
             not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
             not wrap_async or self._connection.always_pipeline_modules,  # async does not normally support pipelining unless it does (eg winrm)
@@ -304,10 +304,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             remote_user = self._connection.get_option('remote_user')
         except KeyError:
             # plugin does not have remote_user option, fallback to default and/play_context
-            remote_user = getattr(self._connection, 'default_user', None) or self._play_context.remote_user
+            remote_user = getattr(self._connection, 'default_user', None) or self._play_context['remote_user']
         except AttributeError:
             # plugin does not use config system, fallback to old play_context
-            remote_user = self._play_context.remote_user
+            remote_user = self._play_context['remote_user']
         return remote_user
 
     def _is_become_unprivileged(self):
@@ -353,7 +353,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 output = 'Authentication failure.'
             elif result['rc'] == 255 and self._connection.transport in ('ssh',):
 
-                if self._play_context.verbosity > 3:
+                if self._play_context['verbosity'] > 3:
                     output = u'SSH encountered an unknown error. The output was:\n%s%s' % (result['stdout'], result['stderr'])
                 else:
                     output = (u'SSH encountered an unknown error during the connection. '
@@ -368,7 +368,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                           'Failed command was: %s, exited with result %d' % (cmd, result['rc']))
             if 'stdout' in result and result['stdout'] != u'':
                 output = output + u", stdout output: %s" % result['stdout']
-            if self._play_context.verbosity > 3 and 'stderr' in result and result['stderr'] != u'':
+            if self._play_context['verbosity'] > 3 and 'stderr' in result and result['stderr'] != u'':
                 output += u", stderr output: %s" % result['stderr']
             raise AnsibleConnectionFailure(output)
         else:
@@ -684,7 +684,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             expanded = initial_fragment
 
         if '..' in os.path.dirname(expanded).split('/'):
-            raise AnsibleError("'%s' returned an invalid relative home directory path containing '..'" % self._play_context.remote_addr)
+            raise AnsibleError("'%s' returned an invalid relative home directory path containing '..'" % self._play_context['remote_addr'])
 
         return expanded
 
@@ -699,7 +699,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     def _update_module_args(self, module_name, module_args, task_vars):
 
         # set check mode in the module arguments, if required
-        if self._play_context.check_mode:
+        if self._play_context['check_mode']:
             if not self._supports_check_mode:
                 raise AnsibleError("check mode is not supported for this operation")
             module_args['_ansible_check_mode'] = True
@@ -707,13 +707,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_args['_ansible_check_mode'] = False
 
         # set no log in the module arguments, if required
-        module_args['_ansible_no_log'] = self._play_context.no_log or C.DEFAULT_NO_TARGET_SYSLOG
+        module_args['_ansible_no_log'] = self._play_context['no_log'] or C.DEFAULT_NO_TARGET_SYSLOG
 
         # set debug in the module arguments, if required
         module_args['_ansible_debug'] = C.DEFAULT_DEBUG
 
         # let module know we are in diff mode
-        module_args['_ansible_diff'] = self._play_context.diff
+        module_args['_ansible_diff'] = self._play_context['diff']
 
         # let module know our verbosity
         module_args['_ansible_verbosity'] = display.verbosity
@@ -739,7 +739,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_args['_ansible_socket'] = task_vars.get('ansible_socket')
 
         # make sure all commands use the designated shell executable
-        module_args['_ansible_shell_executable'] = self._play_context.executable
+        module_args['_ansible_shell_executable'] = self._play_context['executable']
 
         # make sure modules are aware if they need to keep the remote files
         module_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
@@ -785,9 +785,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # if a module name was not specified for this execution, use the action from the task
         if module_name is None:
-            module_name = self._task.action
+            module_name = self._task['action']
         if module_args is None:
-            module_args = self._task.args
+            module_args = self._task['args']
 
         self._update_module_args(module_name, module_args, task_vars)
 
@@ -795,8 +795,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # make sure we get the right async_dir variable, backwards compatibility
         # means we need to lookup the env value ANSIBLE_ASYNC_DIR first
         remove_async_dir = None
-        if wrap_async or self._task.async_val:
-            env_async_dir = [e for e in self._task.environment if
+        if wrap_async or self._task['async_val']:
+            env_async_dir = [e for e in self._task['environment'] if
                              "ANSIBLE_ASYNC_DIR" in e]
             if len(env_async_dir) > 0:
                 msg = "Setting the async dir from the environment keyword " \
@@ -808,8 +808,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # from the shell option and temporarily add to the environment
                 # list for async_wrapper to pick up
                 async_dir = self.get_shell_option('async_dir', default="~/.ansible_async")
-                remove_async_dir = len(self._task.environment)
-                self._task.environment.append({"ANSIBLE_ASYNC_DIR": async_dir})
+                remove_async_dir = len(self._task['environment'])
+                self._task['environment'].append({"ANSIBLE_ASYNC_DIR": async_dir})
 
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
@@ -857,7 +857,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # the async_wrapper task - this is so the async_status plugin doesn't
         # fire a deprecation warning when it runs after this task
         if remove_async_dir is not None:
-            del self._task.environment[remove_async_dir]
+            del self._task['environment'][remove_async_dir]
 
         remote_files = []
         if tmpdir and remote_module_path:
@@ -879,7 +879,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             self._transfer_data(remote_async_module_path, async_module_data)
             remote_files.append(remote_async_module_path)
 
-            async_limit = self._task.async_val
+            async_limit = self._task['async_val']
             async_jid = str(random.randint(0, 999999999999))
 
             # call the interpreter for async_wrapper directly
@@ -1055,7 +1055,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         if self._connection.allow_executable:
             if executable is None:
-                executable = self._play_context.executable
+                executable = self._play_context['executable']
                 # mitigation for SSH race which can drop stdout (https://github.com/ansible/ansible/issues/13876)
                 # only applied for the default executable to avoid interfering with the raw action
                 cmd = self._connection._shell.append_command(cmd, 'sleep 0')
@@ -1152,7 +1152,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 diff['after_header'] = u'dynamically generated'
                 diff['after'] = source
 
-        if self._play_context.no_log:
+        if self._play_context['no_log']:
             if 'before' in diff:
                 diff["before"] = u""
             if 'after' in diff:
@@ -1168,7 +1168,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         # dwim already deals with playbook basedirs
-        path_stack = self._task.get_search_path()
+        path_stack = self._task['search_path']
 
         # if missing it will return a file not found exception
         return self._loader.path_dwim_relative_stack(path_stack, dirname, needle)

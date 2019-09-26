@@ -114,6 +114,26 @@ class Attribute:
     def __ge__(self, other):
         return other.priority >= self.priority
 
+    def serialize(self):
+        def_value = self.default
+        if callable(def_value):
+            def_value = def_value()
+        return {
+          'isa': self.isa,
+          'private': self.private,
+          'default': def_value,
+          'required': self.required,
+          'listof': self.listof,
+          'priority': self.priority,
+          'class_type': '', #self.class_type,
+          'always_post_validate': self.always_post_validate,
+          'inherit': self.inherit,
+          'alias': self.alias,
+          'extend': self.extend,
+          'prepend': self.prepend,
+          'static': self.static,
+        }
+
 
 class FieldAttribute(Attribute):
     pass

@@ -21,17 +21,23 @@ __metaclass__ = type
 
 import os
 import tempfile
+import threading
+
+from collections import deque
 
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
+from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text, to_native
+from ansible.playbook.base import post_validate
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
+from ansible.plugins import loader as plugin_loader
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
@@ -48,12 +54,51 @@ __all__ = ['TaskQueueManager']
 display = Display()
 
 
+class StrategySentinel:
+    pass
+
+
+_sentinel = StrategySentinel()
+
+
+def results_thread_main(tqm):
+    while True:
+        try:
+            result = tqm._final_q.get()
+            if isinstance(result, StrategySentinel):
+                break
+            else:
+                tqm._results_lock.acquire()
+                tqm._results.append(result)
+                tqm._results_lock.release()
+        except (IOError, EOFError):
+            break
+        except Queue.Empty:
+            pass
+
+
 class TaskQueueManager:
 
     '''
     This class handles the multiprocessing requirements of Ansible by
     creating a pool of worker forks, a result handler fork, and a
-    manager object with shared datastructures/queues for coordinating
+    def results_thread_main(strategy):
+    while True:
+        try:
+            result = strategy._final_q.get()
+            if isinstance(result, StrategySentinel):
+                break
+            else:
+                strategy._results_lock.acquire()
+                strategy._results.append(result)
+                strategy._results_lock.release()
+        except (IOError, EOFError):
+            break
+        except Queue.Empty:
+            pass
+
+
+manager object with shared datastructures/queues for coordinating
     work between all processes.
 
     The queue manager is responsible for loading the play strategy plugin,
@@ -105,11 +150,29 @@ class TaskQueueManager:
         # plugins for inter-process locking.
         self._connection_lockfile = tempfile.TemporaryFile()
 
+        self._results = deque()
+        self._results_lock = threading.Condition(threading.Lock())
+
     def _initialize_processes(self, num):
         self._workers = []
 
         for i in range(num):
-            self._workers.append(None)
+            in_q = multiprocessing.Queue()
+            proc = WorkerProcess(
+                in_q,
+                self._final_q,
+                self._loader,
+                self._variable_manager,
+                plugin_loader,
+            )
+            self._workers.append((proc, in_q))
+            proc.start()
+
+        # create the result processing thread for reading results in the background
+        self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
+        self._results_thread.daemon = True
+        self._results_thread.start()
+
 
     def load_callbacks(self):
         '''
@@ -182,7 +245,9 @@ class TaskQueueManager:
         templar = Templar(loader=self._loader, variables=all_vars)
 
         new_play = play.copy()
-        new_play.post_validate(templar)
+        new_play.deserialize(
+            post_validate(new_play.serialize(), templar)
+        )
         new_play.handlers = new_play.compile_roles_handlers() + new_play.handlers
 
         self.hostvars = HostVars(
@@ -250,17 +315,20 @@ class TaskQueueManager:
     def cleanup(self):
         display.debug("RUNNING CLEANUP")
         self.terminate()
+        self._final_q.put(_sentinel)
+        self._results_thread.join()
         self._final_q.close()
         self._cleanup_processes()
 
     def _cleanup_processes(self):
         if hasattr(self, '_workers'):
-            for worker_prc in self._workers:
+            for worker_prc, in_q in self._workers:
                 if worker_prc and worker_prc.is_alive():
                     try:
                         worker_prc.terminate()
                     except AttributeError:
                         pass
+                in_q.close()
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()

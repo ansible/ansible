@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
+import multiprocessing
 import os
 import sys
 import traceback
@@ -39,8 +41,10 @@ from ansible.errors import AnsibleConnectionFailure
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
+from ansible.parsing.ajson import AnsibleJSONDecoder
 from ansible.utils.display import Display
 from ansible.utils.multiprocessing import context as multiprocessing_context
+from ansible.utils.sentinel import Sentinel
 
 __all__ = ['WorkerProcess']
 
@@ -54,15 +58,12 @@ class WorkerProcess(multiprocessing_context.Process):
     for reading later.
     '''
 
-    def __init__(self, final_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj):
+    def __init__(self, in_q, final_q, loader, variable_manager, shared_loader_obj):
 
         super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
+        self._in_q = in_q
         self._final_q = final_q
-        self._task_vars = task_vars
-        self._host = host
-        self._task = task
-        self._play_context = play_context
         self._loader = loader
         self._variable_manager = variable_manager
         self._shared_loader_obj = shared_loader_obj
@@ -145,61 +146,74 @@ class WorkerProcess(multiprocessing_context.Process):
         if HAS_PYCRYPTO_ATFORK:
             atfork()
 
-        try:
-            # execute the task and build a TaskResult from the result
-            display.debug("running TaskExecutor() for %s/%s" % (self._host, self._task))
-            executor_result = TaskExecutor(
-                self._host,
-                self._task,
-                self._task_vars,
-                self._play_context,
-                self._new_stdin,
-                self._loader,
-                self._shared_loader_obj,
-                self._final_q
-            ).run()
+        # execute the task and build a TaskResult from the result
+        while True:
+            try:
+                job = self._in_q.get()
+                if isinstance(job, Sentinel):
+                    break
 
-            display.debug("done running TaskExecutor() for %s/%s [%s]" % (self._host, self._task, self._task._uuid))
-            self._host.vars = dict()
-            self._host.groups = []
-            task_result = TaskResult(
-                self._host.name,
-                self._task._uuid,
-                executor_result,
-                task_fields=self._task.dump_attrs(),
-            )
-
-            # put the result on the result queue
-            display.debug("sending task result for task %s" % self._task._uuid)
-            self._final_q.put(task_result)
-            display.debug("done sending task result for task %s" % self._task._uuid)
-
-        except AnsibleConnectionFailure:
-            self._host.vars = dict()
-            self._host.groups = []
-            task_result = TaskResult(
-                self._host.name,
-                self._task._uuid,
-                dict(unreachable=True),
-                task_fields=self._task.dump_attrs(),
-            )
-            self._final_q.put(task_result, block=False)
-
-        except Exception as e:
-            if not isinstance(e, (IOError, EOFError, KeyboardInterrupt, SystemExit)) or isinstance(e, TemplateNotFound):
+                task_vars = {}
                 try:
-                    self._host.vars = dict()
-                    self._host.groups = []
-                    task_result = TaskResult(
-                        self._host.name,
-                        self._task._uuid,
-                        dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''),
-                        task_fields=self._task.dump_attrs(),
-                    )
-                    self._final_q.put(task_result, block=False)
-                except Exception:
-                    display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
-                    display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
+                    (host, task, task_vars_path, play_context, plugin_paths) = job
+                    display.debug("running TaskExecutor() for %s/%s [name: %s]" % (host['name'], task['uuid'], task['name']))
+                    #with open(task_vars_path, 'rt') as f:
+                    #    task_vars = json.load(f, cls=AnsibleJSONDecoder)
+                    task_vars = {}
+                    #os.unlink(task_vars_path)
+                except ValueError as e:
+                    # FIXME: send back a failed result re: invalid job params
+                    # FIXME: catch possible errors from JSON and unlink
+                    print("OOPS: %s" % e)
+                    break
+
+                executor_result = TaskExecutor(
+                    host,
+                    task,
+                    task_vars,
+                    play_context,
+                    self._new_stdin,
+                    self._loader,
+                    self._shared_loader_obj,
+                    self._final_q,
+                ).run()
+
+                display.debug("done running TaskExecutor() for %s/%s [name: %s]" % (host['name'], task['uuid'], task['name']))
+                task_result = TaskResult(
+                    host['name'],
+                    task['uuid'],
+                    executor_result,
+                    task_fields=task,
+                )
+
+                # put the result on the result queue
+                display.debug("sending task result for task %s" % task['uuid'])
+                self._final_q.put(task_result)
+                display.debug("done sending task result for task %s" % task['uuid'])
+
+            except AnsibleConnectionFailure:
+                task_result = TaskResult(
+                    host['name'],
+                    task['uuid'],
+                    dict(unreachable=True),
+                    task_fields=task,
+                )
+                self._final_q.put(task_result, block=False)
+
+            except Exception as e:
+                if not isinstance(e, (IOError, EOFError, KeyboardInterrupt, SystemExit)) or isinstance(e, TemplateNotFound):
+                    try:
+                        task_result = TaskResult(
+                            host['name'],
+                            task['uuid'],
+                            dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''),
+                            task_fields=task,
+                        )
+                        self._final_q.put(task_result, block=False)
+                    except Exception:
+                        display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
+                        display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
+                break
 
         display.debug("WORKER PROCESS EXITING")
 

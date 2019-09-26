@@ -21,13 +21,13 @@ __metaclass__ = type
 
 import cmd
 import functools
+import json
 import os
 import pprint
 import sys
-import threading
+import tempfile
 import time
 
-from collections import deque
 from multiprocessing import Lock
 from jinja2.exceptions import UndefinedError
 
@@ -35,19 +35,23 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
-from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.module_utils.six.moves import queue as Queue
+from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.six import iteritems, itervalues, string_types
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
+from ansible.playbook.base import post_validate
+from ansible.playbook.conditional import evaluate_conditional
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
+from ansible.playbook.play_context import set_task_and_variable_override
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
+from ansible.utils.path import unfrackpath
 from ansible.utils.vars import combine_vars
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
@@ -56,35 +60,12 @@ display = Display()
 __all__ = ['StrategyBase']
 
 
-class StrategySentinel:
-    pass
-
-
 def SharedPluginLoaderObj():
     '''This only exists for backwards compat, do not use.
     '''
     display.deprecated('SharedPluginLoaderObj is deprecated, please directly use ansible.plugins.loader',
                        version='2.11')
     return plugin_loader
-
-
-_sentinel = StrategySentinel()
-
-
-def results_thread_main(strategy):
-    while True:
-        try:
-            result = strategy._final_q.get()
-            if isinstance(result, StrategySentinel):
-                break
-            else:
-                strategy._results_lock.acquire()
-                strategy._results.append(result)
-                strategy._results_lock.release()
-        except (IOError, EOFError):
-            break
-        except Queue.Empty:
-            pass
 
 
 def debug_closure(func):
@@ -108,7 +89,7 @@ def debug_closure(func):
             task = result._task
             host = result._host
             _queued_task_args = self._queued_task_cache.pop((host.name, task._uuid), None)
-            task_vars = _queued_task_args['task_vars']
+            task_vars = {} # _queued_task_args['task_vars']
             play_context = _queued_task_args['play_context']
             # Try to grab the previous host state, if it doesn't exist use get_host_state to generate an empty state
             try:
@@ -191,14 +172,6 @@ class StrategyBase:
         # flushed handlers
         self._flushed_hosts = dict()
 
-        self._results = deque()
-        self._results_lock = threading.Condition(threading.Lock())
-
-        # create the result processing thread for reading results in the background
-        self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
-        self._results_thread.daemon = True
-        self._results_thread.start()
-
         # holds the list of active (persistent) connections to be shutdown at
         # play completion
         self._active_connections = dict()
@@ -235,8 +208,6 @@ class StrategyBase:
             except ConnectionError as e:
                 # most likely socket is already closed
                 display.debug("got an error while closing persistent connection: %s" % e)
-        self._final_q.put(_sentinel)
-        self._results_thread.join()
 
     def run(self, iterator, play_context, result=0):
         # execute one more pass through the iterator without peeking, to
@@ -323,55 +294,54 @@ class StrategyBase:
         except Exception as e:
             raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
 
-        # and then queue the new task
+        # Dump the task vars to a file. We do this in case they are
+        # very large and to avoid serializing them resulting in large
+        # memory utilization
+
+        # FIXME: get the ansible secure working directory properly instead of hard-coding it here
+        display.debug("dumping task vars to tmp file")
+        #task_vars_fd, task_vars_path = tempfile.mkstemp(prefix='task_vars', dir=unfrackpath('~/.ansible/tmp'), text=True)
+        #with os.fdopen(task_vars_fd, 'wt') as f:
+        #    #json.dump(task_vars, f, cls=AnsibleJSONEncoder)
+        #    json.dump({}, f)
+        task_vars_path = ''
+        del task_vars
+        display.debug("done dumping task vars to tmp file")
+
         try:
-            queued = False
-            starting_worker = self._cur_worker
-            while True:
-                worker_prc = self._workers[self._cur_worker]
-                if worker_prc is None or not worker_prc.is_alive():
-                    self._queued_task_cache[(host.name, task._uuid)] = {
-                        'host': host,
-                        'task': task,
-                        'task_vars': task_vars,
-                        'play_context': play_context
-                    }
-
-                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader)
-                    self._workers[self._cur_worker] = worker_prc
-                    self._tqm.send_callback('v2_runner_on_start', host, task)
-                    worker_prc.start()
-                    display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
-                    queued = True
-
-                self._cur_worker += 1
-
-                # Determine the "rewind point" of the worker list. This means we start
-                # iterating over the list of workers until the end of the list is found.
-                # Normally, that is simply the length of the workers list (as determined
-                # by the forks or serial setting), however a task/block/play may "throttle"
-                # that limit down.
-                rewind_point = len(self._workers)
-                if throttle > 0 and self.ALLOW_BASE_THROTTLING:
-                    if task.run_once:
-                        display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
-                    else:
-                        if throttle <= rewind_point:
-                            display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
-                            rewind_point = throttle
-                if self._cur_worker >= rewind_point:
-                    self._cur_worker = 0
-
-                if queued:
-                    break
-                elif self._cur_worker == starting_worker:
-                    time.sleep(0.0001)
-
+            display.debug("adding host/task info to queued task cache")
+            self._queued_task_cache[(host.name, task._uuid)] = {
+                'host': host,
+                'task': task,
+                #'task_vars': task_vars,
+                'play_context': play_context
+            }
+            display.debug("done adding host/task info to queued task cache")
+            display.debug("copying/squashing task and play context for queue")
+            t = task.copy(exclude_parent=False, exclude_tasks=True)
+            t.squash()
+            pc = play_context.copy()
+            pc.squash()
+            display.debug("done copying/squashing task and play context for queue")
+            display.debug("putting the task/etc. in the queue")
+            worker, in_q = self._workers[self._cur_worker]
+            in_q.put((
+                host.serialize(),
+                t.serialize(),
+                task_vars_path,
+                pc.serialize(),
+                {}, # plugin paths dict
+            ), block=False)
+            display.debug("done putting the task/etc. in the queue")
+            self._cur_worker += 1
+            if self._cur_worker >= len(self._workers):
+                self._cur_worker = 0
             self._pending_results += 1
         except (EOFError, IOError, AssertionError) as e:
             # most likely an abort
             display.debug("got an error while queuing: %s" % e)
             return
+
         display.debug("exiting _queue_task() for %s/%s" % (host.name, task.action))
 
     def get_task_hosts(self, iterator, task_host, task):
@@ -438,12 +408,12 @@ class StrategyBase:
         cur_pass = 0
         while True:
             try:
-                self._results_lock.acquire()
-                task_result = self._results.popleft()
+                self._tqm._results_lock.acquire()
+                task_result = self._tqm._results.popleft()
             except IndexError:
                 break
             finally:
-                self._results_lock.release()
+                self._tqm._results_lock.release()
 
             # get the original host and task. We then assign them to the TaskResult for use in callbacks/etc.
             original_host = get_original_host(task_result._host)
@@ -1036,7 +1006,7 @@ class StrategyBase:
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task,
                                                        _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
             templar = Templar(loader=self._loader, variables=all_vars)
-            return task.evaluate_conditional(templar, all_vars)
+            return evaluate_conditional(task.when, task.get_ds(), templar, all_vars)
 
         skipped = False
         msg = ''
@@ -1089,18 +1059,31 @@ class StrategyBase:
                 skipped = True
                 msg = "end_host conditional evaluated to false, continuing execution for %s" % target_host.name
         elif meta_action == 'reset_connection':
-            all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task,
-                                                       _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
+            all_vars = self._variable_manager.get_vars(
+                play=iterator._play,
+                host=target_host,
+                task=task,
+                _hosts=self._hosts_cache,
+                _hosts_all=self._hosts_cache_all,
+            )
             templar = Templar(loader=self._loader, variables=all_vars)
 
             # apply the given task's information to the connection info,
             # which may override some fields already set by the play or
             # the options specified on the command line
-            play_context = play_context.set_task_and_variable_override(task=task, variables=all_vars, templar=templar)
+            # FIXME: hacky... there may be a better way
+            play_context.deserialize(
+                set_task_and_variable_override(
+                    play_context=self._play_context.serialize(),
+                    task=task.serialize(),
+                    variables=all_vars,
+                    templar=templar,
+                )
+            )
 
             # fields set from the play/task may be based on variables, so we have to
             # do the same kind of post validation step on it here before we use it.
-            play_context.post_validate(templar=templar)
+            post_validate(play_context, templar=templar)
 
             # now that the play context is finalized, if the remote_addr is not set
             # default to using the host's address field as the remote address
@@ -1231,8 +1214,7 @@ class Debugger(cmd.Cmd):
         templar = Templar(None, shared_loader_obj=None, variables=self.scope['task_vars'])
         task = self.scope['task']
         task = task.load_data(task._ds)
-        task.post_validate(templar)
-        self.scope['task'] = task
+        self.scope['task'] = post_validate(task.serialize(), templar)
 
     do_u = do_update_task
 

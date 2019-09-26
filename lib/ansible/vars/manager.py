@@ -48,6 +48,8 @@ from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
 
+from ansible.devel.cprofile_decorator import cprofile_func
+
 display = Display()
 
 
@@ -230,6 +232,7 @@ class VariableManager:
                 return data
 
             # internal fuctions that actually do the work
+            @cprofile_func()
             def _plugins_inventory(entities):
                 ''' merges all entities by inventory source '''
                 return get_vars_from_inventory_sources(self._loader, self._inventory._sources, entities, stage)
