@@ -27,7 +27,7 @@ If you want to follow the conversation about what features will be added to Ansi
 Micro development: the lifecycle of a PR
 ========================================
 
-Ansible accepts code via **pull requests** ("PRs" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of Ansible Core.
+Ansible accepts code through **pull requests** ("PRs" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of Ansible Core.
 Here's an overview of the PR lifecycle:
 
 * Contributor opens a PR
@@ -107,7 +107,7 @@ Information labels
 -  **feature_pull_request**: applied by the bot based on the templatized description of the PR.
 -  **networking**: applied by the bot based on the paths of the modified files.
 -  **owner_pr**: largely deprecated. Formerly workflow, now informational. Originally, PRs submitted by the maintainer would automatically go to **shipit** based on this label. If the submitter is also a maintainer, we notify the other maintainers and still require one of the maintainers (including the submitter) to give a **shipit**.
--  **pending_action**: applied by the bot to PRs that are not moving. Reviewed every couple of weeks by the community team, who tries to figure out the appropriate action (closure, asking for new maintainers, etc).
+-  **pending_action**: applied by the bot to PRs that are not moving. Reviewed every couple of weeks by the community team, who tries to figure out the appropriate action (closure, asking for new maintainers, and so on).
 
 
 Special Labels
@@ -164,7 +164,7 @@ an existing one, so we can trace the change back to the PR that introduced it.
 To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory. The file name should include the PR number and a description of the change. It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``
 
 A single changelog fragment may contain multiple sections but most will only contain one section.
-The toplevel keys (bugfixes, major_changes, etc) are defined in the
+The toplevel keys (bugfixes, major_changes, and so on) are defined in the
 `config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our release note tool. Here are the valid sections and a description of each:
 
 **major_changes**
