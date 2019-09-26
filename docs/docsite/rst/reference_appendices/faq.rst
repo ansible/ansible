@@ -651,7 +651,7 @@ but you can still access the original via ``hostvars``::
 
    original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
 
-This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
+This works for all overridden connection variables, like ``ansible_user``, ``ansible_port``, etc.
 
 
 .. _scp_protocol_error_filename:
