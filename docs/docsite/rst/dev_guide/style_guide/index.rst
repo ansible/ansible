@@ -49,7 +49,7 @@ Headers should be written in sentence case. For example, this section's title is
 ``Header case``, not ``Header Case`` or ``HEADER CASE``.
 
 
-Avoid using latin phrases
+Avoid using Latin phrases
 -------------------------
 
 Latin words and phrases like ``e.g.`` or ``etc.``
