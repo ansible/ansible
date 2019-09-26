@@ -137,7 +137,7 @@ Cisco Nexus Platform Support Matrix
 
 The following platforms and software versions have been certified by Cisco to work with this version of Ansible.
 
-.. table:: Platform / Software Mininum Requirements
+.. table:: Platform / Software Minimum Requirements
      :align: center
 
      ===================  =====================

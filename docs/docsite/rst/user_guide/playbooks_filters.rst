@@ -286,7 +286,7 @@ To always exhaust all list use ``zip_longest``::
         msg: "{{ [1,2,3] | zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X') | list }}"
 
 
-Similarly to the output of the ``items2dict`` filter mentioned above, these filters can be used to contruct a ``dict``::
+Similarly to the output of the ``items2dict`` filter mentioned above, these filters can be used to construct a ``dict``::
 
     {{ dict(keys_list | zip(values_list)) }}
 
@@ -824,7 +824,7 @@ To sort a VLAN list::
 
     {{ [3003, 3004, 3005, 100, 1688, 3002, 3999] | vlan_parser }}
 
-This example renders the folllowing sorted list::
+This example renders the following sorted list::
 
     ['100,1688,3002-3005,3999']
 
