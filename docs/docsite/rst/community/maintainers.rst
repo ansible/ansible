@@ -42,7 +42,7 @@ Issues
 
 Issues for modules, including bug reports, documentation bug reports, and feature requests, are tracked in the `ansible repository <https://github.com/ansible/ansible/issues>`_.
 
-Issues for modules are routed to their maintainers via an automated process. This process is still being refined, and currently depends upon the issue creator to provide adequate details (specifically, providing the proper module name) in order to route it correctly. If you are a maintainer of a specific module, it is recommended that you periodically search module issues for issues which mention your module's name (or some variation on that name), as well as setting an appropriate notification process for receiving notification of mentions of your GitHub ID.
+Issues for modules are routed to their maintainers by an automated process. This process is still being refined, and currently depends upon the issue creator to provide adequate details (specifically, providing the proper module name) in order to route it correctly. If you are a maintainer of a specific module, it is recommended that you periodically search module issues for issues which mention your module's name (or some variation on that name), as well as setting an appropriate notification process for receiving notification of mentions of your GitHub ID.
 
 PR workflow
 -----------
