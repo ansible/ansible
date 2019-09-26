@@ -271,7 +271,7 @@ def conversion_src(module):
         if re.search(r'^#\s*$', per_config) is not None:
             src_list_organize.append(per_config)
             src_list_organize.append('commit')
-        elif re.search(r'^\s+#\s*$', per_config)  is not None:
+        elif re.search(r'^\s+#\s*$', per_config) is not None:
             continue
     src_str = '\n'.join(src_list_organize)
     return src_str
