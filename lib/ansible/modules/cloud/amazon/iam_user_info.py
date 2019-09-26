@@ -176,8 +176,6 @@ def main():
         supports_check_mode=True
     )
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
     connection = module.client('iam')
 
     list_iam_users(connection, module)
