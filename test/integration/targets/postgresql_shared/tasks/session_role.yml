@@ -3,7 +3,7 @@
   become: yes
   postgresql_db:
     state: present
-    name: "{{ db_name }}"
+    name: must_fail
     login_user: "{{ pg_user }}"
     session_role: "{{ db_session_role1 }}"
   register: result
