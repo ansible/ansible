@@ -69,7 +69,7 @@ class Cliconf(CliconfBase):
     def get_option_values(self):
         # format: json is supported from SROS19.10 onwards in MD MODE only
         return {
-            'format': ['text','json'],
+            'format': ['text', 'json'],
             'diff_match': [],
             'diff_replace': [],
             'output': ['text']
@@ -189,7 +189,7 @@ class Cliconf(CliconfBase):
             if format not in self.get_option_values()['format']:
                 raise ValueError("'format' value %s is invalid. Valid values are %s" % (format, ','.join(self.get_option_values()['format'])))
 
-            if format=='text':
+            if format is 'text':
                 cmd = 'info %s %s' % (source, ' '.join(flags))
             else:
                 cmd = 'info %s %s %s' % (source, format, ' '.join(flags))
