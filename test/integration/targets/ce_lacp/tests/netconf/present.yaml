@@ -3,7 +3,7 @@
     msg: "START ce_lacp presented integration tests on connection={{ ansible_connection }}"
 
 - name: present the provided configuration with the exisiting running configuration
-  ce_lacp: &presentd
+  ce_lacp: &present
     mode: Dynamic
     trunk_id: 10
     preempt_enable: True
@@ -74,7 +74,7 @@
 
 
 - name: present the provided configuration with the existing running configuration (IDEMPOTENT)
-  ce_lacp: *presentd
+  ce_lacp: *present
   register: result_re_presentd
 
 - name: Assert that the previous task was idempotent
@@ -97,11 +97,7 @@
       - "'<lacpMlagSysId>1111-2222-3333</lacpMlagSysId>' in result_global_presentd.end_state.result"
       - "'<priority>123</priority>' in result_global_presentd.end_state.result"
 
-
-- name: clean-up all
-  ce_lacp: *presentd
-    state: absent
-  register: result_re_presentd
-
+# after present, it should be deleted
+- include_tasks: delete.yaml
 - debug:
     msg: "END ce_lacp presentd integration tests on connection={{ ansible_connection }}"
