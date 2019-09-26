@@ -220,6 +220,7 @@ backup_path:
   sample: /playbooks/ansible/backup/ce_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig as _NetworkConfig
 from ansible.module_utils.network.common.config import dumps, ConfigLine, ignore_line
 from ansible.module_utils.network.cloudengine.ce import get_config, run_commands, exec_command, cli_err_msg
@@ -236,17 +237,26 @@ def _load_config(module, config):
     """Sends configuration commands to the remote device
     """
 
+    # ensure that context is user-view
+    rc, out, err = exec_command(module, 'return')
+    if rc != 0:
+        module.fail_json(msg='unable to return', output=err)
+    # enter 'system-view'
     rc, out, err = exec_command(module, 'system-view')
     if rc != 0:
         module.fail_json(msg='unable to enter system-view', output=err)
-
+    # iter commands and execute them
     for index, cmd in enumerate(config):
         rc, out, err = exec_command(module, cmd)
         if rc != 0:
             print_msg = cli_err_msg(cmd.strip(), err)
             if rc != 0:
                 module.fail_json(msg=print_msg)
-
+    # try to commit, if it is necessary.may be unnecessary,but have a try
+    try:
+        exec_command(module, 'commit')
+    except ConnectionError:
+        pass
     rc, out, err = exec_command(module, 'return')
     if rc != 0:
         module.fail_json(msg='unable to return', output=err)
