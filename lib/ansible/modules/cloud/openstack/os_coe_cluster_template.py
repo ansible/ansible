@@ -37,7 +37,7 @@ options:
    docker_storage_driver:
       description:
          - Docker storage driver
-      choices: [devicemapper, overlay]
+      choices: [devicemapper, overlay, overlay2]
    docker_volume_size:
       description:
          - The size in GB of the docker volume
@@ -288,7 +288,7 @@ def main():
     argument_spec = openstack_full_argument_spec(
         coe=dict(required=True, choices=['kubernetes', 'swarm', 'mesos']),
         dns_nameserver=dict(default='8.8.8.8'),
-        docker_storage_driver=dict(choices=['devicemapper', 'overlay']),
+        docker_storage_driver=dict(choices=['devicemapper', 'overlay', 'overlay2']),
         docker_volume_size=dict(type='int'),
         external_network_id=dict(default=None),
         fixed_network=dict(default=None),
