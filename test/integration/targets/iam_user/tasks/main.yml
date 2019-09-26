@@ -19,6 +19,38 @@
         - iam_user_info_path_group is failed
         - 'iam_user_info_path_group.msg == "parameters are mutually exclusive: group|path"'
 
+  - name: ensure exception handling fails as expected
+    iam_user_info:
+      region: 'bogus'
+      path: ''
+    ignore_errors: yes
+    register: iam_user_info
+  - assert:
+      that:
+        - iam_user_info is failed
+        - '"user" in iam_user_info.msg'
+
+  - name: ensure exception handling fails as expected with group
+    iam_user_info:
+      region: 'bogus'
+      group: '{{ test_group }}'
+    ignore_errors: yes
+    register: iam_user_info
+  - assert:
+      that:
+        - iam_user_info is failed
+        - '"group" in iam_user_info.msg'
+
+  - name: ensure exception handling fails as expected with default path
+    iam_user_info:
+      region: 'bogus'
+    ignore_errors: yes
+    register: iam_user_info
+  - assert:
+      that:
+        - iam_user_info is failed
+        - '"path" in iam_user_info.msg'
+
   - name: ensure ansible user exists
     iam_user:
       name: '{{ test_user }}'
