@@ -329,6 +329,73 @@
         that:
           - result is not changed
 
+
+    - name: When creating with force_delete flag true
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        force_delete: true
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: it should ignored force parameter and perform change and create
+      assert:
+        that:
+          - result is changed
+          - result.created
+
+    - name: When deleting a repository with force_delete flag true (check_mode)
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        force_delete: true
+        state: absent
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+      check_mode: yes
+
+    - name: it should skip, flag as changed and not delete
+      assert:
+        that:
+        - result is skipped
+        - result is changed
+
+    - name: When deleting a repository with force_delete flag true
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        force_delete: true
+        state: absent
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: it should flag as changed and delete
+      assert:
+        that:
+          - result is changed
+
+    - name: When deleting a repository with force_delete flag true (test idempotency)
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        force_delete: true
+        state: absent
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: it should not change
+      assert:
+        that:
+          - result is not changed
+
   always:
 
     - name: Delete lingering ECR repository

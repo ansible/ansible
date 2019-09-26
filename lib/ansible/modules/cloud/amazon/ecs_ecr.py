@@ -48,6 +48,13 @@ options:
         required: false
         default: false
         type: bool
+    force_delete:
+        description:
+            - if a repository contains images, forces the deletion.
+        required: false
+        default: false
+        type: bool
+        version_added: '2.10'
     state:
         description:
             - create or destroy the repository
@@ -67,8 +74,11 @@ EXAMPLES = '''
 - name: ecr-repo
   ecs_ecr: name=super/cool
 
-- name: destroy-ecr-repo
+- name: destroy ecr-repo
   ecs_ecr: name=old/busted state=absent
+
+- name: force destroy ecr-repo
+  ecs_ecr: name=old/busted force_delete=true state=absent
 
 - name: Cross account ecr-repo
   ecs_ecr: registry_id=999999999999 name=cross/account
@@ -224,10 +234,12 @@ class EcsEcr:
                     'could not find repository {0}'.format(printable))
             return
 
-    def delete_repository(self, registry_id, name):
+    def delete_repository(self, registry_id, name, force_delete):
         if not self.check_mode:
             repo = self.ecr.delete_repository(
-                repositoryName=name, **build_kwargs(registry_id))
+                repositoryName=name,
+                force=force_delete,
+                **build_kwargs(registry_id))
             self.changed = True
             return repo
         else:
@@ -270,6 +282,7 @@ def run(ecr, params, verbosity):
         delete_policy = params['delete_policy']
         registry_id = params['registry_id']
         force_set_policy = params['force_set_policy']
+        force_delete = params['force_delete']
 
         # If a policy was given, parse it
         policy = policy_text and json.loads(policy_text)
@@ -329,7 +342,7 @@ def run(ecr, params, verbosity):
         elif state == 'absent':
             result['name'] = name
             if repo:
-                ecr.delete_repository(registry_id, name)
+                ecr.delete_repository(registry_id, name, force_delete)
                 result['changed'] = True
 
     except Exception as err:
@@ -358,7 +371,8 @@ def main():
                    default='present'),
         force_set_policy=dict(required=False, type='bool', default=False),
         policy=dict(required=False, type='json'),
-        delete_policy=dict(required=False, type='bool')))
+        delete_policy=dict(required=False, type='bool'),
+        force_delete=dict(required=False, type='bool', default=False)))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
