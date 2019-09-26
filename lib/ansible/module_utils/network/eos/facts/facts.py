@@ -10,7 +10,10 @@ calls the appropriate facts gathering function
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
+
 from ansible.module_utils.network.common.facts.facts import FactsBase
+from ansible.module_utils.network.eos.eos import get_connection
 from ansible.module_utils.network.eos.facts.interfaces.interfaces import InterfacesFacts
 from ansible.module_utils.network.eos.facts.l2_interfaces.l2_interfaces import L2_interfacesFacts
 from ansible.module_utils.network.eos.facts.l3_interfaces.l3_interfaces import L3_interfacesFacts
@@ -48,6 +51,15 @@ class Facts(FactsBase):
 
     VALID_LEGACY_GATHER_SUBSETS = frozenset(FACT_LEGACY_SUBSETS.keys())
     VALID_RESOURCE_SUBSETS = frozenset(FACT_RESOURCE_SUBSETS.keys())
+
+    def __init__(self, module):
+        super(Facts, self).__init__(module)
+
+        if self._connection:
+            capabilities = json.loads(self._connection.get_capabilities())
+            if capabilities.get("network_api") == "eapi":
+                # Redirect connection to something that understands httpapi
+                self._connection = get_connection(module)
 
     def get_facts(self, legacy_facts_type=None, resource_facts_type=None, data=None):
         """ Collect the facts for eos
