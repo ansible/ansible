@@ -55,6 +55,19 @@
     iam_user:
       name: '{{ test_user }}'
       state: present
+    register: iam_user
+
+  - name: ensure the info used to validate other tests is valid
+    set_fact:
+        test_iam_user: '{{ iam_user.iam_user.user }}'
+  - assert:
+      that:
+        - 'test_iam_user.arn.startswith("arn:aws:iam")'
+        - 'test_iam_user.arn.endswith("user/" + test_user )'
+        - test_iam_user.create_date is not none
+        - test_iam_user.path == '{{ test_path }}'
+        - test_iam_user.user_id is not none
+        - test_iam_user.user_name == '{{ test_user }}'
 
   - name: get info on IAM user(s)
     iam_user_info:
@@ -67,15 +80,15 @@
     iam_user_info:
       name: '{{ test_user }}'
     register: iam_user_info
+  - debug: var=iam_user_info
   - assert:
       that:
         - iam_user_info.iam_users | length == 1
-        - 'iam_user_info.iam_users[0].arn.startswith("arn:aws:iam")'
-        - 'iam_user_info.iam_users[0].arn.endswith("user/" + test_user )'
-        - iam_user_info.iam_users[0].createDate is not none
-        - iam_user_info.iam_users[0].path == '{{ test_path }}'
-        - iam_user_info.iam_users[0].user_id is not none
-        - iam_user_info.iam_users[0].user_name == '{{ test_user }}'
+        - iam_user_info.iam_users[0].arn == test_iam_user.arn
+        - iam_user_info.iam_users[0].create_date == test_iam_user.create_date
+        - iam_user_info.iam_users[0].path == test_iam_user.path
+        - iam_user_info.iam_users[0].user_id == test_iam_user.user_id
+        - iam_user_info.iam_users[0].user_name == test_iam_user.user_name
 
   - name: get info on IAM user(s) on path
     iam_user_info:
@@ -85,12 +98,11 @@
   - assert:
       that:
         - iam_user_info.iam_users | length == 1
-        - 'iam_user_info.iam_users[0].arn.startswith("arn:aws:iam")'
-        - 'iam_user_info.iam_users[0].arn.endswith("user/" + test_user )'
-        - iam_user_info.iam_users[0].createDate is not none
-        - iam_user_info.iam_users[0].path == '{{ test_path }}'
-        - iam_user_info.iam_users[0].user_id is not none
-        - iam_user_info.iam_users[0].user_name == '{{ test_user }}'
+        - iam_user_info.iam_users[0].arn == test_iam_user.arn
+        - iam_user_info.iam_users[0].create_date == test_iam_user.create_date
+        - iam_user_info.iam_users[0].path == test_iam_user.path
+        - iam_user_info.iam_users[0].user_id == test_iam_user.user_id
+        - iam_user_info.iam_users[0].user_name == test_iam_user.user_name
 
   - name: ensure group exists
     iam_group:
@@ -108,12 +120,11 @@
   - assert:
       that:
         - iam_user_info.iam_users | length == 1
-        - 'iam_user_info.iam_users[0].arn.startswith("arn:aws:iam")'
-        - 'iam_user_info.iam_users[0].arn.endswith("user/" + test_user )'
-        - iam_user_info.iam_users[0].createDate is not none
-        - iam_user_info.iam_users[0].path == '{{ test_path }}'
-        - iam_user_info.iam_users[0].user_id is not none
-        - iam_user_info.iam_users[0].user_name == '{{ test_user }}'
+        - iam_user_info.iam_users[0].arn == test_iam_user.arn
+        - iam_user_info.iam_users[0].create_date == test_iam_user.create_date
+        - iam_user_info.iam_users[0].path == test_iam_user.path
+        - iam_user_info.iam_users[0].user_id == test_iam_user.user_id
+        - iam_user_info.iam_users[0].user_name == test_iam_user.user_name
 
   - name: remove user from group
     iam_group:
