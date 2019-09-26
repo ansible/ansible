@@ -15,20 +15,20 @@ options:
       - Indicates whether get_id() can return multiple IDs for a given name.
       - Typically, this should be false when updating or deleting; otherwise, all named objects could be affected.
       required: true
-      version_added: "2.9"
+      version_added: "2.10"
       type: bool
     filters:
       description:
       - The key/value pairs describing filters to be applied to the request(s) made by this instance.
       required: false
-      version_added: "2.9"
+      version_added: "2.10"
       type: dict
     log_level:
       description:
       - If ANSIBLE_DEBUG is set, this will be forced to 'debug', but can be user-defined otherwise.
       required: True
       choices: ['debug', 'info', 'normal']
-      version_added: "2.9"
+      version_added: "2.10"
       type: str
       default: 'normal'
     state:
@@ -36,14 +36,14 @@ options:
       - Either 'absent' or 'present', depending on whether object should be removed or created.
       required: false
       choices: ['absent', 'present', 'query']
-      version_added: "2.9"
+      version_added: "2.10"
       type: str
       default: 'present'
     status_code:
       description:
       - A list of integer status codes considered to be successful for the this module.
       required: true
-      version_added: "2.9"
+      version_added: "2.10"
       type: list
       default: [200]
 '''

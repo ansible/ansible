@@ -20,7 +20,7 @@ short_description: Gathers info about various VMware inventory objects using RES
 description:
 - This module can be used to gather information about various VMware inventory objects.
 - This module is based on REST API and uses httpapi connection plugin for persistent connection.
-version_added: '2.9'
+version_added: '2.10'
 author:
 - Abhijeet Kasurde (@Akasurde)
 - Paul Knight (@n3pjk)
