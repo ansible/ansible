@@ -26,9 +26,15 @@
   check_mode: yes
 
 - name: verify test gather hcloud volume infos in check mode
+  vars:
+    volume: "{{ hcloud_volume.hcloud_volume_info|selectattr('name','equalto',hcloud_volume_name) | first }}"
   assert:
     that:
       - hcloud_volume.hcloud_volume_info|selectattr('name','equalto','{{ hcloud_volume_name }}') | list | count == 1
+      - volume.name == "{{hcloud_volume_name}}"
+      - volume.location == "fsn1"
+      - volume.size == 10
+      - volume.linux_device is defined
 
 - name: test gather hcloud volume infos with correct label selector
   hcloud_volume_info:

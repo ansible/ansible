@@ -73,6 +73,11 @@ hcloud_volume_info:
             returned: always
             type: str
             sample: 10
+        linux_device:
+            description: Path to the device that contains the volume.
+            returned: always
+            type: src
+            sample: /dev/disk/by-id/scsi-0HC_Volume_12345
         location:
             description: Name of the location where the volume resides in
             returned: always
@@ -119,6 +124,7 @@ class AnsibleHcloudVolumeInfo(Hcloud):
                     "location": to_native(volume.location.name),
                     "labels": volume.labels,
                     "server": to_native(server_name),
+                    "linux_device": to_native(volume.linux_device),
                 })
 
         return tmp
