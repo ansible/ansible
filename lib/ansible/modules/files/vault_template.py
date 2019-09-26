@@ -76,7 +76,7 @@ EXAMPLES = r'''
       vault_addr: 'http://127.0.0.1:8200/'
       vault_token: "..."
       dest: "/opt/rmcp/none/conf/none.properties"
-      content: !unsafe |
+      content: |
         \{\{ with secret "secret/test" -\}\}
         app.name=\{\{ index .Data.data "secretkey" \}\}
         \{\{- end \}\}
@@ -91,7 +91,7 @@ EXAMPLES = r'''
 
   - name: Use environment variables in template
     vault_template:
-      content: !unsafe |
+      content: |
         \{\{ with secret (printf "/kv/%s/secret" (env "ENV_NAME")) -\}\}
         secretkey=\{\{ index .Data.data "secretkey" \}\}
         \{\{- end \}\}
