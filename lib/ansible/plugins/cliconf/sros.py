@@ -38,21 +38,21 @@ from ansible.plugins.cliconf import CliconfBase, enable_mode
 class Cliconf(CliconfBase):
 
     def get_device_operations(self):
-        return {                                   # supported: ---------------
-            'supports_commit': True,               # identify if commit is supported by device or not
-            'supports_rollback': True,             # identify if rollback is supported or not
-            'supports_defaults': True,             # identify if fetching running config with default is supported
-            'supports_onbox_diff': True,           # identify if on box diff capability is supported or not
-            'supports_config_replace': True,       # identify if running config replace with candidate config is supported
-                                                   # unsupported: -------------
-            'supports_admin': False,               # identify if admin configure mode is supported or not
-            'supports_multiline_delimiter': False, # identify if multiline demiliter is supported within config
-            'supports_commit_label': False,        # identify if commit label is supported or not
-            'supports_commit_comment': False,      # identify if adding comment to commit is supported of not
-            'supports_generate_diff': False,       # not needed, as we support on box diff
-            'supports_diff_replace': False,        # not needed, as we support on box diff
-            'supports_diff_match': False,          # not needed, as we support on box diff
-            'supports_diff_ignore_lines': False    # not needed, as we support on box diff
+        return {                                    # supported: ---------------
+            'supports_commit': True,                # identify if commit is supported by device or not
+            'supports_rollback': True,              # identify if rollback is supported or not
+            'supports_defaults': True,              # identify if fetching running config with default is supported
+            'supports_onbox_diff': True,            # identify if on box diff capability is supported or not
+            'supports_config_replace': True,        # identify if running config replace with candidate config is supported
+                                                    # unsupported: -------------
+            'supports_admin': False,                # identify if admin configure mode is supported or not
+            'supports_multiline_delimiter': False,  # identify if multiline demiliter is supported within config
+            'supports_commit_label': False,         # identify if commit label is supported or not
+            'supports_commit_comment': False,       # identify if adding comment to commit is supported of not
+            'supports_generate_diff': False,        # not needed, as we support on box diff
+            'supports_diff_replace': False,         # not needed, as we support on box diff
+            'supports_diff_match': False,           # not needed, as we support on box diff
+            'supports_diff_ignore_lines': False     # not needed, as we support on box diff
         }
 
     def get_sros_rpc(self):
@@ -181,7 +181,7 @@ class Cliconf(CliconfBase):
             if format not in self.get_option_values()['format']:
                 raise ValueError("'format' value %s is invalid. Valid values are %s" % (format, ','.join(self.get_option_values()['format'])))
 
-            if format is text':
+            if format is 'text':
                 cmd = 'info %s %s' % (source, ' '.join(flags))
             else:
                 cmd = 'info %s %s %s' % (source, format, ' '.join(flags))
@@ -319,6 +319,7 @@ class Cliconf(CliconfBase):
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
+
     def rollback(self, rollback_id, commit=True):
         self.send_command('exit all')
 
