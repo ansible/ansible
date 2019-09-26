@@ -18,6 +18,19 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # ============================================================
+
+- name: Create a test user
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_user:
+    name: "{{ db_user1 }}"
+    state: "present"
+    encrypted: 'yes'
+    password: "password"
+    role_attr_flags: "CREATEDB,LOGIN,CREATEROLE"
+    login_user: "{{ pg_user }}"
+    db: postgres
+
 - set_fact: db_file_name="{{tmp_dir}}/{{file}}"
 
 - set_fact:
@@ -138,3 +151,12 @@
 
 - name: remove file name
   file: name={{ db_file_name }}  state=absent
+
+- name: Remove the test user
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_user:
+    name: "{{ db_user1 }}"
+    state: "absent"
+    login_user: "{{ pg_user }}"
+    db: postgres
