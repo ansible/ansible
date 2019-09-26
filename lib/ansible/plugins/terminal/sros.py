@@ -1,21 +1,6 @@
-#
-# (c) 2016 Red Hat Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright (c) 2019 - NOKIA Inc. All Rights Reserved.
+# Please read the associated COPYRIGHTS file for more details.
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -28,16 +13,24 @@ from ansible.errors import AnsibleConnectionFailure
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#|\$|>#) ?$"),
-        re.compile(br"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+        re.compile(br"\r?\n\r?\n\!?\*?(\((ex|gl|pr|ro)\))?\[.*\]\r?\n[AB]\:\S+\@\S+\#\s"),
+        re.compile(br"\r?\n\*?[AB]:[\w\-\.\>]+\#\s")
     ]
 
     terminal_stderr_re = [
-        re.compile(br"Error:"),
+        re.compile(br"[\r\n]Error: .*[\r\n]+"),
+        re.compile(br"[\r\n](WARNING|MINOR|MAJOR|CRITICAL): .*[\r\n]+")
     ]
 
     def on_open_shell(self):
         try:
-            self._exec_cli_command(b'environment no more')
+            if '\n' in self._connection.get_prompt().strip():
+                # node is running md-cli
+                self._exec_cli_command(b'environment more false')
+                self._exec_cli_command(b'//environment no more')
+            else:
+                # node is running classic-cli
+                self._exec_cli_command(b'environment no more')
+
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
