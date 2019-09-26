@@ -418,6 +418,9 @@ class HttpApi:
             self._session_support = self._connection.supports_sessions()
         return self._session_support
 
+    def get(self, command, **kwargs):
+        return self._connection.send_request(command)
+
     def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
         """
