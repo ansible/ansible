@@ -12,11 +12,13 @@ DOCUMENTATION = '''
         - Remy Leone (@sieben)
         - Anthony Ruhier (@Anthony25)
         - Nikhil Singh Baliyan (@nikkytub)
+        - Sander Steffann (@steffann)
     short_description: NetBox inventory source
     description:
         - Get inventory hosts from NetBox
     extends_documentation_fragment:
         - constructed
+        - inventory_cache
     options:
         plugin:
             description: token that ensures this is a source file for the 'netbox' plugin.
@@ -118,12 +120,12 @@ from sys import version as python_version
 from threading import Thread
 from itertools import chain
 
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import open_url
-from ansible.module_utils.six.moves.urllib.parse import urljoin, urlencode
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.compat.ipaddress import ip_interface
 
 ALLOWED_DEVICE_QUERY_PARAMETERS = (
@@ -158,21 +160,51 @@ ALLOWED_DEVICE_QUERY_PARAMETERS = (
 )
 
 
-class InventoryModule(BaseInventoryPlugin, Constructable):
+class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     NAME = 'netbox'
 
     def _fetch_information(self, url):
-        response = open_url(url, headers=self.headers, timeout=self.timeout, validate_certs=self.validate_certs)
+        results = None
+        cache_key = self.get_cache_key(url)
 
-        try:
-            raw_data = to_text(response.read(), errors='surrogate_or_strict')
-        except UnicodeError:
-            raise AnsibleError("Incorrect encoding of fetched payload from NetBox API.")
+        # get the user's cache option to see if we should save the cache if it is changing
+        user_cache_setting = self.get_option('cache')
 
-        try:
-            return json.loads(raw_data)
-        except ValueError:
-            raise AnsibleError("Incorrect JSON payload: %s" % raw_data)
+        # read if the user has caching enabled and the cache isn't being refreshed
+        attempt_to_read_cache = user_cache_setting and self.use_cache
+
+        # attempt to read the cache if inventory isn't being refreshed and the user has caching enabled
+        if attempt_to_read_cache:
+            try:
+                results = self._cache[cache_key]
+                need_to_fetch = False
+            except KeyError:
+                # occurs if the cache_key is not in the cache or if the cache_key expired
+                # we need to fetch the URL now
+                need_to_fetch = True
+        else:
+            # not reading from cache so do fetch
+            need_to_fetch = True
+
+        if need_to_fetch:
+            self.display.v("Fetching: " + url)
+            response = open_url(url, headers=self.headers, timeout=self.timeout, validate_certs=self.validate_certs)
+
+            try:
+                raw_data = to_text(response.read(), errors='surrogate_or_strict')
+            except UnicodeError:
+                raise AnsibleError("Incorrect encoding of fetched payload from NetBox API.")
+
+            try:
+                results = json.loads(raw_data)
+            except ValueError:
+                raise AnsibleError("Incorrect JSON payload: %s" % raw_data)
+
+            # put result in cache if enabled
+            if user_cache_setting:
+                self._cache[cache_key] = results
+
+        return results
 
     def get_resource_list(self, api_url):
         """Retrieves resource list from netbox API.
@@ -446,6 +478,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
         self._read_config_data(path=path)
+        self.use_cache = cache
 
         # Netbox access
         token = self.get_option("token")
