@@ -20,7 +20,7 @@ description:
 - This module can be used to gather information about VCSA health.
 - This module is based on REST API and uses httpapi connection plugin for persistent connection.
 - The Appliance API works against the VCSA and uses the "administrator@vsphere.local" user.
-version_added: '2.9'
+version_added: '2.10'
 author:
 - Paul Knight (@n3pjk)
 notes:
