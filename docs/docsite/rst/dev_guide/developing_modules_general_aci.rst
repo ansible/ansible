@@ -325,7 +325,7 @@ You can test your ``construct_url()`` and ``payload()`` arguments without access
     import json
     from ansible.module_utils.network.aci.aci import ACIModule
 
-    # Just another class mimicking a bare AnsibleModule class for construct_url() and payload() methods
+    # Just another class mimicing a bare AnsibleModule class for construct_url() and payload() methods
     class AltModule():
         params = dict(
             host='dummy',

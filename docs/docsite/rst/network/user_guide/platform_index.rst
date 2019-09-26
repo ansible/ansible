@@ -41,7 +41,7 @@ Settings by Platform
 .. raw:: html
 
     <style>
-    /* Style for this single table.  Add delimiters between header colums */
+    /* Style for this single table.  Add delimiters between header columns */
     table#network-platform-table thead tr th.head {
       border-left-width: 1px;
       border-left-color: rgb(225, 228, 229);

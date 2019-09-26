@@ -84,7 +84,7 @@ used - in this case the ``resource_name`` should be set to ``Registry``. The
 installed; if left blank it will default to the latest version. The other
 options are parameters that are used to define the resource, such as ``Key`` and
 ``ValueName``. While the options in the task are not case sensitive,
-keeping the case as-is is recommended becuase it makes it easier to distinguish DSC
+keeping the case as-is is recommended because it makes it easier to distinguish DSC
 resource options from Ansible's ``win_dsc`` options.
 
 This is what the Ansible task version of the above DSC Registry resource would look like:
