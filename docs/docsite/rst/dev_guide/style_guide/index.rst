@@ -48,6 +48,30 @@ Header case
 Headers should be written in sentence case. For example, this section's title is
 ``Header case``, not ``Header Case`` or ``HEADER CASE``.
 
+
+Avoid using Latin phrases
+-------------------------
+
+Latin words and phrases like ``e.g.`` or ``etc.``
+are easily understood by English speakers.
+They may be harder to understand for others and are also tricky for automated translation.
+
+Use the following English terms in place of Latin terms or abbreviations: 
++-------------------------------+------------------------------+
+| Latin                         | English                      | 
++===============================+==============================+
+| i.e                           | in other words               | 
++-------------------------------+------------------------------+
+| e.g.                          | for example                  |
++-------------------------------+------------------------------+
+| etc                           | and so on                    |
++-------------------------------+------------------------------+
+| via                           | by/ through                  |
++-------------------------------+------------------------------+
+| vs./versus                    | rather than/against          |
++-------------------------------+------------------------------+
+
+
 reStructuredText guidelines
 ===========================
 
