@@ -65,12 +65,14 @@ options:
     default: present
     choices:
       - read
+      - list
       - present
       - absent
     description:
       - The action to take upon the key/value.
 """
 
+# TODO figure how to mention that this can return a list
 RETURN = """
 value:
     description: value associated with the requested key
@@ -96,6 +98,12 @@ EXAMPLES = """
   dconf:
     key: "/org/gnome/desktop/input-sources/sources"
     state: absent
+
+- name: List terminal profiles in Gnome
+  dconf:
+    key: "/org/gnome/terminal/legacy/profiles:/"
+    state: list
+  register: terminal_profiles
 
 - name: Configure available keyboard layouts in Cinnamon
   dconf:
@@ -272,6 +280,24 @@ class DconfPreference(object):
 
         return value
 
+    def list(self, key):
+        """
+        List the sub-keys and sub-dirs of a dconf directory.
+
+        If an error occurs, a call will be made to AnsibleModule.fail_json.
+
+        :returns: list -- the sub-keys and sub-dirs of the provided key. If the value is not set for specified key, returns None.
+        """
+
+        command = ["dconf", "list", key]
+
+        rc, out, err = self.module.run_command(command)
+
+        if rc != 0:
+            self.module.fail_json(msg='dconf failed while reading the value with error: %s' % err)
+
+        return out.strip('\n').split('\n')
+
     def write(self, key, value):
         """
         Writes the value for specified key.
@@ -349,7 +375,7 @@ def main():
     # Setup the Ansible module
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent', 'read']),
+            state=dict(default='present', choices=['present', 'absent', 'read', 'list']),
             key=dict(required=True, type='str'),
             value=dict(required=False, default=None, type='str'),
         ),
@@ -369,6 +395,9 @@ def main():
     # Process based on different states.
     if module.params['state'] == 'read':
         value = dconf.read(module.params['key'])
+        module.exit_json(changed=False, value=value)
+    elif module.params['state'] == 'list':
+        value = dconf.list(module.params['key'])
         module.exit_json(changed=False, value=value)
     elif module.params['state'] == 'present':
         changed = dconf.write(module.params['key'], module.params['value'])
