@@ -38,23 +38,22 @@ from ansible.plugins.cliconf import CliconfBase, enable_mode
 class Cliconf(CliconfBase):
 
     def get_device_operations(self):
-        return {                                   # supported:
-            'supports_commit': True,               #   identify if commit is supported by device or not
-            'supports_rollback': True,             #   identify if rollback is supported or not
-            'supports_defaults': True,             #   identify if fetching running config with default is supported
-            'supports_onbox_diff': True,           #   identify if on box diff capability is supported or not
-            'supports_config_replace': True,       #   identify if running config replace with candidate config is supported
-                                                   # unsupported:
-            'supports_admin': False,               #   identify if admin configure mode is supported or not
-            'supports_multiline_delimiter': False, #   identify if multiline demiliter is supported within config
-            'supports_commit_label': False,        #   identify if commit label is supported or not
-            'supports_commit_comment': False,      #   identify if adding comment to commit is supported of not
-            'supports_generate_diff': False,       #   not needed, as we support on box diff
-            'supports_diff_replace': False,        #   not needed, as we support on box diff
-            'supports_diff_match': False,          #   not needed, as we support on box diff
-            'supports_diff_ignore_lines': False    #   not needed, as we support on box diff
+        return {                                   # supported: ---------------
+            'supports_commit': True,               # identify if commit is supported by device or not
+            'supports_rollback': True,             # identify if rollback is supported or not
+            'supports_defaults': True,             # identify if fetching running config with default is supported
+            'supports_onbox_diff': True,           # identify if on box diff capability is supported or not
+            'supports_config_replace': True,       # identify if running config replace with candidate config is supported
+                                                   # unsupported: -------------
+            'supports_admin': False,               # identify if admin configure mode is supported or not
+            'supports_multiline_delimiter': False, # identify if multiline demiliter is supported within config
+            'supports_commit_label': False,        # identify if commit label is supported or not
+            'supports_commit_comment': False,      # identify if adding comment to commit is supported of not
+            'supports_generate_diff': False,       # not needed, as we support on box diff
+            'supports_diff_replace': False,        # not needed, as we support on box diff
+            'supports_diff_match': False,          # not needed, as we support on box diff
+            'supports_diff_ignore_lines': False    # not needed, as we support on box diff
         }
-
 
     def get_sros_rpc(self):
         return [
@@ -65,7 +64,6 @@ class Cliconf(CliconfBase):
             'get_default_flag'     # CLI option to include defaults for config dumps
         ]
 
-
     def get_option_values(self):
         # format: json is supported from SROS19.10 onwards in MD MODE only
         return {
@@ -74,7 +72,6 @@ class Cliconf(CliconfBase):
             'diff_replace': [],
             'output': ['text']
         }
-
 
     def get_device_info(self):
         device_info = {'network_os': 'sros'}
@@ -96,11 +93,10 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-
     def get_capabilities(self):
         try:
             self.capabilities
-        except:
+        except NameError:
             self.capabilities = {}
             self.capabilities['device_operations'] = self.get_device_operations()
             self.capabilities['rpc'] = self.get_sros_rpc()
@@ -110,10 +106,8 @@ class Cliconf(CliconfBase):
 
         return json.dumps(self.capabilities)
 
-
     def get_default_flag(self):
         return ['detail']
-
 
     def is_config_mode(self):
         """
@@ -139,7 +133,6 @@ class Cliconf(CliconfBase):
 
         return self._connection.get_prompt().strip().startswith('(')
 
-
     def is_classic_cli(self):
         """
         Determines if the session is running in Classic CLI or MD-CLI.
@@ -163,7 +156,6 @@ class Cliconf(CliconfBase):
 
         return '\n' not in self._connection.get_prompt().strip()
 
-
     def get_config(self, source='running', format='text', flags=None):
         if self.is_classic_cli():
             # In classic CLI we are using the 'admin display config' command.
@@ -174,14 +166,14 @@ class Cliconf(CliconfBase):
                 raise ValueError("fetching configuration from %s is not supported" % source)
 
             if format is not 'text':
-                raise ValueError("'format' value %s is invalid. Only format supported is 'text'")
+                raise ValueError("'format' value %s is invalid. Only format supported is 'text'" % format)
 
             cmd = 'admin display-config %s' % ' '.join(flags)
             self.send_command('exit all')
             response = self.send_command(cmd.strip())
             pos1 = response.find('exit all')
-            pos2 = response.rfind('exit all')
-            response = response[pos1:pos2+8]
+            pos2 = response.rfind('exit all') + 8
+            response = response[pos1:pos2]
         else:
             if source not in ('startup', 'running', 'candidate'):
                 raise ValueError("fetching configuration from %s is not supported" % source)
@@ -189,7 +181,7 @@ class Cliconf(CliconfBase):
             if format not in self.get_option_values()['format']:
                 raise ValueError("'format' value %s is invalid. Valid values are %s" % (format, ','.join(self.get_option_values()['format'])))
 
-            if format is 'text':
+            if format is text':
                 cmd = 'info %s %s' % (source, ' '.join(flags))
             else:
                 cmd = 'info %s %s %s' % (source, format, ' '.join(flags))
@@ -221,7 +213,6 @@ class Cliconf(CliconfBase):
                 self.send_command('quit-config')
 
         return response
-
 
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         operations = self.get_device_operations()
@@ -320,17 +311,14 @@ class Cliconf(CliconfBase):
             self.send_command('quit-config')
 
         if diffs:
-          return {'request': requests, 'response': responses, 'diff': diffs}
+            return {'request': requests, 'response': responses, 'diff': diffs}
         else:
-          return {'request': requests, 'response': responses}
-
+            return {'request': requests, 'response': responses}
 
     def get(self, command, prompt=None, answer=None, sendonly=False, output=None, newline=True, check_all=False):
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
-
-
     def rollback(self, rollback_id, commit=True):
         self.send_command('exit all')
 
