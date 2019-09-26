@@ -37,8 +37,8 @@ options:
             - "ID of the Virtual Machine to manage. Either C(vm_id) or C(vm_name) is required if C(state) is I(attached) or I(detached)."
     state:
         description:
-            - "Should the Virtual Machine disk be present/absent/attached/detached/exported."
-        choices: ['present', 'absent', 'attached', 'detached', 'exported']
+            - "Should the Virtual Machine disk be present/absent/attached/detached/exported/imported."
+        choices: ['present', 'absent', 'attached', 'detached', 'exported', 'imported']
         default: 'present'
     download_image_path:
         description:
@@ -167,6 +167,7 @@ options:
     image_provider:
         description:
             - "When C(state) is I(exported) disk is exported to given Glance image provider."
+            - "When C(state) is I(imported) disk is imported from given Glance image provider."
             - "C(**IMPORTANT**)"
             - "There is no reliable way to achieve idempotency, so every time
                you specify this parameter the disk is exported, so please handle
@@ -327,6 +328,7 @@ from ansible.module_utils.ovirt import (
     follow_link,
     get_id_by_name,
     ovirt_full_argument_spec,
+    get_dict_of_struct,
     search_by_name,
     wait,
 )
@@ -633,7 +635,7 @@ def get_vm_service(connection, module):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'attached', 'detached', 'exported'],
+            choices=['present', 'absent', 'attached', 'detached', 'exported', 'imported'],
             default='present'
         ),
         id=dict(default=None),
@@ -758,9 +760,34 @@ def main():
                 ret = disks_module.action(
                     action='export',
                     action_condition=lambda d: module.params['image_provider'],
-                    wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
+                    wait_condition=lambda d: d.status == otypes.DiskStatpus.OK,
                     storage_domain=otypes.StorageDomain(name=module.params['image_provider']),
                 )
+        elif state == 'imported':
+            glance_service = connection.system_service().openstack_image_providers_service()
+            image_provider = search_by_name(glance_service, module.params['image_provider'])
+            images_service = glance_service.service(image_provider.id).images_service()
+            entity = search_by_name(images_service, module.params['name'])
+            if entity is None:
+                raise Exception("Image '%s' was not found." % module.params['name'])
+            images_service.service(entity.id).import_(
+                storage_domain=otypes.StorageDomain(
+                    name=module.params['storage_domain']
+                ) if module.params['storage_domain'] else None,
+                disk=otypes.Disk(
+                    name=module.params['name']
+                ),
+                import_as_template=False,
+            )
+            # Wait for disk to appear in system:
+            disk = disks_module.wait_for_import(
+                condition=lambda t: t.status == otypes.DiskStatus.OK
+            )
+            ret = {
+                'changed': True,
+                'id': disk.id,
+                'disk': get_dict_of_struct(disk),
+            }
         elif state == 'absent':
             ret = disks_module.remove()
 
