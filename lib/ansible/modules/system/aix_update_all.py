@@ -21,20 +21,20 @@ DOCUMENTATION = r'''
 ---
 author: "Bob ter Hark (@krahb)"
 module: 'aix_update_all'
-short_description: Update all
+short_description: Update all from a directory
 version_added: '2.10'
 description:
-    - Updates all
+- Update All
 options:
   nfs_server:
     description:
     - name of the nfs server
-    default: { NIM_MASTER }
+    type: str
+    default:  NIM_MASTER
   nfs_share:
     description:
     - name of the remote directory, if not given, it will be "/export/nim/aix<OSVER>/lpp_new"
-      where OSVER is  OSVERSION + TL + -SP
-      fi. /export/nim/aix7104-03/lpp_new
+    type: str
 
 notes:
   - the changes are persistent
@@ -78,12 +78,12 @@ def nim_master(module):
                 (k.strip(), v.strip(' "\n')) for k, v in (
                     line.split(
                         ' ', 1)[1].split(
-                        '=', 1) for line in (
-                        (l for l in open(
-                            file, 'r') if l.startswith('export')))))
+                            '=', 1) for line in (
+                                (l for l in open(
+                                    file, 'r') if l.startswith('export')))))
     except IOError as e:
-             module.fail_json(msg="could not determine NIM_MASTER", rc=rc, err=e)
-    return niminfo['NIM_MASTER_HOSTNAME']
+        module.fail_json(msg="could not determine NIM_MASTER", rc=rc, err=e)
+        return niminfo['NIM_MASTER_HOSTNAME']
 
 
 def nfs_mount(module):
