@@ -17,8 +17,8 @@ DOCUMENTATION = r'''
 ---
 module: vault_template
 short_description: Parses Go templates using consul-template and values from HashiCorp Vault
-version_added: 2.10
-author: Mikhail Morev <mmorev@live.ru>
+version_added: '2.10'
+author: Mikhail Morev (@mmorev)
 requirements:
   - consul-template (binary) in $PATH
 description:
@@ -51,13 +51,13 @@ options:
     description:
     - Vault server URL
     env:
-    - name: VAULT_ADDR
+      - name: VAULT_ADDR
     type: str
   vault_token:
     description:
     - Vault authorization token
     env:
-    - name: VAULT_TOKEN
+      - name: VAULT_TOKEN
     type: str
 notes:
 - You can use the M(vault_template) module with the C(content:) option if you prefer the template inline,
@@ -77,7 +77,7 @@ EXAMPLES = r'''
   vault_template:
     vault_addr: 'http://127.0.0.1:8200/'
     vault_token: '...'
-    dest: /opt/rmcp/none/conf/none.properties
+    dest: '/opt/rmcp/none/conf/none.properties'
     content: !unsafe |
       {{ with secret "secret/test" -}}
       app.name={{ index .Data.data "secretkey" }}
@@ -85,9 +85,9 @@ EXAMPLES = r'''
 
 - name: Create file with root-only access
   vault_template:
-    src: secretconfig.ctmpl
-    dest: /etc/secretconfig.ini
-    mode: 0600
+    src: 'secretconfig.ctmpl'
+    dest: '/etc/secretconfig.ini'
+    mode: '0600'
     owner: root
     group: wheel
 
@@ -97,7 +97,7 @@ EXAMPLES = r'''
       {{ with secret (printf "/kv/%s/secret" (env "ENV_NAME")) -}}
       secretkey={{ index .Data.data "secretkey" }}
       {{- end }}
-    dest: /etc/secretconfig.ini
+    dest: '/etc/secretconfig.ini'
   environment:
     ENV_NAME: dev
 '''
