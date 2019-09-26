@@ -288,7 +288,7 @@ def parse_args():
 
     integration.add_argument('--allow-destructive',
                              action='store_true',
-                             help='allow destructive tests (--local and --tox only)')
+                             help='allow destructive tests')
 
     integration.add_argument('--allow-root',
                              action='store_true',
@@ -484,13 +484,13 @@ def parse_args():
                        action='store_true',
                        help='direct to shell with no setup')
 
-    add_environments(shell, tox_version=True)
+    add_environments(shell)
     add_extra_docker_options(shell)
     add_httptester_options(shell, argparse)
 
     coverage_common = argparse.ArgumentParser(add_help=False, parents=[common])
 
-    add_environments(coverage_common, tox_version=True, tox_only=True)
+    add_environments(coverage_common, isolated_delegation=False)
 
     coverage = subparsers.add_parser('coverage',
                                      help='code coverage management and reporting')
@@ -629,11 +629,10 @@ def add_changes(parser, argparse):
     changes.add_argument('--changed-path', metavar='PATH', action='append', help=argparse.SUPPRESS)
 
 
-def add_environments(parser, tox_version=False, tox_only=False):
+def add_environments(parser, isolated_delegation=True):
     """
     :type parser: argparse.ArgumentParser
-    :type tox_version: bool
-    :type tox_only: bool
+    :type isolated_delegation: bool
     """
     parser.add_argument('--requirements',
                         action='store_true',
@@ -654,32 +653,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
                               action='store_true',
                               help='run from ansible-test managed virtual environments')
 
-    if data_context().content.is_ansible:
-        if tox_version:
-            environments.add_argument('--tox',
-                                      metavar='VERSION',
-                                      nargs='?',
-                                      default=None,
-                                      const='.'.join(str(i) for i in sys.version_info[:2]),
-                                      choices=SUPPORTED_PYTHON_VERSIONS,
-                                      help='run from a tox virtualenv: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
-        else:
-            environments.add_argument('--tox',
-                                      action='store_true',
-                                      help='run from a tox virtualenv')
-
-        tox = parser.add_argument_group(title='tox arguments')
-
-        tox.add_argument('--tox-sitepackages',
-                         action='store_true',
-                         help='allow access to globally installed packages')
-    else:
-        environments.set_defaults(
-            tox=None,
-            tox_sitepackages=False,
-        )
-
-    if tox_only:
+    if not isolated_delegation:
         environments.set_defaults(
             docker=None,
             remote=None,

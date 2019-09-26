@@ -1,0 +1,5 @@
+minor_changes:
+    - ansible-test no longer provides a ``--tox`` option.
+      Use the ``--venv`` option instead.
+      This only affects testing the Ansible source.
+      The feature was never available for Ansible Collections or when running from an Ansible install.
