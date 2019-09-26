@@ -1,6 +1,12 @@
----
-
 # Setup
+- name: Create a test user
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    name: "{{ db_user1 }}"
+    login_user: "{{ pg_user }}"
+    db: postgres
+
 - name: Create DB
   become_user: "{{ pg_user }}"
   become: yes
@@ -72,6 +78,8 @@
 
 # Cleanup
 - name: Remove user given permissions
+  become_user: "{{ pg_user }}"
+  become: yes
   postgresql_user:
     name: "{{ db_user2 }}"
     state: absent
@@ -79,6 +87,8 @@
     login_user: "{{ pg_user }}"
 
 - name: Remove user owner of objects
+  become_user: "{{ pg_user }}"
+  become: yes
   postgresql_user:
     name: "{{ db_user3 }}"
     state: absent
@@ -91,4 +101,13 @@
   postgresql_db:
     state: absent
     name: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Remove test user
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    name: "{{ db_user1 }}"
+    state: absent
+    db: postgres
     login_user: "{{ pg_user }}"
