@@ -13,7 +13,7 @@ httpapi : vmware
 short_description: HttpApi Plugin for VMware REST API
 description:
   - This HttpApi plugin provides methods to connect to VMware vCenter over a HTTP(S)-based APIs.
-version_added: "2.9"
+version_added: "2.10"
 """
 
 import json
