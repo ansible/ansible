@@ -41,7 +41,8 @@ class FreeBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
             virtual_facts['virtualization_role'] = 'guest'
 
         if virtual_facts['virtualization_type'] == '':
-            virtual_product_facts = self.detect_virt_product('kern.vm_guest') or self.detect_virt_product('hw.hv_vendor')
+            virtual_product_facts = self.detect_virt_product('kern.vm_guest') or self.detect_virt_product(
+                'hw.hv_vendor') or self.detect_virt_product('security.jail.jailed')
             virtual_facts.update(virtual_product_facts)
 
         if virtual_facts['virtualization_type'] == '':
