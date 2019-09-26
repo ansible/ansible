@@ -15,13 +15,13 @@ You can install and use collections through `Ansible Galaxy <https://galaxy.ansi
 Installing collections
 ======================
 
-You can use the ``ansible-galaxy collection install`` command to install a collection on your system. You must specify an installation location using the ``-p`` option.
+You can use the ``ansible-galaxy collection install`` command to install a collection on your system.
 
 To install a collection hosted in Galaxy:
 
 .. code-block:: bash
 
-   ansible-galaxy collection install my_namespace.my_collection -p /collections
+   ansible-galaxy collection install my_namespace.my_collection
 
 You can also directly use the tarball from your build:
 
@@ -34,7 +34,9 @@ You can also directly use the tarball from your build:
     parent directory is already in a folder called ``ansible_collections``.
 
 
-You should use one of the values configured in :ref:`COLLECTIONS_PATHS` for your path. This is also where Ansible itself will expect to find collections when attempting to use them.
+When using the ``-p`` option to specify the install path, use one of the values configured in :ref:`COLLECTIONS_PATHS`, as this is
+where Ansible itself will expect to find collections. If you don't specify a path, ``ansible-galaxy collection install`` installs
+the collection to the first path defined in :ref:`COLLECTIONS_PATHS`, which by default is ``~/.ansible/collections``
 
 You can also keep a collection adjacent to the current playbook, under a ``collections/ansible_collections/`` directory structure.
 
