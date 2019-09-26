@@ -113,7 +113,7 @@ commands:
 import re
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.network.nxos.nxos import run_commands
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
@@ -365,7 +365,6 @@ def main():
 
     warnings = list()
     result = {'changed': False, 'commands': [], 'warnings': warnings}
-    check_args(module, warnings)
 
     state = module.params['state']
 

@@ -182,7 +182,7 @@ import re
 import copy
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands, save_module_context, read_module_context
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args, normalize_interface
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, normalize_interface
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -761,7 +761,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:
