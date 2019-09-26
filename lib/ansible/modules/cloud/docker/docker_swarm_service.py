@@ -606,6 +606,7 @@ options:
       filename:
         description:
           - Name of the file containing the secret. Defaults to the I(secret_name) if not specified.
+          - Corresponds to the C(target) key of C(docker service create --secret).
         type: str
       uid:
         description:
