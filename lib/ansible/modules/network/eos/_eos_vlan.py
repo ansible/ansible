@@ -132,7 +132,7 @@ from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.eos.eos import load_config, run_commands
-from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import eos_argument_spec
 
 
 def search_obj_in_list(vlan_id, lst):
@@ -327,7 +327,6 @@ def main():
                            mutually_exclusive=mutually_exclusive)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
 
