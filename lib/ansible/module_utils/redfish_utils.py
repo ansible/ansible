@@ -17,15 +17,24 @@ PATCH_HEADERS = {'content-type': 'application/json', 'accept': 'application/json
                  'OData-Version': '4.0'}
 DELETE_HEADERS = {'accept': 'application/json', 'OData-Version': '4.0'}
 
+DEPRECATE_MSG = 'Issuing a data modification command without specifying the '\
+                'ID of the target %(resource)s resource when there is more '\
+                'than one %(resource)s will use the first one in the '\
+                'collection. Use the `resource_id` option to specify the '\
+                'target %(resource)s ID'
+
 
 class RedfishUtils(object):
 
-    def __init__(self, creds, root_uri, timeout, module):
+    def __init__(self, creds, root_uri, timeout, module, resource_id=None,
+                 data_modification=False):
         self.root_uri = root_uri
         self.creds = creds
         self.timeout = timeout
         self.module = module
         self.service_root = '/redfish/v1/'
+        self.resource_id = resource_id
+        self.data_modification = data_modification
         self._init_session()
 
     # The following functions are to send GET/POST/PATCH/DELETE requests
@@ -198,6 +207,16 @@ class RedfishUtils(object):
             self.sessions_uri = sessions
         return {'ret': True}
 
+    def _get_resource_uri_by_id(self, uris, id_prop):
+        for uri in uris:
+            response = self.get_request(self.root_uri + uri)
+            if response['ret'] is False:
+                continue
+            data = response['data']
+            if id_prop == data.get('Id'):
+                return uri
+        return None
+
     def _find_systems_resource(self):
         response = self.get_request(self.root_uri + self.service_root)
         if response['ret'] is False:
@@ -214,6 +233,17 @@ class RedfishUtils(object):
             return {
                 'ret': False,
                 'msg': "ComputerSystem's Members array is either empty or missing"}
+        self.systems_uri = self.systems_uris[0]
+        if self.data_modification:
+            if self.resource_id:
+                self.systems_uri = self._get_resource_uri_by_id(self.systems_uris,
+                                                                self.resource_id)
+                if not self.systems_uri:
+                    return {
+                        'ret': False,
+                        'msg': "System resource %s not found" % self.resource_id}
+            elif len(self.systems_uris) > 1:
+                self.module.deprecate(DEPRECATE_MSG % {'resource': 'System'})
         return {'ret': True}
 
     def _find_updateservice_resource(self):
@@ -245,16 +275,27 @@ class RedfishUtils(object):
         data = response['data']
         if 'Chassis' not in data:
             return {'ret': False, 'msg': "Chassis resource not found"}
-        else:
-            chassis = data["Chassis"]["@odata.id"]
-            response = self.get_request(self.root_uri + chassis)
-            if response['ret'] is False:
-                return response
-            data = response['data']
-            for member in data[u'Members']:
-                chassis_service.append(member[u'@odata.id'])
-            self.chassis_uri_list = chassis_service
-            return {'ret': True}
+        chassis = data["Chassis"]["@odata.id"]
+        response = self.get_request(self.root_uri + chassis)
+        if response['ret'] is False:
+            return response
+        self.chassis_uri_list = [
+            i['@odata.id'] for i in response['data'].get('Members', [])]
+        if not self.chassis_uri_list:
+            return {'ret': False,
+                    'msg': "Chassis Members array is either empty or missing"}
+        self.chassis_uri = self.chassis_uri_list[0]
+        if self.data_modification:
+            if self.resource_id:
+                self.chassis_uri = self._get_resource_uri_by_id(self.chassis_uri_list,
+                                                                self.resource_id)
+                if not self.chassis_uri:
+                    return {
+                        'ret': False,
+                        'msg': "Chassis resource %s not found" % self.resource_id}
+            elif len(self.chassis_uri_list) > 1:
+                self.module.deprecate(DEPRECATE_MSG % {'resource': 'Chassis'})
+        return {'ret': True}
 
     def _find_managers_resource(self):
         response = self.get_request(self.root_uri + self.service_root)
@@ -263,16 +304,27 @@ class RedfishUtils(object):
         data = response['data']
         if 'Managers' not in data:
             return {'ret': False, 'msg': "Manager resource not found"}
-        else:
-            manager = data["Managers"]["@odata.id"]
-            response = self.get_request(self.root_uri + manager)
-            if response['ret'] is False:
-                return response
-            data = response['data']
-            for member in data[u'Members']:
-                manager_service = member[u'@odata.id']
-            self.manager_uri = manager_service
-            return {'ret': True}
+        manager = data["Managers"]["@odata.id"]
+        response = self.get_request(self.root_uri + manager)
+        if response['ret'] is False:
+            return response
+        self.manager_uri_list = [
+            i['@odata.id'] for i in response['data'].get('Members', [])]
+        if not self.manager_uri_list:
+            return {'ret': False,
+                    'msg': "Managers Members array is either empty or missing"}
+        self.manager_uri = self.manager_uri_list[0]
+        if self.data_modification:
+            if self.resource_id:
+                self.manager_uri = self._get_resource_uri_by_id(self.manager_uri_list,
+                                                                self.resource_id)
+                if not self.manager_uri:
+                    return {
+                        'ret': False,
+                        'msg': "Manager resource %s not found" % self.resource_id}
+            elif len(self.manager_uri_list) > 1:
+                self.module.deprecate(DEPRECATE_MSG % {'resource': 'Manager'})
+        return {'ret': True}
 
     def get_logs(self):
         log_svcs_uri_list = []
@@ -696,7 +748,7 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': 'Invalid Command (%s)' % command}
 
         # read the system resource and get the current power state
-        response = self.get_request(self.root_uri + self.systems_uris[0])
+        response = self.get_request(self.root_uri + self.systems_uri)
         if response['ret'] is False:
             return response
         data = response['data']
@@ -1317,7 +1369,7 @@ class RedfishUtils(object):
         key = "Bios"
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uris[0])
+        response = self.get_request(self.root_uri + self.systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -1350,7 +1402,7 @@ class RedfishUtils(object):
                     'msg': "bootdevice option required for SetOneTimeBoot"}
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uris[0])
+        response = self.get_request(self.root_uri + self.systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -1414,7 +1466,7 @@ class RedfishUtils(object):
                 }
             }
 
-        response = self.patch_request(self.root_uri + self.systems_uris[0], payload)
+        response = self.patch_request(self.root_uri + self.systems_uri, payload)
         if response['ret'] is False:
             return response
         return {'ret': True, 'changed': True}
@@ -1424,7 +1476,7 @@ class RedfishUtils(object):
         key = "Bios"
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uris[0])
+        response = self.get_request(self.root_uri + self.systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
