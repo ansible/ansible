@@ -53,7 +53,7 @@ options:
     - Removing members will remove the specified members if they are present.  Nonexistent members will be ignored.
     default: "set"
     choices: ["add", "remove", "set"]
-    version_added: "2.9"
+    version_added: "2.10"
   privilege:
     description:
     - Accepts a list of member privileges.  The action taken will depend on the value of "member_action."
