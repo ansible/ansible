@@ -243,7 +243,8 @@ class RedfishUtils(object):
                         'ret': False,
                         'msg': "System resource %s not found" % self.resource_id}
             elif len(self.systems_uris) > 1:
-                self.module.deprecate(DEPRECATE_MSG % {'resource': 'System'})
+                self.module.deprecate(DEPRECATE_MSG % {'resource': 'System'},
+                                      version='2.13')
         return {'ret': True}
 
     def _find_updateservice_resource(self):
@@ -294,7 +295,8 @@ class RedfishUtils(object):
                         'ret': False,
                         'msg': "Chassis resource %s not found" % self.resource_id}
             elif len(self.chassis_uri_list) > 1:
-                self.module.deprecate(DEPRECATE_MSG % {'resource': 'Chassis'})
+                self.module.deprecate(DEPRECATE_MSG % {'resource': 'Chassis'},
+                                      version='2.13')
         return {'ret': True}
 
     def _find_managers_resource(self):
@@ -323,7 +325,8 @@ class RedfishUtils(object):
                         'ret': False,
                         'msg': "Manager resource %s not found" % self.resource_id}
             elif len(self.manager_uri_list) > 1:
-                self.module.deprecate(DEPRECATE_MSG % {'resource': 'Manager'})
+                self.module.deprecate(DEPRECATE_MSG % {'resource': 'Manager'},
+                                      version='2.13')
         return {'ret': True}
 
     def get_logs(self):
