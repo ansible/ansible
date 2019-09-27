@@ -8,6 +8,10 @@ class ModuleDocFragment(object):
 
     # Ansible Tower documentation fragment
     DOCUMENTATION = r'''
+deprecated:
+    alternative: Use U(https://galaxy.ansible.com/awx/awx) instead.
+    removed_in: "2.11"
+    why: All Tower or AWX content has moved to a collection.
 options:
   tower_host:
     description:

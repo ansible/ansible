@@ -20,6 +20,10 @@ DOCUMENTATION = '''
           the path in the command would be /path/to/tower_inventory.(yml|yaml). If some arguments in the config file
           are missing, this plugin will try to fill in missing arguments by reading from environment variables.
         - If reading configurations from environment variables, the path in the command must be @tower_inventory.
+    deprecated:
+        alternative: Use U(https://galaxy.ansible.com/awx/awx) instead.
+        removed_in: "2.11"
+        why: All Tower or AWX content has moved to a collection.
     options:
         plugin:
             description: the name of this plugin, it should always be set to 'tower'
