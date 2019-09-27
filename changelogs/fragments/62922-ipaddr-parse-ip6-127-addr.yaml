@@ -1,0 +1,2 @@
+bugfixes:
+  - ipaddr filter - Fix IPv6 /127 address parsing (https://github.com/ansible/ansible/issues/62740)

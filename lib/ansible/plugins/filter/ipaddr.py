@@ -90,11 +90,10 @@ def _6to4_query(v, vtype, value):
 
 
 def _ip_query(v):
-    if v.size == 1:
+    if v.size in [1, 2]:
         return str(v.ip)
-    if v.size > 1:
-        # /31 networks in netaddr have no broadcast address
-        if v.ip != v.network or not v.broadcast:
+    if v.size > 2:
+        if v.ip != v.network:
             return str(v.ip)
 
 
