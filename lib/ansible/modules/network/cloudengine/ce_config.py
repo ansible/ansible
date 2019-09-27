@@ -247,11 +247,9 @@ def _load_config(module, config):
         module.fail_json(msg='unable to enter system-view', output=err)
     # iter commands and execute them
     for index, cmd in enumerate(config):
-        rc, out, err = exec_command(module, cmd)
-        if rc != 0:
-            print_msg = cli_err_msg(cmd.strip(), err)
-            if rc != 0:
-                module.fail_json(msg=print_msg)
+        command = {"command": cmd, "prompts": "Y/N", "answer": "Y"}
+        run_command(module, command)
+
     # try to commit, if it is necessary.may be unnecessary,but have a try
     try:
         exec_command(module, 'commit')
@@ -269,10 +267,10 @@ def conversion_src(module):
         src_list.pop(0)
     for per_config in src_list:
         if re.search(r'^#\s*$', per_config) is not None:
-            src_list_organize.append(per_config)
             src_list_organize.append('commit')
         elif re.search(r'^\s+#\s*$', per_config) is not None:
             continue
+        src_list_organize.append(per_config)
     src_str = '\n'.join(src_list_organize)
     return src_str
 
