@@ -135,6 +135,16 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * eos_vlan use :ref:`eos_vlans <eos_vlans_module>` instead.
 
+* ios_interface use :ref:`ios_interfaces <ios_interfaces_module>` instead.
+
+* ios_l2_interface use :ref:`ios_l2_interfaces <ios_l2_interfaces_module>` instead.
+
+* ios_l3_interface use :ref:`ios_l3_interfaces <ios_l3_interfaces_module>` instead.
+
+* ios_vlan use :ref:`ios_vlans <ios_vlans_module>` instead.
+
+* iosxr_interface use :ref:`iosxr_interfaces <iosxr_interfaces_module>` instead.
+
 * junos_interface use :ref:`junos_interfaces <junos_interfaces_module>` instead.
 
 * junos_l2_interface use :ref:`junos_l2_interfaces <junos_l2_interfaces_module>` instead.
