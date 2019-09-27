@@ -1,0 +1,64 @@
+# We run two servers listening different ports
+# to be able to check replication (one server for master, another for standby).
+
+- name: Install MariaDB packages on RedHat family OS
+  yum:
+    name: "{{ item }}"
+    enablerepo: epel
+  loop:
+  - mariadb-server
+  - mariadb
+  when: ansible_os_family == 'RedHat'
+
+- name: Create directories for standby
+  file:
+    state: directory
+    path: "{{ item }}"
+    owner: mysql
+    group: mysql
+  loop:
+  - "{{ standby_datadir }}"
+  - "{{ standby_logdir }}"
+
+- name: Copy cnf template
+  template:
+    src: my.cnf.j2
+    dest: /etc/my.cnf
+    owner: mysql
+    group: mysql
+    force: yes
+
+- name: Initialize standby's DB
+  shell: 'mysql_install_db --user=mysql --datadir={{ standby_datadir }}'
+
+- name: Initialize master's DB
+  shell: 'mysql_install_db --user=mysql --datadir={{ default_datadir }}'
+
+- name: Start services
+  shell: 'mysqld_multi start 1,2'
+
+- name: Pause
+  pause: seconds=3
+
+########### For painful debug uncomment the lines below ##
+#- name: DEBUG Check stratup log
+#  shell: cat /var/log/mariadb/mariadb.log
+
+#- name: DEBUG Check processes
+#  shell: 'ps aux | grep mysqld | grep -v "grep\|root"'
+
+#- name: DEBUG
+#  yum: name=net-tools
+
+#- name: DEBUG
+#  shell: "netstat -ntpl"
+
+#- name: DEBUG
+#  shell: cat /etc/my.cnf
+##########################################################
+
+- name: Check connection to the master
+  shell: 'echo "SHOW DATABASES;" | mysql -P {{ master_port }} -h 127.0.0.1'
+
+- name: Check connection to the standby
+  shell: "echo \"SHOW VARIABLES LIKE 'datadir';\" | mysql -P {{ standby_port }} -h 127.0.0.1"

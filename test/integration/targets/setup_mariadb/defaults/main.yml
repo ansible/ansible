@@ -1,0 +1,5 @@
+master_port: 3306
+standby_port: 3307
+default_datadir: /var/lib/mysql
+standby_datadir: /var/lib/mysql_standby
+standby_logdir: /var/log/mysql_standby
