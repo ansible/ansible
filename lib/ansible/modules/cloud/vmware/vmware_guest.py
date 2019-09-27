@@ -265,6 +265,12 @@ options:
        This is specifically the case for removing a powered on the virtual machine when C(state) is set to C(absent).'
     default: 'no'
     type: bool
+  delete_from_inventory:
+    description:
+    - Whether to delete Virtual machine from inventory or delete from disk.
+    default: False
+    type: bool
+    version_added: '2.10'
   datacenter:
     description:
     - Destination datacenter for the deploy operation.
@@ -534,6 +540,17 @@ EXAMPLES = r'''
     password: "{{ vcenter_password }}"
     validate_certs: no
     uuid: "{{ vm_uuid }}"
+    state: absent
+  delegate_to: localhost
+
+- name: Remove a virtual machine from inventory
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: vm_name
+    delete_from_inventory: True
     state: absent
   delegate_to: localhost
 
@@ -887,12 +904,22 @@ class PyVmomiHelper(PyVmomi):
     def gather_facts(self, vm):
         return gather_vm_facts(self.content, vm)
 
-    def remove_vm(self, vm):
+    def remove_vm(self, vm, delete_from_inventory=False):
         # https://www.vmware.com/support/developer/converter-sdk/conv60_apireference/vim.ManagedEntity.html#destroy
         if vm.summary.runtime.powerState.lower() == 'poweredon':
             self.module.fail_json(msg="Virtual machine %s found in 'powered on' state, "
                                       "please use 'force' parameter to remove or poweroff VM "
                                       "and try removing VM again." % vm.name)
+        # Delete VM from Inventory
+        if delete_from_inventory:
+            try:
+                vm.UnregisterVM()
+            except (vim.fault.TaskInProgress,
+                    vmodl.RuntimeFault) as e:
+                return {'changed': self.change_applied, 'failed': True, 'msg': e.msg, 'op': 'UnregisterVM'}
+            self.change_applied = True
+            return {'changed': self.change_applied, 'failed': False}
+        # Delete VM from Disk
         task = vm.Destroy()
         self.wait_for_task(task)
         if task.info.state == 'error':
@@ -2748,6 +2775,7 @@ def main():
         vapp_properties=dict(type='list', default=[]),
         datastore=dict(type='str'),
         convert=dict(type='str', choices=['thin', 'thick', 'eagerzeroedthick']),
+        delete_from_inventory=dict(type='bool', default=False),
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -2782,7 +2810,7 @@ def main():
             if module.params['force']:
                 # has to be poweredoff first
                 set_vm_power_state(pyv.content, vm, 'poweredoff', module.params['force'])
-            result = pyv.remove_vm(vm)
+            result = pyv.remove_vm(vm, module.params['delete_from_inventory'])
         elif module.params['state'] == 'present':
             if module.check_mode:
                 result.update(
