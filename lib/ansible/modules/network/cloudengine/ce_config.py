@@ -247,7 +247,7 @@ def _load_config(module, config):
         module.fail_json(msg='unable to enter system-view', output=err)
     # iter commands and execute them
     for index, cmd in enumerate(config):
-        command = {"command": cmd, "prompts": "Y/N", "answer": "Y"}
+        command = {"command": cmd, "prompt": "Y/N", "answer": "Y"}
         run_commands(module, command)
 
     # try to commit, if it is necessary.may be unnecessary,but have a try
