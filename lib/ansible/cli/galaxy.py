@@ -26,7 +26,7 @@ from ansible.galaxy.collection import build_collection, install_collections, pub
     validate_collection_name
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
-from ansible.galaxy.token import GalaxyToken, NoTokenSentinel
+from ansible.galaxy.token import GalaxyToken, KeycloakToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -314,7 +314,8 @@ class GalaxyCLI(CLI):
                 ],
                 'required': required,
             }
-        server_def = [('url', True), ('username', False), ('password', False), ('token', False)]
+        server_def = [('url', True), ('username', False), ('password', False), ('token', False),
+                      ('auth_url', False)]
 
         config_servers = []
         for server_key in (C.GALAXY_SERVER_LIST or []):
@@ -325,8 +326,14 @@ class GalaxyCLI(CLI):
             C.config.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
 
             server_options = C.config.get_plugin_options('galaxy_server', server_key)
+            auth_url = server_options.get('auth_url')
             token_val = server_options['token'] or NoTokenSentinel
-            server_options['token'] = GalaxyToken(token=token_val)
+            if auth_url:
+                server_options['token'] = KeycloakToken(access_token=token_val,
+                                                        auth_url=auth_url)
+            else:
+                server_options['token'] = GalaxyToken(token=token_val)
+
             config_servers.append(GalaxyAPI(self.galaxy, server_key, **server_options))
 
         cmd_server = context.CLIARGS['api_server']

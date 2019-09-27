@@ -22,12 +22,15 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import json
 from stat import S_IRUSR, S_IWUSR
 
 import yaml
 
 from ansible import constants as C
-from ansible.module_utils._text import to_bytes, to_text
+from ansible import context
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
 
 display = Display()
@@ -37,6 +40,50 @@ class NoTokenSentinel(object):
     """ Represents an ansible.cfg server with not token defined (will ignore cmdline and GALAXY_TOKEN_PATH. """
     def __new__(cls, *args, **kwargs):
         return cls
+
+
+class KeycloakToken(object):
+    '''A token granted by a Keycloak server.
+
+    Like sso.redhat.com as used by cloud.redhat.com
+    ie Automation Hub'''
+
+    def __init__(self, access_token=None, auth_url=None):
+        self.access_token = access_token
+        self.auth_url = auth_url
+        self._token = None
+        self.validate_certs = not context.CLIARGS['ignore_certs']
+
+    def _form_payload(self):
+        return 'grant_type=refresh_token&client_id=cloud-services&refresh_token=%s' % self.access_token
+
+    def get(self):
+        if self._token:
+            return self._token
+
+        # - build a request to POST to auth_url
+        #  - body is form encoded
+        #    - 'request_token' is the offline token stored in ansible.cfg
+        #    - 'grant_type' is 'refresh_token'
+        #    - 'client_id' is 'cloud-services'
+        #       - should probably be based on the contents of the
+        #         offline_ticket's JWT payload 'aud' (audience)
+        #         or 'azp' (Authorized party - the party to which the ID Token was issued)
+        payload = self._form_payload()
+
+        resp = open_url(to_native(self.auth_url),
+                        data=payload,
+                        validate_certs=self.validate_certs,
+                        method='POST')
+
+        # TODO: handle auth errors
+
+        data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
+
+        # - extract 'access_token'
+        self._token = data.get('access_token')
+
+        return self._token
 
 
 class GalaxyToken(object):
