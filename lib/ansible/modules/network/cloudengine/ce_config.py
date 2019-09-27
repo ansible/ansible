@@ -248,7 +248,7 @@ def _load_config(module, config):
     # iter commands and execute them
     for index, cmd in enumerate(config):
         command = {"command": cmd, "prompts": "Y/N", "answer": "Y"}
-        run_command(module, command)
+        run_commands(module, command)
 
     # try to commit, if it is necessary.may be unnecessary,but have a try
     try:
