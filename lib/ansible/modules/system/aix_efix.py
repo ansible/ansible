@@ -44,15 +44,16 @@ options:
                removed
                ]
     default: present
+    type: str
   nfs_server:
     description:
     - name of the nfs server
     default: NIM_MASTER
+    type: str
   nfs_share:
     description:
     - name of the remote directory, if not given, it will be "/export/nim/aix<OSVER>efix"
-      where OSVER is  OSVERSION + TL + -SP
-      fi. /export/nim/aix7104-03/efix
+    type: str
 
 notes:
   - the changes are persistent
@@ -100,7 +101,7 @@ msg:
 changed:
     description: whether efixes changed or not
     returned: always
-    type: boolean
+    type: str
     sample: False
 warnings:
     description: if the Prerequisites fail for an efix, a warning is generated
@@ -121,6 +122,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def nim_master(module):
     file = '/etc/niminfo'
+    rc = 0
 
     try:
         if os.path.exists(file):
