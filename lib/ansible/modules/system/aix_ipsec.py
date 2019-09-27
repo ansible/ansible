@@ -1,34 +1,28 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+
 # (c) 2017, Joris Weijters <joris.weijters@gmail.com>
-#
-# This file is part of Ansible
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-DOCUMENTATION = '''
+
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
+
+
+DOCUMENTATION = r'''
 ---
 author: "Joris Weijters (@molekuul)"
 module: aix_ipsec
 short_description: Manages the ipsec filter on AIX.
-version_added: "2.4"
+version_added: "2.10"
 description:
   - Manages the ipsec filter rules on AIX.
 notes:
@@ -68,7 +62,8 @@ options:
         Value tcp/ack implies checking for TCP packets with the ACK flag set."
     required: False
     default: all
-    choices: [ "udp", "icmp", "icmpv6", "tcp", "tcp/ack", "ospf", "ipip", "esp", "ah", "all" ]
+    choices: [ 'udp', 'icmp', 'icmpv6', 'tcp', 'tcp/ack', 'ospf', 'ipip', 'esp', 'ah', 'all' ]
+    aliases: [ proto ]
   source_address:
     description:
       - "Specifies the source address. It can be an IP address or a host name.
@@ -77,6 +72,7 @@ options:
         subnet mask will be compared against the source address of the IP packets.
         Required when I(state) is C(present) or C(absent)"
     required: False
+    aliases: [ source ]
   source_mask:
     description:
       - "Specifies the source subnet mask. This is used in the comparison of the
@@ -84,6 +80,7 @@ options:
         Required when I(state) is C(present) or C(absent)"
     required: False
     default: None
+    aliases: [ smask ]
   source_port:
     description:
       - "Specifies the source port or ICMP type. This is the value/type that will
@@ -91,6 +88,7 @@ options:
         Required when I(state) is C(present) or C(absent)"
     required: False
     default: None
+    aliases: [ stype ]
   source_port_operation:
     description:
       - "Specifies the source port or ICMP type operation. This is the operation
@@ -100,7 +98,8 @@ options:
         This value must be any when the protocol is ospf.
         Required when I(state) is C(present) or C(absent)"
     required: False
-    choices: [ "lt", "le", "gt", "ge", "eq", "neq", "any" ]
+    choices: ['lt', 'le', 'gt', 'ge', 'eq', 'neq', 'any']
+    aliases: [ soper ]
   destination_address:
     description:
       - "Specifies the destination address. It can be an IP address or a host name.
@@ -110,6 +109,7 @@ options:
         Required when I(state) is C(present) or C(absent)"
     required: False
     default: None
+    aliases: [ dest ]
   destination_mask:
     description:
       - "Specifies the source destination mask. This is used in the comparison of the
@@ -117,6 +117,7 @@ options:
         Required when I(state) is C(present) or C(absent)"
     required: False
     default: None
+    aliases: [ dmask ]
   destination_port:
     description:
       - "Specifies the destination port/ICMP code. This is the value/code that
@@ -124,6 +125,7 @@ options:
         Required when I(state) is C(present) or C(absent)"
     required: False
     default: None
+    aliases: [ dtype ]
   destination_port_operation:
     description:
       - "Specifies the destination port or ICMP code operation. This is the
@@ -132,7 +134,8 @@ options:
         This value must be any when the protocol flag is ospf.
         Required when I(state) is C(present) or C(absent)"
     required: False
-    choices: [ "lt", "le", "gt", "ge", "eq", "neq", "any" ]
+    choices: [ 'lt', 'le', 'gt', 'ge', 'eq', 'neq', 'any' ]
+    aliases: [ doper ]
   routing:
     description:
       - "This specifies whether the rule will apply to forwarded packets (route),
@@ -150,7 +153,8 @@ options:
         but only the incoming packets are checked against the packets."
     required: False
     default: both
-    choices: [ "both", "incomming", "outgoing" ]
+    choices: [ 'both', 'incomming', 'outgoing' ]
+    aliases: [ dir ]
   rule_id:
     description:
       - "Specifies the filter rule ID. The new rule will be added BEFORE the
@@ -158,7 +162,7 @@ options:
         because the first filter rule is a system generated rule and cannot be moved.
         If this flag is not used, the new rule will be added to the end of the filter rule table."
     required: False
-    default: None
+    default: 'None'
   logging:
     description:
       - "Specifies the log control. Must be specified as yes or No. If specified
@@ -166,7 +170,8 @@ options:
         filter log."
     required: False
     default: no
-    choices: [ "yes", "no" ]
+    choices: [ 'yes', 'no' ]
+    aliases: [ log ]
   fragment_control:
     description:
       - "Specifies the fragmentation control. This flag specifies that this rule
@@ -175,7 +180,8 @@ options:
         or unfragmented packets only (N)."
     required: False
     default: Y
-    choices: [ "Y", "H", "O", "N" ]
+    choices: [ 'Y', 'H', 'O', 'N' ]
+    aliases: [ frag ]
   tunnel_number:
     description:
       - "Specifies the ID of the tunnel related to this filter rule. All the
@@ -183,12 +189,14 @@ options:
         If this flag is not specified, this rule will only apply to non-tunnel traffic."
     required: False
     default: 0
+    aliases: [ tunnel ]
   interface:
     description:
       - "Specifies the name of IP interface(s) to which the filter rule applies.
         The examples of the name are: all, tr0, en0, lo0, and pp0."
     required: False
     default: all
+    aliases: [ intf ]
   expiration_time:
     description:
       - "Specifies the expiration time. The expiration time is the amount of
@@ -206,6 +214,7 @@ options:
         traffic."
     required: False
     default: "0"
+    aliases: [ expt ]
   pattern:
     description:
       - "Specifies the quoted character string or pattern. This string specified
@@ -213,6 +222,7 @@ options:
         in which case it is interpreted as a hexadecimal string.
         The pattern is compared against network traffic."
     required: False
+    aliases: [ patp ]
   pattern_filename:
     description:
       - "Specifies the pattern file name. If more than one patterns are associated
@@ -221,14 +231,16 @@ options:
         unquoted character string. This file is read once when the filter rules
         are activated. For more information, see the mkfilt command."
     required: False
+    aliases: [ patt ]
   description:
     description:
       - "A short description text for the filter rule. This is an optional flag
         for static filter rules, it's not applicable to dynamic filter rules."
     required: False
+    aliases: [ desc ]
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Make sure ipsec is started
 - name: Make sure ipsec is started
   aix_ipsec:
@@ -289,7 +301,7 @@ EXAMPLES = '''
     intf: 'en0'
 '''
 
-RETURN = '''
+RETURN = r'''
 changed:
     description: whether the rules are changed
     returned: always
@@ -363,7 +375,6 @@ results:
 
 '''
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 import itertools
 import socket
@@ -581,12 +592,10 @@ def activate_rules(module):
         create_device(module)
         (rc, out, err) = module.run_command(cmd)
         if rc != 0:
-            module.fail_json(msg="Could not activate ipsec rules" +
-                             " Command used: " + cmd, rc=rc, err=err)
+            module.fail_json(msg="Could not activate ipsec rules" + " Command used: " + cmd, rc=rc, err=err)
     else:
         if rc != 0:
-            module.fail_json(msg="Could not activate ipsec rules" +
-                         " Command used: " + cmd, rc=rc, err=err)
+            module.fail_json(msg="Could not activate ipsec rules" + " Command used: " + cmd, rc=rc, err=err)
 
 
 def create_device(module):
@@ -594,9 +603,7 @@ def create_device(module):
     mkdev_cmd = mkdev_path + " -c ipsec -t " + module.params['ip_version']
     (rc, out, err) = module.run_command(mkdev_cmd)
     if rc != 0:
-        module.fail_json(msg="Could not define ipsec device" +
-                " Command used: " + mkdev_cmd, rc=rc, err=err)
-
+        module.fail_json(msg="Could not define ipsec device" + " Command used: " + mkdev_cmd, rc=rc, err=err)
 
 
 def stop_start_ipsec(module, mkfilt_path, lsfilt_path):
@@ -916,6 +923,7 @@ def main():
     result['current_rules'] = current_rules
     result['new_rule'] = new_rule
     module.exit_json(changed=result['changed'], rc=0, msg=msg, results=result)
+
 
 if __name__ == '__main__':
     main()
