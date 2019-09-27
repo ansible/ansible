@@ -1,45 +1,40 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+
 # (c) 2017, Joris Weijters <joris.weijters@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
-DOCUMENTATION = '''
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
+
+
+DOCUMENTATION = r'''
 ---
 author: "Joris Weijters (@molekuul)"
 module: 'aix_efix'
 short_description: Installs and removes efixes
 description:
     - Installs and removes efixes delivered by an nfs mount.
-      If "name= ALL" is given, it removes all efixes installed which are not on the share, and installs all efixes which are present on the share, but not currently installed.
+      If "name= ALL" is given, it removes all efixes installed which are not on the share,
+      and installs all efixes which are present on the share, but not currently installed.
       If a single efix is given as a parameter, this will be installed or removed.
-version_added: "2.4"
+version_added: "2.10"
 options:
   name:
     description:
     - Name of the efix or ALL for all efixes on the share
-    aliases: efix
     default: ALL
     type: list
+    aliases: [ 'efix' ]
   state:
     description:
     - State of the efix
@@ -52,11 +47,11 @@ options:
   nfs_server:
     description:
     - name of the nfs server
-    default: { NIM_MASTER }
+    default: NIM_MASTER
   nfs_share:
     description:
     - name of the remote directory, if not given, it will be "/export/nim/aix<OSVER>efix"
-      where OSVER is  OSVERSION + TL + -SP 
+      where OSVER is  OSVERSION + TL + -SP
       fi. /export/nim/aix7104-03/efix
 
 notes:
@@ -91,7 +86,7 @@ EXAMPLES = '''
 '''
 
 
-RETURN = '''
+RETURN = r'''
 name:
     description: name of the efixes to be installed
     returned: always
@@ -116,15 +111,12 @@ warnings:
                 ]
 '''
 
-# Import necessary libraries
 import re
 import os
 import tempfile
 import shutil
 import glob
 from ansible.module_utils.basic import AnsibleModule
-
-# end import modules
 
 
 def nim_master(module):
@@ -372,8 +364,8 @@ def main():
             # efix on the share but not on the system must be installed
             efixes2remove = []
             efixes2install = []
-	    rchanged = False
-	    ichanged = False
+            rchanged = False
+            ichanged = False
             for efix in efixesinstalled:
                 if efix not in efixesatshare:
                     efixes2remove.append(efix)
@@ -389,7 +381,7 @@ def main():
                 (ichanged, resultmsg2add) = install_efixes(
                     module, mountpath, efixes2install)
                 result['msg'].append(resultmsg2add)
-	    result['changed'] = rchanged or ichanged
+            result['changed'] = rchanged or ichanged
             # finnished installing efixes, unmounting the share
             nfs_umount(module, mountpath)
 
