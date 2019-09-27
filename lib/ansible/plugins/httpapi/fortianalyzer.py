@@ -66,7 +66,7 @@ class HttpApi(HttpApiBase):
 
     def set_become(self, become_context):
         """
-        ELEVATION IS NOT REQUIRED ON FORTINET DEVICES - SKIPPED
+        ELEVATION IS NOT REQUIRED ON FORTINET DEVICES - SKIPPED.
         :param become_context: Unused input.
         :return: None
         """
