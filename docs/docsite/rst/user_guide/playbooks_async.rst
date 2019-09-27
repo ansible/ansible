@@ -3,13 +3,16 @@
 Asynchronous Actions and Polling
 ================================
 
-By default tasks in playbooks block, meaning the connections stay open
-until the task is done on each node.  This may not always be desirable, or you may
-be running operations that take longer than the SSH timeout.
+Playbook tasks are *blocking* by default, meaning subsequent tasks won't run
+until the current task completes. Sometimes, a task may take longer to complete
+than the SSH session allows for, causing a timeout. Or maybe you want a
+long-running process to take place in the background while you perform other
+tasks.
 
-To avoid blocking or timeout issues, you can use asynchronous mode to run all of your tasks at once and then poll until they are done.
+Asynchronous mode allows you to create such nonblocking tasks. In this mode,
+one or more tasks may be spawned and then polled for completion.
 
-The behaviour of asynchronous mode depends on the value of `poll`.
+The behavior of asynchronous mode depends on the value of `poll`.
 
 
 Avoid connection timeouts: poll > 0
