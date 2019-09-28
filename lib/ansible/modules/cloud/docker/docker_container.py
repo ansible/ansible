@@ -3081,7 +3081,8 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             pids_limit=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
             mounts=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
             # specials
-            ipvX_address_supported=dict(docker_py_version='1.9.0', detect_usage=detect_ipvX_address_usage,
+            ipvX_address_supported=dict(docker_py_version='1.9.0' docker_api_version='1.22',
+                                        detect_usage=detect_ipvX_address_usage,
                                         usage_msg='ipv4_address or ipv6_address in networks'),
             stop_timeout=dict(),  # see _get_additional_minimal_versions()
         )
