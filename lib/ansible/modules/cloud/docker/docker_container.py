@@ -2195,9 +2195,10 @@ class Container(DockerBaseClass):
                 ))
             else:
                 diff = False
-                if network.get('ipv4_address') and network['ipv4_address'] != network_info.get('IPAddress'):
+                network_info_ipam = network_info.get('IPAMConfig', {})
+                if network.get('ipv4_address') and network['ipv4_address'] != network_info_ipam.get('IPv4Address'):
                     diff = True
-                if network.get('ipv6_address') and network['ipv6_address'] != network_info.get('GlobalIPv6Address'):
+                if network.get('ipv6_address') and network['ipv6_address'] != network_info_ipam.get('IPv6Address'):
                     diff = True
                 if network.get('aliases'):
                     if not compare_generic(network['aliases'], network_info.get('Aliases'), 'allow_more_present', 'set'):
@@ -2214,8 +2215,8 @@ class Container(DockerBaseClass):
                         parameter=network,
                         container=dict(
                             name=network['name'],
-                            ipv4_address=network_info.get('IPAddress'),
-                            ipv6_address=network_info.get('GlobalIPv6Address'),
+                            ipv4_address=network_info_ipam.get('IPv4Address'),
+                            ipv6_address=network_info_ipam.get('IPv6Address'),
                             aliases=network_info.get('Aliases'),
                             links=network_info.get('Links')
                         )
