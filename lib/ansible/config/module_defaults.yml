@@ -412,6 +412,8 @@ groupings:
   - aws
   iam_user:
   - aws
+  iam_user_info:
+  - aws
   kinesis_stream:
   - aws
   lambda:
