@@ -1861,12 +1861,10 @@ class AssertOnlyCertificateCryptography(AssertOnlyCertificateBase):
     def _validate_csr_signature(self):
         if not self.csr.is_signature_valid:
             return False
-        if self.csr.public_key().public_numbers() != self.cert.public_key().public_numbers():
-            return False
+        return self.csr.public_key().public_numbers() == self.cert.public_key().public_numbers()
 
     def _validate_csr_subject(self):
-        if self.csr.subject != self.cert.subject:
-            return False
+        return self.csr.subject == self.cert.subject
 
     def _validate_csr_extensions(self):
         cert_exts = self.cert.extensions
