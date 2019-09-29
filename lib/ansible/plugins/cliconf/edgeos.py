@@ -66,7 +66,7 @@ class Cliconf(CliconfBase):
         self.send_command(command)
 
     def discard_changes(self, *args, **kwargs):
-        self.send_command('discard')
+        self.send_command('exit discard')
 
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()
