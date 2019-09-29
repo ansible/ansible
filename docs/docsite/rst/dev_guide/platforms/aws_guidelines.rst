@@ -347,7 +347,7 @@ API throttling (rate limiting) and pagination
 =============================================
 
 For methods that return a lot of results, boto3 often provides
-`paginators <http://boto3.readthedocs.io/en/latest/guide/paginators.html>`_. If the method
+`paginators <https://boto3.readthedocs.io/en/latest/guide/paginators.html>`_. If the method
 you're calling has ``NextToken`` or ``Marker`` parameters, you should probably
 check whether a paginator exists (the top of each boto3 service reference page has a link
 to Paginators, if the service has any). To use paginators, obtain a paginator object,
@@ -640,7 +640,7 @@ to your test in the following variables:
 * `security_token`
 
 So all invocations of AWS modules in the test should set these parameters. To avoid duplication these
-for every call, it's preferable to use `YAML Anchors <http://blog.daemonl.com/2016/02/yaml.html>`_. For example:
+for every call, it's preferable to use `YAML Anchors <https://blog.daemonl.com/2016/02/yaml.html>`_. For example:
 
 .. code-block:: yaml
 

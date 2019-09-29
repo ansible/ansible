@@ -61,7 +61,7 @@ For menu procedures, bold the menu names, button names, etc to help the user fin
 3. In the **Open** dialog box, click **Save**.
 4. On the toolbar, click the **Open File** icon.
 
-For code or command snippets, use the RST `code-block directive <http://www.sphinx-doc.org/en/1.5/markup/code.html#directive-code-block>`_::
+For code or command snippets, use the RST `code-block directive <https://www.sphinx-doc.org/en/1.5/markup/code.html#directive-code-block>`_::
 
    .. code-block:: bash
 

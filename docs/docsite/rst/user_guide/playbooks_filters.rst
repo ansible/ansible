@@ -565,7 +565,7 @@ Or, alternatively print out the ports in a comma separated string::
 
 .. note:: Here, quoting literals using backticks avoids escaping quotes and maintains readability.
 
-Or, using YAML `single quote escaping <http://yaml.org/spec/current.html#id2534365>`_::
+Or, using YAML `single quote escaping <https://yaml.org/spec/current.html#id2534365>`_::
 
     - name: "Display all ports from cluster1"
       debug:
