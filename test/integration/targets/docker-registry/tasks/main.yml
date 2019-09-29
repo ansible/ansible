@@ -79,7 +79,6 @@
     docker_container:
       name: "{{ nginx_name }}"
       state: started
-      restart: yes  # in case it was already running
     register: nginx_container
 
   - debug: var=nginx_container.container.NetworkSettings
