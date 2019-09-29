@@ -685,44 +685,44 @@
       that:
       - networks_1 is changed
       - networks_1.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_2
-      - networks_1.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address == nname_3_ipv6_2
+      - networks_1.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_2 | ipaddr
       - networks_1.container.NetworkSettings.Networks[nname_3].IPAddress == ""
       - networks_1.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address == ""
       - networks_2 is not changed
       - networks_2.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_2
-      - networks_2.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address == nname_3_ipv6_2
+      - networks_2.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_2 | ipaddr
       - networks_2.container.NetworkSettings.Networks[nname_3].IPAddress == ""
       - networks_2.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address == ""
       - networks_3 is changed
       - networks_3.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_3
-      - networks_3.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address == nname_3_ipv6_2
+      - networks_3.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_2 | ipaddr
       - networks_3.container.NetworkSettings.Networks[nname_3].IPAddress == ""
       - networks_3.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address == ""
       - networks_4 is changed
       - networks_4.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_3
-      - networks_4.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address == nname_3_ipv6_3
+      - networks_4.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_3 | ipaddr
       - networks_4.container.NetworkSettings.Networks[nname_3].IPAddress == ""
       - networks_4.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address == ""
       - networks_5 is changed
       - networks_5.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_3
-      - networks_5.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address == nname_3_ipv6_3
+      - networks_5.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_3 | ipaddr
       - networks_5.container.NetworkSettings.Networks[nname_3].IPAddress == nname_3_ipv4_3
-      - networks_5.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address == nname_3_ipv6_3
+      - networks_5.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address | ipaddr == nname_3_ipv6_3 | ipaddr
       - networks_6 is changed
       - networks_6.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_4
-      - networks_6.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address == nname_3_ipv6_3
+      - networks_6.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_3 | ipaddr
       - networks_6.container.NetworkSettings.Networks[nname_3].IPAddress == nname_3_ipv4_4
-      - networks_6.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address == nname_3_ipv6_3
+      - networks_6.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address | ipaddr == nname_3_ipv6_3 | ipaddr
       - networks_7 is changed
       - networks_7.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_4
-      - networks_7.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address == nname_3_ipv6_4
+      - networks_7.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_4 | ipaddr
       - networks_7.container.NetworkSettings.Networks[nname_3].IPAddress == nname_3_ipv4_4
-      - networks_7.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address == nname_3_ipv6_4
+      - networks_7.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address | ipaddr == nname_3_ipv6_4 | ipaddr
       - networks_8 is not changed
       - networks_8.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_4
-      - networks_8.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address == nname_3_ipv6_4
+      - networks_8.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_4 | ipaddr
       - networks_8.container.NetworkSettings.Networks[nname_3].IPAddress == nname_3_ipv4_4
-      - networks_8.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address == nname_3_ipv6_4
+      - networks_8.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address | ipaddr == nname_3_ipv6_4 | ipaddr
 
   when: docker_py_version is version('1.10.0', '>=')
 
