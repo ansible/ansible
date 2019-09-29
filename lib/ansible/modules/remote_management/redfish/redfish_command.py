@@ -100,8 +100,9 @@ options:
       - BootNext target when bootdevice is "UefiBootNext"
     type: str
     version_added: "2.9"
-  account_updatename:
+  update_username:
     required: false
+    aliases: [ account_updatename ]
     description:
       - new update user name for account_username
     type: str
@@ -110,13 +111,13 @@ options:
     required: false
     description:
       - name of password policy to update
-    type: int
+    type: str
     version_added: "2.10"
   account_policy_value:
     required: false
     description:
       - value of password policy to update
-    type: int
+    type: str
     version_added: "2.10"
 
 author: "Jose Delarosa (@jose-delarosa)"
@@ -258,6 +259,16 @@ EXAMPLES = '''
       account_username: "{{ account_username }}"
       account_updatename: "{{ account_updatename }}"
 
+  - name: Update user name
+    redfish_command:
+      category: Accounts
+      command: UpdateUserName
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      account_username: "{{ account_username }}"
+      update_username: "{{ update_username }}"
+
   - name: Update password policy
     redfish_command:
       category: Accounts
@@ -316,7 +327,7 @@ def main():
             new_username=dict(aliases=["account_username"]),
             new_password=dict(aliases=["account_password"], no_log=True),
             roleid=dict(aliases=["account_roleid"]),
-            update_username=dict(aliases=["account_updatename"]),
+            update_username=dict(type='str', aliases=["account_updatename"]),
             account_policy_name=dict(),
             account_policy_value=dict(),
             bootdevice=dict(),

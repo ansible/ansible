@@ -1007,7 +1007,7 @@ class RedfishUtils(object):
         if user.get('account_policy_name') is None or user.get('account_policy_value') is None:
             return {'ret': False, 'msg':
                     'Must provide account_policy_name and account_policy_value for UpdatePasswordPolicy command'}
-                    
+ 
         policy_name = user.get('account_policy_name')
         policy_value = user.get('account_policy_value')
 
