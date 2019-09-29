@@ -227,7 +227,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_device_type(self, host):
         try:
-            return [host["device_type"]["name"]]
+            return [host["device_type"]["model"]]
         except Exception:
             return
 
