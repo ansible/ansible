@@ -115,7 +115,6 @@ compose:
 import json
 import uuid
 from sys import version as python_version
-from threading import Thread
 from itertools import chain
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
@@ -222,40 +221,40 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_platform(self, host):
         try:
-            return [self.platforms_lookup[host["platform"]["id"]]]
+            return [host["platform"]["name"]]
         except Exception:
             return
 
     def extract_device_type(self, host):
         try:
-            return [self.device_types_lookup[host["device_type"]["id"]]]
+            return [host["device_type"]["name"]]
         except Exception:
             return
 
     def extract_rack(self, host):
         try:
-            return [self.racks_lookup[host["rack"]["id"]]]
+            return [host["rack"]["name"]]
         except Exception:
             return
 
     def extract_site(self, host):
         try:
-            return [self.sites_lookup[host["site"]["id"]]]
+            return [host["site"]["name"]]
         except Exception:
             return
 
     def extract_tenant(self, host):
         try:
-            return [self.tenants_lookup[host["tenant"]["id"]]]
+            return [host["tenant"]["name"]]
         except Exception:
             return
 
     def extract_device_role(self, host):
         try:
             if 'device_role' in host:
-                return [self.device_roles_lookup[host["device_role"]["id"]]]
+                return [host["device_role"]["name"]]
             elif 'role' in host:
-                return [self.device_roles_lookup[host["role"]["id"]]]
+                return [host["role"]["name"]]
         except Exception:
             return
 
@@ -267,7 +266,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_manufacturer(self, host):
         try:
-            return [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]]
+            return [host["device_type"]["manufacturer"]["name"]]
         except Exception:
             return
 
@@ -294,67 +293,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_tags(self, host):
         return host["tags"]
-
-    def refresh_platforms_lookup(self):
-        url = self.api_endpoint + "/api/dcim/platforms/?limit=0"
-        platforms = self.get_resource_list(api_url=url)
-        self.platforms_lookup = dict((platform["id"], platform["name"]) for platform in platforms)
-
-    def refresh_sites_lookup(self):
-        url = self.api_endpoint + "/api/dcim/sites/?limit=0"
-        sites = self.get_resource_list(api_url=url)
-        self.sites_lookup = dict((site["id"], site["name"]) for site in sites)
-
-    def refresh_regions_lookup(self):
-        url = self.api_endpoint + "/api/dcim/regions/?limit=0"
-        regions = self.get_resource_list(api_url=url)
-        self.regions_lookup = dict((region["id"], region["name"]) for region in regions)
-
-    def refresh_tenants_lookup(self):
-        url = self.api_endpoint + "/api/tenancy/tenants/?limit=0"
-        tenants = self.get_resource_list(api_url=url)
-        self.tenants_lookup = dict((tenant["id"], tenant["name"]) for tenant in tenants)
-
-    def refresh_racks_lookup(self):
-        url = self.api_endpoint + "/api/dcim/racks/?limit=0"
-        racks = self.get_resource_list(api_url=url)
-        self.racks_lookup = dict((rack["id"], rack["name"]) for rack in racks)
-
-    def refresh_device_roles_lookup(self):
-        url = self.api_endpoint + "/api/dcim/device-roles/?limit=0"
-        device_roles = self.get_resource_list(api_url=url)
-        self.device_roles_lookup = dict((device_role["id"], device_role["name"]) for device_role in device_roles)
-
-    def refresh_device_types_lookup(self):
-        url = self.api_endpoint + "/api/dcim/device-types/?limit=0"
-        device_types = self.get_resource_list(api_url=url)
-        self.device_types_lookup = dict((device_type["id"], device_type["model"]) for device_type in device_types)
-
-    def refresh_manufacturers_lookup(self):
-        url = self.api_endpoint + "/api/dcim/manufacturers/?limit=0"
-        manufacturers = self.get_resource_list(api_url=url)
-        self.manufacturers_lookup = dict((manufacturer["id"], manufacturer["name"]) for manufacturer in manufacturers)
-
-    def refresh_lookups(self):
-        lookup_processes = (
-            self.refresh_sites_lookup,
-            self.refresh_regions_lookup,
-            self.refresh_tenants_lookup,
-            self.refresh_racks_lookup,
-            self.refresh_device_roles_lookup,
-            self.refresh_platforms_lookup,
-            self.refresh_device_types_lookup,
-            self.refresh_manufacturers_lookup,
-        )
-
-        thread_list = []
-        for p in lookup_processes:
-            t = Thread(target=p)
-            thread_list.append(t)
-            t.start()
-
-        for thread in thread_list:
-            thread.join()
 
     def validate_query_parameters(self, x):
         if not (isinstance(x, dict) and len(x) == 1):
@@ -422,7 +360,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             self.inventory.set_variable(hostname, "primary_ip6", self.extract_primary_ip6(host=host))
 
     def main(self):
-        self.refresh_lookups()
         self.refresh_url()
         hosts_list = self.fetch_hosts()
 
