@@ -113,11 +113,13 @@
   - name: "Get registry logs"
     command: "docker logs {{ registry_name }}"
     register: registry_logs
+    no_log: yes
   - name: "Printing registry logs"
     debug: var=registry_logs.stdout_lines
   - name: "Get nginx logs"
     command: "docker logs {{ nginx_name }}"
     register: nginx_logs
+    no_log: yes
   - name: "Printing nginx logs"
     debug: var=nginx_logs.stdout_lines
   - name: "Make sure all containers are removed"
