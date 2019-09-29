@@ -987,6 +987,66 @@ class RedfishUtils(object):
             return response
         return {'ret': True}
 
+    def update_user_name(self, user):
+        if not user.get('account_updatename'):
+            return {'ret': False, 'msg':
+                    'Must provide account_updatename for UpdateUserName command'}
+
+        response = self._find_account_uri(username=user.get('account_username'),
+                                          acct_id=user.get('account_id'))
+        if not response['ret']:
+            return response
+        uri = response['uri']
+        payload = {'UserName': user['account_updatename']}
+        response = self.patch_request(self.root_uri + uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True}
+
+    def update_password_policy(self, user):
+        if user.get('account_policy_name') is None or user.get('account_policy_value') is None:
+            return {'ret': False, 'msg':
+                    'Must provide account_policy_name and account_policy_value for UpdatePasswordPolicy command'}
+                    
+        policy_name = user.get('account_policy_name')
+        policy_value = user.get('account_policy_value')
+
+        # Find AccountService
+        response = self.get_request(self.root_uri + self.service_root)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'AccountService' not in data:
+            return {'ret': False, 'msg': "AccountService resource not found"}
+        accountservice_uri = data["AccountService"]["@odata.id"]
+
+        # Check support or not
+        response = self.get_request(self.root_uri + accountservice_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if policy_name not in data:
+            return {'ret': False, 'msg':
+                    'account_policy_name %s not support' % policy_name}
+
+        # if value is already matched, nothing to do
+        property_value = data.get(policy_name)
+        new_value = None
+        if isinstance(property_value, int):
+            new_value = int(policy_value)
+        elif isinstance(property_value, bool):
+            new_value = bool(policy_value)
+        else:
+            new_value = policy_value
+        if property_value == new_value:
+            return {'ret': True, 'changed': False}
+
+        payload = {policy_name: new_value}
+        response = self.patch_request(self.root_uri + self.service_root + 'AccountService', payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True}
+
     def get_sessions(self):
         result = {}
         # listing all users has always been slower than other operations, why?
