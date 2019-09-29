@@ -67,32 +67,32 @@ options:
     type: bool
     default: false
     version_added: 2.8
-  schema:
-    description:
-    - Specify the output schema desired.
-    - The 'summary' output schema is the legacy output from the module
-    - The 'vsphere' output schema is the vSphere API class definition
-      which requires pyvmomi>6.7.1
-    choices: ['summary', 'vsphere']
-    default: 'summary'
-    type: str
-    version_added: '2.10'
-  properties:
-    description:
-    - Specify the properties to retrieve.
-    - If not specified, all properties are retrieved (deeply).
-    - Results are returned in a structure identical to the vsphere API.
-    - 'Example:'
-    - '   properties: ['
-    - '      "name",'
-    - '      "info.vmfs.ssd",'
-    - '      "capability.vsanSparseSupported",'
-    - '      "overallStatus"'
-    - '   ]'
-    - Only valid when C(schema) is C(vsphere).
-    type: list
-    required: False
-    version_added: '2.10'
+   schema:
+     description:
+     - Specify the output schema desired.
+     - The 'summary' output schema is the legacy output from the module
+     - The 'vsphere' output schema is the vSphere API class definition
+       which requires pyvmomi>6.7.1
+     choices: ['summary', 'vsphere']
+     default: 'summary'
+     type: str
+     version_added: '2.10'
+   properties:
+     description:
+     - Specify the properties to retrieve.
+     - If not specified, all properties are retrieved (deeply).
+     - Results are returned in a structure identical to the vsphere API.
+     - 'Example:'
+     - '   properties: ['
+     - '      "name",'
+     - '      "info.vmfs.ssd",'
+     - '      "capability.vsanSparseSupported",'
+     - '      "overallStatus"'
+     - '   ]'
+     - Only valid when C(schema) is C(vsphere).
+     type: list
+     required: False
+     version_added: '2.10'
 extends_documentation_fragment: vmware.documentation
 '''
 
