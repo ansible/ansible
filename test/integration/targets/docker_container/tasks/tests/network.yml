@@ -23,8 +23,25 @@
   when: docker_py_version is version('1.10.0', '>=')
 
 - set_fact:
-    subnet_ipv4: 192.168.{{ 64 + (192 | random) }}.0/24
-    subnet_ipv6: fdb6:feea:{{ '%0.4x:%0.4x' | format(65536 | random, 65536 | random) }}::/64
+    subnet_ipv4_base: 192.168.{{ 64 + (192 | random) }}
+    subnet_ipv6_base: fdb6:feea:{{ '%0.4x:%0.4x' | format(65536 | random, 65536 | random) }}
+
+- set_fact:
+    subnet_ipv4: "{{ subnet_ipv4_base }}.0/24"
+    subnet_ipv6: "{{ subnet_ipv6_base }}::/64"
+    nname_3_ipv4_2: "{{ subnet_ipv4_base }}.2"
+    nname_3_ipv4_3: "{{ subnet_ipv4_base }}.3"
+    nname_3_ipv4_4: "{{ subnet_ipv4_base }}.4"
+    nname_3_ipv6_2: "{{ subnet_ipv6_base }}::2"
+    nname_3_ipv6_3: "{{ subnet_ipv6_base }}::3"
+    nname_3_ipv6_4: "{{ subnet_ipv6_base }}::4"
+    # If netaddr would be installed on the controller, one could do:
+    #  nname_3_ipv4_2: "{{ subnet_ipv4 | next_nth_usable(2) }}"
+    #  nname_3_ipv4_3: "{{ subnet_ipv4 | next_nth_usable(3) }}"
+    #  nname_3_ipv4_4: "{{ subnet_ipv4 | next_nth_usable(4) }}"
+    #  nname_3_ipv6_2: "{{ subnet_ipv6 | next_nth_usable(2) }}"
+    #  nname_3_ipv6_3: "{{ subnet_ipv6 | next_nth_usable(3) }}"
+    #  nname_3_ipv6_4: "{{ subnet_ipv6 | next_nth_usable(4) }}"
 
 - debug:
     msg: "Chose random IPv4 subnet {{ subnet_ipv4 }} and random IPv6 subnet {{ subnet_ipv6 }}"
@@ -558,16 +575,6 @@
 ####################################################################
 
 - block:
-  - set_fact:
-      nname_3_ipv4_2: "{{ subnet_ipv4 | next_nth_usable(2) }}"
-      nname_3_ipv4_3: "{{ subnet_ipv4 | next_nth_usable(3) }}"
-      nname_3_ipv4_4: "{{ subnet_ipv4 | next_nth_usable(4) }}"
-      nname_3_ipv6_2: "{{ subnet_ipv6 | next_nth_usable(2) }}"
-      nname_3_ipv6_3: "{{ subnet_ipv6 | next_nth_usable(3) }}"
-      nname_3_ipv6_4: "{{ subnet_ipv6 | next_nth_usable(4) }}"
-  - debug:
-      msg: "{{ nname_3_ipv4_2 }} {{ nname_3_ipv4_3 }} {{ nname_3_ipv4_4 }} {{ nname_3_ipv6_2 }} {{ nname_3_ipv6_3 }} {{ nname_3_ipv6_4 }}"
-
   - name: create container (stopped) with one network and fixed IP
     docker_container:
       image: alpine:3.8
