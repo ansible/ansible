@@ -152,7 +152,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    name: "{{ ds1 | basename }}"
+    name: "{{ ro_datastore }}"
     schema: vsphere
     properties:
       - name
@@ -164,7 +164,7 @@
 - assert:
     that:
       - "datastore_info_0007['datastores'][0]['name'] is defined"
-      - "datastore_info_0007['datastores'][0]['name'] == ds1"
+      - "datastore_info_0007['datastores'][0]['name'] == ro_datastore"
       - "datastore_info_0007['datastores'] | length == 1"
 
 - name: get list of info about datastores with multiple properties specify
@@ -174,7 +174,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    name: "{{ ds1 | basename }}"
+    name: "{{ ro_datastore }}"
     schema: vsphere
     properties:
       - name
