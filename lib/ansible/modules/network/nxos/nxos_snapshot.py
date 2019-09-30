@@ -321,8 +321,6 @@ def main():
                            required_if=required_if,
                            supports_check_mode=True)
 
-    warnings = list()
-
     action = module.params['action']
     comparison_results_file = module.params['comparison_results_file']
 

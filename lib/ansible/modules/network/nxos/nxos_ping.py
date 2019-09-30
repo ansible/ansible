@@ -188,8 +188,6 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    warnings = list()
-
     destination = module.params['dest']
     state = module.params['state']
 
