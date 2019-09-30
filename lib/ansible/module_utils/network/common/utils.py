@@ -433,9 +433,7 @@ def load_provider(spec, args):
     provider = args.get('provider') or {}
     for key, value in iteritems(spec):
         if key not in provider:
-            if key in args:
-                provider[key] = args[key]
-            elif 'fallback' in value:
+            if 'fallback' in value:
                 provider[key] = _fallback(value['fallback'])
             elif 'default' in value:
                 provider[key] = value['default']
