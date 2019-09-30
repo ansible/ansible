@@ -142,6 +142,18 @@ def regex_findall(value, regex, multiline=False, ignorecase=False):
     return re.findall(regex, value, flags)
 
 
+def regex_findall_groupdict(value, regex, multiline=False, ignorecase=False):
+    ''' Perform re.findall and return the list of named matches (dicts) '''
+    flags = 0
+    if ignorecase:
+        flags |= re.I
+    if multiline:
+        flags |= re.M
+
+    r = re.compile(regex, flags)
+    return [m.groupdict() for m in r.finditer(value)]
+
+
 def regex_search(value, regex, *args, **kwargs):
     ''' Perform re.search and return the list of matches or a backref '''
 
@@ -171,6 +183,22 @@ def regex_search(value, regex, *args, **kwargs):
             for item in groups:
                 items.append(match.group(item))
             return items
+
+
+def regex_search_groupdict(value, regex, multiline=False, ignorecase=False):
+    ''' Perform re.search and return the named matches as a dict '''
+
+    flags = 0
+    if ignorecase:
+        flags |= re.I
+    if multiline:
+        flags |= re.M
+
+    match = re.search(regex, value, flags)
+    if match:
+        return match.groupdict()
+    else:
+        return dict()
 
 
 def ternary(value, true_val, false_val, none_val=None):
@@ -629,7 +657,9 @@ class FilterModule(object):
             'regex_replace': regex_replace,
             'regex_escape': regex_escape,
             'regex_search': regex_search,
+            'regex_search_groupdict': regex_search_groupdict,
             'regex_findall': regex_findall,
+            'regex_findall_groupdict': regex_findall_groupdict,
 
             # ? : ;
             'ternary': ternary,
