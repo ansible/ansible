@@ -136,6 +136,7 @@ except ImportError:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (boto3_conn, boto_exception, get_aws_connection_info, compare_policies)
 from ansible.module_utils.six import string_types
+from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
 
 
 def build_kwargs(registry_id):
@@ -367,9 +368,9 @@ def main():
     passed, result = run(EcsEcr(module), module.params, module._module._verbosity)
 
     if passed:
-        module.exit_json(**result)
+        module.exit_json(**camel_dict_to_snake_dict(result))
     else:
-        module.fail_json(**result)
+        module.fail_json(**camel_dict_to_snake_dict(result))
 
 
 if __name__ == '__main__':

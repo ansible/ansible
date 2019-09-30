@@ -54,12 +54,12 @@
     - name: it should expose repository information returned from api
       assert:
         that:
-          - result.repository['createdAt'] is defined
-          - result.repository['imageTagMutability'] is defined
-          - result.repository['registryId'] is defined
-          - result.repository['repositoryArn'] is defined
-          - result.repository['repositoryName'] is defined
-          - result.repository['repositoryUri'] is defined
+          - result.repository['created_at'] is defined
+          - result.repository['image_tag_mutability'] is defined
+          - result.repository['registry_id'] is defined
+          - result.repository['repository_arn'] is defined
+          - result.repository['repository_name'] is defined
+          - result.repository['repository_uri'] is defined
 
     - name: When creating a repository that already exists in check mode
       ecs_ecr:
