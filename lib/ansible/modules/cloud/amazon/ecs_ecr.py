@@ -134,7 +134,7 @@ except ImportError:
     pass  # Taken care of by ec2.HAS_BOTO3
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (boto3_conn, boto_exception, get_aws_connection_info, compare_policies)
+from ansible.module_utils.ec2 import (boto_exception, compare_policies)
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
 
@@ -154,15 +154,8 @@ def build_kwargs(registry_id):
 
 class EcsEcr:
     def __init__(self, module):
-        region, ec2_url, aws_connect_kwargs = \
-            get_aws_connection_info(module, boto3=True)
-
-        self.ecr = boto3_conn(module, conn_type='client',
-                              resource='ecr', region=region,
-                              endpoint=ec2_url, **aws_connect_kwargs)
-        self.sts = boto3_conn(module, conn_type='client',
-                              resource='sts', region=region,
-                              endpoint=ec2_url, **aws_connect_kwargs)
+        self.ecr = module.client('ecr')
+        self.sts = module.client('sts')
         self.check_mode = module.check_mode
         self.changed = False
         self.skipped = False
