@@ -2665,7 +2665,7 @@ class ContainerManager(DockerBaseClass):
                 if image.get('Id') != container.Image:
                     self.diff_tracker.add('image', parameter=image.get('Id'), active=container.Image)
                     return True
-        if image is None and image.get('Id') and self.parameters.image:
+        if image is None and container and container.Image and self.parameters.image:
             # In this case, we've tried our best but weren't able to get hold of the image.
             if not is_image_name_id(self.parameters.image):
                 # We weren't able to find it via distribution. It could be that the
