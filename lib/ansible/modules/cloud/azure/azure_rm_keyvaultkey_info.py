@@ -218,7 +218,7 @@ def keybundle_to_dict(bundle):
             e=bundle.key.e if hasattr(bundle.key, 'e') else None,
             crv=bundle.key.crv if hasattr(bundle.key, 'crv') else None,
             x=bundle.key.x if hasattr(bundle.key, 'x') else None,
-            y=bundle.k.y if hasattr(bundle.key, 'y') else None
+            y=bundle.key.y if hasattr(bundle.key, 'y') else None
         )
     )
 
