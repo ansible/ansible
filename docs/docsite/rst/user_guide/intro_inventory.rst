@@ -141,6 +141,7 @@ You could also use nested groups to simplify ``prod`` and ``test`` in this inven
         children:
           west:
 
+You can find more examples on how to organize your inventories and group your hosts in :ref:`inventory_setup_examples`.
 
 If you do have systems in multiple groups, note that variables will come from all of the groups they are a member of. Variable precedence is detailed in :ref:`ansible_variable_precedence`.
 
@@ -648,6 +649,100 @@ For a full list with available plugins and examples, see :ref:`connection_plugin
 
 .. note:: If you're reading the docs from the beginning, this may be the first example you've seen of an Ansible playbook. This is not an inventory file.
           Playbooks will be covered in great detail later in the docs.
+
+.. _inventory_setup_examples:
+
+Inventory setup examples
+========================
+
+.. _inventory_setup-per_environment:
+
+Example: One inventory per environment
+--------------------------------------
+
+If you need to manage multiple environments it's sometimes prudent to
+have only hosts of a single environment defined per inventory. This
+way, it is harder to, for instance, accidentally change the state of
+nodes inside the "test" environment when you actually wanted to update
+some "staging" servers.
+
+For the example mentioned above you could have an
+:file:`inventory_test` file:
+
+.. code-block:: ini
+
+  [dbservers]
+  db01.test.example.com
+  db02.test.example.com
+
+  [appservers]
+  app01.test.example.com
+  app02.test.example.com
+  app03.test.example.com
+
+That file only includes hosts that are part of the "test"
+environment. Define the "staging" machines in another file
+called :file:`inventory_staging`:
+
+.. code-block:: ini
+
+  [dbservers]
+  db01.staging.example.com
+  db02.staging.example.com
+
+  [appservers]
+  app01.staging.example.com
+  app02.staging.example.com
+  app03.staging.example.com
+
+To apply a playbook called :file:`site.yml`
+to all the app servers in the test environment, use the
+following command::
+
+  ansible-playbook -i inventory_test site.yml -l appservers
+
+.. _inventory_setup-per_function:
+
+Example: Group by function
+--------------------------
+
+In the previous section you already saw an example for using groups in
+order to cluster hosts that have the same function. This allows you,
+for instance, to define firewall rules inside a playbook or role
+without affecting database servers:
+
+.. code-block:: yaml
+
+  - hosts: dbservers
+    tasks:
+    - name: allow access from 10.0.0.1
+      iptables:
+        chain: INPUT
+        jump: ACCEPT
+        source: 10.0.0.1
+
+.. _inventory_setup-per_location:
+
+Example: Group by location
+--------------------------
+
+Other tasks might be focused on where a certain host is located. Let's
+say that ``db01.test.example.com`` and ``app01.test.example.com`` are
+located in DC1 while ``db02.test.example.com`` is in DC2:
+
+.. code-block:: ini
+
+  [dc1]
+  db01.test.example.com
+  app01.test.example.com
+
+  [dc2]
+  db02.test.example.com
+
+In practice, you might even end up mixing all these setups as you
+might need to, on one day, update all nodes in a specific data center
+while, on another day, update all the application servers no matter
+their location.
 
 .. seealso::
 

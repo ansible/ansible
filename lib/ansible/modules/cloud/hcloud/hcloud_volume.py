@@ -41,7 +41,7 @@ options:
         type: str
     size:
         description:
-            - The size of the Block Volume.
+            - The size of the Block Volume in GB.
             - Required if volume does not yet exists.
         type: int
     automount:
@@ -126,7 +126,7 @@ hcloud_volume:
             returned: Always
             sample: my-volume
         size:
-            description: Size in MB of the volume
+            description: Size in GB of the volume
             type: int
             returned: Always
             sample: 1337

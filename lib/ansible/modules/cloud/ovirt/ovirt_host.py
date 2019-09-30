@@ -75,6 +75,7 @@ options:
         description:
             - "Indicates that the host should be removed even if it is non-responsive,
                or if it is part of a Gluster Storage cluster and has volume bricks on it."
+            - "WARNING: It doesn't forcibly remove the host if another host related operation is being executed on the host at the same time."
         default: False
         type: bool
     override_display:

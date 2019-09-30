@@ -694,4 +694,28 @@ No notable changes
 Networking
 ==========
 
-No notable changes
+Network resource modules
+------------------------
+
+Ansible 2.9 introduced the first batch of network resource modules. These modules improve the usability of Ansible network modules. The older modules are deprecated in Ansible 2.9 and will be removed in Ansible 2.13. You should scan the list of deprecated modules above and replace them with the new network resource modules in your playbooks.
+
+Top-level connection arguments removed in 2.9
+---------------------------------------------
+
+Top-level connection arguments like ``username``, ``host``, and ``password`` are  removed in version 2.9.
+
+**OLD** In Ansible < 2.4
+
+.. code-block:: yaml
+
+    - name: example of using top-level options for connection properties
+      ios_command:
+        commands: show version
+        host: "{{ inventory_hostname }}"
+        username: cisco
+        password: cisco
+        authorize: yes
+        auth_pass: cisco
+
+
+Change your playbooks to the connection types ``network_cli`` and ``netconf`` using standard Ansible connection properties, and setting those properties in inventory by group. As you update your playbooks and inventory files, you can easily make the change to ``become`` for privilege escalation (on platforms that support it). For more information, see the :ref:`using become with network modules<become_network>` guide and the :ref:`platform documentation<platform_options>`.
