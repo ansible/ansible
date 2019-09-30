@@ -12,7 +12,12 @@ class ModuleDocFragment(object):
     DOCUMENTATION = r'''
 options:
   stage:
-    description: Control when this vars plugin may be executed.
+    description:
+      - Control when this vars plugin may be executed.
+      - Setting this option to C(all) will run the vars plugin after importing inventory and whenever it is demanded by a task.
+      - Setting this option to C(task) will only run the vars plugin whenever it is demanded by a task.
+      - Setting this option to C(inventory) will only run the vars plugin after parsing inventory.
+      - If this option is omitted, the global I(RUN_VARS_PLUGINS) configuration is used to determine when to execute the vars plugin.
     choices: ['all', 'task', 'inventory']
     version_added: "2.10"
     type: str
