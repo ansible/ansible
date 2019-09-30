@@ -57,7 +57,19 @@ def get_vars_from_path(loader, path, entities, stage):
         if plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and getattr(plugin, 'REQUIRES_WHITELIST', False):
             # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
             continue
-        if hasattr(plugin, 'get_option') and plugin.has_option('stage') and plugin.get_option('stage') not in ('all', stage):
+
+        has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')
+
+        # if a plugin-specific setting has not been provided, use the global setting
+        # older/non shipped plugins that don't support the plugin-specific setting should also use the global setting
+        use_global = (has_stage and plugin.get_option('stage') is None) or not has_stage
+
+        if use_global:
+            if C.RUN_VARS_PLUGINS == 'demand' and stage == 'inventory':
+                continue
+            elif C.RUN_VARS_PLUGINS == 'start' and stage == 'task':
+                continue
+        elif has_stage and plugin.get_option('stage') not in ('all', stage):
             continue
 
         data = combine_vars(data, get_plugin_vars(loader, plugin, path, entities))

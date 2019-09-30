@@ -232,11 +232,10 @@ class InventoryManager(object):
             else:
                 display.warning("No inventory was parsed, only implicit localhost is available")
 
-        if C.RUN_VARS_PLUGINS == 'start':
-            for group in self.groups.values():
-                group.vars = combine_vars(group.vars, get_vars_from_inventory_sources(self._loader, self._sources, [group], 'inventory'))
-            for host in self.hosts.values():
-                host.vars = combine_vars(host.vars, get_vars_from_inventory_sources(self._loader, self._sources, [host], 'inventory'))
+        for group in self.groups.values():
+            group.vars = combine_vars(group.vars, get_vars_from_inventory_sources(self._loader, self._sources, [group], 'inventory'))
+        for host in self.hosts.values():
+            host.vars = combine_vars(host.vars, get_vars_from_inventory_sources(self._loader, self._sources, [host], 'inventory'))
 
     def parse_source(self, source, cache=False):
         ''' Generate or update inventory for the source provided '''
