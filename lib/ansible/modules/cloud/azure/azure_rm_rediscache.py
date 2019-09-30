@@ -571,7 +571,7 @@ class AzureRMRedisCaches(AzureRMModuleBase):
 
             params = RedisCreateParameters(
                 location=self.location,
-                sku=Sku(self.sku['name'].title(), self.sku['size'][0], self.sku['size'][1:]),
+                sku=Sku(name=self.sku['name'].title(), family=self.sku['size'][0], capacity=self.sku['size'][1:]),
                 tags=self.tags,
                 redis_configuration=redis_config,
                 enable_non_ssl_port=self.enable_non_ssl_port,
@@ -616,7 +616,7 @@ class AzureRMRedisCaches(AzureRMModuleBase):
                 enable_non_ssl_port=self.enable_non_ssl_port,
                 tenant_settings=self.tenant_settings,
                 shard_count=self.shard_count,
-                sku=Sku(self.sku['name'].title(), self.sku['size'][0], self.sku['size'][1:]),
+                sku=Sku(name=self.sku['name'].title(), family=self.sku['size'][0], capacity=self.sku['size'][1:]),
                 tags=self.tags
             )
 
