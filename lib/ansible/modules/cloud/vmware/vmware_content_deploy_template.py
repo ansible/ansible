@@ -25,7 +25,7 @@ version_added: '2.9'
 author:
 - Pavan Bidkar (@pgbidkar)
 notes:
-- Tested on vSphere 6.5, 6.7
+- Tested on vSphere 6.7 U3
 requirements:
 - python >= 2.6
 - PyVmomi
