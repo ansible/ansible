@@ -20,12 +20,11 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     vars: custom_vars
-    version_added: "2.9"
+    version_added: "2.10"
     short_description: load host and group vars
     description: test loading host and group vars from a collection
     options:
       stage:
-        default: all
         choices: ['all', 'inventory', 'task']
         type: str
         ini:
