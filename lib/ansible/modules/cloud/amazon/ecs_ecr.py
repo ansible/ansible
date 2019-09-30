@@ -5,6 +5,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 
@@ -132,9 +133,8 @@ try:
 except ImportError:
     pass  # Taken care of by ec2.HAS_BOTO3
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, boto_exception, ec2_argument_spec,
-                                      get_aws_connection_info, compare_policies)
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (boto3_conn, boto_exception, get_aws_connection_info, compare_policies)
 from ansible.module_utils.six import string_types
 
 
@@ -350,26 +350,21 @@ def run(ecr, params, verbosity):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(required=True),
         registry_id=dict(required=False),
         state=dict(required=False, choices=['present', 'absent'],
                    default='present'),
         force_set_policy=dict(required=False, type='bool', default=False),
         policy=dict(required=False, type='json'),
-        delete_policy=dict(required=False, type='bool')))
+        delete_policy=dict(required=False, type='bool'))
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True,
-                           mutually_exclusive=[
-                               ['policy', 'delete_policy']])
+    module = AnsibleAWSModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+        mutually_exclusive=[['policy', 'delete_policy']])
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
-    ecr = EcsEcr(module)
-    passed, result = run(ecr, module.params, module._verbosity)
+    passed, result = run(EcsEcr(module), module.params, module._module._verbosity)
 
     if passed:
         module.exit_json(**result)
