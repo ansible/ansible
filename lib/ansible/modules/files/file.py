@@ -126,7 +126,7 @@ EXAMPLES = r'''
     group: foo
     mode: '0644'
 
-- name: Create an insecure file
+- name: Give insecure permissions to an existing file
   file:
     path: /work
     owner: root
