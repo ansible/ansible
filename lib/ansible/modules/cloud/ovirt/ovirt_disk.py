@@ -120,6 +120,7 @@ options:
         description:
             - "I(True) if the disk should be bootable. By default when disk is created it isn't bootable."
         type: bool
+        default: 'no'
     shareable:
         description:
             - "I(True) if the disk should be shareable. By default when disk is created it isn't shareable."
@@ -254,7 +255,7 @@ EXAMPLES = '''
 
 # Export disk as image to Glance domain
 # Since Ansible 2.4
-- ovirt_disks:
+- ovirt_disk:
     id: 7de90f31-222c-436c-a1ca-7e655bd5b60c
     image_provider: myglance
     state: exported
