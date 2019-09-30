@@ -96,7 +96,7 @@ extends_documentation_fragment: mso
 
 EXAMPLES = r'''
 - name: Add a new static port to a site EPG
-  mso_schema_template_anp_epg_staticport:
+  mso_schema_site_anp_epg_staticport:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -115,7 +115,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove a static port from a site EPG
-  mso_schema_template_anp_epg_staticport:
+  mso_schema_site_anp_epg_staticport:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -132,7 +132,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query a specific site EPG static port
-  mso_schema_template_anp_epg_staticport:
+  mso_schema_site_anp_epg_staticport:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -150,7 +150,7 @@ EXAMPLES = r'''
   register: query_result
 
 - name: Query all site EPG static ports
-  mso_schema_template_anp_epg_staticport:
+  mso_schema_site_anp_epg_staticport:
     host: mso_host
     username: admin
     password: SomeSecretPassword
