@@ -225,8 +225,8 @@ notes:
     Use the "yum group list hidden ids" command to see which category of group the group
     you want to install falls into.'
   - 'The yum module does not support clearing yum cache in an idempotent way, so it
-    was decided not to implement it, the only method is to use shell and call the yum
-    command directly, namely "shell: yum clean all"
+    was decided not to implement it, the only method is to use command and call the yum
+    command directly, namely "command: yum clean all"
     https://github.com/ansible/ansible/pull/31450#issuecomment-352889579'
 # informational: requirements for nodes
 requirements:
