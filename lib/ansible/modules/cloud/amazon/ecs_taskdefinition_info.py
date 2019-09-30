@@ -330,11 +330,8 @@ def main():
                      region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     try:
-        task_definition = ecs.describe_task_definition(taskDefinition=module.params['task_definition'], include=['TAGS'])
-        ecs_td = {
-            **task_definition['taskDefinition'],
-            'tags': boto3_tag_list_to_ansible_dict(task_definition.get('tags', []), 'key', 'value')
-        }
+        ecs_td = ecs.describe_task_definition(taskDefinition=module.params['task_definition'], include=['TAGS'])
+        ecs_td['tags'] = boto3_tag_list_to_ansible_dict(ecs_td.get('tags', []), 'key', 'value')
     except botocore.exceptions.ClientError:
         ecs_td = {}
 

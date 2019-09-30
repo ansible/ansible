@@ -102,7 +102,7 @@ options:
         description:
             - A dictionary of key value pairs to assign to the task definition
         required: false
-        version_added: 2.10
+        version_added: "2.10"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -203,7 +203,7 @@ EXAMPLES = '''
     memory: 1GB
     state: present
     network_mode: awsvpc
-    
+
 - name: Create Task Definition with Tags
   ecs_taskdefinition:
     family: nginx
