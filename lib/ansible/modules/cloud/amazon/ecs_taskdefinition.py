@@ -25,7 +25,7 @@ short_description: register a task definition in ecs
 description:
     - Registers or deregisters task definitions in the Amazon Web Services (AWS) EC2 Container Service (ECS)
 version_added: "2.0"
-author: 
+author:
     - Mark Chance (@Java1Guy)
     - Jason Kingsbury (@relvacode)
 requirements: [ json, botocore, boto3 ]
@@ -103,8 +103,6 @@ options:
             - A dictionary of key value pairs to assign to the task definition
         required: false
         version_added: 2.10
-        
-            
 extends_documentation_fragment:
     - aws
     - ec2
@@ -522,15 +520,15 @@ def main():
                 # Doesn't exist. create it.
                 volumes = module.params.get('volumes', []) or []
                 actual_tags, task_definition = task_mgr.register_task(module.params['family'],
-                                                               module.params['task_role_arn'],
-                                                               module.params['execution_role_arn'],
-                                                               module.params['network_mode'],
-                                                               module.params['containers'],
-                                                               volumes,
-                                                               module.params['launch_type'],
-                                                               module.params['cpu'],
-                                                               module.params['memory'],
-                                                               module.params.get('tags'))
+                                                                      module.params['task_role_arn'],
+                                                                      module.params['execution_role_arn'],
+                                                                      module.params['network_mode'],
+                                                                      module.params['containers'],
+                                                                      volumes,
+                                                                      module.params['launch_type'],
+                                                                      module.params['cpu'],
+                                                                      module.params['memory'],
+                                                                      module.params.get('tags'))
                 results['taskdefinition'] = task_definition
                 results['tags'] = actual_tags
             results['changed'] = True
