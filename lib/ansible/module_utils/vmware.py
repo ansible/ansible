@@ -322,13 +322,11 @@ def gather_vm_facts(content, vm):
             pass
     if vm.summary.runtime.dasVmProtection:
         facts['hw_guest_ha_state'] = vm.summary.runtime.dasVmProtection.dasProtected
-    try:
-        facts['instant_clone_frozen'] = vm.summary.runtime.instantCloneFrozen
-    except:
+    if vm.summary.runtime.instantCloneFrozen is not None:
         # This property is only available to vSphere 6.7 and later
         # This value will only affect instant clone operations
         # which are not available to all ESXi and vSphere installations.
-        pass
+        facts['instant_clone_frozen'] = vm.summary.runtime.instantCloneFrozen
 
 
     datastores = vm.datastore

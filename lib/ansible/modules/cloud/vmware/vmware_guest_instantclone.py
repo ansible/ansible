@@ -17,7 +17,7 @@ short_description: Manages virtual machines instant clones in vCenter
 description:
     - This module can be used to create instant clones of a given virtual machine.
     - All parameters and VMware object names are case sensitive.
-version_added: 2.9
+version_added: 2.10
 author:
     - Dakota Clark (@PDQDakota) <dakota.clark@pdq.com>
 notes:
