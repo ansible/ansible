@@ -103,8 +103,8 @@ class Connection(ConnectionBase):
         else:
             try:
                 self.chroot_cmd = get_bin_path(self.get_option('chroot_exe'))
-            except ValueError:
-                raise AnsibleError("chroot command (%s) not found in PATH" % to_native(self.get_option('chroot_exe')))
+            except ValueError as e:
+                raise AnsibleError(to_native(e))
 
         super(Connection, self)._connect()
         if not self._connected:
