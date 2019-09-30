@@ -1087,8 +1087,8 @@ def discover_security_groups(group, groups, parent_vpc_id=None, subnet_id=None, 
 
 
 def _supports_ebs_optimized(instance_type):
-    ebs_optimized_types = ['a1', 'c4', 'c5', 'd2', 'f1', 'g3', 'h1', 'i3', 'm4', 'm5', 'p2', 'p3', 'r4', 'r5', 't3', 'u-', 'x1', 'z1']
-    if instance_type[:2] in ebs_optimized_types:
+    ebs_optimized_types = ['c1.xlarge', 'c3.xlarge', 'c3.2xlarge', 'c3.4xlarge', 'g2.2xlarge', 'i2.xlarge', 'i2.2xlarge', 'i2.4xlarge', 'm1.large', 'm1.xlarge', 'm2.2xlarge', 'm2.4xlarge', 'm3.xlarge', 'm3.2xlarge', 'r3.xlarge', 'r3.2xlarge', 'r3.4xlarge']
+    if instance_type in ebs_optimized_types:
         return True
     return False
 
