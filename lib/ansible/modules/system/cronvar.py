@@ -214,8 +214,8 @@ class CronVar(object):
         lexer.wordchars = self.wordchars
         varname = lexer.get_token()
         is_env_var = lexer.get_token() == '='
-        value = ''.join(lexer)
         if is_env_var:
+            value = ''.join(lexer)
             return (varname, value)
         raise CronVarError("Not a variable.")
 
