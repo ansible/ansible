@@ -22,10 +22,14 @@ description:
     - "Please note that the module regenerates existing DH params if they don't
       match the module's options. If you are concerned that this could overwrite
       your existing DH params, consider using the I(backup) option."
+    - The module can use the cryptography Python library, or the C(openssl) executable.
+      By default, it tries to detect which one is available. This can be overridden
+      with the I(select_crypto_backend) option.
 requirements:
-    - OpenSSL
+    - Either cryptography >= 2.0
+    - Or OpenSSL binary C(openssl)
 author:
-- Thom Wiggers (@thomwiggers)
+    - Thom Wiggers (@thomwiggers)
 options:
     state:
         description:
@@ -56,6 +60,16 @@ options:
         type: bool
         default: no
         version_added: "2.8"
+    select_crypto_backend:
+        description:
+            - Determines which crypto backend to use.
+            - The default choice is C(auto), which tries to use C(cryptography) if available, and falls back to C(openssl).
+            - If set to C(openssl), will try to use the OpenSSL C(openssl) executable.
+            - If set to C(cryptography), will try to use the L(cryptography,https://cryptography.io/) library.
+        type: str
+        default: auto
+        choices: [ auto, cryptography, openssl ]
+        version_added: '2.10'
 extends_documentation_fragment:
 - files
 seealso:
@@ -104,9 +118,29 @@ import abc
 import os
 import re
 import tempfile
+import traceback
+from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
+from ansible.module_utils import crypto as crypto_utils
+
+
+MINIMAL_CRYPTOGRAPHY_VERSION = '2.0'
+
+CRYPTOGRAPHY_IMP_ERR = None
+try:
+    import cryptography
+    import cryptography.exceptions
+    import cryptography.hazmat.backends
+    import cryptography.hazmat.primitives.asymmetric.dh
+    import cryptography.hazmat.primitives.serialization
+    CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
+except ImportError:
+    CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
+    CRYPTOGRAPHY_FOUND = False
+else:
+    CRYPTOGRAPHY_FOUND = True
 
 
 class DHParameterError(Exception):
@@ -249,6 +283,44 @@ class DHParameterOpenSSL(DHParameterBase):
         return bits == self.size
 
 
+class DHParameterCryptography(DHParameterBase):
+
+    def __init__(self, module):
+        super(DHParameterCryptography, self).__init__(module)
+        self.crypto_backend = cryptography.hazmat.backends.default_backend()
+
+    def _do_generate(self, module):
+        """Actually generate the DH params."""
+        # Generate parameters
+        params = cryptography.hazmat.primitives.asymmetric.dh.generate_parameters(
+            generator=2,
+            key_size=self.size,
+            backend=self.crypto_backend,
+        )
+        # Serialize parameters
+        result = params.parameter_bytes(
+            encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM,
+            format=cryptography.hazmat.primitives.serialization.ParameterFormat.PKCS3,
+        )
+        # Write result
+        if self.backup:
+            self.backup_file = module.backup_local(self.path)
+        crypto_utils.write_file(module, result)
+
+    def _check_params_valid(self, module):
+        """Check if the params are in the correct state"""
+        # Load parameters
+        try:
+            with open(self.path, 'rb') as f:
+                data = f.read()
+            params = self.crypto_backend.load_pem_parameters(data)
+        except Exception as dummy:
+            return False
+        # Check parameters
+        bits = crypto_utils.count_bits(params.parameter_numbers().p)
+        return bits == self.size
+
+
 def main():
     """Main function"""
 
@@ -259,6 +331,7 @@ def main():
             force=dict(type='bool', default=False),
             path=dict(type='path', required=True),
             backup=dict(type='bool', default=False),
+            select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'openssl']),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
@@ -272,7 +345,30 @@ def main():
         )
 
     if module.params['state'] == 'present':
-        dhparam = DHParameterOpenSSL(module)
+        backend = module.params['select_crypto_backend']
+        if backend == 'auto':
+            # Detection what is possible
+            can_use_cryptography = CRYPTOGRAPHY_FOUND and CRYPTOGRAPHY_VERSION >= LooseVersion(MINIMAL_CRYPTOGRAPHY_VERSION)
+            can_use_openssl = module.get_bin_path('openssl', False) is not None
+
+            # First try cryptography, then pyOpenSSL
+            if can_use_cryptography:
+                backend = 'cryptography'
+            elif can_use_openssl:
+                backend = 'pyopenssl'
+
+            # Success?
+            if backend == 'auto':
+                module.fail_json(msg=("Can't detect either the required Python library cryptography (>= {0}) "
+                                      "or the OpenSSL binary openssl").format(MINIMAL_CRYPTOGRAPHY_VERSION))
+
+        if backend == 'openssl':
+            dhparam = DHParameterOpenSSL(module)
+        elif backend == 'cryptography':
+            if not CRYPTOGRAPHY_FOUND:
+                module.fail_json(msg=missing_required_lib('cryptography >= {0}'.format(MINIMAL_CRYPTOGRAPHY_VERSION)),
+                                 exception=CRYPTOGRAPHY_IMP_ERR)
+            dhparam = DHParameterCryptography(module)
 
         if module.check_mode:
             result = dhparam.dump()
