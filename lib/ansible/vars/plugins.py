@@ -82,6 +82,8 @@ def get_vars_from_inventory_sources(loader, sources, entities, stage):
     data = {}
     for path in sources:
 
+        if path is None:
+            continue
         if ',' in path and not os.path.exists(path):  # skip host lists
             continue
         elif not os.path.isdir(to_bytes(path)):
