@@ -533,8 +533,8 @@ options:
         description:
             - The point in time at which the certificate stops being valid.
             - Time can be specified either as relative time or as an absolute timestamp.
-            - A valid absolute format is C(ASN.1 TIME) such as C(2019-06-18).
-            - A valid relative format is C([+-]timespec) where timespec can be an integer + C([w | d | h | m | s]), such as C(+365d) or C(+32w1d2h)).
+            - A valid absolute time format is C(ASN.1 TIME) such as C(2019-06-18).
+            - A valid relative time format is C([+-]timespec) where timespec can be an integer + C([w | d | h | m | s]), such as C(+365d) or C(+32w1d2h)).
             - Time will always be interpreted as UTC.
             - Note that only the date (day, month, year) is supported for specifying the expiry date of the issued certificate.
             - The full date-time is adjusted to EST (GMT -5:00) before issuance, which may result in a certificate with an expiration date one day
