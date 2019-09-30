@@ -130,7 +130,7 @@ EXAMPLES = """
         ipv4:
         - address: 192.168.2.1/24
           secondary: True
-    operation: merged
+    state: merged
 
 # After state:
 # ------------
@@ -190,7 +190,7 @@ EXAMPLES = """
         - address: 192.168.0.2/24
         - address: 192.168.2.1/24
           secondary: True
-    operation: overridden
+    state: overridden
 
 # After state:
 # -------------
@@ -247,7 +247,7 @@ EXAMPLES = """
       - name: GigabitEthernet0/0/0/4
         ipv4:
         - address: 192.168.0.2/24
-    operation: replaced
+    state: replaced
 
 # After state:
 # -------------
@@ -303,7 +303,7 @@ EXAMPLES = """
       - name: GigabitEthernet0/0/0/3
       - name: GigabitEthernet0/0/0/4
       - name: GigabitEthernet0/0/0/3.700
-    operation: deleted
+    state: deleted
 
 # After state:
 # -------------
@@ -356,7 +356,7 @@ EXAMPLES = """
 
 - name: "Delete L3 attributes of all interfaces (Note: This won't delete the interface itself)"
   iosxr_l3_interfaces:
-    operation: deleted
+    state: deleted
 
 # After state:
 # -------------
