@@ -14,6 +14,6 @@ options:
   stage:
     description: Control when this vars plugin may be executed.
     choices: ['all', 'task', 'inventory']
-    version_added: "2.9"
+    version_added: "2.10"
     type: str
 '''

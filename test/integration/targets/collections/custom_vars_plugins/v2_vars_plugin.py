@@ -20,7 +20,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     vars: v2_vars_plugin
-    version_added: "2.9"
+    version_added: "2.10"
     short_description: load host and group vars
     description:
       - 3rd party vars plugin to test loading host and group vars without requiring whitelisting and with a plugin-specific stage option

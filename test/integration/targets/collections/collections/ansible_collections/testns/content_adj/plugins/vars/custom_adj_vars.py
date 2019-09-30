@@ -20,7 +20,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     vars: custom_adj_vars
-    version_added: "2.9"
+    version_added: "2.10"
     short_description: load host and group vars
     description: test loading host and group vars from a collection
     options:
