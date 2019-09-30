@@ -188,6 +188,20 @@ class DHParameterBase(object):
         return result
 
 
+class DHParameterAbsent(DHParameterBase):
+
+    def __init__(self, module):
+        super(DHParameterAbsent, self).__init__(module)
+
+    def _do_generate(self, module):
+        """Actually generate the DH params."""
+        pass
+
+    def _check_params_valid(self, module):
+        """Check if the params are in the correct state"""
+        pass
+
+
 class DHParameterOpenSSL(DHParameterBase):
 
     def __init__(self, module):
@@ -257,9 +271,8 @@ def main():
             msg="The directory '%s' does not exist or the file is not a directory" % base_dir
         )
 
-    dhparam = DHParameterOpenSSL(module)
-
-    if dhparam.state == 'present':
+    if module.params['state'] == 'present':
+        dhparam = DHParameterOpenSSL(module)
 
         if module.check_mode:
             result = dhparam.dump()
@@ -271,6 +284,7 @@ def main():
         except DHParameterError as exc:
             module.fail_json(msg=to_native(exc))
     else:
+        dhparam = DHParameterAbsent(module)
 
         if module.check_mode:
             result = dhparam.dump()
