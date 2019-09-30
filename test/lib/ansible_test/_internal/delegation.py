@@ -425,7 +425,7 @@ def delegate_docker(args, exclude, require, integration_targets):
                 remote_temp_file = os.path.join('/root', remote_results_name + '.tgz')
 
                 with tempfile.NamedTemporaryFile(prefix='ansible-result-', suffix='.tgz') as local_result_fd:
-                    docker_exec(args, test_id, ['tar', 'czf', remote_temp_file, '-C', remote_test_root, remote_results_name])
+                    docker_exec(args, test_id, ['tar', 'czf', remote_temp_file, '--exclude', ResultType.TMP.name, '-C', remote_test_root, remote_results_name])
                     docker_get(args, test_id, remote_temp_file, local_result_fd.name)
                     run_command(args, ['tar', 'oxzf', local_result_fd.name, '-C', local_test_root])
         finally:
@@ -547,7 +547,7 @@ def delegate_remote(args, exclude, require, integration_targets):
                 remote_results_name = os.path.basename(remote_results_root)
                 remote_temp_path = os.path.join('/tmp', remote_results_name)
 
-                manage.ssh('rm -rf {0} && cp -a {1} {0} && chmod -R a+r {0}'.format(remote_temp_path, remote_results_root))
+                manage.ssh('rm -rf {0} && mkdir {0} && cp -a {1}/* {0}/ && chmod -R a+r {0}'.format(remote_temp_path, remote_results_root))
                 manage.download(remote_temp_path, local_test_root)
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
