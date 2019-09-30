@@ -132,14 +132,18 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False, multil
     return _re.sub(replacement, value)
 
 
-def regex_findall(value, regex, multiline=False, ignorecase=False):
+def regex_findall(value, regex, multiline=False, ignorecase=False, groupdict=False):
     ''' Perform re.findall and return the list of matches '''
     flags = 0
     if ignorecase:
         flags |= re.I
     if multiline:
         flags |= re.M
-    return re.findall(regex, value, flags)
+    if groupdict:
+        r = re.compile(regex, flags)
+        return [m.groupdict() for m in r.finditer(value)]
+    else:
+        return re.findall(regex, value, flags)
 
 
 def regex_search(value, regex, *args, **kwargs):
@@ -165,7 +169,10 @@ def regex_search(value, regex, *args, **kwargs):
     match = re.search(regex, value, flags)
     if match:
         if not groups:
-            return match.group()
+            if kwargs.get('groupdict'):
+                return match.groupdict()
+            else:
+                return match.group()
         else:
             items = list()
             for item in groups:

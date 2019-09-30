@@ -1,0 +1,4 @@
+minor_changes:
+- Return named capture groups as a dict from the ``regex_search`` and
+  ``regex_findall`` filters. This makes ugly list comprehensions much simpler
+  by allowing it to be boiled to a single ``regex_findall``.
