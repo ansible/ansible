@@ -100,6 +100,7 @@ backup_file:
     sample: /path/to/dhparams.pem.2019-03-09@11:22~
 '''
 
+import abc
 import os
 import re
 import tempfile
@@ -112,7 +113,7 @@ class DHParameterError(Exception):
     pass
 
 
-class DHParameter(object):
+class DHParameterBase(object):
 
     def __init__(self, module):
         self.state = module.params['state']
@@ -120,32 +121,22 @@ class DHParameter(object):
         self.size = module.params['size']
         self.force = module.params['force']
         self.changed = False
-        self.openssl_bin = module.get_bin_path('openssl', True)
 
         self.backup = module.params['backup']
         self.backup_file = None
 
+    @abc.abstractmethod
+    def _do_generate(self, module):
+        """Actually generate the DH params."""
+        pass
+
     def generate(self, module):
-        """Generate a keypair."""
+        """Generate DH params."""
         changed = False
 
         # ony generate when necessary
         if self.force or not self._check_params_valid(module):
-            # create a tempfile
-            fd, tmpsrc = tempfile.mkstemp()
-            os.close(fd)
-            module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
-            # openssl dhparam -out <path> <bits>
-            command = [self.openssl_bin, 'dhparam', '-out', tmpsrc, str(self.size)]
-            rc, dummy, err = module.run_command(command, check_rc=False)
-            if rc != 0:
-                raise DHParameterError(to_native(err))
-            if self.backup:
-                self.backup_file = module.backup_local(self.path)
-            try:
-                module.atomic_move(tmpsrc, self.path)
-            except Exception as e:
-                module.fail_json(msg="Failed to write to file %s: %s" % (self.path, str(e)))
+            self._do_generate(module)
             changed = True
 
         # fix permissions (checking force not necessary as done above)
@@ -171,6 +162,56 @@ class DHParameter(object):
             return False
         return self._check_params_valid(module) and self._check_fs_attributes(module)
 
+    @abc.abstractmethod
+    def _check_params_valid(self, module):
+        """Check if the params are in the correct state"""
+        pass
+
+    def _check_fs_attributes(self, module):
+        """Checks (and changes if not in check mode!) fs attributes"""
+        file_args = module.load_file_common_arguments(module.params)
+        attrs_changed = module.set_fs_attributes_if_different(file_args, False)
+
+        return not attrs_changed
+
+    def dump(self):
+        """Serialize the object into a dictionary."""
+
+        result = {
+            'size': self.size,
+            'filename': self.path,
+            'changed': self.changed,
+        }
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
+
+        return result
+
+
+class DHParameterOpenSSL(DHParameterBase):
+
+    def __init__(self, module):
+        super(DHParameterOpenSSL, self).__init__(module)
+        self.openssl_bin = module.get_bin_path('openssl', True)
+
+    def _do_generate(self, module):
+        """Actually generate the DH params."""
+        # create a tempfile
+        fd, tmpsrc = tempfile.mkstemp()
+        os.close(fd)
+        module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
+        # openssl dhparam -out <path> <bits>
+        command = [self.openssl_bin, 'dhparam', '-out', tmpsrc, str(self.size)]
+        rc, dummy, err = module.run_command(command, check_rc=False)
+        if rc != 0:
+            raise DHParameterError(to_native(err))
+        if self.backup:
+            self.backup_file = module.backup_local(self.path)
+        try:
+            module.atomic_move(tmpsrc, self.path)
+        except Exception as e:
+            module.fail_json(msg="Failed to write to file %s: %s" % (self.path, str(e)))
+
     def _check_params_valid(self, module):
         """Check if the params are in the correct state"""
         command = [self.openssl_bin, 'dhparam', '-check', '-text', '-noout', '-in', self.path]
@@ -192,26 +233,6 @@ class DHParameter(object):
             return False
 
         return bits == self.size
-
-    def _check_fs_attributes(self, module):
-        """Checks (and changes if not in check mode!) fs attributes"""
-        file_args = module.load_file_common_arguments(module.params)
-        attrs_changed = module.set_fs_attributes_if_different(file_args, False)
-
-        return not attrs_changed
-
-    def dump(self):
-        """Serialize the object into a dictionary."""
-
-        result = {
-            'size': self.size,
-            'filename': self.path,
-            'changed': self.changed,
-        }
-        if self.backup_file:
-            result['backup_file'] = self.backup_file
-
-        return result
 
 
 def main():
@@ -236,7 +257,7 @@ def main():
             msg="The directory '%s' does not exist or the file is not a directory" % base_dir
         )
 
-    dhparam = DHParameter(module)
+    dhparam = DHParameterOpenSSL(module)
 
     if dhparam.state == 'present':
 
