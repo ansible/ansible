@@ -305,7 +305,7 @@ def fmgr_fwobj_ipv4(fmgr, paramgram):
             "color": paramgram["color"],
             "meta fields": {},
             "dynamic_mapping": [],
-            "visibility": paramgram["allow-routing"],
+            "visibility": paramgram["visibility"],
             "type": paramgram["ipv4"],
         }
 
