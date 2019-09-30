@@ -223,5 +223,6 @@ We try to enforce the following rules in our documentation:
 - VMware, not VMWare or vmware
 - ESXi, not esxi or ESXI
 - vCenter, not vcenter or VCenter
+- vSphere, not vsphere or VSphere
 
 We also refer to vcsim's Go implementation with ``govcsim``. This to avoid any confusion with the outdated implementation.
