@@ -141,7 +141,7 @@ from ansible.module_utils._text import to_native
 
 
 def vmware_path(datastore, datacenter, path):
-    ''' Constructs a URL path that VSphere accepts reliably '''
+    ''' Constructs a URL path that vSphere accepts reliably '''
     path = '/folder/{path}'.format(path=quote(path.strip('/')))
     # Due to a software bug in vSphere, it fails to handle ampersand in datacenter names
     # The solution is to do what vSphere does (when browsing) and double-encode ampersands, maybe others ?
