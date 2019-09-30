@@ -2,15 +2,19 @@
 - set_fact:
     ecr_name: '{{ resource_prefix }}-ecr'
 
-- block:
+- name: Run tests against ecs_ecr
+  module_defaults:
+    group/aws:
+      region: '{{ aws_region }}'
+      aws_access_key: '{{ aws_access_key }}'
+      aws_secret_key: '{{ aws_secret_key }}'
+      security_token: '{{ security_token | default(omit) }}'
+
+  block:
 
     - name: When creating with check mode
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
       check_mode: yes
 
@@ -26,10 +30,6 @@
       ecs_ecr:
         registry_id: 999999999999
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
       ignore_errors: true
 
@@ -43,10 +43,6 @@
     - name: When creating a repository
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
 
     - name: it should change and create
@@ -59,10 +55,6 @@
     - name: When creating a repository that already exists in check mode
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
       check_mode: yes
 
@@ -76,10 +68,6 @@
     - name: When creating a repository that already exists
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
 
     - name: it should not change
@@ -90,11 +78,7 @@
 
     - name: When in check mode, and deleting a policy that does not exist
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         delete_policy: yes
       register: result
       check_mode: yes
@@ -108,12 +92,8 @@
 
     - name: When in check mode, setting policy on a repository that has no policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
       check_mode: yes
 
@@ -127,12 +107,8 @@
 
     - name: When setting policy on a repository that has no policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
 
     - name: it should change and not create
@@ -144,12 +120,8 @@
 
     - name: When in check mode, and deleting a policy that exists
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         delete_policy: yes
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
       check_mode: yes
 
@@ -163,12 +135,8 @@
 
     - name: When deleting a policy that exists
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         delete_policy: yes
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
 
     - name: it should change and not create
@@ -180,12 +148,8 @@
 
     - name: When setting a policy as a string
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy | to_json }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
 
     - name: it should change and not create
@@ -197,12 +161,8 @@
 
     - name: When setting a policy to its current value
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
 
     - name: it should not change
@@ -213,11 +173,7 @@
 
     - name: When omitting policy on a repository that has a policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
 
     - name: it should not change
@@ -228,13 +184,9 @@
 
     - name: When specifying both policy and delete_policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
         delete_policy: yes
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
       ignore_errors: true
 
@@ -246,12 +198,8 @@
 
     - name: When specifying invalid JSON for policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy_text: "Ceci n'est pas une JSON"
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
       ignore_errors: true
 
@@ -264,11 +212,7 @@
     - name: When in check mode, deleting a policy that exists
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
         state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
       check_mode: yes
 
@@ -283,11 +227,7 @@
     - name: When deleting a policy that exists
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
         state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
 
     - name: it should change
@@ -299,11 +239,7 @@
     - name: When in check mode, deleting a policy that does not exist
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
         state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
       check_mode: yes
 
@@ -317,11 +253,7 @@
     - name: When deleting a policy that does not exist
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
         state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
 
     - name: it should not change
@@ -334,8 +266,4 @@
     - name: Delete lingering ECR repository
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
         state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
