@@ -821,6 +821,26 @@ def wait_for_poweroff(vm, timeout=300):
     return result
 
 
+def is_integer(value, type_of='int'):
+    try:
+        VmomiSupport.vmodlTypes[type_of](value)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def is_boolean(value):
+    if str(value).lower() in ['true', 'on', 'yes', 'false', 'off', 'no']:
+        return True
+    return False
+
+
+def is_truthy(value):
+    if str(value).lower() in ['true', 'on', 'yes']:
+        return True
+    return False
+
+
 class PyVmomi(object):
     def __init__(self, module):
         """
