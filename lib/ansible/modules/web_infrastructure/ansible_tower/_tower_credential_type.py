@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
+ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
 

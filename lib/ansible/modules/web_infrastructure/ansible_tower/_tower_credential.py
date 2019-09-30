@@ -9,12 +9,11 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
----
 module: tower_credential
 author: "Wayne Witzel III (@wwitzel3)"
 version_added: "2.3"
