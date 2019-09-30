@@ -20,9 +20,20 @@ short_description: manage docker containers
 
 description:
   - Manage the life cycle of docker containers.
-  - Supports check mode. Run with --check and --diff to view config difference and list of actions to be taken.
+  - Supports check mode. Run with C(--check) and C(--diff) to view config difference and list of actions to be taken.
 
 version_added: "2.1"
+
+notes:
+  - For most config changes, the container needs to be recreated, i.e. the existing container has to be destroyed and
+    a new one created. This can cause unexpected data loss and downtime. You can use the I(comparisons) option to
+    prevent this.
+  - If the module needs to recreate the container, it will only use the options provided to the module to create the
+    new container (except I(image)). Therefore, always specify *all* options relevant to the container.
+  - When I(restart) is set to C(true), the module will only restart the container if no config changes are detected.
+    Please note that several options have default values; if the container to be restarted uses different values for
+    these options, it will be recreated instead. The options with default values which can cause this are I(auto_remove),
+    I(detach), I(init), I(interactive), I(memory), I(paused), I(privileged), I(read_only) and I(tty).
 
 options:
   auto_remove:
