@@ -18,7 +18,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: ecs_taskdefinition
@@ -26,7 +25,9 @@ short_description: register a task definition in ecs
 description:
     - Registers or deregisters task definitions in the Amazon Web Services (AWS) EC2 Container Service (ECS)
 version_added: "2.0"
-author: Mark Chance (@Java1Guy)
+author: 
+    - Mark Chance (@Java1Guy)
+    - Jason Kingsbury (@relvacode)
 requirements: [ json, botocore, boto3 ]
 options:
     state:
@@ -97,6 +98,13 @@ options:
               If using the Fargate launch type, this field is required and is limited by the cpu
         required: false
         version_added: 2.7
+    tags:
+        description:
+            - A dictionary of key value pairs to assign to the task definition
+        required: false
+        version_added: 2.10
+        
+            
 extends_documentation_fragment:
     - aws
     - ec2
@@ -197,10 +205,33 @@ EXAMPLES = '''
     memory: 1GB
     state: present
     network_mode: awsvpc
+    
+- name: Create Task Definition with Tags
+  ecs_taskdefinition:
+    family: nginx
+    containers:
+    - name: nginx
+      essential: true
+      image: "nginx"
+      portMappings:
+      - containerPort: 8080
+        hostPort:      8080
+    launch_type: FARGATE
+    cpu: 512
+    memory: 1024
+    state: present
+    network_mode: awsvpc
+    tags:
+        Environment: production
+        Name: nginx
 '''
 RETURN = '''
 taskdefinition:
     description: a reflection of the input parameters
+    type: dict
+    returned: always
+tags:
+    description: The tags assigned to the task definition
     type: dict
     returned: always
 '''
@@ -212,7 +243,8 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, \
+    boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils._text import to_text
 
 
@@ -227,12 +259,14 @@ class EcsTaskManager:
 
     def describe_task(self, task_name):
         try:
-            response = self.ecs.describe_task_definition(taskDefinition=task_name)
-            return response['taskDefinition']
+            response = self.ecs.describe_task_definition(taskDefinition=task_name, include=['TAGS'])
+            return boto3_tag_list_to_ansible_dict(
+                response.get('tags', []), 'key', 'value') or {}, response['taskDefinition']
         except botocore.exceptions.ClientError:
             return None
 
-    def register_task(self, family, task_role_arn, execution_role_arn, network_mode, container_definitions, volumes, launch_type, cpu, memory):
+    def register_task(self, family, task_role_arn, execution_role_arn, network_mode, container_definitions, volumes,
+                      launch_type, cpu, memory, tags):
         validated_containers = []
 
         # Ensures the number parameters are int as required by boto
@@ -268,13 +302,15 @@ class EcsTaskManager:
             params['requiresCompatibilities'] = [launch_type]
         if execution_role_arn:
             params['executionRoleArn'] = execution_role_arn
+        if tags:
+            params['tags'] = ansible_dict_to_boto3_tag_list(tags or {}, 'key', 'value')
 
         try:
             response = self.ecs.register_task_definition(**params)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
-        return response['taskDefinition']
+        return boto3_tag_list_to_ansible_dict(response.get('tags', [])) or {}, response['taskDefinition']
 
     def describe_task_definitions(self, family):
         data = {
@@ -300,11 +336,11 @@ class EcsTaskManager:
         while fetch():
             pass
 
-        # Return the full descriptions of the task definitions, sorted ascending by revision
+        # Return the full descriptions of the task definitions and tags, sorted ascending by revision
         return list(
             sorted(
-                [self.ecs.describe_task_definition(taskDefinition=arn)['taskDefinition'] for arn in data['taskDefinitionArns']],
-                key=lambda td: td['revision']
+                [self.describe_task(task_name=arn) for arn in data['taskDefinitionArns']],
+                key=lambda td: td[1]['revision']
             )
         )
 
@@ -328,7 +364,8 @@ def main():
         volumes=dict(required=False, type='list'),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         cpu=dict(),
-        memory=dict(required=False, type='str')
+        memory=dict(required=False, type='str'),
+        tags=dict(required=False, type='dict')
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
@@ -376,7 +413,7 @@ def main():
             revision = int(module.params['revision'])
 
             # A revision has been explicitly specified. Attempt to locate a matching revision
-            tasks_defs_for_revision = [td for td in existing_definitions_in_family if td['revision'] == revision]
+            tasks_defs_for_revision = [td for tags, td in existing_definitions_in_family if td['revision'] == revision]
             existing = tasks_defs_for_revision[0] if len(tasks_defs_for_revision) > 0 else None
 
             if existing and existing['status'] != "ACTIVE":
@@ -390,6 +427,7 @@ def main():
                                          (revision, existing_definitions_in_family[-1]['revision'] + 1))
         else:
             existing = None
+            existing_tags = None
 
             def _right_has_values_of_left(left, right):
                 # Make sure the values are equivalent for everything left has
@@ -417,13 +455,13 @@ def main():
                 return True
 
             def _task_definition_matches(requested_volumes, requested_containers, requested_task_role_arn, existing_task_definition):
-                if td['status'] != "ACTIVE":
+                if existing_task_definition['status'] != "ACTIVE":
                     return None
 
-                if requested_task_role_arn != td.get('taskRoleArn', ""):
+                if requested_task_role_arn != existing_task_definition.get('taskRoleArn', ""):
                     return None
 
-                existing_volumes = td.get('volumes', []) or []
+                existing_volumes = existing_task_definition.get('volumes', []) or []
 
                 if len(requested_volumes) != len(existing_volumes):
                     # Nope.
@@ -441,7 +479,7 @@ def main():
                         if not found:
                             return None
 
-                existing_containers = td.get('containerDefinitions', []) or []
+                existing_containers = existing_task_definition.get('containerDefinitions', []) or []
 
                 if len(requested_containers) != len(existing_containers):
                     # Nope.
@@ -461,31 +499,40 @@ def main():
                 return existing_task_definition
 
             # No revision explicitly specified. Attempt to find an active, matching revision that has all the properties requested
-            for td in existing_definitions_in_family:
+            for actual_tags, td in existing_definitions_in_family:
                 requested_volumes = module.params['volumes'] or []
                 requested_containers = module.params['containers'] or []
                 requested_task_role_arn = module.params['task_role_arn']
+                requested_tags = module.params['tags'] or {}
+                if not _right_has_values_of_left(requested_tags, actual_tags):
+                    continue
+
                 existing = _task_definition_matches(requested_volumes, requested_containers, requested_task_role_arn, td)
 
                 if existing:
+                    existing_tags = actual_tags
                     break
 
         if existing and not module.params.get('force_create'):
             # Awesome. Have an existing one. Nothing to do.
             results['taskdefinition'] = existing
+            results['tags'] = existing_tags
         else:
             if not module.check_mode:
                 # Doesn't exist. create it.
                 volumes = module.params.get('volumes', []) or []
-                results['taskdefinition'] = task_mgr.register_task(module.params['family'],
-                                                                   module.params['task_role_arn'],
-                                                                   module.params['execution_role_arn'],
-                                                                   module.params['network_mode'],
-                                                                   module.params['containers'],
-                                                                   volumes,
-                                                                   module.params['launch_type'],
-                                                                   module.params['cpu'],
-                                                                   module.params['memory'])
+                actual_tags, task_definition = task_mgr.register_task(module.params['family'],
+                                                               module.params['task_role_arn'],
+                                                               module.params['execution_role_arn'],
+                                                               module.params['network_mode'],
+                                                               module.params['containers'],
+                                                               volumes,
+                                                               module.params['launch_type'],
+                                                               module.params['cpu'],
+                                                               module.params['memory'],
+                                                               module.params.get('tags'))
+                results['taskdefinition'] = task_definition
+                results['tags'] = actual_tags
             results['changed'] = True
 
     elif module.params['state'] == 'absent':
@@ -499,13 +546,14 @@ def main():
             else:
                 module.fail_json(msg="To use task definitions, an arn or family and revision must be specified")
 
-        existing = task_mgr.describe_task(task_to_describe)
+        actual_tags, existing = task_mgr.describe_task(task_to_describe)
 
         if not existing:
             pass
         else:
             # It exists, so we should delete it and mark changed. Return info about the task definition deleted
             results['taskdefinition'] = existing
+            results['tags'] = actual_tags
             if 'status' in existing and existing['status'] == "INACTIVE":
                 results['changed'] = False
             else:

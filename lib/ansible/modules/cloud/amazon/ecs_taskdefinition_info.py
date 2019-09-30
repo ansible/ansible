@@ -25,6 +25,7 @@ author:
     - Gustavo Maia (@gurumaia)
     - Mark Chance (@Java1Guy)
     - Darek Kaczynski (@kaczynskid)
+    - Jason Kingsbury (@relvacode)
 requirements: [ json, botocore, boto3 ]
 options:
     task_definition:
@@ -299,10 +300,14 @@ placement_constraints:
             description: A cluster query language expression to apply to the constraint.
             returned: when present
             type: str
+tags:
+    description: The tags assigned to the task definition
+    type: dict
+    returned: always
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_conn, ec2_argument_spec, get_aws_connection_info, boto3_tag_list_to_ansible_dict
 
 try:
     import botocore
@@ -325,7 +330,11 @@ def main():
                      region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     try:
-        ecs_td = ecs.describe_task_definition(taskDefinition=module.params['task_definition'])['taskDefinition']
+        task_definition = ecs.describe_task_definition(taskDefinition=module.params['task_definition'], include=['TAGS'])
+        ecs_td = {
+            **task_definition['taskDefinition'],
+            'tags': boto3_tag_list_to_ansible_dict(task_definition.get('tags', []), 'key', 'value')
+        }
     except botocore.exceptions.ClientError:
         ecs_td = {}
 
