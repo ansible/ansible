@@ -92,7 +92,7 @@ def makedirs_safe(path, mode=None):
 
 def basedir(source):
     """ returns directory for inventory or playbook """
-    source = to_bytes(source, errors='surrogate_or_strict')
+    source = to_bytes(source, errors='surrogate_or_strict', nonstring='passthru')
     dname = None
     if os.path.isdir(source):
         dname = source
