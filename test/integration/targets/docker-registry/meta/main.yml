@@ -1,0 +1,4 @@
+---
+dependencies:
+  - setup_docker
+  - setup_openssl
