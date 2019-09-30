@@ -214,7 +214,7 @@ Testing
 -------
 
 -  Integration testing is currently done in oVirt's CI system
-   `on Jenkins <http://jenkins.ovirt.org/view/All/job/ovirt-system-tests_ansible-suite-master/>`__
+   `on Jenkins <https://jenkins.ovirt.org/view/All/job/ovirt-system-tests_ansible-suite-master/>`__
    and
    `on GitHub <https://github.com/oVirt/ovirt-system-tests/tree/master/ansible-suite-master/>`__.
 -  Please consider using these integration tests if you create a new module or add a new feature to an existing
