@@ -1667,7 +1667,7 @@ PERSISTENT_CONNECT_TIMEOUT:
 PERSISTENT_CONNECT_RETRY_TIMEOUT:
   name: Persistence connection retry timeout
   default: 15
-  description: This controls the retry timeout for presistent connection to connect to the local domain socket.
+  description: This controls the retry timeout for persistent connection to connect to the local domain socket.
   env: [{name: ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT}]
   ini:
   - {key: connect_retry_timeout, section: persistent_connection}
@@ -1675,7 +1675,7 @@ PERSISTENT_CONNECT_RETRY_TIMEOUT:
 PERSISTENT_COMMAND_TIMEOUT:
   name: Persistence command timeout
   default: 30
-  description: This controls the amount of time to wait for response from remote device before timing out presistent connection.
+  description: This controls the amount of time to wait for response from remote device before timing out persistent connection.
   env: [{name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT}]
   ini:
   - {key: command_timeout, section: persistent_connection}
