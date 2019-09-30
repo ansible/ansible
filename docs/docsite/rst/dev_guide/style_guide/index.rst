@@ -81,7 +81,7 @@ We follow these technical or mechanical guidelines on all rST pages:
 Header notation
 ---------------
 
-`Section headers in reStructuredText <http://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#sections>`_
+`Section headers in reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#sections>`_
 can use a variety of notations.
 Sphinx will 'learn on the fly' when creating a hierarchy of headers.
 To make our documents easy to read and to edit, we follow a standard set of header notations.
@@ -135,7 +135,7 @@ We use:
 Internal navigation
 -------------------
 
-`Anchors (also called labels) and links <http://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#ref-role>`_
+`Anchors (also called labels) and links <https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#ref-role>`_
 work together to help users find related content.
 Local tables of contents also help users navigate quickly to the information they need.
 All internal links should use the ``:ref:`` syntax.
