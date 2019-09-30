@@ -597,7 +597,7 @@ class AnsibleDockerClient(Client):
 
         return result
 
-    def find_image(self, name, tag):
+    def find_image(self, name, tag, check_distribution=False):
         '''
         Lookup an image (by name and tag) and return the inspection results.
         '''
@@ -625,6 +625,12 @@ class AnsibleDockerClient(Client):
                     lookup = "%s/%s" % (registry, repo_name)
                     self.log("Check for docker.io image: %s" % lookup)
                     images = self._image_lookup(lookup, tag)
+
+        if not images and check_distribution:
+            try:
+                images = [self.client.inspect_distribution('%s:%s' % (name, tag))]
+            except Exception as e:
+                self.log("Cannot inspect image %s:%s via distribution: %s" % (name, tag, e))
 
         if len(images) > 1:
             self.fail("Registry returned more than one result for %s:%s" % (name, tag))
