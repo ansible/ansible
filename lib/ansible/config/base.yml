@@ -1696,8 +1696,8 @@ RUN_VARS_PLUGINS:
   default: demand
   description:
     - This setting can be used to optimize vars_plugin usage depending on user's inventory size and play selection.
-    - Setting to 'demand' will run vars_plugins relative to inventory sources anytime vars are 'demanded' by tasks.
-    - Setting to 'start' will run vars_plugins relative to inventory sources after importing that inventory source.
+    - Setting to C(demand) will run vars_plugins relative to inventory sources anytime vars are 'demanded' by tasks.
+    - Setting to C(start) will run vars_plugins relative to inventory sources after importing that inventory source.
   env: [{name: ANSIBLE_RUN_VARS_PLUGINS}]
   ini:
   - {key: run_vars_plugins, section: defaults}
