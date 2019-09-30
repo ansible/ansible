@@ -90,7 +90,7 @@ try:
     from azure.keyvault import KeyVaultClient, KeyVaultId, KeyVaultAuthentication
     from azure.keyvault.models import KeyAttributes, JsonWebKey
     from azure.common.credentials import ServicePrincipalCredentials
-    from azure.keyvault.models.key_vault_error import KeyVaultErrorException
+    from azure.keyvault.models import KeyVaultErrorException
     from msrestazure.azure_active_directory import MSIAuthentication
     from OpenSSL import crypto
 except ImportError:
