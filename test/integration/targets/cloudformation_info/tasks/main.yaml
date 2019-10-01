@@ -1,0 +1,251 @@
+---
+- debug:
+    msg: "{{ lookup('file', 'cloudformation_template.yaml') }}"
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
+- name: cloudformation_info integration tests
+  block:
+    - name: "IntegrationTestStackCreation"
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        template_body: "{{ lookup('file', 'cloudformation_template.yaml') }}"
+        template_parameters:
+          TopicName: "CloudformationInfoIntegrationTest"
+          DisplayName: "CloudformationInfoIntegrationTest"
+        <<: *aws_connection_info
+
+    - name: "IntegrationTestStackChangeSet"
+      cloudformation:
+        create_changeset: True
+        stack_name: "{{ stack_name }}"
+        template_body: "{{ lookup('file', 'cloudformation_template.yaml') }}"
+        template_parameters:
+          TopicName: "CloudformationInfoIntegrationTest"
+          DisplayName: "CloudformationInfoIntegrationTestChanged"
+        <<: *aws_connection_info
+
+# Tests with default info
+    - name: "Gather default Info"
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+        <<: *aws_connection_info
+      register: mystack
+
+    # Validate default info keys are present
+    - name: "stack_description in info"
+      assert:
+        that:
+          - "'stack_description' in mystack.cloudformation[stack_name]"
+
+    - name: "stack_outputs in info"
+      assert:
+        that:
+          - "'stack_outputs' in mystack.cloudformation[stack_name]"
+
+    - name: "stack_parameters in info"
+      assert:
+        that:
+          - "'stack_parameters' in mystack.cloudformation[stack_name]"
+
+    - name: "stack_tags in info"
+      assert:
+        that:
+          - "'stack_tags' in mystack.cloudformation[stack_name]"
+
+    # Validate non-default info keys are not present
+    - name: "stack_policy is not in info"
+      assert:
+        that:
+          - "'stack_policy' not in mystack.cloudformation[stack_name]"
+        fail_msg: "stack_policy should not be in info when  both all_facts and stack_change_sets are false"
+
+    - name: "stack_events is not in info"
+      assert:
+        that:
+          - "'stack_events' not in mystack.cloudformation[stack_name]"
+        fail_msg: "stack_events should not be in info when  both all_facts and stack_change_sets are false"
+
+    - name: "stack_resources not in info"
+      assert:
+        that:
+          - "'stack_resources' not in mystack.cloudformation[stack_name]"
+        fail_msg: "stack_resources should not be in info when  both all_facts or stack_change_sets are false"
+
+    - name: "stack_template not in info"
+      assert:
+        that:
+          - "'stack_template' not in mystack.cloudformation[stack_name]"
+        fail_msg: "stack_template should not be in info when  both all_facts or stack_change_sets are false"
+
+    - name: "stack_change_sets not in info"
+      assert:
+        that:
+          - "'stack_change_sets' not in mystack.cloudformation[stack_name]"
+        fail_msg: "stack_change_sets should not be in info when  both all_facts or stack_change_sets are false"
+
+    # Validate Values
+    - name: "TopicArn output value"
+      assert:
+        that:
+          - "'arn:aws:sns' in mystack.cloudformation[stack_name].stack_outputs.TopicArn"
+        fail_msg: "TopicArn in stack outputs does not appear to be an arn"
+
+    - name: "DisplayName parameter value"
+      assert:
+        that:
+          - "mystack.cloudformation[stack_name].stack_parameters.DisplayName == 'CloudformationInfoIntegrationTest'"
+        fail_msg: "DisplayName in stack_parameters does not match expeced value 'CloudformationInfoIntegrationTest'"
+
+    - name: "stack_description description value"
+      assert:
+        that:
+          - "mystack.cloudformation[stack_name].stack_description.description == 'cloudformation_info integration testing'"
+        fail_msg: "description in stack_description does not match expeced value 'cloudformation_info integration testing'"
+
+    
+
+# Tests with stack_policy
+    - name: "Gather default Info with stack_policy"
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+        stack_policy: True
+        <<: *aws_connection_info
+      register: mystack
+
+    # Validate stack_policy is present
+    - name: "stack_policy in info with stack_policy=True"
+      assert:
+        that:
+          - "'stack_policy' in mystack.cloudformation[stack_name]"
+
+    - name: "stack_policy is empty dictionary"
+      assert:
+        that:
+          - "mystack.cloudformation[stack_name].stack_policy == {}"
+
+# Tests with stack_events
+    - name: "Gather default Info with stack_events"
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+        stack_events: True
+        <<: *aws_connection_info
+      register: mystack
+
+    # Validate stack_events is present
+    - name: "stack_events in info with stack_events=True"
+      assert:
+        that:
+          - "'stack_events' in mystack.cloudformation[stack_name]"
+
+# Tests with stack_resources
+    - name: "Gather default Info with stack_resources"
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+        stack_resources: True
+        <<: *aws_connection_info
+      register: mystack
+
+    # Validate stack_resources is present
+    - name: "stack_resources in info with stack_resource=True"
+      assert:
+        that:
+          - "'stack_resources' in mystack.cloudformation[stack_name]"
+
+# Tests with stack_template
+    - name: "Gather default Info with stack_template"
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+        stack_template: True
+        <<: *aws_connection_info
+      register: mystack
+
+    # Validate stack_template is present
+    - name: "stack_template in info with stack_template=True"
+      assert:
+        that:
+          - "'stack_template' in mystack.cloudformation[stack_name]"
+
+# Tests with stack_change_sets
+    - name: "Gather default Info with stack_change_sets"
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+        stack_change_sets: True
+        <<: *aws_connection_info
+      register: mystack
+
+    # Validate stack_change_sets is present
+    - name: "stack_change_sets in info when stack_change_sets=True"
+      assert:
+        that:
+          - "'stack_change_sets' in mystack.cloudformation[stack_name]"
+
+    - name: "Gather default Info with all_facts"
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+        all_facts: True
+        <<: *aws_connection_info
+      register: mystack
+
+    # Validate default info keys are present
+    - name: "stack_description in info when all_facts=True"
+      assert:
+        that:
+          - "'stack_description' in mystack.cloudformation[stack_name]"
+
+    - name: "stack_outputs in info when all_facts=True"
+      assert:
+        that:
+          - "'stack_outputs' in mystack.cloudformation[stack_name]"
+
+    - name: "stack_parameters in info when all_facts=True"
+      assert:
+        that:
+          - "'stack_parameters' in mystack.cloudformation[stack_name]"
+
+    - name: "stack_tags in info when all_facts=True"
+      assert:
+        that:
+          - "'stack_tags' in mystack.cloudformation[stack_name]"
+
+    - name: "stack_policy in info when all_facts=True"
+      assert:
+        that:
+          - "'stack_policy' in mystack.cloudformation[stack_name]"
+
+    - name: "stack_events in info when all_facts=True"
+      assert:
+        that:
+          - "'stack_events' in mystack.cloudformation[stack_name]"
+
+    - name: "stack_resources in info when all_facts=True"
+      assert:
+        that:
+          - "'stack_resources' in mystack.cloudformation[stack_name]"
+
+    - name: "stack_template in info when all_facts=True"
+      assert:
+        that:
+          - "'stack_template' in mystack.cloudformation[stack_name]"
+
+    - name: "stack_change_sets in info when all_facts=True"
+      assert:
+        that:
+          - "'stack_change_sets' in mystack.cloudformation[stack_name]"
+
+  always:
+    - name: "IntegrationTestStackDeletion"
+      cloudformation:
+        state: absent
+        stack_name: "{{ stack_name }}"
+        template_body: "{{ lookup('file', 'cloudformation_template.yaml') }}"
+        template_parameters:
+          TopicName: "CloudformationInfoIntegrationTest"
+          DisplayName: "CloudformationInfoIntegrationTest"
+        <<: *aws_connection_info
