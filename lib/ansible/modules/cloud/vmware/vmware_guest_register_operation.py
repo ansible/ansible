@@ -23,14 +23,13 @@ version_added: '2.10'
 description:
   - This module can register or unregister VMs to the inventory.
 requirements:
-  - python >= 2.6
+  - python >= 2.7
   - PyVmomi
 options:
   datacenter:
     description:
     - Destination datacenter for the register/unregister operation.
     - This parameter is case sensitive.
-    default: ha-datacenter
     type: str
   cluster:
     description:
@@ -208,38 +207,38 @@ class VMwareGuestRegisterOperation(PyVmomi):
         if self.state == "present":
             if self.get_vm():
                 self.module.exit_json(**result)
+
+            if self.esxi_hostname:
+                host_obj = self.find_hostsystem_by_name(self.esxi_hostname)
+                if not host_obj:
+                    self.module.fail_json(msg="Cannot find the specified ESXi host: %s" % self.esxi_hostname)
             else:
-                if self.esxi_hostname:
-                    host_obj = self.find_hostsystem_by_name(self.esxi_hostname)
-                    if not host_obj:
-                        self.module.fail_json(msg="Cannot find the specified ESXi host: %s" % self.esxi_hostname)
-                else:
-                    host_obj = None
+                host_obj = None
 
-                if self.cluster:
-                    cluster_obj = find_cluster_by_name(self.content, self.cluster, datacenter)
-                    if not cluster_obj:
-                        self.module.fail_json(msg="Cannot find the specified cluster name: %s" % self.cluster)
+            if self.cluster:
+                cluster_obj = find_cluster_by_name(self.content, self.cluster, datacenter)
+                if not cluster_obj:
+                    self.module.fail_json(msg="Cannot find the specified cluster name: %s" % self.cluster)
 
-                    resource_pool_obj = cluster_obj.resourcePool
-                elif self.resource_pool:
-                    resource_pool_obj = find_resource_pool_by_name(self.content, self.resource_pool)
-                    if not resource_pool_obj:
-                        self.module.fail_json(msg="Cannot find the specified resource pool: %s" % self.resource_pool)
-                else:
-                    resource_pool_obj = host_obj.parent.resourcePool
+                resource_pool_obj = cluster_obj.resourcePool
+            elif self.resource_pool:
+                resource_pool_obj = find_resource_pool_by_name(self.content, self.resource_pool)
+                if not resource_pool_obj:
+                    self.module.fail_json(msg="Cannot find the specified resource pool: %s" % self.resource_pool)
+            else:
+                resource_pool_obj = host_obj.parent.resourcePool
 
-                task = folder_obj.RegisterVM_Task(path=self.path, name=self.name, asTemplate=self.template,
-                                                  pool=resource_pool_obj, host=host_obj)
+            task = folder_obj.RegisterVM_Task(path=self.path, name=self.name, asTemplate=self.template,
+                                              pool=resource_pool_obj, host=host_obj)
 
-                changed = False
-                try:
-                    changed, info = wait_for_task(task)
-                except Exception as task_e:
-                    self.module.fail_json(msg=to_native(task_e))
+            changed = False
+            try:
+                changed, info = wait_for_task(task)
+            except Exception as task_e:
+                self.module.fail_json(msg=to_native(task_e))
 
-                result.update(changed=changed)
-                self.module.exit_json(**result)
+            result.update(changed=changed)
+            self.module.exit_json(**result)
 
         if self.state == "absent":
             vm_obj = self.get_vm()
@@ -255,7 +254,7 @@ class VMwareGuestRegisterOperation(PyVmomi):
 
 def main():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(datacenter=dict(type="str", default="ha-datacenter"),
+    argument_spec.update(datacenter=dict(type="str"),
                          cluster=dict(type="str"),
                          folder=dict(type="str"),
                          name=dict(type="str", required=True),

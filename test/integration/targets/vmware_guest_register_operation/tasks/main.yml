@@ -9,17 +9,7 @@
     setup_datastore: true
     setup_cluster: true
     setup_virtualmachines: true
-
-- name: get a list of Resource pools from vcsim
-  uri:
-    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=RP
-  register: resource_pools
-
-- name: get a resource pool
-  set_fact: resource_pool="{{ resource_pools['json'][2].split('/').7 }}"
-
-- name: get a vm name
-  set_fact: vm_name="DC0_H0_VM0"
+    setup_resource_pool: true
 
 - block:
   - name: gather facts of vm
@@ -30,9 +20,9 @@
       validate_certs: False
       datacenter: "{{ dc1 }}"
       folder: "{{ f0 }}"
-      name: "{{ vm_name }}"
+      name: "{{ virtual_machines[0].name }}"
     register: vm_facts
-    
+
   - name: get a vm vmx file path
     set_fact: vm_vmx_file_path="{{ vm_facts.instance.hw_files[0] }}"
 
@@ -43,7 +33,7 @@
     password: "{{ vcenter_password }}"
     validate_certs: False
     folder: /vm
-    name: "{{ vm_name }}"
+    name: "{{ virtual_machines[0].name }}"
     state: powered-off
 
 - name: Unregister VM from inventory
@@ -54,8 +44,30 @@
     validate_certs: no
     datacenter: "{{ dc1 }}"
     folder: "/vm"
-    name: "{{ vm_name }}"
+    name: "{{ virtual_machines[0].name }}"
     state: absent
+
+- name: Gather all registered virtual machines
+  vmware_vm_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+  register: vms
+
+- assert:
+    that:
+      - >-
+        vms.virtual_machines
+        | selectattr('guest_name', 'equalto', virtual_machines[0].name)
+        | map(attribute='guest_name')
+        | list
+        | length == 0
+
+- assert:
+    that:
+      - item.guest_name != virtual_machines[0].name
+  loop: "{{ vms.virtual_machines }}"
 
 - name: Register VM to inventory
   vmware_guest_register_operation:
@@ -66,9 +78,27 @@
     datacenter: "{{ dc1 }}"
     folder: "/vm"
     esxi_hostname: "{{ esxi1 }}"
-    name: "{{ vm_name }}"
+    name: "{{ virtual_machines[0].name }}"
     path: "{{ vm_vmx_file_path }}"
     state: present
+
+- name: Gather all registered virtual machines
+  vmware_vm_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+  register: vms
+
+- assert:
+    that:
+      - >-
+        vms.virtual_machines
+        | selectattr('guest_name', 'equalto', virtual_machines[0].name)
+        | selectattr('esxi_hostname', 'equalto', esxi1)
+        | map(attribute='guest_name')
+        | list
+        | length == 1
 
 - name: Unregister VM from inventory
   vmware_guest_register_operation:
@@ -78,8 +108,25 @@
     validate_certs: no
     datacenter: "{{ dc1 }}"
     folder: "/vm"
-    name: "{{ vm_name }}"
+    name: "{{ virtual_machines[0].name }}"
     state: absent
+
+- name: Gather all registered virtual machines
+  vmware_vm_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+  register: vms
+
+- assert:
+    that:
+      - >-
+        vms.virtual_machines
+        | selectattr('guest_name', 'equalto', virtual_machines[0].name)
+        | map(attribute='guest_name')
+        | list
+        | length == 0
 
 - name: Register VM in Cluster
   vmware_guest_register_operation:
@@ -90,9 +137,27 @@
     datacenter: "{{ dc1 }}"
     folder: "/vm"
     cluster: "{{ ccr1 }}"
-    name: "{{ vm_name }}"
+    name: "{{ virtual_machines[0].name }}"
     path: "{{ vm_vmx_file_path }}"
     state: present
+
+- name: Gather all registered virtual machines
+  vmware_vm_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+  register: vms
+
+- assert:
+    that:
+      - >-
+        vms.virtual_machines
+        | selectattr('guest_name', 'equalto', virtual_machines[0].name)
+        | selectattr('cluster', 'equalto', ccr1)
+        | map(attribute='guest_name')
+        | list
+        | length == 1
 
 - name: Unregister VM from inventory
   vmware_guest_register_operation:
@@ -102,8 +167,25 @@
     validate_certs: no
     datacenter: "{{ dc1 }}"
     folder: "/vm"
-    name: "{{ vm_name }}"
+    name: "{{ virtual_machines[0].name }}"
     state: absent
+
+- name: Gather all registered virtual machines
+  vmware_vm_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+  register: vms
+
+- assert:
+    that:
+      - >-
+        vms.virtual_machines
+        | selectattr('guest_name', 'equalto', virtual_machines[0].name)
+        | map(attribute='guest_name')
+        | list
+        | length == 0
 
 - name: Register VM in Resource pool
   vmware_guest_register_operation:
@@ -113,25 +195,41 @@
     validate_certs: no
     datacenter: "{{ dc1 }}"
     folder: "/vm"
-    resource_pool: "{{ resource_pool }}"
-    name: "{{ vm_name }}"
+    resource_pool: DC0_C0_RP1
+    name: "{{ virtual_machines[0].name }}"
     path: "{{ vm_vmx_file_path }}"
     state: present
 
-- block:
-  - name: gather facts of vm
-    vmware_guest_facts:
-      hostname: "{{ vcenter_hostname }}"
-      username: "{{ vcenter_username }}"
-      password: "{{ vcenter_password }}"
-      validate_certs: False
-      datacenter: "{{ dc1 }}"
-      folder: "{{ f0 }}"
-      name: "{{ vm_name }}"
-    register: vm_facts
+- name: Gather all registered virtual machines
+  vmware_vm_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+  register: vms
 
-  - name: get a vm uuid
-    set_fact: vm_uuid="{{ vm_facts.instance.hw_product_uuid }}"
+- assert:
+    that:
+      - >-
+        vms.virtual_machines
+        | selectattr('guest_name', 'equalto', virtual_machines[0].name)
+        | map(attribute='guest_name')
+        | list
+        | length == 1
+
+- name: Gather facts of vm
+  vmware_guest_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder: "/vm"
+    name: "{{ virtual_machines[0].name }}"
+  register: vm_facts
+
+- name: Get a vm uuid
+  set_fact: vm_uuid="{{ vm_facts.instance.hw_product_uuid }}"
 
 - name: Unregister VM from inventory with uuid parameter
   vmware_guest_register_operation:
@@ -141,6 +239,23 @@
     validate_certs: no
     datacenter: "{{ dc1 }}"
     folder: "/vm"
-    name: "{{ vm_name }}"
+    name: "{{ virtual_machines[0].name }}"
     uuid: "{{ vm_uuid }}"
     state: absent
+
+- name: Gather all registered virtual machines
+  vmware_vm_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+  register: vms
+
+- assert:
+    that:
+      - >-
+        vms.virtual_machines
+        | selectattr('guest_name', 'equalto', virtual_machines[0].name)
+        | map(attribute='guest_name')
+        | list
+        | length == 0
