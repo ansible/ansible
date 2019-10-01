@@ -1,4 +1,4 @@
-﻿#!powershell
+#!powershell
 
 # Copyright: (c) 2019 VMware, Inc. All Rights Reserved.
 # SPDX-License-Identifier: GPL-3.0-only
