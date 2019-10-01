@@ -66,12 +66,12 @@
 - name: Untag image
   # Image will not be deleted since the container still uses it
   docker_image:
-    name: hello-world:latest
+    name: alpine:3.8
     state: absent
 
 - name: Create container with alpine image via name (idempotent)
   docker_container:
-    image: hello-world:latest
+    image: alpine:3.8
     name: "{{ cname }}"
     state: present
   register: create_5
