@@ -13,6 +13,8 @@
       - '[] is not truthy'
       - '"on" is truthy(convert_bool=True)'
       - '"off" is not truthy(convert_bool=True)'
+      - '{} is not truthy'
+      - '{"key": "value"} is truthy'      
 
 - name: Assert falsy tests work
   assert:
