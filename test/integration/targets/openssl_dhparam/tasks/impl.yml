@@ -1,4 +1,6 @@
 ---
+# The tests for this module generate unsafe parameters for testing purposes;
+# otherwise tests would be too slow. Use sizes of at least 2048 in production!
 - name: "[{{ select_crypto_backend }}] Generate parameter"
   openssl_dhparam:
     size: 768
