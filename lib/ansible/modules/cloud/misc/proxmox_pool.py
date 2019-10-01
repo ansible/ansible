@@ -460,7 +460,7 @@ def main():
             except Exception as e:
                 module.fail_json(msg="Removing VM '%s' from pool '%s' failed with exception: %s" % (vmid, pool_name, e))
     else:
-        module.exit_json(changed=True, msg="OLOLO--00000")
+        module.fail_json(changed=False, msg="Unknown state")
 
 
 if __name__ == "__main__":
