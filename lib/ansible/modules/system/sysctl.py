@@ -86,6 +86,7 @@ EXAMPLES = '''
     name: net.ipv4.ip_forward
     value: '1'
     sysctl_set: yes
+    sysctl_file: /dev/null
 
 # Set ip forwarding on in /proc and in the sysctl file and reload if necessary
 - sysctl:
