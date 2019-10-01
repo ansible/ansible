@@ -113,7 +113,7 @@ and run Ansible from there.
 
 .. _python_interpreters:
 
-How do I handle python not having a Python interpreter at /usr/bin/python on a remote machine?
+How do I handle Python not having a Python interpreter at /usr/bin/python on a remote machine?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 While you can write Ansible modules in any language, most Ansible modules are written in Python,
@@ -150,12 +150,12 @@ How do I handle the package dependencies required by Ansible package dependencie
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 While installing Ansible, sometimes you may encounter errors such as `No package 'libffi' found` or `fatal error: Python.h: No such file or directory`
-These errors are generally caused by the missing packages which are dependencies of the packages required by Ansible.
+These errors are generally caused by the missing packages, which are dependencies of the packages required by Ansible.
 For example, `libffi` package is dependency of `pynacl` and `paramiko` (Ansible -> paramiko -> pynacl -> libffi).
 
-In order to solve these kinds of dependency issue, you may need to install required packages using the OS native package managers (e.g., `yum`, `dnf` or `apt`) or as mentioned in the package installation guide.
+In order to solve these kinds of dependency issues, you maight need to install required packages using the OS native package managers, like `yum`, `dnf`, or `apt`, or as mentioned in the package installation guide.
 
-Please refer the documentation of the respective package for such dependencies and their installation methods.
+Refer the documentation of the respective package for such dependencies and their installation methods.
 
 Common Platform Issues
 ++++++++++++++++++++++
@@ -185,8 +185,8 @@ If you want to run under Python 3 instead of Python 2 you may want to change tha
     $ pip install ansible
 
 If you need to use any libraries which are not available via pip (for instance, SELinux Python
-bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled) then you
-need to install them into the virtualenv.  There are two methods:
+bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled), then you
+need to install them into the virtualenv. There are two methods:
 
 * When you create the virtualenv, specify ``--system-site-packages`` to make use of any libraries
   installed in the system's Python:
@@ -226,7 +226,7 @@ is likely the problem. There are several workarounds:
 
     solaris1 ansible_remote_tmp=$HOME/.ansible/tmp
 
-* You can set :ref:`ansible_shell_executable<ansible_shell_executable>` to the path to a POSIX compatible shell.  For
+* You can set :ref:`ansible_shell_executable<ansible_shell_executable>` to the path to a POSIX compatible shell. For
   instance, many Solaris hosts have a POSIX shell located at :file:`/usr/xpg4/bin/sh` so you can set
   this in inventory like so::
 
