@@ -31,3 +31,5 @@
       - '[] is falsy'
       - '"on" is not falsy(convert_bool=True)'
       - '"off" is falsy(convert_bool=True)'
+      - '{} is falsy'
+      - '{"key": "value"} is not falsy'
