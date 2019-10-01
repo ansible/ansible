@@ -2639,9 +2639,9 @@ class ContainerManager(DockerBaseClass):
             repository, tag = utils.parse_repository_tag(self.parameters.image)
             if not tag:
                 tag = "latest"
-            image = self.client.find_image(repository, tag, check_distribution=True)
-            if not self.check_mode:
-                if not image or self.parameters.pull:
+            image = self.client.find_image(repository, tag)
+            if not image or self.parameters.pull:
+                if not self.check_mode:
                     self.log("Pull the image.")
                     image, alreadyToLatest = self.client.pull_image(repository, tag)
                     if alreadyToLatest:
@@ -2649,6 +2649,12 @@ class ContainerManager(DockerBaseClass):
                     else:
                         self.results['changed'] = True
                         self.results['actions'].append(dict(pulled_image="%s:%s" % (repository, tag)))
+                elif not image:
+                    # If the image isn't there, claim we'll pull.
+                    # (Implicitly: if the image is there, claim it already was latest.)
+                    self.results['changed'] = True
+                    self.results['actions'].append(dict(pulled_image="%s:%s" % (repository, tag)))
+
         self.log("image")
         self.log(image, pretty_print=True)
         return image
@@ -2659,19 +2665,6 @@ class ContainerManager(DockerBaseClass):
                 if image.get('Id') != container.Image:
                     self.diff_tracker.add('image', parameter=image.get('Id'), active=container.Image)
                     return True
-        if image is None and container and container.Image and self.parameters.image:
-            # In this case, we've tried our best but weren't able to get hold of the image.
-            if not is_image_name_id(self.parameters.image):
-                # We weren't able to find it via distribution. It could be that the
-                # docker daemon has another access (or different credentials) which allow
-                # it to find the image. So let's try!
-                self.diff_tracker.add('image', parameter=self.parameters.image, active=container.Image)
-                return True
-            elif self.parameters.image != container.Image:
-                # We simply assume that the same hash is used for the ID in self.parameters.image than
-                # the one in container.Image.
-                self.diff_tracker.add('image', parameter=self.parameters.image, active=container.Image)
-                return True
         return False
 
     def update_limits(self, container):
