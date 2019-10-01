@@ -726,7 +726,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
     changed = False
     deps_to_install = []
     pkgs_to_install = []
-    for deb_file in debs.split(','):
+    for deb_file in debs:
         try:
             pkg = apt.debfile.DebPackage(deb_file)
             pkg_name = get_field_of_deb(m, deb_file, "Package")

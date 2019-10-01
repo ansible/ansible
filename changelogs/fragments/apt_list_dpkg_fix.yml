@@ -1,0 +1,2 @@
+bugfixes:
+    - code incorrectly assumes string, while argspec defines a list for deb option in apt modules.
