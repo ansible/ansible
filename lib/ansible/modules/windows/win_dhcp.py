@@ -77,8 +77,6 @@ options:
       - Specifies the description for reservation being created
       - Only applicable to l(type=reservation)
     type: str
-author:
-- Joseph Zollo (@joezollo)
 '''
 
 EXAMPLES = r'''
