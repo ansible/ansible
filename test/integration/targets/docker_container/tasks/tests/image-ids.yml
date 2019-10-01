@@ -63,6 +63,19 @@
     force_kill: yes
   register: create_4
 
+- name: Untag image
+  # Image will not be deleted since the container still uses it
+  docker_image:
+    name: hello-world:latest
+    state: absent
+
+- name: Create container with alpine image via name (idempotent)
+  docker_container:
+    image: hello-world:latest
+    name: "{{ cname }}"
+    state: present
+  register: create_5
+
 - name: Cleanup
   docker_container:
     name: "{{ cname }}"
@@ -76,6 +89,7 @@
       - create_2 is not changed
       - create_3 is changed
       - create_4 is not changed
+      - create_5 is not changed
 
 - name: set Digests
   set_fact:
