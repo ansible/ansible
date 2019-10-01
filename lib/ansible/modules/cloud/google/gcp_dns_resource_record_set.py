@@ -37,7 +37,7 @@ description:
 - The record will include the domain/subdomain name, a type (i.e. A, AAA, CAA, MX,
   CNAME, NS, etc) .
 short_description: Creates a GCP ResourceRecordSet
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -81,7 +81,43 @@ options:
       of the gcp_dns_managed_zone module, which will contain both.
     required: true
     type: dict
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -362,9 +398,10 @@ def prefetch_soa_resource(module):
             'name': replace_resource_dict(module.params['managed_zone'], 'dnsName'),
             'project': module.params['project'],
             'scopes': module.params['scopes'],
-            'service_account_file': module.params['service_account_file'],
+            'service_account_file': module.params.get('service_account_file'),
             'auth_kind': module.params['auth_kind'],
-            'service_account_email': module.params['service_account_email'],
+            'service_account_email': module.params.get('service_account_email'),
+            'service_account_contents': module.params.get('service_account_contents'),
         },
         module,
     )
