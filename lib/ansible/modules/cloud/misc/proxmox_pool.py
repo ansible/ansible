@@ -193,12 +193,14 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 def pool_exists(proxmox, pool_name):
     pools = proxmox.pools.get()
     for item in pools:
-      if item['poolid'] == pool_name:
-         return True
+        if item['poolid'] == pool_name:
+            return True
     return False
+
 
 def pool_create(proxmox, pool_name, comment=''):
     if comment != '':
@@ -207,48 +209,59 @@ def pool_create(proxmox, pool_name, comment=''):
         res = proxmox.pools.create(poolid=pool_name)
     return res
 
+
 def pool_delete(proxmox, pool_name):
     proxmox.pools.delete(pool_name)
-    
+
+
 def pool_has_members(proxmox, pool_name):
     pool = proxmox.pools.get(pool_name)
-    return len(pool['members'])>0
+    return len(pool['members']) > 0
+
 
 def pool_vm_exists(proxmox, pool_name, vmid):
     pool = proxmox.pools.get(pool_name)
     for item in pool['members']:
-      if (item['type'] == "lxc" or item['type'] == "qemu" or item['type'] == "openvz") and item['vmid'] == vmid:
-         return True
+        if (item['type'] == "lxc" or item['type'] == "qemu" or item['type'] == "openvz") and item['vmid'] == vmid:
+            return True
     return False
+
 
 def pool_vm_add(proxmox, pool_name, vmid):
     proxmox.pools.set(pool_name, vms=vmid)
 
+
 def pool_vm_delete(proxmox, pool_name, vmid):
     proxmox.pools.set(pool_name, vms=vmid, delete=1)
+
 
 def pool_storage_exists(proxmox, pool_name, storage):
     pool = proxmox.pools.get(pool_name)
     for item in pool['members']:
-      if item['type'] == "storage" and item['storage'] == storage:
-         return True
+        if item['type'] == "storage" and item['storage'] == storage:
+            return True
     return False
+
 
 def pool_storage_add(proxmox, pool_name, storage):
     proxmox.pools.set(pool_name, storage=storage)
 
+
 def pool_storage_delete(proxmox, pool_name, storage):
     proxmox.pools.set(pool_name, storage=storage, delete=1)
 
+
 def pool_comment_get(proxmox, pool_name):
     pool = proxmox.pools.get(pool_name)
-    if 'comment' in pool :
+    if 'comment' in pool:
         return pool['comment']
     else:
         return ''
 
+
 def pool_comment_set(proxmox, pool_name, comment):
     proxmox.pools.set(pool_name, comment=comment)
+
 
 def pool_clear_force(proxmox, pool_name):
     pool = proxmox.pools.get(pool_name)
@@ -257,18 +270,21 @@ def pool_clear_force(proxmox, pool_name):
             pool_storage_delete(proxmox, pool_name, item['storage'])
         elif item['type'] == "lxc" or item['type'] == "qemu" or item['type'] == "openvz":
             pool_vm_delete(proxmox, pool_name, item['vmid'])
-    
+
+
 def cluster_storage_exists(proxmox, storage):
     for st in proxmox.cluster.resources.get(type='storage'):
         if st['storage'] == storage:
-         return True
+            return True
     return False
+
 
 def cluster_vm_exists(proxmox, vmid):
     for vm in proxmox.cluster.resources.get(type='vm'):
         if vm['vmid'] == vmid:
-         return True
+            return True
     return False
+
 
 def main():
     module = AnsibleModule(
@@ -276,20 +292,18 @@ def main():
             api_host=dict(required=True),  # the host of the Proxmox VE cluster
             api_password=dict(no_log=True, required=False, default=''),
             api_user=dict(required=True),  # the user to authenticate with
-            pool_name=dict(required=True, aliases=['pool','name']), # Proxmox VE resource pool
-            state=dict(required=False, choices=['present','absent'], default='present'),
-            option=dict(required=False, choices=['comment', 'pool','storage','vms'], default='pool'),
+            pool_name=dict(required=True, aliases=['pool', 'name']),  # Proxmox VE resource pool
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
+            option=dict(required=False, choices=['comment', 'pool', 'storage', 'vms'], default='pool'),
             validate_certs=dict(type='bool', default='no'),
             vmid=dict(required=False, type='int'),
             comment=dict(required=False, default=''),
             storage=dict(required=False),
             force_delete=dict(required=False, type='bool', default='no')
         ),
-        #no_log=True,
         supports_check_mode=False,
         mutually_exclusive=[['vmid', 'comment', 'storage']]
     )
-
 
     api_host = module.params['api_host']
     api_user = module.params['api_user']
@@ -302,7 +316,6 @@ def main():
     validate_certs = module.params['validate_certs']
     option = module.params['option']
     force_delete = module.params['force_delete']
-
 
     # If password not set get it from PROXMOX_PASSWORD env
     if not api_password:
@@ -317,125 +330,128 @@ def main():
         module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
     if state == 'present':
-        if option == 'comment': # Обновление комментария пула
+        if option == 'comment':  # Обновление комментария пула
             try:
-                if pool_exists(proxmox, pool_name): 
+                if pool_exists(proxmox, pool_name):
                     current_comment = pool_comment_get(proxmox, pool_name)
-                    if current_comment == comment: # Всё есть, ничего не делаем
+                    if current_comment == comment:  # Всё есть, ничего не делаем
                         module.exit_json(changed=False, msg="Comment is valid")
-                    else: # Обновление комментария
+                    else:  # Обновление комментария
                         pool_comment_set(proxmox, pool_name, comment)
                         module.exit_json(changed=True, msg="Comment changed")
-                else: # Пул не найден, ничего не делаем
+                else:  # Пул не найден, ничего не делаем
                     module.fail_json(msg="Pool '%s' not exists" % (pool_name))
             except Exception as e:
                 module.fail_json(msg="Adding comment '%s' to pool '%s' failed with exception: %s" % (comment, pool_name, e))
-        elif option == 'pool': # Создание пула, обновление комментария к пулу
+        elif option == 'pool':  # Создание пула, обновление комментария к пулу
             try:
-                if pool_exists(proxmox, pool_name): 
+                if pool_exists(proxmox, pool_name):
                     current_comment = pool_comment_get(proxmox, pool_name)
-                    if current_comment == comment: # Всё есть, ничего не делаем
+                    if current_comment == comment:  # Всё есть, ничего не делаем
                         module.exit_json(changed=False, msg="Comment is valid")
-                    else: # Обновление комментария
+                    else:  # Обновление комментария
                         pool_comment_set(proxmox, pool_name, comment)
                         module.exit_json(changed=True, msg="Comment changed")
-                else: # Создание пула
+                else:  # Создание пула
                     pool_create(proxmox, pool_name, comment)
                     module.exit_json(changed=True, msg="Pool created successfully")
             except Exception as e:
                 module.fail_json(msg="Creation pool '%s' failed with exception: %s" % (pool_name, e))
 
-        elif option == 'storage': # Добавление хранилища в пул
+        elif option == 'storage':  # Добавление хранилища в пул
             try:
-                if pool_exists(proxmox, pool_name): 
-                    if pool_storage_exists(proxmox, pool_name, storage): # Всё есть, ничего не делаем
+                if pool_exists(proxmox, pool_name):
+                    if pool_storage_exists(proxmox, pool_name, storage):  # Всё есть, ничего не делаем
                         module.exit_json(changed=False, msg="Storage exists in pool")
-                    else: # Добавить хранилище в пул
-                        if cluster_storage_exists(proxmox, storage): # Проверим, существует ли такое хранилище в кластере
+                    else:  # Добавить хранилище в пул
+                        if cluster_storage_exists(proxmox, storage):  # Проверим, существует ли такое хранилище в кластере
                             pool_storage_add(proxmox, pool_name, storage)
                             module.exit_json(changed=True, msg="Storage added in pool successfully")
                         else:
                             module.fail_json(msg="Storage '%s' not exists in cluster" % (storage))
-                else: # Пул не найден, ничего не делаем
+                else:  # Пул не найден, ничего не делаем
                     module.fail_json(msg="Pool '%s' not exists" % (pool_name))
             except Exception as e:
                 module.fail_json(msg="Adding storage '%s' to pool '%s' failed with exception: %s" % (storage, pool_name, e))
 
-        elif option == 'vms': # Добавление VM в пул
+        elif option == 'vms':  # Добавление VM в пул
             try:
-                if pool_exists(proxmox, pool_name): 
-                    if pool_vm_exists(proxmox, pool_name, vmid): # Всё есть, ничего не делаем
+                if pool_exists(proxmox, pool_name):
+                    if pool_vm_exists(proxmox, pool_name, vmid):  # Всё есть, ничего не делаем
                         module.exit_json(changed=False, msg="VM exists in pool")
-                    else: # Добавить VM в пул
-                        if cluster_vm_exists(proxmox, vmid): # Проверим, существует ли такая VM в кластере
+                    else:  # Добавить VM в пул
+                        if cluster_vm_exists(proxmox, vmid):  # Проверим, существует ли такая VM в кластере
                             pool_vm_add(proxmox, pool_name, vmid)
                             module.exit_json(changed=True, msg="VM added in pool successfully")
                         else:
                             module.fail_json(msg="VM '%s' not exists in cluster" % (vmid))
-                else: # Пул не найден, ничего не делаем
+                else:  # Пул не найден, ничего не делаем
                     module.fail_json(msg="Pool '%s' not exists" % (pool_name))
             except Exception as e:
                 module.fail_json(msg="Adding VM '%s' to pool '%s' failed with exception: %s" % (vmid, pool_name, e))
 
     elif state == 'absent':
-        if option == 'comment': # Очистка комментария пула
+        if option == 'comment':  # Очистка комментария пула
             try:
-                if pool_exists(proxmox, pool_name): 
+                if pool_exists(proxmox, pool_name):
                     current_comment = pool_comment_get(proxmox, pool_name)
-                    if current_comment == '': # Комментарий пустой, ничего не делаем
+                    if current_comment == '':  # Комментарий пустой, ничего не делаем
                         module.exit_json(changed=False, msg="Comment is empty")
-                    else: # Обновление комментария
+                    else:  # Обновление комментария
                         pool_comment_set(proxmox, pool_name, '')
                         module.exit_json(changed=True, msg="Comment is removed")
-                else: # Пул не найден, ничего не делаем
+                else:  # Пул не найден, ничего не делаем
                     module.fail_json(msg="Pool '%s' not exists" % (pool_name))
             except Exception as e:
                 module.fail_json(msg="Removing comment from pool '%s' failed with exception: %s" % (pool_name, e))
-        elif option == 'pool': # Удаление пула
+        elif option == 'pool':  # Удаление пула
             try:
-                if pool_exists(proxmox, pool_name): # Удалим пул
+                if pool_exists(proxmox, pool_name):  # Удалим пул
                     if pool_has_members(proxmox, pool_name):
-                        if force_delete == False:
-                            module.fail_json(msg="The pool '%s' has members. The pool must be empty. Or use the 'force_delete' option to automatically delete all pool members" % (pool_name))
+                        if force_delete is False:
+                            module.fail_json(msg="The pool '%s' has members. The pool must be empty. \
+                                                  Or use the 'force_delete' option to automatically \
+                                                  delete all pool members" % (pool_name))
                         else:
                             pool_clear_force(proxmox, pool_name)
                             pool_delete(proxmox, pool_name)
-                            module.exit_json(changed=True, msg="Forced deleting pool '%s' is successfully" % (pool_name) )
+                            module.exit_json(changed=True, msg="Forced deleting pool '%s' is successfully" % (pool_name))
                     else:
                         pool_delete(proxmox, pool_name)
-                        module.exit_json(changed=True, msg="Pool '%s' deleted successfully" % (pool_name) )
-                else: # Пул не существует, ничего не делаем
+                        module.exit_json(changed=True, msg="Pool '%s' deleted successfully" % (pool_name))
+                else:  # Пул не существует, ничего не делаем
                     module.exit_json(changed=False, msg="Pool not exists")
             except Exception as e:
                 module.fail_json(msg="Deleting pool '%s' failed with exception: %s" % (pool_name, e))
 
-        elif option == 'storage': # Удаление хранилища из пула
+        elif option == 'storage':  # Удаление хранилища из пула
             try:
-                if pool_exists(proxmox, pool_name): 
-                    if pool_storage_exists(proxmox, pool_name, storage): # Удалим хранилище из пула
+                if pool_exists(proxmox, pool_name):
+                    if pool_storage_exists(proxmox, pool_name, storage):  # Удалим хранилище из пула
                         pool_storage_delete(proxmox, pool_name, storage)
                         module.exit_json(changed=True, msg="Removing storage '%s' from pool '%s' is successfully" % (storage, pool_name))
-                    else: # Хранилище в пуле не найдено, ничего не делаем
+                    else:  # Хранилище в пуле не найдено, ничего не делаем
                         module.exit_json(changed=False, msg="Storage not found in pool")
-                else: # Пул не найден, ничего не делаем
+                else:  # Пул не найден, ничего не делаем
                     module.fail_json(msg="Pool '%s' not exists" % (pool_name))
             except Exception as e:
                 module.fail_json(msg="Removing storage '%s' from pool '%s' failed with exception: %s" % (storage, pool_name, e))
 
-        elif option == 'vms': # Удаление VM из пула
+        elif option == 'vms':  # Удаление VM из пула
             try:
-                if pool_exists(proxmox, pool_name): 
-                    if pool_vm_exists(proxmox, pool_name, vmid): # Удалим хранилище из пула
+                if pool_exists(proxmox, pool_name):
+                    if pool_vm_exists(proxmox, pool_name, vmid):  # Удалим хранилище из пула
                         pool_vm_delete(proxmox, pool_name, vmid)
                         module.exit_json(changed=True, msg="Removing VM '%s' from pool '%s' is successfully" % (vmid, pool_name))
-                    else: # Хранилище в пуле не найдено, ничего не делаем
+                    else:  # Хранилище в пуле не найдено, ничего не делаем
                         module.exit_json(changed=False, msg="VM not found in pool")
-                else: # Пул не найден, ничего не делаем
+                else:  # Пул не найден, ничего не делаем
                     module.fail_json(msg="Pool '%s' not exists" % (pool_name))
             except Exception as e:
                 module.fail_json(msg="Removing VM '%s' from pool '%s' failed with exception: %s" % (vmid, pool_name, e))
     else:
         module.exit_json(changed=True, msg="OLOLO--00000")
+
 
 if __name__ == "__main__":
     main()
