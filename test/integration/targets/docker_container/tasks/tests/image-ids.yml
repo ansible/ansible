@@ -9,7 +9,7 @@
 - name: Pull images
   docker_image:
     name: "{{ image }}"
-    pull: true
+    source: pull
   loop:
     - "hello-world:latest"
     - "alpine:3.8"
