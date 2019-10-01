@@ -18,7 +18,7 @@ short_description: management of resources pool in Proxmox VE cluster
 description:
   - allows you to create/delete resources pool in Proxmox VE cluster
   - allows you to add/remove VM/Storage in resources pool in Proxmox VE cluster
-version_added: "2.9"
+version_added: "2.10"
 options:
   api_host:
     description:
