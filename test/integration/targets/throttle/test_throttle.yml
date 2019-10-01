@@ -1,5 +1,5 @@
 ---
-- hosts: localhosts
+- hosts: localhost
   gather_facts: false
   vars:
     throttledir: "{{ lookup('env', 'OUTPUT_DIR') }}/throttle.dir/"
@@ -9,12 +9,16 @@
         state: absent
         path: '{{ throttledir }}'
       ignore_errors: yes
-      run_once: yes
     - name: Create throttledir '{{ throttledir }}'
       file:
         state: directory
         path: '{{ throttledir }}'
-      run_once: yes
+
+- hosts: localhosts
+  gather_facts: false
+  vars:
+    throttledir: "{{ lookup('env', 'OUTPUT_DIR') }}/throttle.dir/"
+  tasks:
     - block:
       - name: "Test 1 (max throttle: 3)"
         script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 3"
