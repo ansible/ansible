@@ -1887,7 +1887,7 @@ def quick_is_not_prime(n):
 
 
 python_version = (sys.version_info[0], sys.version_info[1])
-if python_version >= (2, 6) or python_version >= (3, 1):
+if python_version >= (2, 7) or python_version >= (3, 1):
     # Ansible still supports Python 2.6 on remote nodes
     def count_bits(no):
         no = abs(no)
