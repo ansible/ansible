@@ -630,11 +630,6 @@ class AnsibleModule(object):
         self._options_context = list()
         self._tmpdir = None
 
-        if add_file_common_args:
-            for k, v in FILE_COMMON_ARGUMENTS.items():
-                if k not in self.argument_spec:
-                    self.argument_spec[k] = v
-
         self._load_params()
         self._set_fallbacks()
 
@@ -645,6 +640,12 @@ class AnsibleModule(object):
             # Use exceptions here because it isn't safe to call fail_json until no_log is processed
             print('\n{"failed": true, "msg": "Module alias error: %s"}' % to_native(e))
             sys.exit(1)
+
+        if add_file_common_args:
+            print("add_file_common_args", add_file_common_args)
+            for k, v in FILE_COMMON_ARGUMENTS.items():
+                if k not in self.argument_spec and k not in self.aliases:
+                    self.argument_spec[k] = v
 
         # Save parameter values that should never be logged
         self.no_log_values = set()
