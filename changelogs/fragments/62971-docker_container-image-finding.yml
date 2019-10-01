@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container - if the module cannot find the image locally, will now try to get image ID from remote distribution, and if that fails, recreate the container and let Docker daemon figure out where to get the image from."
