@@ -1,0 +1,119 @@
+---
+- name: Check DHCP Service/Role Install State
+  win_feature:
+    name: DHCP
+    state: present
+    include_management_tools: yes
+  register: dhcp_role
+
+- name: Reboot if Necessary
+  win_reboot:
+  when: dhcp_role.reboot_required
+
+- name: Remove DHCP Address by IP
+  win_dhcp:
+    state: absent
+    ip: "{{ dhcp_lease_ip }}"
+
+- name: Remove DHCP Address by IP (Idempotentcy Check) - Changed should equal false
+  win_dhcp:
+    state: absent
+    ip: "{{ dhcp_lease_ip }}"
+  register: remove_reservation_ip
+  failed_when: remove_reservation_ip.changed == true
+
+- name: Create New DHCP Lease
+  win_dhcp:
+    type: lease
+    ip: "{{ dhcp_lease_ip }}"
+    scope_id: "{{ dhcp_scope_id }}"
+    mac: "{{ dhcp_lease_mac }}"
+    dns_hostname: "{{ dhcp_lease_hostname }}"
+    dns_regtype: noreg
+    description: This is a description!
+
+- name: Create New DHCP Lease (Idempotentcy Check) - Changed should equal false
+  win_dhcp:
+    type: lease
+    ip: "{{ dhcp_lease_ip }}"
+    scope_id: "{{ dhcp_scope_id }}"
+    mac: "{{ dhcp_lease_mac }}"
+    dns_hostname: "{{ dhcp_lease_hostname }}"
+    dns_regtype: noreg
+    description: This is a description!
+  register: create_lease
+  failed_when: create_lease.changed == true
+
+- name: Validate the Lease
+  win_shell: |
+    Get-DhcpServerv4Scope | Get-DhcpServerv4Lease | Where-Object IPAddress -eq {{ dhcp_lease_ip }}
+  register: validate_lease_out
+  failed_when: validate_lease_out.stdout == ""
+
+- name: Convert Lease to Reservation
+  win_dhcp:
+    type: reservation
+    ip: "{{ dhcp_lease_ip }}"
+    
+- name: Convert Lease to Reservation (Idempotentcy Check) - Changed should equal false
+  win_dhcp:
+    type: reservation
+    ip: "{{ dhcp_lease_ip }}"
+  register: convert_lease_to_reservation
+  failed_when: convert_lease_to_reservation.changed == true
+
+- name: Validate the Reservation
+  win_shell: |
+    Get-DhcpServerv4Scope | Get-DhcpServerv4Reservation | Where-Object IPAddress -eq {{ dhcp_lease_ip }}
+  register: validate_reservation_out
+  failed_when: validate_reservation_out.stdout == ""
+
+- name: Update Reservation Description
+  win_dhcp:
+    type: reservation
+    mac: "{{ dhcp_lease_mac }}"
+    description: Changed Description!
+
+- name: Update Reservation Description (Idempotentcy Check) - Changed should equal false
+  win_dhcp:
+    type: reservation
+    mac: "{{ dhcp_lease_mac }}"
+    description: Changed Description!
+  register: update_reservation_description
+  failed_when: update_reservation_description.changed == true
+
+- name: Validate the Description
+  win_shell: |
+    Get-DhcpServerv4Scope | Get-DhcpServerv4Lease | Where-Object {($_.ClientId -eq "{{ dhcp_lease_mac }}") -and ($_.Description -eq "Changed Description!")}
+  register: validate_description_out
+  failed_when: validate_description_out.stdout == ""
+
+- name: Convert Reservation to Lease
+  win_dhcp:
+    type: lease
+    ip: "{{ dhcp_lease_ip }}"
+
+- name: Convert Reservation to Lease (Idempotentcy Check) - Changed should equal false
+  win_dhcp:
+    type: lease
+    ip: "{{ dhcp_lease_ip }}"
+  register: convert_reservation_to_lease
+  failed_when: convert_reservation_to_lease.changed == true
+
+- name: Remove DHCP Reservation
+  win_dhcp:
+    state: absent
+    mac: "{{ dhcp_lease_mac }}"
+
+- name: Remove DHCP Reservation (Idempotentcy Check) - Changed should equal false
+  win_dhcp:
+    state: absent
+    mac: "{{ dhcp_lease_mac }}"
+  register: remove_reservation
+  failed_when: remove_reservation.changed == true
+
+- name: Validate the State
+  win_shell: |
+    Get-DhcpServerv4Scope | Get-DhcpServerv4Reservation | Where-Object IPAddress -eq {{ dhcp_lease_ip }}
+  register: validate_state_out
+  failed_when: validate_state_out.stdout != ""

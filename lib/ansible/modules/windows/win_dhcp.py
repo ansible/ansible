@@ -13,11 +13,14 @@ DOCUMENTATION = r'''
 ---
 module: win_dhcp
 version_added: '2.10'
-short_description: Interacts with Windows DHCP Server in the Client Context
+short_description: Manages IP Addresses on a Windows DHCP Server
+author: Joe Zollo (@joezollo)
+requirements:
+  - This module requires Windows Server 2012 or Newer
 description:
-- Interacts with Windows DHCP Server in the Client Context
-- Adds or Removes DHCP Leases and Reservations for targeted hosts
-- Task should be delegated to a Windows DHCP Server
+  - Manages IP Addresses on a Windows DHCP Server
+  - Adds or Removes DHCP Leases and Reservations
+  - Task should be delegated to a Windows DHCP Server
 options:
   type:
     description:
@@ -50,14 +53,17 @@ options:
     description:
       - Specifies the duration of the DHCP lease in days
       - The duration value only applies to l(type=lease)
-      - Defaults to the duration specified by the DHCP server configuration
+      - Defaults to the duration specified by the DHCP server 
+        configuration
     type: int
   dns_hostname:
     description:
-      - Specifies the DNS hostname of the client for which the IP address lease is to be added
+      - Specifies the DNS hostname of the client for which the IP address 
+        lease is to be added
   dns_regtype:
     description:
-      - Indicates the type of DNS record to be registered by the DHCP server service for this lease
+      - Indicates the type of DNS record to be registered by the DHCP 
+        server service for this lease
       - Defaults to the type specified by the DHCP server configuration
     type: str
     choices: [ aptr, a, noreg ]
@@ -84,46 +90,58 @@ EXAMPLES = r'''
     mac: 00b18ad15a1f
     dns_hostname: "{{ ansible_inventory }}"
     description: Testing Server
-  delegate_to: dhcpserver.vmware.com
+  delegate_to: dhcp-ericb-euc.vmware.com
 
 - name: Ensure DHCP lease or reservation does not exist
   win_dhcp:
     mac: 00b18ad15a1f
     state: absent
-  delegate_to: dhcpserver.vmware.com
+  delegate_to: dhcp-marshallb-euc.vmware.com
 
 - name: Ensure DHCP lease or reservation does not exist
   win_dhcp:
     ip: 192.168.100.205
     state: absent
-  delegate_to: dhcpserver.vmware.com
+  delegate_to: dhcp-willp-euc.vmware.com
 
 - name: Convert DHCP lease to reservation & update description
   win_dhcp:
     type: reservation
     ip: 192.168.100.205
     description: Testing Server
-  delegate_to: dhcpserver.vmware.com
+  delegate_to: dhcp-danielg-euc.vmware.com
 
 - name: Convert DHCP reservation to lease
   win_dhcp:
     type: lease
     ip: 192.168.100.205
-  delegate_to: dhcpserver.vmware.com
+  delegate_to: dhcp-devangm-euc.vmware.com
 '''
 
 RETURN = r'''
 lease:
-  description: DHCP object parameters
+  description: New/Updated DHCP object parameters
   returned: When l(state=present)
   type: dict
   sample:
-    AddressState: InactiveReservation 
-    ClientId: 0a-0b-0c-04-05-aa
-    Description: Really Fancy
-    IPAddress: 172.16.98.230
-    Name: null
-    ScopeId: 172.16.98.0
+    address_state: InactiveReservation 
+    client_id: 0a-0b-0c-04-05-aa
+    description: Really Fancy
+    ip_address: 172.16.98.230
+    name: null
+    scope_id: 172.16.98.0
+
+original:
+  description: Original DHCP object parameters
+  returned: When an existing lease is found
+  type: dict
+  sample:
+    address_state: InactiveReservation 
+    client_id: 0a-0b-0c-04-05-aa
+    description: Really Fancy
+    ip_address: 172.16.98.230
+    name: null
+    scope_id: 172.16.98.0
 '''
 
 from module_utils.basic import AnsibleModule
