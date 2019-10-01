@@ -179,9 +179,7 @@ def diff_list_of_dicts(w, h):
 
     diff = []
     for w_item in w:
-        h_item = search_obj_in_list(w_item['member'], h, key='member')
-        if not h_item:
-            h_item = {}
+        h_item = search_obj_in_list(w_item['member'], h, key='member') or {}
         d = dict_diff(h_item, w_item)
         if d:
             if 'member' not in d.keys():
