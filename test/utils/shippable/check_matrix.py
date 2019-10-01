@@ -17,7 +17,7 @@ except ImportError:
 
 try:
     # noinspection PyCompatibility
-    from urllib2 import urlopen  # pylint: disable=ansible-bad-import-from
+    from urllib2 import urlopen
 except ImportError:
     # noinspection PyCompatibility
     from urllib.request import urlopen
