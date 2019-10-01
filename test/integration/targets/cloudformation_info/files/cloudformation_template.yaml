@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: cloudformation_info integration testing
+
+Parameters:
+  TopicName:
+    Description: SNS Topic Name
+    Type: String
+  DisplayName:
+    Description: SNS Topic Name
+    Type: String
+
+Resources:
+  IntegrationTestTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Ref DisplayName
+      TopicName: !Ref TopicName
+
+Outputs:
+  TopicArn:
+    Description: ARN of the SNS Topic
+    Value: !Ref IntegrationTestTopic
