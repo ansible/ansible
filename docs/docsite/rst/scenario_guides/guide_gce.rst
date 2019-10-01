@@ -307,6 +307,6 @@ An example playbook is below:
       auth_kind: "service_account_file"
       service_account_file: "~/my_account.json"
       state: present
-  with_items:
+  loop:
     - instance-1
     - instance-2
