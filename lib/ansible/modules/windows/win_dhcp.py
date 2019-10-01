@@ -53,16 +53,16 @@ options:
     description:
       - Specifies the duration of the DHCP lease in days
       - The duration value only applies to l(type=lease)
-      - Defaults to the duration specified by the DHCP server 
+      - Defaults to the duration specified by the DHCP server
         configuration
     type: int
   dns_hostname:
     description:
-      - Specifies the DNS hostname of the client for which the IP address 
+      - Specifies the DNS hostname of the client for which the IP address
         lease is to be added
   dns_regtype:
     description:
-      - Indicates the type of DNS record to be registered by the DHCP 
+      - Indicates the type of DNS record to be registered by the DHCP
         server service for this lease
       - Defaults to the type specified by the DHCP server configuration
     type: str
@@ -122,7 +122,7 @@ lease:
   returned: When l(state=present)
   type: dict
   sample:
-    address_state: InactiveReservation 
+    address_state: InactiveReservation
     client_id: 0a-0b-0c-04-05-aa
     description: Really Fancy
     ip_address: 172.16.98.230
@@ -134,12 +134,10 @@ original:
   returned: When an existing lease is found
   type: dict
   sample:
-    address_state: InactiveReservation 
+    address_state: InactiveReservation
     client_id: 0a-0b-0c-04-05-aa
     description: Really Fancy
     ip_address: 172.16.98.230
     name: null
     scope_id: 172.16.98.0
 '''
-
-from module_utils.basic import AnsibleModule
