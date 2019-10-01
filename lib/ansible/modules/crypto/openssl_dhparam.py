@@ -351,11 +351,11 @@ def main():
             can_use_cryptography = CRYPTOGRAPHY_FOUND and CRYPTOGRAPHY_VERSION >= LooseVersion(MINIMAL_CRYPTOGRAPHY_VERSION)
             can_use_openssl = module.get_bin_path('openssl', False) is not None
 
-            # First try cryptography, then pyOpenSSL
+            # First try cryptography, then OpenSSL
             if can_use_cryptography:
                 backend = 'cryptography'
             elif can_use_openssl:
-                backend = 'pyopenssl'
+                backend = 'openssl'
 
             # Success?
             if backend == 'auto':
