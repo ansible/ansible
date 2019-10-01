@@ -2635,12 +2635,6 @@ class ContainerManager(DockerBaseClass):
             return None
         if is_image_name_id(self.parameters.image):
             image = self.client.find_image_by_id(self.parameters.image)
-            if image is None:
-                # If docker daemon doesn't know about the image identified by ID,
-                # we're screwed. We can either ignore this (and let the user continue
-                # with the old image if nothing else triggers a container recreation),
-                # or die.
-                self.fail('Cannot find the requested image %s' % format(self.parameters.image))
         else:
             repository, tag = utils.parse_repository_tag(self.parameters.image)
             if not tag:
@@ -2671,6 +2665,12 @@ class ContainerManager(DockerBaseClass):
                 # We weren't able to find it via distribution. It could be that the
                 # docker daemon has another access (or different credentials) which allow
                 # it to find the image. So let's try!
+                self.diff_tracker.add('image', parameter=self.parameters.image, active=container.Image)
+                return True
+            elif self.parameters.image != container.Image:
+                # We simply assume that the same hash is used for the ID in self.parameters.image than
+                # the one in container.Image.
+                self.diff_tracker.add('image', parameter=self.parameters.image, active=container.Image)
                 return True
         return False
 
