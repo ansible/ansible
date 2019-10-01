@@ -2296,7 +2296,6 @@ lib/ansible/modules/messaging/rabbitmq/rabbitmq_parameter.py validate-modules:do
 lib/ansible/modules/messaging/rabbitmq/rabbitmq_plugin.py validate-modules:doc-missing-type
 lib/ansible/modules/messaging/rabbitmq/rabbitmq_policy.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/messaging/rabbitmq/rabbitmq_policy.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/messaging/rabbitmq/rabbitmq_policy.py validate-modules:doc-missing-type
 lib/ansible/modules/messaging/rabbitmq/rabbitmq_queue.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/messaging/rabbitmq/rabbitmq_queue.py validate-modules:doc-default-incompatible-type
 lib/ansible/modules/messaging/rabbitmq/rabbitmq_queue.py validate-modules:parameter-type-not-in-doc

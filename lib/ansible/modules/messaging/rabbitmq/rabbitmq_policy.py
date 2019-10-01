@@ -50,13 +50,13 @@ options:
       - A dict describing the policy.
     required: true
     default: null
+    version_added: "2.9"
   state:
     description:
       - The state of the policy.
     default: present
     choices: [present, absent]
-extends_documentation_fragment:
-    - rabbitmq
+extends_documentation_fragment: rabbitmq
 '''
 
 EXAMPLES = '''
