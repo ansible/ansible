@@ -70,3 +70,9 @@
     - slave_status.Last_IO_Errno == 0
     - slave_status.Last_IO_Error == ''
     - slave_status is not changed
+
+###############
+# Finish tests
+
+- name: Stop replication via shell
+  shell: 'echo "STOP SLAVE;" | mysql -P {{ standby_port }} -h 127.0.0.1'

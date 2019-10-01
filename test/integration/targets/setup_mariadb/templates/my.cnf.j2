@@ -1,8 +1,9 @@
 [mysqld1]
 server_id           = 1
 port                = {{ master_port }}
-datadir             = {{ default_datadir }}
-socket              = {{ default_datadir }}/mysql.sock
+datadir             = {{ master_datadir }}
+socket              = {{ master_datadir }}/mysql.sock
+pid-file            = {{ master_datadir }}/mysql.pid
 mysqladmin          = /usr/bin/mysqladmin
 log_bin             = /var/log/mariadb/mysql-bin.log
 sync_binlog         = 1
@@ -29,5 +30,5 @@ user       = multi_admin
 password   = multipass
 
 [mysqld_safe]
-log-error=/var/log/mariadb/mariadb.log
+log-error={{  mysql_safe_err_log }}
 pid-file=/var/run/mariadb/mariadb.pid
