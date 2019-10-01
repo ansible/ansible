@@ -1,6 +1,4 @@
 ---
-- debug:
-    msg: "{{ lookup('file', 'cloudformation_template.yaml') }}"
 - name: set up aws connection info
   set_fact:
     aws_connection_info: &aws_connection_info
