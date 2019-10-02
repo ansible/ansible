@@ -33,7 +33,7 @@ module: gcp_compute_instance
 description:
 - An instance is a virtual machine (VM) hosted on Google's infrastructure.
 short_description: Creates a GCP Instance
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -62,7 +62,7 @@ options:
     - Whether the resource should be protected against deletion.
     required: false
     type: bool
-    version_added: 2.9
+    version_added: '2.9'
   disks:
     description:
     - An array of disks that are associated with the instances that are created from
@@ -231,13 +231,13 @@ options:
       when using zonal DNS.
     required: false
     type: str
-    version_added: 2.9
+    version_added: '2.9'
   labels:
     description:
     - Labels to apply to this instance. A list of key->value pairs.
     required: false
     type: dict
-    version_added: 2.9
+    version_added: '2.9'
   metadata:
     description:
     - The metadata key/value pairs to assign to instances that are created from this
@@ -415,7 +415,7 @@ options:
     - Configuration for various parameters related to shielded instances.
     required: false
     type: dict
-    version_added: 2.9
+    version_added: '2.9'
     suboptions:
       enable_secure_boot:
         description:
@@ -442,7 +442,7 @@ options:
       "SUSPENDING", "SUSPENDED", "TERMINATED"'
     required: false
     type: str
-    version_added: 2.8
+    version_added: '2.8'
   tags:
     description:
     - A list of tags to apply to this instance. Tags are used to identify valid sources
@@ -472,7 +472,43 @@ options:
     - A reference to the zone where the machine resides.
     required: true
     type: str
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
