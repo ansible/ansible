@@ -17,7 +17,7 @@ module: aws_organizations
 short_description: Manages AWS Organization
 description:
   - Creates and deletes AWS OrganizationalUnits
-version_added: 2.10
+version_added: "2.10"
 author:
   - Kamil Potrec (@p0tr3c)
 options:
