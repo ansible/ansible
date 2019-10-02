@@ -1,0 +1,2 @@
+removed_features:
+  - pacman - Removed deprecated ``recurse`` option, use ``extra_args=--recursive`` instead
