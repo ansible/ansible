@@ -118,6 +118,8 @@ class RabbitMqPlugins(object):
         for plugin in list_output:
             if not plugin:
                 break
+            if plugin == 'Listing plugins with pattern ".*" ...':
+                continue
             plugins.append(plugin)
 
         return plugins
