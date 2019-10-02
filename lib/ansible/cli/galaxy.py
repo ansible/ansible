@@ -251,7 +251,8 @@ class GalaxyCLI(CLI):
                                             "dependencies.".format(galaxy_type))
 
         if galaxy_type == 'collection':
-            install_parser.add_argument('-p', '--collections-path', dest='collections_path', required=True,
+            install_parser.add_argument('-p', '--collections-path', dest='collections_path',
+                                        default=C.COLLECTIONS_PATHS[0],
                                         help='The path to the directory containing your collections.')
             install_parser.add_argument('-r', '--requirements-file', dest='requirements',
                                         help='A file containing a list of collections to be installed.')
