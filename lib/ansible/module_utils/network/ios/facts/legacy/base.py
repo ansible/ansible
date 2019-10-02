@@ -378,3 +378,62 @@ class Interfaces(FactsBase):
         match = re.search(r'^Device ID: (.+)$', data, re.M)
         if match:
             return match.group(1)
+        
+class Inventory(FactsBase):
+
+    COMMANDS = [
+        'show inventory'
+    ]
+
+    def populate(self):
+        super(Inventory, self).populate()
+
+        self.facts['inventory'] = list()
+
+        data = self.responses[0]
+        if data:
+            self.facts['inventory'] = self.parse_inventory(data)
+
+    def parse_inventory(self, data):
+        facts = dict()
+        key = 0
+        line = 0
+        for entry in data.split('\n'):
+            if entry == '':
+                continue
+            if key not in facts:
+                facts[key] = dict()
+            if line == 1:
+                x = { 'PID':self.parse_pid(entry), 'SN':self.parse_serial(entry) }
+                facts[key].update(x)
+                key += 1
+                line += 1
+            if line == 0:
+                x = { 'NAME':self.parse_name(entry), 'DESCR':self.parse_descr(entry) }
+                facts[key].update(x)
+                line += 1
+            if line == 2:
+                line = 0
+
+        return facts
+
+
+    def parse_name(self, data):
+        match = re.search(r'NAME: "(.+)",', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_descr(self, data):
+        match = re.search(r'DESCR: "(.+)"', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_pid(self, data):
+        match = re.search(r'PID: ([^ \s]+)', data, re.M)
+        if match:
+            return match.group(1)
+    
+    def parse_serial(self, data):
+        match = re.search(r'SN: ([^ \s]+)', data, re.M)
+        if match:
+            return match.group(1)

@@ -23,14 +23,15 @@ from ansible.module_utils.network.ios.facts.lacp_interfaces.lacp_interfaces impo
 from ansible.module_utils.network.ios.facts.lldp_global.lldp_global import Lldp_globalFacts
 from ansible.module_utils.network.ios.facts.lldp_interfaces.lldp_interfaces import Lldp_InterfacesFacts
 from ansible.module_utils.network.ios.facts.l3_interfaces.l3_interfaces import L3_InterfacesFacts
-from ansible.module_utils.network.ios.facts.legacy.base import Default, Hardware, Interfaces, Config
+from ansible.module_utils.network.ios.facts.legacy.base import Default, Hardware, Interfaces, Config, Inventory
 
 
 FACT_LEGACY_SUBSETS = dict(
     default=Default,
     hardware=Hardware,
     interfaces=Interfaces,
-    config=Config
+    config=Config,
+    inventory=Inventory
 )
 
 FACT_RESOURCE_SUBSETS = dict(

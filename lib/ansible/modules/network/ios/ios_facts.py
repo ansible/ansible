@@ -203,6 +203,12 @@ ansible_net_neighbors:
       CDP and LLDP neighbor data is present on one port, CDP is preferred.
   returned: when interfaces is configured
   type: dict
+  
+# inventory
+ansible_net_inventory:
+  description: All inventory cards on the device
+  return: when inventory is configured
+  type: list
 """
 
 from ansible.module_utils.basic import AnsibleModule
