@@ -22,7 +22,7 @@ API_APPS_ENDPOINTS = dict(
     ipam=["ip_addresses", "prefixes", "roles", "vlans", "vlan_groups", "vrfs"],
     secrets=[],
     tenancy=["tenants", "tenant_groups"],
-    virtualization=["clusters"],
+    virtualization=["clusters", "interfaces", "virtual-machines"],
 )
 
 QUERY_TYPES = dict(
@@ -44,6 +44,7 @@ QUERY_TYPES = dict(
     tenant="name",
     tenant_group="slug",
     time_zone="timezone",
+    virtual_machine="name",
     vlan="name",
     vlan_group="slug",
     vrf="name",
@@ -70,6 +71,7 @@ CONVERT_TO_ID = dict(
     tenant="tenants",
     tenant_group="tenant_groups",
     untagged_vlan="vlans",
+    virtual_machine="virtual-machines",
     vlan="vlans",
     vlan_group="vlan_groups",
     vrf="vrfs",
