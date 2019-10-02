@@ -338,16 +338,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
     def get_validated_value(self, name, attribute, value, templar):
         if attribute.isa == 'string':
-            # This is a hack.  We should change the architecture so that playbook objects only
-            # deal with values that are coming from the playbook.  We can then combine those
-            # values with values from other sources (default values, values from the command line
-            # and environment, etc)  That's a big project, though, so use this special case instead
-            if not isinstance(value, AnsibleUnsafe):
-                value = to_text(value)
-            else:
-                # If this is unsafe and is not a string, then make it a string and re-mark it as
-                # unsafe
-                value = wrap_var(to_text(value))
+            value = to_text(value)
         elif attribute.isa == 'int':
             value = int(value)
         elif attribute.isa == 'float':

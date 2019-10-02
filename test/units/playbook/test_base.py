@@ -624,7 +624,7 @@ class TestBaseSubClass(TestBase):
 
     def test_get_validated_value_string_rewrap_unsafe(self):
         attribute = FieldAttribute(isa='string')
-        value = AnsibleUnsafeBytes(b'bar')
+        value = AnsibleUnsafeText(u'bar')
         templar = Templar(None)
         bsc = self.ClassUnderTest()
         result = bsc.get_validated_value('foo', attribute, value, templar)
