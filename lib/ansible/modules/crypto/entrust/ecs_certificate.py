@@ -31,7 +31,7 @@ requirements:
 options:
     backup:
         description:
-            - The destination path for a backup of the certificate in I(path).
+            - Whether a backup should be made for the certificate in I(path).
         type: bool
         default: false
     force:
