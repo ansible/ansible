@@ -17,7 +17,7 @@ DOCUMENTATION = r'''
 module: launchd
 author:
 - Martin Migasiewicz (@martinm82)
-version_added: "2.9"
+version_added: "2.10"
 short_description:  Manage macOS services
 description:
 - This module can be used to control launchd services on target macOS hosts.
