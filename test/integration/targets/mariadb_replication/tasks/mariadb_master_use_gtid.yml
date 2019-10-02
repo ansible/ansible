@@ -35,8 +35,12 @@
     that:
     - result is changed
 
-- name: Run replication via shell
-  shell: 'echo "START SLAVE;" | mysql -P {{ standby_port }} -h 127.0.0.1'
+# Start standby for further tests:
+- name: Start standby
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ master_port }}"
+    mode: startslave
 
 - name: Get standby status
   mysql_replication:
@@ -49,8 +53,12 @@
     that:
     - slave_status.Using_Gtid == 'No'
 
-- name: Stop replication via shell
-  shell: 'echo "STOP SLAVE;" | mysql -P {{ standby_port }} -h 127.0.0.1'
+# Stop standby for further tests:
+- name: Stop standby
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: stopslave
 
 ################################
 # master_use_gtid: "current_pos"
@@ -83,8 +91,12 @@
     that:
     - result is changed
 
-- name: Run replication via shell
-  shell: 'echo "START SLAVE;" | mysql -P {{ standby_port }} -h 127.0.0.1'
+# Start standby for further tests:
+- name: Start standby
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ master_port }}"
+    mode: startslave
 
 - name: Get standby status
   mysql_replication:
@@ -97,8 +109,12 @@
     that:
     - slave_status.Using_Gtid == 'Current_Pos'
 
-- name: Stop replication via shell
-  shell: 'echo "STOP SLAVE;" | mysql -P {{ standby_port }} -h 127.0.0.1'
+# Stop standby for further tests:
+- name: Stop standby
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: stopslave
 
 ##############################
 # master_use_gtid: "slave_pos"
@@ -131,8 +147,12 @@
     that:
     - result is changed
 
-- name: Run replication via shell
-  shell: 'echo "START SLAVE;" | mysql -P {{ standby_port }} -h 127.0.0.1'
+# Start standby for further tests:
+- name: Start standby
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ master_port }}"
+    mode: startslave
 
 - name: Get standby status
   mysql_replication:
@@ -145,5 +165,9 @@
     that:
     - slave_status.Using_Gtid == 'Slave_Pos'
 
-- name: Stop replication via shell
-  shell: 'echo "STOP SLAVE;" | mysql -P {{ standby_port }} -h 127.0.0.1'
+# Stop standby for further tests:
+- name: Stop standby
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: stopslave
