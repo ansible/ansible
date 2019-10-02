@@ -13,7 +13,7 @@ import platform
 from ansible.module_utils.network.common.netconf import exec_rpc
 from ansible.module_utils.network.junos.junos import get_param, tostring
 from ansible.module_utils.network.junos.junos import get_configuration, get_capabilities
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_text
 
 
 try:
@@ -44,14 +44,14 @@ class FactsBase(object):
         output = reply.find('.//output')
         if not output:
             self.module.fail_json(msg='failed to retrieve facts for command %s' % command)
-        return str(output.text).strip()
+        return to_text(output.text).strip()
 
     def rpc(self, rpc):
         return exec_rpc(self.module, tostring(Element(rpc)))
 
     def get_text(self, ele, tag):
         try:
-            return str(ele.find(tag).text).strip()
+            return to_text(ele.find(tag).text).strip()
         except AttributeError:
             pass
 
@@ -204,7 +204,7 @@ class OFacts(FactsBase):
             device.open()
             device.timeout = get_param(module, 'timeout') or 10
         except ConnectError as exc:
-            module.fail_json('unable to connect to %s: %s' % (host, to_native(exc)))
+            module.fail_json('unable to connect to %s: %s' % (host, to_text(exc)))
 
         return device
 
