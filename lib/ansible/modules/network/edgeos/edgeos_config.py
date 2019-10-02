@@ -107,6 +107,13 @@ options:
         type: path
     type: dict
     version_added: "2.8"
+  force:
+    description:
+      - The C(force) argument controls whether or not dangerous commands like
+        those for setting passwords are run.
+    type: bool
+    default: 'no'
+    version_added: "2.10"
 """
 
 EXAMPLES = """
@@ -129,6 +136,12 @@ EXAMPLES = """
     backup_options:
       filename: backup.cfg
       dir_path: /home/user
+
+- name: configure a user password
+  edgeos_config:
+    lines:
+      - set system login user john authentication encrypted-password '$6$32$dskjdskjdskj'
+    force: yes
 """
 
 RETURN = """
@@ -235,7 +248,6 @@ def diff_config(commands, config):
 
 
 def sanitize_config(config, result):
-    result['filtered'] = list()
     for regex in CONFIG_FILTERS:
         for index, line in reversed(list(enumerate(config))):
             if regex.search(line):
@@ -253,7 +265,10 @@ def run(module, result):
 
     # create loadable config that includes only the configuration updates
     commands = diff_config(candidate, config)
-    sanitize_config(commands, result)
+    result['filtered'] = list()
+
+    if not module.params['force']:
+        sanitize_config(commands, result)
 
     result['commands'] = commands
 
@@ -289,6 +304,7 @@ def main():
         backup=dict(type='bool', default=False),
         backup_options=dict(type='dict', options=backup_spec),
         save=dict(type='bool', default=False),
+        force=dict(type='bool', default=False),
     )
 
     mutually_exclusive = [('lines', 'src')]
