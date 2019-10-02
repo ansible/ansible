@@ -52,6 +52,7 @@
       - volume.hcloud_volume.location == "fsn1"
       - volume.hcloud_volume.size == 10
       - volume.hcloud_volume.server != "{{hcloud_server_name}}"
+      - volume.hcloud_volume.linux_device is defined
 
 - name: test create volume idempotence
   hcloud_volume:
