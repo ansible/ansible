@@ -1,0 +1,126 @@
+- name: Reset potentially leftovers profiles configuration
+  win_firewall_profile:
+    enabled: False
+    inbound: NotConfigured
+    outbound: NotConfigured
+    log_file_name: "C:\\Windows\\system32\\logfiles\\firewall\\pfirewall.log"
+    log_max_size_kilobytes: 4096
+    log_allowed: NotConfigured
+    log_blocked: NotConfigured
+    log_ignored: NotConfigured
+
+- name: Update profile (check mode)
+  win_firewall_profile:
+    enabled: True
+    inbound: Block
+    outbound: Block
+    log_file: "C:\\myfirewall.log"
+    log_max_size: 8192
+    log_allowed: True
+    log_blocked: True
+    log_ignored: True
+    profile: Public
+  register: win_firewall_profile_check
+  check_mode: yes
+
+- name: Register effects of update profile (check mode)
+  win_firewall_profile:
+    profile: Public
+  register: win_firewall_profile_check_effects
+
+- name: Assert result of update profile (check mode)
+  assert:
+    that: 
+    - win_firewall_profile_check is changed
+    - win_firewall_profile_check.Public.changed
+    - win_firewall_profile_check.Private is not defined
+    - win_firewall_profile_check.Domain is not defined
+    - win_firewall_profile_check.Public.enabled == 'True'
+    - win_firewall_profile_check.Public.default_inbound_action == 'Block'
+    - win_firewall_profile_check.Public.default_outbound_action == 'Block'
+    - win_firewall_profile_check.Public.log_file_name == 'C:\myfirewall.log'
+    - win_firewall_profile_check.Public.log_max_size_kilobytes == 8192
+    - win_firewall_profile_check.Public.log_allowed == 'True'
+    - win_firewall_profile_check.Public.log_blocked == 'True'
+    - win_firewall_profile_check.Public.log_ignored == 'True'
+    - not win_firewall_profile_check_effects is changed
+    - not win_firewall_profile_check_effects.Public.changed
+    - win_firewall_profile_check_effects.Public.enabled == 'False'
+    - win_firewall_profile_check_effects.Public.default_inbound_action == 'NotConfigured'
+    - win_firewall_profile_check_effects.Public.default_outbound_action == 'NotConfigured'
+    - win_firewall_profile_check_effects.Public.log_file_name == "C:\\Windows\\system32\\logfiles\\firewall\\pfirewall.log"
+    - win_firewall_profile_check_effects.Public.log_max_size_kilobytes == 4096
+    - win_firewall_profile_check_effects.Public.log_allowed == 'NotConfigured'
+    - win_firewall_profile_check_effects.Public.log_blocked == 'NotConfigured'
+    - win_firewall_profile_check_effects.Public.log_ignored == 'NotConfigured'
+
+- name: Update profile
+  win_firewall_profile:
+    enabled: True
+    inbound: Block
+    outbound: Block
+    log_file: "C:\\myfirewall.log"
+    log_max_size: 8192
+    log_allowed: True
+    log_blocked: True
+    log_ignored: True
+    profile: Public
+  register: win_firewall_profile
+
+- name: Register effects of update profile
+  win_firewall_profile:
+    profile: Public
+  register: win_firewall_profile_effects
+
+- name: Assert result of update profile
+  assert:
+    that: 
+    - win_firewall_profile is changed
+    - win_firewall_profile.Public.changed
+    - win_firewall_profile.Private is not defined
+    - win_firewall_profile.Domain is not defined
+    - win_firewall_profile.Public.enabled == 'True'
+    - win_firewall_profile.Public.default_inbound_action == 'Block'
+    - win_firewall_profile.Public.default_outbound_action == 'Block'
+    - win_firewall_profile.Public.log_file_name == 'C:\myfirewall.log'
+    - win_firewall_profile.Public.log_max_size_kilobytes == 8192
+    - win_firewall_profile.Public.log_allowed == 'True'
+    - win_firewall_profile.Public.log_blocked == 'True'
+    - win_firewall_profile.Public.log_ignored == 'True'
+    - not win_firewall_profile_effects is changed
+    - not win_firewall_profile_effects.Public.changed
+    - win_firewall_profile_effects.Public.enabled == 'True'
+    - win_firewall_profile_effects.Public.default_inbound_action == 'Block'
+    - win_firewall_profile_effects.Public.default_outbound_action == 'Block'
+    - win_firewall_profile_effects.Public.log_file_name == 'C:\myfirewall.log'
+    - win_firewall_profile_effects.Public.log_max_size_kilobytes == 8192
+    - win_firewall_profile_effects.Public.log_allowed == 'True'
+    - win_firewall_profile_effects.Public.log_blocked == 'True'
+    - win_firewall_profile_effects.Public.log_ignored == 'True'
+
+- name: Update profile (idempotent)
+  win_firewall_profile:
+    enabled: True
+    inbound: Block
+    outbound: Block
+    log_file: "C:\\myfirewall.log"
+    log_max_size: 8192
+    log_allowed: True
+    log_blocked: True
+    log_ignored: True
+    profile: Public
+  register: win_firewall_profile_again
+
+- name: Assert result of update profile (idempotent)
+  assert:
+    that: 
+    - not win_firewall_profile_again is changed
+    - not win_firewall_profile_again.Public.changed
+    - win_firewall_profile_again.Public.enabled == 'True'
+    - win_firewall_profile_again.Public.default_inbound_action == 'Block'
+    - win_firewall_profile_again.Public.default_outbound_action == 'Block'
+    - win_firewall_profile_again.Public.log_file_name == 'C:\myfirewall.log'
+    - win_firewall_profile_again.Public.log_max_size_kilobytes == 8192
+    - win_firewall_profile_again.Public.log_allowed == 'True'
+    - win_firewall_profile_again.Public.log_blocked == 'True'
+    - win_firewall_profile_again.Public.log_ignored == 'True'
