@@ -290,7 +290,6 @@ def main():
     contract = module.params['contract']
     dscp = module.params['dscp']
     description = module.params['description']
-    filter_name = module.params['filter']
     consumer_match = module.params['consumer_match']
     if consumer_match is not None:
         consumer_match = MATCH_MAPPING[consumer_match]
