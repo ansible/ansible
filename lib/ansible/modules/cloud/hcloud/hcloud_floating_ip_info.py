@@ -66,6 +66,7 @@ hcloud_floating_ip_info:
             returned: Always
             type: str
             sample: my-floating-ip
+            version_added: "2.10"
         description:
             description: Description of the Floating IP
             returned: always
