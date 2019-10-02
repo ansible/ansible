@@ -86,6 +86,11 @@ def list_no_log_values(argument_spec, params):
             if no_log_object:
                 no_log_values.update(_return_datastructure_name(no_log_object))
 
+        # Get no_log values from suboptions
+        if arg_opts.get('options'):
+            sub_argument_spec = arg_opts.get('options')
+            sub_params = params.get(arg_name)
+            no_log_values.update(list_no_log_values(sub_argument_spec, sub_params))
     return no_log_values
 
 
