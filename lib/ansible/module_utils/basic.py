@@ -1665,6 +1665,34 @@ class AnsibleModule(object):
                 if no_log_object:
                     self.no_log_values.update(return_values(no_log_object))
 
+            # Get no_log values from suboptions
+            sub_argument_spec = arg_opts.get('options')
+            if sub_argument_spec is not None:
+                wanted_type = arg_opts.get('type')
+                sub_parameters = param.get(arg_name)
+
+                if sub_parameters is not None:
+                    if wanted_type == 'dict' or (wanted_type == 'list' and arg_opts.get('elements', '') == 'dict'):
+                        # Sub parameters can be a dict or list of dicts. Ensure parameters are always a list.
+                        if not isinstance(sub_parameters, list):
+                            sub_parameters = [sub_parameters]
+
+                        for sub_param in sub_parameters:
+                            # Validate dict fields in case they came in as strings
+
+                            if isinstance(sub_param, string_types):
+                                sub_param = self._check_type_dict(sub_param)
+
+                            try:
+                                if not isinstance(sub_param, Mapping):
+                                    raise TypeError("Value '{1}' in the sub parameter field '{0}' must by a {2}, "
+                                                    "not '{1.__class__.__name__}'".format(arg_name, sub_param, wanted_type))
+                            except TypeError as te:
+                                self.fail_json(msg="Failure when processing no_log parameters. Module invocation will be hidden. "
+                                                   "%s" % to_native(te), invocation={'module_args': 'HIDDEN DUE TO FAILURE'})
+
+                            self._handle_no_log_values(sub_argument_spec, sub_param)
+
             if arg_opts.get('removed_in_version') is not None and arg_name in param:
                 self._deprecations.append({
                     'msg': "Param '%s' is deprecated. See the module docs for more information" % arg_name,
@@ -2032,7 +2060,6 @@ class AnsibleModule(object):
                     self._set_fallbacks(spec, param)
                     options_aliases = self._handle_aliases(spec, param)
 
-                    self._handle_no_log_values(spec, param)
                     options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
 
                     self._check_arguments(self.check_invalid_arguments, spec, param, options_legal_inputs)

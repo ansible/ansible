@@ -47,6 +47,7 @@
       poll: 1
       shell: echo "DO_NOT_LOG_ASYNC_TASK_SUCCEEDED"
       no_log: true
+      ignore_errors: yes
 
 - name: play-level no_log set
   hosts: testhost
