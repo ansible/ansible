@@ -1,0 +1,2 @@
+bugfixes:
+    - Fix iosxr_lag_interfaces idempotent issue under python35.
