@@ -693,6 +693,40 @@
     yum_version: "{%- if item.yumstate == 'installed' -%}{{ item.version }}{%- else -%}{{ yum_version }}{%- endif -%}"
   with_items: "{{ yum_version.results }}"
 
+- name: Ensure double uninstall of wildcard globs works
+  block:
+  - name: "Install lohit-*-fonts"
+    yum:
+      name: "lohit-*-fonts"
+      state: present
+
+  - name: "Remove lohit-*-fonts (1st time)"
+    yum:
+      name: "lohit-*-fonts"
+      state: absent
+    register: remove_lohit_fonts_1
+
+  - name: "Verify lohit-*-fonts (1st time)"
+    assert:
+      that:
+        - "remove_lohit_fonts_1 is changed"
+        - "'msg' in remove_lohit_fonts_1"
+        - "'results' in remove_lohit_fonts_1"
+
+  - name: "Remove lohit-*-fonts (2nd time)"
+    yum:
+      name: "lohit-*-fonts"
+      state: absent
+    register: remove_lohit_fonts_2
+
+  - name: "Verify lohit-*-fonts (2nd time)"
+    assert:
+      that:
+        - "remove_lohit_fonts_2 is not changed"
+        - "'msg' in remove_lohit_fonts_2"
+        - "'results' in remove_lohit_fonts_2"
+        - "'lohit-*-fonts is not installed' in remove_lohit_fonts_2['results']"
+
 - block:
   - name: uninstall bc
     yum: name=bc state=removed
