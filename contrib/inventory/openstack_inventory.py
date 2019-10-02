@@ -132,8 +132,16 @@ def append_hostvars(hostvars, groups, key, server, namegroup=False):
         openstack=server)
 
     metadata = server.get('metadata', {})
-    if 'ansible_user' in metadata:
-        hostvars[key]['ansible_user'] = metadata['ansible_user']
+    # iterate through metadata and append items that
+    # start with 'ansible_'
+    for dkey, dvalue in metadata.items():
+        if dkey.startswith('ansible_'):
+            hostvars[key][dkey] = metadata[dkey]
+
+    # special case: when ansible_ssh_host is found in metadata
+    # we also set ansible_host so that both are identical
+    if 'ansible_ssh_host' in metadata:
+        hostvars[key]['ansible_host'] = metadata['ansible_ssh_host']
 
     for group in get_groups_from_server(server, namegroup=namegroup):
         groups[group].append(key)
