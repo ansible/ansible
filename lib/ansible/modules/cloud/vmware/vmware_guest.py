@@ -2718,12 +2718,17 @@ class PyVmomiHelper(PyVmomi):
         if task.info.state == 'error':
             return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'customize_exist'}
 
-        if self.params['wait_for_customization']:
+        if self.params['wait_for_ip_address'] or self.params['wait_for_customization'] or self.params['state'] in ['poweredon', 'restarted']:
             set_vm_power_state(self.content, self.current_vm_obj, 'poweredon', force=False)
-            is_customization_ok = self.wait_for_customization(vm=self.current_vm_obj, timeout=self.params['wait_for_customization_timeout'])
-            if not is_customization_ok:
-                return {'changed': self.change_applied, 'failed': True,
-                        'msg': 'Wait for customization failed due to timeout', 'op': 'wait_for_customize_exist'}
+
+            if self.params['wait_for_ip_address']:
+                self.wait_for_vm_ip(self.current_vm_obj)
+
+            if self.params['wait_for_customization']:
+                is_customization_ok = self.wait_for_customization(vm=self.current_vm_obj, timeout=self.params['wait_for_customization_timeout'])
+                if not is_customization_ok:
+                    return {'changed': self.change_applied, 'failed': True,
+                            'msg': 'Wait for customization failed due to timeout', 'op': 'wait_for_customize_exist'}
 
         return {'changed': self.change_applied, 'failed': False}
 
