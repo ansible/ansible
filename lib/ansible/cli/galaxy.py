@@ -326,7 +326,9 @@ class GalaxyCLI(CLI):
             C.config.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
 
             server_options = C.config.get_plugin_options('galaxy_server', server_key)
-            auth_url = server_options.get('auth_url')
+            # auth_url is used to create the token, but not directly by GalaxyAPI, so
+            # it doesn't need to be passed as kwarg to GalaxyApi
+            auth_url = server_options.pop('auth_url', None)
             token_val = server_options['token'] or NoTokenSentinel
             if auth_url:
                 server_options['token'] = KeycloakToken(access_token=token_val,

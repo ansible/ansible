@@ -145,13 +145,12 @@ class CollectionVersionMetadata:
 class GalaxyAPI:
     """ This class is meant to be used as a API client for an Ansible Galaxy server """
 
-    def __init__(self, galaxy, name, url, username=None, password=None, token=None, auth_url=None):
+    def __init__(self, galaxy, name, url, username=None, password=None, token=None):
         self.galaxy = galaxy
         self.name = name
         self.username = username
         self.password = password
         self.token = token
-        self.auth_url = auth_url
         self.api_server = url
         self.validate_certs = not context.CLIARGS['ignore_certs']
         self._available_api_versions = {}
