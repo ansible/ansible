@@ -23,7 +23,6 @@ from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
-from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
 display = Display()
