@@ -411,9 +411,6 @@
       that:
         - 'result.changed == false'
 
-
-
-
   always:
   - name: Teardown
     ios_bgp: &rm
