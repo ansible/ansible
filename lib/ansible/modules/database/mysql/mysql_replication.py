@@ -130,12 +130,23 @@ EXAMPLES = r'''
     login_port: 3308
 '''
 
+RETURN = r'''
+queries:
+  description: List of executed queries which modified DB's state.
+  returned: always
+  type: list
+  sample: ["CHANGE MASTER TO MASTER_HOST='master2.example.com',MASTER_PORT=3306"]
+  version_added: '2.10'
+'''
+
 import os
 import warnings
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
+
+executed_queries = []
 
 
 def get_master_status(cursor):
@@ -152,7 +163,9 @@ def get_slave_status(cursor):
 
 def stop_slave(cursor):
     try:
-        cursor.execute("STOP SLAVE")
+        query = 'STOP SLAVE'
+        executed_queries.append(query)
+        cursor.execute(query)
         stopped = True
     except Exception:
         stopped = False
@@ -161,7 +174,9 @@ def stop_slave(cursor):
 
 def reset_slave(cursor):
     try:
-        cursor.execute("RESET SLAVE")
+        query = 'RESET SLAVE'
+        executed_queries.append(query)
+        cursor.execute(query)
         reset = True
     except Exception:
         reset = False
@@ -170,7 +185,9 @@ def reset_slave(cursor):
 
 def reset_slave_all(cursor):
     try:
-        cursor.execute("RESET SLAVE ALL")
+        query = 'RESET SLAVE ALL'
+        executed_queries.append(query)
+        cursor.execute(query)
         reset = True
     except Exception:
         reset = False
@@ -179,17 +196,19 @@ def reset_slave_all(cursor):
 
 def start_slave(cursor):
     try:
-        cursor.execute("START SLAVE")
+        query = 'START SLAVE'
+        executed_queries.append(query)
+        cursor.execute(query)
         started = True
     except Exception:
         started = False
     return started
 
 
-def changemaster(cursor, chm, chm_params):
-    sql_param = ",".join(chm)
-    query = 'CHANGE MASTER TO %s' % sql_param
-    cursor.execute(query, chm_params)
+def changemaster(cursor, chm):
+    query = 'CHANGE MASTER TO %s' % ','.join(chm)
+    executed_queries.append(query)
+    cursor.execute(query)
 
 
 def main():
@@ -273,7 +292,7 @@ def main():
             status = dict(Is_Master=False, msg="Server is not configured as mysql master")
         else:
             status['Is_Master'] = True
-        module.exit_json(**status)
+        module.exit_json(queries=executed_queries, **status)
 
     elif mode in "getslave":
         status = get_slave_status(cursor)
@@ -281,90 +300,75 @@ def main():
             status = dict(Is_Slave=False, msg="Server is not configured as mysql slave")
         else:
             status['Is_Slave'] = True
-        module.exit_json(**status)
+        module.exit_json(queries=executed_queries, **status)
 
     elif mode in "changemaster":
         chm = []
-        chm_params = {}
         result = {}
         if master_host:
-            chm.append("MASTER_HOST=%(master_host)s")
-            chm_params['master_host'] = master_host
+            chm.append("MASTER_HOST='%s'" % master_host)
         if master_user:
-            chm.append("MASTER_USER=%(master_user)s")
-            chm_params['master_user'] = master_user
+            chm.append("MASTER_USER='%s'" % master_user)
         if master_password:
-            chm.append("MASTER_PASSWORD=%(master_password)s")
-            chm_params['master_password'] = master_password
+            chm.append("MASTER_PASSWORD='%s'" % master_password)
         if master_port is not None:
-            chm.append("MASTER_PORT=%(master_port)s")
-            chm_params['master_port'] = master_port
+            chm.append("MASTER_PORT=%s" % master_port)
         if master_connect_retry is not None:
-            chm.append("MASTER_CONNECT_RETRY=%(master_connect_retry)s")
-            chm_params['master_connect_retry'] = master_connect_retry
+            chm.append("MASTER_CONNECT_RETRY=%s" % master_connect_retry)
         if master_log_file:
-            chm.append("MASTER_LOG_FILE=%(master_log_file)s")
-            chm_params['master_log_file'] = master_log_file
+            chm.append("MASTER_LOG_FILE='%s'" % master_log_file)
         if master_log_pos is not None:
-            chm.append("MASTER_LOG_POS=%(master_log_pos)s")
-            chm_params['master_log_pos'] = master_log_pos
+            chm.append("MASTER_LOG_POS=%s" % master_log_pos)
         if relay_log_file:
-            chm.append("RELAY_LOG_FILE=%(relay_log_file)s")
-            chm_params['relay_log_file'] = relay_log_file
+            chm.append("RELAY_LOG_FILE='%s'" % relay_log_file)
         if relay_log_pos is not None:
-            chm.append("RELAY_LOG_POS=%(relay_log_pos)s")
-            chm_params['relay_log_pos'] = relay_log_pos
+            chm.append("RELAY_LOG_POS=%s" % relay_log_pos)
         if master_ssl:
             chm.append("MASTER_SSL=1")
         if master_ssl_ca:
-            chm.append("MASTER_SSL_CA=%(master_ssl_ca)s")
-            chm_params['master_ssl_ca'] = master_ssl_ca
+            chm.append("MASTER_SSL_CA='%s'" % master_ssl_ca)
         if master_ssl_capath:
-            chm.append("MASTER_SSL_CAPATH=%(master_ssl_capath)s")
-            chm_params['master_ssl_capath'] = master_ssl_capath
+            chm.append("MASTER_SSL_CAPATH='%s'" % master_ssl_capath)
         if master_ssl_cert:
-            chm.append("MASTER_SSL_CERT=%(master_ssl_cert)s")
-            chm_params['master_ssl_cert'] = master_ssl_cert
+            chm.append("MASTER_SSL_CERT='%s'" % master_ssl_cert)
         if master_ssl_key:
-            chm.append("MASTER_SSL_KEY=%(master_ssl_key)s")
-            chm_params['master_ssl_key'] = master_ssl_key
+            chm.append("MASTER_SSL_KEY='%s'" % master_ssl_key)
         if master_ssl_cipher:
-            chm.append("MASTER_SSL_CIPHER=%(master_ssl_cipher)s")
-            chm_params['master_ssl_cipher'] = master_ssl_cipher
+            chm.append("MASTER_SSL_CIPHER='%s'" % master_ssl_cipher)
         if master_auto_position:
-            chm.append("MASTER_AUTO_POSITION = 1")
+            chm.append("MASTER_AUTO_POSITION=1")
         try:
-            changemaster(cursor, chm, chm_params)
+            changemaster(cursor, chm)
         except mysql_driver.Warning as e:
             result['warning'] = to_native(e)
         except Exception as e:
             module.fail_json(msg='%s. Query == CHANGE MASTER TO %s' % (to_native(e), chm))
         result['changed'] = True
-        module.exit_json(**result)
+        module.exit_json(queries=executed_queries, **result)
     elif mode in "startslave":
         started = start_slave(cursor)
         if started is True:
-            module.exit_json(msg="Slave started ", changed=True)
+            module.exit_json(msg="Slave started ", changed=True, queries=executed_queries)
         else:
-            module.exit_json(msg="Slave already started (Or cannot be started)", changed=False)
+            module.exit_json(msg="Slave already started (Or cannot be started)", changed=False, queries=executed_queries)
     elif mode in "stopslave":
         stopped = stop_slave(cursor)
         if stopped is True:
-            module.exit_json(msg="Slave stopped", changed=True)
+            module.exit_json(msg="Slave stopped", changed=True, queries=executed_queries)
         else:
-            module.exit_json(msg="Slave already stopped", changed=False)
+            module.exit_json(msg="Slave already stopped", changed=False, queries=executed_queries)
     elif mode in "resetslave":
         reset = reset_slave(cursor)
         if reset is True:
-            module.exit_json(msg="Slave reset", changed=True)
+            module.exit_json(msg="Slave reset", changed=True, queries=executed_queries)
         else:
-            module.exit_json(msg="Slave already reset", changed=False)
+            module.exit_json(msg="Slave already reset", changed=False, queries=executed_queries)
     elif mode in "resetslaveall":
         reset = reset_slave_all(cursor)
         if reset is True:
-            module.exit_json(msg="Slave reset", changed=True)
+            module.exit_json(msg="Slave reset", changed=True, queries=executed_queries)
         else:
-            module.exit_json(msg="Slave already reset", changed=False)
+            module.exit_json(msg="Slave already reset", changed=False, queries=executed_queries)
 
     warnings.simplefilter("ignore")
 
