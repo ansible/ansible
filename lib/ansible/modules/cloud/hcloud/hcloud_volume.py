@@ -135,6 +135,7 @@ hcloud_volume:
             returned: always
             type: src
             sample: /dev/disk/by-id/scsi-0HC_Volume_12345
+            version_added: "2.10"
         location:
             description: Location name where the volume is located at
             type: string
