@@ -10,7 +10,7 @@ Now that you have read the :ref:`installation guide<installation_guide>` and ins
   * copies one or more modules to the remote machines and starts execution there
   * collects return values and reports results on the control node
 
-Ansible can do much more, but you should understand the most common use case before exploring all the powerful configuration, deployment, and orchestration features of Ansible. This page illustrates the basic process with a simple inventory and an ad-hoc command. Once you understand how Ansible works, you can read more details about :ref:`ad-hoc commands<intro_adhoc>`, organize your infrastructure with :ref:`inventory <intro_inventory>`, and harness the full power of Ansible with :ref:`playbooks<intro_playbooks>`.
+Ansible can do much more, but you should understand the most common use case before exploring all the powerful configuration, deployment, and orchestration features of Ansible. This page illustrates the basic process with a simple inventory and an ad-hoc command. Once you understand how Ansible works, you can read more details about :ref:`ad-hoc commands<intro_adhoc>`, organize your infrastructure with :ref:`inventory<intro_inventory>`, and harness the full power of Ansible with :ref:`playbooks<playbooks_intro>`.
 
 .. contents::
    :local:

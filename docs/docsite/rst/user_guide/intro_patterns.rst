@@ -83,7 +83,9 @@ You can mix wildcard patterns and groups at the same time::
 Limitations of patterns
 -----------------------
 
-Patterns depend on inventory. If a host or group is not listed in your inventory, you cannot use a pattern to target it. If your pattern includes an IP address or hostname that does not appear in your inventory, you will see an error like this::
+Patterns depend on inventory. If a host or group is not listed in your inventory, you cannot use a pattern to target it. If your pattern includes an IP address or hostname that does not appear in your inventory, you will see an error like this:
+
+.. code-block:: text
 
    [WARNING]: No inventory was parsed, only implicit localhost is available
    [WARNING]: Could not match supplied host pattern, ignoring: *.not_in_inventory.com

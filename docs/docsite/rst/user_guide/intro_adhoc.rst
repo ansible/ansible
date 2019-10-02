@@ -16,7 +16,7 @@ Ad-hoc commands are great for tasks you repeat rarely. For example, if you want 
 
     $ ansible [pattern] -m [module] -a "[module options]"
 
-You can learn more about :ref:`patterns<_intro_patterns>` and :ref:`modules<working_with_modules>` on other pages.
+You can learn more about :ref:`patterns<intro_patterns>` and :ref:`modules<working_with_modules>` on other pages.
 
 Use cases for ad-hoc tasks
 ==========================
@@ -71,9 +71,9 @@ An ad-hoc task can harness the power of Ansible and SCP to transfer many files t
 
     $ ansible atlanta -m copy -a "src=/etc/hosts dest=/tmp/hosts"
 
-If you plan to repeat a task like this, use the :ref:`template <template_module` module in a playbook.
+If you plan to repeat a task like this, use the :ref:`template<template_module>` module in a playbook.
 
-The :ref:`file <file_module` module allows changing ownership and permissions on files. These
+The :ref:`file<file_module>` module allows changing ownership and permissions on files. These
 same options can be passed directly to the ``copy`` module as well::
 
     $ ansible webservers -m file -a "dest=/srv/foo/a.txt mode=600"

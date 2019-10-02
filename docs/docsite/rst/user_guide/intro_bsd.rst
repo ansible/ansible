@@ -1,3 +1,5 @@
+.. _working_with_bsd:
+
 Ansible and BSD
 ===============
 

@@ -43,7 +43,7 @@ You can specify localhost explicitly by adding this to your inventory file::
 
     localhost ansible_connection=local ansible_python_interpreter="/usr/bin/env python"
 
-.. _host_key_checking:
+.. _host_key_checking_on:
 
 Host key checking
 -----------------
