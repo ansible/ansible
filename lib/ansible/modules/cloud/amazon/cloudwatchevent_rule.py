@@ -65,17 +65,15 @@ options:
     description:
       - "A dictionary array of targets to add to or update for the rule, in the
         form C({ id: [string], arn: [string], role_arn: [string], input: [valid JSON string],
-        input_path: [valid JSONPath string], ecs_parameters: {task_definition_arn: [string], task_count: [int]}}).
-        I(id) [required] is the unique target assignment ID. I(arn) (required)
-        is the Amazon Resource Name associated with the target. I(role_arn) (optional) is The Amazon Resource Name
-        of the IAM role to be used for this target when the rule is triggered. I(input)
-        (optional) is a JSON object that will override the event data when
-        passed to the target.  I(input_path) (optional) is a JSONPath string
-        (e.g. C($.detail)) that specifies the part of the event data to be
-        passed to the target. If neither I(input) nor I(input_path) is
-        specified, then the entire event is passed to the target in JSON form.
-        I(task_definition_arn) [optional] is ecs task definition arn.
-        I(task_count) [optional] is ecs task count."
+        input_path: [valid JSONPath string], ecs_parameters: {task_definition_arn: [string], task_count: [int]}})."
+      - I(id) [required] is the unique target assignment ID.
+      - I(arn) (required) is the Amazon Resource Name associated with the target.
+      - I(role_arn) (optional) is the Amazon Resource Name of the IAM role to be used for this target when the rule is triggered.
+      - "I(input) (optional) is a JSON object that will override the event data when passed to the target. I(input_path) (optional) 
+        is a JSONPath string (e.g. C($.detail)) that specifies the part of the event data to be passed to the target. 
+        If neither I(input) nor I(input_path) is specified, then the entire event is passed to the target in JSON form."
+      - I(task_definition_arn) [optional] is ecs task definition arn.
+      - I(task_count) [optional] is ecs task count.
     required: false
 '''
 
