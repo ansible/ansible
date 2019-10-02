@@ -760,17 +760,15 @@ def main():
                 ret = disks_module.action(
                     action='export',
                     action_condition=lambda d: module.params['image_provider'],
-                    wait_condition=lambda d: d.status == otypes.DiskStatpus.OK,
+                    wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
                     storage_domain=otypes.StorageDomain(name=module.params['image_provider']),
                 )
         elif state == 'imported':
             glance_service = connection.system_service().openstack_image_providers_service()
             image_provider = search_by_name(glance_service, module.params['image_provider'])
             images_service = glance_service.service(image_provider.id).images_service()
-            entity = search_by_name(images_service, module.params['name'])
-            if entity is None:
-                raise Exception("Image '%s' was not found." % module.params['name'])
-            images_service.service(entity.id).import_(
+            entity_id = get_id_by_name(images_service, module.params['name'])
+            images_service.service(entity_id).import_(
                 storage_domain=otypes.StorageDomain(
                     name=module.params['storage_domain']
                 ) if module.params['storage_domain'] else None,
