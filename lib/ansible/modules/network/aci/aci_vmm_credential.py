@@ -238,7 +238,7 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         name=dict(type='str', aliases=['credential_name', 'credential_profile']),
-        credential_password=dict(type='str'),
+        credential_password=dict(type='str', no_log=True),
         credential_username=dict(type='str'),
         description=dict(type='str', aliases=['descr']),
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
@@ -255,17 +255,17 @@ def main():
         ],
     )
 
-    name = module.params['name']
-    credential_password = module.params['credential_password']
-    credential_username = module.params['credential_username']
-    description = module.params['description']
-    domain = module.params['domain']
-    state = module.params['state']
-    vm_provider = module.params['vm_provider']
+    name = module.params.get('name')
+    credential_password = module.params.get('credential_password')
+    credential_username = module.params.get('credential_username')
+    description = module.params.get('description')
+    domain = module.params.get('domain')
+    state = module.params.get('state')
+    vm_provider = module.params.get('vm_provider')
 
     credential_class = 'vmmUsrAccP'
-    usracc_mo = 'uni/vmmp-{0}/dom-{1}/usracc-{2}'.format(VM_PROVIDER_MAPPING[vm_provider], domain, name)
-    usracc_rn = 'vmmp-{0}/dom-{1}/usracc-{2}'.format(VM_PROVIDER_MAPPING[vm_provider], domain, name)
+    usracc_mo = 'uni/vmmp-{0}/dom-{1}/usracc-{2}'.format(VM_PROVIDER_MAPPING.get(vm_provider), domain, name)
+    usracc_rn = 'vmmp-{0}/dom-{1}/usracc-{2}'.format(VM_PROVIDER_MAPPING.get(vm_provider), domain, name)
 
     # Ensure that querying all objects works when only domain is provided
     if name is None:

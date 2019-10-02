@@ -211,14 +211,14 @@ def main():
 
     aci = ACIModule(module)
 
-    l2_policy = module.params['l2_policy']
-    vlan_scope = module.params['vlan_scope']
-    qinq = module.params['qinq']
+    l2_policy = module.params.get('l2_policy')
+    vlan_scope = module.params.get('vlan_scope')
+    qinq = module.params.get('qinq')
     if qinq is not None:
-        qinq = QINQ_MAPPING[qinq]
-    vepa = aci.boolean(module.params['vepa'], 'enabled', 'disabled')
-    description = module.params['description']
-    state = module.params['state']
+        qinq = QINQ_MAPPING.get(qinq)
+    vepa = aci.boolean(module.params.get('vepa'), 'enabled', 'disabled')
+    description = module.params.get('description')
+    state = module.params.get('state')
 
     aci.construct_url(
         root_class=dict(
