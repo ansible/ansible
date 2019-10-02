@@ -350,7 +350,7 @@ class DnfModule(YumDnf):
         messages we want to ignore in a removal scenario as known benign
         failures. Do that here.
         """
-        if to_text("no package matched") in to_text(error):
+        if 'no package matched' in to_native(error):
             return (False, "{0} is not installed".format(spec))
 
         # Return value is tuple of:
