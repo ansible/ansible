@@ -12,6 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
+
 DOCUMENTATION = """
 ---
 module: iosxr_banner
