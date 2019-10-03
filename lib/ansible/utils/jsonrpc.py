@@ -60,7 +60,13 @@ class JsonRpcServer(object):
                 else:
                     response = self.response(result)
 
-                response = json.dumps(response)
+                try:
+                    response = json.dumps(response)
+                except Exception as exc:
+                    display.vvv(traceback.format_exc())
+                    error = self.internal_error(data=to_text(exc, errors='surrogate_then_replace'))
+                    response = json.dumps(error)
+
 
         delattr(self, '_identifier')
 
