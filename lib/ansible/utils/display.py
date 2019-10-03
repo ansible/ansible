@@ -48,6 +48,14 @@ except NameError:
     # Python 3, we already have raw_input
     pass
 
+# Optional import to assist with checking the exact length of strings with
+# unicode/emoji characters.
+try:
+    from wcwidth import wcswidth
+    HAS_WCWIDTH = True
+except ImportError:
+    HAS_WCWIDTH = False
+
 
 class FilterBlackList(logging.Filter):
     def __init__(self, blacklist):
@@ -274,7 +282,16 @@ class Display(with_metaclass(Singleton, object)):
                 self.warning("somebody cleverly deleted cowsay or something during the PB run.  heh.")
 
         msg = msg.strip()
-        star_len = self.columns - len(msg)
+
+        # By default, wide glyphs (such as unicode characters and emojis) have
+        # a length of 1, even if they are 2 or 4 characters wide. Use wcwidth
+        # (if present) to ensure the padding is correct and does not cause a
+        # line wrap.
+        if HAS_WCWIDTH:
+            star_len = self.columns - wcswidth(msg)
+        else:
+            star_len = self.columns - len(msg)
+
         if star_len <= 3:
             star_len = 3
         stars = u"*" * star_len
