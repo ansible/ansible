@@ -1,9 +1,11 @@
-# -*_ coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 #
 
 """
 Python3 library to ease interaction with the Uptime Robot API.
 """
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import requests
 import configparser
@@ -13,7 +15,7 @@ import pathlib
 
 
 class UptimeRobot(object):
-    """Library to easily interact with the Uptim Robot API
+    """Library to easily interact with the Uptime Robot API
     This library implements the methods available in the Uptime Robot
     documentation here: https://uptimerobot.com/api.
     """
@@ -30,7 +32,7 @@ class UptimeRobot(object):
         req_obj : requests.sessions.Session
             A requests session object for making requests to Uptime Robot API.
         api_key : str
-            Api key to Uptim Robot API for authentication.
+            Api key to Uptime Robot API for authentication.
         """
         self.endpoint = endpoint
         self._api_key = api_key
@@ -92,8 +94,7 @@ class UptimeRobot(object):
         if response.status_code // 100 == 2:
             return True
         else:
-            raise requests.HTTPError('{} ==> {}'.format(response.status_code,
-                                                        response.text))
+            raise requests.HTTPError('{0} ==> {1}'.format(response.status_code, response.text))
 
     def _make_request(self, method="POST", route="/", **kwargs):
         """Utilize our session object to make requests.
@@ -147,7 +148,7 @@ class UptimeRobot(object):
             Returns a dict of parameters to be passed with the API call.
         """
         if 'kwargs' in local_vars:
-            kwargs = local_vars['kwargs']    
+            kwargs = local_vars['kwargs']
             del local_vars['kwargs']
             del local_vars['route']
             del local_vars['self']
