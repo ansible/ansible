@@ -82,8 +82,8 @@ later).
      modules to use. You will still need to set :ref:`ansible_python_interpreter<ansible_python_interpreter>` if the Python
      2 interpreter is not installed to :command:`/usr/bin/python`.
 
-   * Ansible's "raw" module (for executing commands in a quick and dirty way) and the script module
-     don't even need Python installed.  So technically, you can use Ansible to install a compatible
+   * Ansible's :ref:`raw module<raw_module>`, and the :ref:`script module<script_module>`, do not depend
+     on a client side install of Python to run.  Technically, you can use Ansible to install a compatible
      version of Python using the :ref:`raw module<raw_module>`, which then allows you to use everything else.
      For example, if you need to bootstrap Python 2 onto a RHEL-based system, you can install it
      via
