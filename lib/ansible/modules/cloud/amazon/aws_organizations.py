@@ -221,7 +221,7 @@ class AwsOrganizations():
 
     def delete_ou(self, ou_id):
         try:
-            res = self.client.delete_organizational_unit(OrganizationalUnitId=ou_id)
+            self.client.delete_organizational_unit(OrganizationalUnitId=ou_id)
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e, msg="Failed to delete organizational unit")
         else:
@@ -236,7 +236,7 @@ def main():
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     client = AwsOrganizations(module)
@@ -248,28 +248,43 @@ def main():
         state='absent',
     )
 
-    ou = client.get_ou(module.params.get('name'))
+    ou_name = module.params.get('name')
+    ou_state = module.params.get('state')
+
+    ou = client.get_ou(ou_name)
     if ou is None:
         result['state'] = 'absent'
     else:
         result['state'] = 'present'
         result['ou'] = ou
 
-    if module.params.get('state') == 'absent':
-        if ou is None:
-            result['changed'] = False
-        else:
-            if client.delete_ou(ou['Id']):
-                result['changed'] = True
-                result['state'] = 'absent'
-    elif module.params.get('state') == 'present':
-        if ou is None:
-            ou = client.create_ou(module.params.get('name'))
-            if ou is not None:
-                result['changed'] = True
-                result['ou'] = ou
+    if module.check_mode:
+        if ou_state == 'absent':
+            if ou is None:
+                result['changed'] = False
             else:
-                module.fail_json(msg="Failed to create organizational unit")
+                result['changed'] = True
+        elif ou_state == 'present':
+            if ou is None:
+                result['changed'] = True
+            else:
+                result['changed'] = False
+    else:
+        if ou_state == 'absent':
+            if ou is None:
+                result['changed'] = False
+            else:
+                if client.delete_ou(ou['Id']):
+                    result['changed'] = True
+                    result['state'] = 'absent'
+        elif ou_state == 'present':
+            if ou is None:
+                ou = client.create_ou(ou_name)
+                if ou is not None:
+                    result['changed'] = True
+                    result['ou'] = ou
+                else:
+                    module.fail_json(msg="Failed to create organizational unit")
 
     module.exit_json(**result)
 
