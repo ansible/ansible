@@ -87,10 +87,6 @@
             description: EBGP_NBR_1
             local_as: 64497
 
-          - neighbor: 10.10.20.20
-            remote_as: 65012
-            description: EBGP_NBR_2
-            ebgp_multihop: 100
     register: result
 
   - assert:
@@ -173,6 +169,8 @@
       operation: merge
       config:
         bgp_as: 64496
+          - neighbor: 10.10.20.20
+            remote_as: 65012
         address_family:
           - afi: ipv4
             safi: unicast
@@ -196,6 +194,7 @@
       that:
         - 'result.changed == true'
         - "'router bgp 64496' in result.commands"
+        - "'neighbor 10.10.20.20 remote-as 65012' in result.commands"
         - "'address-family ipv4' in result.commands"
         - "'neighbor 203.0.113.10 activate' in result.commands"
         - "'neighbor 203.0.113.10 maximum-prefix 250' in result.commands"
