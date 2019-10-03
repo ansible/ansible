@@ -95,6 +95,12 @@ def run_venv(args,  # type: EnvironmentConfig
         # we must use the real python to create a virtual environment with venv
         # attempting to use python from a virtualenv created virtual environment results in a copy of that environment instead
         run_python = os.path.join(real_prefix, 'bin', 'python')
+        if not os.path.exists(run_python):
+            py2_run_python = run_python
+            run_python = os.path.join(real_prefix, 'bin', 'python3')
+            if not os.path.exists(run_python):
+                display.error("Unable to find local python interpreter: %s or %s" % (py2_run_python, run_python))
+
 
     cmd = [run_python, '-m', 'venv']
 
