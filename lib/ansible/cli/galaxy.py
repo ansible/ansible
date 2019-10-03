@@ -330,7 +330,10 @@ class GalaxyCLI(CLI):
             # it doesn't need to be passed as kwarg to GalaxyApi
             auth_url = server_options.pop('auth_url', None)
             token_val = server_options['token'] or NoTokenSentinel
-            if auth_url:
+            username = server_options['username']
+
+            # Use basic auth even if auth_url is provided
+            if auth_url and not username:
                 server_options['token'] = KeycloakToken(access_token=token_val,
                                                         auth_url=auth_url)
             else:
