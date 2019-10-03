@@ -103,31 +103,47 @@ options:
             - Whether the host uses GTID based replication or not.
         type: bool
         version_added: "2.0"
+    master_use_gtid:
+        description:
+            - Configures the slave to use the MariaDB Global Transaction ID.
+            - C(disabled) equals MASTER_USE_GTID=no command.
+            - To find information about available values see
+              U(https://mariadb.com/kb/en/library/change-master-to/#master_use_gtid).
+            - Available since MariaDB 10.0.2.
+        choices: [current_pos, slave_pos, disabled]
+        type: str
+        version_added: "2.10"
+
 extends_documentation_fragment:
 - mysql
 '''
 
 EXAMPLES = r'''
-# Stop mysql slave thread
-- mysql_replication:
+- name: Stop mysql slave thread
+  mysql_replication:
     mode: stopslave
 
-# Get master binlog file name and binlog position
-- mysql_replication:
+- name: Get master binlog file name and binlog position
+  mysql_replication:
     mode: getmaster
 
-# Change master to master server 192.0.2.1 and use binary log 'mysql-bin.000009' with position 4578
-- mysql_replication:
+- name: Change master to master server 192.0.2.1 and use binary log 'mysql-bin.000009' with position 4578
+  mysql_replication:
     mode: changemaster
     master_host: 192.0.2.1
     master_log_file: mysql-bin.000009
     master_log_pos: 4578
 
-# Check slave status using port 3308
-- mysql_replication:
+- name: Check slave status using port 3308
+  mysql_replication:
     mode: getslave
     login_host: ansible.example.com
     login_port: 3308
+
+- name: On MariaDB change master to use GTID current_pos
+  mysql_replication:
+    mode: changemaster
+    master_use_gtid: current_pos
 '''
 
 RETURN = r'''
@@ -242,6 +258,7 @@ def main():
             client_cert=dict(type='path', aliases=['ssl_cert']),
             client_key=dict(type='path', aliases=['ssl_key']),
             ca_cert=dict(type='path', aliases=['ssl_ca']),
+            master_use_gtid=dict(type='str', choices=['current_pos', 'slave_pos', 'disabled']),
         )
     )
     mode = module.params["mode"]
@@ -266,6 +283,10 @@ def main():
     ssl_ca = module.params["ca_cert"]
     connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
+    if module.params.get("master_use_gtid") == 'disabled':
+        master_use_gtid = 'no'
+    else:
+        master_use_gtid = module.params["master_use_gtid"]
 
     if mysql_driver is None:
         module.fail_json(msg=mysql_driver_fail_msg)
@@ -337,6 +358,8 @@ def main():
             chm.append("MASTER_SSL_CIPHER='%s'" % master_ssl_cipher)
         if master_auto_position:
             chm.append("MASTER_AUTO_POSITION=1")
+        if master_use_gtid is not None:
+            chm.append("MASTER_USE_GTID=%s" % master_use_gtid)
         try:
             changemaster(cursor, chm)
         except mysql_driver.Warning as e:
