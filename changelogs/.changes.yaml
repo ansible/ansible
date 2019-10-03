@@ -1252,3 +1252,18 @@ releases:
     - win_become-shared-token.yaml
     - win_exec-error.yaml
     release_date: '2019-09-19'
+  2.9.0rc2:
+    codename: Immigrant Song
+    fragments:
+    - 62616-vmware_cluster_ha-fix-documentation.yml
+    - 62621-docker_login-fix-60381.yaml
+    - 62809-dnf-wildcard-absent-failure.yml
+    - 62870-collection-install-default-path.yml
+    - 62998-fix_iosxr_lag_interfaces_random_failures.yaml
+    - ansible-test-delegation-tmp-dir.yml
+    - ansible-test-fix-python-path.yml
+    - find-contains-docs.yaml
+    - kubevirt-add-wait_sleep-param.yml
+    - nxos_l3_interfaces29.yaml
+    - v2.9.0rc2_summary.yaml
+    release_date: '2019-10-03'

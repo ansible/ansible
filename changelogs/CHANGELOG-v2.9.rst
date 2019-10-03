@@ -5,6 +5,34 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.0rc2
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2019-10-03
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- dnf - Properly handle idempotent transactions with package name wildcard globs (https://github.com/ansible/ansible/issues/62809)
+- vmware_cluster_ha - Remove a wrong parameter from an example in the documentation.
+
+Bugfixes
+--------
+
+- Fix nxos_l3_interfaces module deleting mgmt IP (https://github.com/ansible/ansible/pull/62545).
+- ansible-galaxy - Default collection install path to first path in COLLECTIONS_PATHS (https://github.com/ansible/ansible/pull/62870)
+- ansible-test now correctly excludes the test results temporary directory when copying files from the remote test system to the local system
+- ansible-test now properly sets PYTHONPATH for tests when running from an Ansible installation
+- docker_login - correct broken fix for https://github.com/ansible/ansible/pull/60381 which crashes for Python 3.
+- find - clarify description of ``contains`` (https://github.com/ansible/ansible/issues/61983)
+- iosxr - Fix random idempotence issues with iosxr_lag_interfaces Resource Module (https://github.com/ansible/ansible/pull/62998).
+- kubevirt: apply wait_sleep fix from devel to not fail on missing param
+
 v2.9.0rc1
 =========
 
@@ -1463,7 +1491,7 @@ eric_eccli
 exos
 ^^^^
 
-- exos_lldp_global - Configure and manage Link Layer Discovery Protocol(LLDP) attribures on EXOS platforms.
+- exos_lldp_global - Configure and manage Link Layer Discovery Protocol(LLDP) attributes on EXOS platforms.
 
 f5
 ^^
@@ -1676,7 +1704,7 @@ fortios
 - fortios_web_proxy_wisp - Configure Wireless Internet service provider (WISP) servers in Fortinet's FortiOS and FortiGate.
 - fortios_wireless_controller_ap_status - Configure access point status (rogue | accepted | suppressed) in Fortinet's FortiOS and FortiGate.
 - fortios_wireless_controller_ble_profile - Configure Bluetooth Low Energy profile in Fortinet's FortiOS and FortiGate.
-- fortios_wireless_controller_bonjour_profile - Configure Bonjour profiles. Bonjour is Apple's zero configuration networking protocol. Bonjour profiles allow APs and FortiAPs to connnect to networks using Bonjour in Fortinet's FortiOS and FortiGate.
+- fortios_wireless_controller_bonjour_profile - Configure Bonjour profiles. Bonjour is Apple's zero configuration networking protocol. Bonjour profiles allow APs and FortiAPs to connect to networks using Bonjour in Fortinet's FortiOS and FortiGate.
 - fortios_wireless_controller_hotspot20_anqp_3gpp_cellular - Configure 3GPP public land mobile network (PLMN) in Fortinet's FortiOS and FortiGate.
 - fortios_wireless_controller_hotspot20_anqp_ip_address_type - Configure IP address type availability in Fortinet's FortiOS and FortiGate.
 - fortios_wireless_controller_hotspot20_anqp_nai_realm - Configure network access identifier (NAI) realm in Fortinet's FortiOS and FortiGate.
