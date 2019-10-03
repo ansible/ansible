@@ -125,7 +125,10 @@ from yandex.cloud.compute.v1.instance_service_pb2_grpc import InstanceServiceStu
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
