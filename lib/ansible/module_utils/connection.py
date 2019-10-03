@@ -163,6 +163,8 @@ class Connection(object):
 
         if response['id'] != reqid:
             raise ConnectionError('invalid json-rpc id received')
+        if "result_type" in response:
+            response["result"] = cPickle.loads(to_bytes(response["result"]))
 
         return response
 

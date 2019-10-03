@@ -9,7 +9,8 @@ import traceback
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
-from ansible.module_utils.six import binary_type
+from ansible.module_utils.six import binary_type, text_type
+from ansible.module_utils.six.moves import cPickle
 from ansible.utils.display import Display
 
 display = Display()
@@ -67,7 +68,6 @@ class JsonRpcServer(object):
                     error = self.internal_error(data=to_text(exc, errors='surrogate_then_replace'))
                     response = json.dumps(error)
 
-
         delattr(self, '_identifier')
 
         return response
@@ -82,6 +82,9 @@ class JsonRpcServer(object):
         response = self.header()
         if isinstance(result, binary_type):
             result = to_text(result)
+        if not isinstance(result, text_type):
+            response["result_type"] = "pickle"
+            result = to_text(cPickle.dumps(result, protocol=0))
         response['result'] = result
         return response
 
