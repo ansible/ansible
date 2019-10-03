@@ -153,6 +153,15 @@ class CollectionRequirement:
             download_url = self._metadata.download_url
             artifact_hash = self._metadata.artifact_sha256
             headers = {}
+            # for v2 api, we don't require or add auth
+            # for v3 api, we require auth and add it, but not for download redirects
+            if 'v3' in self.api.available_api_versions:
+                auth_required = True
+            else:
+                auth_required = False
+            self.api._add_auth_token(headers, download_url, required=auth_required)
+
+            headers = {}
             self.api._add_auth_token(headers, download_url)
             self.b_path = _download_file(download_url, b_temp_path, artifact_hash, self.api.validate_certs,
                                          headers=headers)
