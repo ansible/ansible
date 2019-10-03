@@ -48,8 +48,8 @@ class TestOnyxSyslogFilesModule(TestOnyxModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_syslog_files_freq(self):
-        set_module_args(dict(rotation=dict(frequancy="daily")))
-        commands = ["logging files rotation criteria frequancy daily"]
+        set_module_args(dict(rotation=dict(frequency="daily")))
+        commands = ["logging files rotation criteria frequency daily"]
         self.execute_module(changed=True, commands=commands)
 
     def test_syslog_files_size(self):
@@ -62,15 +62,52 @@ class TestOnyxSyslogFilesModule(TestOnyxModule):
         commands = ["logging files delete oldest"]
         self.execute_module(changed=True, commands=commands)
 
+    def test_syslog_debug_files_force_rotate(self):
+        set_module_args(dict(rotation=dict(force=True), debug=True))
+        commands = ["logging debug-files rotation force"]
+        self.execute_module(changed=True, commands=commands)
+
+    def test_syslog_debug_files_max_num(self):
+        set_module_args(dict(rotation=dict(max_num=30), debug=True))
+        commands = ["logging debug-files rotation max-num 30"]
+        self.execute_module(changed=True, commands=commands)
+
+    def test_syslog_debug_files_freq(self):
+        set_module_args(dict(rotation=dict(frequency="weekly"), debug=True))
+        commands = ["logging debug-files rotation criteria frequency weekly"]
+        self.execute_module(changed=True, commands=commands)
+
+    def test_syslog_debug_files_size(self):
+        set_module_args(dict(rotation=dict(size=10.5), debug=True))
+        commands = ["logging debug-files rotation criteria size 10.5"]
+        self.execute_module(changed=True, commands=commands)
+
+    def test_syslog_debug_files_delete(self):
+        set_module_args(dict(delete_group="oldest", debug=True))
+        commands = ["logging debug-files delete oldest"]
+        self.execute_module(changed=True, commands=commands)
+
     ''' nochange '''
     def test_syslog_files_max_num_no_change(self):
         set_module_args(dict(rotation=dict(max_num=10)))
         self.execute_module(changed=False)
 
     def test_syslog_files_freq_no_change(self):
-        set_module_args(dict(rotation=dict(frequancy="weekly")))
+        set_module_args(dict(rotation=dict(frequency="weekly")))
         self.execute_module(changed=False)
 
-    def test_syslog_files_size(self):
+    def test_syslog_files_size_no_change(self):
         set_module_args(dict(rotation=dict(size_pct=10)))
+        self.execute_module(changed=False)
+
+    def test_syslog_debug_files_max_num_no_change(self):
+        set_module_args(dict(rotation=dict(max_num=20), debug=True))
+        self.execute_module(changed=False)
+
+    def test_syslog_debug_files_freq_no_change(self):
+        set_module_args(dict(rotation=dict(frequency="daily"), debug=True))
+        self.execute_module(changed=False)
+
+    def test_syslog_debug_files_size_no_change(self):
+        set_module_args(dict(rotation=dict(size=20), debug=True))
         self.execute_module(changed=False)

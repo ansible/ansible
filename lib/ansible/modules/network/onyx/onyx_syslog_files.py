@@ -20,6 +20,11 @@ description:
     on Mellanox ONYX network devices.
 notes:
 options:
+    debug:
+      description:
+        - Configure settings for debug log files
+      type: bool
+      default: False
     delete_group:
       description:
         - Delete certain log files
@@ -30,7 +35,7 @@ options:
         - rotation related attributes
       type: dict
       suboptions:
-        frequancy:
+        frequency:
           description:
           - Rotate log files on a fixed time-based schedule
           choices: ['daily', 'weekly', 'monthly']
@@ -74,7 +79,7 @@ EXAMPLES = """
     rotation:
         force: true
         max_num: 30
-        frequancy: daily
+        frequency: daily
         size: 128
 """
 
@@ -99,17 +104,17 @@ class OnyxSyslogFilesModule(BaseOnyxModule):
     URL_REGEX = re.compile(
         r'^(ftp|scp|ftps):\/\/[a-z0-9\.]*:(.*)@(.*):([a-zA-Z\/\/])*$')
     FREQUANCIES = ['daily', 'weekly', 'monthly']
-    ROTATION_KEYS = ['frequancy', 'max_num', 'size', 'size_pct', 'force']
-    ROTATION_CMDS = {'size': 'logging files rotation criteria size {0}',
-                     'frequancy': 'logging files rotation criteria frequancy {0}',
-                     'max_num': 'logging files rotation max-num {0}',
-                     'size_pct': 'logging files rotation criteria size-pct {0}',
-                     'force': 'logging files rotation force'}
+    ROTATION_KEYS = ['frequency', 'max_num', 'size', 'size_pct', 'force']
+    ROTATION_CMDS = {'size': 'logging {0} rotation criteria size {1}',
+                     'frequency': 'logging {0} rotation criteria frequency {1}',
+                     'max_num': 'logging {0} rotation max-num {1}',
+                     'size_pct': 'logging {0} rotation criteria size-pct {1}',
+                     'force': 'logging {0} rotation force'}
 
     def init_module(self):
         """" Ansible module initialization
         """
-        rotation_spec = dict(frequancy=dict(choices=self.FREQUANCIES),
+        rotation_spec = dict(frequency=dict(choices=self.FREQUANCIES),
                              max_num=dict(type="int"),
                              force=dict(type="bool"),
                              size=dict(type="float"),
@@ -118,7 +123,8 @@ class OnyxSyslogFilesModule(BaseOnyxModule):
         element_spec = dict(delete_group=dict(choices=['oldest', 'current']),
                             rotation=dict(type="dict", options=rotation_spec),
                             upload_file=dict(type="str"),
-                            upload_url=dict(type="str"))
+                            upload_url=dict(type="str"),
+                            debug=dict(type="bool", default=False))
 
         argument_spec = dict()
         argument_spec.update(element_spec)
@@ -149,7 +155,16 @@ class OnyxSyslogFilesModule(BaseOnyxModule):
                 msg='logging max_num must be between 1 and 999999')
 
     def show_logging(self):
-        return show_cmd(self._module, "show logging", json_fmt=True, fail_on_error=False)
+        show_logging = show_cmd(self._module, "show logging", json_fmt=True, fail_on_error=False)
+        running_config = show_cmd(self._module, "show running-config | include .*logging.*debug-files.*", json_fmt=True, fail_on_error=False)
+
+        if len(show_logging) > 0:
+            show_logging[0]['debug'] = running_config['Lines'] if 'Lines' in running_config else []
+        else:
+            show_logging = [{
+                'debug': running_config['Lines'] if 'Lines' in running_config else []
+            }]
+        return show_logging
 
     def load_current_config(self):
         self._current_config = dict()
@@ -157,21 +172,34 @@ class OnyxSyslogFilesModule(BaseOnyxModule):
         if 'Log rotation frequency' in current_config:
             freq = current_config.get('Log rotation frequency')  # daily (Once per day at midnight)
             freq_str = freq.split()[0]
-            self._current_config['frequancy'] = freq_str
+            self._current_config['frequency'] = freq_str
 
-        if 'Log rotation (debug) size threshold' in current_config:  # 19.07 megabytes
-            size = current_config.get('Log rotation (debug) size threshold')
-            size_str = size.split()[0]
-            self._current_config['size'] = float(size_str)
-
-        if 'Log rotation size threshold' in current_config:  # 10.000% of partition (987.84 megabytes)
+        if 'Log rotation size threshold' in current_config:  # 19.07 megabytes or 10.000% of partition (987.84 megabytes)
             size = current_config.get('Log rotation size threshold')
-            size_str = size.split()[0].replace('%', '')
-            self._current_config['size_pct'] = float(size_str)
+            size_arr = size.split(' ')
+            if '%' in size:
+                size_pct_value = size_arr[0].replace('%', '')
+                self._current_config['size_pct'] = float(size_pct_value)
+                size_value = re.sub(r'(\(|\)|megabytes)', '', size_arr[-2]).strip()
+                self._current_config['size'] = float(size_value)
+            else:
+                size_value = size_arr[0]
+                self._current_config['size'] = float(size_value)
 
         if 'Number of archived log files to keep' in current_config:
             max_num = current_config.get('Number of archived log files to keep')
             self._current_config['max_num'] = int(max_num)
+
+        '''debug params'''
+        for line in current_config['debug']:
+            if 'size' in line:
+                self._current_config['debug_size'] = float(line.split(' ')[-1])
+            if 'frequency' in line:
+                self._current_config['debug_frequency'] = line.split(' ')[-1]
+            if 'size-pct' in line:
+                self._current_config['debug_size_pct'] = float(line.split(' ')[-1])
+            if 'max-num' in line:
+                self._current_config['debug_max_num'] = int(line.split(' ')[-1])
 
     def get_required_config(self):
         self._required_config = dict()
@@ -185,6 +213,7 @@ class OnyxSyslogFilesModule(BaseOnyxModule):
                                     'upload_url': module_params['upload_url']})
         if module_params.get('rotation', None):
             required_config['rotation'] = module_params['rotation']
+        required_config['debug'] = module_params['debug']
 
         self.validate_param_values(required_config)
         self._required_config = required_config
@@ -192,21 +221,24 @@ class OnyxSyslogFilesModule(BaseOnyxModule):
     def generate_commands(self):
         required_config = self._required_config
         current_config = self._current_config
+
+        logging_files_type = 'debug-files' if required_config['debug'] else 'files'
+        debug_prefix = 'debug_' if required_config['debug'] else ''
         if required_config.get('rotation', None):
             rotation = required_config['rotation']
             for key in rotation:
-                if rotation.get(key) and current_config.get(key, None) != rotation.get(key):
-                    cmd = self.ROTATION_CMDS[key].format(rotation[key]) if key != 'force' else\
-                        self.ROTATION_CMDS[key]
+                if rotation.get(key) and current_config.get(debug_prefix + key, None) != rotation.get(key):
+                    cmd = self.ROTATION_CMDS[key].format(logging_files_type, rotation[key]) if key != 'force' else\
+                        self.ROTATION_CMDS[key].format(logging_files_type)
                     self._commands.append(cmd)
 
         if required_config.get('delete_group', None):
-            self._commands.append('logging files delete {0}'.format(
-                required_config['delete_group']))
+            self._commands.append('logging {0} delete {1}'.format(logging_files_type,
+                                                                  required_config['delete_group']))
 
         if required_config.get('upload_file', None):
-            self._commands.append('logging files upload {0} {1}'.format(
-                required_config['upload_file'], required_config['upload_url']))
+            self._commands.append('logging {0} upload {1} {2}'.format(logging_files_type,
+                                                                      required_config['upload_file'], required_config['upload_url']))
 
 
 def main():
