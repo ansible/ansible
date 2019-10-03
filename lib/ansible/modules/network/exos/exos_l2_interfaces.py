@@ -51,7 +51,7 @@ options:
     type: list
     elements: dict
     suboptions:
-      name: 
+      name:
         description:
           - Name of the interface
         type: str
@@ -731,7 +731,7 @@ EXAMPLES = """
 #   }
 # }
 
-- name: Overrride device configuration of all L2 interfaces with provided configuration 
+- name: Overrride device configuration of all L2 interfaces with provided configuration
   exos_l2_interfaces:
     config:
       - access:
@@ -927,7 +927,7 @@ EXAMPLES = """
 #   }
 # }
 
-- name: Replace device configuration of listed L2 interfaces with provided configuration 
+- name: Replace device configuration of listed L2 interfaces with provided configuration
   exos_l2_interfaces:
     config:
       - access:
