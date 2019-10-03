@@ -169,6 +169,7 @@
       operation: merge
       config:
         bgp_as: 64496
+        neighbors:
           - neighbor: 10.10.20.20
             remote_as: 65012
         address_family:
