@@ -114,7 +114,13 @@ import grpc
 from yandex.cloud.compute.v1.instance_service_pb2 import ListInstancesRequest
 from yandex.cloud.compute.v1.instance_service_pb2_grpc import InstanceServiceStub
 import yandexcloud
-from google.protobuf.json_format import MessageToDict
+import json
+import grpc
+import yandexcloud
+
+from google.protobuf.json_format import MessageToDict 
+from yandex.cloud.compute.v1.instance_service_pb2 import ListInstancesRequest
+from yandex.cloud.compute.v1.instance_service_pb2_grpc import InstanceServiceStub
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 from ansible.errors import AnsibleError, AnsibleParserError
