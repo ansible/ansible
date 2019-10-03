@@ -70,7 +70,11 @@ class LookupModule(LookupBase):
             try:
                 if lookupfile:
                     b_contents, show_data = self._loader._get_file_contents(lookupfile)
-                    contents = to_text(b_contents, errors='surrogate_or_strict')
+                    try:
+                        contents = to_text(b_contents, errors='surrogate_or_strict')
+                    except UnicodeDecodeError:
+                        # Attempts utf-16 decode for files coming from Windows.
+                        contents = to_text(b_contents, encoding='utf-16', errors='surrogate_or_strict')
                     if kwargs.get('lstrip', False):
                         contents = contents.lstrip()
                     if kwargs.get('rstrip', True):
