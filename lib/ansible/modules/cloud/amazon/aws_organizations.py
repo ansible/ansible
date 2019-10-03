@@ -99,11 +99,8 @@ class AwsOrganizations():
             self.module.fail_json_aws(e, msg="Failed to connect to AWS")
         self.aws_org_root = self.get_root()
 
-    def _get_boto_paginator(self, api):
-        return self.client.get_paginator(api)
-
     def get_children_ous(self, parent_id, recursive=False):
-        paginator = self._get_boto_paginator('list_organizational_units_for_parent')
+        paginator = self.client.get_paginator('list_organizational_units_for_parent')
         children_ous = []
         for page in paginator.paginate(ParentId=parent_id):
             if recursive:
@@ -118,7 +115,7 @@ class AwsOrganizations():
         return children_ous
 
     def get_children_accounts(self, parent_id):
-        paginator = self._get_boto_paginator('list_accounts_for_parent')
+        paginator = self.client.get_paginator('list_accounts_for_parent')
         children_accounts = []
         for page in paginator.paginate(ParentId=parent_id):
             children_accounts += page['Accounts']
@@ -174,7 +171,7 @@ class AwsOrganizations():
         return self.aws_org_root['Id']
 
     def _get_ou(self, name, parent):
-        paginator = self._get_boto_paginator("list_organizational_units_for_parent")
+        paginator = self.client.get_paginator("list_organizational_units_for_parent")
         children_ous = []
         for page in paginator.paginate(ParentId=parent):
             children_ous += page['OrganizationalUnits']
