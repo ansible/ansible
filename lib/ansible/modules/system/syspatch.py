@@ -147,10 +147,10 @@ def syspatch_run(module):
         # http://openbsd-archive.7691.n7.nabble.com/Warning-applying-latest-syspatch-td354250.html
         if rc != 0 and err != 'ln: /usr/X11R6/bin/X: No such file or directory\n':
             module.fail_json(msg="Command %s failed rc=%d, out=%s, err=%s" % (cmd, rc, out, err))
-        elif out.lower().find('create unique kernel'):
+        elif out.lower().find('create unique kernel') > 0:
             # Kernel update applied
             reboot_required = True
-        elif out.lower().find('syspatch updated itself'):
+        elif out.lower().find('syspatch updated itself') > 0:
             warnings.append('Syspatch was updated. Please run syspatch again.')
 
         # If no stdout, then warn user
