@@ -48,6 +48,8 @@ class KeycloakToken(object):
     Like sso.redhat.com as used by cloud.redhat.com
     ie Automation Hub'''
 
+    token_type = 'Bearer'
+
     def __init__(self, access_token=None, auth_url=None):
         self.access_token = access_token
         self.auth_url = auth_url
@@ -85,9 +87,16 @@ class KeycloakToken(object):
 
         return self._token
 
+    def headers(self):
+        headers = {}
+        headers['Authorization'] = '%s %s' % (self.token_type, self.get())
+        return headers
+
 
 class GalaxyToken(object):
     ''' Class to storing and retrieving local galaxy token '''
+
+    token_type = 'Token'
 
     def __init__(self, token=None):
         self.b_file = to_bytes(C.GALAXY_TOKEN_PATH, errors='surrogate_or_strict')
@@ -131,3 +140,8 @@ class GalaxyToken(object):
     def save(self):
         with open(self.b_file, 'w') as f:
             yaml.safe_dump(self.config, f, default_flow_style=False)
+
+    def headers(self):
+        headers = {}
+        headers['Authorization'] = '%s %s' % (self.token_type, self.get())
+        return headers
