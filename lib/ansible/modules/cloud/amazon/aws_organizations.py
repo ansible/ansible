@@ -230,7 +230,7 @@ class AwsOrganizations():
 
 def main():
     argument_spec = dict(
-        name=dict(type='str', required=False),
+        name=dict(type='str', required=True),
         state=dict(default='present', choices=['absent', 'present']),
     )
 
