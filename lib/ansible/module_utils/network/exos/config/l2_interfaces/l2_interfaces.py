@@ -116,7 +116,7 @@ class L2_interfaces(ConfigBase):
             collect the current configuration (as a dict from facts)
 
         :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
+        :returns: the requests necessary to migrate the current configuration
                   to the desired configuration
         """
         want = self._module.params['config']
