@@ -21,6 +21,7 @@
   tower_inventory_source:
     name: source-test-inventory
     description: Source for Test inventory
+    organization: Default
     inventory: openstack-test-inventory
     credential: openstack-test-credential
     overwrite: True
