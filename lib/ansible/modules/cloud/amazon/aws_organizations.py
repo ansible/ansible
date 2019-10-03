@@ -34,8 +34,6 @@ options:
     choices:
       - present
       - absent
-      - describe
-      - list
 extends_documentation_fragment:
   - aws
   - ec2
@@ -54,11 +52,6 @@ EXAMPLES = """
   aws_organizations:
     name: Prod
     state: absent
-
-- name: Describe organizational unit
-  aws_organizations:
-    name: Prod
-    state: describe
 """
 
 RETURN = """
@@ -72,19 +65,6 @@ state:
   returned: always
   type: str
   sample: present
-org:
-  description: Full Organization Tree
-  returned: on_list
-  type: dict
-  sample:
-    {
-        "Accounts": [],
-        "Arn": "arn:aws:organizations::account:root/o-id/r-id",
-        "Id": "r-id",
-        "Name": "Root",
-        "OrganizationalUnits": [],
-        "PolicyTypes": []
-    }
 ou:
   description: The Organization Unit details
   returned: always
@@ -251,16 +231,13 @@ class AwsOrganizations():
 def main():
     argument_spec = dict(
         name=dict(type='str', required=False),
-        state=dict(default='present', choices=['absent', 'present', 'describe', 'list']),
+        state=dict(default='present', choices=['absent', 'present']),
     )
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
-
-    if module.params['state'] != 'list' and module.params['name'] is None:
-        module.fail_json(msg='missing required arguments: name')
 
     client = AwsOrganizations(module)
 
@@ -269,41 +246,30 @@ def main():
         ou=dict(),
         changed=False,
         state='absent',
-        failed=False
     )
 
-    if module.params.get('state') == 'list':
-        if module.params.get('name') is None:
-            org_tree = client.get_org_tree()
-        else:
-            org_tree = client.get_parent_tree(module.params.get('name'))
-        result['org'] = org_tree
-        result['state'] = 'list'
+    ou = client.get_ou(module.params.get('name'))
+    if ou is None:
+        result['state'] = 'absent'
     else:
-        ou = client.get_ou(module.params.get('name'))
-        if ou is None:
-            result['state'] = 'absent'
-        else:
-            result['state'] = 'present'
-            result['ou'] = ou
+        result['state'] = 'present'
+        result['ou'] = ou
 
-        if module.params.get('state') == 'describe':
-            pass
-        elif module.params.get('state') == 'absent':
-            if ou is None:
-                result['changed'] = False
+    if module.params.get('state') == 'absent':
+        if ou is None:
+            result['changed'] = False
+        else:
+            if client.delete_ou(ou['Id']):
+                result['changed'] = True
+                result['state'] = 'absent'
+    elif module.params.get('state') == 'present':
+        if ou is None:
+            ou = client.create_ou(module.params.get('name'))
+            if ou is not None:
+                result['changed'] = True
+                result['ou'] = ou
             else:
-                if client.delete_ou(ou['Id']):
-                    result['changed'] = True
-                    result['state'] = 'absent'
-        elif module.params.get('state') == 'present':
-            if ou is None:
-                ou = client.create_ou(module.params.get('name'))
-                if ou is not None:
-                    result['changed'] = True
-                    result['ou'] = ou
-                else:
-                    module.fail_json(msg="Failed to create organizational unit")
+                module.fail_json(msg="Failed to create organizational unit")
 
     module.exit_json(**result)
 
