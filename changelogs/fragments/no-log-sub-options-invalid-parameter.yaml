@@ -1,0 +1,2 @@
+bugfixes:
+  - properly hide parameters marked with no_log in suboptions when invalid parameters are passed to the module
