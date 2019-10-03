@@ -333,11 +333,13 @@ class GalaxyCLI(CLI):
             username = server_options['username']
 
             # Use basic auth even if auth_url is provided
-            if auth_url and not username:
-                server_options['token'] = KeycloakToken(access_token=token_val,
-                                                        auth_url=auth_url)
-            else:
-                server_options['token'] = GalaxyToken(token=token_val)
+            if not username:
+                if token_val:
+                    if auth_url:
+                        server_options['token'] = KeycloakToken(access_token=token_val,
+                                                                auth_url=auth_url)
+                    else:
+                        server_options['token'] = GalaxyToken(token=token_val)
 
             config_servers.append(GalaxyAPI(self.galaxy, server_key, **server_options))
 

@@ -187,18 +187,17 @@ class GalaxyAPI:
         return data
 
     def _add_auth_token(self, headers, url, token_type=None, required=False):
+        if not required:
+            return
+
         # Don't add the auth token if one is already present
         if 'Authorization' in headers:
             return
 
         token = self.token.get() if self.token else None
 
-        # 'Token' for v2 api, 'Bearer' for v3 but still allow someone to override the token if necessary.
-        is_v3 = 'v3' in url.split('/')
-        token_type = token_type or ('Bearer' if is_v3 else 'Token')
-
-        if token:
-            headers['Authorization'] = '%s %s' % (token_type, token)
+        if self.token:
+            headers.update(self.token.headers())
         elif self.username:
             token = "%s:%s" % (to_text(self.username, errors='surrogate_or_strict'),
                                to_text(self.password, errors='surrogate_or_strict', nonstring='passthru') or '')

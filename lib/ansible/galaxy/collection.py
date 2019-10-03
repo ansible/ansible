@@ -161,8 +161,6 @@ class CollectionRequirement:
                 auth_required = False
             self.api._add_auth_token(headers, download_url, required=auth_required)
 
-            headers = {}
-            self.api._add_auth_token(headers, download_url)
             self.b_path = _download_file(download_url, b_temp_path, artifact_hash, self.api.validate_certs,
                                          headers=headers)
 
