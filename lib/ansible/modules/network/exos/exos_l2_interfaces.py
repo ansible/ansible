@@ -21,7 +21,6 @@
 #   builder template.
 #
 #############################################
-
 """
 The module file for exos_l2_interfaces
 """
@@ -71,14 +70,14 @@ options:
           - Switchport mode trunk command to configure the interface as a Layer 2 trunk.
         type: dict
         suboptions:
-          trunk_allowed_vlans:
-            description:
-              - List of allowed VLANs in a given trunk port. These are the only VLANs that will be configured on the trunk.
-            type: list
           native_vlan:
             description:
               - Native VLAN to be configured in trunk port. It's used as the trunk native VLAN ID.
             type: int
+          trunk_allowed_vlans:
+            description:
+              - List of allowed VLANs in a given trunk port. These are the only VLANs that will be configured on the trunk.
+            type: list
   state:
     description:
       - The state the configuration should be left in
@@ -148,7 +147,7 @@ EXAMPLES = """
 - name: Delete L2 interface configuration for the given arguments
   exos_l2_interfaces:
     config:
-      - name: 3
+      - name: '3'
     state: deleted
 
 # Module Execution Results:
@@ -522,16 +521,16 @@ EXAMPLES = """
 - name: Merge provided configuration with device configuration
   exos_l2_interfaces:
     config:
-      - name: 1
-	interface_mode: access
-        access_vlan: 10
-      - name: 2
-	interface_mode: trunk
-        trunk_vlans: 10
-      - name: 3
-	interface_mode: trunk
-	trunk_vlans: 20
-        native_vlan: 10
+      - access:
+          vlan: 10
+        name: '1'
+      - name: '2'
+        trunk:
+          trunk_allowed_vlans: 10
+      - name: '3'
+        trunk:
+          native_vlan: 10
+          trunk_allowed_vlans: 20
     state: merged
 
 # Module Execution Results:
@@ -735,9 +734,9 @@ EXAMPLES = """
 - name: Overrride device configuration of all L2 interfaces with provided configuration 
   exos_l2_interfaces:
     config:
-      - name: 2
-        interface_mode: access
-        access_vlan: 10
+      - access:
+          vlan: 10
+        name: '2'
     state: overridden
 
 # Module Execution Results:
@@ -931,16 +930,16 @@ EXAMPLES = """
 - name: Replace device configuration of listed L2 interfaces with provided configuration 
   exos_l2_interfaces:
     config:
-      - name: 1
-        interface_mode: access
-        access_vlan: 20
-      - name: 2
-        interface_mode: trunk
-        trunk_vlans: 10
-      - name: 3
-        interface_mode: trunk
-	native_vlan: 10
-        trunk_vlans: 20, 30
+      - access:
+          vlan: 20
+        name: '1'
+      - name: '2'
+        trunk:
+          trunk_allowed_vlans: 10
+      - name: '3'
+        trunk:
+          native_vlan: 10
+          trunk_allowed_vlan: 20,30
     state: replaced
 
 # Module Execution Results:

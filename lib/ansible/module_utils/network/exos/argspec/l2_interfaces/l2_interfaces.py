@@ -21,7 +21,6 @@
 #   builder template.
 #
 #############################################
-
 """
 The arg spec for the exos_l2_interfaces module
 """
@@ -32,7 +31,6 @@ __metaclass__ = type
 class L2_interfacesArgs(object):  # pylint: disable=R0903
     """The arg spec for the exos_l2_interfaces module
     """
-
     def __init__(self, **kwargs):
         pass
 
@@ -40,13 +38,35 @@ class L2_interfacesArgs(object):  # pylint: disable=R0903
         'config': {
             'elements': 'dict',
             'options': {
-                'access': {'options': {'vlan': {'type': 'int'}},
-                           'type': 'dict'},
-                'name': {'required': True, 'type': 'str'},
-                'trunk': {'options': {'native_vlan': {'type': 'int'}, 'trunk_allowed_vlans': {'type': 'list'}},
-                          'type': 'dict'}},
-            'type': 'list'},
+                'access': {
+                    'options': {
+                        'vlan': {
+                            'type': 'int'
+                        }
+                    },
+                    'type': 'dict'
+                },
+                'name': {
+                    'required': True,
+                    'type': 'str'
+                },
+                'trunk': {
+                    'options': {
+                        'native_vlan': {
+                            'type': 'int'
+                        },
+                        'trunk_allowed_vlans': {
+                            'type': 'list'
+                        }
+                    },
+                    'type': 'dict'
+                }
+            },
+            'type': 'list'
+        },
         'state': {
             'choices': ['merged', 'replaced', 'overridden', 'deleted'],
             'default': 'merged',
-            'type': 'str'}}  # pylint: disable=C0301
+            'type': 'str'
+        }
+    }  # pylint: disable=C0301

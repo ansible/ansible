@@ -10,9 +10,11 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import json
 from copy import deepcopy
-
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, dict_diff
 from ansible.module_utils.network.exos.facts.facts import Facts
@@ -78,8 +80,10 @@ class L2_interfaces(ConfigBase):
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
-        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
-        l2_interfaces_facts = facts['ansible_network_resources'].get('l2_interfaces')
+        facts, _warnings = Facts(self._module).get_facts(
+            self.gather_subset, self.gather_network_resources)
+        l2_interfaces_facts = facts['ansible_network_resources'].get(
+            'l2_interfaces')
         if not l2_interfaces_facts:
             return []
         return l2_interfaces_facts
@@ -241,23 +245,33 @@ class L2_interfaces(ConfigBase):
 
         if want["access"]:
             l2_request = deepcopy(self.L2_INTERFACE_ACCESS)
-            l2_request["data"]["openconfig-vlan:config"]["access-vlan"] = want["access"]["vlan"]
-            l2_request["path"] = self.L2_PATH + str(want["name"]) + "/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config"
+            l2_request["data"]["openconfig-vlan:config"]["access-vlan"] = want[
+                "access"]["vlan"]
+            l2_request["path"] = self.L2_PATH + str(
+                want["name"]
+            ) + "/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config"
 
         elif want["trunk"]:
 
             if want["trunk"]["native_vlan"]:
                 l2_request = deepcopy(self.L2_INTERFACE_NATIVE)
-                l2_request["data"]["openconfig-vlan:config"]["native-vlan"] = want["trunk"]["native_vlan"]
+                l2_request["data"]["openconfig-vlan:config"][
+                    "native-vlan"] = want["trunk"]["native_vlan"]
                 for vlan in want["trunk"]["trunk_allowed_vlans"]:
-                    l2_request["data"]["openconfig-vlan:config"]["trunk-vlans"].append(int(vlan))
-                l2_request["path"] = self.L2_PATH + str(want["name"]) + "/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config"
+                    l2_request["data"]["openconfig-vlan:config"][
+                        "trunk-vlans"].append(int(vlan))
+                l2_request["path"] = self.L2_PATH + str(
+                    want["name"]
+                ) + "/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config"
 
             else:
                 l2_request = deepcopy(self.L2_INTERFACE_TRUNK)
                 for vlan in want["trunk"]["trunk_allowed_vlans"]:
-                    l2_request["data"]["openconfig-vlan:config"]["trunk-vlans"].append(int(vlan))
-                l2_request["path"] = self.L2_PATH + str(want["name"]) + "/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config"
+                    l2_request["data"]["openconfig-vlan:config"][
+                        "trunk-vlans"].append(int(vlan))
+                l2_request["path"] = self.L2_PATH + str(
+                    want["name"]
+                ) + "/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config"
 
         return l2_request
 
@@ -265,8 +279,11 @@ class L2_interfaces(ConfigBase):
 
         l2_request = deepcopy(self.L2_INTERFACE_ACCESS)
 
-        if have["access"] and have["access"]["vlan"] != 1 or have["trunk"] or not have["access"]:
-                l2_request["data"]["openconfig-vlan:config"]["access-vlan"] = 1
-                l2_request["path"] = self.L2_PATH + str(have["name"]) + "/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config"
+        if have["access"] and have["access"]["vlan"] != 1 or have[
+                "trunk"] or not have["access"]:
+            l2_request["data"]["openconfig-vlan:config"]["access-vlan"] = 1
+            l2_request["path"] = self.L2_PATH + str(
+                have["name"]
+            ) + "/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config"
 
         return l2_request
