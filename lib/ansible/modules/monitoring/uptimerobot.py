@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -12,7 +12,7 @@ short_description: Create, remove, pause and start monitors in Uptimerobot
 description:
     - This module will let you create, remove, pause and start monitors in Uptimerobot
 author: "Ninjiner (@ninjiner)"
-version_added: "2.8"
+version_added: "1.9"
 requirements:
     - Valid Uptime Robot API Key
     - https://pypi.org/project/uptimerobotpy/
@@ -64,9 +64,8 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from uptimerobotpy import UptimeRobot
+from ansible.module_utils.uptimerobot import UptimeRobot
 from requests import HTTPError
-import sys
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -117,9 +116,9 @@ def main():
     try:
         up_robot = UptimeRobot(api_key=module.params['apikey'])
     except KeyError:
-        sys.exit("Problem with API-Key")
+        module.fail_json(msg='Problem with API-Key')
     except HTTPError:
-        sys.exit("Cannot reach uptimerobot API endpoint")
+        module.fail_json(msg='Cannot reach uptimerobot API endpoint')
 
     if params['state'] != 'present':
         mid = get_monitor_id(up_robot, module.params['name'])
@@ -147,9 +146,9 @@ def main():
         result['message'] = 'Monitor is paused'
         pass
 
-    if get_monitor_id(up_robot, module.params['name']) is None and params['state'] is not 'absent':
+    if get_monitor_id(up_robot, module.params['name']) is not None and params['state'] != 'absent':
         module.fail_json(msg='Could not perform action')
-    elif get_monitor_id(up_robot, module.params['name']) is not None and params['state'] is 'absent':
+    elif get_monitor_id(up_robot, module.params['name']) is not None and params['state'] == 'absent':
         module.fail_json(msg='Could not delete monitor')
 
     result['original_message'] = params['url']
