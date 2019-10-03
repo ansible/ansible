@@ -29,6 +29,13 @@ options:
           - Your Datadog API key.
         required: true
         type: str
+    api_host:
+        description:
+          - The URL to the Datadog API. Default value is C(https://api.datadoghq.com).
+          - This value can also be set with the C(DATADOG_HOST) environment variable.
+        required: false
+        type: str
+        version_added: '2.10'
     app_key:
         description:
           - Your Datadog app key.
@@ -172,6 +179,14 @@ EXAMPLES = '''
     state: "unmute"
     api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
     app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"
+
+# Use datadoghq.eu platform instead of datadoghq.com
+- datadog_monitor:
+    name: "Test monitor"
+    state: "absent"
+    api_host: https://api.datadoghq.eu
+    api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
+    app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"
 '''
 import traceback
 
@@ -192,6 +207,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             api_key=dict(required=True, no_log=True),
+            api_host=dict(required=False),
             app_key=dict(required=True, no_log=True),
             state=dict(required=True, choices=['present', 'absent', 'mute', 'unmute']),
             type=dict(required=False, choices=['metric alert', 'service check', 'event alert', 'process alert']),
@@ -221,6 +237,7 @@ def main():
 
     options = {
         'api_key': module.params['api_key'],
+        'api_host': module.params['api_host'],
         'app_key': module.params['app_key']
     }
 
