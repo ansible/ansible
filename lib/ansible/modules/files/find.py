@@ -363,7 +363,7 @@ def main():
             patterns=dict(type='list', default=['*'], aliases=['pattern']),
             excludes=dict(type='list', aliases=['exclude']),
             contains=dict(type='str'),
-            file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
+            file_type=dict(type='str', default="file", choices=['any', 'block', 'char', 'directory', 'fifo', 'file', 'link', 'socket']),
             age=dict(type='str'),
             age_stamp=dict(type='str', default="mtime", choices=['atime', 'ctime', 'mtime']),
             size=dict(type='str'),
