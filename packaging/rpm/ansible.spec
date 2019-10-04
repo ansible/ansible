@@ -63,10 +63,11 @@ BuildRequires: python3-pytest
 BuildRequires: python3-pytest-xdist
 BuildRequires: python3-pytest-mock
 BuildRequires: python3-requests
-BuildRequires: python3-coverage
+BUildRequires: %{py3_dist coverage}
 BuildRequires: python3-mock
-BuildRequires: python3-boto3
-BuildRequires: python3-botocore
+# Not available in RHEL8, we'll just skip the tests where they apply
+#BuildRequires: python3-boto3
+#BuildRequires: python3-botocore
 BuildRequires: python3-systemd
 
 BuildRequires: git-core
