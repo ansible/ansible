@@ -1,6 +1,5 @@
 destructive
 shippable/posix/group4
-mysql_replication
 skip/osx
 skip/freebsd
 skip/ubuntu

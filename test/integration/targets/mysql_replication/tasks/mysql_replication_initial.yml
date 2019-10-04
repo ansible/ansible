@@ -82,6 +82,29 @@
     - slave_status.Last_IO_Error == ''
     - slave_status is not changed
 
+# Create test table and add data to it:
+- name: Create user for replication
+  shell: "echo \"CREATE TABLE {{ test_table }} (id int);\" | mysql -P {{ master_port }} -h 127.0.0.1 {{ test_db }}"
+
+- name: Create user for replication
+  shell: >
+    echo "INSERT INTO {{ test_table }} (id) VALUES (1), (2), (3); FLUSH LOGS;" |
+    mysql -P {{ master_port }} -h 127.0.0.1 {{ test_db }}
+
+# Test master log pos has been changed:
+- name: Get standby status
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: getslave
+  register: slave_status
+
+# master_status.Position is not actual and it has been changed by the prev step,
+# so slave_status.Exec_Master_Log_Pos must be different:
+- assert:
+    that:
+    - slave_status.Exec_Master_Log_Pos != master_status.Position
+
 # Test stopslave mode:
 - name: Stop slave
   mysql_replication:
