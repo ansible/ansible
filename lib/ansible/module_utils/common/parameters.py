@@ -87,10 +87,19 @@ def list_no_log_values(argument_spec, params):
                 no_log_values.update(_return_datastructure_name(no_log_object))
 
         # Get no_log values from suboptions
-        if arg_opts.get('options'):
-            sub_argument_spec = arg_opts.get('options')
-            sub_params = params.get(arg_name)
-            no_log_values.update(list_no_log_values(sub_argument_spec, sub_params))
+        sub_argument_spec = arg_opts.get('options')
+        if sub_argument_spec:
+            # Sub parameters can be a dict or list of dicts. Ensure parameters are always a list.
+            sub_parameters = params.get(arg_name)
+            if sub_parameters is not None:
+                if not isinstance(sub_parameters, list):
+                    sub_parameters = [sub_parameters]
+
+                for sub_param in sub_parameters:
+                    if not isinstance(sub_param, dict):
+                        raise TypeError("Value '{1}' in the sub parameter field '{0}' must by a dict, not '{1.__class__.__name__}'".format(arg_name, sub_param))
+                    no_log_values.update(list_no_log_values(sub_argument_spec, sub_param))
+
     return no_log_values
 
 
