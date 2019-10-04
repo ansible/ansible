@@ -100,7 +100,7 @@ EXAMPLES = '''
     expression_attribute_values: {":number": {"N": "1000"}, ":person": {"S": "ochoa"}}
 
 # Updates the 'quantity' attibute value from a single item.
-- name: Updates arribute 'number'
+- name: Updates attribute 'number'
   aws_dynamodb_item:
     table: narcos
     state: present
