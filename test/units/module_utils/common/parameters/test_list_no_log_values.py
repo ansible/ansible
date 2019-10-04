@@ -34,8 +34,8 @@ def module_parameters():
     # Allow extra parameters to be passed to the fixture, which will be added to the output
     def _module_parameters(extra_params=None):
         params = {
-            'secret': 'undercookwovennativity',
-            'other_secret': 'cautious-slate-makeshift',
+            'secret': 'under',
+            'other_secret': 'makeshift',
             'state': 'present',
             'value': 5,
         }
@@ -54,13 +54,33 @@ def test_list_no_log_values_no_secrets(module_parameters):
         'state': {'type': 'str'},
         'value': {'type': 'int'},
     }
-    result = set()
-    assert result == list_no_log_values(argument_spec, module_parameters)
+    expected = set()
+    assert expected == list_no_log_values(argument_spec, module_parameters)
 
 
 def test_list_no_log_values(argument_spec, module_parameters):
-    result = set(('undercookwovennativity', 'cautious-slate-makeshift'))
-    assert result == list_no_log_values(argument_spec(), module_parameters())
+    expected = set(('under', 'makeshift'))
+    assert expected == list_no_log_values(argument_spec(), module_parameters())
+
+
+@pytest.mark.parametrize('extra_params', [
+    {'subopt1': 1},
+    {'subopt1': 3.14159},
+    {'subopt1': ['one', 'two']},
+    {'subopt1': ('one', 'two')},
+])
+def test_list_no_log_values_invalid_suboptions(argument_spec, module_parameters, extra_params):
+    extra_opts = {
+        'subopt1': {
+            'type': 'dict',
+            'options': {
+                'sub_1_1': {},
+            }
+        }
+    }
+
+    with pytest.raises(TypeError, match=r"Value '.*?' in the sub parameter field '.*?' must by a dict, not '.*?'"):
+        list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
 
 
 def test_list_no_log_values_suboptions(argument_spec, module_parameters):
@@ -70,48 +90,117 @@ def test_list_no_log_values_suboptions(argument_spec, module_parameters):
             'options': {
                 'sub_1_1': {'no_log': True},
                 'sub_1_2': {'type': 'list'},
-            },
-        },
+            }
+        }
     }
 
     extra_params = {
         'subopt1': {
-            'sub_1_1': 'Precision-Bagel',
-            'sub_1_2': ['Pebble-Slogan'],
+            'sub_1_1': 'bagel',
+            'sub_1_2': ['pebble'],
         }
     }
 
-    result = set(('undercookwovennativity', 'cautious-slate-makeshift', 'Precision-Bagel'))
-    assert result == list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
+    expected = set(('under', 'makeshift', 'bagel'))
+    assert expected == list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
 
 
-def test_list_no_log_values_recursive_suboptions(argument_spec, module_parameters):
+def test_list_no_log_values_sub_suboptions(argument_spec, module_parameters):
     extra_opts = {
-        'subopt1': {
+        'sub_level_1': {
             'type': 'dict',
             'options': {
-                'sub_1_1': {'no_log': True},
-                'subopt2': {
+                'l1_1': {'no_log': True},
+                'l1_2': {},
+                'l1_3': {
                     'type': 'dict',
                     'options': {
-                        'sub_2_1': {'no_log': True},
-                        'sub_2_2': {},
-                    },
-                },
+                        'l2_1': {'no_log': True},
+                        'l2_2': {},
+                    }
+                }
+            }
+        }
+    }
+
+    extra_params = {
+        'sub_level_1': {
+            'l1_1': 'saucy',
+            'l1_2': 'napped',
+            'l1_3': {
+                'l2_1': 'corporate',
+                'l2_2': 'tinsmith',
+            }
+        }
+    }
+
+    expected = set(('under', 'makeshift', 'saucy', 'corporate'))
+    assert expected == list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
+
+
+def test_list_no_log_values_suboptions_list(argument_spec, module_parameters):
+    extra_opts = {
+        'subopt1': {
+            'type': 'list',
+            'elements': 'dict',
+            'options': {
+                'sub_1_1': {'no_log': True},
+                'sub_1_2': {},
+            }
+        }
+    }
+
+    extra_params = {
+        'subopt1': [
+            {
+                'sub_1_1': ['playroom', 'luxury'],
+                'sub_1_2': 'deuce',
             },
-        },
+            {
+                'sub_1_2': ['squishier', 'finished'],
+            }
+        ]
+    }
+
+    expected = set(('under', 'makeshift', 'playroom', 'luxury'))
+    assert expected == list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
+
+
+def test_list_no_log_values_sub_suboptions_list(argument_spec, module_parameters):
+    extra_opts = {
+        'subopt1': {
+            'type': 'list',
+            'elements': 'dict',
+            'options': {
+                'sub_1_1': {'no_log': True},
+                'sub_1_2': {},
+                'subopt2': {
+                    'type': 'list',
+                    'elements': 'dict',
+                    'options': {
+                        'sub_2_1': {'no_log': True, 'type': 'list'},
+                        'sub_2_2': {},
+                    }
+                }
+            }
+        }
     }
 
     extra_params = {
         'subopt1': {
-            'sub_1_1': 'Precision-Bagel',
-            'subopt2': {
-                'sub_2_1': 'Sandstone-Unwrapped',
-                'sub_2_2': 'Hamstring-Aged',
-            },
+            'sub_1_1': ['playroom', 'luxury'],
+            'sub_1_2': 'deuce',
+            'subopt2': [
+                {
+                    'sub_2_1': ['basis', 'gave'],
+                    'sub_2_2': 'liquid',
+                },
+                {
+                    'sub_2_1': ['composure', 'thumping']
+                },
+            ]
         }
     }
-    result = set(('undercookwovennativity', 'cautious-slate-makeshift', 'Precision-Bagel', 'Sandstone-Unwrapped'))
-    assert result == list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
 
-
+    expected = set(('under', 'makeshift', 'playroom', 'luxury', 'basis', 'gave', 'composure', 'thumping'))
+    assert expected == list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
