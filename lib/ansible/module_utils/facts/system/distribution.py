@@ -529,14 +529,15 @@ class Distribution(object):
 
     def get_distribution_AIX(self):
         aix_facts = {}
-        rc, out, err = self.module.run_command("/usr/bin/oslevel")
-        data = out.split('.')
-        aix_facts['distribution_major_version'] = data[0]
-        if len(data) > 1:
-            aix_facts['distribution_version'] = '%s.%s' % (data[0], data[1])
-            aix_facts['distribution_release'] = data[1]
-        else:
-            aix_facts['distribution_version'] = data[0]
+        rc, out, err = self.module.run_command(["/usr/bin/oslevel", "-s"])
+        data = out.split('-')
+        aix_facts['distribution_major_version'] = data[0][:1]
+        aix_facts['distribution_release'] = data[0][1:2]
+        aix_facts['distribution_version'] = data[0].strip('0')
+        aix_facts['distribution_technology_level'] = data[1].strip('0')
+        aix_facts['distribution_service_pack'] = data[2].strip('0')
+        aix_facts['distribution_build_date'] = data[3].strip()
+
         return aix_facts
 
     def get_distribution_HPUX(self):
