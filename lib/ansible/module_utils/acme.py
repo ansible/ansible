@@ -654,7 +654,7 @@ class ACMEAccount(object):
         else:
             result = content
 
-        if fail_on_error and info['status'] >= 400:
+        if fail_on_error and (info['status'] < 200 or info['status'] >= 400):
             raise ModuleFailException("ACME request failed: CODE: {0} RESULT: {1}".format(info['status'], result))
         return result, info
 
