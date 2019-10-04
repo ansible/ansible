@@ -22,9 +22,9 @@
   yum: name=zip,unzip state=latest
   when: ansible_pkg_mgr  ==  'yum'
 
-  #- name: Ensure zip is present to create test archive (dnf)
-  #  dnf: name=zip state=latest
-  #  when: ansible_pkg_mgr  ==  'dnf'
+- name: Ensure zip is present to create test archive (dnf)
+  dnf: name=zip state=latest
+  when: ansible_pkg_mgr  ==  'dnf'
 
 - name: Ensure zip & unzip is present to create test archive (apt)
   apt: name=zip,unzip state=latest
