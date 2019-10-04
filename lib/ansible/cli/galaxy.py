@@ -26,7 +26,7 @@ from ansible.galaxy.collection import build_collection, install_collections, pub
     validate_collection_name
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
-from ansible.galaxy.token import GalaxyToken, KeycloakToken, NoTokenSentinel
+from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -332,14 +332,20 @@ class GalaxyCLI(CLI):
             token_val = server_options['token'] or NoTokenSentinel
             username = server_options['username']
 
-            # Use basic auth even if auth_url is provided
-            if not username:
+            # default case if no auth info is provided.
+            server_options['token'] = None
+
+            if username:
+                server_options['token'] = BasicAuthToken(username,
+                                                         server_options['password'])
+            else:
                 if token_val:
                     if auth_url:
                         server_options['token'] = KeycloakToken(access_token=token_val,
                                                                 auth_url=auth_url,
                                                                 validate_certs=not context.CLIARGS['ignore_certs'])
                     else:
+                        # The galaxy v1 / github / django / 'Token'
                         server_options['token'] = GalaxyToken(token=token_val)
 
             config_servers.append(GalaxyAPI(self.galaxy, server_key, **server_options))

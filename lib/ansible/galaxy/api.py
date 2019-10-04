@@ -5,7 +5,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import base64
 import json
 import os
 import tarfile
@@ -42,17 +41,7 @@ def g_connect(versions):
                 n_url = _urljoin(self.api_server, 'api')
                 error_context_msg = 'Error when finding available api versions from %s (%s)' % (self.name, n_url)
 
-                try:
-                    data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg)
-                except GalaxyError as e:
-                    if e.http_code != 401:
-                        raise
-
-                    # Assume this is v3 (Automation Hub) and auth is required
-                    headers = {}
-                    data = self._call_galaxy(n_url, headers=headers, method='GET',
-                                             error_context_msg=error_context_msg,
-                                             auth_required=True)
+                data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg)
 
                 # Default to only supporting v1, if only v1 is returned we also assume that v2 is available even though
                 # it isn't returned in the available_versions dict.
@@ -187,25 +176,16 @@ class GalaxyAPI:
         return data
 
     def _add_auth_token(self, headers, url, token_type=None, required=False):
-        if not required:
-            return
-
         # Don't add the auth token if one is already present
         if 'Authorization' in headers:
             return
 
-        token = self.token.get() if self.token else None
+        if not self.token and required:
+            raise AnsibleError("No access token or username set. A token can be set with --api-key, with "
+                               "'ansible-galaxy login', or set in ansible.cfg.")
 
         if self.token:
             headers.update(self.token.headers())
-        elif self.username:
-            token = "%s:%s" % (to_text(self.username, errors='surrogate_or_strict'),
-                               to_text(self.password, errors='surrogate_or_strict', nonstring='passthru') or '')
-            b64_val = base64.b64encode(to_bytes(token, encoding='utf-8', errors='surrogate_or_strict'))
-            headers['Authorization'] = 'Basic %s' % to_text(b64_val)
-        elif required:
-            raise AnsibleError("No access token or username set. A token can be set with --api-key, with "
-                               "'ansible-galaxy login', or set in ansible.cfg.")
 
     @g_connect(['v1'])
     def authenticate(self, github_token):
@@ -502,18 +482,15 @@ class GalaxyAPI:
         """
         if 'v3' in self.available_api_versions:
             api_path = self.available_api_versions['v3']
-            auth_required = True
         else:
             api_path = self.available_api_versions['v2']
-            auth_required = False
 
         url_paths = [self.api_server, api_path, 'collections', namespace, name, 'versions', version]
 
         n_collection_url = _urljoin(*url_paths)
         error_context_msg = 'Error when getting collection version metadata for %s.%s:%s from %s (%s)' \
                             % (namespace, name, version, self.name, self.api_server)
-        data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg,
-                                 auth_required=auth_required)
+        data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg)
 
         return CollectionVersionMetadata(data['namespace']['name'], data['collection']['name'], data['version'],
                                          data['download_url'], data['artifact']['sha256'],
@@ -532,19 +509,16 @@ class GalaxyAPI:
             api_path = self.available_api_versions['v3']
             results_key = 'data'
             pagination_path = ['links', 'next']
-            auth_required = True
         else:
             api_path = self.available_api_versions['v2']
             results_key = 'results'
             pagination_path = ['next']
-            auth_required = False
 
         n_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions')
 
         error_context_msg = 'Error when getting available collection versions for %s.%s from %s (%s)' \
                             % (namespace, name, self.name, self.api_server)
-        data = self._call_galaxy(n_url, error_context_msg=error_context_msg,
-                                 auth_required=auth_required)
+        data = self._call_galaxy(n_url, error_context_msg=error_context_msg)
 
         versions = []
         while True:
@@ -558,7 +532,6 @@ class GalaxyAPI:
                 break
 
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
-                                     error_context_msg=error_context_msg,
-                                     auth_required=auth_required)
+                                     error_context_msg=error_context_msg)
 
         return versions
