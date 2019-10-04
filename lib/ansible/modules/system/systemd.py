@@ -73,6 +73,12 @@ options:
               Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
         choices: [ system, user, global ]
         version_added: "2.7"
+    properties:
+        description:
+            - Run ``systemctl set-property`` for each name/value pair provided.
+            - The property name must already exist in the output of ``systemctl show``
+        type: dict
+        version_added: "2.9x"
     no_block:
         description:
             - Do not synchronously wait for the requested operation to finish.
@@ -316,6 +322,23 @@ def parse_systemctl_show(lines):
                 k = None
     return parsed
 
+def convert_property_suffix(raw_value):
+    import math
+
+    # check if we have an int, in which case there is nothing to convert
+    if isinstance(raw_value, int):
+        return raw_value
+
+    last_char = raw_value[-1]
+    size_converter = {"K":1, "M":2, "G":3, "T":4}
+
+    if last_char.upper() in size_converter:
+        p = int(math.pow(1024, size_converter[last_char.upper()]))
+        sz = int(raw_value[:-1])*p
+        return sz
+    else:
+        return raw_value
+
 
 # ===========================================
 # Main control flow
@@ -334,13 +357,15 @@ def main():
             user=dict(type='bool'),
             scope=dict(type='str', choices=['system', 'user', 'global']),
             no_block=dict(type='bool', default=False),
+            properties=dict(type='dict'),
         ),
         supports_check_mode=True,
-        required_one_of=[['state', 'enabled', 'masked', 'daemon_reload', 'daemon_reexec']],
+        required_one_of=[['state', 'enabled', 'masked', 'daemon_reload', 'daemon_reexec', 'properties']],
         required_by=dict(
             state=('name', ),
             enabled=('name', ),
             masked=('name', ),
+            properties=('name', ),
         ),
         mutually_exclusive=[['scope', 'user']],
     )
@@ -488,6 +513,47 @@ def main():
                         module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
 
                 result['enabled'] = not enabled
+
+        # set service properties if requested and this is not an initd service.  Should be done before starting the service.
+        if module.params['properties'] is not None and not is_initd:
+            fail_if_missing(module, found, unit, msg="host")
+
+            # loop through all of the properties we want to set
+            prop_list = module.params['properties']
+            prop_action = ""
+            for prop in prop_list.keys():
+                module.log("Evaluating property %s", prop)
+                # convert the output to a str as that is what result['status'][prop] will be when we compare later
+                prop_val = str(convert_property_suffix(prop_list[prop]))
+
+                # check if this is a valid property name
+                if prop not in result['status']:
+                    module.log("Property '%s' is invalid", prop)
+
+                # check if value already matches new value
+                elif prop_val != result['status'][prop]:
+                    module.log("Add '%s' to prop_mods list", prop)
+                    prop_action += (" %s=%s" % (prop, prop_val))
+                else:
+                    module.log("Property '%s' unchanged", prop)
+
+            # Modify all items
+            if prop_action:
+                result['changed'] = True
+                if not module.check_mode:
+                    (rc, out, err) = module.run_command("%s set-property %s %s" % (systemctl, unit, prop_action))
+                    if rc != 0:
+                        module.fail_json(msg="Unable to set-property service %s - %s: %s" % (unit, prop_action, err))
+                    else:
+                        # In the case where we have updated properties we need to pull the full list again
+                        # so that the result[status] reflects the new values
+                        (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
+
+                        if rc == 0:
+                            # load return of systemctl show into dictionary for easy access and return
+                            if out:
+                                result['status'] = parse_systemctl_show(to_native(out).split('\n'))
+
 
         # set service state if requested
         if module.params['state'] is not None:
