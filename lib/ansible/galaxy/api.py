@@ -5,7 +5,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import base64
 import json
 import os
 import tarfile
@@ -42,16 +41,7 @@ def g_connect(versions):
                 n_url = _urljoin(self.api_server, 'api')
                 error_context_msg = 'Error when finding available api versions from %s (%s)' % (self.name, n_url)
 
-                try:
-                    data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg)
-                except GalaxyError as e:
-                    if e.http_code != 401:
-                        raise
-
-                    # Assume this is v3 (Automation Hub) and auth is required
-                    headers = {}
-                    self._add_auth_token(headers, n_url, token_type='Bearer', required=True)
-                    data = self._call_galaxy(n_url, headers=headers, method='GET', error_context_msg=error_context_msg)
+                data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg)
 
                 # Default to only supporting v1, if only v1 is returned we also assume that v2 is available even though
                 # it isn't returned in the available_versions dict.
@@ -170,7 +160,7 @@ class GalaxyAPI:
         try:
             display.vvvv("Calling Galaxy at %s" % url)
             resp = open_url(to_native(url), data=args, validate_certs=self.validate_certs, headers=headers,
-                            method=method, timeout=20, unredirected_headers=['Authorization'])
+                            method=method, timeout=20)
         except HTTPError as e:
             raise GalaxyError(e, error_context_msg)
         except Exception as e:
@@ -190,22 +180,12 @@ class GalaxyAPI:
         if 'Authorization' in headers:
             return
 
-        token = self.token.get() if self.token else None
-
-        # 'Token' for v2 api, 'Bearer' for v3 but still allow someone to override the token if necessary.
-        is_v3 = 'v3' in url.split('/')
-        token_type = token_type or ('Bearer' if is_v3 else 'Token')
-
-        if token:
-            headers['Authorization'] = '%s %s' % (token_type, token)
-        elif self.username:
-            token = "%s:%s" % (to_text(self.username, errors='surrogate_or_strict'),
-                               to_text(self.password, errors='surrogate_or_strict', nonstring='passthru') or '')
-            b64_val = base64.b64encode(to_bytes(token, encoding='utf-8', errors='surrogate_or_strict'))
-            headers['Authorization'] = 'Basic %s' % to_text(b64_val)
-        elif required:
+        if not self.token and required:
             raise AnsibleError("No access token or username set. A token can be set with --api-key, with "
                                "'ansible-galaxy login', or set in ansible.cfg.")
+
+        if self.token:
+            headers.update(self.token.headers())
 
     @g_connect(['v1'])
     def authenticate(self, github_token):
