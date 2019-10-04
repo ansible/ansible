@@ -209,7 +209,9 @@ def integration_test_environment(args, target, inventory_path_src):
         yield IntegrationEnvironment(integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
         return
 
-    root_temp_dir = os.path.expanduser('~/.ansible/test/tmp')
+    # When testing a collection, the temporary directory must reside within the collection.
+    # This is necessary to enable support for the default collection for non-collection content (playbooks and roles).
+    root_temp_dir = os.path.join(ResultType.TMP.path, 'integration')
 
     prefix = '%s-' % target.name
     suffix = u'-\u00c5\u00d1\u015a\u00cc\u03b2\u0141\u00c8'
