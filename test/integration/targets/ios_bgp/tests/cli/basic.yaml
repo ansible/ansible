@@ -87,6 +87,10 @@
             description: EBGP_NBR_1
             local_as: 64497
 
+          - neighbor: 10.10.20.20
+            remote_as: 65012
+            description: BGP_NBR_2
+            ebgp_multihop: 100
     register: result
 
   - assert:
@@ -95,6 +99,8 @@
         - "'neighbor 203.0.113.10 remote-as 64511' in result.commands"
         - "'neighbor 203.0.113.10 description EBGP_NBR_1' in result.commands"
         - "'neighbor 203.0.113.10 local-as 64497' in result.commands"
+        - "'neighbor 10.10.20.20 remote-as 65012' in result.commands"
+        - "'neighbor 10.10.20.20 description BGP_NBR_2' in result.commands"
         - "'no neighbor 192.0.2.10' in result.commands"
 
   - name: Configure BGP neighbors with operation replace (idempotent)
@@ -169,9 +175,6 @@
       operation: merge
       config:
         bgp_as: 64496
-        neighbors:
-          - neighbor: 10.10.20.20
-            remote_as: 65012
         address_family:
           - afi: ipv4
             safi: unicast
@@ -195,7 +198,6 @@
       that:
         - 'result.changed == true'
         - "'router bgp 64496' in result.commands"
-        - "'neighbor 10.10.20.20 remote-as 65012' in result.commands"
         - "'address-family ipv4' in result.commands"
         - "'neighbor 203.0.113.10 activate' in result.commands"
         - "'neighbor 203.0.113.10 maximum-prefix 250' in result.commands"
