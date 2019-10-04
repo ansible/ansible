@@ -83,10 +83,10 @@
     - slave_status is not changed
 
 # Create test table and add data to it:
-- name: Create user for replication
+- name: Create test table
   shell: "echo \"CREATE TABLE {{ test_table }} (id int);\" | mysql -P {{ master_port }} -h 127.0.0.1 {{ test_db }}"
 
-- name: Create user for replication
+- name: Insert data
   shell: >
     echo "INSERT INTO {{ test_table }} (id) VALUES (1), (2), (3); FLUSH LOGS;" |
     mysql -P {{ master_port }} -h 127.0.0.1 {{ test_db }}
