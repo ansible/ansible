@@ -113,6 +113,13 @@ options:
         choices: [current_pos, slave_pos, disabled]
         type: str
         version_added: "2.10"
+    master_delay:
+        description:
+            - Time lag behind the master's state (in seconds).
+            - Available from MySQL 5.6.
+            - For more information see U(https://dev.mysql.com/doc/refman/8.0/en/replication-delayed.html).
+        type: int
+        version_added: "2.10"
 
 extends_documentation_fragment:
 - mysql
@@ -144,6 +151,12 @@ EXAMPLES = r'''
   mysql_replication:
     mode: changemaster
     master_use_gtid: current_pos
+
+- name: Change master to use replication delay 3600 seconds
+  mysql_replication:
+    mode: changemaster
+    master_host: 192.0.2.1
+    master_delay: 3600
 '''
 
 RETURN = r'''
@@ -259,6 +272,7 @@ def main():
             client_key=dict(type='path', aliases=['ssl_key']),
             ca_cert=dict(type='path', aliases=['ssl_ca']),
             master_use_gtid=dict(type='str', choices=['current_pos', 'slave_pos', 'disabled']),
+            master_delay=dict(type='int'),
         )
     )
     mode = module.params["mode"]
@@ -283,6 +297,7 @@ def main():
     ssl_ca = module.params["ca_cert"]
     connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
+    master_delay = module.params['master_delay']
     if module.params.get("master_use_gtid") == 'disabled':
         master_use_gtid = 'no'
     else:
@@ -340,6 +355,8 @@ def main():
             chm.append("MASTER_LOG_FILE='%s'" % master_log_file)
         if master_log_pos is not None:
             chm.append("MASTER_LOG_POS=%s" % master_log_pos)
+        if master_delay:
+            chm.append("MASTER_DELAY=%s" % master_delay)
         if relay_log_file:
             chm.append("RELAY_LOG_FILE='%s'" % relay_log_file)
         if relay_log_pos is not None:
