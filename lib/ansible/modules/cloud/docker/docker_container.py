@@ -2640,8 +2640,8 @@ class ContainerManager(DockerBaseClass):
             if not tag:
                 tag = "latest"
             image = self.client.find_image(repository, tag)
-            if not self.check_mode:
-                if not image or self.parameters.pull:
+            if not image or self.parameters.pull:
+                if not self.check_mode:
                     self.log("Pull the image.")
                     image, alreadyToLatest = self.client.pull_image(repository, tag)
                     if alreadyToLatest:
@@ -2649,6 +2649,12 @@ class ContainerManager(DockerBaseClass):
                     else:
                         self.results['changed'] = True
                         self.results['actions'].append(dict(pulled_image="%s:%s" % (repository, tag)))
+                elif not image:
+                    # If the image isn't there, claim we'll pull.
+                    # (Implicitly: if the image is there, claim it already was latest.)
+                    self.results['changed'] = True
+                    self.results['actions'].append(dict(pulled_image="%s:%s" % (repository, tag)))
+
         self.log("image")
         self.log(image, pretty_print=True)
         return image
