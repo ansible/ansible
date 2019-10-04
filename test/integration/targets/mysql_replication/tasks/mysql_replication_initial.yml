@@ -91,6 +91,10 @@
     echo "INSERT INTO {{ test_table }} (id) VALUES (1), (2), (3); FLUSH LOGS;" |
     mysql -P {{ master_port }} -h 127.0.0.1 {{ test_db }}
 
+- name: Small pause to be sure the bin log, which was flushed previously, reached the slave
+  pause:
+    seconds: 2
+
 # Test master log pos has been changed:
 - name: Get standby status
   mysql_replication:
