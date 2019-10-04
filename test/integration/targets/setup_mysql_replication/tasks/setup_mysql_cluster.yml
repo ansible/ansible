@@ -1,0 +1,69 @@
+# We run two servers listening different ports
+# to be able to check replication (one server for master, another for standby).
+
+- name: Install Repo
+  yum:
+    name: '{{ repo_link }}'
+
+- name: Install MySQL community server
+  yum:
+    name: mysql-community-server
+    #enablerepo: '{{ repo_name }}'
+
+- name: Create directories for standby
+  file:
+    state: directory
+    path: "{{ item }}"
+    owner: mysql
+    group: mysql
+  loop:
+  - "{{ master_datadir }}"
+  - "{{ standby_datadir }}"
+  - "{{ standby_logdir }}"
+  - "{{ default_logdir }}"
+
+- name: Copy cnf template
+  template:
+    src: my.cnf.j2
+    dest: /etc/my.cnf
+    owner: mysql
+    group: mysql
+    force: yes
+
+- name: Initialize DBs
+  shell: 'mysql_install_db --user=mysql --datadir={{ item }}'
+  loop:
+  - '{{ master_datadir }}'
+  - '{{ standby_datadir }}'
+
+- name: Start services
+  shell: 'mysqld_multi --log=/var/log/mysql/mysql.log start 1,2'
+
+- name: Pause
+  pause: seconds=3
+
+########### For painful debug uncomment the lines below ##
+#- name: DEBUG Check stratup log
+#  shell: cat /var/log/mysql/mysql.log
+
+#- name: DEBUG Check mysql_safe err log
+#  shell: cat '{{  mysql_safe_err_log }}'
+
+#- name: DEBUG Check processes
+#  shell: 'ps aux | grep mysqld | grep -v "grep\|root"'
+
+#- name: DEBUG
+#  yum: name=net-tools
+
+#- name: DEBUG
+#  shell: "netstat -ntpl"
+
+#- name: DEBUG
+#  shell: cat /etc/my.cnf
+##########################################################
+
+- name: Check connection to the master
+  shell: 'echo "SHOW DATABASES;" | mysql -P {{ master_port }} -h 127.0.0.1'
+
+- name: Check connection to the standby
+  shell: "echo \"SHOW VARIABLES LIKE '%version%';\" | mysql -P {{ standby_port }} -h 127.0.0.1"
