@@ -337,7 +337,8 @@ class GalaxyCLI(CLI):
                 if token_val:
                     if auth_url:
                         server_options['token'] = KeycloakToken(access_token=token_val,
-                                                                auth_url=auth_url)
+                                                                auth_url=auth_url,
+                                                                validate_certs=not context.CLIARGS['ignore_certs'])
                     else:
                         server_options['token'] = GalaxyToken(token=token_val)
 

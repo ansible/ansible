@@ -28,7 +28,6 @@ from stat import S_IRUSR, S_IWUSR
 import yaml
 
 from ansible import constants as C
-from ansible import context
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
@@ -50,11 +49,11 @@ class KeycloakToken(object):
 
     token_type = 'Bearer'
 
-    def __init__(self, access_token=None, auth_url=None):
+    def __init__(self, access_token=None, auth_url=None, validate_certs=True):
         self.access_token = access_token
         self.auth_url = auth_url
         self._token = None
-        self.validate_certs = not context.CLIARGS['ignore_certs']
+        self.validate_certs = validate_certs
 
     def _form_payload(self):
         return 'grant_type=refresh_token&client_id=cloud-services&refresh_token=%s' % self.access_token
