@@ -480,11 +480,7 @@ class GalaxyAPI:
         :param version: Optional version of the collection to get the information for.
         :return: CollectionVersionMetadata about the collection at the version requested.
         """
-        if 'v3' in self.available_api_versions:
-            api_path = self.available_api_versions['v3']
-        else:
-            api_path = self.available_api_versions['v2']
-
+        api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
         url_paths = [self.api_server, api_path, 'collections', namespace, name, 'versions', version]
 
         n_collection_url = _urljoin(*url_paths)
