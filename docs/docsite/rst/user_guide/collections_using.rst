@@ -132,7 +132,12 @@ following entries like so:
 .. code-block:: ini
 
     [galaxy]
-    server_list = my_org_hub, release_galaxy, test_galaxy
+    server_list = automation_hub, my_org_hub, release_galaxy, test_galaxy
+
+    [galaxy_server.automation_hub]
+    url=https://ci.cloud.redhat.com/api/automation-hub/
+    auth_url=https://sso.qa.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+    token=my_token
 
     [galaxy_server.my_org_hub]
     url=https://automation.my_org/
@@ -165,6 +170,7 @@ define the following keys:
 * ``token``: A token key to use for authentication against the Galaxy instance, this is mutually exclusive with ``username``
 * ``username``: The username to use for basic authentication against the Galaxy instance, this is mutually exclusive with ``token``
 * ``password``: The password to use for basic authentication
+* ``auth_url``: The URL of a Keycloak server 'token_endpoint' if using SSO auth (Automation Hub for ex). This is mutually exclusive with ``username``. ``auth_url`` requires ``token``.
 
 As well as being defined in the ``ansible.cfg`` file, these server options can be defined as an environment variable.
 The environment variable is in the form ``ANSIBLE_GALAXY_SERVER_{{ id }}_{{ key }}`` where ``{{ id }}`` is the upper
