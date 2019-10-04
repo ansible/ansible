@@ -21,7 +21,7 @@ from ansible import context
 from ansible.errors import AnsibleError
 from ansible.galaxy import api as galaxy_api
 from ansible.galaxy.api import CollectionVersionMetadata, GalaxyAPI, GalaxyError
-from ansible.galaxy.token import GalaxyToken, KeycloakToken
+from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.six.moves.urllib import error as urllib_error
 from ansible.utils import context_objects as co
@@ -117,14 +117,16 @@ def test_api_token_auth_with_v2_url():
 
 
 def test_api_basic_auth_password():
-    api = GalaxyAPI(None, "test", "https://galaxy.ansible.com", username=u"user", password=u"pass")
+    token = BasicAuthToken(username=u"user", password=u"pass")
+    api = GalaxyAPI(None, "test", "https://galaxy.ansible.com", token=token)
     actual = {}
     api._add_auth_token(actual, "", required=True)
     assert actual == {'Authorization': 'Basic dXNlcjpwYXNz'}
 
 
 def test_api_basic_auth_no_password():
-    api = GalaxyAPI(None, "test", "https://galaxy.ansible.com", username=u"user")
+    token = BasicAuthToken(username=u"user")
+    api = GalaxyAPI(None, "test", "https://galaxy.ansible.com", token=token)
     actual = {}
     api._add_auth_token(actual, "", required=True)
     assert actual == {'Authorization': 'Basic dXNlcjo='}

@@ -152,7 +152,7 @@ class GalaxyToken(object):
 class BasicAuthToken(object):
     token_type = 'Basic'
 
-    def __init__(self, username, password):
+    def __init__(self, username, password=None):
         self.username = username
         self.password = password
         self._token = None
