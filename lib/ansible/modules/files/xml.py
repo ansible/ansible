@@ -225,7 +225,7 @@ EXAMPLES = r'''
 - name: Add several more beers to the 'beers' element and add them before the 'Rochefort 10' element
   xml:
     path: /foo/bar.xml
-    xpath: '/business/beers/beer[text()=\"Rochefort 10\"]'
+    xpath: '/business/beers/beer[text()="Rochefort 10"]'
     insertbefore: yes
     add_children:
     - beer: Old Rasputin
