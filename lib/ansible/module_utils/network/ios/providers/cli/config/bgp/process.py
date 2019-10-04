@@ -89,7 +89,7 @@ class Provider(CliProvider):
         for entry in self.get_value('config.networks'):
             network = entry['prefix']
             cmd = 'network %s' % network
-            if entry['masklen']:
+            if entry['masklen'] and entry['masklen'] not in (24, 16, 8):
                 cmd += ' mask %s' % to_netmask(entry['masklen'])
                 network += ' mask %s' % to_netmask(entry['masklen'])
 

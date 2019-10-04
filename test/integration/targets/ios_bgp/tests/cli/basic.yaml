@@ -380,6 +380,36 @@
         - "'router bgp 64497' in result.commands"
         - "'bgp router-id 192.0.2.10' in result.commands"
         - "'bgp log-neighbor-changes' in result.commands"
+  
+  - name: "Configure BGP neighbors with classful boundary"
+    ios_bgp: &classful
+      config:
+        bgp_as: 64497
+        log_neighbor_changes: true
+        networks:
+          - prefix: 198.51.100.0
+            masklen: 23
+
+          - prefix: 201.0.113.32
+            masklen: 24
+
+      operation: merge
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == true'
+        - "'router bgp 64497' in result.commands"
+        - "'network 198.51.100.0 mask 255.255.254.0' in result.commands"
+        - "'network 201.0.113.32' in result.commands"
+
+  - name: Configure BGP neighbors with classful boundary (idempotent)
+    ios_bgp: *classful
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == false'
 
   always:
   - name: Teardown
