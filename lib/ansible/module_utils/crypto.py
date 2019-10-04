@@ -30,6 +30,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
+import sys
 from distutils.version import LooseVersion
 
 try:
@@ -1883,3 +1884,22 @@ def quick_is_not_prime(n):
     # TODO: maybe do some iterations of Miller-Rabin to increase confidence
     # (https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test)
     return False
+
+
+python_version = (sys.version_info[0], sys.version_info[1])
+if python_version >= (2, 7) or python_version >= (3, 1):
+    # Ansible still supports Python 2.6 on remote nodes
+    def count_bits(no):
+        no = abs(no)
+        if no == 0:
+            return 0
+        return no.bit_length()
+else:
+    # Slow, but works
+    def count_bits(no):
+        no = abs(no)
+        count = 0
+        while no > 0:
+            no >>= 1
+            count += 1
+        return count
