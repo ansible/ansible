@@ -32,6 +32,7 @@ options:
     description:
       - List of container names or container IDs to connect to a network.
     type: list
+    elements: str
     aliases:
       - containers
 
@@ -115,6 +116,7 @@ options:
         L(Docker docs,https://docs.docker.com/compose/compose-file/compose-file-v2/#ipam) for valid options and values.
         Note that I(iprange) is spelled differently here (we use the notation from the Docker SDK for Python).
     type: list
+    elements: dict
     suboptions:
       subnet:
         description:

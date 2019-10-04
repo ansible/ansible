@@ -39,6 +39,7 @@ options:
         for idempotency checking.
       - Requires API version >= 1.39.
     type: list
+    elements: str
     version_added: "2.8"
   subnet_size:
     description:
@@ -98,6 +99,7 @@ options:
       - Remote address of one or more manager nodes of an existing Swarm to connect to.
       - Used with I(state=join).
     type: list
+    elements: str
   task_history_retention_limit:
     description:
       - Maximum number of tasks history stored.

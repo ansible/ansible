@@ -47,6 +47,7 @@ options:
       - List of Compose file names relative to I(project_src). Overrides C(docker-compose.yml) or C(docker-compose.yaml).
       - Files are loaded and merged in the order given.
     type: list
+    elements: path
   state:
     description:
       - Desired state of the project.
@@ -64,6 +65,7 @@ options:
         on a subset of services.
       - If empty, which is the default, the operation will be performed on all services defined in the Compose file (or inline I(definition)).
     type: list
+    elements: str
   scale:
     description:
       - When I(state) is C(present) scale services. Provide a dictionary of key/value pairs where the key
