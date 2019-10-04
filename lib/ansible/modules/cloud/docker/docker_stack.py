@@ -41,6 +41,7 @@ options:
         referring to the path of the compose file on the target host
         or the YAML contents of a compose file nested as dictionary.
     type: list
+    # elements: raw
     default: []
   prune:
     description:
@@ -210,7 +211,7 @@ def main():
     module = AnsibleModule(
         argument_spec={
             'name': dict(type='str', required=True),
-            'compose': dict(type='list', default=[]),
+            'compose': dict(type='list', elements='raw', default=[]),
             'prune': dict(type='bool', default=False),
             'with_registry_auth': dict(type='bool', default=False),
             'resolve_image': dict(type='str', choices=['always', 'changed', 'never']),

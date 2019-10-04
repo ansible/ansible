@@ -57,6 +57,7 @@ options:
         description:
           - List of image names to consider as cache source.
         type: list
+        elements: str
       dockerfile:
         description:
           - Use with state C(present) and source C(build) to provide an alternate name for the Dockerfile to use when building an image.
