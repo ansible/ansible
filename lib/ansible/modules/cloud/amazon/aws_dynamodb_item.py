@@ -109,7 +109,7 @@ EXAMPLES = '''
     expression_attribute_values: {":number": {"N": "2000"}}
 
 # Updates the 'status' (dynamodb protected keyword) attibute value from a single item.
-- name: Updates arribute 'status'
+- name: Updates attribute 'status'
   aws_dynamodb_item:
     table: narcos
     state: present
