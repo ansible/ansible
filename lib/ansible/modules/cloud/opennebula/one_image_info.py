@@ -37,7 +37,7 @@ description:
   - This module was called C(one_image_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.6"
 requirements:
-  - python-oca
+  - pyone
 options:
   api_url:
     description:
@@ -66,6 +66,7 @@ options:
       - See examples for more details.
 author:
     - "Milan Ilic (@ilicmilan)"
+    - "Jan Meerkamp (@meerkampdvv)"
 '''
 
 EXAMPLES = '''
@@ -143,19 +144,18 @@ images:
 '''
 
 try:
-    import oca
-    HAS_OCA = True
+    import pyone
+    HAS_PYONE = True
 except ImportError:
-    HAS_OCA = False
+    HAS_PYONE = False
 
 from ansible.module_utils.basic import AnsibleModule
 import os
 
 
 def get_all_images(client):
-    pool = oca.ImagePool(client)
+    pool = client.imagepool.info(-2, -1, -1, -1)
     # Filter -2 means fetch all images user can Use
-    pool.info(filter=-2)
 
     return pool
 
@@ -164,20 +164,17 @@ IMAGE_STATES = ['INIT', 'READY', 'USED', 'DISABLED', 'LOCKED', 'ERROR', 'CLONE',
 
 
 def get_image_info(image):
-    image.info()
-
     info = {
-        'id': image.id,
-        'name': image.name,
-        'state': IMAGE_STATES[image.state],
-        'running_vms': image.running_vms,
-        'used': bool(image.running_vms),
-        'user_name': image.uname,
-        'user_id': image.uid,
-        'group_name': image.gname,
-        'group_id': image.gid,
+        'id': image.ID,
+        'name': image.NAME,
+        'state': IMAGE_STATES[image.STATE],
+        'running_vms': image.RUNNING_VMS,
+        'used': bool(image.RUNNING_VMS),
+        'user_name': image.UNAME,
+        'user_id': image.UID,
+        'group_name': image.GNAME,
+        'group_id': image.GID,
     }
-
     return info
 
 
@@ -185,10 +182,10 @@ def get_images_by_ids(module, client, ids):
     images = []
     pool = get_all_images(client)
 
-    for image in pool:
-        if str(image.id) in ids:
+    for image in pool.IMAGE:
+        if str(image.ID) in ids:
             images.append(image)
-            ids.remove(str(image.id))
+            ids.remove(str(image.ID))
             if len(ids) == 0:
                 break
 
@@ -212,11 +209,11 @@ def get_images_by_name(module, client, name_pattern):
         else:
             pattern = re.compile(name_pattern[1:])
 
-    for image in pool:
+    for image in pool.IMAGE:
         if pattern is not None:
-            if pattern.match(image.name):
+            if pattern.match(image.NAME):
                 images.append(image)
-        elif name_pattern == image.name:
+        elif name_pattern == image.NAME:
             images.append(image)
             break
 
@@ -266,14 +263,14 @@ def main():
     if module._name == 'one_image_facts':
         module.deprecate("The 'one_image_facts' module has been renamed to 'one_image_info'", version='2.13')
 
-    if not HAS_OCA:
-        module.fail_json(msg='This module requires python-oca to work!')
+    if not HAS_PYONE:
+        module.fail_json(msg='This module requires pyone to work!')
 
     auth = get_connection_info(module)
     params = module.params
     ids = params.get('ids')
     name = params.get('name')
-    client = oca.Client(auth.username + ':' + auth.password, auth.url)
+    client = pyone.OneServer(auth.url, session=auth.username + ':' + auth.password)
 
     result = {'images': []}
     images = []
@@ -283,7 +280,7 @@ def main():
     elif name:
         images = get_images_by_name(module, client, name)
     else:
-        images = get_all_images(client)
+        images = get_all_images(client).IMAGE
 
     for image in images:
         result['images'].append(get_image_info(image))
