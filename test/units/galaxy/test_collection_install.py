@@ -609,6 +609,7 @@ def test_install_collection_with_download(galaxy_server, collection_artifact, mo
     mock_download.return_value = collection_tar
     monkeypatch.setattr(collection, '_download_file', mock_download)
 
+    monkeypatch.setattr(galaxy_server, '_available_api_versions', {'v2': 'v2/'})
     temp_path = os.path.join(os.path.split(collection_tar)[0], b'temp')
     os.makedirs(temp_path)
 

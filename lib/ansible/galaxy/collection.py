@@ -153,7 +153,8 @@ class CollectionRequirement:
             download_url = self._metadata.download_url
             artifact_hash = self._metadata.artifact_sha256
             headers = {}
-            self.api._add_auth_token(headers, download_url)
+            self.api._add_auth_token(headers, download_url, required=False)
+
             self.b_path = _download_file(download_url, b_temp_path, artifact_hash, self.api.validate_certs,
                                          headers=headers)
 
