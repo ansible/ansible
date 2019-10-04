@@ -59,7 +59,6 @@
       that:
           - create_network_port is changed
 
-
   - name: Backing type - named pipe
     vmware_serial_port:
       hostname: "{{ vcenter_hostname }}"
@@ -77,6 +76,11 @@
 
   - debug: var=create_pipe_port
 
+  - name: assert that changes were made
+    assert:
+      that:
+          - create_pipe_port is changed
+
   - name: Backing type - physical serial device
     vmware_serial_port:
       hostname: "{{ vcenter_hostname }}"
@@ -92,6 +96,11 @@
 
   - debug: var=create_device_port
 
+  - name: assert that changes were made
+    assert:
+      that:
+          - create_device_port is changed
+
   - name: Backing type - output file
     vmware_serial_port:
       hostname: "{{ vcenter_hostname }}"
@@ -106,3 +115,8 @@
     register: create_file_port
 
   - debug: var=create_file_port
+
+  - name: assert that changes were made
+    assert:
+      that:
+          - create_file_port is changed
