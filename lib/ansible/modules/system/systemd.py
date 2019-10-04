@@ -136,6 +136,19 @@ EXAMPLES = '''
 - name: just force systemd to re-execute itself (2.8 and above)
   systemd:
     daemon_reexec: yes
+
+- name: set CPUShares and MemoryLimit on sshd.service
+  systemd:
+    name: sshd.service
+    properties:
+      CPUShares: 750
+      MemoryLimit: "750M"
+
+- name: set CPUShares to the default value on sshd.service
+  systemd:
+    name: sshd.service
+    properties:
+      CPUShares: ""
 '''
 
 RETURN = '''
@@ -326,7 +339,7 @@ def convert_property_suffix(raw_value):
     import math
 
     # check if we have an int, in which case there is nothing to convert
-    if isinstance(raw_value, int):
+    if isinstance(raw_value, int) or raw_value == "":
         return raw_value
 
     last_char = raw_value[-1]
