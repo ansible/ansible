@@ -558,6 +558,7 @@ class GalaxyAPI:
                 break
 
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
-                                     error_context_msg=error_context_msg)
+                                     error_context_msg=error_context_msg,
+                                     auth_required=auth_required)
 
         return versions
