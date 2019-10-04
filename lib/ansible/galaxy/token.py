@@ -21,6 +21,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import base64
 import os
 import json
 from stat import S_IRUSR, S_IWUSR
@@ -139,6 +140,37 @@ class GalaxyToken(object):
     def save(self):
         with open(self.b_file, 'w') as f:
             yaml.safe_dump(self.config, f, default_flow_style=False)
+
+    def headers(self):
+        headers = {}
+        token = self.get()
+        if token:
+            headers['Authorization'] = '%s %s' % (self.token_type, self.get())
+        return headers
+
+
+class BasicAuthToken(object):
+    token_type = 'Basic'
+
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+        self._token = None
+
+    @staticmethod
+    def _encode_token(username, password):
+        token = "%s:%s" % (to_text(username, errors='surrogate_or_strict'),
+                           to_text(password, errors='surrogate_or_strict', nonstring='passthru') or '')
+        b64_val = base64.b64encode(to_bytes(token, encoding='utf-8', errors='surrogate_or_strict'))
+        return to_text(b64_val)
+
+    def get(self):
+        if self._token:
+            return self._token
+
+        self._token = self._encode_token(self.username, self.password)
+
+        return self._token
 
     def headers(self):
         headers = {}
