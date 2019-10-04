@@ -184,7 +184,6 @@ def test_initialise_galaxy_with_auth(monkeypatch):
 def test_initialise_automation_hub(monkeypatch):
     mock_open = MagicMock()
     mock_open.side_effect = [
-        urllib_error.HTTPError('https://galaxy.ansible.com/api', 401, 'msg', {}, StringIO()),
         StringIO(u'{"available_versions":{"v2": "v2/", "v3":"v3/"}}'),
     ]
     monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
@@ -200,7 +199,7 @@ def test_initialise_automation_hub(monkeypatch):
     assert api.available_api_versions['v3'] == u'v3/'
 
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api'
-    assert mock_open.mock_calls[1][2]['headers'] == {'Authorization': 'Bearer my_token'}
+    assert mock_open.mock_calls[0][2]['headers'] == {'Authorization': 'Bearer my_token'}
 
 
 def test_initialise_unknown(monkeypatch):
