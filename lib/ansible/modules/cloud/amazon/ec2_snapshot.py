@@ -100,14 +100,12 @@ EXAMPLES = '''
         source: /data
 
 # Remove a snapshot
-- local_action:
-    module: ec2_snapshot
+- ec2_snapshot:
     snapshot_id: snap-abcd1234
     state: absent
 
 # Create a snapshot only if the most recent one is older than 1 hour
-- local_action:
-    module: ec2_snapshot
+- ec2_snapshot:
     volume_id: vol-abcdef12
     last_snapshot_min_age: 60
 '''
