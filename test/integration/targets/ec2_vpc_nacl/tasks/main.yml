@@ -44,6 +44,21 @@
 
     # ============================================================
 
+    - name: fetch AZ availability
+      aws_az_info:
+      register: az_info
+
+    - name: Assert that we have multiple AZs available to us
+      assert:
+        that: az_info.availability_zones | length >= 2
+
+    - name: pick AZs
+      set_fact:
+        az_one: '{{ az_info.availability_zones[0].zone_name }}'
+        az_two: '{{ az_info.availability_zones[1].zone_name }}'
+
+    # ============================================================
+
     - name: create a VPC
       ec2_vpc_net:
         cidr_block: 10.230.230.0/24
@@ -54,23 +69,23 @@
     - name: create subnets
       ec2_vpc_subnet:
         cidr: "{{ item.cidr }}"
-        az: "{{ aws_region}}{{ item.az }}"
+        az: "{{ item.az }}"
         vpc_id: "{{ vpc.vpc.id }}"
         state: present
         tags:
           Name: "{{ item.name }}"
       with_items:
         - cidr: 10.230.230.0/26
-          az: "a"
+          az: "{{ az_one }}"
           name: "{{ resource_prefix }}-subnet-1"
         - cidr: 10.230.230.64/26
-          az: "b"
+          az: "{{ az_two }}"
           name: "{{ resource_prefix }}-subnet-2"
         - cidr: 10.230.230.128/26
-          az: "a"
+          az: "{{ az_one }}"
           name: "{{ resource_prefix }}-subnet-3"
         - cidr: 10.230.230.192/26
-          az: "b"
+          az: "{{ az_two }}"
           name: "{{ resource_prefix }}-subnet-4"
       register: subnets
 
