@@ -117,7 +117,7 @@ account:
       description: the public account key as a L(JSON Web Key,https://tools.ietf.org/html/rfc7517).
       returned: always
       type: str
-      sample: https://example.ca/account/1/orders
+      sample: '{"kty":"EC","crv":"P-256","x":"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4","y":"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM"}'
 
 orders:
   description:
