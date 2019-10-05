@@ -1,0 +1,28 @@
+---
+- hosts: "localhost"
+  gather_facts: no
+
+  tasks:
+    - name: "Install Hiera"
+      gem:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+          - "hiera"
+          - "hiera-eyaml"
+
+    - debug: msg="{{ lookup('hiera', 'test_var') }}"
+
+    - name: Fetch a value from Hiera
+      set_fact:
+        actual_value: "{{ lookup('hiera', 'test_var') }}"
+
+    - name: Perform assertions
+      assert:
+        that:
+          - actual_value == "success"
+          - "'{{ (lookup('hiera', 'test_list'))[0].gamertag }}' == 'Art3mis'"
+          - "{{ lookup('hiera', 'test_array') | length }} == 3"
+          - "'{{ lookup('hiera', 'test_array') | join(' ') }}' == 'Ready Player One'"
+          - "'{{ lookup('hiera', 'first.to_the_key environment=production') }}' == 'First to the Egg'"
+        

@@ -57,6 +57,7 @@ RETURN = """
 """
 
 import os
+import json
 
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.cmd_functions import run_cmd
@@ -64,24 +65,20 @@ from ansible.utils.cmd_functions import run_cmd
 ANSIBLE_HIERA_CFG = os.getenv('ANSIBLE_HIERA_CFG', '/etc/hiera.yaml')
 ANSIBLE_HIERA_BIN = os.getenv('ANSIBLE_HIERA_BIN', '/usr/bin/hiera')
 
-
 class Hiera(object):
     def get(self, hiera_key):
-        pargs = [ANSIBLE_HIERA_BIN]
-        pargs.extend(['-c', ANSIBLE_HIERA_CFG])
-
-        pargs.extend(hiera_key)
-
-        rc, output, err = run_cmd("{0} -c {1} {2}".format(
-            ANSIBLE_HIERA_BIN, ANSIBLE_HIERA_CFG, hiera_key[0]))
+        command = "{0} -f json -c {1} {2}".format(ANSIBLE_HIERA_BIN, ANSIBLE_HIERA_CFG, hiera_key[0])
+        _, output, _ = run_cmd(command)
 
         return output.strip()
-
 
 class LookupModule(LookupBase):
     def run(self, terms, variables=''):
         hiera = Hiera()
-        ret = []
+        data = hiera.get(terms)
 
-        ret.append(hiera.get(terms))
-        return ret
+        # Check for bytes literal and decode if necessary
+        if isinstance(data, bytes):
+            data = data.decode('utf-8')
+        
+        return [json.loads(data)]

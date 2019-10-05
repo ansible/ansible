@@ -1,0 +1,12 @@
+---
+
+test_var: success
+
+test_list:
+  - gamertag: Art3mis
+    real_name: Samantha Evelyn Cook
+
+test_array:
+  - Ready
+  - Player
+  - One
