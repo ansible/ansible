@@ -440,30 +440,6 @@ def main():
                                 r['checksum'] = module.sha1(fsname)
                             filelist.append(r)
 
-                    elif stat.S_ISBLK(st.st_mode) and params['file_type'] == 'block':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
-
-                            r.update(statinfo(st))
-                            filelist.append(r)
-
-                    elif stat.S_ISCHR(st.st_mode) and params['file_type'] == 'char':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
-
-                            r.update(statinfo(st))
-                            filelist.append(r)
-
-                    elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
-
-                            r.update(statinfo(st))
-                            filelist.append(r)
-
-                    elif stat.S_ISFIFO(st.st_mode) and params['file_type'] == 'fifo':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
-
-                            r.update(statinfo(st))
-                            filelist.append(r)
-
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
                            agefilter(st, now, age, params['age_stamp']) and \
@@ -474,13 +450,7 @@ def main():
                                 r['checksum'] = module.sha1(fsname)
                             filelist.append(r)
 
-                    elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
-
-                            r.update(statinfo(st))
-                            filelist.append(r)
-
-                    elif stat.S_ISSOCK(st.st_mode) and params['file_type'] == 'socket':
+                    elif params['file_type'] in ['block', 'char', 'directory', 'fifo', 'link', 'socket']:
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
 
                             r.update(statinfo(st))
