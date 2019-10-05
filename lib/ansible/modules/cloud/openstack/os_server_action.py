@@ -261,7 +261,7 @@ def main():
                 _action_url(server.id),
                 json={'resize': {'flavorRef': flavor.id}})
             # Waiting is not conditional as we need to do a second task
-            for _ in sdk.utils.iterate_timeout(
+            for count in sdk.utils.iterate_timeout(
                     timeout,
                     "Timeout waiting for server to complete %s" % action):
                 try:
