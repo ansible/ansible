@@ -450,7 +450,12 @@ def main():
                                 r['checksum'] = module.sha1(fsname)
                             filelist.append(r)
 
-                    elif params['file_type'] in ['block', 'char', 'directory', 'fifo', 'link', 'socket']:
+                    elif ((stat.S_ISBLK(st.st_mode) and params['file_type'] == 'block') or
+                          (stat.S_ISCHR(st.st_mode) and params['file_type'] == 'char') or
+                          (stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory') or
+                          (stat.S_ISFIFO(st.st_mode) and params['file_type'] == 'fifo') or
+                          (stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link') or
+                          (stat.S_ISSOCK(st.st_mode) and params['file_type'] == 'socket')):
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
 
                             r.update(statinfo(st))
