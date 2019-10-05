@@ -29,12 +29,85 @@
 
   block:
     - name: Get the current caller identity facts
-      aws_caller_facts:
-      register: caller_facts
+      aws_caller_info:
+      register: caller_info
+
+    - name: list available AZs
+      aws_az_info:
+      register: region_azs
+
+    - name: pick an AZ for testing
+      set_fact:
+        subnet_az: "{{ region_azs.availability_zones[0].zone_name }}"
+
+    - name: create a VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: present
+        cidr_block: "{{ vpc_cidr }}"
+        tags:
+            AnsibleEIPTest: "Pending"
+            AnsibleEIPTestPrefix: "{{ resource_prefix }}"
+      register: vpc_result
+
+    - name: create subnet
+      ec2_vpc_subnet:
+        cidr: "{{ subnet_cidr }}"
+        az: "{{ subnet_az }}"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: present
+      register: vpc_subnet_create
+
+    - ec2_vpc_igw:
+        state: present
+        vpc_id: "{{ vpc_result.vpc.id }}"
+      register: vpc_igw
+
+    # =================================================
+    # A rough Lock using the VPC...
+    #
+    # Because we're testing the behaviour when dealing with objects that are
+    # both tagged and untagged, we need to know that EIPs aren't being poached
+    # underneath us.  See specifically the behaviour around
+    # I(reuse_existing_ip_allowed), I(tag_name) and I(tag_value)
+    #
+    # We also want to know that things like only 1 EIP was allocated / released.
+    #
+    # Because Python 2.x and Python 3.x tests are run concurrently there's a
+    # high chance of the tests interfering with each other if we don't try to
+    # perform some kind of locking here.
+
+    - name: Look for signs of concurrent EIP tests.  Pause if they are running or their prefix comes before ours.
+      vars:
+        running_query: "vpcs[?tags.AnsibleEIPTest=='Running']"
+        pending_query: "vpcs[?tags.AnsibleEIPTest=='Pending'].tags.AnsibleEIPTestPrefix"
+      ec2_vpc_net_info:
+        filters:
+          "tag:AnsibleEIPTest": ["Pending", "Running"]
+      register: vpc_info
+      retries: 120
+      delay: 5
+      until:
+        # Anyone else running?
+      - ( vpc_info | json_query(running_query) | length == 0 )
+        # Are we first in the queue?
+      - ( vpc_info | json_query(pending_query) | sort | first == resource_prefix )
+
+    - name: Make a crude lock
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: present
+        cidr_block: "{{ vpc_cidr }}"
+        tags:
+            AnsibleEIPTest: "Running"
+            AnsibleEIPTestPrefix: "{{ resource_prefix }}"
+
+    # =================================================
 
     - name: Get current state of EIPs
       ec2_eip_info:
       register: eip_info_start
+
     - name: Require that there are no free IPs when we start, otherwise we can't test things properly
       assert:
         that:
@@ -359,35 +432,6 @@
     #==================================================================
     # Assigning EIP to an ENI
 
-    # Create a VPC for the ENI to exist in...
-    - name: list available AZs
-      aws_az_info:
-      register: region_azs
-
-    - name: pick an AZ for testing
-      set_fact:
-        subnet_az: "{{ region_azs.availability_zones[0].zone_name }}"
-
-    - name: create a VPC
-      ec2_vpc_net:
-        name: "{{ resource_prefix }}-vpc"
-        state: present
-        cidr_block: "10.232.232.128/26"
-      register: vpc_result
-
-    - name: create subnet
-      ec2_vpc_subnet:
-        cidr: "10.232.232.128/28"
-        az: "{{ subnet_az }}"
-        vpc_id: "{{ vpc_result.vpc.id }}"
-        state: present
-      register: vpc_subnet_create
-
-    - ec2_vpc_igw:
-        state: present
-        vpc_id: "{{ vpc_result.vpc.id }}"
-      register: vpc_igw
-
     - name: create ENI A
       ec2_eni:
         subnet_id: '{{ vpc_subnet_create.subnet.id }}'
@@ -421,7 +465,7 @@
           - eip_info.addresses[0].association_id is defined and eip_info.addresses[0].association_id.startswith("eipassoc-")
           - eip_info.addresses[0].network_interface_id == eni_create_a.interface.id
           - eip_info.addresses[0].private_ip_address is defined and ( eip_info.addresses[0].private_ip_address | ipaddr )
-          - eip_info.addresses[0].network_interface_owner_id == caller_facts.account
+          - eip_info.addresses[0].network_interface_owner_id == caller_info.account
 
     - name: Re-Attach EIP to ENI A (no change)
       ec2_eip:
@@ -601,14 +645,8 @@
     - name: Cleanup Subnet
       ec2_vpc_subnet:
         state: absent
-        cidr: "10.232.232.128/28"
+        cidr: "{{ subnet_cidr }}"
         vpc_id: "{{ vpc_result.vpc.id }}"
-
-    - name: Cleanup VPC
-      ec2_vpc_net:
-        state: absent
-        name: "{{ resource_prefix }}-vpc"
-        cidr_block: "10.232.232.128/26"
 
     - name: Release eip
       ec2_eip:
@@ -660,6 +698,12 @@
           - eip_release is not changed
           - ( eip_info_start.addresses | length ) == ( eip_info.addresses | length )
 
+    - name: Cleanup VPC
+      ec2_vpc_net:
+        state: absent
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: "{{ vpc_cidr }}"
+
   always:
 
     - name: Cleanup ENI A
@@ -683,15 +727,8 @@
     - name: Cleanup Subnet
       ec2_vpc_subnet:
         state: absent
-        cidr: "10.232.232.128/28"
+        cidr: "{{ subnet_cidr }}"
         vpc_id: "{{ vpc_result.vpc.id }}"
-      ignore_errors: yes
-
-    - name: Cleanup VPC
-      ec2_vpc_net:
-        state: absent
-        name: "{{ resource_prefix }}-vpc"
-        cidr_block: "10.232.232.128/26"
       ignore_errors: yes
 
     - name: Cleanup eip
@@ -720,4 +757,11 @@
         state: absent
         public_ip: "{{ no_tagged_eip.public_ip }}"
       when: no_tagged_eip is changed
+      ignore_errors: yes
+
+    - name: Cleanup VPC
+      ec2_vpc_net:
+        state: absent
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: "{{ vpc_cidr }}"
       ignore_errors: yes
