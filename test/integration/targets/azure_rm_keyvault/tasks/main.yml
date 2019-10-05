@@ -221,6 +221,21 @@
         state: absent
         secret_name: testsecret
 
+- name: Get secret current version
+  azure_rm_keyvaultsecret_info:
+    vault_uri: https://vault{{ rpfx }}.vault.azure.net
+    name: testsecret
+  register: facts
+
+- name: Assert secret facts
+  assert:
+    that:
+      - facts['secrets'] | length == 1
+      - facts['secrets'][0]['sid']
+      - facts['secrets'][0]['secret']
+      - facts['secrets'][0]['tags']
+      - facts['secrets'][0]['version']
+
 - name: delete a keyvault secret
   azure_rm_keyvaultsecret:
     keyvault_uri: https://vault{{ rpfx }}.vault.azure.net
