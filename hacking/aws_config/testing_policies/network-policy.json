@@ -39,6 +39,8 @@
                 "ec2:CreateCustomerGateway",
                 "ec2:CreateDhcpOptions",
                 "ec2:CreateNatGateway",
+                "ec2:CreateNetworkAcl",
+                "ec2:CreateNetworkAclEntry",
                 "ec2:CreateNetworkInterface",
                 "ec2:CreateRoute",
                 "ec2:CreateRouteTable",
@@ -50,6 +52,8 @@
                 "ec2:DeleteDhcpOptions",
                 "ec2:DeleteInternetGateway",
                 "ec2:DeleteNatGateway",
+                "ec2:DeleteNetworkAcl",
+                "ec2:DeleteNetworkAclEntry",
                 "ec2:DeleteNetworkInterface",
                 "ec2:DeleteRoute",
                 "ec2:DeleteRouteTable",
@@ -66,6 +70,8 @@
                 "ec2:ModifySubnetAttribute",
                 "ec2:ModifyVpcAttribute",
                 "ec2:ReleaseAddress",
+                "ec2:ReplaceNetworkAclAssociation",
+                "ec2:ReplaceNetworkAclEntry",
                 "ec2:ReplaceRouteTableAssociation"
             ],
             "Resource": "*"
