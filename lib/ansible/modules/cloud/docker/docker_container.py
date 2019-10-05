@@ -307,8 +307,8 @@ options:
         container to requested configuration. The evaluation includes the image version. If the image
         version in the registry does not match the container, the container will be recreated. You can
         stop this behavior by setting I(ignore_image) to C(True).
-      - *Warning:* This option is ignored if C(image: ignore) or C(*: ignore) is specified in the
-        I(comparisons) option.
+      - "*Warning:* This option is ignored if C(image: ignore) or C(*: ignore) is specified in the
+        I(comparisons) option."
     type: bool
     default: no
     version_added: "2.2"
@@ -623,8 +623,8 @@ options:
     description:
        - If true, always pull the latest version of an image. Otherwise, will only pull an image
          when missing.
-       - *Note:* images are only pulled when specified by name. If the image is specified
-         as a image ID (hash), it cannot be pulled.
+       - "*Note:* images are only pulled when specified by name. If the image is specified
+         as a image ID (hash), it cannot be pulled."
     type: bool
     default: no
   purge_networks:
