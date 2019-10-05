@@ -27,7 +27,7 @@ options:
           port number, like C(eth0:4567).
       - If the port number is omitted,
           the port number from the listen address is used.
-      - If C(advertise_addr) is not specified, it will be automatically
+      - If I(advertise_addr) is not specified, it will be automatically
           detected when possible.
       - Only used when swarm is initialised or joined. Because of this it's not
         considered for idempotency checking.

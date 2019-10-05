@@ -75,7 +75,7 @@ options:
     tls:
         description:
             - Secure the connection to the API by using TLS without verifying the authenticity of the Docker host
-              server. Note that if C(tls_verify) is set to C(yes) as well, it will take precedence.
+              server. Note that if I(validate_certs) is set to C(yes) as well, it will take precedence.
             - If the value is not specified in the task, the value of environment variable C(DOCKER_TLS) will be used
               instead. If the environment variable is not set, the default value will be used.
         type: bool

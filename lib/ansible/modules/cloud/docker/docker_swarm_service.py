@@ -368,8 +368,8 @@ options:
   networks:
     description:
       - List of the service networks names or dictionaries.
-      - When passed dictionaries valid sub-options are C(name) which is required and
-        C(aliases) and C(options).
+      - When passed dictionaries valid sub-options are I(name), which is required, and
+        I(aliases) and I(options).
       - Prior to API version 1.29, updating and removing networks is not supported.
         If changes are made the service will then be removed and recreated.
       - Corresponds to the C(--network) option of C(docker service create).
@@ -636,8 +636,8 @@ options:
         type: int
   state:
     description:
-      - I(absent) - A service matching the specified name will be removed and have its tasks stopped.
-      - I(present) - Asserts the existence of a service matching the name and provided configuration parameters.
+      - C(absent) - A service matching the specified name will be removed and have its tasks stopped.
+      - C(present) - Asserts the existence of a service matching the name and provided configuration parameters.
         Unspecified configuration parameters will be set to docker defaults.
     type: str
     required: yes

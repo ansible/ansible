@@ -23,14 +23,14 @@ version_added: "1.5"
 description:
   - Build, load or pull an image, making the image available for creating containers. Also supports tagging an
     image into a repository and archiving an image to a .tar file.
-  - Since Ansible 2.8, it is recommended to explicitly specify the image's source (C(source=build),
-    C(source=load), C(source=pull) or C(source=local)). This will be required from Ansible 2.12 on.
+  - Since Ansible 2.8, it is recommended to explicitly specify the image's source (I(source) can be C(build),
+    C(load), C(pull) or C(local)). This will be required from Ansible 2.12 on.
 
 options:
   source:
     description:
       - "Determines where the module will try to retrieve the image from."
-      - "Use C(build) to build the image from a C(Dockerfile). I(path) must
+      - "Use C(build) to build the image from a C(Dockerfile). I(build.path) must
          be specified when this value is used."
       - "Use C(load) to load the image from a C(.tar) file. I(load_path) must
          be specified when this value is used."
@@ -127,7 +127,7 @@ options:
             type: str
       use_config_proxy:
         description:
-          - If set to `yes` and a proxy configuration is specified in the docker client configuration
+          - If set to C(yes) and a proxy configuration is specified in the docker client configuration
             (by default C($HOME/.docker/config.json)), the corresponding environment variables will
             be set in the container being built.
           - Needs Docker SDK for Python >= 3.7.0.
@@ -270,7 +270,7 @@ options:
     description:
       - Used to select an image when pulling. Will be added to the image when pushing, tagging or building. Defaults to
         I(latest).
-      - If C(name) parameter format is I(name:tag), then tag value from C(name) will take precedence.
+      - If I(name) parameter format is I(name:tag), then tag value from I(name) will take precedence.
     type: str
     default: latest
   buildargs:
