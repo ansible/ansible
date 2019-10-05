@@ -15,7 +15,7 @@
       - nacl.nacl_id.startswith('acl-')
 
 - name: get network ACL facts
-  ec2_vpc_nacl_facts:
+  ec2_vpc_nacl_info:
     nacl_ids:
       - "{{ nacl.nacl_id }}"
   register: nacl_facts
@@ -44,7 +44,7 @@
       - nacl.changed
 
 - name: get network ACL facts
-  ec2_vpc_nacl_facts:
+  ec2_vpc_nacl_info:
     nacl_ids:
       - "{{ nacl.nacl_id }}"
   register: nacl_facts
@@ -52,6 +52,20 @@
 - name: assert the facts are the same as before
   assert:
     that:
+      - nacl_facts.nacls[0].tags | length == 2
+      - "'{{ nacl_facts.nacls[0].tags.Name }}' == '{{ resource_prefix }}-acl'"
+      - "'{{ nacl_facts.nacls[0].tags.Created_by }}' == 'Ansible test {{ resource_prefix }}'"
+
+- name: get network ACL facts by filter
+  ec2_vpc_nacl_info:
+    filters:
+      "tag:Created_by": "Ansible test {{ resource_prefix }}"
+  register: nacl_facts
+
+- name: assert the facts are the same as before
+  assert:
+    that:
+      - nacl_facts.nacls | length == 1
       - nacl_facts.nacls[0].tags | length == 2
       - "'{{ nacl_facts.nacls[0].tags.Name }}' == '{{ resource_prefix }}-acl'"
       - "'{{ nacl_facts.nacls[0].tags.Created_by }}' == 'Ansible test {{ resource_prefix }}'"
@@ -73,7 +87,7 @@
       - nacl.nacl_id.startswith('acl-')
 
 - name: get network ACL facts
-  ec2_vpc_nacl_facts:
+  ec2_vpc_nacl_info:
     nacl_ids:
       - "{{ nacl.nacl_id }}"
   register: nacl_facts

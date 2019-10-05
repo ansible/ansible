@@ -23,7 +23,7 @@
       - nacl.nacl_id.startswith('acl-')
 
 - name: get network ACL facts
-  ec2_vpc_nacl_facts:
+  ec2_vpc_nacl_info:
     nacl_ids:
       - "{{ nacl.nacl_id }}"
   register: nacl_facts
@@ -59,7 +59,7 @@
       - nacl.nacl_id.startswith('acl-')
 
 - name: get network ACL facts
-  ec2_vpc_nacl_facts:
+  ec2_vpc_nacl_info:
     nacl_ids:
       - "{{ nacl.nacl_id }}"
   register: nacl_facts
@@ -94,7 +94,7 @@
       - nacl.nacl_id.startswith('acl-')
 
 - name: get network ACL facts
-  ec2_vpc_nacl_facts:
+  ec2_vpc_nacl_info:
     nacl_ids:
       - "{{ nacl.nacl_id }}"
   register: nacl_facts
@@ -131,7 +131,7 @@
       - nacl.nacl_id.startswith('acl-')
 
 - name: get network ACL facts
-  ec2_vpc_nacl_facts:
+  ec2_vpc_nacl_info:
     nacl_ids:
       - "{{ nacl.nacl_id }}"
   register: nacl_facts

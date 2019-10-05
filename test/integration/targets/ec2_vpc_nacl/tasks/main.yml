@@ -10,7 +10,6 @@
     # ============================================================
 
     - name: test without any parameters
-      module_defaults: { 'group/aws': {} }
       ec2_vpc_nacl:
       register: result
       ignore_errors: yes
@@ -20,6 +19,28 @@
         that:
           - result.failed
           - "result.msg == 'one of the following is required: name, nacl_id'"
+
+    - name: get network ACL info without any parameters
+      ec2_vpc_nacl_info:
+      register: nacl_facts
+
+    - name: assert we don't error
+      assert:
+        that:
+          - nacl_facts is succeeded
+
+    - name: get network ACL info with invalid ID
+      ec2_vpc_nacl_info:
+        nacl_ids:
+        - 'acl-000000000000'
+      register: nacl_facts
+      ignore_errors: yes
+
+    - name: assert message mentions missing ACLs
+      assert:
+        that:
+          - nacl_facts is failed
+          - '"does not exist" in nacl_facts.msg'
 
     # ============================================================
 
