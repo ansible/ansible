@@ -1,12 +1,3 @@
-- name: set connection information for subsequent tasks
-  set_fact:
-    aws_connection_info: &aws_connection_info
-      aws_access_key: "{{ aws_access_key }}"
-      aws_secret_key: "{{ aws_secret_key }}"
-      security_token: "{{ security_token }}"
-      region: "{{ aws_region }}"
-  no_log: yes
-
 # ============================================================
 
 - name: create ingress and egress rules using subnet names
@@ -23,7 +14,6 @@
     egress:
       - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
     state: 'present'
-    <<: *aws_connection_info
   register: nacl
 
 - name: assert the network acl was created
@@ -36,7 +26,6 @@
   ec2_vpc_nacl_facts:
     nacl_ids:
       - "{{ nacl.nacl_id }}"
-    <<: *aws_connection_info
   register: nacl_facts
 
 - name: assert the nacl has the correct attributes
@@ -64,7 +53,6 @@
     egress:
       - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
     state: 'present'
-    <<: *aws_connection_info
   register: nacl
 
 - name: assert the network acl already existed
@@ -77,7 +65,6 @@
   ec2_vpc_nacl_facts:
     nacl_ids:
       - "{{ nacl.nacl_id }}"
-    <<: *aws_connection_info
   register: nacl_facts_idem
 
 - name: assert the facts are the same as before
@@ -104,7 +91,6 @@
     egress:
       - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
     state: 'present'
-    <<: *aws_connection_info
   register: nacl
 
 - name: assert the network ACL changed
@@ -118,7 +104,6 @@
 #  ec2_vpc_nacl_facts:
 #    nacl_ids:
 #      - "{{ nacl.nacl_id }}"
-#    <<: *aws_connection_info
 #  register: nacl_facts
 
 #- name: assert the nacl has the correct attributes
@@ -137,7 +122,6 @@
     vpc_id: "{{ vpc_id }}"
     name: "{{ resource_prefix }}-acl"
     state: absent
-    <<: *aws_connection_info
   register: nacl
   until: nacl is success
   ignore_errors: yes

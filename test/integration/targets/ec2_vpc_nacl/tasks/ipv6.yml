@@ -1,20 +1,9 @@
 - block:
-
-    - name: set up aws connection info
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: yes
-
     - name: create a VPC
       ec2_vpc_net:
         cidr_block: 10.230.231.0/24
         name: "{{ resource_prefix }}-ipv6"
         state: present
-        <<: *aws_connection_info
       register: vpc_result
 
     # FIXME - Replace by creating IPv6 enabled VPC once ec2_vpc_net module supports it.
@@ -53,7 +42,6 @@
         state: present
         tags:
           Name: "{{ resource_prefix }}-ipv6-subnet-1"
-        <<: *aws_connection_info
       register: vpc_subnet_ipv6
 
     - name: assert creation with IPv6 happened (expected changed=true)
@@ -78,7 +66,6 @@
         egress:
           - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
         state: 'present'
-        <<: *aws_connection_info
       register: nacl
 
     - assert:
@@ -99,7 +86,6 @@
         egress:
           - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
         state: 'present'
-        <<: *aws_connection_info
       register: nacl
       ignore_errors: yes
 
@@ -129,7 +115,6 @@
           - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
           - [105, 'all', 'allow', '::/0', null, null, null, null]
         state: 'present'
-        <<: *aws_connection_info
       register: nacl
       ignore_errors: yes
 
@@ -151,7 +136,6 @@
           - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
           - [105, 'all', 'allow', '::/0', null, null, null, null]
         state: 'present'
-        <<: *aws_connection_info
       register: nacl
       ignore_errors: yes
 
@@ -165,7 +149,6 @@
       ec2_vpc_subnet:
         cidr: 10.230.231.0/26
         vpc_id: "{{ vpc_result.vpc.id }}"
-        <<: *aws_connection_info
         state: absent
       register: vpc_remove_ipv6_cidr
 
@@ -185,7 +168,6 @@
         vpc_id: "{{ vpc_result.vpc.id }}"
         name: "{{ resource_prefix }}-acl"
         state: absent
-        <<: *aws_connection_info
       register: removed_acl
       until: removed_acl is success
       retries: 5
@@ -197,7 +179,6 @@
         cidr: 10.230.231.0/26
         vpc_id: "{{ vpc_result.vpc.id }}"
         state: absent
-        <<: *aws_connection_info
       register: removed_subnet
       until: removed_subnet is success
       retries: 5
@@ -209,7 +190,6 @@
         name: "{{ resource_prefix }}-ipv6"
         state: absent
         cidr_block: 10.230.231.0/24
-        <<: *aws_connection_info
       register: removed_vpc
       until: removed_vpc is success
       retries: 5

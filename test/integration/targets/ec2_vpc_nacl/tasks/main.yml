@@ -1,9 +1,16 @@
 ---
-- block:
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  block:
 
     # ============================================================
 
     - name: test without any parameters
+      module_defaults: { 'group/aws': {} }
       ec2_vpc_nacl:
       register: result
       ignore_errors: yes
@@ -16,23 +23,11 @@
 
     # ============================================================
 
-    - name: set connection information for subsequent tasks
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: yes
-
-    # ============================================================
-
     - name: create a VPC
       ec2_vpc_net:
         cidr_block: 10.230.230.0/24
         name: "{{ resource_prefix }}"
         state: present
-        <<: *aws_connection_info
       register: vpc
 
     - name: create subnets
@@ -43,7 +38,6 @@
         state: present
         tags:
           Name: "{{ item.name }}"
-        <<: *aws_connection_info
       with_items:
         - cidr: 10.230.230.0/26
           az: "a"
@@ -92,7 +86,6 @@
         vpc_id: "{{ vpc.vpc.id }}"
         name: "{{ resource_prefix }}-acl"
         state: absent
-        <<: *aws_connection_info
       register: removed_acl
       until: removed_acl is success
       retries: 5
@@ -108,7 +101,6 @@
         tags:
           Public: "{{ item.public | string }}"
           Name: "{{ item.public | ternary('public', 'private') }}-{{ item.az }}"
-        <<: *aws_connection_info
       with_items:
         - cidr: 10.230.230.0/26
           az: "a"
@@ -133,7 +125,6 @@
         cidr_block: 10.230.230.0/24
         name: "{{ resource_prefix }}"
         state: absent
-        <<: *aws_connection_info
       ignore_errors: yes
       register: removed_vpc
       until: removed_vpc is success
