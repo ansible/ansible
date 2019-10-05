@@ -244,12 +244,12 @@ swarm_facts:
           type: complex
           contains:
               Worker:
-                  description: Token to create a new I(worker) node
+                  description: Token to create a new *worker* node
                   returned: success
                   type: str
                   example: SWMTKN-1--xxxxx
               Manager:
-                  description: Token to create a new I(manager) node
+                  description: Token to create a new *manager* node
                   returned: success
                   type: str
                   example: SWMTKN-1--xxxxx

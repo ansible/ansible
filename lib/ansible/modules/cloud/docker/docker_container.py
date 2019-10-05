@@ -86,7 +86,7 @@ options:
         or restarted if the module option contains a key which isn't present in the
         container's option, or if the value of a key present differs.
       - The wildcard option C(*) can be used to set one of the default values C(strict)
-        or C(ignore) to I(all) comparisons which are not explicitly set to other values.
+        or C(ignore) to *all* comparisons which are not explicitly set to other values.
       - See the examples for details.
     type: dict
     version_added: "2.8"
@@ -307,7 +307,7 @@ options:
         container to requested configuration. The evaluation includes the image version. If the image
         version in the registry does not match the container, the container will be recreated. You can
         stop this behavior by setting I(ignore_image) to C(True).
-      - I(Warning:) This option is ignored if C(image: ignore) or C(*: ignore) is specified in the
+      - *Warning:* This option is ignored if C(image: ignore) or C(*: ignore) is specified in the
         I(comparisons) option.
     type: bool
     default: no
@@ -549,7 +549,7 @@ options:
          with both C(default) and C(other) attached. If I(purge_networks) is set to C(yes),
          the C(default) network will be removed afterwards."
       - "If I(networks_cli_compatible) is set to C(yes), this module will behave as
-         C(docker run --network) and will I(not) add the default network if I(networks) is
+         C(docker run --network) and will *not* add the default network if I(networks) is
          specified. If I(networks) is not specified, the default network will be attached."
       - "Note that docker CLI also sets I(network_mode) to the name of the first network
          added if C(--network) is specified. For more compatibility with docker CLI, you
@@ -604,7 +604,7 @@ options:
         container port, 9000 is a host port, and 0.0.0.0 is a host interface."
       - Port ranges can be used for source and destination ports. If two ranges with
         different lengths are specified, the shorter range will be used.
-      - "Bind addresses must be either IPv4 or IPv6 addresses. Hostnames are I(not) allowed. This
+      - "Bind addresses must be either IPv4 or IPv6 addresses. Hostnames are *not* allowed. This
         is different from the C(docker) command line utility. Use the L(dig lookup,../lookup/dig.html)
         to resolve hostnames."
       - A value of C(all) will publish all exposed container ports to random host ports, ignoring
@@ -623,7 +623,7 @@ options:
     description:
        - If true, always pull the latest version of an image. Otherwise, will only pull an image
          when missing.
-       - I(Note): images are only pulled when specified by name. If the image is specified
+       - *Note:* images are only pulled when specified by name. If the image is specified
          as a image ID (hash), it cannot be pulled.
     type: bool
     default: no

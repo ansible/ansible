@@ -258,7 +258,7 @@ options:
         the image, provide a I(path) value set to a directory containing a context and Dockerfile, and set I(source)
         to C(build). To load an image, specify I(load_path) to provide a path to an archive file. To tag an image to
         a repository, provide a I(repository) path. If the name contains a repository path, it will be pushed.
-      - "NOTE: C(state=build) is DEPRECATED and will be removed in release 2.11. Specifying C(build) will behave the
+      - "*Note:* C(state=build) is DEPRECATED and will be removed in Ansible 2.11. Specifying C(build) will behave the
          same as C(present)."
     type: str
     default: present
@@ -309,8 +309,8 @@ options:
       - "DEPRECATED. Whether to use tls to connect to the docker daemon. Set to
         C(encrypt) to use TLS. And set to C(verify) to use TLS and verify that
         the server's certificate is valid for the server."
-      - "NOTE: If you specify this option, it will set the value of the I(tls) or
-        I(tls_verify) parameters if not set to I(no)."
+      - "*Note:* If you specify this option, it will set the value of the I(tls) or
+        I(validate_certs) parameters if not set to C(no)."
       - Will be removed in Ansible 2.11.
     type: str
     choices:
