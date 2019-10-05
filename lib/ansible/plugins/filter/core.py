@@ -112,6 +112,7 @@ def to_datetime(string, format="%Y-%m-%d %H:%M:%S", fail_on_error=False):
     else:
         return datetime.datetime.strptime(string, format)
 
+
 def strftime(string_format, second=None):
     ''' return a date string using string. See https://docs.python.org/2/library/time.html#time.strftime for format '''
     if second is not None:
