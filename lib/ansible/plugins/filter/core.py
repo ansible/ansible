@@ -99,12 +99,18 @@ def to_bool(a):
     return False
 
 
-def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
-    try:
+def to_datetime(string, format="%Y-%m-%d %H:%M:%S", fail_on_error=False):
+    '''
+    Normal behaviour is to return datetime.
+    If toggle(fail_on_error) is True, in any value error it will fail.
+    '''
+    if fail_on_error:
+        try:
+            return datetime.datetime.strptime(string, format)
+        except ValueError:
+            return False
+    else:
         return datetime.datetime.strptime(string, format)
-    except ValueError:
-        return False
-
 
 def strftime(string_format, second=None):
     ''' return a date string using string. See https://docs.python.org/2/library/time.html#time.strftime for format '''
