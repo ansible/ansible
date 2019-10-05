@@ -27,6 +27,7 @@ options:
     required: false
     default: []
     aliases: [nacl_id]
+    type: list
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See \
@@ -34,6 +35,7 @@ options:
       names and values are case sensitive.
     required: false
     default: {}
+    type: dict
 notes:
   - By default, the module will return all Network ACLs.
 
