@@ -900,7 +900,7 @@ def main():
     if client.module.params['use_tls']:
         client.module.warn('The "use_tls" option has been deprecated for a long time '
                            'and will be removed in Ansible 2.11. Please use the'
-                           '"tls" and "tls_verify" options instead.')
+                           '"tls" and "validate_certs" options instead.')
 
     if not is_valid_tag(client.module.params['tag'], allow_empty=True):
         client.fail('"{0}" is not a valid docker tag!'.format(client.module.params['tag']))
