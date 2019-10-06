@@ -69,8 +69,7 @@ options:
     received:
         description:
            - Allow receiving of syslog messages from remote hosts
-        choices: ['no', 'yes']
-        type: str
+        type: bool
     trap:
         description:
            - Set minimum severity of log messages sent to syslog servers
@@ -209,7 +208,7 @@ class OnyxSyslogModule(BaseOnyxModule):
                             received=dict(type="bool"),
                             seconds_enabled=dict(type="str", choices=['enabled', 'disabled']),
                             fractional_digits=dict(type='int', choices=[1, 2, 3, 6]),
-                            whole_digits=dict(type='str', choice=['1', '6', 'all']))
+                            whole_digits=dict(type='str', choices=['1', '6', 'all']))
         argument_spec = dict()
         argument_spec.update(element_spec)
         self._module = AnsibleModule(
