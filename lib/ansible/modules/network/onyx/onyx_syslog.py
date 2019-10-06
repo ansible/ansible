@@ -348,7 +348,7 @@ class OnyxSyslogModule(BaseOnyxModule):
                 commands.append('logging format standard')
 
         is_received = required_config.get('received')
-        if is_received != current_config.get('received'):
+        if is_received is not None and is_received != current_config.get('received'):
             commands.append('{0}logging receive'.format('' if is_received else 'no '))
 
         cli_level = required_config.get('cli_level')
