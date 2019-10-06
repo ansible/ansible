@@ -1,5 +1,5 @@
 destructive
-shippable/posix/group4
+shippable/posix/group2
 mysql_replication
 skip/osx
 skip/freebsd
