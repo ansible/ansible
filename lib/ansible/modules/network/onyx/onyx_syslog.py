@@ -91,12 +91,12 @@ options:
     fractional_digits:
         description:
         - Specify the number of digits to the right of the decimal point (truncation is from the right)
-        choice: [1, 2, 3, 6]
+        choices: [1, 2, 3, 6]
         type: int
     whole_digits:
         description:
         - Specify the number of digits to the left of the decimal point (truncation is from the left)
-        choice: ['1', '6', 'all']
+        choices: ['1', '6', 'all']
         type: str
 
     monitor:
