@@ -269,20 +269,39 @@ def associate_floating_ips(module, rest):
 def create_floating_ips(module, rest):
     payload = {
     }
+    floating_ip_data = None
 
     if module.params['region'] is not None:
         payload["region"] = module.params['region']
+
     if module.params['droplet_id'] is not None:
         payload["droplet_id"] = module.params['droplet_id']
 
-    response = rest.post("floating_ips", data=payload)
-    status_code = response.status_code
-    json_data = response.json
-    if status_code == 202:
-        module.exit_json(changed=True, data=json_data)
+        page = 1
+        while page is not None:
+            response = rest.get('floating_ips?page={0}&per_page=20'.format(page))
+            json_data = response.json
+            if response.status_code == 200:
+                for floating_ip in json_data['floating_ips']:
+                    if floating_ip['droplet'] and floating_ip['droplet']['id'] == int(module.params['droplet_id']):
+                        floating_ip_data = {'floating_ip': floating_ip}
+                if 'links' in json_data and 'pages' in json_data['links'] and 'next' in json_data['links']['pages']:
+                    page += 1
+                else:
+                    page = None
+
+    if floating_ip_data:
+        module.exit_json(changed=False, data=floating_ip_data)
     else:
-        module.fail_json(msg="Error creating floating ip [{0}: {1}]".format(
-            status_code, json_data["message"]), region=module.params['region'])
+        response = rest.post("floating_ips", data=payload)
+        status_code = response.status_code
+        json_data = response.json
+
+        if status_code == 202:
+            module.exit_json(changed=True, data=json_data)
+        else:
+            module.fail_json(msg="Error creating floating ip [{0}: {1}]".format(
+                status_code, json_data["message"]), region=module.params['region'])
 
 
 def main():
