@@ -374,19 +374,25 @@ Organizing host and group variables
 Although you can store variables in the main inventory file, storing separate host and group variables files may help you organize your variable values more easily. Host and group variable files must use YAML syntax. Valid file extensions include '.yml', '.yaml', '.json', or no file extension.
 See :ref:`yaml_syntax` if you are new to YAML.
 
-Ansible loads host and group variable files by searching paths relative to the inventory file or the playbook file. If your inventory file at ``/etc/ansible/hosts`` contains a host named 'foosball' that belongs to two groups, 'raleigh' and 'webservers', that host will use variables in YAML files at the following locations::
+Ansible loads host and group variable files by searching paths relative to the inventory file or the playbook file. If your inventory file at ``/etc/ansible/hosts`` contains a host named 'foosball' that belongs to two groups, 'raleigh' and 'webservers', that host will use variables in YAML files at the following locations:
+
+.. code-block:: bash
 
     /etc/ansible/group_vars/raleigh # can optionally end in '.yml', '.yaml', or '.json'
     /etc/ansible/group_vars/webservers
     /etc/ansible/host_vars/foosball
 
-For example, if you group hosts in your inventory by datacenter, and each datacenter uses its own NTP server and database server, you can create a file called ``/etc/ansible/group_vars/raleigh`` to store the variables for the ``raleigh`` group::
+For example, if you group hosts in your inventory by datacenter, and each datacenter uses its own NTP server and database server, you can create a file called ``/etc/ansible/group_vars/raleigh`` to store the variables for the ``raleigh`` group:
+
+.. code-block:: yaml
 
     ---
     ntp_server: acme.example.org
     database_server: storage.example.org
 
-You can also create *directories* named after your groups or hosts. Ansible will read all the files in these directories in lexicographical order. An example with the 'raleigh' group::
+You can also create *directories* named after your groups or hosts. Ansible will read all the files in these directories in lexicographical order. An example with the 'raleigh' group:
+
+.. code-block:: bash
 
     /etc/ansible/group_vars/raleigh/db_settings
     /etc/ansible/group_vars/raleigh/cluster_settings
@@ -439,7 +445,9 @@ or files supported by inventory plugins) at the same time by giving multiple inv
 line or by configuring :envvar:`ANSIBLE_INVENTORY`. This can be useful when you want to target normally
 separate environments, like staging and production, at the same time for a specific action.
 
-Target two sources from the command line like this::
+Target two sources from the command line like this:
+
+.. code-block:: bash
 
     ansible-playbook get_logs.yml -i staging -i production
 
@@ -455,7 +463,9 @@ the playbook will be run with ``myvar = 2``. The result would be reversed if the
 You can also create an inventory by combining multiple inventory sources and source types under a directory.
 This can be useful for combining static and dynamic hosts and managing them as one inventory.
 The following inventory combines an inventory plugin source, a dynamic inventory script,
-and a file with static hosts::
+and a file with static hosts:
+
+.. code-block:: text
 
     inventory/
       openstack.yml          # configure inventory plugin to get hosts from Openstack cloud
@@ -464,14 +474,18 @@ and a file with static hosts::
       group_vars/
         all.yml              # assign variables to all hosts
 
-You can target this inventory directory simply like this::
+You can target this inventory directory simply like this:
+
+.. code-block:: bash
 
     ansible-playbook example.yml -i inventory
 
 It can be useful to control the merging order of the inventory sources if there's variable
 conflicts or group of groups dependencies to the other inventory sources. The inventories
 are merged in alphabetical order according to the filenames so the result can
-be controlled by adding prefixes to the files::
+be controlled by adding prefixes to the files:
+
+.. code-block:: text
 
     inventory/
       01-openstack.yml          # configure inventory plugin to get hosts from Openstack cloud
@@ -580,7 +594,9 @@ ansible_shell_executable
     to use :command:`/bin/sh` (i.e. :command:`/bin/sh` is not installed on the target
     machine or cannot be run from sudo.).
 
-Examples from an Ansible-INI host file::
+Examples from an Ansible-INI host file:
+
+.. code-block:: text
 
   some_host         ansible_port=2222     ansible_user=manager
   aws_host          ansible_ssh_private_key_file=/home/example/.ssh/aws.pem
@@ -611,27 +627,29 @@ ansible_become
 ansible_docker_extra_args
     Could be a string with any additional arguments understood by Docker, which are not command specific. This parameter is mainly used to configure a remote Docker daemon to use.
 
-Here is an example of how to instantly deploy to created containers::
+Here is an example of how to instantly deploy to created containers:
 
-  - name: create jenkins container
-    docker_container:
-      docker_host: myserver.net:4243
-      name: my_jenkins
-      image: jenkins
+.. code-block:: yaml
 
-  - name: add container to inventory
-    add_host:
-      name: my_jenkins
-      ansible_connection: docker
-      ansible_docker_extra_args: "--tlsverify --tlscacert=/path/to/ca.pem --tlscert=/path/to/client-cert.pem --tlskey=/path/to/client-key.pem -H=tcp://myserver.net:4243"
-      ansible_user: jenkins
-    changed_when: false
+   - name: create jenkins container
+     docker_container:
+       docker_host: myserver.net:4243
+       name: my_jenkins
+       image: jenkins
 
-  - name: create directory for ssh keys
-    delegate_to: my_jenkins
-    file:
-      path: "/var/jenkins_home/.ssh/jupiter"
-      state: directory
+   - name: add container to inventory
+     add_host:
+       name: my_jenkins
+       ansible_connection: docker
+       ansible_docker_extra_args: "--tlsverify --tlscacert=/path/to/ca.pem --tlscert=/path/to/client-cert.pem --tlskey=/path/to/client-key.pem -H=tcp://myserver.net:4243"
+       ansible_user: jenkins
+     changed_when: false
+
+   - name: create directory for ssh keys
+     delegate_to: my_jenkins
+     file:
+       path: "/var/jenkins_home/.ssh/jupiter"
+       state: directory
 
 For a full list with available plugins and examples, see :ref:`connection_plugin_list`.
 
