@@ -12,7 +12,7 @@ options:
     fetch_nested:
         description:
             - If I(yes) the module will fetch additional data from the API.
-            - It will fetch IDs of the VMs disks, snapshots, etc. User can configure to fetch other
+            - It will fetch IDs of first API level. User can configure to fetch other
               attributes of the nested entities by specifying C(nested_attributes).
         type: bool
         version_added: "2.3"
