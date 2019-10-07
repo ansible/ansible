@@ -38,7 +38,7 @@ options:
       - Host running the database
   login_port:
     description:
-      - Port of the MSSQL server. Requires login_host be defined as other then localhost if login_port is used
+      - Port of the MSSQL server. Requires login_host be defined as other than localhost if login_port is used
     default: 1433
   state:
     description:
