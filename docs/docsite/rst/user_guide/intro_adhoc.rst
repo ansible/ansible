@@ -146,7 +146,7 @@ Ensure a service is stopped::
 Gathering facts
 ---------------
 
-Facts represent discovered variables about a system. You can use facts to implement conditional execution of tasks but also just to get ad-hoc information about your systems. You can see all facts via::
+Facts represent discovered variables about a system. You can use facts to implement conditional execution of tasks but also just to get ad-hoc information about your systems. To see all facts::
 
     $ ansible all -m setup
 
