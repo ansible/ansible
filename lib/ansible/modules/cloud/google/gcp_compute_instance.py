@@ -434,12 +434,9 @@ options:
         type: bool
   status:
     description:
-    - 'The status of the instance. One of the following values: PROVISIONING, STAGING,
-      RUNNING, STOPPING, SUSPENDING, SUSPENDED, and TERMINATED.'
-    - As a user, use RUNNING to keep a machine "on" and TERMINATED to turn a machine
-      off .
-    - 'Some valid choices include: "PROVISIONING", "STAGING", "RUNNING", "STOPPING",
-      "SUSPENDING", "SUSPENDED", "TERMINATED"'
+    - The desired state of the instance.
+    - As a user, use RUNNING to keep a machine "on" and TERMINATED or STOPPED
+      to turn a machine off .
     required: false
     type: str
     version_added: 2.8
@@ -497,7 +494,7 @@ EXAMPLES = '''
     state: present
   register: network
 
-- name: create a address
+- name: reserve an address
   gcp_compute_address:
     name: address-instance
     region: us-central1
@@ -507,9 +504,11 @@ EXAMPLES = '''
     state: present
   register: address
 
-- name: create a instance
+- name: create an instance
   gcp_compute_instance:
-    name: test_object
+    name: test-instance
+    project: "{{ gcp_project }}"
+    zone: us-central1-a
     machine_type: n1-standard-1
     disks:
     - auto_delete: 'true'
@@ -526,11 +525,18 @@ EXAMPLES = '''
       - name: External NAT
         nat_ip: "{{ address }}"
         type: ONE_TO_ONE_NAT
-    zone: us-central1-a
-    project: test_project
-    auth_kind: serviceaccount
-    service_account_file: "/tmp/auth.pem"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
     state: present
+
+- name: Stop the instance
+  gcp_compute_instance:
+    project: "{{ gcp_project }}"
+    zone: us-central1-a
+    name: test-instance
+    status: STOPPED
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
 '''
 
 RETURN = '''
@@ -1094,13 +1100,15 @@ def update(module, link, kind, fetch):
 
 
 def update_fields(module, request, response):
-    if response.get('deletionProtection') != request.get('deletionProtection'):
+    params = module.params
+
+    if params.get('deletion_protection') is not None and response.get('deletionProtection') != request.get('deletionProtection'):
         deletion_protection_update(module, request, response)
-    if response.get('labels') != request.get('labels'):
+    if params.get('labels') is not None and response.get('labels') != request.get('labels'):
         label_fingerprint_update(module, request, response)
-    if response.get('machineType') != request.get('machineType'):
+    if params.get('machine_type') is not None and response.get('machineType') != request.get('machineType'):
         machine_type_update(module, request, response)
-    if response.get('shieldedInstanceConfig') != request.get('shieldedInstanceConfig'):
+    if params.get('shielded_instance_config') is not None and response.get('shieldedInstanceConfig') != request.get('shieldedInstanceConfig'):
         shielded_instance_config_update(module, request, response)
 
 
@@ -1352,7 +1360,7 @@ class InstancePower(object):
             return
         elif self.desired_status == 'RUNNING':
             self.start()
-        elif self.desired_status == 'TERMINATED':
+        elif self.desired_status in ['STOPPED', 'TERMINATED']:
             self.stop()
         elif self.desired_status == 'SUSPENDED':
             self.module.fail_json(msg="Instances cannot be suspended using Ansible")
