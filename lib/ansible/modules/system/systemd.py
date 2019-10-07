@@ -540,14 +540,14 @@ def main():
 
                 # check if this is a valid property name
                 if prop not in result['status']:
-                    print("Property '%s' is invalid", prop)
+                    module.log("Property '%s' is invalid" % (prop))
 
                 # check if value already matches new value
                 elif prop_val != result['status'][prop]:
-                    print("Add '%s' to prop_mods list", prop)
+                    module.log("Add '%s' to prop_mods list" % (prop))
                     prop_action += (" %s=%s" % (prop, prop_val))
                 else:
-                    print("Property '%s' unchanged", prop)
+                    module.log("Property '%s' unchanged" % (prop))
 
             # Modify all items
             if prop_action:
