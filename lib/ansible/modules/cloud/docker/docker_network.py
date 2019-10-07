@@ -52,9 +52,9 @@ options:
       - With state C(absent) forces disconnecting all containers from the
         network prior to deleting the network. With state C(present) will
         disconnect all containers, delete the network and re-create the
-        network.  This option is required if you have changed the IPAM or
-        driver options and want an existing network to be updated to use the
-        new options.
+        network.
+      - This option is required if you have changed the IPAM or driver options
+        and want an existing network to be updated to use the new options.
     type: bool
     default: no
 
