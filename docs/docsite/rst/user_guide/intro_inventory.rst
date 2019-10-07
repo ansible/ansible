@@ -254,7 +254,7 @@ This only works for hosts with static IPs, or when you are connecting through tu
           * When declared inline with the host, INI values are interpreted as Python literal structures
           (strings, numbers, tuples, lists, dicts, booleans, None). Host lines accept multiple ``key=value`` parameters per line. Therefore they need a way to indicate that a space is part of a value rather than a separator.
           * When declared in a ``:vars`` section, INI values are interpreted as strings. For example ``var=FALSE`` would create a string equal to 'FALSE'. Unlike host lines, ``:vars`` sections accept only a single entry per line, so everything after the ``=`` must be the value for the entry.
-          * Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
+          * Do not rely on types set during definition. Always make sure you specify type with a filter when needed when consuming the variable.
           * Consider using YAML format for inventory sources to avoid confusion on the actual type of a variable. The YAML inventory plugin processes variable values consistently and correctly.
 
 Generally speaking, this is not the best way to define variables that describe your system policy. Setting variables in the main inventory file is only a shorthand. See :ref:`splitting_out_vars` for guidelines on storing variable values in individual files in the 'host_vars' directory.
