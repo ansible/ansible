@@ -22,7 +22,9 @@ Ansible reads information about which machines you want to manage from your inve
 
 Action: create a basic inventory
 --------------------------------
-For this basic inventory, edit (or create) ``/etc/ansible/hosts`` and add a few remote systems to it. For this example, use either IP addresses or FQDNs::
+For this basic inventory, edit (or create) ``/etc/ansible/hosts`` and add a few remote systems to it. For this example, use either IP addresses or FQDNs:
+
+.. code-block:: text
 
    192.0.2.50
    aserver.example.org
@@ -30,7 +32,7 @@ For this basic inventory, edit (or create) ``/etc/ansible/hosts`` and add a few 
 
 Beyond the basics
 -----------------
-
+TODO: add content here
 
 .. _remote_connection_information:
 
@@ -45,7 +47,13 @@ Confirm that you can connect using SSH to all the nodes in your inventory using 
 
 Beyond the basics
 -----------------
-You can override the default remote user name in several ways, including passing the ``-u`` parameter at the command line, setting user information in your inventory file, setting user information in your configuration file, and setting environment variables. See :ref:`general_precedence_rules` for details on the (sometimes unintuitive) precedence of each method of passing user information. You can read more about connections in :ref:`connections`.
+You can override the default remote user name in several ways, including:
+* passing the ``-u`` parameter at the command line
+* setting user information in your inventory file
+* setting user information in your configuration file
+* setting environment variables
+
+See :ref:`general_precedence_rules` for details on the (sometimes unintuitive) precedence of each method of passing user information. You can read more about connections in :ref:`connections`.
 
 Copying and executing modules
 =============================
@@ -92,13 +100,13 @@ Action
 ------
 Compare the results of your first Ansible command to this sample output:
 
+TODO: add sample output here
 
 Beyond the basics
 -----------------
-
+TODO: add content here
 
 Congratulations! You have contacted your nodes using Ansible. You used a basic inventory file and an ad-hoc command to direct Ansible to connect to specific remote nodes, copy a module file there and execute it, and return output. You have a fully working infrastructure.
-
 
 Next steps
 ==========
