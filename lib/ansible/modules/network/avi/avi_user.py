@@ -123,7 +123,7 @@ EXAMPLES = '''
       is_active: true
       is_superuser: true
       default_tenant_ref: "/api/tenant?name=admin"
-      
+
   - name: user creation
     avi_user:
       controller: "192.0.2.10"
