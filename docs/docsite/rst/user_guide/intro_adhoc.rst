@@ -12,7 +12,9 @@ An Ansible ad-hoc command uses the `/usr/bin/ansible` command-line tool to autom
 Why use ad-hoc commands?
 ========================
 
-Ad-hoc commands are great for tasks you repeat rarely. For example, if you want to power off all the machines in your lab for Christmas vacation, you could execute a quick one-liner in Ansible without writing a playbook. An ad-hoc command looks like this::
+Ad-hoc commands are great for tasks you repeat rarely. For example, if you want to power off all the machines in your lab for Christmas vacation, you could execute a quick one-liner in Ansible without writing a playbook. An ad-hoc command looks like this:
+
+.. code-block:: bash
 
     $ ansible [pattern] -m [module] -a "[module options]"
 
@@ -28,19 +30,27 @@ achieve a form of idempotence by checking the current state before they begin an
 Rebooting servers
 -----------------
 
-The default module for the ``ansible`` command-line utility is the :ref:`command module<command_module>`. You can use an ad-hoc task to call the command module and reboot all web servers in Atlanta, 10 at a time. Before Ansible can do this, you must have all servers in Atlanta listed in a a group called [atlanta] in your inventory, and you must have working SSH credentials for each machine in that group. To reboot all the servers in the [atlanta] group::
+The default module for the ``ansible`` command-line utility is the :ref:`command module<command_module>`. You can use an ad-hoc task to call the command module and reboot all web servers in Atlanta, 10 at a time. Before Ansible can do this, you must have all servers in Atlanta listed in a a group called [atlanta] in your inventory, and you must have working SSH credentials for each machine in that group. To reboot all the servers in the [atlanta] group:
+
+.. code-block:: bash
 
     $ ansible atlanta -a "/sbin/reboot"
 
-By default Ansible uses only 5 simultaneous processes. If you have more hosts than the value set for the fork count, Ansible will talk to them, but it will take a little longer. To reboot the [atlanta] servers with 10 parallel forks::
+By default Ansible uses only 5 simultaneous processes. If you have more hosts than the value set for the fork count, Ansible will talk to them, but it will take a little longer. To reboot the [atlanta] servers with 10 parallel forks:
+
+.. code-block:: bash
 
     $ ansible atlanta -a "/sbin/reboot" -f 10
 
-/usr/bin/ansible will default to running from your user account. To connect as a different user::
+/usr/bin/ansible will default to running from your user account. To connect as a different user:
+
+.. code-block:: bash
 
     $ ansible atlanta -a "/sbin/reboot" -f 10 -u username
 
-Rebooting probably requires privilege escalation. You can connect to the server as ``username`` and run the command as the ``root`` user by using the :ref:`become <become>` keyword::
+Rebooting probably requires privilege escalation. You can connect to the server as ``username`` and run the command as the ``root`` user by using the :ref:`become <become>` keyword:
+
+.. code-block:: bash
 
     $ ansible atlanta -a "/sbin/reboot" -f 10 -u username --become [--ask-become-pass]
 
@@ -52,7 +62,9 @@ If you add ``--ask-become-pass`` or ``-K``, Ansible prompts you for the password
    syntax, use the `shell` module instead. Read more about the differences on the
    :ref:`working_with_modules` page.
 
-So far all our examples have used the default 'command' module. To use a different module, pass ``-m`` for module name. For example, to use the :ref:`shell module <shell_module>`::
+So far all our examples have used the default 'command' module. To use a different module, pass ``-m`` for module name. For example, to use the :ref:`shell module <shell_module>`:
+
+.. code-block:: bash
 
     $ ansible raleigh -m shell -a 'echo $TERM'
 
@@ -67,23 +79,31 @@ evaluate the variable on the box you were on.
 Managing files
 --------------
 
-An ad-hoc task can harness the power of Ansible and SCP to transfer many files to multiple machines in parallel. To transfer a file directly to all servers in the [atlanta] group::
+An ad-hoc task can harness the power of Ansible and SCP to transfer many files to multiple machines in parallel. To transfer a file directly to all servers in the [atlanta] group:
+
+.. code-block:: bash
 
     $ ansible atlanta -m copy -a "src=/etc/hosts dest=/tmp/hosts"
 
 If you plan to repeat a task like this, use the :ref:`template<template_module>` module in a playbook.
 
 The :ref:`file<file_module>` module allows changing ownership and permissions on files. These
-same options can be passed directly to the ``copy`` module as well::
+same options can be passed directly to the ``copy`` module as well:
+
+.. code-block:: bash
 
     $ ansible webservers -m file -a "dest=/srv/foo/a.txt mode=600"
     $ ansible webservers -m file -a "dest=/srv/foo/b.txt mode=600 owner=mdehaan group=mdehaan"
 
-The ``file`` module can also create directories, similar to ``mkdir -p``::
+The ``file`` module can also create directories, similar to ``mkdir -p``:
+
+.. code-block:: bash
 
     $ ansible webservers -m file -a "dest=/path/to/c mode=755 owner=mdehaan group=mdehaan state=directory"
 
-As well as delete directories (recursively) and delete files::
+As well as delete directories (recursively) and delete files:
+
+.. code-block:: bash
 
     $ ansible webservers -m file -a "dest=/path/to/c state=absent"
 
@@ -92,19 +112,27 @@ As well as delete directories (recursively) and delete files::
 Managing packages
 -----------------
 
-You might also use an ad-hoc task to install, update, or remove packages on managed nodes using a package management module like yum. To ensure a package is installed without updating it::
+You might also use an ad-hoc task to install, update, or remove packages on managed nodes using a package management module like yum. To ensure a package is installed without updating it:
+
+.. code-block:: bash
 
     $ ansible webservers -m yum -a "name=acme state=present"
 
-To ensure a specific version of a package is installed::
+To ensure a specific version of a package is installed:
+
+.. code-block:: bash
 
     $ ansible webservers -m yum -a "name=acme-1.5 state=present"
 
-To ensure a package is at the latest version::
+To ensure a package is at the latest version:
+
+.. code-block:: bash
 
     $ ansible webservers -m yum -a "name=acme state=latest"
 
-To ensure a package is not installed::
+To ensure a package is not installed:
+
+.. code-block:: bash
 
     $ ansible webservers -m yum -a "name=acme state=absent"
 
@@ -115,7 +143,9 @@ Ansible has modules for managing packages under many platforms. If there is no m
 Managing users and groups
 -------------------------
 
-You can create, manage, and remove user accounts on your managed nodes with ad-hoc tasks::
+You can create, manage, and remove user accounts on your managed nodes with ad-hoc tasks:
+
+.. code-block:: bash
 
     $ ansible all -m user -a "name=foo password=<crypted password here>"
 
@@ -129,15 +159,21 @@ how to manipulate groups and group membership.
 Managing services
 -----------------
 
-Ensure a service is started on all webservers::
+Ensure a service is started on all webservers:
+
+.. code-block:: bash
 
     $ ansible webservers -m service -a "name=httpd state=started"
 
-Alternatively, restart a service on all webservers::
+Alternatively, restart a service on all webservers:
+
+.. code-block:: bash
 
     $ ansible webservers -m service -a "name=httpd state=restarted"
 
-Ensure a service is stopped::
+Ensure a service is stopped:
+
+.. code-block:: bash
 
     $ ansible webservers -m service -a "name=httpd state=stopped"
 
@@ -146,7 +182,9 @@ Ensure a service is stopped::
 Gathering facts
 ---------------
 
-Facts represent discovered variables about a system. You can use facts to implement conditional execution of tasks but also just to get ad-hoc information about your systems. To see all facts::
+Facts represent discovered variables about a system. You can use facts to implement conditional execution of tasks but also just to get ad-hoc information about your systems. To see all facts:
+
+.. code-block:: bash
 
     $ ansible all -m setup
 
