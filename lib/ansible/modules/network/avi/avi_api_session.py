@@ -34,19 +34,27 @@ options:
             - Allowed HTTP methods for RESTful services and are supported by Avi Controller.
         choices: ["get", "put", "post", "patch", "delete"]
         required: true
+        type: str
     data:
         description:
             - HTTP body in YAML or JSON format.
+        type: jsonarg
     params:
         description:
             - Query parameters passed to the HTTP API.
+        type: dict
     path:
         description:
             - 'Path for Avi API resource. For example, C(path: virtualservice) will translate to C(api/virtualserivce).'
+        required: true
+        type: str
     timeout:
         description:
             - Timeout (in seconds) for Avi API calls.
         default: 60
+        type: int
+
+
 extends_documentation_fragment:
     - avi
 '''
@@ -98,6 +106,20 @@ EXAMPLES = '''
         step: 300
         limit: 10
     register: pool_metrics
+
+  - name: Wait for Controller upgrade to finish
+    avi_api_session:
+      controller: "{{ controller }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      http_method: get
+      timeout: 300
+      path: cluster/upgrade/status
+      api_version: 16.4
+    register: upgrade_status
+    until: "'result' in upgrade_status.obj and upgrade_status.obj.result == 'SUCCESS'"
+    retries: 120
+    delay: 10
 
 '''
 
@@ -168,7 +190,8 @@ def main():
     gparams.update({'include_refs': '', 'include_name': ''})
 
     # API methods not allowed
-    api_get_not_allowed = ["cluster", "gslbsiteops"]
+    api_get_not_allowed = ["cluster", "gslbsiteops", "server"]
+    sub_api_get_not_allowed = ["scaleout"]
     api_post_not_allowed = ["alert", "fileservice"]
     api_put_not_allowed = ["backup"]
 
@@ -178,11 +201,13 @@ def main():
         # change the method to be put
         try:
             using_collection = False
-            if not any(path.startswith(uri) for uri in api_get_not_allowed):
+            if (not any(path.startswith(uri) for uri in api_get_not_allowed) and
+            not any(path.endswith(uri) for uri in sub_api_get_not_allowed)):
                 if 'name' in data:
                     gparams['name'] = data['name']
                 using_collection = True
-            if not any(path.startswith(uri) for uri in api_get_not_allowed):
+            if (not any(path.startswith(uri) for uri in api_get_not_allowed) and
+            not any(path.endswith(uri) for uri in sub_api_get_not_allowed)):
                 rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
                               params=gparams, api_version=api_version)
                 existing_obj = rsp.json()
@@ -192,7 +217,9 @@ def main():
             # object is not found
             pass
         else:
-            if not any(path.startswith(uri) for uri in api_get_not_allowed):
+            if (not any(path.startswith(uri) for uri in api_get_not_allowed)
+                    and not any(path.endswith(uri) for uri in
+                                sub_api_get_not_allowed)):
                 # object is present
                 method = 'put'
                 path += '/' + existing_obj['uuid']

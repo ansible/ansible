@@ -29,6 +29,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -36,47 +37,56 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     app_name:
         description:
             - Name of the virtual service which generated the error page.
             - Field deprecated in 18.1.1.
             - Field introduced in 17.2.4.
-            - Default value when not specified in API or module is interpreted by Avi Controller as VS Name.
+        type: str
     company_name:
         description:
             - Name of the company to show in error page.
             - Field deprecated in 18.1.1.
             - Field introduced in 17.2.4.
-            - Default value when not specified in API or module is interpreted by Avi Controller as Avi Networks.
+        type: str
     error_pages:
         description:
             - Defined error pages for http status codes.
             - Field introduced in 17.2.4.
+        type: list
     host_name:
         description:
             - Fully qualified domain name for which the error page is generated.
             - Field deprecated in 18.1.1.
             - Field introduced in 17.2.4.
-            - Default value when not specified in API or module is interpreted by Avi Controller as Host Header.
+        type: str
     name:
         description:
             - Field introduced in 17.2.4.
         required: true
+        type: str
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
             - Field introduced in 17.2.4.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Field introduced in 17.2.4.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

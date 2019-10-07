@@ -29,23 +29,30 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
             - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     created_by:
         description:
             - Creator name.
             - Field introduced in 17.2.7.
+        type: str
     description:
         description:
             - Field introduced in 17.2.7.
+        type: str
     is_internal_policy:
         description:
             - Field introduced in 17.2.7.
@@ -55,22 +62,29 @@ options:
         description:
             - Policy to apply when a new transport connection is setup.
             - Field introduced in 17.2.7.
+        type: dict
     name:
         description:
             - Name of the l4 policy set.
             - Field introduced in 17.2.7.
         required: true
+        type: str
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
             - Field introduced in 17.2.7.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
-            - Id of the l4 policy set.
+            - ID of the L4 Policy Set.
             - Field introduced in 17.2.7.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

@@ -82,13 +82,12 @@ options:
             - Default method for object update is HTTP PUT.
             - Setting to patch will override that behavior to use HTTP PATCH.
         default: put
-        choices: ["post", "put", "patch"]
+        choices: ["put", "patch"]
         type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         choices: ["add", "replace", "delete"]
-        type: str
     user_profile_ref:
         description:
             - Refer user profile.
@@ -116,7 +115,7 @@ EXAMPLES = '''
       name: "testuser"
       obj_username: "testuser"
       obj_password: "test123"
-      email: "test@abc.test"
+      email: "test@abc.com"
       access:
         - role_ref: "/api/role?name=Tenant-Admin"
           tenant_ref: "/api/tenant/admin#admin"
@@ -124,10 +123,10 @@ EXAMPLES = '''
       is_active: true
       is_superuser: true
       default_tenant_ref: "/api/tenant?name=admin"
-
+      
   - name: user creation
     avi_user:
-      controller: ""
+      controller: "192.0.2.10"
       username: ""
       password: ""
       api_version: ""
@@ -151,7 +150,9 @@ obj:
     type: dict
 '''
 
+
 from ansible.module_utils.basic import AnsibleModule
+
 
 try:
     from ansible.module_utils.network.avi.avi import (
@@ -174,9 +175,9 @@ def main():
         is_superuser=dict(type='bool',),
         is_active=dict(type='bool',),
         avi_api_update_method=dict(default='put',
-                                   choices=['post', 'put', 'patch']),
+                                   choices=['put', 'patch']),
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
-        user_profile_ref=dict(type='str',),
+        user_profile_ref=dict(type='str'),
         default_tenant_ref=dict(type='str', default='/api/tenant?name=admin'),
     )
     argument_specs.update(avi_common_argument_spec())

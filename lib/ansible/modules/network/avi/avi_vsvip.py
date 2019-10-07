@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,19 +38,23 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     cloud_ref:
         description:
             - It is a reference to an object of type cloud.
             - Field introduced in 17.1.1.
+        type: str
     dns_info:
         description:
             - Service discovery specific data including fully qualified domain name, type and time-to-live of the dns record.
             - Field introduced in 17.1.1.
+        type: list
     east_west_placement:
         description:
             - Force placement on all service engines in the service engine group (container clouds only).
@@ -61,13 +66,16 @@ options:
             - Name for the vsvip object.
             - Field introduced in 17.1.1.
         required: true
+        type: str
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
             - Field introduced in 17.1.1.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     use_standard_alb:
         description:
             - This overrides the cloud level default and needs to match the se group value in which it will be used if the se group use_standard_alb value is
@@ -78,36 +86,54 @@ options:
         type: bool
     uuid:
         description:
-            - Uuid of the vsvip object.
+            - UUID of the VsVip object.
             - Field introduced in 17.1.1.
+        type: str
     vip:
         description:
             - List of virtual service ips and other shareable entities.
             - Field introduced in 17.1.1.
+        type: list
     vrf_context_ref:
         description:
             - Virtual routing context that the virtual service is bound to.
             - This is used to provide the isolation of the set of networks the application is attached to.
             - It is a reference to an object of type vrfcontext.
             - Field introduced in 17.1.1.
+        type: str
     vsvip_cloud_config_cksum:
         description:
             - Checksum of cloud configuration for vsvip.
             - Internally set by cloud connector.
             - Field introduced in 17.2.9, 18.1.2.
         version_added: "2.9"
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''
 
 EXAMPLES = """
-- name: Example to create VsVip object
+- name: Create vsvip for virtualservice for newtestvs
   avi_vsvip:
-    controller: 10.10.25.42
-    username: admin
-    password: something
-    state: present
-    name: sample_vsvip
+    name: vsvip-newtestvs-Default-Cloud
+    avi_credentials: '{{ avi_credentials }}' 
+    api_context: '{{avi_api_context | default(omit)}}'
+    vrf_context_ref: /api/vrfcontext/?name=global
+    tenant_ref: /api/tenant/?name=admin
+    cloud_ref: /api/cloud/?name=Default-Cloud
+    vip:
+    - vip_id: '1'
+      avi_allocated_fip: false
+      auto_allocate_ip: false
+      enabled: true
+      auto_allocate_floating_ip: false
+      avi_allocated_vip: false
+      auto_allocate_ip_type: V4_ONLY
+      ip_address:
+        type: V4
+        addr: 198.51.100.101
 """
 
 RETURN = '''

@@ -39,14 +39,26 @@ description:
 version_added: 2.6
 requirements: [ avisdk ]
 options:
+    full_name:
+        description:
+            - To set the full name for useraccount.
+        type: str
+    email:
+        description:
+            - To set email address for useraccount.
+        type: str
     old_password:
         description:
             - Old password for update password or default password for bootstrap.
+        required: true
+        type: str
     force_change:
         description:
             - If specifically set to true then old password is tried first for controller and then the new password is
               tried. If not specified this flag then the new password is tried first.
         version_added: "2.9"
+        type: bool
+
 
 extends_documentation_fragment:
     - avi
@@ -57,7 +69,9 @@ EXAMPLES = '''
     avi_useraccount:
       controller: ""
       username: ""
-      password: new_password
+      password: ""
+      full_name: "abc xyz"
+      email: "abc@xyz.com"
       old_password: ""
       api_version: ""
       force_change: false
@@ -93,6 +107,8 @@ except ImportError:
 
 def main():
     argument_specs = dict(
+        full_name=dict(type='str'),
+        email=dict(type='str'),
         old_password=dict(type='str', required=True, no_log=True),
         # Flag to specify priority of old/new password while establishing session with controller.
         # To handle both Saas and conventional (Entire state in playbook) scenario.
@@ -106,47 +122,39 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     api_creds = AviCredentials()
     api_creds.update_from_ansible_module(module)
+    full_name = module.params.get('full_name')
+    email = module.params.get('email')
     old_password = module.params.get('old_password')
     force_change = module.params.get('force_change', False)
     data = {
         'old_password': old_password,
         'password': api_creds.password
     }
-    # First try old password if 'force_change' is set to true
-    if force_change:
-        first_pwd = old_password
-        second_pwd = api_creds.password
-    # First try new password if 'force_change' is set to false or not specified in playbook.
-    else:
-        first_pwd = api_creds.password
-        second_pwd = old_password
-    password_changed = False
-    try:
+    if full_name:
+        data['full_name'] = full_name
+    if email:
+        data['email'] = email
+    api = None
+    if not force_change:
+        # check if the new password is already set.
+        try:
+            api = ApiSession.get_session(
+                api_creds.controller, api_creds.username,
+                password=api_creds.password, timeout=api_creds.timeout,
+                tenant=api_creds.tenant, tenant_uuid=api_creds.tenant_uuid,
+                token=api_creds.token, port=api_creds.port)
+            data['old_password'] = api_creds.password
+        except Exception:
+            # create a new session using the old password.
+            pass
+    if not api:
         api = ApiSession.get_session(
             api_creds.controller, api_creds.username,
-            password=first_pwd, timeout=api_creds.timeout,
+            password=old_password, timeout=api_creds.timeout,
             tenant=api_creds.tenant, tenant_uuid=api_creds.tenant_uuid,
             token=api_creds.token, port=api_creds.port)
-        if force_change:
-            rsp = api.put('useraccount', data=data)
-            if rsp:
-                password_changed = True
-    except Exception:
-        pass
-    if not password_changed:
-        api = ApiSession.get_session(
-            api_creds.controller, api_creds.username, password=second_pwd,
-            timeout=api_creds.timeout, tenant=api_creds.tenant,
-            tenant_uuid=api_creds.tenant_uuid, token=api_creds.token,
-            port=api_creds.port)
-        if not force_change:
-            rsp = api.put('useraccount', data=data)
-            if rsp:
-                password_changed = True
-    if password_changed:
-        return ansible_return(module, rsp, True, req=data)
-    else:
-        return ansible_return(module, rsp, False, req=data)
+    rsp = api.put('useraccount', data=data)
+    return ansible_return(module, rsp, True, req=data)
 
 
 if __name__ == '__main__':

@@ -29,6 +29,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -36,15 +37,18 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     action_script_config_ref:
         description:
             - Reference of the action script configuration to be used.
             - It is a reference to an object of type alertscriptconfig.
+        type: str
     autoscale_trigger_notification:
         description:
             - Trigger notification to autoscale manager.
@@ -53,10 +57,12 @@ options:
     description:
         description:
             - User defined description for the object.
+        type: str
     email_config_ref:
         description:
             - Select the email notification configuration to use when sending alerts via email.
             - It is a reference to an object of type alertemailconfig.
+        type: str
     external_only:
         description:
             - Generate alert only to external destinations.
@@ -69,27 +75,36 @@ options:
             - Enum options - ALERT_LOW, ALERT_MEDIUM, ALERT_HIGH.
             - Default value when not specified in API or module is interpreted by Avi Controller as ALERT_LOW.
         required: true
+        type: str
     name:
         description:
             - Name of the object.
         required: true
+        type: str
     snmp_trap_profile_ref:
         description:
             - Select the snmp trap notification to use when sending alerts via snmp trap.
             - It is a reference to an object of type snmptrapprofile.
+        type: str
     syslog_config_ref:
         description:
             - Select the syslog notification configuration to use when sending alerts via syslog.
             - It is a reference to an object of type alertsyslogconfig.
+        type: str
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Unique object identifier of the object.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''
