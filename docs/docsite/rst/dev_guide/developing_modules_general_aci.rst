@@ -263,7 +263,7 @@ Example: ``aci.post_config()``
 
 Example code
 """"""""""""
-.. code-block:: guess
+.. code-block:: python
 
     if state == 'present':
         aci.payload(
