@@ -985,3 +985,245 @@ groupings:
   - os
   os_zone:
   - os
+  vcenter_extension:
+  - vmware
+  vcenter_extension_info:
+  - vmware
+  vcenter_folder:
+  - vmware
+  vcenter_license:
+  - vmware
+  vmware_about_info:
+  - vmware
+  vmware_category:
+  - vmware
+  vmware_category_info:
+  - vmware
+  vmware_cfg_backup:
+  - vmware
+  vmware_cluster:
+  - vmware
+  vmware_cluster_drs:
+  - vmware
+  vmware_cluster_ha:
+  - vmware
+  vmware_cluster_info:
+  - vmware
+  vmware_cluster_vsan:
+  - vmware
+  vmware_content_deploy_template:
+  - vmware
+  vmware_content_library_info:
+  - vmware
+  vmware_content_library_manager:
+  - vmware
+  vmware_datacenter:
+  - vmware
+  vmware_datastore_cluster:
+  - vmware
+  vmware_datastore_info:
+  - vmware
+  vmware_datastore_maintenancemode:
+  - vmware
+  vmware_deploy_ovf:
+  - vmware
+  vmware_dns_config:
+  - vmware
+  vmware_drs_group:
+  - vmware
+  vmware_drs_group_info:
+  - vmware
+  vmware_drs_rule_info:
+  - vmware
+  vmware_dvs_host:
+  - vmware
+  vmware_dvs_portgroup:
+  - vmware
+  vmware_dvs_portgroup_find:
+  - vmware
+  vmware_dvs_portgroup_info:
+  - vmware
+  vmware_dvswitch:
+  - vmware
+  vmware_dvswitch_lacp:
+  - vmware
+  vmware_dvswitch_nioc:
+  - vmware
+  vmware_dvswitch_pvlans:
+  - vmware
+  vmware_dvswitch_uplink_pg:
+  - vmware
+  vmware_evc_mode:
+  - vmware
+  vmware_export_ovf:
+  - vmware
+  vmware_folder_info:
+  - vmware
+  vmware_guest:
+  - vmware
+  vmware_guest_boot_info:
+  - vmware
+  vmware_guest_boot_manager:
+  - vmware
+  vmware_guest_custom_attribute_defs:
+  - vmware
+  vmware_guest_custom_attributes:
+  - vmware
+  vmware_guest_customization_info:
+  - vmware
+  vmware_guest_disk:
+  - vmware
+  vmware_guest_disk_info:
+  - vmware
+  vmware_guest_file_operation:
+  - vmware
+  vmware_guest_find:
+  - vmware
+  vmware_guest_info:
+  - vmware
+  vmware_guest_move:
+  - vmware
+  vmware_guest_network:
+  - vmware
+  vmware_guest_powerstate:
+  - vmware
+  vmware_guest_screenshot:
+  - vmware
+  vmware_guest_sendkey:
+  - vmware
+  vmware_guest_snapshot:
+  - vmware
+  vmware_guest_snapshot_info:
+  - vmware
+  vmware_guest_tools_upgrade:
+  - vmware
+  vmware_guest_tools_wait:
+  - vmware
+  vmware_guest_video:
+  - vmware
+  vmware_guest_vnc:
+  - vmware
+  vmware_host:
+  - vmware
+  vmware_host_acceptance:
+  - vmware
+  vmware_host_active_directory:
+  - vmware
+  vmware_host_capability_info:
+  - vmware
+  vmware_host_config_info:
+  - vmware
+  vmware_host_config_manager:
+  - vmware
+  vmware_host_datastore:
+  - vmware
+  vmware_host_dns_info:
+  - vmware
+  vmware_host_facts:
+  - vmware
+  vmware_host_feature_info:
+  - vmware
+  vmware_host_firewall_info:
+  - vmware
+  vmware_host_firewall_manager:
+  - vmware
+  vmware_host_hyperthreading:
+  - vmware
+  vmware_host_ipv6:
+  - vmware
+  vmware_host_kernel_manager:
+  - vmware
+  vmware_host_lockdown:
+  - vmware
+  vmware_host_ntp:
+  - vmware
+  vmware_host_ntp_info:
+  - vmware
+  vmware_host_package_info:
+  - vmware
+  vmware_host_powermgmt_policy:
+  - vmware
+  vmware_host_powerstate:
+  - vmware
+  vmware_host_scanhba:
+  - vmware
+  vmware_host_service_info:
+  - vmware
+  vmware_host_service_manager:
+  - vmware
+  vmware_host_snmp:
+  - vmware
+  vmware_host_ssl_info:
+  - vmware
+  vmware_host_vmhba_info:
+  - vmware
+  vmware_host_vmnic_info:
+  - vmware
+  vmware_local_role_info:
+  - vmware
+  vmware_local_role_manager:
+  - vmware
+  vmware_local_user_info:
+  - vmware
+  vmware_local_user_manager:
+  - vmware
+  vmware_maintenancemode:
+  - vmware
+  vmware_migrate_vmk:
+  - vmware
+  vmware_object_role_permission:
+  - vmware
+  vmware_portgroup:
+  - vmware
+  vmware_portgroup_info:
+  - vmware
+  vmware_resource_pool:
+  - vmware
+  vmware_resource_pool_info:
+  - vmware
+  vmware_tag:
+  - vmware
+  vmware_tag_info:
+  - vmware
+  vmware_tag_manager:
+  - vmware
+  vmware_target_canonical_info:
+  - vmware
+  vmware_vcenter_settings:
+  - vmware
+  vmware_vcenter_statistics:
+  - vmware
+  vmware_vm_host_drs_rule:
+  - vmware
+  vmware_vm_info:
+  - vmware
+  vmware_vm_shell:
+  - vmware
+  vmware_vm_storage_policy_info:
+  - vmware
+  vmware_vm_vm_drs_rule:
+  - vmware
+  vmware_vm_vss_dvs_migrate:
+  - vmware
+  vmware_vmkernel:
+  - vmware
+  vmware_vmkernel_info:
+  - vmware
+  vmware_vmkernel_ip_config:
+  - vmware
+  vmware_vmotion:
+  - vmware
+  vmware_vsan_cluster:
+  - vmware
+  vmware_vsan_health_info:
+  - vmware
+  vmware_vspan_session:
+  - vmware
+  vmware_vswitch:
+  - vmware
+  vmware_vswitch_info:
+  - vmware
+  vsphere_copy:
+  - vmware
+  vsphere_file:
+  - vmware
