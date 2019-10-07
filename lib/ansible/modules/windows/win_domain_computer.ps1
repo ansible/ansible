@@ -147,7 +147,7 @@ Function Add-ConstructedState($desired_state) {
 # ------------------------------------------------------------------------------
 Function Remove-ConstructedState($initial_state) {
   Try {
-    Get-ADComputer -identity $initial_state.name -credential $credential |
+Get-ADComputer -Identity $initial_state.name @extra_args |
      Remove-ADObject `
       -Recursive `
       -Confirm:$False `
