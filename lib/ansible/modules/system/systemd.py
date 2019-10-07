@@ -538,34 +538,25 @@ def main():
                 # convert the output to a str as that is what result['status'][prop] will be when we compare later
                 prop_val = str(convert_property_suffix(prop_list[prop]))
 
-                # check if this is a valid property name
-                if prop not in result['status']:
-                    module.log("Property '%s' is invalid" % (prop))
-
-                # check if value already matches new value
-                elif prop_val != result['status'][prop]:
-                    module.log("Add '%s' to prop_mods list" % (prop))
+                # the property name must already be in the output from `systemctl show`
+                if prop in result['status'] and prop_val != result['status'][prop]:
                     prop_action += (" %s=%s" % (prop, prop_val))
-                else:
-                    module.log("Property '%s' unchanged" % (prop))
 
             # Modify all items
-            if prop_action:
+            if prop_action and not module.check_mode:
                 result['changed'] = True
-                if not module.check_mode:
-                    (rc, out, err) = module.run_command("%s set-property %s %s" % (systemctl, unit, prop_action))
-                    if rc != 0:
-                        module.fail_json(msg="Unable to set-property service %s - %s: %s" % (unit, prop_action, err))
-                    else:
-                        # In the case where we have updated properties we need to pull the full list again
-                        # so that the result[status] reflects the new values
-                        (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
+                (rc, out, err) = module.run_command("%s set-property %s %s" % (systemctl, unit, prop_action))
+                if rc != 0:
+                    module.fail_json(msg="Unable to set-property service %s - %s: %s" % (unit, prop_action, err))
+                else:
+                    # In the case where we have updated properties we need to pull the full list again
+                    # so that the result[status] reflects the new values
+                    (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
 
-                        if rc == 0:
-                            # load return of systemctl show into dictionary for easy access and return
-                            if out:
-                                result['status'] = parse_systemctl_show(to_native(out).split('\n'))
-
+                    if rc == 0:
+                        # load return of systemctl show into dictionary for easy access and return
+                        if out:
+                            result['status'] = parse_systemctl_show(to_native(out).split('\n'))
 
         # set service state if requested
         if module.params['state'] is not None:
