@@ -1,4 +1,4 @@
-.. _ansible_galaxy:
+:orphan:
 
 Ansible Galaxy
 ++++++++++++++
