@@ -211,7 +211,7 @@ def grafana_folder_exists(module, grafana_url, folder_name, headers):
         if info['status'] != 200:
             raise GrafanaAPIException("Unable to query Grafana API for folders (name: %s): %d" % (folder_name, info['status']))
 
-        folders = json.load(r.read())
+        folders = json.loads(r.read())
 
         for folder in folders:
             if folder['title'] == folder_name:
