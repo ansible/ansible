@@ -78,6 +78,7 @@ options:
             - Run ``systemctl set-property`` for each name/value pair provided.
             - The property name must already exist in the output of ``systemctl show``
         type: dict
+        version_added: "2.10"
     no_block:
         description:
             - Do not synchronously wait for the requested operation to finish.
