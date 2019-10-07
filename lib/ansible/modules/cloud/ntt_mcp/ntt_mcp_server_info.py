@@ -482,6 +482,8 @@ def main():
     try:
         if network_domain_name:
             network_domain = client.get_network_domain_by_name(name=network_domain_name, datacenter=datacenter)
+        if not network_domain:
+            module.fail_json(msg='Failed to locate the Cloud Network Domain - {0}'.format(network_domain_name))
     except (KeyError, IndexError, AttributeError, NTTMCPAPIException):
         module.fail_json(msg='Failed to locate the Cloud Network Domain - {0}'.format(network_domain_name))
 

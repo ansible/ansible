@@ -1256,19 +1256,19 @@ class NTTMCPClient():
         returns: A list of customer image objects
         """
         params = {}
-        if image_id:
+        if image_id is not None:
             if '*' in image_id:
                 params['id.LIKE'] = image_id
             else:
                 params['id'] = image_id
-        if image_name:
+        if image_name is not None:
             if '*' in image_name:
                 params['name.LIKE'] = image_name
             else:
                 params['name'] = image_name
-        if os_family:
+        if os_family is not None:
             params['family'] = os_family
-        if datacenter_id:
+        if datacenter_id is not None:
             params['datacenterId'] = datacenter_id
 
         url = self.base_url + 'image/customerImage'
@@ -1276,7 +1276,8 @@ class NTTMCPClient():
         response = self.api_get_call(url, params)
         if response is not None:
             try:
-                return response.json().get('customerImage')
+                #return response.json().get('customerImage')
+                return response.json()
             except AttributeError:
                 raise NTTMCPAPIException('Error with the API response')
         else:
