@@ -280,6 +280,22 @@ resources:
       - Changing this forces a new resource to be created.
       returned: success
       type: str
+    defaultEncryptionConfiguration:
+      description:
+      - The default encryption key for all tables in the dataset. Once this property
+        is set, all newly-created partitioned tables in the dataset will have encryption
+        key set to this value, unless table creation request (or query) overrides
+        the key.
+      returned: success
+      type: complex
+      contains:
+        kmsKeyName:
+          description:
+          - Describes the Cloud KMS encryption key that will be used to protect destination
+            BigQuery table. The BigQuery Service Account associated with your project
+            requires access to this encryption key.
+          returned: success
+          type: str
 '''
 
 ################################################################################
