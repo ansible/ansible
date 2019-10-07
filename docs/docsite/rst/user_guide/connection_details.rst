@@ -27,6 +27,8 @@ To set up SSH agent to avoid retyping passwords, you can do:
 
 Depending on your setup, you may wish to use Ansible's ``--private-key`` command line option to specify a pem file instead.  You can also add the private key file:
 
+.. code-block:: bash
+
    $ ssh-agent bash
    $ ssh-add ~/.ssh/keypair.pem
 
@@ -35,11 +37,15 @@ Another way to add private key files without using ssh-agent is using ``ansible_
 Running against localhost
 -------------------------
 
-You can run commands against the control node by using "localhost" or "127.0.0.1" for the server name::
+You can run commands against the control node by using "localhost" or "127.0.0.1" for the server name:
+
+.. code-block:: bash
 
     $ ansible localhost -m ping -e 'ansible_python_interpreter="/usr/bin/env python"'
 
-You can specify localhost explicitly by adding this to your inventory file::
+You can specify localhost explicitly by adding this to your inventory file:
+
+.. code-block:: bash
 
     localhost ansible_connection=local ansible_python_interpreter="/usr/bin/env python"
 
@@ -52,7 +58,9 @@ Ansible enables host key checking by default. Checking host keys guards against 
 
 If a host is reinstalled and has a different key in 'known_hosts', this will result in an error message until corrected.  If a new host is not in 'known_hosts' your control node may prompt for confirmation of the key, which results in an interactive experience if using Ansible, from say, cron. You might not want this.
 
-If you understand the implications and wish to disable this behavior, you can do so by editing ``/etc/ansible/ansible.cfg`` or ``~/.ansible.cfg``::
+If you understand the implications and wish to disable this behavior, you can do so by editing ``/etc/ansible/ansible.cfg`` or ``~/.ansible.cfg``:
+
+.. code-block:: text
 
     [defaults]
     host_key_checking = False
