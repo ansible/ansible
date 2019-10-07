@@ -331,7 +331,7 @@ delegation or accessing forbidden system calls like the WUA API. You can use
 ``become`` with the same user as ``ansible_user`` to bypass these limitations
 and run commands that are not normally accessible in a WinRM session.
 
-Administrative Rights
+Administrative rights
 ---------------------
 
 Many tasks in Windows require administrative privileges to complete. When using
@@ -504,7 +504,7 @@ If running on a version of Ansible that is older than 2.5 or the normal
 .. Note:: Granting the ``SeTcbPrivilege`` or turning UAC off can cause Windows
     security vulnerabilities and care should be given if these steps are taken.
 
-Local Service Accounts
+Local service accounts
 ----------------------
 
 Prior to Ansible version 2.5, ``become`` only worked on Windows with a local or domain
@@ -521,7 +521,7 @@ Because local service accounts do not have passwords, the
 ``ansible_become_password`` parameter is not required and is ignored if
 specified.
 
-Become without setting a Password
+Become without setting a password
 ---------------------------------
 
 As of Ansible 2.8, ``become`` can be used to become a Windows local or domain account
