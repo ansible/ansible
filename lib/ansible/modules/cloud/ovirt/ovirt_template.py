@@ -1022,6 +1022,8 @@ def main():
                 template = templates_module.wait_for_import(
                     condition=lambda t: t.status == otypes.TemplateStatus.OK
                 )
+                if template is None:
+                    raise TimeoutError("Image/template '%s' could not be imported. Try again with larger timeout." % template_name)
                 ret = templates_module.create(result_state=otypes.TemplateStatus.OK)
                 ret = {
                     'changed': True,
