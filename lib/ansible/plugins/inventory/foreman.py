@@ -234,7 +234,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
                     self.inventory.set_variable(host['name'], 'ansible_facts', self._get_facts(host))
 
                 hostvars = combine_vars(get_group_vars(self.inventory.hosts[host['name']].get_groups()), self.inventory.hosts[host['name']].get_vars())
-                self._set_composite_vars(self.get_option('compose'), hostvars, host['name'], strict=True)
+                self._set_composite_vars(self.get_option('compose'), hostvars, host['name'], strict=self.get_option('strict'))
                 self._add_host_to_composed_groups(self.get_option('groups'), dict(), host['name'], strict=True)
                 self._add_host_to_keyed_groups(self.get_option('keyed_groups'), dict(), host['name'], strict=True)
 
