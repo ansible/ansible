@@ -23,7 +23,7 @@ $path = Get-AnsibleParam -obj $params -name 'path'
 $start_mode = Get-AnsibleParam -obj $params -name 'start_mode' -type 'str' -validateset 'auto','manual','disabled','delayed'
 $state = Get-AnsibleParam -obj $params -name 'state' -type 'str' -validateset 'started','stopped','restarted','absent','paused'
 $username = Get-AnsibleParam -obj $params -name 'username' -type 'str'
-$recovery_reset_interval = Get-AnsibleParam -obj $params -name 'recovery_reset_interval' -type 'int' -default 1
+$recovery_reset_interval = Get-AnsibleParam -obj $params -name 'recovery_reset_interval' -type 'int' -default 0
 $recovery_actions = Get-AnsibleParam -obj $params -name 'recovery_actions' -type 'list' -default $null
 
 $result = @{
@@ -69,7 +69,7 @@ Function ReversedHexValue ($v) {
 
   $res = [system.string]::Join('', $res)
 
-  $res
+  return $res
 }
 
 Function DecValue ($v) {
@@ -82,7 +82,7 @@ Function DecValue ($v) {
 
   $res = [convert]::toint32($res, 16)
 
-  $res
+  return $res
 }
 
 Function RecoveryActionMapping ($a) {
@@ -97,10 +97,10 @@ Function RecoveryActionMapping ($a) {
         default { 0 }
     }
 
-    $res
+    return $res
 }
 
-Function RecoveryActionsToHuman ($s) {
+Function Convert-RecoveryActionsToHuman ($s) {
     $res = (("{0:x8}" -f $s) -split '(........)' | Where-Object { $_ }).split(" ")
 
     for ($i=0; $i -lt $res.Length; $i++) {
@@ -117,7 +117,7 @@ Function RecoveryActionsToHuman ($s) {
                             'subsequent_failure_timeout' = $res[10];
                         }
 
-    $recovery_actions
+    return $recovery_actions
 }
 
 Function Get-ServiceInfo($name) {
@@ -152,7 +152,7 @@ Function Get-ServiceInfo($name) {
     $recovery = Get-RecoveryActions($svc.Name)
 
     if ('' -ne $recovery) {
-        $recovery = RecoveryActionsToHuman($recovery)
+        $recovery = Convert-RecoveryActionsToHuman($recovery)
     } else {
         $recovery = @{}
     }
@@ -220,12 +220,12 @@ Function Get-RecoveryActions($name) {
       $recovery_actions = ""
       $bytes = (Get-ItemProperty -LiteralPath $recovery_actions_key).FailureActions
       $bytes | ForEach-Object { $recovery_actions+=('{0:x2}' -f $_).ToString() }
-      $recovery_actions = $recovery_actions.substring(0,$recovery_actions.length)
+      #$recovery_actions = $recovery_actions.substring(0,$recovery_actions.length)
   } catch {
       $recovery_actions = $false
   }
 
-  $recovery_actions
+  return $recovery_actions
 
 }
 
@@ -500,7 +500,7 @@ Function Set-ServiceRecovery($name, $reset_interval, $actions) {
 
     $reset_fail_count_after = ReversedHexValue $reset_interval
 
-    if ($actions.Count -ge 3) {
+    if ($actions.Count -eq 3) {
       $on_first_failure = ReversedHexValue (RecoveryActionMapping($actions[0].action))
       $first_failure_timeout = ReversedHexValue $actions[0].delay
       $on_second_failure = ReversedHexValue (RecoveryActionMapping($actions[1].action))
@@ -526,7 +526,7 @@ Function Set-ServiceRecovery($name, $reset_interval, $actions) {
 
     if ($recovery_actions -ne $processed_actions) {
 
-            if (!$check_mode) {
+            if ( -not $check_mode) {
                 $cmd_output=sc.exe failure $name reset= $reset actions= $actions_string
 
                 if ($LASTEXITCODE -ne 0) {
