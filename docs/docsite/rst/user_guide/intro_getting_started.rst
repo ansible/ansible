@@ -8,7 +8,6 @@ Now that you have read the :ref:`installation guide<installation_guide>` and ins
   * selects machines to execute against from inventory
   * connects to those machines (or network devices, or other managed nodes), usually over SSH
   * copies one or more modules to the remote machines and starts execution there
-  * collects return values and reports results on the control node
 
 Ansible can do much more, but you should understand the most common use case before exploring all the powerful configuration, deployment, and orchestration features of Ansible. This page illustrates the basic process with a simple inventory and an ad-hoc command. Once you understand how Ansible works, you can read more details about :ref:`ad-hoc commands<intro_adhoc>`, organize your infrastructure with :ref:`inventory<intro_inventory>`, and harness the full power of Ansible with :ref:`playbooks<playbooks_intro>`.
 
@@ -32,7 +31,7 @@ For this basic inventory, edit (or create) ``/etc/ansible/hosts`` and add a few 
 
 Beyond the basics
 -----------------
-TODO: add content here
+Your inventory can store much more than IPs and FQDNs. You can create :ref:`aliases<inventory_aliases>`, set variable values for a single host with :ref:`host vars<host_variables>`, or set variable values for multiple hosts with :ref:`group vars<group_variables>`.
 
 .. _remote_connection_information:
 
@@ -74,9 +73,21 @@ Now run a live command on all of your nodes:
 
    $ ansible all -a "/bin/echo hello"
 
+You should see output for each host in your inventory, similar to this:
+
+.. code-block:: ansible-output
+
+   aserver.example.org | SUCCESS => {
+       "ansible_facts": {
+           "discovered_interpreter_python": "/usr/bin/python"
+       },
+       "changed": false,
+       "ping": "pong"
+   }
+
 Beyond the basics
 -----------------
-By default Ansible uses SFTP to transfer files. If the machine or device you want to manage does not support SFTP, you can switch to SCP mode in :ref:`intro_configuration`. The files are placed in a temporary directory
+By default Ansible uses SFTP to transfer files. If the machine or device you want to manage does not support SFTP, you can switch to SCP mode in :ref:`intro_configuration`. The files are placed in a temporary directory and executed from there.
 
 If you need privilege escalation (sudo and similar) to run a command, pass the ``become`` flags:
 
@@ -90,21 +101,6 @@ If you need privilege escalation (sudo and similar) to run a command, pass the `
     $ ansible all -m ping -u bruce --become --become-user batman
 
 You can read more about privilege escalation in :ref:`become`.
-
-Return values and results
-==========================
-
-Ansible collects information about the connection, the command, and the results from each remote node and presents them to you at the end of each run.
-
-Action
-------
-Compare the results of your first Ansible command to this sample output:
-
-TODO: add sample output here
-
-Beyond the basics
------------------
-TODO: add content here
 
 Congratulations! You have contacted your nodes using Ansible. You used a basic inventory file and an ad-hoc command to direct Ansible to connect to specific remote nodes, copy a module file there and execute it, and return output. You have a fully working infrastructure.
 
