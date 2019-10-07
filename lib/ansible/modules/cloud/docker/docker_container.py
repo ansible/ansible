@@ -371,7 +371,7 @@ options:
   log_options:
     description:
       - Dictionary of options specific to the chosen I(log_driver).
-      - See https://docs.docker.com/engine/admin/logging/overview/ for details.
+      - See U(https://docs.docker.com/engine/admin/logging/overview/) for details.
     type: dict
     aliases:
       - log_opt
