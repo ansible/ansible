@@ -18,7 +18,7 @@ and without polling (``-P``)::
     $ ansible all -B 3600 -P 0 -a "/usr/bin/long_running_operation --do-stuff"
 
 If you want to check on the job status later, you can use the
-async_status module, passing it the job ID that was returned when you ran
+``async_status`` module, passing it the job ID that was returned when you ran
 the original job in the background::
 
     $ ansible web1.example.com -m async_status -a "jid=488359678239.2844"
