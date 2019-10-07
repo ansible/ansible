@@ -112,14 +112,14 @@ Function Set-ConstructedState($initial_state, $desired_state) {
   If ($initial_state.distinguished_name -cne $desired_state.distinguished_name) {
     # Move computer to OU
     Try {
-      Get-ADComputer -Identity $desired_state.name -credential $credential |
+      Get-ADComputer -Identity $desired_state.name @extra_args |
           Move-ADObject `
             -TargetPath $desired_state.ou `
             -Confirm:$False `
             -WhatIf:$check_mode `
             @extra_args
     } Catch {
-      Fail-Json -obj $result -message "Failed to move the AD object $($initial_state.distinguished_name) to $($desired_state.distinguished_name) OU: $($_.Exception.Message)"
+      Fail-Json -obj $result -message "Failed to move the AD object $($initial_state.distinguished_name) to $($desired_state.distinguished_name) .Exception message: $($_.Exception.Message)"
     }
   }
   $result.changed = $true
