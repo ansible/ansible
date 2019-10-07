@@ -211,6 +211,41 @@ VM names should be predictable
 If you need to create a new VM during your test, you can use ``test_vm1``, ``test_vm2`` or ``test_vm3``. This
 way it will be automatically clean up for you.
 
+Avoid the common boiling plate code in your test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Since https://github.com/ansible/ansible/pull/63209, the test suite uses `modules_defaults`. This module
+allow us to preinitialize the following default keys of the VMware modules:
+
+- hostname
+- username
+- password
+- validate_certs
+
+For example, the following block:
+
+.. code-block:: yaml
+
+    - name: Add a VMware vSwitchs
+      vmware_vswitch:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        username: '{{ vcenter_username }}'
+        validate_certs: 'no'
+        esxi_hostname: 'esxi1'
+        switch_name: "boby"
+        state: present
+
+should be simplified to just:
+
+.. code-block:: yaml
+
+    - name: Add a VMware vSwitchs
+      vmware_vswitch:
+        esxi_hostname: 'esxi1'
+        switch_name: "boby"
+        state: present
+
 
 Typographic convention
 ======================
