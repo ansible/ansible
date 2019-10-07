@@ -1,0 +1,16 @@
+- hosts: localhost
+  vars:
+    git_install: '{{ lookup("file", lookup("env", "OUTPUT_DIR") + "/git_install.json") | from_json }}'
+  tasks:
+    - name: remove unwanted packages
+      package:
+        name: git
+        state: absent
+      when: git_install.changed
+
+    - name: remove auto-installed packages from FreeBSD
+      pkgng:
+        name: git
+        state: absent
+        autoremove: yes
+      when: git_install.changed and ansible_distribution == "FreeBSD"

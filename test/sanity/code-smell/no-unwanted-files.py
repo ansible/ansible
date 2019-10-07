@@ -20,6 +20,7 @@ def main():
 
     skip_directories = (
         'lib/ansible/galaxy/data/',
+        'lib/ansible/galaxydev/data/',
     )
 
     for path in paths:

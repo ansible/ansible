@@ -44,6 +44,7 @@ ANSIBLE_BIN_SYMLINK_MAP = {
     'ansible-console': 'ansible',
     'ansible-doc': 'ansible',
     'ansible-galaxy': 'ansible',
+    'ansible-galaxydev': 'ansible',
     'ansible-inventory': 'ansible',
     'ansible-playbook': 'ansible',
     'ansible-pull': 'ansible',

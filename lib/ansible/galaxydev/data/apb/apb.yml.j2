@@ -1,0 +1,13 @@
+version: '1.0.0'
+name: {{ role_name }}
+description: {{ description }}
+bindable: False
+async: optional
+metadata:
+  displayName: {{ role_name }}
+plans:
+  - name: default
+    description: This default plan deploys {{ role_name }}
+    free: True
+    metadata: {}
+    parameters: []

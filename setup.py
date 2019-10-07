@@ -321,6 +321,7 @@ static_setup_params = dict(
         'bin/ansible-pull',
         'bin/ansible-doc',
         'bin/ansible-galaxy',
+        'bin/ansible-galaxydev',
         'bin/ansible-console',
         'bin/ansible-connection',
         'bin/ansible-vault',

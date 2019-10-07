@@ -23,6 +23,10 @@ from ..commands import Command  # pylint: disable=relative-beyond-top-level
 
 DEFAULT_TEMPLATE_FILE = pathlib.Path(__file__).parents[4] / 'docs/templates/man.j2'
 
+# Do not build man pages for galaxydev because it is a one-off backport of the 2.10 ansible-galaxy
+# script for 2.9.
+MAN_PAGE_BLACKLIST = frozenset(('galaxydev',))
+
 
 # from https://www.python.org/dev/peps/pep-0257/
 def trim_docstring(docstring):
@@ -264,7 +268,9 @@ class GenerateMan(Command):
 
             cli_name = os.path.splitext(binary)[0]
 
-            if cli_name == 'adhoc':
+            if cli_name in MAN_PAGE_BLACKLIST:
+                continue
+            elif cli_name == 'adhoc':
                 cli_class_name = 'AdHocCLI'
                 # myclass = 'AdHocCLI'
                 output[cli_name] = 'ansible.1.rst.in'
