@@ -117,13 +117,13 @@ options:
     description:
       - Reset failure counter after this number of seconds.
     type: int
-    default: 1
+    default: 0
     version_added: '2.10'
   recovery_actions:
     description:
-      - A list representing the recovery actions you want to set.
+      - A list representing the recovery actions you want to set (3).
       - First element of the list is the first failure actions/delay...
-      - This can go up to a count of three for subsequent failures.
+      - Third element is for the subsequent failures.
     type: list
     version_added: '2.10'
 
