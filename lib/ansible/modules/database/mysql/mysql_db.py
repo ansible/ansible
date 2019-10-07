@@ -28,6 +28,7 @@ options:
       - if name=all Works like --all-databases option for mysqldump (Added in 2.0).
     required: true
     type: list
+    elements: str
     aliases: [ db ]
   state:
     description:
