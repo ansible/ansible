@@ -12,7 +12,9 @@ Connecting to BSD nodes
 -----------------------
 
 Ansible connects to managed nodes using OpenSSH by default. This works on BSD if you use SSH keys for authentication. However, if you use SSH passwords for authentication, Ansible relies on sshpass. Most
-versions of sshpass do not deal well with BSD login prompts, so when using SSH passwords against BSD machines, use ``paramiko`` to connect instead of OpenSSH. You can do this in ansible.cfg globally or you can set it as an inventory/group/host variable. For example::
+versions of sshpass do not deal well with BSD login prompts, so when using SSH passwords against BSD machines, use ``paramiko`` to connect instead of OpenSSH. You can do this in ansible.cfg globally or you can set it as an inventory/group/host variable. For example:
+
+.. code-block:: text
 
     [freebsd]
     mybsdhost1 ansible_connection=paramiko
@@ -25,11 +27,15 @@ Bootstrapping BSD
 Ansible is agentless by default, however, it requires Python on managed nodes. Only the :ref:`raw <raw_module>` module will operate without Python. Although this module can be used to bootstrap Ansible and install Python on BSD variants (see below), it is very limited and the use of Python is required to make full use of Ansible's features.
 
 The following example installs Python 2.7 which includes the json library required for full functionality of Ansible.
-On your control machine you can execute the following for most versions of FreeBSD::
+On your control machine you can execute the following for most versions of FreeBSD:
+
+.. code-block:: bash
 
     ansible -m raw -a "pkg install -y python27" mybsdhost1
 
-Or for most versions of OpenBSD::
+Or for most versions of OpenBSD:
+
+.. code-block:: bash
 
     ansible -m raw -a "pkg_add -z python-2.7"
 
@@ -43,14 +49,18 @@ Once this is done you can now use other Ansible modules apart from the ``raw`` m
 Setting the Python interpreter
 ------------------------------
 
-To support a variety of Unix/Linux operating systems and distributions, Ansible cannot always rely on the existing environment or ``env`` variables to locate the correct Python binary. By default, modules point at ``/usr/bin/python`` as this is the most common location. On BSD variants, this path may differ, so it is advised to inform Ansible of the binary's location, through the ``ansible_python_interpreter`` inventory variable. For example::
+To support a variety of Unix/Linux operating systems and distributions, Ansible cannot always rely on the existing environment or ``env`` variables to locate the correct Python binary. By default, modules point at ``/usr/bin/python`` as this is the most common location. On BSD variants, this path may differ, so it is advised to inform Ansible of the binary's location, through the ``ansible_python_interpreter`` inventory variable. For example:
+
+.. code-block:: text
 
     [freebsd:vars]
     ansible_python_interpreter=/usr/local/bin/python2.7
     [openbsd:vars]
     ansible_python_interpreter=/usr/local/bin/python2.7
 
-If you use additional plugins beyond those bundled with Ansible, you can set similar variables for ``bash``, ``perl`` or ``ruby``, depending on how the plugin is written. For example::
+If you use additional plugins beyond those bundled with Ansible, you can set similar variables for ``bash``, ``perl`` or ``ruby``, depending on how the plugin is written. For example:
+
+.. code-block:: text
 
     [freebsd:vars]
     ansible_python_interpreter=/usr/local/bin/python
