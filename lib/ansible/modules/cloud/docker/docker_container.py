@@ -500,7 +500,7 @@ options:
     type: str
   userns_mode:
     description:
-      - Set the user namespace mode for the container. Currently, the only valid value are C(host) and the empty string.
+      - Set the user namespace mode for the container. Currently, the only valid values are C(host) and the empty string.
     type: str
     version_added: "2.5"
   networks:
