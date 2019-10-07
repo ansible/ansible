@@ -51,6 +51,7 @@ options:
     - Cannot reassign ownership of objects that are required by the database system.
     - Mutually exclusive with C(obj_type).
     type: list
+    elements: str
   fail_on_role:
     description:
     - If C(yes), fail when I(reassign_owned_by) role does not exist.

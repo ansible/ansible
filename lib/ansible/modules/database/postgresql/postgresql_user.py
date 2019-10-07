@@ -150,6 +150,7 @@ options:
     description:
     - The list of groups (roles) that need to be granted to the user.
     type: list
+    elements: str
     version_added: '2.9'
 notes:
 - The module creates a user (role) with login privilege by default.
