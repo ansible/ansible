@@ -500,7 +500,7 @@ options:
     type: str
   userns_mode:
     description:
-      - Set the user namespace mode for the container. Currently, the only valid values are C(host) and the empty string.
+      - Set the user namespace mode for the container. Currently, the only valid value are C(host) and the empty string.
     type: str
     version_added: "2.5"
   networks:
@@ -682,25 +682,25 @@ options:
     elements: str
   state:
     description:
-      - 'C(absent) - A container matching the specified name will be stopped and removed. Use force_kill to kill the container
-         rather than stopping it. Use keep_volumes to retain volumes associated with the removed container.'
+      - 'C(absent) - A container matching the specified name will be stopped and removed. Use I(force_kill) to kill the container
+         rather than stopping it. Use I(keep_volumes) to retain volumes associated with the removed container.'
       - 'C(present) - Asserts the existence of a container matching the name and any provided configuration parameters. If no
         container matches the name, a container will be created. If a container matches the name but the provided configuration
         does not match, the container will be updated, if it can be. If it cannot be updated, it will be removed and re-created
         with the requested config. Image version will be taken into account when comparing configuration. To ignore image
-        version use the ignore_image option. Use the recreate option to force the re-creation of the matching container. Use
-        force_kill to kill the container rather than stopping it. Use keep_volumes to retain volumes associated with a removed
+        version use the I(ignore_image) option. Use the I(recreate) option to force the re-creation of the matching container. Use
+        I(force_kill) to kill the container rather than stopping it. Use I(keep_volumes) to retain volumes associated with a removed
         container.'
       - 'C(started) - Asserts there is a running container matching the name and any provided configuration. If no container
         matches the name, a container will be created and started. If a container matching the name is found but the
         configuration does not match, the container will be updated, if it can be. If it cannot be updated, it will be removed
         and a new container will be created with the requested configuration and started. Image version will be taken into
-        account when comparing configuration. To ignore image version use the ignore_image option. Use recreate to always
-        re-create a matching container, even if it is running. Use restart to force a matching container to be stopped and
-        restarted. Use force_kill to kill a container rather than stopping it. Use keep_volumes to retain volumes associated
+        account when comparing configuration. To ignore image version use the I(ignore_image) option. Use I(recreate) to always
+        re-create a matching container, even if it is running. Use I(restart) to force a matching container to be stopped and
+        restarted. Use I(force_kill) to kill a container rather than stopping it. Use I(keep_volumes) to retain volumes associated
         with a removed container.'
       - 'C(stopped) - Asserts that the container is first C(present), and then if the container is running moves it to a stopped
-        state. Use force_kill to kill a container rather than stopping it.'
+        state. Use I(force_kill) to kill a container rather than stopping it.'
     type: str
     default: started
     choices:
