@@ -127,6 +127,12 @@ options:
             - For more information see U(https://mariadb.com/kb/en/library/multi-source-replication/).
         type: str
         version_added: "2.10"
+    channel:
+        description:
+            - Name of replication channel.
+            - Multi-source replication is supported from MySQL 5.7.
+            - For more information see U(https://dev.mysql.com/doc/refman/8.0/en/replication-multi-source.html).
+        version_added: "2.10"
 
 extends_documentation_fragment:
 - mysql
@@ -169,6 +175,11 @@ EXAMPLES = r'''
   mysql_replication:
     mode: startslave
     connection_name: master-1
+
+- name: Stop replication in channel master-1
+  mysql_replication:
+    mode: stopslave
+    channel: master-1
 '''
 
 RETURN = r'''
@@ -196,20 +207,29 @@ def get_master_status(cursor):
     return masterstatus
 
 
-def get_slave_status(cursor, connection_name=''):
+def get_slave_status(cursor, connection_name='', channel=''):
     if connection_name:
-        cursor.execute("SHOW SLAVE '%s' STATUS" % connection_name)
+        query = "SHOW SLAVE '%s' STATUS" % connection_name
     else:
-        cursor.execute("SHOW SLAVE STATUS")
+        query = "SHOW SLAVE STATUS"
+
+    if channel:
+        query += " FOR CHANNEL '%s'" % channel
+
+    cursor.execute(query)
     slavestatus = cursor.fetchone()
     return slavestatus
 
 
-def stop_slave(cursor, connection_name=''):
+def stop_slave(cursor, connection_name='', channel=''):
     if connection_name:
         query = "STOP SLAVE '%s'" % connection_name
     else:
         query = 'STOP SLAVE'
+
+    if channel:
+        query += " FOR CHANNEL '%s'" % channel
+
     try:
         executed_queries.append(query)
         cursor.execute(query)
@@ -219,11 +239,15 @@ def stop_slave(cursor, connection_name=''):
     return stopped
 
 
-def reset_slave(cursor, connection_name=''):
+def reset_slave(cursor, connection_name='', channel=''):
     if connection_name:
         query = "RESET SLAVE '%s'" % connection_name
     else:
         query = 'RESET SLAVE'
+
+    if channel:
+        query += " FOR CHANNEL '%s'" % channel
+
     try:
         executed_queries.append(query)
         cursor.execute(query)
@@ -233,11 +257,15 @@ def reset_slave(cursor, connection_name=''):
     return reset
 
 
-def reset_slave_all(cursor, connection_name=''):
+def reset_slave_all(cursor, connection_name='', channel=''):
     if connection_name:
         query = "RESET SLAVE '%s' ALL" % connection_name
     else:
         query = 'RESET SLAVE ALL'
+
+    if channel:
+        query += " FOR CHANNEL '%s'" % channel
+
     try:
         executed_queries.append(query)
         cursor.execute(query)
@@ -247,11 +275,15 @@ def reset_slave_all(cursor, connection_name=''):
     return reset
 
 
-def start_slave(cursor, connection_name=''):
+def start_slave(cursor, connection_name='', channel=''):
     if connection_name:
         query = "START SLAVE '%s'" % connection_name
     else:
         query = 'START SLAVE'
+
+    if channel:
+        query += " FOR CHANNEL '%s'" % channel
+
     try:
         executed_queries.append(query)
         cursor.execute(query)
@@ -261,11 +293,15 @@ def start_slave(cursor, connection_name=''):
     return started
 
 
-def changemaster(cursor, chm, connection_name=''):
+def changemaster(cursor, chm, connection_name='', channel=''):
     if connection_name:
         query = "CHANGE MASTER '%s' TO %s" % (connection_name, ','.join(chm))
     else:
         query = 'CHANGE MASTER TO %s' % ','.join(chm)
+
+    if channel:
+        query += " FOR CHANNEL '%s'" % channel
+
     executed_queries.append(query)
     cursor.execute(query)
 
@@ -304,6 +340,7 @@ def main():
             master_use_gtid=dict(type='str', choices=['current_pos', 'slave_pos', 'disabled']),
             master_delay=dict(type='int'),
             connection_name=dict(type='str'),
+            channel=dict(type='str'),
         )
     )
     mode = module.params["mode"]
@@ -334,6 +371,7 @@ def main():
     else:
         master_use_gtid = module.params["master_use_gtid"]
     connection_name = module.params["connection_name"]
+    channel = module.params['channel']
 
     if mysql_driver is None:
         module.fail_json(msg=mysql_driver_fail_msg)
@@ -363,7 +401,7 @@ def main():
         module.exit_json(queries=executed_queries, **status)
 
     elif mode in "getslave":
-        status = get_slave_status(cursor, connection_name)
+        status = get_slave_status(cursor, connection_name, channel)
         if not isinstance(status, dict):
             status = dict(Is_Slave=False, msg="Server is not configured as mysql slave")
         else:
@@ -410,7 +448,7 @@ def main():
         if master_use_gtid is not None:
             chm.append("MASTER_USE_GTID=%s" % master_use_gtid)
         try:
-            changemaster(cursor, chm, connection_name)
+            changemaster(cursor, chm, connection_name, channel)
         except mysql_driver.Warning as e:
             result['warning'] = to_native(e)
         except Exception as e:
@@ -418,25 +456,25 @@ def main():
         result['changed'] = True
         module.exit_json(queries=executed_queries, **result)
     elif mode in "startslave":
-        started = start_slave(cursor, connection_name)
+        started = start_slave(cursor, connection_name, channel)
         if started is True:
             module.exit_json(msg="Slave started ", changed=True, queries=executed_queries)
         else:
             module.exit_json(msg="Slave already started (Or cannot be started)", changed=False, queries=executed_queries)
     elif mode in "stopslave":
-        stopped = stop_slave(cursor, connection_name)
+        stopped = stop_slave(cursor, connection_name, channel)
         if stopped is True:
             module.exit_json(msg="Slave stopped", changed=True, queries=executed_queries)
         else:
             module.exit_json(msg="Slave already stopped", changed=False, queries=executed_queries)
     elif mode in "resetslave":
-        reset = reset_slave(cursor, connection_name)
+        reset = reset_slave(cursor, connection_name, channel)
         if reset is True:
             module.exit_json(msg="Slave reset", changed=True, queries=executed_queries)
         else:
             module.exit_json(msg="Slave already reset", changed=False, queries=executed_queries)
     elif mode in "resetslaveall":
-        reset = reset_slave_all(cursor, connection_name)
+        reset = reset_slave_all(cursor, connection_name, channel)
         if reset is True:
             module.exit_json(msg="Slave reset", changed=True, queries=executed_queries)
         else:
