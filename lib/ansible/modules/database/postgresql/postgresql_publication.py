@@ -41,6 +41,7 @@ options:
       nothing will be changed. If you need to add all tables to the publication with the same name,
       drop existent and create new without passing I(tables).
     type: list
+    elements: str
   state:
     description:
     - The publication state.
