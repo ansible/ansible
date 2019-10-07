@@ -430,9 +430,9 @@ options:
         type: str
         choices:
           - bind
-          - volume
-          - tmpfs
           - npipe
+          - tmpfs
+          - volume
         default: volume
       read_only:
         description:
@@ -443,9 +443,9 @@ options:
           - The consistency requirement for the mount.
         type: str
         choices:
-          - default
-          - consistent
           - cached
+          - consistent
+          - default
           - delegated
       propagation:
         description:
