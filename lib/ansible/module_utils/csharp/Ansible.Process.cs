@@ -253,17 +253,29 @@ namespace Ansible.Process
 
         public static Result CreateProcess(string command)
         {
-            return CreateProcess(null, command, null, null, String.Empty);
+            return CreateProcess(null, command, null, null, String.Empty, String.Empty);
         }
 
         public static Result CreateProcess(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory,
             IDictionary environment)
         {
-            return CreateProcess(lpApplicationName, lpCommandLine, lpCurrentDirectory, environment, String.Empty);
+            return CreateProcess(lpApplicationName, lpCommandLine, lpCurrentDirectory, environment, String.Empty, String.Empty);
         }
 
         public static Result CreateProcess(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory,
             IDictionary environment, string stdin)
+        {
+            return CreateProcess(lpApplicationName, lpCommandLine, lpCurrentDirectory, environment, stdin, String.Empty);
+        }
+
+        public static Result CreateProcess(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory,
+            IDictionary environment, byte[] stdin)
+        {
+            return CreateProcess(lpApplicationName, lpCommandLine, lpCurrentDirectory, environment, stdin, String.Empty);
+        }
+
+        public static Result CreateProcess(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory,
+            IDictionary environment, string stdin, string output_encoding_override)
         {
             byte[] stdinBytes;
             if (String.IsNullOrEmpty(stdin))
@@ -274,7 +286,7 @@ namespace Ansible.Process
                     stdin += Environment.NewLine;
                 stdinBytes = new UTF8Encoding(false).GetBytes(stdin);
             }
-            return CreateProcess(lpApplicationName, lpCommandLine, lpCurrentDirectory, environment, stdinBytes);
+            return CreateProcess(lpApplicationName, lpCommandLine, lpCurrentDirectory, environment, stdinBytes, output_encoding_override);
         }
 
         /// <summary>
@@ -285,9 +297,10 @@ namespace Ansible.Process
         /// <param name="lpCurrentDirectory">The full path to the current directory for the process, null will have the same cwd as the calling process</param>
         /// <param name="environment">A dictionary of key/value pairs to define the new process environment</param>
         /// <param name="stdin">A byte array to send over the stdin pipe</param>
+        /// <param name="output_encoding_override">The character encoding for decoding stdout/stderr output of the process.</param>
         /// <returns>Result object that contains the command output and return code</returns>
         public static Result CreateProcess(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory,
-            IDictionary environment, byte[] stdin)
+            IDictionary environment, byte[] stdin, string output_encoding_override)
         {
             NativeHelpers.ProcessCreationFlags creationFlags = NativeHelpers.ProcessCreationFlags.CREATE_UNICODE_ENVIRONMENT |
                 NativeHelpers.ProcessCreationFlags.EXTENDED_STARTUPINFO_PRESENT;
@@ -299,6 +312,12 @@ namespace Ansible.Process
             CreateStdioPipes(si, out stdoutRead, out stdoutWrite, out stderrRead, out stderrWrite, out stdinRead,
                 out stdinWrite);
             FileStream stdinStream = new FileStream(stdinWrite, FileAccess.Write);
+
+            Encoding encodingInstance = null;
+            if (!String.IsNullOrWhiteSpace(output_encoding_override))
+            {
+                encodingInstance = Encoding.GetEncoding(output_encoding_override);
+            }
 
             // $null from PowerShell ends up as an empty string, we need to convert back as an empty string doesn't
             // make sense for these parameters
@@ -337,7 +356,7 @@ namespace Ansible.Process
                 }
             }
 
-            return WaitProcess(stdoutRead, stdoutWrite, stderrRead, stderrWrite, stdinStream, stdin, pi.hProcess);
+            return WaitProcess(stdoutRead, stdoutWrite, stderrRead, stderrWrite, stdinStream, stdin, pi.hProcess, encodingInstance);
         }
 
         internal static void CreateStdioPipes(NativeHelpers.STARTUPINFOEX si, out SafeFileHandle stdoutRead,
@@ -383,16 +402,19 @@ namespace Ansible.Process
         }
 
         internal static Result WaitProcess(SafeFileHandle stdoutRead, SafeFileHandle stdoutWrite, SafeFileHandle stderrRead,
-            SafeFileHandle stderrWrite, FileStream stdinStream, byte[] stdin, IntPtr hProcess)
+            SafeFileHandle stderrWrite, FileStream stdinStream, byte[] stdin, IntPtr hProcess, Encoding encodingInstance = null)
         {
             // Setup the output buffers and get stdout/stderr
-            UTF8Encoding utf8Encoding = new UTF8Encoding(false);
+            if (encodingInstance == null)
+            {
+                encodingInstance = new UTF8Encoding(false);
+            }
             FileStream stdoutFS = new FileStream(stdoutRead, FileAccess.Read, 4096);
-            StreamReader stdout = new StreamReader(stdoutFS, utf8Encoding, true, 4096);
+            StreamReader stdout = new StreamReader(stdoutFS, encodingInstance, true, 4096);
             stdoutWrite.Close();
 
             FileStream stderrFS = new FileStream(stderrRead, FileAccess.Read, 4096);
-            StreamReader stderr = new StreamReader(stderrFS, utf8Encoding, true, 4096);
+            StreamReader stderr = new StreamReader(stderrFS, encodingInstance, true, 4096);
             stderrWrite.Close();
 
             stdinStream.Write(stdin, 0, stdin.Length);
