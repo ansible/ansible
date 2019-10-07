@@ -1,0 +1,44 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Test master_delay mode:
+- name: Run replication
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: changemaster
+    master_delay: '{{ test_master_delay }}'
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["CHANGE MASTER TO MASTER_DELAY=60"]
+
+# Auxiliary step:
+- name: Start slave
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: startslave
+  register: result
+
+# Check master_delay:
+- name: Get standby status
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: getslave
+  register: slave_status
+
+- assert:
+    that:
+    - slave_status.SQL_Delay == {{ test_master_delay }}
+    - slave_status is not changed
+
+# Stop standby for further tests:
+- name: Stop slave
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: stopslave
