@@ -376,11 +376,11 @@ EXAMPLES = '''
 
 # Import template
 - ovirt_template:
-  state: imported
-  name: mytemplate
-  export_domain: myexport
-  storage_domain: mystorage
-  cluster: mycluster
+    state: imported
+    name: mytemplate
+    export_domain: myexport
+    storage_domain: mystorage
+    cluster: mycluster
 
 # Remove template
 - ovirt_template:
