@@ -65,6 +65,7 @@ options:
     - List of index columns that need to be covered by index.
     - Mutually exclusive with I(state=absent).
     type: list
+    elements: str
     aliases:
     - column
   cond:
@@ -100,6 +101,7 @@ options:
     - Storage parameters like fillfactor, vacuum_cleanup_index_scale_factor, etc.
     - Mutually exclusive with I(state=absent).
     type: list
+    elements: str
   cascade:
     description:
     - Automatically drop objects that depend on the index,

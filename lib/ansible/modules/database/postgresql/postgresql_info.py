@@ -33,6 +33,7 @@ options:
     - If you pass including and excluding values to the filter, for example, I(filter=!settings,ver),
       the excluding values will be ignored.
     type: list
+    elements: str
   db:
     description:
     - Name of database to connect.

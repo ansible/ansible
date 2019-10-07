@@ -51,6 +51,7 @@ options:
     description:
     - List of column names for the src/dst table to COPY FROM/TO.
     type: list
+    elements: str
     aliases: [ column ]
   program:
     description:
