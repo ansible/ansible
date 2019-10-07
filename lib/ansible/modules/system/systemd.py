@@ -535,20 +535,19 @@ def main():
             prop_list = module.params['properties']
             prop_action = ""
             for prop in prop_list.keys():
-                module.log("Evaluating property %s", prop)
                 # convert the output to a str as that is what result['status'][prop] will be when we compare later
                 prop_val = str(convert_property_suffix(prop_list[prop]))
 
                 # check if this is a valid property name
                 if prop not in result['status']:
-                    module.log("Property '%s' is invalid", prop)
+                    print("Property '%s' is invalid", prop)
 
                 # check if value already matches new value
                 elif prop_val != result['status'][prop]:
-                    module.log("Add '%s' to prop_mods list", prop)
+                    print("Add '%s' to prop_mods list", prop)
                     prop_action += (" %s=%s" % (prop, prop_val))
                 else:
-                    module.log("Property '%s' unchanged", prop)
+                    print("Property '%s' unchanged", prop)
 
             # Modify all items
             if prop_action:
