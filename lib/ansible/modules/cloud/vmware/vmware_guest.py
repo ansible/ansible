@@ -1265,7 +1265,7 @@ class PyVmomiHelper(PyVmomi):
                     except ValueError:
                         hw_version_check_failed = True
 
-                    if temp_version not in range(3, 15):
+                    if temp_version not in range(3, 16):
                         hw_version_check_failed = True
 
                     if hw_version_check_failed:
