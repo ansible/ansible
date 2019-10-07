@@ -687,20 +687,17 @@ options:
       - 'C(present) - Asserts the existence of a container matching the name and any provided configuration parameters. If no
         container matches the name, a container will be created. If a container matches the name but the provided configuration
         does not match, the container will be updated, if it can be. If it cannot be updated, it will be removed and re-created
-        with the requested config. Image version will be taken into account when comparing configuration. To ignore image
-        version use the I(ignore_image) option. Use the I(recreate) option to force the re-creation of the matching container. Use
-        I(force_kill) to kill the container rather than stopping it. Use I(keep_volumes) to retain volumes associated with a removed
-        container.'
-      - 'C(started) - Asserts there is a running container matching the name and any provided configuration. If no container
-        matches the name, a container will be created and started. If a container matching the name is found but the
-        configuration does not match, the container will be updated, if it can be. If it cannot be updated, it will be removed
-        and a new container will be created with the requested configuration and started. Image version will be taken into
-        account when comparing configuration. To ignore image version use the I(ignore_image) option. Use I(recreate) to always
-        re-create a matching container, even if it is running. Use I(restart) to force a matching container to be stopped and
-        restarted. Use I(force_kill) to kill a container rather than stopping it. Use I(keep_volumes) to retain volumes associated
-        with a removed container.'
+        with the requested config.'
+      - 'C(started) - Asserts that the container is first C(present), and then if the container is not running moves it to a running
+        state. Use I(restart) to force a matching container to be stopped and restarted.'
       - 'C(stopped) - Asserts that the container is first C(present), and then if the container is running moves it to a stopped
-        state. Use I(force_kill) to kill a container rather than stopping it.'
+        state.'
+      - To control what will be taken into account when comparing configuration, see the I(comparisons) option. To avoid that the
+        image version will be taken into account, you can also use the I(ignore_image) option.
+      - Use the I(recreate) option to always force re-creation of a matching container, even if it is running.
+      - If the container should be killed instead of stopped in case it needs to be stopped for recreation, or because I(state) is
+        C(stopped), please use the I(force_kill) option. Use I(keep_volumes) to retain volumes associated with a removed container.
+      - Use I(keep_volumes) to retain volumes associated with a removed container.
     type: str
     default: started
     choices:
