@@ -33,7 +33,9 @@ become_method
 become_flags
     (at play or task level) permit the use of specific flags for the tasks or role. One common use is to change the user to nobody when the shell is set to no login. Added in Ansible 2.2.
 
-For example, to manage a system service (which requires ``root`` privileges) when connected as a non-``root`` user, you can use the default value of ``become_user`` (``root``)::
+For example, to manage a system service (which requires ``root`` privileges) when connected as a non-``root`` user, you can use the default value of ``become_user`` (``root``):
+
+.. code-block:: yaml
 
     - name: Ensure the httpd service is running
       service:
@@ -41,14 +43,18 @@ For example, to manage a system service (which requires ``root`` privileges) whe
         state: started
       become: yes
 
-To run a command as the ``apache`` user::
+To run a command as the ``apache`` user:
+
+.. code-block:: yaml
 
     - name: Run a command as the apache user
       command: somecommand
       become: yes
       become_user: apache
 
-To do something as the ``nobody`` user when the shell is nologin::
+To do something as the ``nobody`` user when the shell is nologin:
+
+.. code-block:: yaml
 
     - name: Run a command as nobody
       command: somecommand
@@ -74,7 +80,9 @@ ansible_become_user
 ansible_become_password
     set the privilege escalation password. See :ref:`playbooks_vault` for details on how to avoid having secrets in plain text
 
-For example, if you want to run all tasks as ``root`` on a server named ``webserver``, but you can only connect as the ``manager`` user, you could use an inventory entry like this::
+For example, if you want to run all tasks as ``root`` on a server named ``webserver``, but you can only connect as the ``manager`` user, you could use an inventory entry like this:
+
+.. code-block:: text
 
     webserver ansible_user=manager ansible_become=yes
 
@@ -337,7 +345,9 @@ debug privilege is not available, the become process will run with a limited
 set of privileges and groups.
 
 To determine the type of token that Ansible was able to get, run the following
-task::
+task:
+
+.. code-block:: yaml
 
     - win_whoami:
       become: yes
@@ -461,7 +471,9 @@ If running on a version of Ansible that is older than 2.5 or the normal
   default, and care should be taken if you grant this privilege to a user or group.
   For more information on this privilege, please see
   `Act as part of the operating system <https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/dn221957(v=ws.11)>`_.
-  You can use the below task to set this privilege on a Windows host::
+  You can use the below task to set this privilege on a Windows host:
+
+  .. code-block:: yaml
 
     - name: grant the ansible user the SeTcbPrivilege right
       win_user_right:
@@ -472,7 +484,9 @@ If running on a version of Ansible that is older than 2.5 or the normal
 * Turn UAC off on the host and reboot before trying to become the user. UAC is
   a security protocol that is designed to run accounts with the
   ``least privilege`` principle. You can turn UAC off by running the following
-  tasks::
+  tasks:
+
+  .. code-block:: yaml
 
     - name: turn UAC off
       win_regedit:
