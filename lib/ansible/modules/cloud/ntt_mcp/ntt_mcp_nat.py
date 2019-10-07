@@ -58,7 +58,12 @@ options:
         type: str
     external_ip:
         description:
-            - The external IP address of the NAT
+            - The external IPv4 address of the NAT - This does not have to be an MCP allocated public IPv4 address
+            - Using 192.168.0.10 is perfectly valid as an external_ip address
+            - The external_ip address value does *not* need to be in the range of any subnets on within your Cloud
+            - Network Domain
+            - Not required if the user just wants the next available public IPv4 address.
+            - Only use if the external_ip must be set to a specific IPv4 address
         required: false
         type: str
     id:
@@ -86,7 +91,15 @@ EXAMPLES = '''
   connection: local
   tasks:
 
-  - name: Create a NAT rule
+  - name: Create the NAT rule for an internal IP using auto allocated public IPv4 address
+    ntt_mcp_nat:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      internal_ip: 10.1.77.6
+      state: present
+
+  - name: Create a NAT rule for the internal IP with a specific external_ip
     ntt_mcp_nat:
       region: na
       datacenter: NA12
@@ -189,8 +202,8 @@ def create_nat_rule(module, client, network_domain_id, internal_ip, external_ip)
     :returns: The created NAT rule object
     """
     return_data = return_object('nat')
-    if internal_ip is None or external_ip is None:
-        module.fail_json(msg='Valid internal_ip and external_ip values are required')
+    if internal_ip is None:
+        module.fail_json(msg='Valid internal_ip value is required')
 
     # Check if a NAT rule already exists for this private & public IP and delete it if it exists
     # Only a single NAT rule can exist for any given private IP address
@@ -198,11 +211,16 @@ def create_nat_rule(module, client, network_domain_id, internal_ip, external_ip)
         nat_rule = client.get_nat_by_private_ip(network_domain_id, internal_ip)
         nat_rule_public = client.get_nat_by_public_ip(network_domain_id, external_ip)
         if nat_rule:
+            # If the user did not specify an external_ip but a rule exists for the internal IP we will not allocate
+            # additional public IP addresses. Additional NATs require the users to specifically provide a value for
+            # external_ip
+            if external_ip is None:
+                external_ip = nat_rule.get('externalIp')
             if nat_rule.get('internalIp') == internal_ip and nat_rule.get('externalIp') == external_ip:
                 module.exit_json(data=nat_rule)
-            # Check conflicts on the public IP
             return_data['nat'].append(nat_rule)
             if nat_rule_public:
+                # Conflict exists on the public IP so report the existing NAT rule for the public ip
                 return_data['nat'].append(nat_rule_public)
             # Implement Check Mode
             if module.check_mode:
@@ -216,6 +234,14 @@ def create_nat_rule(module, client, network_domain_id, internal_ip, external_ip)
             client.remove_nat_rule(nat_rule_public.get('id'))
     except (KeyError, NTTMCPAPIException) as e:
         module.fail_json(msg='Could not create the NAT rule - {0}'.format(e))
+
+    # If no external_ip is supplied allocate a new one.
+    if external_ip is None:
+        try:
+            public_ip_result = client.get_next_public_ipv4(network_domain_id)
+            external_ip = public_ip_result.get('ipAddress')
+        except (AttributeError, NTTMCPAPIException) as e:
+            module.fail_json(msg='Could not allocate a new public IPv4 address: {0}'.format(e))
 
     try:
         # Implement Check Mode

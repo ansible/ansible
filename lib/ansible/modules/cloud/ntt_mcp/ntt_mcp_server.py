@@ -783,7 +783,11 @@ def create_server(module, client):
 
     try:
         image = client.list_image(datacenter_id=datacenter, image_name=image_name)
-        image_id = image.get('osImage')[0].get('id')
+        if image.get('osImage'):
+            image_id = image.get('osImage')[0].get('id')
+        else:
+            image = client.list_customer_image(datacenter_id=datacenter, image_name=image_name)
+            image_id = image.get('customerImage')[0].get('id')
     except (KeyError, IndexError, NTTMCPAPIException) as e:
         module.fail_json(msg='Failed to find the  Image {0} - {1}'.format(image_name, e))
 
