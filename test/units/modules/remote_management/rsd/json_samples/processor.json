@@ -1,0 +1,91 @@
+{
+  "@odata.context": "/redfish/v1/$metadata#Processor.Processor",
+  "@odata.id": "/redfish/v1/Systems/7486c4dd-6397-437a-a379-da6b58cec8f5/Processors/1",
+  "@odata.type": "#Processor.v1_0_0.Processor",
+  "Id": "1",
+  "Name": "Processor",
+  "Description": "Processor Description",
+  "Socket": "CPU0",
+  "Model": "Haswell-noTSX-IBRS",
+  "Manufacturer": "Intel",
+  "ProcessorType": "CPU",
+  "ProcessorArchitecture": "x86",
+  "InstructionSet": "x86-64",
+  "ProcessorId": {
+    "VendorId": null,
+    "IdentificationRegisters": "54 06 05 00 ff fb eb bf",
+    "EffectiveFamily": "6",
+    "EffectiveModel": "85",
+    "Step": "4",
+    "MicrocodeInfo": null
+  },
+  "MaxSpeedMHz": 8000,
+  "TotalCores": 0,
+  "TotalThreads": 0,
+  "Status": {
+    "State": "Enabled",
+    "Health": "OK",
+    "HealthRollup": "OK"
+  },
+  "Oem": {
+    "Intel_RackScale": {
+      "@odata.type": "Intel.Oem.Resource",
+      "Brand": "Unknown",
+      "Capabilities": [
+        "vme",
+        "ss",
+        "vmx",
+        "f16c",
+        "rdrand",
+        "hypervisor",
+        "arat",
+        "tsc_adjust",
+        "xsaveopt",
+        "pdpe1gb",
+        "abm"
+      ],
+      "ExtendedIdentificationRegisters": {
+        "EAX_00h": "0x1600000047656E756E74656C696E6549",
+        "EAX_01h": "0x5406050000084000FFFBFE77FFFBEBBF",
+        "EAX_02h": "0x01630376FFB5F000000000000000C300",
+        "EAX_03h": "0x00000000000000000000000000000000",
+        "EAX_04h": "0x00000000000000000000000000000000",
+        "EAX_05h": "0x40000000400000000300000020200000",
+        "EAX_06h": "0xF70E0000020000000900000000000000",
+        "EAX_07h": "0x00000000FBFF9FD30800000000000000",
+        "EAX_09h": "0x00000000000000000000000000000000",
+        "EAX_0ah": "0x04043007000000000000000003060000",
+        "EAX_0bh": "0x01000000020000000001000000000000",
+        "EAX_0dh": "0xFF020000800A0000880A000000000000",
+        "EAX_0fh": "0x000000009F0000000000000002000000",
+        "EAX_10h": "0x000000000A0000000000000000000000",
+        "EAX_14h": "0x010000000F0000000700000000000000",
+        "EAX_15h": "0x02000000A00000000000000000000000",
+        "EAX_16h": "0xD0070000740E00006400000000000000",
+        "EAX_17h_00h": "0xD0070000740E00006400000000000000",
+        "EAX_17h_01h": "0xD0070000740E00006400000000000000",
+        "EAX_17h_02h": "0xD0070000740E00006400000000000000",
+        "EAX_17h_03h": "0xD0070000740E00006400000000000000",
+        "EAX_80000000h": "0x08000080000000000000000000000000",
+        "EAX_80000001h": "0x0000000000000000210100000008102C",
+        "EAX_80000002h": "0x496E74656C2852292058656F6E285229",
+        "EAX_80000003h": "0x20476F6C642036313338204350552040",
+        "EAX_80000004h": "0x20322E303047487A0000000000000000",
+        "EAX_80000006h": "0x00000000000000004060000100000000",
+        "EAX_80000007h": "0x00000000000000000000000000010000",
+        "EAX_80000008h": "0x2E300000000000000000000000000000"
+      },
+      "OnPackageMemory": [],
+      "ThermalDesignPowerWatt": null,
+      "FPGA": {
+        "Type": "Discrete",
+        "Model": "Stratix10",
+        "ReconfigurationSlots": 1
+      },
+      "Metrics": {
+        "@odata.id": "/redfish/v1/Systems/7486c4dd-6397-437a-a379-da6b58cec8f5/Processors/1/Metrics"
+      },
+      "TaggedValues": {}
+    }
+  }
+}
