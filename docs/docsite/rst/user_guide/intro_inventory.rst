@@ -21,7 +21,7 @@ Inventory basics: formats, hosts, and groups
 The inventory file can be in one of many formats, depending on the inventory plugins you have.
 The most common formats are INI and YAML. A basic INI ``etc/ansible/hosts`` might look like this:
 
-.. code-block:: guess
+.. code-block:: text
 
     mail.example.com
 
@@ -155,7 +155,7 @@ If you have a lot of hosts with a similar pattern, you can add them as a range r
 
 In INI:
 
-.. code-block:: guess
+.. code-block:: text
 
     [webservers]
     www[01:50].example.com
@@ -171,7 +171,7 @@ In YAML:
 
 For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive. You can also define alphabetic ranges:
 
-.. code-block:: guess
+.. code-block:: text
 
     [databases]
     db-[a:f].example.com
@@ -188,7 +188,7 @@ Assigning a variable to one machine: host variables
 
 You can easily assign a variable to a single host, then use it later in playbooks. In INI:
 
-.. code-block:: guess
+.. code-block:: text
 
    [atlanta]
    host1 http_port=80 maxRequestsPerChild=808
@@ -208,13 +208,13 @@ In YAML:
 
 Unique values like non-standard SSH ports work well as host variables. You can add them to your Ansible inventory by adding the port number after the hostname with a colon:
 
-.. code-block:: guess
+.. code-block:: text
 
     badwolf.example.com:5309
 
 Connection variables also work well as host variables:
 
-.. code-block:: guess
+.. code-block:: text
 
    [targets]
 
@@ -233,7 +233,7 @@ You can also define aliases in your inventory:
 
 In INI:
 
-.. code-block:: guess
+.. code-block:: text
 
     jumper ansible_port=5555 ansible_host=192.0.2.50
 
@@ -250,12 +250,16 @@ In YAML:
 In the above example, running Ansible against the host alias "jumper" will connect to 192.0.2.50 on port 5555.
 This only works for hosts with static IPs, or when you are connecting through tunnels.
 
-.. note:: Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared.
-          * When declared inline with the host, INI values are interpreted as Python literal structures
-          (strings, numbers, tuples, lists, dicts, booleans, None). Host lines accept multiple ``key=value`` parameters per line. Therefore they need a way to indicate that a space is part of a value rather than a separator.
-          * When declared in a ``:vars`` section, INI values are interpreted as strings. For example ``var=FALSE`` would create a string equal to 'FALSE'. Unlike host lines, ``:vars`` sections accept only a single entry per line, so everything after the ``=`` must be the value for the entry.
-          * Do not rely on types set during definition. Always make sure you specify type with a filter when needed when consuming the variable.
-          * Consider using YAML format for inventory sources to avoid confusion on the actual type of a variable. The YAML inventory plugin processes variable values consistently and correctly.
+.. note::
+   Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared:
+
+   * When declared inline with the host, INI values are interpreted as Python literal structures           (strings, numbers, tuples, lists, dicts, booleans, None). Host lines accept multiple ``key=value`` parameters per line. Therefore they need a way to indicate that a space is part of a value rather than a separator.
+
+   * When declared in a ``:vars`` section, INI values are interpreted as strings. For example ``var=FALSE`` would create a string equal to 'FALSE'. Unlike host lines, ``:vars`` sections accept only a single entry per line, so everything after the ``=`` must be the value for the entry.
+
+   * If a variable value set in an INI inventory must be a certain type (for example, a string or a boolean value), always specify the type with a filter in your task. Do not rely on types set in INI inventories when consuming variables.
+
+   * Consider using YAML format for inventory sources to avoid confusion on the actual type of a variable. The YAML inventory plugin processes variable values consistently and correctly.
 
 Generally speaking, this is not the best way to define variables that describe your system policy. Setting variables in the main inventory file is only a shorthand. See :ref:`splitting_out_vars` for guidelines on storing variable values in individual files in the 'host_vars' directory.
 
@@ -266,7 +270,7 @@ Assigning a variable to many machines: group variables
 
 If all hosts in a group share a variable value, you can apply that variable to an entire group at once. In INI:
 
-.. code-block:: guess
+.. code-block:: text
 
    [atlanta]
    host1
@@ -300,7 +304,7 @@ You can apply variables to these groups of groups using ``:vars`` or ``vars:``:
 
 In INI:
 
-.. code-block:: guess
+.. code-block:: text
 
    [atlanta]
    host1
