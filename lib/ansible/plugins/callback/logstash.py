@@ -1,5 +1,6 @@
 # (C) 2016, Ievgen Khmelenko <ujenmr@gmail.com>
 # (C) 2017 Ansible Project
+# (C) 2019 Contribution: Hannes Ebelt <hs.ebelt@googlemail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -21,19 +22,27 @@ DOCUMENTATION = '''
         env:
           - name: LOGSTASH_SERVER
         default: localhost
+        ini:
+          - section: callback_logstash
+            key: server
       port:
         description: Port on which logstash is listening
         env:
-            - name: LOGSTASH_PORT
+          - name: LOGSTASH_PORT
         default: 5000
+        ini:
+          - section: callback_logstash
+            key: port
       type:
         description: Message type
         env:
           - name: LOGSTASH_TYPE
         default: ansible
+        ini:
+          - section: callback_logstash
+            key: type
 '''
 
-import os
 import json
 import socket
 import uuid
@@ -86,16 +95,18 @@ class CallbackModule(CallbackBase):
         if not HAS_LOGSTASH:
             self.disabled = True
             self._display.warning("The required python-logstash is not installed. "
-                                  "pip install python-logstash")
+                                  "pip install python3-logstash")
         else:
             self.logger = logging.getLogger('python-logstash-logger')
             self.logger.setLevel(logging.DEBUG)
 
+            self.set_options()
+
             self.handler = logstash.TCPLogstashHandler(
-                os.getenv('LOGSTASH_SERVER', 'localhost'),
-                int(os.getenv('LOGSTASH_PORT', 5000)),
-                version=1,
-                message_type=os.getenv('LOGSTASH_TYPE', 'ansible')
+                self.get_option('server'),
+                int(self.get_option('port')),
+                message_type=self.get_option('type'),
+                version=1
             )
 
             self.logger.addHandler(self.handler)
