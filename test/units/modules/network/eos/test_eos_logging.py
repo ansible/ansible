@@ -70,7 +70,7 @@ class TestEosLoggingModule(TestEosModule):
         set_module_args(dict(dest='buffered', size='ten'))
         commands = ['logging buffered ten']
         result = self.execute_module(failed=True)
-        self.assertEqual(result['msg'],"argument size is of type <class 'str'> and we were unable to convert to int: <class 'str'> cannot be converted to an int")
+        self.assertRegex(result['msg'],"argument size is of type <(class|type) 'str'> and we were unable to convert to int: <(class|type) 'str'> cannot be converted to an int")
 
     def test_eos_buffer_size(self):
         set_module_args(dict(dest='buffered', size=5000))
