@@ -118,7 +118,7 @@ options:
   spot_wait_timeout:
     version_added: "1.5"
     description:
-      - How long to wait for the spot instance request to be fulfilled. Will affect 'Request valid until' which will be used to create a request that is valid only during a specific time period
+      - How long to wait for the spot instance request to be fulfilled. Affect "Request valid until" which is used to create request with specific time period
     default: 600
     type: int
   count:
