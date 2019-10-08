@@ -44,22 +44,6 @@ def g_connect(versions):
                 # TODO: if api_server == 'https://galaxy.ansible.com' we can assume it is a migrated config
                 #       and point it to the more accurate url 'https://galaxy.ansible.com/api/'
 
-                # we could try/except here, and check if the response from self.api_server is what we expect,
-                # and if not (for ex, if it's the html from https://galaxy.ansible.com/) we could try appending
-                # /api/ to handle cases where someone has migrated a ansible 2.8 ansible.cfg that configures
-                # a custom galaxy server that uses the default api root ie:
-                #
-                # [galaxy]
-                # server=https://localgalaxy.example.com
-                #
-                # And migrated that directly to the new galaxy config stanzas in ansible-2.9, ie
-                #
-                # [galaxy]
-                # server_list = my_local_galaxy
-                #
-                # [galaxy.my_local_galaxy]
-                # url=https://localgalaxy.example.com   # new config expects url=https://localgalaxy.example.com/api/
-                #
                 # Note: This retry will do the wrong thing if the custom galaxy server does not live at a url that
                 # ends with /api. For example, a ansible.cfg that points to a galaxy server provided by pulp:
                 #
@@ -67,7 +51,23 @@ def g_connect(versions):
                 # server=http://localhost:24817/pulp_ansible/galaxy/dev
                 #
                 # For that case
-                data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg)
+
+                if self.api_server == 'https://galaxy.ansible.com' or self.api_server == 'https://galaxy.ansible.com/':
+                    n_url = 'https://galaxy.ansible.com/api/'
+
+                try:
+                    data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg)
+                except (AnsibleError, GalaxyError, ValueError, KeyError):
+                    # Either the URL doesnt exist, or other error. Or the URL exists, but isn't a galaxy API
+                    # root (not JSON, no 'available_versions') so try appending '/api/'
+                    n_url = _urljoin(n_url, '/api/')
+
+                    # let exceptions here bubble up
+                    data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg)
+                    if 'available_versions' not in data:
+                        raise AnsibleError("Tried to find galaxy API root at %s but no 'available_versions' are available on %s"
+                                           % (n_url, self.api_server))
+
 
                 # Default to only supporting v1, if only v1 is returned we also assume that v2 is available even though
                 # it isn't returned in the available_versions dict.
