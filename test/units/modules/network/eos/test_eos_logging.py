@@ -64,13 +64,13 @@ class TestEosLoggingModule(TestEosModule):
         set_module_args(dict(dest='buffered', size=5))
         commands = ['logging buffered 5']
         result = self.execute_module(failed=True)
-        self.assertEqual(result['msg'],"size must be between 10 and 2147483647")
-    
+        self.assertEqual(result['msg'], "size must be between 10 and 2147483647")
+
     def test_eos_buffer_size_datatype(self):
         set_module_args(dict(dest='buffered', size='ten'))
         commands = ['logging buffered ten']
         result = self.execute_module(failed=True)
-        self.assertRegex(result['msg'],"argument size is of type <(class|type) 'str'> and we were unable to convert to int: <(class|type) 'str'> cannot be converted to an int")
+        self.assertRegex(result['msg'], "argument size is of type <(class|type) 'str'> and we were unable to convert to int: <(class|type) 'str'> cannot be converted to an int")
 
     def test_eos_buffer_size(self):
         set_module_args(dict(dest='buffered', size=5000))
@@ -81,13 +81,13 @@ class TestEosLoggingModule(TestEosModule):
         set_module_args(dict(dest='buffered', size=50000, level='informational'))
         commands = ['logging buffered 50000 informational']
         result = self.execute_module(changed=False, commands=[])
-  
+
     def test_eos_facilty(self):
         set_module_args(dict(facility='local2'))
         commands = ['logging facility local2']
         result = self.execute_module(changed=True)
         # when dest is not passed, 'None' is set to dest
-        self.assertEqual(sorted(result['commands'])[1], commands[0]) 
+        self.assertEqual(sorted(result['commands'])[1], commands[0])
 
     def test_eos_facility_idempotent(self):
         set_module_args(dict(facility='local7'))
