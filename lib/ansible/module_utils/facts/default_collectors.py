@@ -51,6 +51,7 @@ from ansible.module_utils.facts.system.selinux import SelinuxFactCollector
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
 from ansible.module_utils.facts.system.ssh_pub_keys import SshPubKeyFactCollector
 from ansible.module_utils.facts.system.user import UserFactCollector
+from ansible.module_utils.facts.system.aix import AIXSystemFactCollector
 
 from ansible.module_utils.facts.hardware.base import HardwareCollector
 from ansible.module_utils.facts.hardware.aix import AIXHardwareCollector
@@ -114,7 +115,8 @@ _general = [
     DateTimeFactCollector,
     EnvFactCollector,
     SshPubKeyFactCollector,
-    UserFactCollector
+    UserFactCollector,
+    AIXSystemFactCollector
 ]
 
 # virtual, this might also limit hardware/networking
@@ -165,7 +167,7 @@ _network = [
 _extra_facts = [
     LocalFactCollector,
     FacterFactCollector,
-    OhaiFactCollector
+    OhaiFactCollector,
 ]
 
 # TODO: make config driven
