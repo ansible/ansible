@@ -42,7 +42,7 @@ the collection to the first path defined in :ref:`COLLECTIONS_PATHS`, which by d
 
 You can also keep a collection adjacent to the current playbook, under a ``collections/ansible_collections/`` directory structure.
 
-::
+.. code-block:: text
 
     play.yml
     ├── collections/

@@ -1,11 +1,11 @@
 .. _intro_modules:
 
-Introduction
-============
+Introduction to modules
+=======================
 
-Modules (also referred to as "task plugins" or "library plugins") are discrete units of code that can be used from the command line or in a playbook task.
+Modules (also referred to as "task plugins" or "library plugins") are discrete units of code that can be used from the command line or in a playbook task. Ansible executes each module, usually on the remote target node, and collects return values.
 
-Let's review how we execute three different modules from the command line::
+You can execute modules from the command line::
 
     ansible webservers -m service -a "name=httpd state=started"
     ansible webservers -m ping
@@ -25,20 +25,14 @@ Which can be abbreviated to::
     - name: reboot the servers
       command: /sbin/reboot -t now
 
-Another way to pass arguments to a module is using yaml syntax also called 'complex args' ::
+Another way to pass arguments to a module is using YAML syntax also called 'complex args' ::
 
     - name: restart webserver
       service:
         name: httpd
         state: restarted
 
-All modules technically return JSON format data, though if you are using the command line or playbooks, you don't really need to know much about
-that.  If you're writing your own module, you care, and this means you do not have to write modules in any particular language -- you get to choose.
-
-Modules should be idempotent, and should avoid making any changes if
-they detect that the current state matches the desired final state. When using
-Ansible playbooks, these modules can trigger 'change events' in the form of
-notifying 'handlers' to run additional tasks.
+All modules return JSON format data. This means modules can be written in any programming language. Modules should be idempotent, and should avoid making any changes if they detect that the current state matches the desired final state. When used in an Ansible playbook, modules can trigger 'change events' in the form of notifying 'handlers' to run additional tasks.
 
 Documentation for each module can be accessed from the command line with the ansible-doc tool::
 

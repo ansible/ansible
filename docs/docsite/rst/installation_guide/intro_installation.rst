@@ -45,6 +45,8 @@ Currently Ansible can be run from any machine with Python 2 (version 2.7) or Pyt
 
 This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
 
+When choosing a control node, bear in mind that any management system benefits from being run near the machines being managed. If you are running Ansible in a cloud, consider running it from a machine inside that cloud. In most cases this will work better than on the open Internet.
+
 .. note::
 
     macOS by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.

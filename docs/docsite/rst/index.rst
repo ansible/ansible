@@ -81,6 +81,7 @@ Ansible releases a new major release of Ansible approximately three to four time
    reference_appendices/module_utils
    reference_appendices/special_variables
    reference_appendices/tower
+   reference_appendices/logging
 
 
 .. toctree::

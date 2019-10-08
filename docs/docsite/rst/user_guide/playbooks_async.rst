@@ -7,10 +7,37 @@ By default tasks in playbooks block, meaning the connections stay open
 until the task is done on each node.  This may not always be desirable, or you may
 be running operations that take longer than the SSH timeout.
 
+Time-limited background operations
+----------------------------------
+
+You can run long-running operations in the background and check their status later.
+For example, to execute ``long_running_operation``
+asynchronously in the background, with a timeout of 3600 seconds (``-B``),
+and without polling (``-P``)::
+
+    $ ansible all -B 3600 -P 0 -a "/usr/bin/long_running_operation --do-stuff"
+
+If you want to check on the job status later, you can use the
+``async_status`` module, passing it the job ID that was returned when you ran
+the original job in the background::
+
+    $ ansible web1.example.com -m async_status -a "jid=488359678239.2844"
+
+To run for 30 minutes and poll for status every 60 seconds::
+
+    $ ansible all -B 1800 -P 60 -a "/usr/bin/long_running_operation --do-stuff"
+
+Poll mode is smart so all jobs will be started before polling will begin on any machine.
+Be sure to use a high enough ``--forks`` value if you want to get all of your jobs started
+very quickly. After the time limit (in seconds) runs out (``-B``), the process on
+the remote nodes will be terminated.
+
+Typically you'll only be backgrounding long-running
+shell commands or software upgrades.  Backgrounding the copy module does not do a background file transfer. :ref:`Playbooks <working_with_playbooks>` also support polling, and have a simplified syntax for this.
+
 To avoid blocking or timeout issues, you can use asynchronous mode to run all of your tasks at once and then poll until they are done.
 
-The behaviour of asynchronous mode depends on the value of `poll`.
-
+The behavior of asynchronous mode depends on the value of `poll`.
 
 Avoid connection timeouts: poll > 0
 -----------------------------------
