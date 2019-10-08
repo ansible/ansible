@@ -15,6 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
+
 module: hetzner_failover_ip
 version_added: "2.9"
 short_description: Manage Hetzner's failover IPs
