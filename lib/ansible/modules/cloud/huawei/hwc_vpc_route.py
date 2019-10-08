@@ -39,6 +39,7 @@ options:
               resources match and should be altered. The item of filters
               is the name of input options.
         type: list
+        elements: str
         required: true
     destination:
         description:
