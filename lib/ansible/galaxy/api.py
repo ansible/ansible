@@ -59,9 +59,9 @@ def g_connect(versions):
 
                 # Default to only supporting v1, if only v1 is returned we also assume that v2 is available even though
                 # it isn't returned in the available_versions dict.
-                available_versions = data.get('available_versions', {u'v1': u'/api/v1'})
+                available_versions = data.get('available_versions', {u'v1': u'v1/'})
                 if list(available_versions.keys()) == [u'v1']:
-                    available_versions[u'v2'] = u'/api/v2'
+                    available_versions[u'v2'] = u'v2/'
 
                 self._available_api_versions = available_versions
                 display.vvvv("Found API version '%s' with Galaxy server %s (%s)"
