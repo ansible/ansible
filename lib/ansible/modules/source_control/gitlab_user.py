@@ -412,7 +412,7 @@ def deprecation_warning(module):
 
     for aliase in deprecated_aliases:
         if aliase in module.params:
-            module.deprecate("Aliases \'{aliase}\' is deprecated".format(aliase=aliase), "2.10")
+            module.deprecate("Alias \'{aliase}\' is deprecated".format(aliase=aliase), "2.10")
 
 
 def main():
