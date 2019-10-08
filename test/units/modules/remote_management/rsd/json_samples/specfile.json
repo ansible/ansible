@@ -1,0 +1,50 @@
+{
+    "Name": "My first composed node",
+    "Description": "Test node",
+    "Processors": [{
+        "Model": "Multi-Core Intel(R) Xeon(R) processor 7xxx Series",
+        "TotalCores": 2,
+        "AchievableSpeedMHz": 2000,
+        "InstructionSet": "x86"
+    }],
+    "Memory": [{
+        "CapacityMiB": 16000,
+        "MemoryDeviceType": "DDR3",
+        "SpeedMHz": 1600,
+        "Manufacturer": "Intel",
+        "DataWidthBits": 64
+    }],
+    "RemoteDrives": [{
+        "@odata.type" : "AllocationComposedNodeRequest.v1_1_0.RemoteDrive",
+        "CapacityGiB": 80,
+        "Protocol": "iSCSI",
+        "Master": {
+            "Type": "Snapshot"
+        }
+    }],
+    "LocalDrives": [{
+        "CapacityGiB": 500,
+        "Type": "HDD",
+        "MinRPM": 5400,
+        "SerialNumber": "12345678",
+        "Interface": "SATA",
+        "FabricSwitch": false
+    }],
+    "EthernetInterfaces": [{
+        "SpeedMbps": 1000,
+        "PrimaryVLAN": 100,
+        "VLANs": [{
+            "VLANId": 100,
+            "Tagged": false
+        }]
+    }],
+    "Security": {
+        "TpmPresent": true,
+        "TpmInterfaceType": "TPM2_0",
+        "TxtEnabled": false,
+        "ClearTPMOnDelete": true,
+        "PersistentMemoryOperationOnDelete": "OverwritePCD"
+    },
+    "TotalSystemMemoryMiB": 32000,
+    "TotalSystemCoreCount": 2
+}

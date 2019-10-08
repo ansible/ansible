@@ -1,0 +1,67 @@
+{
+  "@odata.context": "/redfish/v1/$metadata#Endpoint.Endpoint",
+  "@odata.id": "/redfish/v1/Fabrics/a5b6af0c-8919-11e9-b709-033fe8413ff7_1/Endpoints/nqn.2014-08.org.nvmexpress:uuid:7486c4dd-6397-437a-a379-da6b58cec8f5",
+  "@odata.type": "#Endpoint.v1_1_0.Endpoint",
+  "Actions": {
+    "Oem": {}
+  },
+  "ConnectedEntities": [
+    {
+      "EntityLink": {
+        "@odata.id": "/redfish/v1/Systems/7486c4dd-6397-437a-a379-da6b58cec8f5"
+      },
+      "EntityPciId": null,
+      "EntityRole": "Initiator",
+      "EntityType": "System",
+      "Identifiers": [],
+      "Oem": {},
+      "PciClassCode": null,
+      "PciFunctionNumber": null
+    }
+  ],
+  "Description": "Fabric Endpoint",
+  "EndpointProtocol": "NVMeOverFabrics",
+  "HostReservationMemoryBytes": null,
+  "IPTransportDetails": [],
+  "Id": "nqn.2014-08.org.nvmexpress:uuid:7486c4dd-6397-437a-a379-da6b58cec8f5",
+  "Identifiers": [
+    {
+      "DurableName": "nqn.2014-08.org.nvmexpress:uuid:7486c4dd-6397-437a-a379-da6b58cec8f5",
+      "DurableNameFormat": "NQN"
+    }
+  ],
+  "Links": {
+    "@odata.type": "#Endpoint.v1_1_0.Links",
+    "Oem": {
+      "Intel_RackScale": {
+        "@odata.type": "#Intel.Oem.EndpointLinks",
+        "Interfaces": [],
+        "Zones": [
+          {
+            "@odata.id": "/redfish/v1/Fabrics/a5b6af0c-8919-11e9-b709-033fe8413ff7_1/Zones/1"
+          }
+        ]
+      }
+    },
+    "Ports": []
+  },
+  "Name": "Fabric Endpoint",
+  "Oem": {
+    "Intel_RackScale": {
+      "@odata.type": "Intel.Oem.Resource",
+      "Authentication": {
+        "Password": null,
+        "Username": null
+      },
+      "EndpointProtocol": null,
+      "TaggedValues": {}
+    }
+  },
+  "PciId": null,
+  "Redundancy": [],
+  "Status": {
+    "Health": "OK",
+    "HealthRollup": "OK",
+    "State": "Enabled"
+  }
+}

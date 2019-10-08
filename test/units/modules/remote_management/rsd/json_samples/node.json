@@ -1,0 +1,87 @@
+{
+  "@odata.context": "/redfish/v1/$metadata#ComposedNode.ComposedNode",
+  "@odata.id": "/redfish/v1/Nodes/1",
+  "@odata.type": "#ComposedNode.v1_1_0.ComposedNode",
+  "Id": "1",
+  "Name": "Composed Node",
+  "Description": null,
+  "UUID": "7486c4dd-6397-437a-a379-da6b58cec8f5",
+  "PowerState": "On",
+  "Status": {
+    "State": "Enabled",
+    "Health": "OK",
+    "HealthRollup": "OK"
+  },
+  "ComposedNodeState": "Assembled",
+  "Boot": {
+    "BootSourceOverrideEnabled": "Continuous",
+    "BootSourceOverrideTarget": "Hdd",
+    "BootSourceOverrideTarget@Redfish.AllowableValues": [
+      "Hdd"
+    ],
+    "BootSourceOverrideMode": "Legacy",
+    "BootSourceOverrideMode@Redfish.AllowableValues": [
+      "Legacy",
+      "UEFI"
+    ]
+  },
+  "ClearTPMOnDelete": true,
+  "Links": {
+    "ComputerSystem": {
+      "@odata.id": "/redfish/v1/Systems/7486c4dd-6397-437a-a379-da6b58cec8f5"
+    },
+    "Processors": [
+      {
+        "@odata.id": "/redfish/v1/Systems/7486c4dd-6397-437a-a379-da6b58cec8f5/Processors/1"
+      },
+      {
+        "@odata.id": "/redfish/v1/Systems/7486c4dd-6397-437a-a379-da6b58cec8f5/Processors/3"
+      },
+      {
+        "@odata.id": "/redfish/v1/Systems/7486c4dd-6397-437a-a379-da6b58cec8f5/Processors/2"
+      }
+    ],
+    "Memory": [
+      {
+        "@odata.id": "/redfish/v1/Systems/7486c4dd-6397-437a-a379-da6b58cec8f5/Memory/DIMM+D2"
+      }
+    ],
+    "EthernetInterfaces": [
+      {
+        "@odata.id": "/redfish/v1/Systems/7486c4dd-6397-437a-a379-da6b58cec8f5/EthernetInterfaces/52:54:00:0d:ae:ea"
+      }
+    ],
+    "Storage": [
+      {
+        "@odata.id": "/redfish/v1/StorageServices/a5b6af0c-8919-11e9-b709-033fe8413ff7_1/Volumes/1"
+      }
+    ],
+    "Oem": {}
+  },
+  "Actions": {
+    "#ComposedNode.Reset": {
+      "target": "/redfish/v1/Nodes/1/Actions/ComposedNode.Reset",
+      "ResetType@Redfish.AllowableValues": [
+        "On",
+        "ForceOff",
+        "GracefulShutdown",
+        "GracefulRestart",
+        "ForceRestart"
+      ]
+    },
+    "#ComposedNode.Assemble": {
+      "target": "/redfish/v1/Nodes/1/Actions/ComposedNode.Assemble"
+    },
+    "#ComposedNode.AttachResource": {
+      "target": "/redfish/v1/Nodes/1/Actions/ComposedNode.AttachResource",
+      "@Redfish.ActionInfo": "/redfish/v1/Nodes/1/Actions/AttachResourceActionInfo"
+    },
+    "#ComposedNode.DetachResource": {
+      "target": "/redfish/v1/Nodes/1/Actions/ComposedNode.DetachResource",
+      "@Redfish.ActionInfo": "/redfish/v1/Nodes/1/Actions/DetachResourceActionInfo"
+    }
+  },
+  "Oem": {},
+  "ClearOptaneDCPersistentMemoryOnDelete": true,
+  "PersistentMemoryOperationOnDelete": "OverwritePCD"
+}
