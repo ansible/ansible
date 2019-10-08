@@ -818,9 +818,6 @@ lib/ansible/modules/cloud/amazon/ec2_vpc_endpoint_info.py validate-modules:doc-m
 lib/ansible/modules/cloud/amazon/ec2_vpc_igw.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/amazon/ec2_vpc_igw.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/amazon/ec2_vpc_igw_info.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/cloud/amazon/ec2_vpc_nacl.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/cloud/amazon/ec2_vpc_nacl.py validate-modules:doc-missing-type
-lib/ansible/modules/cloud/amazon/ec2_vpc_nacl_info.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/amazon/ec2_vpc_nat_gateway.py pylint:blacklisted-name
 lib/ansible/modules/cloud/amazon/ec2_vpc_nat_gateway.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/cloud/amazon/ec2_vpc_nat_gateway.py validate-modules:parameter-type-not-in-doc
