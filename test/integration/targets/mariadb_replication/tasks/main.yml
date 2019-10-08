@@ -9,3 +9,7 @@
 # https://github.com/ansible/ansible/pull/62648
 - import_tasks: mariadb_master_use_gtid.yml
   when: ansible_distribution == 'CentOS' and ansible_distribution_major_version >= '7'
+
+# Tests of connection_name parameter
+- import_tasks: mariadb_replication_connection_name.yml
+  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version >= '7'
