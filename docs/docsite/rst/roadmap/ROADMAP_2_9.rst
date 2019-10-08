@@ -19,9 +19,11 @@ PRs must be raised well in advance of the dates below to have a chance of being 
   No new functionality (including modules/plugins) to any code
 
 - 2019-09-19 Release Candidate 1
-- 2019-09-26 Release Candidate 2 (if needed)
-- 2019-10-03 Release Candidate 3 (if needed)
-- 2019-10-10 Release
+- 2019-10-03 Release Candidate 2
+- 2019-10-10 Release Candidate 3
+- 2019-10-17 Release Candidate 4 (if needed)
+- 2019-10-24 Release Candidate 5 (if needed)
+- 2019-10-31 Release
 
 
 
