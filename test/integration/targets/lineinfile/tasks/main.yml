@@ -1070,6 +1070,23 @@
     path: "{{ output_dir }}/test_58923.txt"
   register: insertbefore_test4_file
 
+# Test when the line is presented in the file but
+# not in the before/after spot and it does match the regexp:
+- name: >
+    Add the line using insertbefore and firstmatch when the regexp line
+    is presented but not close to insertbefore spot
+  lineinfile:
+    path: "{{ output_dir }}/test_58923.txt"
+    insertbefore: '   Darwin*) if [ -z "$JAVA_HOME" ] ; then'
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertbefore_test5
+
+- name: Stat the file again
+  stat:
+    path: "{{ output_dir }}/test_58923.txt"
+  register: insertbefore_test5_file
+
 - name: Assert insertbefore with regexp tests gave the expected results
   assert:
     that:
@@ -1077,3 +1094,5 @@
       - insertbefore_test3_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
       - insertbefore_test4 is not changed
       - insertbefore_test4_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
+      - insertbefore_test5 is not changed
+      - insertbefore_test5_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
