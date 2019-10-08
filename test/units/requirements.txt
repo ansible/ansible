@@ -38,5 +38,8 @@ linode_api4 ; python_version > '2.6' # APIv4
 python-gitlab
 httmock
 
-# requirment for kubevirt modules
+# requirement for kubevirt modules
 openshift ; python_version >= '2.7'
+
+# requirement for rsd_volume module
+oslo_utils

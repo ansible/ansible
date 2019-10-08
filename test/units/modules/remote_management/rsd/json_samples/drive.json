@@ -1,0 +1,70 @@
+{
+  "@odata.context": "/redfish/v1/$metadata#Drive.Drive",
+  "@odata.id": "/redfish/v1/Chassis/170fd71a-266f-3835-bb35-400c66733f8d/Drives/1",
+  "@odata.type": "#Drive.v1_2_0.Drive",
+  "Actions": {
+    "#Drive.SecureErase": {
+      "target": "/redfish/v1/Chassis/170fd71a-266f-3835-bb35-400c66733f8d/Drives/1/Actions/Drive.SecureErase"
+    }
+  },
+  "AssetTag": null,
+  "BlockSizeBytes": 512,
+  "CapableSpeedGbs": null,
+  "CapacityBytes": 1073741824,
+  "Description": "SPDK NVMe Block Device (NVMe BDEV)",
+  "EncryptionAbility": null,
+  "EncryptionStatus": null,
+  "FailurePredicted": null,
+  "HotspareType": null,
+  "Id": "1",
+  "Identifiers": [],
+  "IndicatorLED": null,
+  "Links": {
+    "@odata.type": "#Drive.v1_2_0.Links",
+    "Chassis": {
+      "@odata.id": "/redfish/v1/Chassis/170fd71a-266f-3835-bb35-400c66733f8d"
+    },
+    "Endpoints": [],
+    "Oem": {},
+    "Volumes": []
+  },
+  "Location": [],
+  "Manufacturer": "0x8086",
+  "MediaType": "SSD",
+  "Model": "QEMU NVMe Ctrl",
+  "Name": "nvmen1",
+  "NegotiatedSpeedGbs": null,
+  "Oem": {
+    "Intel_RackScale": {
+      "@odata.type": "Intel.Oem.Resource",
+      "DriveErased": false,
+      "EraseOnDetach": null,
+      "FirmwareVersion": "1.0",
+      "LatencyTrackingEnabled": null,
+      "Metrics": {
+        "@odata.id": "/redfish/v1/Chassis/170fd71a-266f-3835-bb35-400c66733f8d/Drives/1/Metrics"
+      },
+      "PCIeFunction": null,
+      "Storage": null,
+      "UsedBy": [
+        {
+          "@odata.id": "/redfish/v1/StorageServices/a5b6af0c-8919-11e9-b709-033fe8413ff7_1/StoragePools/1"
+        }
+      ],
+      "TaggedValues": {}
+    }
+  },
+  "PartNumber": null,
+  "PredictedMediaLifeLeftPercent": null,
+  "Protocol": "NVMe",
+  "Revision": null,
+  "RotationSpeedRPM": null,
+  "SKU": null,
+  "SerialNumber": "1234",
+  "Status": {
+    "Health": "OK",
+    "HealthRollup": "OK",
+    "State": "Enabled"
+  },
+  "StatusIndicator": null
+}

@@ -1,0 +1,89 @@
+{
+  "@odata.context": "/redfish/v1/$metadata#Volume.Volume",
+  "@odata.id": "/redfish/v1/StorageServices/a5b6af0c-8919-11e9-b709-033fe8413ff7_1/Volumes/1",
+  "@odata.type": "#Volume.v1_1_0.Volume",
+  "AccessCapabilities": [
+    "Read",
+    "Write"
+  ],
+  "Actions": {
+    "#Volume.Initialize": {
+      "target": "/redfish/v1/StorageServices/a5b6af0c-8919-11e9-b709-033fe8413ff7_1/Volumes/1/Actions/Volume.Initialize"
+    }
+  },
+  "BlockSizeBytes": 512,
+  "Capacity": {
+    "@odata.type": "#Capacity.v1_0_0.Capacity",
+    "Data": {
+      "AllocatedBytes": 1073741824
+    },
+    "IsThinProvisioned": true
+  },
+  "CapacityBytes": 1073741824,
+  "CapacitySources": [
+    {
+      "ProvidingPools": [
+        {
+          "@odata.id": "/redfish/v1/StorageServices/1/StoragePools/2"
+        }
+      ],
+      "ProvidedCapacity": {
+        "Data": {
+          "AllocatedBytes": 1073741824
+        }
+      }
+    }
+  ],
+  "Description": "SPDK Logical Volume Block Device (LVOL BDEV)",
+  "Id": "1",
+  "Identifiers": [
+    {
+      "@odata.type": "#Resource.v1_1_0.Identifier",
+      "DurableName": "e7e3bae4-8920-11e9-b40e-3744fc019baa",
+      "DurableNameFormat": "UUID"
+    }
+  ],
+  "Links": {
+    "Drives": [],
+    "Oem": {
+      "Intel_RackScale": {
+        "@odata.type": "#Intel.Oem.VolumeLinks",
+        "Endpoints": [
+          {
+            "@odata.id": "/redfish/v1/Fabrics/a5b6af0c-8919-11e9-b709-033fe8413ff7_1/Endpoints/nqn.2014-08.org.nvmexpress:uuid:2d046b2d-b68a-450b-834e-61913bc919cf"
+          }
+        ]
+      }
+    }
+  },
+  "Manufacturer": null,
+  "Model": null,
+  "Name": "f8969b3e-381f-462a-838c-f10c1310f45c",
+  "Oem": {
+    "Intel_RackScale": {
+      "@odata.type": "Intel.Oem.Resource",
+      "Assigned": true,
+      "Bootable": null,
+      "Metrics": {
+        "@odata.id": "/redfish/v1/StorageServices/a5b6af0c-8919-11e9-b709-033fe8413ff7_1/Volumes/1/Metrics"
+      },
+      "TaggedValues": {}
+    }
+  },
+  "OptimumIOSizeBytes": null,
+  "ReplicaInfos": [
+    {
+      "ReplicaReadOnlyAccess": "SourceElement",
+      "ReplicaType": "Snapshot",
+      "ReplicaRole": "Target",
+      "Replica": {
+        "@odata.id": "/redfish/v1/StorageServices/NVMeoE1/Volumes/2"
+      }
+    }
+  ],
+  "Status": {
+    "Health": "OK",
+    "HealthRollup": "OK",
+    "State": "Enabled"
+  }
+}
