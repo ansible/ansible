@@ -119,7 +119,7 @@ options:
   devices:
     description:
       - List of host device bindings to add to the container.
-      - "Each binding is a mapping expressed in the format: C(<path_on_host>:<path_in_container>:<cgroup_permissions>)"
+      - "Each binding is a mapping expressed in the format C(<path_on_host>:<path_in_container>:<cgroup_permissions>)."
     type: list
     elements: str
   device_read_bps:
@@ -135,7 +135,7 @@ options:
         required: yes
       rate:
         description:
-        - "Device read limit. Format: C(<number>[<unit>])"
+        - "Device read limit in format C(<number>[<unit>])."
         - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
           C(T) (tebibyte), or C(P) (pebibyte)."
         - "Omitting the unit defaults to bytes."
@@ -155,7 +155,7 @@ options:
         required: yes
       rate:
         description:
-        - "Device read limit. Format: C(<number>[<unit>])"
+        - "Device read limit in format C(<number>[<unit>])."
         - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
           C(T) (tebibyte), or C(P) (pebibyte)."
         - "Omitting the unit defaults to bytes."
@@ -348,7 +348,7 @@ options:
     type: str
   kernel_memory:
     description:
-      - "Kernel memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+      - "Kernel memory limit in format C(<number>[<unit>]). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte). Minimum is C(4M)."
       - Omitting the unit defaults to bytes.
@@ -381,7 +381,7 @@ options:
     type: str
   memory:
     description:
-      - "Memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+      - "Memory limit in format C(<number>[<unit>]). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes.
@@ -389,14 +389,14 @@ options:
     default: '0'
   memory_reservation:
     description:
-      - "Memory soft limit (format: C(<number>[<unit>])). Number is a positive integer.
+      - "Memory soft limit in format C(<number>[<unit>]). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes.
     type: str
   memory_swap:
     description:
-      - "Total memory limit (memory + swap, format: C(<number>[<unit>])).
+      - "Total memory limit (memory + swap) in format C(<number>[<unit>]).
         Number is a positive integer. Unit can be C(B) (byte), C(K) (kibibyte, 1024B),
         C(M) (mebibyte), C(G) (gibibyte), C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes.
@@ -479,7 +479,7 @@ options:
         type: dict
       tmpfs_size:
         description:
-          - "The size for the tmpfs mount in bytes. Format: <number>[<unit>]"
+          - "The size for the tmpfs mount in bytes in format <number>[<unit>]."
           - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
              C(T) (tebibyte), or C(P) (pebibyte)."
           - "Omitting the unit defaults to bytes."
@@ -670,7 +670,7 @@ options:
     version_added: "2.8"
   shm_size:
     description:
-      - "Size of C(/dev/shm) (format: C(<number>[<unit>])). Number is positive integer.
+      - "Size of C(/dev/shm) in format C(<number>[<unit>]). Number is positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes. If you omit the size entirely, Docker daemon uses C(64M).

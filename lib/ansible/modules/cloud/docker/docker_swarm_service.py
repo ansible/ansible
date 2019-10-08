@@ -211,7 +211,7 @@ options:
         type: float
       memory:
         description:
-          - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+          - "Service memory reservation in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
           - C(0) equals no reservation.
@@ -228,7 +228,7 @@ options:
     type: float
   limit_memory:
     description:
-      - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+      - "Service memory limit in format C(<number>[<unit>]). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - C(0) equals no limit.
@@ -347,7 +347,7 @@ options:
         version_added: "2.8"
       tmpfs_size:
         description:
-          - "Size of the tmpfs mount (format: C(<number>[<unit>])). Number is a positive integer.
+          - "Size of the tmpfs mount in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
           - Can only be used when I(mode) is C(tmpfs).
@@ -453,7 +453,7 @@ options:
         type: float
       memory:
         description:
-          - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+          - "Service memory reservation in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
           - C(0) equals no reservation.
@@ -470,7 +470,7 @@ options:
     type: float
   reserve_memory:
     description:
-      - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+      - "Service memory reservation in format C(<number>[<unit>]). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - C(0) equals no reservation.
