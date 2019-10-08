@@ -818,3 +818,281 @@
       The regular expression is an empty string, which will match every line in the file.
       This may have unintended consequences, such as replacing the last line in the file rather than appending.
       If this is desired, use '^' to match every line in the file and avoid this warning.
+
+###################################################################
+## Issue #58923
+## Using firstmatch with insertafter and ensure multiple lines are not inserted
+
+- name: Deploy the firstmatch test file
+  copy:
+    src: firstmatch.txt
+    dest: "{{ output_dir }}/firstmatch.txt"
+  register: result
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - result is changed
+      - result.checksum == '1d644e5e2e51c67f1bd12d7bbe2686017f39923d'
+      - result.state == 'file'
+
+- name: Insert a line before an existing line using firstmatch
+  lineinfile:
+    path: "{{ output_dir }}/firstmatch.txt"
+    line: INSERT
+    insertafter: line1
+    firstmatch: yes
+  register: insertafter1
+
+- name: Insert a line before an existing line using firstmatch again
+  lineinfile:
+    path: "{{ output_dir }}/firstmatch.txt"
+    line: INSERT
+    insertafter: line1
+    firstmatch: yes
+  register: insertafter2
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir }}/firstmatch.txt"
+  register: result
+
+- name: Assert that the file was modified appropriately
+  assert:
+    that:
+      - insertafter1 is changed
+      - insertafter2 is not changed
+      - result.stat.checksum == '114aae024073a3ee8ec8db0ada03c5483326dd86'
+
+########################################################################################
+# Tests of fixing the same issue as above (#58923) by @Andersson007 <aaklychkov@mail.ru>
+# and @samdoran <sdoran@redhat.com>:
+
+# Test insertafter with regexp
+- name: Deploy the test file
+  copy:
+    src: test_58923.txt
+    dest: "{{ output_dir }}/test_58923.txt"
+  register: initial_file
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - initial_file is changed
+      - initial_file.checksum == 'b6379ba43261c451a62102acb2c7f438a177c66e'
+      - initial_file.state == 'file'
+
+# Regarding the documentation:
+# If regular expressions are passed to both regexp and
+# insertafter, insertafter is only honored if no match for regexp is found.
+# Therefore,
+# when regular expressions are passed to both regexp and insertafter, then:
+# 1. regexp was found -> ignore insertafter, replace the founded line
+# 2. regexp was not found -> insert the line after 'insertafter' line
+
+# Regexp is not present in the file, so the line must be inserted after ^#!/bin/sh
+- name: Add the line using firstmatch, regexp, and insertafter
+  lineinfile:
+    path: "{{ output_dir }}/test_58923.txt"
+    insertafter: '^#!/bin/sh'
+    regexp: ^export FISHEYE_OPTS
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertafter_test1
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir }}/test_58923.txt"
+  register: insertafter_test1_file
+
+- name: Add the line using firstmatch, regexp, and insertafter again
+  lineinfile:
+    path: "{{ output_dir }}/test_58923.txt"
+    insertafter: '^#!/bin/sh'
+    regexp: ^export FISHEYE_OPTS
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertafter_test2
+
+# Check of the prev step.
+# We tried to add the same line with the same playbook,
+# so nothing has been added:
+- name: Stat the file again
+  stat:
+    path: "{{ output_dir }}/test_58923.txt"
+  register: insertafter_test2_file
+
+- name: Assert insertafter tests gave the expected results
+  assert:
+    that:
+      - insertafter_test1 is changed
+      - insertafter_test1_file.stat.checksum == '9232aed6fe88714964d9e29d13e42cd782070b08'
+      - insertafter_test2 is not changed
+      - insertafter_test2_file.stat.checksum == '9232aed6fe88714964d9e29d13e42cd782070b08'
+
+# Test insertafter without regexp
+- name: Deploy the test file
+  copy:
+    src: test_58923.txt
+    dest: "{{ output_dir }}/test_58923.txt"
+  register: initial_file
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - initial_file is changed
+      - initial_file.checksum == 'b6379ba43261c451a62102acb2c7f438a177c66e'
+      - initial_file.state == 'file'
+
+- name: Insert the line using firstmatch and insertafter without regexp
+  lineinfile:
+    path: "{{ output_dir }}/test_58923.txt"
+    insertafter: '^#!/bin/sh'
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertafter_test3
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir }}/test_58923.txt"
+  register: insertafter_test3_file
+
+- name: Insert the line using firstmatch and insertafter without regexp again
+  lineinfile:
+    path: "{{ output_dir }}/test_58923.txt"
+    insertafter: '^#!/bin/sh'
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertafter_test4
+
+- name: Stat the file again
+  stat:
+    path: "{{ output_dir }}/test_58923.txt"
+  register: insertafter_test4_file
+
+- name: Assert insertafter without regexp tests gave the expected results
+  assert:
+    that:
+      - insertafter_test3 is changed
+      - insertafter_test3_file.stat.checksum == '9232aed6fe88714964d9e29d13e42cd782070b08'
+      - insertafter_test4 is not changed
+      - insertafter_test4_file.stat.checksum == '9232aed6fe88714964d9e29d13e42cd782070b08'
+
+
+# Test insertbefore with regexp
+- name: Deploy the test file
+  copy:
+    src: test_58923.txt
+    dest: "{{ output_dir }}/test_58923.txt"
+  register: initial_file
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - initial_file is changed
+      - initial_file.checksum == 'b6379ba43261c451a62102acb2c7f438a177c66e'
+      - initial_file.state == 'file'
+
+- name: Add the line using regexp, firstmatch, and insertbefore
+  lineinfile:
+    path: "{{ output_dir }}/test_58923.txt"
+    insertbefore: '^#!/bin/sh'
+    regexp: ^export FISHEYE_OPTS
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertbefore_test1
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir }}/test_58923.txt"
+  register: insertbefore_test1_file
+
+- name: Add the line using regexp, firstmatch, and insertbefore again
+  lineinfile:
+    path: "{{ output_dir }}/test_58923.txt"
+    insertbefore: '^#!/bin/sh'
+    regexp: ^export FISHEYE_OPTS
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertbefore_test2
+
+- name: Stat the file again
+  stat:
+    path: "{{ output_dir }}/test_58923.txt"
+  register: insertbefore_test2_file
+
+- name: Assert insertbefore with regexp tests gave the expected results
+  assert:
+    that:
+      - insertbefore_test1 is changed
+      - insertbefore_test1_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
+      - insertbefore_test2 is not changed
+      - insertbefore_test2_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
+
+
+# Test insertbefore without regexp
+- name: Deploy the test file
+  copy:
+    src: test_58923.txt
+    dest: "{{ output_dir }}/test_58923.txt"
+  register: initial_file
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - initial_file is changed
+      - initial_file.checksum == 'b6379ba43261c451a62102acb2c7f438a177c66e'
+      - initial_file.state == 'file'
+
+- name: Add the line using insertbefore and firstmatch
+  lineinfile:
+    path: "{{ output_dir }}/test_58923.txt"
+    insertbefore: '^#!/bin/sh'
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertbefore_test3
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir }}/test_58923.txt"
+  register: insertbefore_test3_file
+
+- name: Add the line using insertbefore and firstmatch again
+  lineinfile:
+    path: "{{ output_dir }}/test_58923.txt"
+    insertbefore: '^#!/bin/sh'
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertbefore_test4
+
+- name: Stat the file again
+  stat:
+    path: "{{ output_dir }}/test_58923.txt"
+  register: insertbefore_test4_file
+
+# Test when the line is presented in the file but
+# not in the before/after spot and it does match the regexp:
+- name: >
+    Add the line using insertbefore and firstmatch when the regexp line
+    is presented but not close to insertbefore spot
+  lineinfile:
+    path: "{{ output_dir }}/test_58923.txt"
+    insertbefore: '   Darwin\*\) if \[ -z \"\$JAVA_HOME\" \] ; then'
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertbefore_test5
+
+- name: Stat the file again
+  stat:
+    path: "{{ output_dir }}/test_58923.txt"
+  register: insertbefore_test5_file
+
+- name: Assert insertbefore with regexp tests gave the expected results
+  assert:
+    that:
+      - insertbefore_test3 is changed
+      - insertbefore_test3_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
+      - insertbefore_test4 is not changed
+      - insertbefore_test4_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
+      - insertbefore_test5 is not changed
+      - insertbefore_test5_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
