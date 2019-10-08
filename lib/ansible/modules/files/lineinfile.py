@@ -208,7 +208,6 @@ import tempfile
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import b
 from ansible.module_utils._text import to_bytes, to_native
 
 
@@ -272,7 +271,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             b_lines = f.readlines()
 
     if module._diff:
-        diff['before'] = to_native(b('').join(b_lines))
+        diff['before'] = to_native(b''.join(b_lines))
 
     if regexp is not None:
         bre_m = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
@@ -289,25 +288,46 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     index = [-1, -1]
     m = None
     b_line = to_bytes(line, errors='surrogate_or_strict')
-    for lineno, b_cur_line in enumerate(b_lines):
-        if regexp is not None:
+
+    # The module's doc says
+    # "If regular expressions are passed to both regexp and
+    # insertafter, insertafter is only honored if no match for regexp is found."
+    # Therefore:
+    # 1. regexp was found -> ignore insertafter, replace the founded line
+    # 2. regexp was not found -> insert the line after 'insertafter' or 'insertbefore' line
+
+    # Given the above:
+    # 1. First check that there is no match for regexp:
+    if regexp is not None:
+        for lineno, b_cur_line in enumerate(b_lines):
             match_found = bre_m.search(b_cur_line)
-        else:
-            match_found = b_line == b_cur_line.rstrip(b('\r\n'))
-        if match_found:
-            index[0] = lineno
-            m = match_found
-        elif bre_ins is not None and bre_ins.search(b_cur_line):
-            if insertafter:
-                # + 1 for the next line
-                index[1] = lineno + 1
+            if match_found:
+                index[0] = lineno
+                m = match_found
                 if firstmatch:
                     break
-            if insertbefore:
-                # index[1] for the previous line
-                index[1] = lineno
-                if firstmatch:
-                    break
+
+    # 2. When no match found on the previous step,
+    # parse for searching insertafter/insertbefore:
+    if not m:
+        for lineno, b_cur_line in enumerate(b_lines):
+            match_found = b_line == b_cur_line.rstrip(b'\r\n')
+            if match_found:
+                index[0] = lineno
+                m = match_found
+
+            elif bre_ins is not None and bre_ins.search(b_cur_line):
+                if insertafter:
+                    # + 1 for the next line
+                    index[1] = lineno + 1
+                    if firstmatch:
+                        break
+
+                if insertbefore:
+                    # index[1] for the previous line
+                    index[1] = lineno
+                    if firstmatch:
+                        break
 
     msg = ''
     changed = False
@@ -331,17 +351,17 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             if insertafter and insertafter != 'EOF':
                 # Ensure there is a line separator after the found string
                 # at the end of the file.
-                if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
+                if b_lines and not b_lines[-1][-1:] in (b'\n', b'\r'):
                     b_lines[-1] = b_lines[-1] + b_linesep
 
                 # If the line to insert after is at the end of the file
                 # use the appropriate index value.
                 if len(b_lines) == index[1]:
-                    if b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                    if b_lines[index[1] - 1].rstrip(b'\r\n') != b_line:
                         b_lines.append(b_line + b_linesep)
                         msg = 'line added'
                         changed = True
-                elif b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+                elif b_lines[index[1]].rstrip(b'\r\n') != b_line:
                     b_lines.insert(index[1], b_line + b_linesep)
                     msg = 'line added'
                     changed = True
@@ -350,12 +370,12 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
                 # If the line to insert before is at the beginning of the file
                 # use the appropriate index value.
                 if index[1] <= 0:
-                    if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+                    if b_lines[index[1]].rstrip(b'\r\n') != b_line:
                         b_lines.insert(index[1], b_line + b_linesep)
                         msg = 'line added'
                         changed = True
 
-                elif b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                elif b_lines[index[1] - 1].rstrip(b'\r\n') != b_line:
                     b_lines.insert(index[1], b_line + b_linesep)
                     msg = 'line added'
                     changed = True
@@ -380,12 +400,21 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     elif insertafter == 'EOF' or index[1] == -1:
 
         # If the file is not empty then ensure there's a newline before the added line
-        if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
+        if b_lines and not b_lines[-1][-1:] in (b'\n', b'\r'):
             b_lines.append(b_linesep)
 
         b_lines.append(b_line + b_linesep)
         msg = 'line added'
         changed = True
+
+    elif insertafter and index[1] != -1:
+
+        # Don't insert the line if it already matches at the index
+        if b_line != b_lines[index[1]].rstrip(b'\n\r'):
+            b_lines.insert(index[1], b_line + b_linesep)
+            msg = 'line added'
+            changed = True
+
     # insert matched, but not the regexp
     else:
         b_lines.insert(index[1], b_line + b_linesep)
@@ -393,7 +422,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         changed = True
 
     if module._diff:
-        diff['after'] = to_native(b('').join(b_lines))
+        diff['after'] = to_native(b''.join(b_lines))
 
     backupdest = ""
     if changed and not module.check_mode:
@@ -430,7 +459,7 @@ def absent(module, dest, regexp, line, backup):
         b_lines = f.readlines()
 
     if module._diff:
-        diff['before'] = to_native(b('').join(b_lines))
+        diff['before'] = to_native(b''.join(b_lines))
 
     if regexp is not None:
         bre_c = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
@@ -442,7 +471,7 @@ def absent(module, dest, regexp, line, backup):
         if regexp is not None:
             match_found = bre_c.search(b_cur_line)
         else:
-            match_found = b_line == b_cur_line.rstrip(b('\r\n'))
+            match_found = b_line == b_cur_line.rstrip(b'\r\n')
         if match_found:
             found.append(b_cur_line)
         return not match_found
@@ -451,7 +480,7 @@ def absent(module, dest, regexp, line, backup):
     changed = len(found) > 0
 
     if module._diff:
-        diff['after'] = to_native(b('').join(b_lines))
+        diff['after'] = to_native(b''.join(b_lines))
 
     backupdest = ""
     if changed and not module.check_mode:
