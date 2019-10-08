@@ -1,0 +1,51 @@
+# test code for the slurp module when using winrm connection
+# (c) 2015, Chris Church <cchurch@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Set autologon registry keys
+  win_auto_logon:
+    user: "{{test_win_user_name}}"
+    password: "{{test_win_user_password$hell1}}"
+    state: present
+  register: win_auto_logon_create_registry_key_set
+
+- name: check win_auto_logon_create_registry_key_set is changed
+  assert:
+    that:
+      - "win_auto_logon_create_registry_key_set is changed"
+
+- name: Set autologon registry keys with missing input
+  win_auto_logon:
+    user: "{{test_win_user_name}}"
+    state: present
+  register: win_auto_logon_create_registry_key_missing_input
+  ignore_errors: true
+
+- name: check win_auto_logon_create_registry_key_missing_input is failed
+  assert:
+    that:
+      - "win_group_create_invalid_state is failed"
+
+- name: Remove autologon registry keys
+  win_auto_logon:
+    state: absent
+  register: win_auto_logon_create_registry_key_remove
+
+- name: check win_auto_logon_create_registry_key_remove is changed
+  assert:
+    that:
+      - "win_auto_logon_create_registry_key_remove is changed"
