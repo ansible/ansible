@@ -41,17 +41,6 @@ def g_connect(versions):
                 n_url = self.api_server
                 error_context_msg = 'Error when finding available api versions from %s (%s)' % (self.name, n_url)
 
-                # TODO: if api_server == 'https://galaxy.ansible.com' we can assume it is a migrated config
-                #       and point it to the more accurate url 'https://galaxy.ansible.com/api/'
-
-                # Note: This retry will do the wrong thing if the custom galaxy server does not live at a url that
-                # ends with /api. For example, a ansible.cfg that points to a galaxy server provided by pulp:
-                #
-                # [galaxy]
-                # server=http://localhost:24817/pulp_ansible/galaxy/dev
-                #
-                # For that case
-
                 if self.api_server == 'https://galaxy.ansible.com' or self.api_server == 'https://galaxy.ansible.com/':
                     n_url = 'https://galaxy.ansible.com/api/'
 
