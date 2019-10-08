@@ -1077,7 +1077,7 @@
     is presented but not close to insertbefore spot
   lineinfile:
     path: "{{ output_dir }}/test_58923.txt"
-    insertbefore: '   Darwin*) if [ -z "$JAVA_HOME" ] ; then'
+    insertbefore: '   Darwin\*\) if \[ -z \"\$JAVA_HOME\" \] ; then'
     firstmatch: true
     line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
   register: insertbefore_test5
