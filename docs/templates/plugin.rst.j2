@@ -290,7 +290,7 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                     <b>@{ key }@</b>
                     <div style="font-size: small">
                       <span style="color: purple">@{ value.type | documented_type }@</span>
-                      {% if value.get('elements') %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
+                      {% if value.elements %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
                     </div>
                     {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
                 </td>
@@ -365,7 +365,7 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                     <b>@{ key }@</b>
                     <div style="font-size: small">
                       <span style="color: purple">@{ value.type | documented_type }@</span>
-                      {% if value.get('elements') %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
+                      {% if value.elements %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
                     </div>
                     {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
                 </td>
