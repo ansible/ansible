@@ -16,6 +16,9 @@
     state: 'present'
   register: nacl
 
+- set_fact:
+    nacl_id: "{{ nacl.nacl_id }}"
+
 - name: assert the network acl was created
   assert:
     that:
@@ -25,13 +28,14 @@
 - name: get network ACL facts
   ec2_vpc_nacl_info:
     nacl_ids:
-      - "{{ nacl.nacl_id }}"
+      - "{{ nacl_id }}"
   register: nacl_facts
 
 - name: assert the nacl has the correct attributes
   assert:
     that:
       - nacl_facts.nacls | length == 1
+      - nacl_facts.nacls[0].nacl_id == nacl_id
       - nacl_facts.nacls[0].subnets | length == 4
       - nacl_facts.nacls[0].subnets | sort == subnet_ids | sort
       - nacl_facts.nacls[0].ingress | length == 3
@@ -60,6 +64,7 @@
   assert:
     that:
       - not nacl.changed
+      - nacl.nacl_id == nacl_id
       - nacl.nacl_id.startswith('acl-')
 
 - name: get network ACL facts
@@ -99,9 +104,7 @@
     that:
       - nacl.changed
       - nacl.nacl_id.startswith('acl-')
-
-- set_fact:
-    nacl_id: "{{ nacl.nacl_id }}"
+      - nacl.nacl_id == nacl_id
 
 - name: get network ACL facts
   ec2_vpc_nacl_info:
@@ -113,6 +116,7 @@
   assert:
     that:
       - nacl_facts.nacls | length == 1
+      - nacl_facts.nacls[0].nacl_id == nacl_id
       - nacl_facts.nacls[0].subnets | length == 3
       - subnet_ids[3] not in nacl_facts.nacls[0].subnets
       - nacl_facts.nacls[0].ingress | length == 3
