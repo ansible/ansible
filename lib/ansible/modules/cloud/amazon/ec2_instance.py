@@ -1087,7 +1087,10 @@ def discover_security_groups(group, groups, parent_vpc_id=None, subnet_id=None, 
 
 
 def _supports_ebs_optimized(instance_type):
-    ebs_optimized_types = ['c1.xlarge', 'c3.xlarge', 'c3.2xlarge', 'c3.4xlarge', 'g2.2xlarge', 'i2.xlarge', 'i2.2xlarge', 'i2.4xlarge', 'm1.large', 'm1.xlarge', 'm2.2xlarge', 'm2.4xlarge', 'm3.xlarge', 'm3.2xlarge', 'r3.xlarge', 'r3.2xlarge', 'r3.4xlarge']
+    ebs_optimized_types = ['c1.xlarge', 'c3.xlarge', 'c3.2xlarge', 'c3.4xlarge',
+                           'g2.2xlarge', 'i2.xlarge', 'i2.2xlarge', 'i2.4xlarge',
+                           'm1.large', 'm1.xlarge', 'm2.2xlarge', 'm2.4xlarge',
+                           'm3.xlarge', 'm3.2xlarge', 'r3.xlarge', 'r3.2xlarge', 'r3.4xlarge']
     if instance_type in ebs_optimized_types:
         return True
     return False
@@ -1652,8 +1655,6 @@ def main():
                 module.params['ebs_optimized'] = check_type_bool(module.params.get('ebs_optimized'))
             except TypeError as e:
                 module.fail_json(msg="Parameter ebs_optimized must be a boolean or 'auto'")
-
-
 
     state = module.params.get('state')
     ec2 = module.client('ec2')
