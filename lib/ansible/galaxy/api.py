@@ -68,7 +68,6 @@ def g_connect(versions):
                         raise AnsibleError("Tried to find galaxy API root at %s but no 'available_versions' are available on %s"
                                            % (n_url, self.api_server))
 
-
                 # Default to only supporting v1, if only v1 is returned we also assume that v2 is available even though
                 # it isn't returned in the available_versions dict.
                 available_versions = data.get('available_versions', {u'v1': u'/api/v1'})
