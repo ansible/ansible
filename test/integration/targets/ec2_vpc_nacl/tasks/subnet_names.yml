@@ -105,21 +105,21 @@
       - nacl.nacl_id == nacl_id
       - nacl.nacl_id.startswith('acl-')
 
-# FIXME: Currently removing a subnet using the subnet names does not work
-#- name: get network ACL facts
-#  ec2_vpc_nacl_info:
-#    nacl_ids:
-#      - "{{ nacl.nacl_id }}"
-#  register: nacl_facts
+- name: get network ACL facts
+  ec2_vpc_nacl_info:
+    nacl_ids:
+      - "{{ nacl.nacl_id }}"
+  register: nacl_facts
 
-#- name: assert the nacl has the correct attributes
-#  assert:
-#    that:
-#      - nacl_facts.nacls | length == 1
-#      - nacl_facts.nacls[0].subnets | length == 3
-#      - nacl_facts.nacls[0].ingress | length == 3
-#      - nacl_facts.nacls[0].egress | length == 1
-#      - "'{{ nacl_facts.nacls[0].tags.Name }}' == '{{ resource_prefix }}-acl'"
+- name: assert the nacl has the correct attributes
+  assert:
+    that:
+      - nacl_facts.nacls | length == 1
+      - nacl_facts.nacls[0].nacl_id == nacl_id
+      - nacl_facts.nacls[0].subnets | length == 3
+      - nacl_facts.nacls[0].ingress | length == 3
+      - nacl_facts.nacls[0].egress | length == 1
+      - "'{{ nacl_facts.nacls[0].tags.Name }}' == '{{ resource_prefix }}-acl'"
 
 # ============================================================
 
