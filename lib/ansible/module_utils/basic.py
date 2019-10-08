@@ -1450,7 +1450,8 @@ class AnsibleModule(object):
         try:
             self.no_log_values.update(list_no_log_values(spec, param))
         except TypeError as te:
-            self.fail_json(msg="Failure when processing no_log parameters. %s" % to_native(te), invocation={'module_args': 'HIDDEN DUE TO FAILURE'})
+            self.fail_json(msg="Failure when processing no_log parameters. Module invocation will be hidden. "
+                               "%s" % to_native(te), invocation={'module_args': 'HIDDEN DUE TO FAILURE'})
         self._deprecations.extend(list_deprecations(spec, param))
 
     def _check_arguments(self, check_invalid_arguments, spec=None, param=None, legal_inputs=None):
