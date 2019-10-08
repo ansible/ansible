@@ -24,6 +24,9 @@ ANSIBLE_PLAYBOOK_DIR=/tmp ansible localhost -m debug -a var=playbook_dir | grep 
 # test setting playbook_dir via cmdline
 ansible localhost -m debug -a var=playbook_dir --playbook-dir=/tmp | grep '"playbook_dir": "/tmp"'
 
+# test setting playbook dir via ansible.cfg
+ANSIBLE_CONFIG=./playbookdir_cfg.ini ansible localhost -m debug -a var=playbook_dir | grep '"playbook_dir": "/tmp"'
+
 # Test that no tmp dirs are left behind when running ansible-config
 TMP_DIR=~/.ansible/tmptest
 if [[ -d "$TMP_DIR" ]]; then
