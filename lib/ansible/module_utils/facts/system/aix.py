@@ -1,6 +1,4 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
+# AIX specific facts
 # Copyright: (c) 2018, Christian Tremel (@flynn1973)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -14,7 +12,6 @@ import os
 import platform
 import re
 import itertools
-import commands
 import subprocess
 try:
     import json
@@ -120,7 +117,7 @@ class AIXSystemFactCollector(BaseFactCollector):
         except IOError as e:
             self.module.warnings.append('could not read /etc/niminfo')
             niminfo = {}
-        niminfo_facts['niminfo'] = [ niminfo ]
+        niminfo_facts['niminfo'] = [niminfo]
 
         return niminfo_facts
 
@@ -255,6 +252,6 @@ class AIXSystemFactCollector(BaseFactCollector):
                     uname["serial"] = out.strip().split(",")[1]
                 else:
                     uname[key] = out.strip()
-        uname_facts['uname'] = [ uname ]
+        uname_facts['uname'] = [uname]
 
         return uname_facts
