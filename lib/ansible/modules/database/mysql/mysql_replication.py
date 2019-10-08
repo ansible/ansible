@@ -355,7 +355,7 @@ def main():
             chm.append("MASTER_LOG_FILE='%s'" % master_log_file)
         if master_log_pos is not None:
             chm.append("MASTER_LOG_POS=%s" % master_log_pos)
-        if master_delay:
+        if master_delay is not None:
             chm.append("MASTER_DELAY=%s" % master_delay)
         if relay_log_file:
             chm.append("RELAY_LOG_FILE='%s'" % relay_log_file)
