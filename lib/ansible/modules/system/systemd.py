@@ -335,6 +335,7 @@ def parse_systemctl_show(lines):
                 k = None
     return parsed
 
+
 def convert_property_suffix(raw_value):
     import math
 
@@ -343,11 +344,11 @@ def convert_property_suffix(raw_value):
         return raw_value
 
     last_char = raw_value[-1]
-    size_converter = {"K":1, "M":2, "G":3, "T":4}
+    size_converter = {"K": 1, "M": 2, "G": 3, "T": 4}
 
     if last_char.upper() in size_converter:
         p = int(math.pow(1024, size_converter[last_char.upper()]))
-        sz = int(raw_value[:-1])*p
+        sz = int(raw_value[:-1]) * p
         return sz
     else:
         return raw_value
