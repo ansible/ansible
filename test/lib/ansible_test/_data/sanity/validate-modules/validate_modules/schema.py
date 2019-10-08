@@ -20,6 +20,7 @@ any_string_types = Any(*string_types)
 #     "Ansible Core Team" - Used by the Bot
 #     "Michael DeHaan" - nop
 #     "Name (!UNKNOWN)" - For the few untraceable authors
+#
 author_line = re.compile(r'^\w.*(\(@([\w-]+)\)|!UNKNOWN)(?![\w.])|^Ansible Core Team$|^Michael DeHaan$')
 
 
