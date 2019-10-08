@@ -206,14 +206,15 @@ def test_initialise_unknown(monkeypatch):
     mock_open = MagicMock()
     mock_open.side_effect = [
         urllib_error.HTTPError('https://galaxy.ansible.com/api/', 500, 'msg', {}, StringIO(u'{"msg":"raw error"}')),
+        urllib_error.HTTPError('https://galaxy.ansible.com/api/api/', 500, 'msg', {}, StringIO(u'{"msg":"raw error"}')),
     ]
     monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
 
     api = GalaxyAPI(None, "test", "https://galaxy.ansible.com/api/", token=GalaxyToken(token='my_token'))
 
-    expected = "Error when finding available api versions from test (%s/api/) (HTTP Code: 500, Message: Unknown " \
+    expected = "Error when finding available api versions from test (%s) (HTTP Code: 500, Message: Unknown " \
                "error returned by Galaxy server.)" % api.api_server
-    with pytest.raises(GalaxyError, match=re.escape(expected)):
+    with pytest.raises(AnsibleError, match=re.escape(expected)):
         api.authenticate("github_token")
 
 
