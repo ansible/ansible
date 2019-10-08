@@ -63,7 +63,7 @@
     security_groups: "{{ sg.group_id }}"
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     ebs_optimized: auto
-    instance_type: t3.nano
+    instance_type: m1.large
     wait: false
     <<: *aws_connection_info
   register: auto_ebs_opt
