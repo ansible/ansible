@@ -148,6 +148,11 @@ task:
   description: The result of the create, or delete action.
   returned: success
   type: dict
+nacl_id:
+  description: The id of the NACL (when creating or updating an ACL)
+  returned: success
+  type: str
+  sample: acl-123456789abcdef01
 '''
 
 try:
