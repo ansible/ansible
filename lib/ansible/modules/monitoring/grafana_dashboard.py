@@ -200,6 +200,24 @@ def get_grafana_version(module, grafana_url, headers):
     return int(grafana_version)
 
 
+def grafana_dashboard_already_in_folder(module, grafana_url, dashboard_id, folder_id, headers):
+    try:
+        r, info = fetch_url(module,
+                            '%s/api/search?dashboardIds=%s&folderIds=%d' % (grafana_url, dashboard_id, folder_id),
+                            headers=headers, method='GET')
+    except Exception as e:
+        raise GrafanaAPIException(e)
+
+    if info['status'] != 200:
+        raise GrafanaAPIException("Unable to verify dashboard '%s' is in folder '%d" % (dashboard_id, folder_id))
+
+    data = json.loads(r.read())
+    if data:
+        return True
+
+    return False
+
+
 def grafana_folder_exists(module, grafana_url, folder_name, headers):
     # the 'General' folder is a special case, it's ID is always '0'
     if folder_name == 'General':
@@ -246,6 +264,27 @@ def grafana_dashboard_exists(module, grafana_url, uid, headers):
     return dashboard_exists, dashboard
 
 
+# for comparison, we sometimes need to ignore a few keys
+def grafana_is_dashboard_unchanged(payload, dashboard):
+    # you don't need to set the version, but '0' is incremented to '1' by Grafana's API
+    if payload['dashboard']['version'] == 0:
+        del(payload['dashboard']['version'])
+        del(dashboard['dashboard']['version'])
+
+    # the meta key is not part of the 'payload' ever
+    del(dashboard['meta'])
+
+    # new dashboards don't require an id attribute (or, it can be 'null'), Grafana's API will generate it
+    if payload['dashboard']['id'] is None:
+        del(dashboard['dashboard']['id'])
+        del(payload['dashboard']['id'])
+
+    if payload == dashboard:
+        return True
+
+    return False
+
+
 def grafana_create_dashboard(module, data):
 
     # define data payload for grafana API
@@ -289,13 +328,20 @@ def grafana_create_dashboard(module, data):
             result['changed'] = False
             return result
 
-        data['folder_id'] = folder_id
+        payload['folderId'] = folder_id
 
     # test if dashboard already exists
     dashboard_exists, dashboard = grafana_dashboard_exists(module, data['grafana_url'], uid, headers=headers)
 
     if dashboard_exists is True:
-        if dashboard == payload:
+        if folder_exists is True:
+            # the folder is not returned in the dashboard request
+            if grafana_dashboard_already_in_folder(module, data['grafana_url'], dashboard['dashboard']['id'], folder_id, headers):
+                dashboard['folderId'] = folder_id
+
+            payload['folderId'] = folder_id
+
+        if grafana_is_dashboard_unchanged(payload, dashboard):
             # unchanged
             result['uid'] = uid
             result['msg'] = "Dashboard %s unchanged." % uid
@@ -306,9 +352,6 @@ def grafana_create_dashboard(module, data):
                 payload['overwrite'] = True
             if 'message' in data and data['message']:
                 payload['message'] = data['message']
-
-            if grafana_version >= 5:
-                payload['folderId'] = data['folder_id']
 
             r, info = fetch_url(module, '%s/api/dashboards/db' % data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
             if info['status'] == 200:
@@ -323,9 +366,12 @@ def grafana_create_dashboard(module, data):
                 result['changed'] = True
             else:
                 body = json.loads(info['body'])
-                raise GrafanaAPIException('Unable to update the dashboard %s : %s' % (uid, body['message']))
+                raise GrafanaAPIException('Unable to update the dashboard %s : %s (HTTP: %d)' % (uid, body['message'], info['status']))
     else:
         # create
+        if folder_exists is True:
+            payload['folderId'] = folder_id
+
         r, info = fetch_url(module, '%s/api/dashboards/db' % data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
         if info['status'] == 200:
             result['msg'] = "Dashboard %s created" % uid
