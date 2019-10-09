@@ -106,8 +106,8 @@ EXAMPLES = '''
     wait: true
     tail_log: true
   register: response
-  # the response will have a `logs` key that will contain a log (up to 4KB) of the function execution in Lambda.
-  
+  # the response will have a `logs` key that will contain a log (up to 4KB) of the function execution in Lambda
+
 # Pass the Lambda event payload as a json file.
 - execute_lambda:
     name: test-function
