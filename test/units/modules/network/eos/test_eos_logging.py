@@ -70,7 +70,7 @@ class TestEosLoggingModule(TestEosModule):
         set_module_args(dict(dest='buffered', size='ten'))
         commands = ['logging buffered ten']
         result = self.execute_module(failed=True)
-        self.assertRegex(result['msg'], "argument size is of type <(class|type) 'str'> and we were unable to convert to int: <(class|type) 'str'> cannot be converted to an int")
+        self.assertIn("we were unable to convert to int",result['msg'])
 
     def test_eos_buffer_size(self):
         set_module_args(dict(dest='buffered', size=5000))
@@ -103,3 +103,8 @@ class TestEosLoggingModule(TestEosModule):
         set_module_args(dict(dest='console', level='warnings'))
         commands = ['logging console warnings']
         result = self.execute_module(changed=False, commands=[])
+
+    def test_eos_logging_state_absent(self):
+        set_module_args(dict(dest='host', name='175.16.0.10', state='absent'))
+        commands = ['no logging host 175.16.0.10']
+        self.execute_module(changed=True, commands=commands)
