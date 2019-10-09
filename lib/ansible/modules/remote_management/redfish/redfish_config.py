@@ -174,7 +174,6 @@ msg:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.redfish_utils import RedfishUtils
 from ansible.module_utils._text import to_native
-import ast
 
 
 # More will be added as module features are expanded
