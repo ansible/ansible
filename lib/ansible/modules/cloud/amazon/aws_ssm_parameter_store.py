@@ -192,8 +192,12 @@ def create_update_parameter(client, module):
                 except ClientError as e:
                     module.fail_json_aws(e, msg="getting description value")
 
-                if describe_existing_parameter['Parameters'][0]['Description'] != args['Description']:
+                existing_parameter = describe_existing_parameter['Parameters'][0]
+
+                # boto3 does not return a description if one is not set.
+                if 'Description' in existing_parameter.keys() and existing_parameter['Description'] != args['Description']:
                     (changed, response) = update_parameter(client, module, args)
+
     else:
         (changed, response) = update_parameter(client, module, args)
 

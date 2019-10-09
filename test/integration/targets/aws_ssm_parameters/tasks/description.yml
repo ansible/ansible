@@ -1,0 +1,30 @@
+- name: verify description based bug in ssm
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  block:
+
+    # this bug presents when a parameter is created without a description then
+    # an update happens with a description.  
+    # This shows up as a Key error
+
+
+    - name: Create or update key/value pair in aws parameter store
+      aws_ssm_parameter_store:
+        name: "/{{ssm_key_prefix}}/description_bug"
+        value: "unimportant"
+
+    - name: update the parameter but make sure the description is different
+      aws_ssm_parameter_store:
+        name: "/{{ssm_key_prefix}}/description_bug"
+        description: "This description changes"
+        value: "unimportant"
+
+    - name: clean up
+      aws_ssm_parameter_store:
+        name: "/{{ssm_key_prefix}}/description_bug"
+        value: "unimportant"
+        state: absent

@@ -14,6 +14,11 @@
            region: "{{ aws_region }}"
       no_log: yes
     # ============================================================
+
+
+    - name: run description bug playbook
+      include_tasks: description.yml
+
     - name: Create or update key/value pair in aws parameter store
       aws_ssm_parameter_store:
         name: "/{{ssm_key_prefix}}/Hello"
@@ -116,6 +121,7 @@
       assert:
         that:
           - result.changed == False
+
   always:
     # ============================================================
     - name: Delete remaining key/value pairs in aws parameter store
