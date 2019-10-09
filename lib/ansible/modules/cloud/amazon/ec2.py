@@ -118,7 +118,7 @@ options:
   spot_wait_timeout:
     version_added: "1.5"
     description:
-      - How long to wait for the spot instance request to be fulfilled. Will affect 'Request valid until' for setting spot request lifespan
+      - How long to wait for the spot instance request to be fulfilled. Affects 'Request valid until' for setting spot request lifespan.
     default: 600
     type: int
   count:
