@@ -27,7 +27,7 @@ options:
           port number, like C(eth0:4567).
       - If the port number is omitted,
           the port number from the listen address is used.
-      - If C(advertise_addr) is not specified, it will be automatically
+      - If I(advertise_addr) is not specified, it will be automatically
           detected when possible.
       - Only used when swarm is initialised or joined. Because of this it's not
         considered for idempotency checking.
@@ -242,12 +242,12 @@ swarm_facts:
           type: complex
           contains:
               Worker:
-                  description: Token to create a new I(worker) node
+                  description: Token to create a new *worker* node
                   returned: success
                   type: str
                   example: SWMTKN-1--xxxxx
               Manager:
-                  description: Token to create a new I(manager) node
+                  description: Token to create a new *manager* node
                   returned: success
                   type: str
                   example: SWMTKN-1--xxxxx
