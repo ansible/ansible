@@ -1680,6 +1680,14 @@ PERSISTENT_COMMAND_TIMEOUT:
   ini:
   - {key: command_timeout, section: persistent_connection}
   type: int
+PLAYBOOK_DIR:
+  name: playbook dir override for non-playbook CLIs (ala --playbook-dir)
+  version_added: "2.9"
+  description:
+    - A number of non-playbook CLIs have a ``--playbook-dir`` argument; this sets the default value for it.
+  env: [{name: ANSIBLE_PLAYBOOK_DIR}]
+  ini: [{key: playbook_dir, section: defaults}]
+  type: path
 PLAYBOOK_VARS_ROOT:
   name: playbook vars files root
   default: top
