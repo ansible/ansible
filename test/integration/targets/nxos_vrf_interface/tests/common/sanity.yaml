@@ -23,6 +23,14 @@
       provider: "{{ connection }}"
       state: present
     register: result
+    # Note: VRF creation may be delayed on some devices if the device is still
+    # in the process of removing the VRF from an earlier step. Further,
+    # module_utils may report an erroneous "Structured output unsupported" error
+    # when json output is requested while the VRF is not present.
+    delay: 15
+    retries: 1
+    until: result is not failed
+    ignore_errors: yes
 
   - assert: &true
       that:
