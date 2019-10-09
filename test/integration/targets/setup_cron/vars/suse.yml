@@ -1,3 +1,4 @@
 cron_pkg: cron
 cron_service: cron
 list_pkg_files: rpm -ql
+cron_user_config_path: /var/spool/cron/tabs

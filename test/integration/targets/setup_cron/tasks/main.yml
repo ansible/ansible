@@ -3,9 +3,9 @@
   vars:
     search:
       files:
-        - '{{ ansible_system | lower }}.yml'
         - '{{ ansible_distribution | lower }}.yml'
         - '{{ ansible_os_family | lower }}.yml'
+        - '{{ ansible_system | lower }}.yml'
         - default.yml
       paths:
         - vars
