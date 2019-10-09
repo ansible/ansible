@@ -99,7 +99,7 @@ RETURN = '''
 #only defaults
 '''
 
-import ansible.module_utils.urls
+from ansible.module_utils.urls import ConnectionError
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.influxdb as influx
@@ -114,7 +114,7 @@ def find_user(module, client, user_name):
             if user['user'] == user_name:
                 user_result = user
                 break
-    except (ansible.module_utils.urls.ConnectionError, influx.exceptions.InfluxDBClientError) as e:
+    except (ConnectionError, influx.exceptions.InfluxDBClientError) as e:
         module.fail_json(msg=to_native(e))
     return user_result
 
@@ -126,7 +126,7 @@ def check_user_password(module, client, user_name, user_password):
     except influx.exceptions.InfluxDBClientError as e:
         if e.code == 401:
             return False
-    except ansible.module_utils.urls.ConnectionError as e:
+    except ConnectionError as e:
         module.fail_json(msg=to_native(e))
     finally:
         # restore previous user
@@ -138,7 +138,7 @@ def set_user_password(module, client, user_name, user_password):
     if not module.check_mode:
         try:
             client.set_user_password(user_name, user_password)
-        except ansible.module_utils.urls.ConnectionError as e:
+        except ConnectionError as e:
             module.fail_json(msg=to_native(e))
 
 
@@ -146,7 +146,7 @@ def create_user(module, client, user_name, user_password, admin):
     if not module.check_mode:
         try:
             client.create_user(user_name, user_password, admin)
-        except ansible.module_utils.urls.ConnectionError as e:
+        except ConnectionError as e:
             module.fail_json(msg=to_native(e))
 
 
