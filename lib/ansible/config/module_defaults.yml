@@ -155,6 +155,50 @@ groupings:
   - aws
   dms_replication_subnet_group:
   - aws
+  docker_compose:
+  - docker
+  docker_config:
+  - docker
+  docker_container_info:
+  - docker
+  docker_container:
+  - docker
+  docker_host_info:
+  - docker
+  docker_image_facts:
+  - docker
+  docker_image_info:
+  - docker
+  docker_image:
+  - docker
+  docker_login:
+  - docker
+  docker_network_info:
+  - docker
+  docker_network:
+  - docker
+  docker_node_info:
+  - docker
+  docker_node:
+  - docker
+  docker_prune:
+  - docker
+  docker_secret:
+  - docker
+  docker_service:
+  - docker
+  docker_swarm_info:
+  - docker
+  docker_swarm:
+  - docker
+  docker_swarm_service_info:
+  - docker
+  docker_swarm_service:
+  - docker
+  docker_volume_info:
+  - docker
+  docker_volume:
+  - docker
   dynamodb_table:
   - aws
   dynamodb_ttl:
