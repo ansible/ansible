@@ -8,3 +8,7 @@
 # Tests of master_delay parameter:
 - import_tasks: mysql_replication_master_delay.yml
   when: ansible_distribution == 'CentOS' and ansible_distribution_major_version >= '7'
+
+# Tests of channel parameter:
+- import_tasks: mysql_replication_channel.yml
+  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version >= '7'
