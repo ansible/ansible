@@ -122,12 +122,6 @@ options:
         type: str
 '''
 EXAMPLES = r'''
-- name: eth_trunk module test
-  hosts: cloudengine
-  connection: local
-  gather_facts: no
-
-  tasks:
   - name: Ensure Eth-Trunk100 is created, and set to mode lacp-static
     ce_lacp:
       trunk_id: 100
@@ -227,12 +221,7 @@ def has_element(parent, xpath):
 
 
 def bulid_xml(kwargs, operation='get'):
-    """
-    create a xml tree by dictionary with operation,get,merge and delete
-    :param kwargs: tags and values
-    :param operation: get, merge, delete
-    :return: a string
-    """
+    """create a xml tree by dictionary with operation,get,merge and delete"""
     attrib = {'xmlns': "http://www.huawei.com/netconf/vrp",
               'content-version': "1.0", 'format-version': "1.0"}
 
@@ -319,11 +308,7 @@ def check_param(kwargs):
 
 
 def xml_to_dict(args):
-    """
-    transfer xml string into dict
-    :param args: a xml string
-    :return: dict
-    """
+    """transfer xml string into dict """
     rdict = dict()
     args = re.sub(r'xmlns=\".+?\"', '', args)
     root = ET.fromstring(args)
@@ -336,11 +321,7 @@ def xml_to_dict(args):
 
 
 def compare_config(module, kwarg_exist, kwarg_end):
-    """
-    :param kwarg_exist: existing config dictionary
-    :param kwarg_end:  end config dictionary
-    :return: commands update list
-    """
+    """compare config between exist and end"""
     dic_command = {'isSupportPrmpt': 'lacp preempt enable',
                    'rcvTimeoutType': 'lacp timeout',  # lacp timeout fast user-defined 23
                    'fastTimeoutUserDefinedValue': 'lacp timeout user-defined',
@@ -390,7 +371,7 @@ class Lacp(object):
     def __init__(self, argument_spec):
         self.spec = argument_spec
         self.module = None
-        self.__init_module__()
+        self.init_module()
 
         # module input info
         self.trunk_id = self.module.params['trunk_id']
@@ -407,8 +388,8 @@ class Lacp(object):
         self.existing = dict()
         self.end_state = dict()
 
-    def __init_module__(self):
-        """ init module """
+    def init_module(self):
+        """ init AnsibleModule """
 
         self.module = AnsibleModule(
             argument_spec=self.spec,
@@ -417,17 +398,13 @@ class Lacp(object):
             supports_check_mode=True)
 
     def check_params(self):
-        """
-        :return:
-        """
+        """check module params """
         for key in self.module.params.keys():
             if key in LACP.keys() and self.module.params[key] is not None:
                 self.param[key] = self.module.params[key]
                 if isinstance(self.module.params[key], bool):
                     self.param[key] = str(self.module.params[key]).lower()
         msg = check_param(self.param)
-        # if self.param.get('fast_timeout') is not None and self.param.get('timeout_type') is None:
-        # self.param['timeout_type'] = 'Fast'
         if msg != 'ok':
             self.module.fail_json(msg=msg)
 
