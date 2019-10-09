@@ -1,0 +1,109 @@
+- name: Create EMAIL cron var
+  cronvar:
+    name: EMAIL
+    value: doug@ansibmod.con.com
+  register: create_cronvar1
+
+- name: Create EMAIL cron var again
+  cronvar:
+    name: EMAIL
+    value: doug@ansibmod.con.com
+  register: create_cronvar2
+
+- name: Check cron var value
+  shell: crontab -l -u root | grep -c EMAIL=doug@ansibmod.con.com
+  register: varcheck1
+
+- name: Modify EMAIL cron var
+  cronvar:
+    name: EMAIL
+    value: jane@ansibmod.con.com
+  register: create_cronvar3
+
+- name: Check cron var value again
+  shell: crontab -l -u root | grep -c EMAIL=jane@ansibmod.con.com
+  register: varcheck2
+
+- name: Remove EMAIL cron var
+  cronvar:
+    name: EMAIL
+    state: absent
+  register: remove_cronvar1
+
+- name: Remove EMAIL cron var again
+  cronvar:
+    name: EMAIL
+    state: absent
+  register: remove_cronvar2
+
+- name: Check cron var value again
+  shell: crontab -l -u root | grep -c EMAIL
+  register: varcheck3
+  failed_when: varcheck3.rc == 0
+
+- name: Add cron var to custom file
+  cronvar:
+    name: TESTVAR
+    value: somevalue
+    cron_file: cronvar_test
+  register: custom_cronfile1
+
+- name: Add cron var to custom file again
+  cronvar:
+    name: TESTVAR
+    value: somevalue
+    cron_file: cronvar_test
+  register: custom_cronfile2
+
+- name: Check cron var value in custom file
+  command: grep -c TESTVAR=somevalue {{ cron_config_path }}/cronvar_test
+  register: custom_varcheck1
+
+- name: Change cron var in custom file
+  cronvar:
+    name: TESTVAR
+    value: newvalue
+    cron_file: cronvar_test
+  register: custom_cronfile3
+
+- name: Check cron var value in custom file
+  command: grep -c TESTVAR=newvalue {{ cron_config_path }}/cronvar_test
+  register: custom_varcheck2
+
+- name: Remove cron var from custom file
+  cronvar:
+    name: TESTVAR
+    value: newvalue
+    cron_file: cronvar_test
+    state: absent
+  register: custom_remove_cronvar1
+
+- name: Remove cron var from custom file again
+  cronvar:
+    name: TESTVAR
+    value: newvalue
+    cron_file: cronvar_test
+    state: absent
+  register: custom_remove_cronvar2
+
+- name: Check cron var value
+  command: grep -c TESTVAR=newvalue {{ cron_config_path }}/cronvar_test
+  register: custom_varcheck3
+  failed_when: custom_varcheck3.rc == 0
+
+- name: Esure cronvar tasks did the right thing
+  assert:
+    that:
+      - create_cronvar1 is changed
+      - create_cronvar2 is not changed
+      - create_cronvar3 is changed
+      - remove_cronvar1 is changed
+      - remove_cronvar2 is not changed
+      - varcheck1.stdout == '1'
+      - varcheck2.stdout == '1'
+      - varcheck3.stdout == '0'
+      - custom_remove_cronvar1 is changed
+      - custom_remove_cronvar2 is not changed
+      - custom_varcheck1.stdout == '1'
+      - custom_varcheck2.stdout == '1'
+      - custom_varcheck3.stdout == '0'
