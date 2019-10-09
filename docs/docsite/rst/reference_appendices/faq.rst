@@ -246,7 +246,7 @@ There are a few common errors that one might run into when trying to execute Ans
 * When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode via sftp however execution of python fails with
 
   .. error::
-      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details
+      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see https://python.org/dev/peps/pep-0263/ for details
 
   To fix it set ``pipelining = True`` in `/etc/ansible/ansible.cfg`.
 
@@ -651,7 +651,7 @@ but you can still access the original via ``hostvars``::
 
    original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
 
-This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
+This works for all overridden connection variables, like ``ansible_user``, ``ansible_port``, etc.
 
 
 .. _scp_protocol_error_filename:

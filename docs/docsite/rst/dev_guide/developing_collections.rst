@@ -13,6 +13,8 @@ You can publish and use collections through `Ansible Galaxy <https://galaxy.ansi
    :local:
    :depth: 2
 
+.. _collection_structure:
+
 Collection structure
 ====================
 
@@ -45,6 +47,7 @@ and other tools need in order to package, build and publish the collection::
     * See the `draft collection <https://github.com/bcoca/collection>`_ for an example of a full collection structure.
     * Not all directories are currently in use. Those are placeholders for future features.
 
+.. _galaxy_yml:
 
 galaxy.yml
 ----------
@@ -52,6 +55,7 @@ galaxy.yml
 A collection must have a ``galaxy.yml`` file that contains the necessary information to build a collection artifact.
 See :ref:`collections_galaxy_meta` for details.
 
+.. _collections_doc_dir:
 
 docs directory
 ---------------
@@ -68,11 +72,14 @@ The ``ansible-doc`` command requires the fully qualified collection name (FQCN) 
 
 .. note:: The Ansible collection namespace is defined in the ``galaxy.yml`` file and is not equivalent to the GitHub repository name.
 
+.. _collections_plugin_dir:
 
 plugins directory
 ------------------
 
-Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by any other plugin by using their FQCN. This is a way to distribute modules, lookups, filters, and so on, without having to import a role in every play.
+Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by most plugins by using their FQCN. This is a way to distribute modules, lookups, filters, and so on, without having to import a role in every play.
+
+Vars plugins are unsupported in collections. Cache plugins may be used in collections for fact caching, but are not supported for inventory plugins.
 
 module_utils
 ^^^^^^^^^^^^
@@ -109,6 +116,11 @@ In the Python example the ``module_util`` in question is called ``qradar`` such 
         not_rest_data_keys=['state']
     )
 
+Note that importing something from an ``__init__.py`` file requires using the file name:
+
+.. code-block:: python
+
+    from ansible_collections.namespace.collection_name.plugins.callback.__init__ import CustomBaseClass
 
 In the PowerShell example the ``module_util`` in question is called ``hyperv`` such that the FCQN is
 ``ansible_example.community.plugins.module_utils.hyperv``:
@@ -129,6 +141,7 @@ In the PowerShell example the ``module_util`` in question is called ``hyperv`` s
 
     $module.ExitJson()
 
+.. _collections_roles_dir:
 
 roles directory
 ----------------
@@ -255,6 +268,8 @@ You can publish collections to Galaxy using the ``ansible-galaxy collection publ
 
 .. note:: Once you upload a version of a collection, you cannot delete or modify that version. Ensure that everything looks okay before you upload it.
 
+.. _upload_collection_ansible_galaxy:
+
 Upload using ansible-galaxy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -272,8 +287,10 @@ without waiting for the import result, use the ``--no-wait`` argument and manual
 The API key is a secret token used by Ansible Galaxy to protect your content. You can find your API key at your
 `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page.
 
-Upload from the Galaxy website
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _upload_collection_galaxy:
+
+Upload a collection from the Galaxy website
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To upload your collection artifact directly on Galaxy:
 
@@ -287,6 +304,7 @@ namespace, the upload request will fail.
 Once Galaxy uploads and accepts a collection, you will be redirected to the **My Imports** page, which displays output from the
 import process, including any errors or warnings about the metadata and content contained in the collection.
 
+.. _collection_versions:
 
 Collection versions
 -------------------
@@ -300,6 +318,8 @@ Collection versions use `Sematic Versioning <https://semver.org/>`_ for version 
 * Increment major (for example: x in `x.y.z`) version number for an incompatible API change.
 * Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner.
 * Increment patch (for example: z in `x.y.z`) version number for backwards compatible bug fixes.
+
+.. _migrate_to_collection:
 
 Migrating Ansible content to a collection
 =========================================

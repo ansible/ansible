@@ -150,7 +150,7 @@ see the source code for the `action plugins included with Ansible Core <https://
 Cache plugins
 -------------
 
-Cache plugins store gathered facts and data retrieved by inventory plugins.
+Cache plugins store gathered facts and data retrieved by inventory plugins. Only fact caching is currently supported by cache plugins in collections.
 
 Import cache plugins using the cache_loader so you can use ``self.set_options()`` and ``self.get_option(<option_name>)``. If you import a cache plugin directly in the code base, you can only access options via ``ansible.constants``, and you break the cache plugin's ability to be used by an inventory plugin.
 
@@ -246,7 +246,7 @@ but with an extra option so you can see how configuration works in Ansible versi
       """
       CALLBACK_VERSION = 2.0
       CALLBACK_TYPE = 'aggregate'
-      CALLBACK_NAME = 'timer'
+      CALLBACK_NAME = 'namespace.collection_name.timer'
 
       # only needed if you ship it and don't want to enable by default
       CALLBACK_NEEDS_WHITELIST = True
@@ -320,7 +320,7 @@ Lookup plugins pull in data from external data stores. Lookup plugins can be use
 
 Lookup plugins are very flexible, allowing you to retrieve and return any type of data. When writing lookup plugins, always return data of a consistent type that can be easily consumed in a playbook. Avoid parameters that change the returned data type. If there is a need to return a single value sometimes and a complex dictionary other times, write two different lookup plugins.
 
-Ansible includes many :ref:`filters <playbooks_filters>` which can be used to manipulate the data returned by a lookup plugin. Sometimes it makes sense to do the filtering inside the lookup plugin, other times it is better to return results that can be filtered in the playbook. Keep in mind how the data will be referenced when determing the appropriate level of filtering to be done inside the lookup plugin.
+Ansible includes many :ref:`filters <playbooks_filters>` which can be used to manipulate the data returned by a lookup plugin. Sometimes it makes sense to do the filtering inside the lookup plugin, other times it is better to return results that can be filtered in the playbook. Keep in mind how the data will be referenced when determining the appropriate level of filtering to be done inside the lookup plugin.
 
 Here's a simple lookup plugin implementation --- this lookup returns the contents of a text file as a variable:
 
@@ -389,7 +389,7 @@ The following is an example of how this lookup is called::
   ---
   - hosts: all
     vars:
-       contents: "{{ lookup('file', '/etc/foo.txt') }}"
+       contents: "{{ lookup('namespace.collection_name.file', '/etc/foo.txt') }}"
 
     tasks:
 
@@ -418,7 +418,7 @@ Vars plugins
 
 Vars plugins inject additional variable data into Ansible runs that did not come from an inventory source, playbook, or command line. Playbook constructs like 'host_vars' and 'group_vars' work using vars plugins.
 
-Vars plugins were partially implemented in Ansible 2.0 and rewritten to be fully implemented starting with Ansible 2.4.
+Vars plugins were partially implemented in Ansible 2.0 and rewritten to be fully implemented starting with Ansible 2.4. Vars plugins are unsupported by collections.
 
 Older plugins used a ``run`` method as their main body/work:
 
