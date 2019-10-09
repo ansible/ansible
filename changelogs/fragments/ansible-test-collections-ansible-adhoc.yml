@@ -1,0 +1,2 @@
+bugfixes:
+    - ansible-test now properly sets ``ANSIBLE_PLAYBOOK_DIR`` for integration tests so unqualified collection references work for adhoc ``ansible`` usage
