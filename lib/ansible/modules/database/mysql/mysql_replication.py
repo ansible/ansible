@@ -132,6 +132,7 @@ options:
             - Name of replication channel.
             - Multi-source replication is supported from MySQL 5.7.
             - For more information see U(https://dev.mysql.com/doc/refman/8.0/en/replication-multi-source.html).
+        type: str
         version_added: "2.10"
 
 extends_documentation_fragment:
