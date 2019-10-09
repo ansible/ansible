@@ -70,7 +70,7 @@ class TestEosLoggingModule(TestEosModule):
         set_module_args(dict(dest='buffered', size='ten'))
         commands = ['logging buffered ten']
         result = self.execute_module(failed=True)
-        self.assertIn("we were unable to convert to int",result['msg'])
+        self.assertIn("we were unable to convert to int", result['msg'])
 
     def test_eos_buffer_size(self):
         set_module_args(dict(dest='buffered', size=5000))
