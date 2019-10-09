@@ -12,7 +12,8 @@ DOCUMENTATION = '''
     short_description: Sends events to Logstash
     description:
       - This callback will report facts and task events to Logstash https://www.elastic.co/products/logstash
-    version_added: "2.3"
+      - Before 2.8 only environment variables were available for configuring this plugin.
+    version_added: "2.8"
     requirements:
       - whitelisting in configuration
       - logstash (python library)
