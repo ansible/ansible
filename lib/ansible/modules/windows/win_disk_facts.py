@@ -50,7 +50,7 @@ EXAMPLES = r'''
 
 - name: Output second disk serial number
   debug:
-    var: ansible_facts.disks[0].serial_number
+    var: ansible_facts.disks[1].serial_number
 '''
 
 RETURN = r'''
