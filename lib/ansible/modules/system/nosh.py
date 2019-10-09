@@ -125,7 +125,7 @@ preset:
     description: whether the enabled status reflects the one set in the relevant C(*.preset) file
     returned: success
     type: bool
-    sample: False
+    sample: 'False'
 state:
     description: service process run state, C(None) if the service is not loaded and will not be started
     returned: if state option is used
