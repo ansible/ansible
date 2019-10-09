@@ -352,7 +352,7 @@ Possible values (sample, not complete list)::
     Archlinux
     ClearLinux
     Coreos
-    Centos
+    CentOS
     Debian
     Fedora
     Gentoo
