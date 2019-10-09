@@ -1,0 +1,2 @@
+cron_config_path: /etc/cron.d
+cron_user_config_path: /var/spool/cron
