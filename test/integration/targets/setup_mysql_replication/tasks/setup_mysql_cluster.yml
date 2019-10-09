@@ -7,10 +7,9 @@
 
 - name: Install MySQL community server
   yum:
-    name: mysql-community-server
-    #enablerepo: '{{ repo_name }}'
+    name: '{{ mysql_package_name }}'
 
-- name: Create directories for standby
+- name: Create directories
   file:
     state: directory
     path: "{{ item }}"
@@ -22,44 +21,36 @@
   - "{{ standby_logdir }}"
   - "{{ default_logdir }}"
 
-- name: Copy cnf template
+- name: Copy cnf templates
   template:
-    src: my.cnf.j2
-    dest: /etc/my.cnf
+    src: '{{ item.conf_templ }}'
+    dest: '{{ item.conf_dest }}'
     owner: mysql
     group: mysql
     force: yes
+  loop:
+  - { conf_templ: my-1.cnf.j2, conf_dest: '{{ master_cnf }}' }
+  - { conf_templ: my-2.cnf.j2, conf_dest: '{{ standby_cnf }}' }
 
 - name: Initialize DBs
-  shell: 'mysql_install_db --user=mysql --datadir={{ item }}'
+  shell: 'mysqld --user=mysql --initialize-insecure --datadir={{ item }}'
   loop:
   - '{{ master_datadir }}'
   - '{{ standby_datadir }}'
 
-- name: Start services
-  shell: 'mysqld_multi --log=/var/log/mysql/mysql.log start 1,2'
+- name: Start master services
+  shell: 'mysqld --defaults-file={{ master_cnf }} --user=mysql --datadir={{ master_datadir }} --log-error={{ mysqld_err_log }} &'
+
+- name: Start standby services
+  shell: 'mysqld --defaults-file={{ standby_cnf }} --user=mysql --datadir={{ standby_datadir }} --log-error={{ mysqld_err_log }} &'
 
 - name: Pause
   pause: seconds=3
 
 ########### For painful debug uncomment the lines below ##
-#- name: DEBUG Check stratup log
-#  shell: cat /var/log/mysql/mysql.log
-
-#- name: DEBUG Check mysql_safe err log
-#  shell: cat '{{  mysql_safe_err_log }}'
-
-#- name: DEBUG Check processes
-#  shell: 'ps aux | grep mysqld | grep -v "grep\|root"'
-
-#- name: DEBUG
-#  yum: name=net-tools
-
-#- name: DEBUG
-#  shell: "netstat -ntpl"
-
-#- name: DEBUG
-#  shell: cat /etc/my.cnf
+#- name: DEBUG Check  log
+#  shell: 'cat {{ mysqld_err_log }}'
+#  ignore_errors: yes
 ##########################################################
 
 - name: Check connection to the master
