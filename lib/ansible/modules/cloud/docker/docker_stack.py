@@ -64,8 +64,8 @@ options:
     choices: ["always", "changed", "never"]
   absent_retries:
     description:
-      - If C(>0) and C(state==absent) the module will retry up to
-        C(absent_retries) times to delete the stack until all the
+      - If C(>0) and I(state) is C(absent) the module will retry up to
+        I(absent_retries) times to delete the stack until all the
         resources have been effectively deleted.
         If the last try still reports the stack as not completely
         removed the module will fail.
@@ -73,7 +73,7 @@ options:
     default: 0
   absent_retries_interval:
     description:
-      - Interval in seconds between C(absent_retries)
+      - Interval in seconds between consecutive I(absent_retries).
     type: int
     default: 1
 

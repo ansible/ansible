@@ -203,7 +203,7 @@ options:
         type: float
       memory:
         description:
-          - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+          - "Service memory reservation in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
           - C(0) equals no reservation.
@@ -220,7 +220,7 @@ options:
     type: float
   limit_memory:
     description:
-      - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+      - "Service memory limit in format C(<number>[<unit>]). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - C(0) equals no limit.
@@ -338,7 +338,7 @@ options:
         version_added: "2.8"
       tmpfs_size:
         description:
-          - "Size of the tmpfs mount (format: C(<number>[<unit>])). Number is a positive integer.
+          - "Size of the tmpfs mount in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
           - Can only be used when I(mode) is C(tmpfs).
@@ -359,8 +359,8 @@ options:
   networks:
     description:
       - List of the service networks names or dictionaries.
-      - When passed dictionaries valid sub-options are C(name) which is required and
-        C(aliases) and C(options).
+      - When passed dictionaries valid sub-options are I(name), which is required, and
+        I(aliases) and I(options).
       - Prior to API version 1.29, updating and removing networks is not supported.
         If changes are made the service will then be removed and recreated.
       - Corresponds to the C(--network) option of C(docker service create).
@@ -440,7 +440,7 @@ options:
         type: float
       memory:
         description:
-          - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+          - "Service memory reservation in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
           - C(0) equals no reservation.
@@ -457,7 +457,7 @@ options:
     type: float
   reserve_memory:
     description:
-      - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+      - "Service memory reservation in format C(<number>[<unit>]). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - C(0) equals no reservation.
@@ -622,8 +622,8 @@ options:
         type: int
   state:
     description:
-      - I(absent) - A service matching the specified name will be removed and have its tasks stopped.
-      - I(present) - Asserts the existence of a service matching the name and provided configuration parameters.
+      - C(absent) - A service matching the specified name will be removed and have its tasks stopped.
+      - C(present) - Asserts the existence of a service matching the name and provided configuration parameters.
         Unspecified configuration parameters will be set to docker defaults.
     type: str
     required: yes
