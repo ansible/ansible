@@ -1003,13 +1003,11 @@ class RedfishUtils(object):
             return response
         return {'ret': True}
 
-    def update_password_policy(self, user):
-        if user.get('account_policy_name') is None or user.get('account_policy_value') is None:
+    def update_accountservice_properties(self, user):
+        if user.get('account_properties') is None:
             return {'ret': False, 'msg':
-                    'Must provide account_policy_name and account_policy_value for UpdatePasswordPolicy command'}
-
-        policy_name = user.get('account_policy_name')
-        policy_value = user.get('account_policy_value')
+                    'Must provide account_properties for UpdateAccountServiceProperties command'}
+        account_properties = user.get('account_properties')
 
         # Find AccountService
         response = self.get_request(self.root_uri + self.service_root)
@@ -1025,27 +1023,26 @@ class RedfishUtils(object):
         if response['ret'] is False:
             return response
         data = response['data']
-        if policy_name not in data:
-            return {'ret': False, 'msg':
-                    'account_policy_name %s not support' % policy_name}
+        for property_name in account_properties.keys():
+            if property_name not in data:
+                return {'ret': False, 'msg':
+                        'property %s not supported' % property_name}
 
-        # if value is already matched, nothing to do
-        property_value = data.get(policy_name)
-        new_value = None
-        if isinstance(property_value, int):
-            new_value = int(policy_value)
-        elif isinstance(property_value, bool):
-            new_value = bool(policy_value)
-        else:
-            new_value = policy_value
-        if property_value == new_value:
-            return {'ret': True, 'changed': False}
+        # if properties is already matched, nothing to do
+        need_change = False
+        for property_name in account_properties.keys():
+            if account_properties[property_name] != data[property_name]:
+                need_change = True
+                break
 
-        payload = {policy_name: new_value}
-        response = self.patch_request(self.root_uri + self.service_root + 'AccountService', payload)
+        if not need_change:
+            return {'ret': True, 'changed': False, 'msg': "AccountService properties already set"}
+
+        payload = account_properties
+        response = self.patch_request(self.root_uri + accountservice_uri, payload)
         if response['ret'] is False:
             return response
-        return {'ret': True}
+        return {'ret': True, 'changed': True, 'msg': "Modified AccountService properties"}
 
     def get_sessions(self):
         result = {}
