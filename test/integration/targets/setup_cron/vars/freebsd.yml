@@ -1,4 +1,3 @@
 cron_pkg:
 cron_service: cron
 list_pkg_files: pkg info --list-files
-cron_user_config_path: /var/cron/tabs

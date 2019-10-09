@@ -11,7 +11,7 @@
   register: create_cronvar2
 
 - name: Check cron var value
-  command: grep -c EMAIL=doug@ansibmod.con.com {{ cron_user_config_path }}/root
+  shell: crontab -l -u root | grep -c EMAIL=doug@ansibmod.con.com
   register: varcheck1
 
 - name: Modify EMAIL cron var
@@ -21,7 +21,7 @@
   register: create_cronvar3
 
 - name: Check cron var value again
-  command: grep -c EMAIL=jane@ansibmod.con.com {{ cron_user_config_path }}/root
+  shell: crontab -l -u root | grep -c EMAIL=jane@ansibmod.con.com
   register: varcheck2
 
 - name: Remove EMAIL cron var
@@ -37,7 +37,7 @@
   register: remove_cronvar2
 
 - name: Check cron var value again
-  command: grep -c EMAIL {{ cron_user_config_path }}/root
+  shell: crontab -l -u root | grep -c EMAIL
   register: varcheck3
   failed_when: varcheck3.rc == 0
 
