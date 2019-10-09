@@ -74,7 +74,6 @@ options:
         description:
             - Link Aggregation Control Protocol System ID,interface Eth-Trunk View.
             - Formate 'X-X-X',X is hex(a,aa,aaa, or aaaa)
-        required: false
         type: str
     timeout_type:
         description:
@@ -409,25 +408,19 @@ class Lacp(object):
             self.module.fail_json(msg=msg)
 
     def get_existing(self):
-        """
-        :return:
-        """
+        """get existing"""
         xml_str = bulid_xml(self.param)
         xml = get_nc_config(self.module, xml_str)
         return xml_to_dict(xml)
 
     def get_proposed(self):
-        """
-        :return:
-        """
+        """get proposed"""
         proposed = dict(state=self.state)
         proposed.update(self.param)
         return proposed
 
     def get_end_state(self):
-        """
-        :return:
-        """
+        """ get end_state"""
         xml_str = bulid_xml(self.param)
         xml = get_nc_config(self.module, xml_str)
         return xml_to_dict(xml)

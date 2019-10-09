@@ -58,22 +58,22 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
                   'lacp timeout user-defined 10',
                   'lacp dampening unexpected-mac disable']
         self.get_nc_config.side_effect = (xml_existing, xml_end_state)
-        set_module_args(dict(mode='Dynamic',
-                             trunk_id='10',
-                             preempt_enable='true',
-                             state_flapping='true',
-                             port_id_extension_enable='true',
-                             unexpected_mac_disable='true',
-                             system_id='0000-1111-2222',
-                             timeout_type='Fast',
-                             fast_timeout='10',
-                             mixed_rate_link_enable='true',
-                             preempt_delay=11,
-                             collector_delay=12,
-                             max_active_linknumber=13,
-                             select='Speed',
-                            state='present')
-                       )
+        set_module_args(dict(
+                        mode='Dynamic',
+                        trunk_id='10',
+                        preempt_enable='true',
+                        state_flapping='true',
+                        port_id_extension_enable='true',
+                        unexpected_mac_disable='true',
+                        system_id='0000-1111-2222',
+                        timeout_type='Fast',
+                        fast_timeout='10',
+                        mixed_rate_link_enable='true',
+                        preempt_delay=11,
+                        collector_delay=12,
+                        max_active_linknumber=13,
+                        select='Speed',
+                        state='present'))
         result = self.execute_module(changed=True)
         self.assertEquals(sorted(result['updates']), sorted(update))
 
@@ -94,23 +94,23 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
                           'lacp system-id 11-22-33',
                           'lacp timeout user-defined 3']
         self.get_nc_config.side_effect = (xml_existing, xml_end_state)
-        set_module_args(dict(mode='Dynamic',
-                             trunk_id='10',
-                             preempt_enable='true',
-                             state_flapping='true',
-                             port_id_extension_enable='true',
-                             unexpected_mac_disable='true',
-                             system_id='0000-1111-2222',
-                             timeout_type='Fast',
-                             fast_timeout='10',
-                             mixed_rate_link_enable='true',
-                             preempt_delay=11,
-                             collector_delay=12,
-                             max_active_linknumber=13,
-                             select='Speed',
-                             state='absent'
-                            )
-                      )
+        set_module_args(dict(
+                        mode='Dynamic',
+                        trunk_id='10',
+                        preempt_enable='true',
+                        state_flapping='true',
+                        port_id_extension_enable='true',
+                        unexpected_mac_disable='true',
+                        system_id='0000-1111-2222',
+                        timeout_type='Fast',
+                        fast_timeout='10',
+                        mixed_rate_link_enable='true',
+                        preempt_delay=11,
+                        collector_delay=12,
+                        max_active_linknumber=13,
+                        select='Speed',
+                        state='absent'
+                        ))
         result = self.execute_module(changed=True)
         self.assertEquals(sorted(result['updates']), sorted(default_values))
 
@@ -119,9 +119,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
         xml_end_state = load_fixture('ce_lacp', 'ce_lacp_11.txt')
         self.get_nc_config.side_effect = (xml_existing, xml_end_state)
         set_module_args(dict(global_priority=32769,
-                             state='present'
-                             )
-                        )
+                             state='present'))
         result = self.execute_module(changed=True)
         self.assertEquals(result['updates'], ['lacp priority 32769'])
 
@@ -130,9 +128,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
         xml_end_state = load_fixture('ce_lacp', 'ce_lacp_10.txt')
         self.get_nc_config.side_effect = (xml_existing, xml_end_state)
         set_module_args(dict(global_priority=32769,
-                             state='absent'
-                            )
-                        )
+                             state='absent'))
         result = self.execute_module(changed=True)
         # excpect: lacp priority is set to default value(32768)
         self.assertEquals(result['updates'], ['lacp priority 32768'])
