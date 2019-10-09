@@ -66,7 +66,7 @@ exists:
 volume:
     description:
       - Volume inspection results for the affected volume.
-      - Will be C(None) if volume does not exist.
+      - Will be C(none) if volume does not exist.
     returned: success
     type: dict
     sample: '{

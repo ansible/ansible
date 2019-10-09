@@ -60,8 +60,8 @@ options:
     version_added: "2.8"
     description:
       - Controls when a volume will be recreated when I(state) is C(present). Please
-        note that recreating an existing volume will cause I(any data in the existing volume
-        to be lost!) The volume will be deleted and a new volume with the same name will be
+        note that recreating an existing volume will cause **any data in the existing volume
+        to be lost!** The volume will be deleted and a new volume with the same name will be
         created.
       - The value C(always) forces the volume to be always recreated.
       - The value C(never) makes sure the volume will not be recreated.

@@ -75,9 +75,9 @@ options:
     default: no
   verbose_output:
     description:
-      - When set to C(yes) and I(nodes), I(services) or I(tasks) is set to C(yes)
-        then output will contain verbose information about objects matching the full output of API method.
-        For details see the documentation of your version of Docker API at U(https://docs.docker.com/engine/api/).
+      - When set to C(yes) and I(nodes), I(services) or I(tasks) is set to C(yes), then the module output will
+        contain verbose information about objects matching the full output of API method.
+      - For details see the documentation of your version of Docker API at U(https://docs.docker.com/engine/api/).
       - The verbose output in this module contains only subset of information returned by I(_info) module
         for each type of the objects.
     type: bool
