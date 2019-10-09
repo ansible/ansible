@@ -14,7 +14,7 @@ rpm-build
 .project
 .pydevproject
 # PyCharm stuff...
-.idea
+.idea 
 #IntelliJ IDEA stuff..
 *.iml
 #VSCode stuff..
