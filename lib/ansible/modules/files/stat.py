@@ -342,7 +342,7 @@ stat:
             sample: False
             version_added: 2.2
         executable:
-            description: Tells you if the invoking user has the execute the path
+            description: Tells you if the invoking user has execute permission on the path
             returned: success, path exists and user can execute the path
             type: bool
             sample: False
