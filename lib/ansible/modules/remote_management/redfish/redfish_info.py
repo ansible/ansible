@@ -223,9 +223,9 @@ EXAMPLES = '''
       password: "{{ password }}"
 
   - name: Get Manager Services
-    redfish_command:
+    redfish_info:
       category: Manager
-      command: GetManagerServices
+      command: GetNetworkProtocols
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
@@ -259,7 +259,7 @@ CATEGORY_COMMANDS_ALL = {
     "Accounts": ["ListUsers"],
     "Sessions": ["GetSessions"],
     "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities", "GetSoftwareInventory"],
-    "Manager": ["GetManagerNicInventory", "GetVirtualMedia", "GetLogs", "GetManagerServices"],
+    "Manager": ["GetManagerNicInventory", "GetVirtualMedia", "GetLogs", "GetNetworkProtocols"],
 }
 
 CATEGORY_COMMANDS_DEFAULT = {
@@ -426,8 +426,8 @@ def main():
                     result["virtual_media"] = rf_utils.get_multi_virtualmedia()
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
-                elif command == "GetManagerServices":
-                    result["manager_services"] = rf_utils.get_manager_services()
+                elif command == "GetNetworkProtocols":
+                    result["network_protocols"] = rf_utils.get_network_protocols()
 
     # Return data back
     if is_old_facts:
