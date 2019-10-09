@@ -370,6 +370,7 @@ EXAMPLES = '''
     vpc_subnet_id: subnet-29e63245
     assign_public_ip: yes
     spot_launch_group: report_generators
+    instance_initiated_shutdown_behavior: terminate
 
 # Examples using pre-existing network interfaces
 - ec2:
