@@ -173,7 +173,7 @@ class Npm(object):
 
             if self.glbl:
                 cmd.append('--global')
-            if self.production and ('install' in cmd or 'update' in cmd):
+            if self.production and ('install' in cmd or 'update' in cmd or 'ci' in cmd):
                 cmd.append('--production')
             if self.ignore_scripts:
                 cmd.append('--ignore-scripts')
