@@ -32,6 +32,7 @@ options:
     - If you pass including and excluding values to the filter, for example, I(filter=!settings,version),
       the excluding values, C(!settings) in this case, will be ignored.
     type: list
+    elements: str
   login_db:
     description:
     - Database name to connect to.
