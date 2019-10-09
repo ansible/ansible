@@ -103,7 +103,7 @@ class ActionModule(_ActionModule):
             result['msg'] = copy_result.get('msg')
             return
 
-        result['backup_path'] = copy_result['dest']
+        result['backup_path'] = dest
         if copy_result.get('changed', False):
             result['changed'] = copy_result['changed']
 
