@@ -24,6 +24,7 @@ options:
       - The full path of the file/object to get the facts of.
     type: path
     required: true
+    aliases: [ dest, name ]
   follow:
     description:
       - Whether to follow symlinks.
@@ -431,7 +432,7 @@ def format_output(module, path, st):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(type='path', required=True),
+            path=dict(type='path', required=True, aliases=['dest', 'name']),
             follow=dict(type='bool', default=False),
             get_md5=dict(type='bool', default=False),
             get_checksum=dict(type='bool', default=True),
