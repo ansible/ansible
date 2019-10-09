@@ -200,43 +200,45 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
         for host in self._get_hosts():
 
             if host.get('name'):
-                self.inventory.add_host(host['name'])
+                host_name = self.inventory.add_host(host['name'])
 
                 # create directly mapped groups
                 group_name = host.get('hostgroup_title', host.get('hostgroup_name'))
                 if group_name:
                     group_name = to_safe_group_name('%s%s' % (self.get_option('group_prefix'), group_name.lower().replace(" ", "")))
                     group_name = self.inventory.add_group(group_name)
-                    self.inventory.add_child(group_name, host['name'])
+                    self.inventory.add_child(group_name, host_name)
 
                 # set host vars from host info
                 try:
                     for k, v in host.items():
                         if k not in ('name', 'hostgroup_title', 'hostgroup_name'):
                             try:
-                                self.inventory.set_variable(host['name'], self.get_option('vars_prefix') + k, v)
+                                self.inventory.set_variable(host_name, self.get_option('vars_prefix') + k, v)
                             except ValueError as e:
                                 self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (host, k, to_text(e)))
                 except ValueError as e:
-                    self.display.warning("Could not get host info for %s, skipping: %s" % (host['name'], to_text(e)))
+                    self.display.warning("Could not get host info for %s, skipping: %s" % (host_name, to_text(e)))
 
                 # set host vars from params
                 if self.get_option('want_params'):
                     for p in self._get_all_params_by_id(host['id']):
                         try:
-                            self.inventory.set_variable(host['name'], p['name'], p['value'])
+                            self.inventory.set_variable(host_name, p['name'], p['value'])
                         except ValueError as e:
                             self.display.warning("Could not set hostvar %s to '%s' for the '%s' host, skipping:  %s" %
                                                  (p['name'], to_native(p['value']), host, to_native(e)))
 
                 # set host vars from facts
                 if self.get_option('want_facts'):
-                    self.inventory.set_variable(host['name'], 'ansible_facts', self._get_facts(host))
+                    self.inventory.set_variable(host_name, 'ansible_facts', self._get_facts(host))
 
-                hostvars = combine_vars(get_group_vars(self.inventory.hosts[host['name']].get_groups()), self.inventory.hosts[host['name']].get_vars())
-                self._set_composite_vars(self.get_option('compose'), hostvars, host['name'], strict=self.get_option('strict'))
-                self._add_host_to_composed_groups(self.get_option('groups'), dict(), host['name'], strict=True)
-                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), dict(), host['name'], strict=True)
+                strict=self.get_option('strict')
+
+                hostvars = self.inventory.get_host(host_name).get_vars()
+                self._set_composite_vars(self.get_option('compose'), hostvars, host_name, strict)
+                self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host_name, strict)
+                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host_name, strict)
 
 
     def parse(self, inventory, loader, path, cache=True):
