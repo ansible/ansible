@@ -9,23 +9,23 @@ You can find roles for provisioning infrastructure, deploying applications, and 
 
 Installing a Galaxy collection
 ==============================
-.. include:: ../../shared_snippets/installing_collections.rst
+.. include:: ../../shared_snippets/installing_collections.txt
 
 
 Installing an older version of a collection
 -------------------------------------------
 
-.. include:: ../../shared_snippets/installing_older_collection.rst
+.. include:: ../../shared_snippets/installing_older_collection.txt
 
 Install multiple collections with a requirements file
 -----------------------------------------------------
 
-.. include:: ../../shared_snippets/installing_multiple_collections.rst
+.. include:: ../../shared_snippets/installing_multiple_collections.txt
 
 Galaxy server configuration list
 --------------------------------
 
-.. include:: ../../shared_snippets/galaxy_server_list.rst
+.. include:: ../../shared_snippets/galaxy_server_list.txt
 
 Installing Roles
 ================
