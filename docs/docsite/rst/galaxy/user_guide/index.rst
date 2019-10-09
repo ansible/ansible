@@ -7,6 +7,25 @@ Using Galaxy for collections and roles
 Use Galaxy to jump-start your automation project with great content from the Ansible community. Galaxy provides pre-packaged units of work such as `roles <playbooks_reuse_roles>`_, and new in Galaxy 3.2, `collections <collections>`_.
 You can find roles for provisioning infrastructure, deploying applications, and all of the tasks you do everyday. The collection format provides a comprehensive package of automation that may include multiple playbooks, roles, modules, and plugins.
 
+Installing a Galaxy collection
+==============================
+.. include:: ../../shared_snippets/installing_collections.rst
+
+
+Installing an older version of a collection
+-------------------------------------------
+
+.. include:: ../../shared_snippets/installing_older_collection.rst
+
+Install multiple collections with a requirements file
+-----------------------------------------------------
+
+.. include:: ../../shared_snippets/installing_multiple_collections.rst
+
+Galaxy server configuration list
+--------------------------------
+
+.. include:: ../../shared_snippets/galaxy_server_list.rst
 
 Installing Roles
 ================
@@ -177,7 +196,7 @@ what tags and conditionals are applied.
 
 Dependencies found in Galaxy can be specified as follows:
 
-.. code-block:: guess
+.. code-block:: text
 
     dependencies:
       - geerlingguy.apache
@@ -186,7 +205,7 @@ Dependencies found in Galaxy can be specified as follows:
 
 The complex form can also be used as follows:
 
-.. code-block:: guess
+.. code-block:: text
 
     dependencies:
       - src: geerlingguy.ansible
