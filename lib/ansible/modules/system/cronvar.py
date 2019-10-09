@@ -126,7 +126,7 @@ class CronVar(object):
         self.user = user
         self.lines = None
         self.wordchars = ''.join(chr(x) for x in range(128) if chr(x) not in ('=', "'", '"',))
-        self.cron_cmd = self.module.get_bin_path('cronvar', required=True)
+        self.cron_cmd = self.module.get_bin_path('crontab', required=True)
 
         if cron_file:
             self.cron_file = ""
