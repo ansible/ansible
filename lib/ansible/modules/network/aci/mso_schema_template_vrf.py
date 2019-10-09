@@ -116,6 +116,7 @@ def main():
         vrf=dict(type='str', aliases=['name']),  # This parameter is not required for querying all objects
         display_name=dict(type='str'),
         layer3_multicast=dict(type='bool'),
+ 	regions=dict(type='list'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -133,6 +134,7 @@ def main():
     vrf = module.params['vrf']
     display_name = module.params['display_name']
     layer3_multicast = module.params['layer3_multicast']
+    regions = module.params['regions']
     state = module.params['state']
 
     mso = MSOModule(module)
@@ -183,7 +185,7 @@ def main():
             displayName=display_name,
             l3MCast=layer3_multicast,
             # FIXME
-            regions=[],
+            regions= regions,
         )
 
         mso.sanitize(payload, collate=True)
