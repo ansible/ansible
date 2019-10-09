@@ -273,6 +273,7 @@ class InventoryManager(object):
                     plugin_wants = False
 
                 if plugin_wants:
+                    self._inventory.start_transaction()
                     try:
                         # FIXME in case plugin fails 1/2 way we have partial inventory
                         plugin.parse(self._inventory, self._loader, source, cache=cache)
@@ -292,6 +293,12 @@ class InventoryManager(object):
                         display.debug('%s failed while attempting to parse %s' % (plugin_name, source))
                         tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e), 'tb': tb})
+                    finally:
+                        if not parsed and self._inventory.needs_rollback():
+                            display.warning(u'\n restoring inventory because %s was partially parsed by %s' % (source, plugin_name))
+                            self._inventory.rollback_transaction()
+                        else:
+                            self._inventory.end_transaction()
                 else:
                     display.vvv("%s declined parsing %s as it did not pass its verify_file() method" % (plugin_name, source))
             else:

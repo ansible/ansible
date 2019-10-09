@@ -42,8 +42,11 @@ class InventoryData(object):
     def __init__(self):
 
         # the inventory object holds a list of groups
-        self.groups = {}
-        self.hosts = {}
+        self._groups = {}
+        self._hosts = {}
+        self._temp_groups = {}
+        self._temp_hosts = {}
+        self.in_transaction = False
 
         # provides 'groups' magic var, host object has group_names
         self._groups_dict_cache = {}
@@ -57,6 +60,40 @@ class InventoryData(object):
         for group in ('all', 'ungrouped'):
             self.add_group(group)
         self.add_child('all', 'ungrouped')
+
+    @property
+    def groups(self):
+        if self.in_transaction:
+            return self._temp_groups
+        else:
+            return self._groups
+
+    @property
+    def hosts(self):
+        if self.in_transaction:
+            return self._temp_hosts
+        else:
+            return self._hosts
+
+    def start_transaction(self):
+        self.in_transaction = True
+
+    def end_transaction(self):
+        self.in_transaction = False
+        self._groups.update(self._temp_groups)
+        self._hosts.update(self._temp_hosts)
+        self._temp_groups = {}
+        self._temp_hosts = {}
+
+    def needs_rollback(self):
+        if self.in_transaction and (self._temp_groups or self._temp_hosts):
+            return True
+        return False
+
+    def rollback_transaction(self):
+        self.in_transaction = False
+        self._temp_groups = {}
+        self._temp_hosts = {}
 
     def serialize(self):
         self._groups_dict_cache = None
