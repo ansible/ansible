@@ -405,11 +405,12 @@ from ansible.module_utils._text import to_native
 
 VALID_PRIVS = frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE',
                          'REFERENCES', 'TRIGGER', 'CREATE', 'CONNECT',
-                         'TEMPORARY', 'TEMP', 'EXECUTE', 'USAGE', 'ALL', 'USAGE'))
+                         'TEMPORARY', 'TEMP', 'EXECUTE', 'USAGE', 'ALL'))
 VALID_DEFAULT_OBJS = {'TABLES': ('ALL', 'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER'),
                       'SEQUENCES': ('ALL', 'SELECT', 'UPDATE', 'USAGE'),
                       'FUNCTIONS': ('ALL', 'EXECUTE'),
-                      'TYPES': ('ALL', 'USAGE')}
+                      'TYPES': ('ALL', 'USAGE'),
+                      'SCHEMAS': ('CREATE', 'USAGE')}
 
 executed_queries = []
 
