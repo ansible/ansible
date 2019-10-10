@@ -23,7 +23,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleLookupError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 
 from ansible.utils.display import Display
 display = Display()
@@ -149,14 +149,14 @@ class LookupModule(LookupBase):
 
                     if exit_code > 0:
                         if exit_code in sops_error_codes.keys():
-                            raise AnsibleLookupError("could not decrypt file %s; Sops error: %s" % (term, sops_error_codes[exit_code]))
+                            raise AnsibleLookupError("could not decrypt file %s; Sops error: %s" % (to_native(term), to_native(sops_error_codes[exit_code])))
                         else:
-                            raise AnsibleLookupError("could not decrypt file %s; Unknown sops error code: %s" % (term, exit_code))
+                            raise AnsibleLookupError("could not decrypt file %s; Unknown sops error code: %s" % (to_native(term), to_native(exit_code)))
 
                     ret.append(output.rstrip())
                 else:
                     raise AnsibleParserError()
             except AnsibleParserError:
-                raise AnsibleError("could not locate file in lookup: %s" % term)
+                raise AnsibleError("could not locate file in lookup: %s" % to_native(term))
 
         return ret
