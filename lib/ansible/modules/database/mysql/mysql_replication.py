@@ -34,6 +34,7 @@ options:
       C(getslave) (SHOW SLAVE STATUS),
       C(startslave) (START SLAVE),
       C(stopslave) (STOP SLAVE),
+      C(resetmaster) (RESET MASTER) - supported from Ansible 2.10,
       C(resetslave) (RESET SLAVE),
       C(resetslaveall) (RESET SLAVE ALL).
     type: str
@@ -43,6 +44,7 @@ options:
     - getslave
     - startslave
     - stopslave
+    - resetmaster
     - resetslave
     - resetslaveall
     default: getslave
@@ -200,6 +202,12 @@ EXAMPLES = r'''
   mysql_replication:
     mode: stopslave
     channel: master-1
+
+- name: >
+    Run RESET MASTER command which will delete all existing binary log files
+    and reset the binary log index file on the master
+  mysql_replication:
+    mode: resetmaster
 '''
 
 RETURN = r'''
@@ -295,6 +303,17 @@ def reset_slave_all(cursor, connection_name='', channel=''):
     return reset
 
 
+def reset_master(cursor):
+    query = 'RESET MASTER'
+    try:
+        executed_queries.append(query)
+        cursor.execute(query)
+        reset = True
+    except Exception:
+        reset = False
+    return reset
+
+
 def start_slave(cursor, connection_name='', channel=''):
     if connection_name:
         query = "START SLAVE '%s'" % connection_name
@@ -335,7 +354,8 @@ def main():
             login_port=dict(type='int', default=3306),
             login_unix_socket=dict(type='str'),
             mode=dict(type='str', default='getslave', choices=[
-                'getmaster', 'getslave', 'changemaster', 'stopslave', 'startslave', 'resetslave', 'resetslaveall']),
+                'getmaster', 'getslave', 'changemaster', 'stopslave',
+                'startslave', 'resetmaster', 'resetslave', 'resetslaveall']),
             master_auto_position=dict(type='bool', default=False),
             master_host=dict(type='str'),
             master_user=dict(type='str'),
@@ -490,6 +510,12 @@ def main():
             module.exit_json(msg="Slave stopped", changed=True, queries=executed_queries)
         else:
             module.exit_json(msg="Slave already stopped", changed=False, queries=executed_queries)
+    elif mode in "resetmaster":
+        reset = reset_master(cursor)
+        if reset is True:
+            module.exit_json(msg="Master reset", changed=True, queries=executed_queries)
+        else:
+            module.exit_json(msg="Master already reset", changed=False, queries=executed_queries)
     elif mode in "resetslave":
         reset = reset_slave(cursor, connection_name, channel)
         if reset is True:

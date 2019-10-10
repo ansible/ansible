@@ -12,3 +12,7 @@
 # Tests of channel parameter:
 - import_tasks: mysql_replication_channel.yml
   when: ansible_distribution == 'CentOS' and ansible_distribution_major_version >= '7'
+
+# Tests of resetmaster mode:
+- import_tasks: mysql_replication_resetmaster_mode.yml
+  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version >= '7'
