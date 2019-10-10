@@ -64,7 +64,9 @@ Ansible releases a new major release of Ansible approximately three to four time
    :maxdepth: 2
    :caption: Ansible Galaxy
 
-   galaxy/index
+   galaxy/user_guide/index
+   galaxy/dev_guide/index
+
 
 .. toctree::
    :maxdepth: 1

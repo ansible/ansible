@@ -1,25 +1,18 @@
-:orphan:
+.. _creating_roles_galaxy:
 
-Ansible Galaxy
-++++++++++++++
-
-*Ansible Galaxy* refers to the `Galaxy <https://galaxy.ansible.com>`_  website where users can share roles, and to a command line tool for installing,
-creating and managing roles.
-
-.. contents:: Topics
-
-Create roles
-------------
+*************************
+Creating roles for Galaxy
+*************************
 
 Use the ``init`` command to initialize the base structure of a new role, saving time on creating the various directories and main.yml files a role requires
 
-::
+.. code-block:: bash
 
    $ ansible-galaxy init role_name
 
 The above will create the following directory structure in the current working directory:
 
-::
+.. code-block:: text
 
    role_name/
        README.md
@@ -58,7 +51,7 @@ Using a Custom Role Skeleton
 
 A custom role skeleton directory can be supplied as follows:
 
-::
+.. code-block:: bash
 
    $ ansible-galaxy init --role-skeleton=/path/to/skeleton role_name
 
@@ -70,102 +63,14 @@ When a skeleton is provided, init will:
 
 Alternatively, the role_skeleton and ignoring of files can be configured via ansible.cfg
 
-::
+.. code-block:: text
 
   [galaxy]
   role_skeleton = /path/to/skeleton
   role_skeleton_ignore = ^.git$,^.*/.git_keep$
 
-
-Search for Roles
-----------------
-
-Search the Galaxy database by tags, platforms, author and multiple keywords. For example:
-
-::
-
-    $ ansible-galaxy search elasticsearch --author geerlingguy
-
-The search command will return a list of the first 1000 results matching your search:
-
-::
-
-    Found 2 roles matching your search:
-
-    Name                              Description
-    ----                              -----------
-    geerlingguy.elasticsearch         Elasticsearch for Linux.
-    geerlingguy.elasticsearch-curator Elasticsearch curator for Linux.
-
-
-Get more information about a role
----------------------------------
-
-Use the ``info`` command to view more detail about a specific role:
-
-::
-
-    $ ansible-galaxy info username.role_name
-
-This returns everything found in Galaxy for the role:
-
-::
-
-    Role: username.role_name
-        description: Installs and configures a thing, a distributed, highly available NoSQL thing.
-        active: True
-        commit: c01947b7bc89ebc0b8a2e298b87ab416aed9dd57
-        commit_message: Adding travis
-        commit_url: https://github.com/username/repo_name/commit/c01947b7bc89ebc0b8a2e298b87ab
-        company: My Company, Inc.
-        created: 2015-12-08T14:17:52.773Z
-        download_count: 1
-        forks_count: 0
-        github_branch:
-        github_repo: repo_name
-        github_user: username
-        id: 6381
-        is_valid: True
-        issue_tracker_url:
-        license: Apache
-        min_ansible_version: 1.4
-        modified: 2015-12-08T18:43:49.085Z
-        namespace: username
-        open_issues_count: 0
-        path: /Users/username/projects/roles
-        scm: None
-        src: username.repo_name
-        stargazers_count: 0
-        travis_status_url: https://travis-ci.org/username/repo_name.svg?branch=master
-        version:
-        watchers_count: 1
-
-
-List installed roles
---------------------
-
-Use ``list`` to show the name and version of each role installed in the *roles_path*.
-
-::
-
-    $ ansible-galaxy list
-
-    - chouseknecht.role-install_mongod, master
-    - chouseknecht.test-role-1, v1.0.2
-    - chrismeyersfsu.role-iptables, master
-    - chrismeyersfsu.role-required_vars, master
-
-Remove an installed role
-------------------------
-
-Use ``remove`` to delete a role from *roles_path*:
-
-::
-
-    $ ansible-galaxy remove username.role_name
-
 Authenticate with Galaxy
-------------------------
+========================
 
 Using the ``import``, ``delete`` and ``setup`` commands to manage your roles on the Galaxy website requires authentication, and the ``login`` command
 can be used to do just that. Before you can use the ``login`` command, you must create an account on the Galaxy website.
@@ -174,90 +79,86 @@ The ``login`` command requires using your GitHub credentials. You can use your u
 
 The following shows authenticating with the Galaxy website using a GitHub username and password:
 
-::
+.. code-block:: text
 
-    $ ansible-galaxy login
+   $ ansible-galaxy login
 
-    We need your GitHub login to identify you.
-    This information will not be sent to Galaxy, only to api.github.com.
-    The password will not be displayed.
+   We need your GitHub login to identify you.
+   This information will not be sent to Galaxy, only to api.github.com.
+   The password will not be displayed.
 
-    Use --github-token if you do not want to enter your password.
+   Use --github-token if you do not want to enter your password.
 
-    GitHub Username: dsmith
-    Password for dsmith:
-    Successfully logged into Galaxy as dsmith
+   GitHub Username: dsmith
+   Password for dsmith:
+   Successfully logged into Galaxy as dsmith
 
 When you choose to use your username and password, your password is not sent to Galaxy. It is used to authenticates with GitHub and create a personal access token.
 It then sends the token to Galaxy, which in turn verifies that your identity and returns a Galaxy access token. After authentication completes the GitHub token is
 destroyed.
 
-If you do not wish to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the *--github-token* option to pass a personal access token
-that you create.
+If you do not wish to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the *--github-token* option to pass a personal access token that you create.
 
 
 Import a role
--------------
+=============
 
-The ``import`` command requires that you first authenticate using the ``login`` command. Once authenticated you can import any GitHub repository that you own or have
-been granted access.
+The ``import`` command requires that you first authenticate using the ``login`` command. Once authenticated you can import any GitHub repository that you own or have been granted access.
 
 Use the following to import to role:
 
-::
+.. code-block:: bash
 
-    $ ansible-galaxy import github_user github_repo
+  $ ansible-galaxy import github_user github_repo
 
 By default the command will wait for Galaxy to complete the import process, displaying the results as the import progresses:
 
-::
+.. code-block:: text
 
-    Successfully submitted import request 41
-    Starting import 41: role_name=myrole repo=githubuser/ansible-role-repo ref=
-    Retrieving GitHub repo githubuser/ansible-role-repo
-    Accessing branch: master
-    Parsing and validating meta/main.yml
-    Parsing galaxy_tags
-    Parsing platforms
-    Adding dependencies
-    Parsing and validating README.md
-    Adding repo tags as role versions
-    Import completed
-    Status SUCCESS : warnings=0 errors=0
+      Successfully submitted import request 41
+      Starting import 41: role_name=myrole repo=githubuser/ansible-role-repo ref=
+      Retrieving GitHub repo githubuser/ansible-role-repo
+      Accessing branch: master
+      Parsing and validating meta/main.yml
+      Parsing galaxy_tags
+      Parsing platforms
+      Adding dependencies
+      Parsing and validating README.md
+      Adding repo tags as role versions
+      Import completed
+      Status SUCCESS : warnings=0 errors=0
 
 Branch
-======
+------
 
 Use the *--branch* option to import a specific branch. If not specified, the default branch for the repo will be used.
 
 Role name
-=========
+---------
 
 By default the name given to the role will be derived from the GitHub repository name. However, you can use the *--role-name* option to override this and set the name.
 
 No wait
-=======
+-------
 
-If the *--no-wait* option is present, the command will not wait for results. Results of the most recent import for any of your roles is available on the Galaxy web site
-by visiting *My Imports*.
+If the *--no-wait* option is present, the command will not wait for results. Results of the most recent import for any of your roles is available on the Galaxy web site by visiting *My Imports*.
 
 Delete a role
--------------
+=============
 
-The ``delete`` command requires that you first authenticate using the ``login`` command. Once authenticated you can remove a role from the Galaxy web site. You are only allowed
-to remove roles where you have access to the repository in GitHub.
+The ``delete`` command requires that you first authenticate using the ``login`` command. Once authenticated you can remove a role from the Galaxy web site. You are only allowed to remove roles where you have access to the repository in GitHub.
 
 Use the following to delete a role:
 
-::
+.. code-block:: bash
 
-    $ ansible-galaxy delete github_user github_repo
+  $ ansible-galaxy delete github_user github_repo
 
 This only removes the role from Galaxy. It does not remove or alter the actual GitHub repository.
 
 
 Travis integrations
--------------------
+===================
 
 You can create an integration or connection between a role in Galaxy and `Travis <https://travis-ci.org>`_. Once the connection is established, a build in Travis will
 automatically trigger an import in Galaxy, updating the search index with the latest information about the role.
@@ -265,9 +166,9 @@ automatically trigger an import in Galaxy, updating the search index with the la
 You create the integration using the ``setup`` command, but before an integration can be created, you must first authenticate using the ``login`` command; you will
 also need an account in Travis, and your Travis token. Once you're ready, use the following command to create the integration:
 
-::
+.. code-block:: bash
 
-    $ ansible-galaxy setup travis github_user github_repo xxx-travis-token-xxx
+  $ ansible-galaxy setup travis github_user github_repo xxx-travis-token-xxx
 
 The setup command requires your Travis token, however the token is not stored in Galaxy. It is used along with the GitHub username and repo to create a hash as described
 in `the Travis documentation <https://docs.travis-ci.com/user/notifications/>`_. The hash is stored in Galaxy and used to verify notifications received from Travis.
@@ -277,34 +178,34 @@ The setup command enables Galaxy to respond to notifications. To configure Travi
 
 To instruct Travis to notify Galaxy when a build completes, add the following to your .travis.yml file:
 
-::
+.. code-block:: text
 
     notifications:
         webhooks: https://galaxy.ansible.com/api/v1/notifications/
 
 
 List Travis integrations
-========================
+------------------------
 
 Use the *--list* option to display your Travis integrations:
 
-::
+.. code-block:: bash
 
-    $ ansible-galaxy setup --list
+      $ ansible-galaxy setup --list
 
 
-    ID         Source     Repo
-    ---------- ---------- ----------
-    2          travis     github_user/github_repo
-    1          travis     github_user/github_repo
+      ID         Source     Repo
+      ---------- ---------- ----------
+      2          travis     github_user/github_repo
+      1          travis     github_user/github_repo
 
 
 Remove Travis integrations
-==========================
+---------------------------
 
 Use the *--remove* option to disable and remove a Travis integration:
 
-::
+  .. code-block:: bash
 
     $ ansible-galaxy setup --remove ID
 
