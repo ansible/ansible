@@ -790,7 +790,7 @@ def main():
             masquerade=dict(type='str'),
             offline=dict(type='bool'),
             chain=dict(type='str'),
-            table=dict(required=False, default=None),
+            table=dict(type='str'),
             direct_rule=dict(type='str'),
             fw_family=dict(type='str'),
             rule_priority=dict(type='int', default=0),
