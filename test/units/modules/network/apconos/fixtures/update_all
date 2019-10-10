@@ -1,0 +1,17 @@
+Starting software update process
+Mount new file system
+New file system mounted
+Updating blade software
+Waiting for blade updates to complete: .
+Updating backplane software
+
+Updating backplane
+Checking hardware device for compatibility information
+Checking firmware file for integrity and compatibility
+Backplane is already up to date
+You must now reboot the chassis by executing the "reboot chassis" command.
+
+
+"Starting software update process",
+"ERROR: #724 Unable to update software: : software file is missing or corrupt"
+
