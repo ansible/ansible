@@ -794,7 +794,7 @@ def main():
             fw_family=dict(required=False, default=None),
             rule_priority=dict(type='int', required=False, default=0)
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     permanent = module.params['permanent']
