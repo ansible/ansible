@@ -270,7 +270,7 @@ class NetstreamTemplate(object):
 
             if self.description:
                 tmp_value = re.findall(r'description (.*)', self.netstream_cfg)
-                if tmp_value:
+                if tmp_value is not None and len(tmp_value) > 0:
                     self.existing["description"] = tmp_value[0]
 
             if self.match:
@@ -303,7 +303,7 @@ class NetstreamTemplate(object):
 
             if self.description:
                 tmp_value = re.findall(r'description (.*)', self.netstream_cfg)
-                if tmp_value:
+                if tmp_value is not None and len(tmp_value) > 0:
                     self.end_state["description"] = tmp_value[0]
 
             if self.match:
