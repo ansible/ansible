@@ -1,0 +1,3 @@
+bugfixes:
+  - rds_instance - Fix the casing of the ca_certificate_identifier option to be CACertificateIdentifier
+    instead of CaCertificateIdentifier. (https://github.com/ansible/ansible/issues/63324)
