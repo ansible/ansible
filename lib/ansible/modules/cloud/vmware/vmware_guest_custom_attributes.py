@@ -37,7 +37,6 @@ options:
      description:
      - Name of the virtual machine to work with.
      - This is required parameter, if C(uuid) or C(moid) is not supplied.
-     required: True
      type: str
    state:
      description:
@@ -206,7 +205,7 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         datacenter=dict(type='str'),
-        name=dict(required=True, type='str'),
+        name=dict(type='str'),
         folder=dict(type='str'),
         uuid=dict(type='str'),
         moid=dict(type='str'),
