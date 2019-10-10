@@ -5,6 +5,36 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.0rc3
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2019-10-10
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Add 'auth_url' field to galaxy server config stanzas in ansible.cfg The url should point to the token_endpoint of a Keycloak server.
+
+Bugfixes
+--------
+
+- CLI - the `ANSIBLE_PLAYBOOK_DIR` envvar or `playbook_dir` config can now substitute for the --playbook-dir arg on CLIs that support it (https://github.com/ansible/ansible/issues/59464)
+- Fix https://github.com/ansible/galaxy-dev/issues/96 Add support for automation-hub authentication to ansible-galaxy
+- adhoc CLI - when playbook-dir is specified and inside a collection, use default collection logic to resolve modules/actions
+- ansible-galaxy -  Stop appendding '/api' to configured galaxy urls. Special case migrated configs.
+- ansible-test now creates its integration test temporary directory within the collection so ansible-playbook can properly detect the default collection
+- ansible-test now properly searches for ``pythonX.Y`` instead of ``python`` when looking for the real python that created a ``virtualenv``
+- ansible-test now properly sets ``ANSIBLE_PLAYBOOK_DIR`` for integration tests so unqualified collection references work for adhoc ``ansible`` usage
+- ansible-test now updates SSH keys it generates with newer versions of ssh-keygen to function with Paramiko
+- config - encoding failures on config values should be non-fatal (https://github.com/ansible/ansible/issues/63310)
+- cronvar - use correct binary name (https://github.com/ansible/ansible/issues/63274)
+- sts_assume_role - fix assertion text in integration test
+
 v2.9.0rc2
 =========
 

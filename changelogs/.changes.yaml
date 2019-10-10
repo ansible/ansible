@@ -1267,3 +1267,19 @@ releases:
     - nxos_l3_interfaces29.yaml
     - v2.9.0rc2_summary.yaml
     release_date: '2019-10-03'
+  2.9.0rc3:
+    codename: Immigrant Song
+    fragments:
+    - 59464-playbook-dir-envvar.yml
+    - 63249-fix-sts-assume-role-test.yml
+    - adhoc_default_collection.yml
+    - ansible-galaxy-support-for-automation-hub.yml
+    - ansible-test-collections-ansible-adhoc.yml
+    - ansible-test-integration-temp-dir.yml
+    - ansible-test-ssh-keygen-fix.yml
+    - ansible-test-virtualenv-python-search.yml
+    - config_encoding_resilience.yml
+    - cronvar-correct-binary-name.yaml
+    - galaxy_api_config.yaml
+    - v2.9.0rc3_summary.yaml
+    release_date: '2019-10-10'
