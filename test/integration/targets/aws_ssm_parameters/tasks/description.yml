@@ -59,14 +59,6 @@
       set_fact:
         without_param_info_post: "{{ param_info_query.stdout |from_json }}"
 
-    - name: dump variables
-      debug:
-        var: without_param_info_pre
-    - name: dump variables
-      debug:
-        var: without_param_info_post
-
-
     - name: Verify param did not have description after first operation
       assert:
         that:
