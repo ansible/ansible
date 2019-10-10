@@ -240,7 +240,7 @@ should be simplified to just:
 
 .. code-block:: yaml
 
-    - name: Add a VMware vSwitchs
+    - name: Add a VMware vSwitch
       vmware_vswitch:
         esxi_hostname: 'esxi1'
         switch_name: "boby"
