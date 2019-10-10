@@ -1,0 +1,49 @@
+---
+- debug:
+    msg: "START exos_vlans merged integration tests on connection = {{ ansible_connection }}"
+
+- include_tasks: _reset_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+  - name: Merge the provided configuration with the existing running configuration
+    exos_vlans: &merged
+      config:
+        - name: vlan_30
+          vlan_id: 30
+          state: active
+        - vlan_id: 10
+          name: vlan_10
+          state: suspend
+      state: merged
+    register: result
+
+  - name: Assert that before dicts were correctly generated
+    assert:
+      that: 
+        - "{{ initial_state == result['before'] }}"
+
+  - name: Assert that correct set of requests were generated
+    assert: 
+      that:
+        - "{{ merged['requests'] == result['requests'] }}"
+
+  - name: Assert that after dicts were correctly generated
+    assert:
+      that:
+        - "{{ merged['after'] == result['after'] }}"
+
+  - name: Merge the provided configuration with the existing configuration (IDEMPOTENT)
+    exos_vlans: *merged
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+      that:
+        - "result.changed == false"
+
+  - name: Assert that before dict was correctly generated 
+    assert:
+      that:
+        - "{{ merged['after'] == result['before'] }}"

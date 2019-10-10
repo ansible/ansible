@@ -1,0 +1,46 @@
+---
+- debug:
+    msg: "START exos_vlans overridden integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _reset_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Override existing VLAN configuration with provided configuration
+      exos_vlans: &overridden
+        config:
+          - name: TEST_VLAN10
+            vlan_id: 10
+            state: suspend
+        state: overridden
+      register: result
+
+    - name: Assert that correct set of requests were generated
+      assert:
+        that:
+          - "{{ overridden['requests'] == result['requests'] }}"
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that:
+          - "{{ initial_state == result['before'] }}"
+
+    - name: Assert that after dicts were correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] == result['after'] }}"
+
+    - name: Override existing VLAN configuration with provided configuration (IDEMPOTENT)
+      exos_vlans: *overridden
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+        that:
+          - "result.changed == false"
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] == result['before'] }}"

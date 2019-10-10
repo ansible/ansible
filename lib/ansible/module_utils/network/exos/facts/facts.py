@@ -14,6 +14,7 @@ __metaclass__ = type
 from ansible.module_utils.network.exos.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.exos.facts.lldp_global.lldp_global import Lldp_globalFacts
+from ansible.module_utils.network.exos.facts.vlans.vlans import VlansFacts
 from ansible.module_utils.network.exos.facts.legacy.base import Default, Hardware, Interfaces, Config
 
 FACT_LEGACY_SUBSETS = dict(
@@ -24,6 +25,7 @@ FACT_LEGACY_SUBSETS = dict(
 
 FACT_RESOURCE_SUBSETS = dict(
     lldp_global=Lldp_globalFacts,
+    vlans=VlansFacts,
 )
 
 
