@@ -1387,7 +1387,7 @@ class VmsModule(BaseModule):
         template = self.__get_template_with_version()
         cluster = self.__get_cluster()
         snapshot = self.__get_snapshot()
-        display = self.param('graphical_console', dict())
+        display = self.param('graphical_console') or dict()
 
         disk_attachments = self.__get_storage_domain_and_all_template_disks(template)
 
@@ -1592,7 +1592,7 @@ class VmsModule(BaseModule):
 
         cpu_mode = getattr(entity.cpu, 'mode')
         vm_display = entity.display
-        provided_vm_display = self.param('graphical_console', {})
+        provided_vm_display = self.param('graphical_console') or dict()
         return (
             check_cpu_pinning() and
             check_custom_properties() and
