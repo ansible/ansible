@@ -97,7 +97,8 @@ options:
     version_added: "2.3"
   direct_rule:
     description:
-      - 'The firewalld iptables direct rule you would like to enable/disable.'
+      - The firewalld iptables direct rule you would like to enable/disable.
+    type: str
     version_added: "2.8"
   chain:
     description:
