@@ -226,7 +226,7 @@ For example, the following block:
 
 .. code-block:: yaml
 
-    - name: Add a VMware vSwitchs
+    - name: Add a VMware vSwitch
       vmware_vswitch:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
