@@ -150,16 +150,14 @@ def create_update_parameter(client, module):
     args = dict(
         Name=module.params.get('name'),
         Value=module.params.get('value'),
-        Type=module.params.get('string_type')
+        Type=module.params.get('string_type'),
+        Description=module.params.get('description')
     )
 
     if (module.params.get('overwrite_value') in ("always", "changed")):
         args.update(Overwrite=True)
     else:
         args.update(Overwrite=False)
-
-    if module.params.get('description'):
-        args.update(Description=module.params.get('description'))
 
     if module.params.get('string_type') == 'SecureString':
         args.update(KeyId=module.params.get('key_id'))
@@ -175,28 +173,30 @@ def create_update_parameter(client, module):
             (changed, response) = update_parameter(client, module, args)
 
         elif (module.params.get('overwrite_value') == 'changed'):
+            # Description field not available from get_parameter function so get it from describe_parameters
+            describe_existing_parameter = None
+            try:
+                describe_existing_parameter_paginator = client.get_paginator('describe_parameters')
+                describe_existing_parameter = describe_existing_parameter_paginator.paginate(
+                    Filters=[{"Key": "Name", "Values": [args['Name']]}]).build_full_result()
+
+            except ClientError as e:
+                module.fail_json_aws(e, msg="getting description value")
+
+            # if there is no description for a parameter, set it to empty string for later comparison
+            if 'Description' in describe_existing_parameter['Parameters'][0]:
+                existing_parameter['Parameter']['Description'] = describe_existing_parameter['Parameters'][0]['Description']
+            else:
+                existing_parameter['Parameter']['Description'] = ""
+
             if existing_parameter['Parameter']['Type'] != args['Type']:
                 (changed, response) = update_parameter(client, module, args)
 
             if existing_parameter['Parameter']['Value'] != args['Value']:
                 (changed, response) = update_parameter(client, module, args)
 
-            if args.get('Description'):
-                # Description field not available from get_parameter function so get it from describe_parameters
-                describe_existing_parameter = None
-                try:
-                    describe_existing_parameter_paginator = client.get_paginator('describe_parameters')
-                    describe_existing_parameter = describe_existing_parameter_paginator.paginate(
-                        Filters=[{"Key": "Name", "Values": [args['Name']]}]).build_full_result()
-
-                except ClientError as e:
-                    module.fail_json_aws(e, msg="getting description value")
-
-                existing_parameter = describe_existing_parameter['Parameters'][0]
-
-                # boto3 does not return a description if one is not set.
-                if 'Description' in existing_parameter.keys() and existing_parameter['Description'] != args['Description']:
-                    (changed, response) = update_parameter(client, module, args)
+            if existing_parameter['Parameter']['Description'] != module.params.get('description'):
+                (changed, response) = update_parameter(client, module, args)
 
     else:
         (changed, response) = update_parameter(client, module, args)
@@ -228,7 +228,7 @@ def setup_client(module):
 def setup_module_object():
     argument_spec = dict(
         name=dict(required=True),
-        description=dict(),
+        description=dict(default=""),
         value=dict(required=False, no_log=True),
         state=dict(default='present', choices=['present', 'absent']),
         string_type=dict(default='String', choices=['String', 'StringList', 'SecureString']),

@@ -10,19 +10,127 @@
     # this bug presents when a parameter is created without a description then
     # an update happens with a description.  
     # This shows up as a Key error
+    # when an ssm parameter is created
+
+    - name: install awscli
+      pip:
+        state: present
+        name: awscli
 
 
-    - name: Create or update key/value pair in aws parameter store
+    - name: Create param without description
       aws_ssm_parameter_store:
-        name: "/{{ssm_key_prefix}}/description_bug"
+        name: "/{{ssm_key_prefix}}/created_without_description"
         value: "unimportant"
 
-    - name: update the parameter but make sure the description is different
+    - name: get info on parameter created without description before adding description
+      command: "aws ssm describe-parameters --filters Key=Name,Values=/{{ssm_key_prefix}}/created_without_description --query Parameters[0]"
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token | default('') }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+      register: param_info_query
+
+    - name: convert it to an object for ease of assertion
+      set_fact:
+        without_param_info_pre: "{{ param_info_query.stdout |from_json }}"
+
+    - name: update param with description
       aws_ssm_parameter_store:
-        name: "/{{ssm_key_prefix}}/description_bug"
-        description: "This description changes"
+        name: "/{{ssm_key_prefix}}/created_without_description"
+        description: "this now has a description"
         value: "unimportant"
 
+    - name: wait for ssm to get consistent
+      pause: 
+        seconds: 5
+
+    - name: get info on parameter created without description after adding description
+      command: "aws ssm describe-parameters --filters Key=Name,Values=/{{ssm_key_prefix}}/created_without_description --query Parameters[0]"
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token | default('') }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+      register: param_info_query
+
+    - name: convert it to an object for ease of assertion
+      set_fact:
+        without_param_info_post: "{{ param_info_query.stdout |from_json }}"
+
+    - name: dump variables
+      debug:
+        var: without_param_info_pre
+    - name: dump variables
+      debug:
+        var: without_param_info_post
+
+
+    - name: Verify param did not have description after first operation
+      assert:
+        that:
+          - "'Description' not in without_param_info_pre.keys()"
+
+    - name: Verify param has description after updated
+      assert:
+        that:
+          - "'Description' in without_param_info_post.keys()"
+          - "without_param_info_post['Description'] == 'this now has a description'"
+
+    # the opposite, created with and removing it later
+    - name: Create param with description
+      aws_ssm_parameter_store:
+        name: "/{{ssm_key_prefix}}/created_with_description"
+        description: "this has a description"
+        value: "unimportant"
+
+    - name: get info on parameter created with description
+      command: "aws ssm describe-parameters --filters Key=Name,Values=/{{ssm_key_prefix}}/created_with_description --query Parameters[0]"
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token | default('') }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+      register: param_info_query
+
+    - name: convert it to an object for ease of assertion
+      set_fact:
+        with_param_info: "{{ param_info_query.stdout |from_json }}"
+
+    - name: Verify param has description after being created
+      assert:
+        that:
+          - "'Description' in with_param_info.keys()"
+          - "with_param_info['Description'] == 'this has a description'"
+
+    - name: update param created with description to remove description
+      aws_ssm_parameter_store:
+        name: "/{{ssm_key_prefix}}/created_with_description"
+        value: "unimportant"
+
+    - name: wait for ssm to get consistent
+      pause: 
+        seconds: 5
+
+    - name: get info on parameters
+      command: "aws ssm describe-parameters --filters Key=Name,Values=/{{ssm_key_prefix}}/created_with_description --query Parameters[0]"
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token | default('') }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+      register: param_info_query
+
+    - name: convert it to an object
+      set_fact:
+        with_param_info_post: "{{ param_info_query.stdout |from_json }}"
+
+    - name: Verify param did not have description after update
+      assert:
+        that:
+          - "'Description' not in with_param_info_post.keys()"
+  always:
     - name: clean up
       aws_ssm_parameter_store:
         name: "/{{ssm_key_prefix}}/description_bug"
