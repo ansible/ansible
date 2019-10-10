@@ -74,7 +74,7 @@ class LookupModule(LookupBase):
             try:
                 if lookupfile:
                     b_contents, show_data = self._loader._get_file_contents(lookupfile)
-                    encoding = kwargs.get('encoding')
+                    encoding = kwargs.get('encoding', 'utf-8')
                     contents = to_text(b_contents, encoding=encoding, errors='surrogate_or_strict')
                     if kwargs.get('lstrip', False):
                         contents = contents.lstrip()
