@@ -40,10 +40,6 @@
     vpc_id: "{{ vpc1.id }}"
     destination: "192.168.0.0/16"
     next_hop: "{{ connect.id }}"
-    filters:
-      - "vpc_id"
-      - "destination"
-      - "type"
     state: absent
 #----------------------------------------------------------
 - name: create a route
@@ -51,10 +47,6 @@
     vpc_id: "{{ vpc1.id }}"
     destination: "192.168.0.0/16"
     next_hop: "{{ connect.id }}"
-    filters:
-      - "vpc_id"
-      - "destination"
-      - "type"
     state: present
   register: result
 - name: assert changed is true
@@ -67,10 +59,6 @@
     vpc_id: "{{ vpc1.id }}"
     destination: "192.168.0.0/16"
     next_hop: "{{ connect.id }}"
-    filters:
-      - "vpc_id"
-      - "destination"
-      - "type"
     state: present
   register: result
 - name: assert changed is false
@@ -84,10 +72,6 @@
     vpc_id: "{{ vpc1.id }}"
     destination: "192.168.0.0/16"
     next_hop: "{{ connect.id }}"
-    filters:
-      - "vpc_id"
-      - "destination"
-      - "type"
     state: absent
   register: result
 - name: assert changed is true
@@ -100,10 +84,6 @@
     vpc_id: "{{ vpc1.id }}"
     destination: "192.168.0.0/16"
     next_hop: "{{ connect.id }}"
-    filters:
-      - "vpc_id"
-      - "destination"
-      - "type"
     state: absent
   register: result
 - name: assert changed is false
