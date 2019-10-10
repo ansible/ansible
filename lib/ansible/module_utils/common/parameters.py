@@ -8,11 +8,13 @@ __metaclass__ = type
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.common.validation import check_type_dict, check_type_list
 
 from ansible.module_utils.six import (
     binary_type,
     integer_types,
+    string_types,
     text_type,
 )
 
@@ -90,11 +92,12 @@ def list_no_log_values(argument_spec, params):
         # Get no_log values from suboptions
         sub_argument_spec = arg_opts.get('options')
         if sub_argument_spec is not None:
-            # Sub parameters can be a dict or list of dicts. Ensure parameters are always a list.
             wanted_type = arg_opts.get('type')
             sub_parameters = params.get(arg_name)
             if sub_parameters is not None:
                 if wanted_type == 'dict' or (wanted_type == 'list' and arg_opts.get('elements', '') == 'dict'):
+
+                    # Sub parameters can be a dict or list of dicts. Ensure parameters are always a list.
                     if not isinstance(sub_parameters, list):
                         sub_parameters = [sub_parameters]
 
@@ -106,12 +109,13 @@ def list_no_log_values(argument_spec, params):
 
                         validator = validators[wanted_type]
                         # Validate list and dict fields in case they came in as strings and need to be parsed
-                        if isinstance(sub_param, text_type):
+                        if isinstance(sub_param, string_types):
                             sub_param = validator(sub_param)
 
-                        if not isinstance(sub_param, dict):
+                        if not isinstance(sub_param, Mapping):
                             raise TypeError("Value '{1}' in the sub parameter field '{0}' must by a {2}, "
                                             "not '{1.__class__.__name__}'".format(arg_name, sub_param, wanted_type))
+
                         no_log_values.update(list_no_log_values(sub_argument_spec, sub_param))
 
     return no_log_values
