@@ -257,7 +257,6 @@ class CallbackModule(CallbackBase):
     def v2_runner_item_on_ok(self, result):
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        self._clean_results(result._result, result._task.action)
         if isinstance(result._task, TaskInclude):
             return
         elif result._result.get('changed', False):
@@ -283,6 +282,7 @@ class CallbackModule(CallbackBase):
 
         msg += " => (item=%s)" % (self._get_item_label(result._result),)
 
+        self._clean_results(result._result, result._task.action)
         if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
             msg += " => %s" % self._dump_results(result._result)
         self._display.display(msg, color=color)
