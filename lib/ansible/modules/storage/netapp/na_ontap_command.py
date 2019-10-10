@@ -215,7 +215,7 @@ class NetAppONTAPCommand(object):
 
                     # Generate stdout_lines_filter_list
                     if self.exclude_lines:
-                        if len(stripped_line) > 1 and self.include_lines in stripped_line and not self.exclude_lines in stripped_line:
+                        if len(stripped_line) > 1 and self.include_lines in stripped_line and self.exclude_lines not in stripped_line:
                             self.result_dict['stdout_lines_filter'].append(stripped_line)
                     else:
                         if len(stripped_line) > 1 and self.include_lines in stripped_line:
