@@ -156,6 +156,19 @@ manager object with shared datastructures/queues for coordinating
     def _initialize_processes(self, num):
         self._workers = []
 
+        ####################################################################
+        # MITOGEN STUFF
+        import sys
+        try:
+            sys.setcheckinterval(100000)
+        except AttributeError:
+            pass
+        try:
+            sys.setswitchinterval(100)
+        except AttributeError:
+            pass
+        ####################################################################
+
         for i in range(num):
             in_q = multiprocessing.Queue()
             proc = WorkerProcess(

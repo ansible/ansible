@@ -146,6 +146,32 @@ class WorkerProcess(multiprocessing_context.Process):
         if HAS_PYCRYPTO_ATFORK:
             atfork()
 
+        ########################################################################
+        # MITOGEN STUFF
+        import ctypes
+        import random
+        import struct
+
+        def _mask_to_bytes(mask):
+            """
+            Convert the (type long) mask to a cpu_set_t.
+            """
+            chunks = []
+            shiftmask = (2 ** 64) - 1
+            for x in range(16):
+                chunks.append(struct.pack('<Q', mask & shiftmask))
+                mask >>= 64
+            return str.encode('').join(chunks)
+
+        _libc = ctypes.CDLL(None, use_errno=True)
+        _sched_setaffinity = _libc.sched_setaffinity
+        # forking seems to work best when the forks are given free reign
+        # over all the CPUs available. So we just mask off CPU0 to dedicate
+        # those to the main proc and results thread.
+        s = _mask_to_bytes(0xFFFFFFFFFFFFFFFE)
+        _sched_setaffinity(os.getpid(), len(s), s)
+        ########################################################################
+
         # execute the task and build a TaskResult from the result
         while True:
             try:
