@@ -30,12 +30,29 @@
     - name: determine if there is a default VPC
       set_fact:
         defaultvpc: "{{ lookup('aws_account_attribute',
-                               attribute='default-vpc',
-                               region=aws_region,
-                               aws_access_key=aws_access_key,
-                               aws_secret_key=aws_secret_key,
-                               aws_security_token=security_token) }}"
+                              attribute='default-vpc',
+                              region=aws_region,
+                              aws_access_key=aws_access_key,
+                              aws_secret_key=aws_secret_key,
+                              aws_security_token=security_token) }}"
       register: default_vpc
+
+    # ============================================================
+
+    # EC2 Classic tests can only be run on a pre-2013 AWS account with supported-platforms=EC2
+    # Ansible CI does NOT have classic EC2 support; these tests are provided as-is for the
+    # community and can be run if you have access to a classic account.  To check if your account
+    # has support for EC2 Classic you can use the `aws_account_attribute` plugin:
+
+    - name: determine if this is an EC2 Classic account
+      set_fact:
+        has_ec2_classic: "{{ lookup('aws_account_attribute',
+                                    attribute='has-ec2-classic',
+                                    region=aws_region,
+                                    aws_access_key=aws_access_key,
+                                    aws_secret_key=aws_secret_key,
+                                    aws_security_token=security_token,
+                                    wantlist=True) }}"
 
     # ============================================================
     - name: create a VPC
@@ -56,6 +73,9 @@
     - include: ./egress_tests.yml
     - include: ./data_validation.yml
     - include: ./multi_nested_target.yml
+
+    - include: ec2_classic.yml
+      when: has_ec2_classic
 
     # ============================================================
     - name: test state=absent (CHECK MODE)
@@ -1470,18 +1490,6 @@
         that:
            - 'result.changed'
            - 'not result.group_id'
-
-
-    # EC2 Classic tests can only be run on a pre-2013 AWS account with supported-platforms=EC2
-    # Ansible CI does NOT have classic EC2 support; these tests are provided as-is for the
-    # community and can be run if you have access to a classic account.  To check if your account
-    # has support for EC2 Classic you can use the `aws_account_attribute` plugin.
-
-    - set_fact:
-        has_ec2_classic: "{{ lookup('aws_account_attribute', attribute='has-ec2-classic') }}"
-
-    - include_tasks: ec2_classic.yml
-      when: has_ec2_classic
 
   always:
     # ============================================================
