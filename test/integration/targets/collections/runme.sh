@@ -18,6 +18,10 @@ ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m pin
 # test documentation
 ansible-doc testns.testcoll.testmodule -vvv | grep -- "- normal_doc_frag"
 
+# test adhoc default collection resolution (use unqualified collection module with playbook dir under its collection)
+echo "testing adhoc default collection support with explicit playbook dir"
+ANSIBLE_PLAYBOOK_DIR=./collection_root_user/ansible_collections/testns/testcoll ansible localhost -m testmodule
+
 echo "testing bad doc_fragments (expected ERROR message follows)"
 # test documentation failure
 ansible-doc testns.testcoll.testmodule_bad_docfrags -vvv 2>&1 | grep -- "unknown doc_fragment"
