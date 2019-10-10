@@ -1128,7 +1128,10 @@ def build_top_level_options(params):
     if params.get('tenancy') is not None:
         spec['Placement'] = {'Tenancy': params.get('tenancy')}
     if params.get('placement_group'):
-        spec.setdefault('Placement', {'GroupName': str(params.get('placement_group'))})
+        if 'Placement' in spec:
+            spec['Placement']['GroupName'] = str(params.get('placement_group'))
+        else:
+            spec.setdefault('Placement', {'GroupName': str(params.get('placement_group'))})
     if params.get('ebs_optimized') is not None:
         spec['EbsOptimized'] = params.get('ebs_optimized')
     if params.get('instance_initiated_shutdown_behavior'):
