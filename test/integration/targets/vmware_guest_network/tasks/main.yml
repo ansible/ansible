@@ -9,7 +9,39 @@
     vars:
       setup_attach_host: true
       setup_datastore: true
-      setup_virtualmachines: true
+
+  - name: Create VMs
+    vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ dc1 }}"
+      validate_certs: no
+      folder: '/DC0/vm/F0'
+      name: test_vm1
+      state: poweredon
+      guest_id: centos7_64Guest
+      disk:
+      - size_gb: 1
+        type: thin
+        datastore: '{{ ds2 }}'
+      hardware:
+        version: latest
+        memory_mb: 1024
+        num_cpus: 1
+        scsi: paravirtual
+      cdrom:
+        type: iso
+        iso_path: "[{{ ds1 }}] fedora.iso"
+      networks:
+      - name: VM Network
+
+  - vmware_guest_tools_wait:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: test_vm1
 
   - name: gather network adapters' facts of the virtual machine
     vmware_guest_network:
@@ -17,7 +49,7 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ virtual_machines[0].name }}"
+      name: test_vm1
       gather_network_info: true
     register: netadapter_info
 
@@ -33,16 +65,16 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ virtual_machines[0].name }}"
+      name: test_vm1
       networks:
         - name: "VM Network"
           state: new
           device_type: e1000e
-          manual_mac: "00:50:56:58:59:60"
+          manual_mac: "aa:50:56:58:59:60"
         - name: "VM Network"
           state: new
           device_type: vmxnet3
-          manual_mac: "00:50:56:58:59:61"
+          manual_mac: "aa:50:56:58:59:61"
     register: add_netadapter
 
   - debug: var=add_netadapter
@@ -59,10 +91,10 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ virtual_machines[0].name }}"
+      name: test_vm1
       networks:
         - state: absent
-          mac: "00:50:56:58:59:60"
+          mac: "aa:50:56:58:59:60"
     register: del_netadapter
 
   - debug: var=del_netadapter
@@ -79,10 +111,10 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ virtual_machines[0].name }}"
+      name: test_vm1
       networks:
         - state: present
-          mac: "00:50:56:58:59:61"
+          mac: "aa:50:56:58:59:61"
           connected: false
     register: disc_netadapter
 
@@ -100,10 +132,10 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ virtual_machines[0].name }}"
+      name: test_vm1
       networks:
         - name: non-existing-nw
-          manual_mac: "00:50:56:11:22:33"
+          manual_mac: "aa:50:56:11:22:33"
           state: new
     register: no_nw_details
     ignore_errors: yes
