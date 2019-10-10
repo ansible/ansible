@@ -1,4 +1,4 @@
-# Test code for the vmware_serial_port Operations.
+# Test code for the vmware_guest_serial_port Operations.
 # Copyright: (c) 2019, Anusha Hegde <anushah@vmware.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -38,85 +38,76 @@
       that:
           - create_vm_for_test is changed
 
-  - name: Backing type - network
-    vmware_serial_port:
+  - name: Create multiple serial ports with Backing type - network, pipe, device and file
+    vmware_guest_serial_port:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: no
       name: "test_vm1"
-      backing: 'network'
-      direction: 'client'
-      service_uri: 'tcp://6000'
+      backings:
+      - type: 'network'
+        state: 'new'
+        direction: 'client'
+        service_uri: 'tcp://6000'
+        yield_on_poll: True
+      - type: 'pipe'
+        state: 'new'
+        pipe_name: 'serial_pipe'
+        endpoint: 'client'
+      - type: 'device'
+        state: 'new'
+        device_name: '/dev/char/serial/uart0'
+      - type: 'file'
+        state: 'new'
+        file_path: 'newfile'
       yield_on_poll:  True
       force: True
-    register: create_network_port
+    register: create_multiple_ports
  
-  - debug: var=create_network_port
+  - debug: var=create_multiple_ports
 
   - name: assert that changes were made
     assert:
       that:
-          - create_network_port is changed
+          - create_multiple_ports is changed
 
-  - name: Backing type - named pipe
-    vmware_serial_port:
+  - name: Modify existing serial port with Backing type - network
+    vmware_guest_serial_port:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: no
       name: 'test_vm1'
-      backing: 'pipe'
-      pipe_name: 'newpipe'
-      endpoint: 'client'
-      yield_on_poll:  True
-      no_rx_loss: False
-      force: True
-    register: create_pipe_port
+      backings:
+      - type: 'network'
+        state: 'present'
+        direction: 'server'
+        service_uri: 'tcp://1000'
+    register: modify_network_port
 
-  - debug: var=create_pipe_port
+  - debug: var=modify_network_port
 
   - name: assert that changes were made
     assert:
       that:
-          - create_pipe_port is changed
+          - modify_network_port is changed
 
-  - name: Backing type - physical serial device
-    vmware_serial_port:
+  - name: Remove serial port with  Backing type - pipe
+    vmware_guest_serial_port:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: no
       name: 'test_vm1'
-      backing: 'device'
-      device_name: '/dev/char/serial/uart0'
-      yield_on_poll: True
-      force: True
-    register: create_device_port
+      backings:
+      - type: 'pipe'
+        state: 'absent'
+    register: remove_pipe_port
 
-  - debug: var=create_device_port
-
-  - name: assert that changes were made
-    assert:
-      that:
-          - create_device_port is changed
-
-  - name: Backing type - output file
-    vmware_serial_port:
-      hostname: "{{ vcenter_hostname }}"
-      username: "{{ vcenter_username }}"
-      password: "{{ vcenter_password }}"
-      validate_certs: no
-      name: 'test_vm1'
-      backing: 'file'
-      file_path: 'newfile'
-      yield_on_poll: True
-      force: True
-    register: create_file_port
-
-  - debug: var=create_file_port
+  - debug: var=remove_pipe_port
 
   - name: assert that changes were made
     assert:
       that:
-          - create_file_port is changed
+          - remove_pipe_port is changed
