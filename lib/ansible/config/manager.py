@@ -393,7 +393,7 @@ class ConfigManager(object):
             try:
                 temp_value = container.get(name, None)
             except UnicodeEncodeError:
-                self.WARNINGS.add('value for config entry {0} contains invalid characters, ignoring...'.format(to_native(name)))
+                self.WARNINGS.add(u'value for config entry {0} contains invalid characters, ignoring...'.format(to_text(name)))
                 continue
             if temp_value is not None:  # only set if env var is defined
                 value = temp_value
