@@ -249,6 +249,10 @@ def delete_instance(module, client, instance_name):
         if e.response['Error']['Code'] != 'NotFoundException':
             module.fail_json(msg='Error finding instance {0}, error: {1}'.format(instance_name, e))
 
+    # If instance doesn't exist, then return with 'changed:false'
+    if not inst:
+        return changed, {}
+
     # Wait for instance to exit transition state before deleting
     if wait:
         while wait_max > time.time() and inst is not None and inst['state']['name'] in ('pending', 'stopping'):
