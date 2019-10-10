@@ -22,6 +22,9 @@ module: hwc_vpc_route
 description:
     - vpc route management.
 short_description: Creates a resource of Vpc/Route in Huawei Cloud
+notes:
+  - I(destination), I(vpc_id), I(type) and I(next_hop) is used for route selection. If more than one route with this options exists, execution is aborted.
+  - No one parameter support update. If one of option changed, it will create a new resource.
 version_added: '2.10'
 author: Huawei Inc. (@huaweicloud)
 requirements:
@@ -33,14 +36,6 @@ options:
         type: str
         choices: ['present', 'absent']
         default: 'present'
-    filters:
-        description:
-            - A list of filters to apply when deciding whether existing
-              resources match and should be altered. The item of filters
-              is the name of input options.
-        type: list
-        elements: str
-        required: true
     destination:
         description:
             - Specifies the destination IP address or CIDR block.
@@ -91,10 +86,6 @@ EXAMPLES = '''
     vpc_id: "{{ vpc1.id }}"
     destination: "192.168.0.0/16"
     next_hop: "{{ connect.id }}"
-    filters:
-      - "vpc_id"
-      - "destination"
-      - "type"
 '''
 
 RETURN = '''
@@ -130,7 +121,6 @@ def build_module():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'],
                        type='str'),
-            filters=dict(required=True, type='list', elements='str'),
             destination=dict(type='str', required=True),
             next_hop=dict(type='str', required=True),
             vpc_id=dict(type='str', required=True),
@@ -248,7 +238,7 @@ def search_resource(config):
     module = config.module
     client = config.client(get_region(module), "network", "project")
     opts = user_input_parameters(module)
-    identity_obj = _build_identity_object(module, opts)
+    identity_obj = _build_identity_object(opts)
     query_link = _build_query_link(opts)
     link = "v2.0/vpc/routes" + query_link
 
@@ -388,28 +378,23 @@ def send_list_request(module, client, url):
     return navigate_value(r, ["routes"], None)
 
 
-def _build_identity_object(module, all_opts):
-    filters = module.params.get("filters")
-    opts = dict()
-    for k, v in all_opts.items():
-        opts[k] = v if k in filters else None
-
+def _build_identity_object(all_opts):
     result = dict()
 
-    v = navigate_value(opts, ["destination"], None)
+    v = navigate_value(all_opts, ["destination"], None)
     result["destination"] = v
 
     result["id"] = None
 
-    v = navigate_value(opts, ["next_hop"], None)
+    v = navigate_value(all_opts, ["next_hop"], None)
     result["nexthop"] = v
 
     result["tenant_id"] = None
 
-    v = navigate_value(opts, ["type"], None)
+    v = navigate_value(all_opts, ["type"], None)
     result["type"] = v
 
-    v = navigate_value(opts, ["vpc_id"], None)
+    v = navigate_value(all_opts, ["vpc_id"], None)
     result["vpc_id"] = v
 
     return result
