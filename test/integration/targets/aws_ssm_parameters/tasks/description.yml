@@ -125,6 +125,9 @@
   always:
     - name: clean up
       aws_ssm_parameter_store:
-        name: "/{{ssm_key_prefix}}/description_bug"
+        name: "/{{ssm_key_prefix}}/{{ item }}"
         value: "unimportant"
         state: absent
+      with_items:
+        - created_with_description
+        - created_without_description
