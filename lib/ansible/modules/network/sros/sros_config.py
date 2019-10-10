@@ -114,7 +114,7 @@ options:
       - This argument specifies whether or not to collect all defaults
         when getting the remote device running config.  When enabled,
         the module will get the current config by issuing the command
-        C(show running-config all).
+        C(admin display-config detail).
     type: bool
     default: 'no'
     aliases: ['detail']
