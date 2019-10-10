@@ -455,7 +455,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             set_collection_playbook_paths(basedir)
             default_collection = get_collection_name_from_path(basedir)
             if default_collection:
-                display.warning("running adhoc inside collection {0}".format(default_collection))
+                display.warning(u'running with default collection {0}'.format(default_collection))
                 AnsibleCollectionLoader().set_default_collection(default_collection)
 
         vault_ids = list(options['vault_ids'])
