@@ -101,7 +101,8 @@ options:
     version_added: "2.8"
   chain:
     description:
-      - 'The iptables chain in which to insert the direct_rule, used with the C(direct_rule) option.'
+      - The iptables chain in which to insert the direct_rule, used with the C(direct_rule) option.
+    type: str
     version_added: "2.8"
   table:
     description:
