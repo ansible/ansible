@@ -214,7 +214,7 @@ way it will be automatically clean up for you.
 Avoid the common boiling plate code in your test
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Since https://github.com/ansible/ansible/pull/63209, the test suite uses `modules_defaults`. This module
+From Ansible 2.10, the test suite uses `modules_defaults`. This module
 allow us to preinitialize the following default keys of the VMware modules:
 
 - hostname
