@@ -212,7 +212,7 @@ If you need to create a new VM during your test, you can use ``test_vm1``, ``tes
 way it will be automatically clean up for you.
 
 Avoid the common boiler plate code in your test playbook
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 From Ansible 2.10, the test suite uses `modules_defaults`. This module
 allow us to preinitialize the following default keys of the VMware modules:
