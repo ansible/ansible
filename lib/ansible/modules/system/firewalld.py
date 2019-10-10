@@ -788,7 +788,7 @@ def main():
             chain=dict(type='str'),
             table=dict(required=False, default=None),
             direct_rule=dict(type='str'),
-            fw_family=dict(required=False, default=None),
+            fw_family=dict(type='str'),
             rule_priority=dict(type='int', default=0),
         ),
         supports_check_mode=True,
