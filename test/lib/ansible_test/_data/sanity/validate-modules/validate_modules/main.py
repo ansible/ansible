@@ -171,12 +171,12 @@ class Reporter:
                 print('\n    '.join(('    %s' % trace).splitlines()))
             for error in report['errors']:
                 error['path'] = path
-                print('%(path)s:%(line)d:%(column)d: E%(code)d %(msg)s' % error)
+                print('%(path)s:%(line)d:%(column)d: E%(code)s %(msg)s' % error)
                 ret.append(1)
             if warnings:
                 for warning in report['warnings']:
                     warning['path'] = path
-                    print('%(path)s:%(line)d:%(column)d: W%(code)d %(msg)s' % warning)
+                    print('%(path)s:%(line)d:%(column)d: W%(code)s %(msg)s' % warning)
 
         return 3 if ret else 0
 
