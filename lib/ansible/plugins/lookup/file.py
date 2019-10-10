@@ -25,6 +25,10 @@ DOCUMENTATION = """
         type: bool
         required: False
         default: False
+      encoding:
+        description: encoding of files to be read
+        default: 'utf-8'
+        type: str
     notes:
       - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
       - this lookup does not understand 'globing', use the fileglob lookup instead.
@@ -70,11 +74,8 @@ class LookupModule(LookupBase):
             try:
                 if lookupfile:
                     b_contents, show_data = self._loader._get_file_contents(lookupfile)
-                    try:
-                        contents = to_text(b_contents, errors='surrogate_or_strict')
-                    except UnicodeDecodeError:
-                        # Attempts utf-16 decode for files coming from Windows.
-                        contents = to_text(b_contents, encoding='utf-16', errors='surrogate_or_strict')
+                    encoding = kwargs.get('encoding')
+                    contents = to_text(b_contents, encoding=encoding, errors='surrogate_or_strict')
                     if kwargs.get('lstrip', False):
                         contents = contents.lstrip()
                     if kwargs.get('rstrip', True):
