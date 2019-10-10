@@ -135,6 +135,7 @@ global_status:
   type: dict
   sample:
   - { "Innodb_buffer_pool_read_requests": 123, "Innodb_buffer_pool_reads": 32 }
+  version_added: "2.10"
 users:
   description: Users information.
   returned: if not excluded by filter
