@@ -61,7 +61,7 @@
       - type: 'file'
         state: 'new'
         file_path: 'newfile'
-      yield_on_poll:  True
+        yield_on_poll:  True
       force: True
     register: create_multiple_ports
  

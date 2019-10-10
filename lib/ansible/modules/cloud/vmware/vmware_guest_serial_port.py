@@ -30,7 +30,7 @@ options:
     type: str
   uuid:
     description:
-      - UUID of the instance to gather info if known, this is VMware's unique identifier.
+      - UUID of the instance to manage the serial ports, this is VMware's unique identifier.
       - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
     type: str
   moid:
@@ -43,11 +43,6 @@ options:
       - Whether to use the VMware instance UUID rather than the BIOS UUID.
     default: no
     type: bool
-  yield_on_poll:
-    description:
-      - Enables CPU yield behavior.
-    type: bool
-    default: true
   force:
     description:
       - Forcefully power off the VM before creating a serial port.
@@ -56,23 +51,27 @@ options:
   backings:
     type: list
     description:
-      - A list of backings for serial ports
+      - A list of backings for serial ports.
       - 'C(backing_type) (str): is required to add or reconfigure or remove an existing serial port.'
       - 'Valid attributes are:'
       - ' - C(backing_type) (str): Backing type is required for the serial ports to be added or reconfigured or removed.'
       - ' - C(state) (str): is required to identify whether we are adding, modifying or removing the serial port.
             - choices:
-              - C(new): create a new serial port
-              - C(present): modify an existing serial port. C(backing_type) is required to determine the port. The first matching C(backing_type) will be modified.
-              - C(absent): remove an existing serial port. C(backing_type) is required to determine the port. The first matching C(backing_type) will be removed.'
+              - C(new): create a new serial port.
+              - C(present): modify an existing serial port. C(backing_type) is required to determine the port.
+                The first matching C(backing_type) will be modified.
+              - C(absent): remove an existing serial port. C(backing_type) is required to determine the port.
+                The first matching C(backing_type) will be removed.'
+      - ' - C(yield_on_poll) (bool): Enables CPU yield behavior. Default value is true.'
       - ' - C(direction) (str): Required when I(backing_type=network).
-            The direction of the connection
+            The direction of the connection.
             - choices:
               - client
               - server'
       - ' - C(service_uri) (str): Required when I(backing_type=network).
             Identifies the local host or a system on the network, depending on the value of I(direction).
-            If you use the virtual machine as a server, the URI identifies the host on which the virtual machine runs. In this case, the host name part of the URI should be empty, or it should specify the address of the local host.
+            If you use the virtual machine as a server, the URI identifies the host on which the virtual machine runs.
+                In this case, the host name part of the URI should be empty, or it should specify the address of the local host.
             If you use the virtual machine as a client, the URI identifies the remote system on the network.'
       - ' - C(endpoint) (str): Required when I(backing_type=pipe).
             When you use serial port pipe backing to connect a virtual machine to another process, you must define the endpoints.'
@@ -95,52 +94,32 @@ author:
 
 EXAMPLES = '''
 # Create serial ports
-- name: Create Network backing type
-  vmware_serial_port:
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
-    name: '{{ name }}'
-    backing: network
-    service_uri: 'service_uri'
-    direction: client
-    yield_on_poll: true
-  delegate_to: localhost
-
-- name: Create Pipe backing type
-  vmware_serial_port:
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
-    name: '{{ name }}'
-    backing: 'pipe'
-    pipe_name: 'pipe_name'
-    endpoint: client
-    yield_on_poll: true
-    no_rx_loss: true
-  delegate_to: localhost
-
-- name: Create Device backing type
-  vmware_serial_port:
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
-    name: '{{ name }}'
-    backing: 'device'
-    device_name: 'device_name'
-    yield_on_poll: true
-  delegate_to: localhost
-
-- name: Create File backing type
-  vmware_serial_port:
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
-    name: '{{ name }}'
-    backing: file
-    file_path: 'file_path'
-    yield_on_poll: true
-  delegate_to: localhost
+- name: Create multiple serial ports with Backing type - network, pipe, device and file
+  vmware_guest_serial_port:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "test_vm1"
+    backings:
+    - type: 'network'
+      state: 'new'
+      direction: 'client'
+      service_uri: 'tcp://6000'
+      yield_on_poll: True
+    - type: 'pipe'
+      state: 'new'
+      pipe_name: 'serial_pipe'
+      endpoint: 'client'
+    - type: 'device'
+      state: 'new'
+      device_name: '/dev/char/serial/uart0'
+    - type: 'file'
+      state: 'new'
+      file_path: 'newfile'
+      yield_on_poll:  True
+    force: True
+    register: create_multiple_ports
 
 # Modify existing serial port
 - name: Modify Network backing type
@@ -149,9 +128,11 @@ EXAMPLES = '''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     name: '{{ name }}'
-    backing: network
-    service_uri: 'service_uri'
-    direction: 'server'
+    backings:
+    - type: 'network'
+      state: 'present'
+      direction: 'server'
+      service_uri: 'tcp://1000'
   delegate_to: localhost
 
 # Remove serial port
@@ -161,7 +142,9 @@ EXAMPLES = '''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     name: '{{ name }}'
-    backing: pipe
+    backings:
+    - type: 'pipe'
+      state: 'absent'
   delegate_to: localhost
 
 '''
@@ -171,18 +154,18 @@ serial_port_data:
     description: metadata about the virtual machine's serial ports after managing them
     returned: always
     type: dict
-    sample: {
-        "0": {
-            "backing_type": "network",
-            "direction": "client",
-            "service_uri": "tcp://6000"
+    sample: [
+        {
+          "backing_type": "network",
+          "direction": "client",
+          "service_uri": "tcp://6000"
         },
-        "1": {
-            "backing_type": "pipe",
-            "direction": "server",
-            "pipe_name": "serial pipe"
+        {
+          "backing_type": "pipe",
+          "direction": "server",
+          "pipe_name": "serial pipe"
         },
-    }
+    ]
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -267,8 +250,7 @@ class PyVmomiHelper(PyVmomi):
         except vim.fault.InvalidDatastorePath as e:
             self.module.fail_json(msg="Failed to configure serial port on given virtual machine due to invalid path: %s" % to_native(e.msg))
         except vim.fault.RestrictedVersion as e:
-            self.module.fail_json(msg="Failed to reconfigure virtual machine due to"
-                                          " product versioning restrictions: %s" % to_native(e.msg))
+            self.module.fail_json(msg="Failed to reconfigure virtual machine due to product versioning restrictions: %s" % to_native(e.msg))
         if task.info.state == 'error':
             results = {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg}
         else:
@@ -302,10 +284,9 @@ def get_serial_port_info(vm_obj):
     """
     Get the serial port info
     """
-    serial_port_info = dict()
+    serial_port_info = []
     if vm_obj is None:
         return serial_port_info
-    port_index = 0
     for port in vm_obj.config.hardware.device:
         backing = dict()
         if isinstance(port, vim.vm.device.VirtualSerialPort):
@@ -326,8 +307,7 @@ def get_serial_port_info(vm_obj):
                 backing['file_path'] = port.backing.fileName
             else:
                 continue
-            serial_port_info[port_index] = backing
-            port_index += 1
+            serial_port_info.append(backing)
     return serial_port_info
 
 
@@ -337,7 +317,7 @@ def create_serial_port(backing):
     """
     serial_spec = vim.vm.device.VirtualDeviceSpec()
     serial_port = vim.vm.device.VirtualSerialPort()
-    serial_port.yieldOnPoll = True
+    serial_port.yieldOnPoll = backing['yield_on_poll'] if 'yield_on_poll' in backing.keys() else True
     serial_port.backing = get_backing_info(serial_port, backing, backing['type'])
     serial_spec.device = serial_port
     return serial_spec
@@ -414,7 +394,6 @@ def main():
         uuid=dict(type='str'),
         moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
-        yield_on_poll=dict(type='bool', default=True),
         force=dict(type='bool', default=False),
         backings=dict(type='list', default=[])
     )
@@ -439,7 +418,9 @@ def main():
         if proceed:
             result = pyv.reconfigure_vm_serial_port(vm_obj)
         else:
-            module.fail_json(msg="The attempted operation cannot be performed in the current state (" + current_state + "), use the force option to forcefully power off the VM")
+            module.fail_json(msg="The attempted operation cannot be performed in the current state ("
+                             + current_state
+                             + "), use the force option to forcefully power off the VM")
 
     else:
         # We are unable to find the virtual machine user specified
