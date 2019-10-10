@@ -202,7 +202,7 @@ def arg_spec_to_rds_params(options_dict):
         processor_features = options_dict.pop('processor_features')
     camel_options = snake_dict_to_camel_dict(options_dict, capitalize_first=True)
     for key in list(camel_options.keys()):
-        for old, new in (('Db', 'DB'), ('Iam', 'IAM'), ('Az', 'AZ')):
+        for old, new in (('Db', 'DB'), ('Iam', 'IAM'), ('Az', 'AZ'), ('Ca', 'CA')):
             if old in key:
                 camel_options[key.replace(old, new)] = camel_options.pop(key)
     camel_options['Tags'] = tags
