@@ -230,7 +230,7 @@ For example, the following block:
       vmware_vswitch:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
-        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
         validate_certs: 'no'
         esxi_hostname: 'esxi1'
         switch_name: "boby"
