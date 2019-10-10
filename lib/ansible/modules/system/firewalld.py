@@ -787,7 +787,7 @@ def main():
             offline=dict(type='bool'),
             chain=dict(type='str'),
             table=dict(required=False, default=None),
-            direct_rule=dict(required=False, default=None),
+            direct_rule=dict(type='str'),
             fw_family=dict(required=False, default=None),
             rule_priority=dict(type='int', required=False, default=0)
         ),
