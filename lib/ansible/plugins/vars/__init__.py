@@ -36,6 +36,8 @@ class BaseVarsPlugin(AnsiblePlugin):
         super(BaseVarsPlugin, self).__init__()
         self._display = display
 
+    from ansible.devel.cprofile_decorator import cprofile_func
+    @cprofile_func()
     def get_vars(self, loader, path, entities):
         """ Gets variables. """
         self._basedir = basedir(path)
