@@ -3,6 +3,7 @@
     msg: "Start exos_l2_interfaces deleted integration tests ansible_connection={{ ansible_connection }}"
 
 - include_tasks: _reset_config.yaml
+  ignore_errors: yes
 
 - include_tasks: _populate_config.yaml
 
@@ -57,7 +58,7 @@
         - "config|difference(ansible_facts.network_resources.l2_interfaces) == []"
 
   - name: Delete L2 interface configuration
-    exos_l2_interfaces:  
+    exos_l2_interfaces:
       config:
       state: deleted
     register: result
@@ -85,7 +86,7 @@
         - "config_all|difference(ansible_facts.network_resources.l2_interfaces) == []"
 
   - name: Delete attributes of all configured interfaces (IDEMPOTENT)
-    exos_l2_interfaces: *deleted 
+    exos_l2_interfaces: *deleted
     register: result
 
   - name: Assert that the previous task was idempotent

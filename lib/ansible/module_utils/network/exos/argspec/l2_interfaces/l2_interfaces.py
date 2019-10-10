@@ -38,35 +38,11 @@ class L2_interfacesArgs(object):  # pylint: disable=R0903
         'config': {
             'elements': 'dict',
             'options': {
-                'access': {
-                    'options': {
-                        'vlan': {
-                            'type': 'int'
-                        }
-                    },
-                    'type': 'dict'
-                },
-                'name': {
-                    'required': True,
-                    'type': 'str'
-                },
-                'trunk': {
-                    'options': {
-                        'native_vlan': {
-                            'type': 'int'
-                        },
-                        'trunk_allowed_vlans': {
-                            'type': 'list'
-                        }
-                    },
-                    'type': 'dict'
-                }
-            },
-            'type': 'list'
-        },
-        'state': {
-            'choices': ['merged', 'replaced', 'overridden', 'deleted'],
-            'default': 'merged',
-            'type': 'str'
-        }
+                'access': {'options': {'vlan': {'type': 'int'}},
+                           'type': 'dict'},
+                'name': {'required': True, 'type': 'str'},
+                'trunk': {'options': {'native_vlan': {'type': 'int'}, 'trunk_allowed_vlans': {'type': 'list'}},
+                          'type': 'dict'}},
+            'type': 'list'},
+        'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'], 'default': 'merged', 'type': 'str'}
     }  # pylint: disable=C0301

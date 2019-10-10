@@ -3,6 +3,7 @@
     msg: "Start exos_l2_interfaces overridden integration tests ansible_connection={{ ansible_connection }}"
 
 - include_tasks: _reset_config.yaml
+  ignore_errors: yes
 
 - include_tasks: _populate_config.yaml
 
@@ -12,7 +13,7 @@
         name: '1'
         trunk:
           native_vlan: 10
-          trunk_allowed_vlans: 
+          trunk_allowed_vlans:
             - 20
             - 30
     config_all:

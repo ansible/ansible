@@ -63,8 +63,7 @@ class L2_interfacesFacts(object):
         ansible_facts['ansible_network_resources'].pop('l2_interfaces', None)
         facts = {}
         if objs:
-            params = utils.validate_config(self.argument_spec,
-                                           {'config': objs})
+            params = utils.validate_config(self.argument_spec, {'config': objs})
             facts['l2_interfaces'] = params['config']
 
         ansible_facts['ansible_network_resources'].update(facts)
@@ -82,15 +81,12 @@ class L2_interfacesFacts(object):
         """
         config = deepcopy(spec)
         if conf["config"]["type"] == "ethernetCsmacd":
-            conf_dict = conf["openconfig-if-ethernet:ethernet"][
-                "openconfig-vlan:switched-vlan"]["config"]
+            conf_dict = conf["openconfig-if-ethernet:ethernet"]["openconfig-vlan:switched-vlan"]["config"]
             config["name"] = conf["name"]
             if conf_dict["interface-mode"] == "ACCESS":
                 config["access"]["vlan"] = conf_dict.get("access-vlan")
             else:
                 if 'native-vlan' in conf_dict:
-                    config["trunk"]["native_vlan"] = conf_dict.get(
-                        "native-vlan")
-                config["trunk"]["trunk_allowed_vlans"] = conf_dict.get(
-                    "trunk-vlans")
+                    config["trunk"]["native_vlan"] = conf_dict.get("native-vlan")
+                config["trunk"]["trunk_allowed_vlans"] = conf_dict.get("trunk-vlans")
         return utils.remove_empties(config)

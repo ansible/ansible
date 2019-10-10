@@ -1126,8 +1126,7 @@ def main():
     """
     required_if = [('state', 'merged', ('config', )),
                    ('state', 'replaced', ('config', ))]
-    module = AnsibleModule(argument_spec=L2_interfacesArgs.argument_spec,
-                           required_if=required_if,
+    module = AnsibleModule(argument_spec=L2_interfacesArgs.argument_spec, required_if=required_if,
                            supports_check_mode=True)
 
     result = L2_interfaces(module).execute_module()

@@ -12,9 +12,9 @@
         name: '2'
         trunk:
           native_vlan: 30
-          trunk_allowed_vlans: 
+          trunk_allowed_vlans:
             - 40
-      - access: 
+      - access:
           vlan: 10
         name: '3'
         trunk: null
