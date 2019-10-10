@@ -389,12 +389,13 @@ class NetStreamGlobal(object):
                     sampler_tmp1 = dict()
                     config_mem_list = config_mem.split(' ')
                     config_num = len(config_mem_list)
-                    sampler_tmp1["sampler_direction"] = config_mem_list[
-                        config_num - 1]
-                    sampler_tmp1["sampler_interval"] = config_mem_list[
-                        config_num - 2]
-                    sampler_tmp1["interface"] = self.interface
-                    self.existing["sampler"].append(sampler_tmp1)
+                    if config_num > 1:
+                        sampler_tmp1["sampler_direction"] = config_mem_list[
+                            config_num - 1]
+                        sampler_tmp1["sampler_interval"] = config_mem_list[
+                            config_num - 2]
+                        sampler_tmp1["interface"] = self.interface
+        self.existing["sampler"].append(sampler_tmp1)
 
     def get_exist_statistic_record(self):
         """get exist netstream statistic record parameter"""
@@ -426,7 +427,7 @@ class NetStreamGlobal(object):
                 config_mem = config_mem.lstrip()
                 statistic_tmp["statistics_record"] = list()
                 config_mem_list = config_mem.split(' ')
-                if len(config_mem_list) >3 and str(config_mem_list[3]) == "ip":
+                if len(config_mem_list) > 3 and str(config_mem_list[3]) == "ip":
                     statistic_tmp["statistics_record"].append(
                         str(config_mem_list[2]))
             statistic_tmp["type"] = "ip"
@@ -847,13 +848,13 @@ class NetStreamGlobal(object):
                     tmp_list = statistic_tmp["statistics_record"]
                     if self.type == statistic_tmp["type"]:
                         if self.type == "ip":
-                            if len(tmp_list) > 1:
+                            if len(tmp_list) > 0:
                                 cmd = "netstream record %s ip" % tmp_list[0]
                                 self.cli_add_command(cmd, undo=True)
                             cmd = "netstream record %s ip" % self.statistics_record
                             self.cli_add_command(cmd)
                         if self.type == "vxlan":
-                            if len(tmp_list):
+                            if len(tmp_list) > 0:
                                 cmd = "netstream record %s vxlan inner-ip" % tmp_list[
                                     0]
                                 self.cli_add_command(cmd, undo=True)
