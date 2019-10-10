@@ -56,8 +56,8 @@ tasks:
   - name : output secrets to screen (BAD IDEA)
     debug:
         msg: "Content: {{lookup('sops', item)}}"
-    with_file:
-    - sops-encrypted-file.enc.yaml
+    with_items:
+        - sops-encrypted-file.enc.yaml
 
   - name: add ssh private key
     copy:
