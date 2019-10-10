@@ -333,11 +333,21 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
         # sshpass returns codes are 1-6. We handle 5 previously, so this catches other scenarios.
         # No exception is raised, so the connection is retried.
         elif return_tuple[0] in [1, 2, 3, 4, 6]:
-            msg = 'sshpass error:'
+            if return_tuple[0] == 1:
+                msg = 'sshpass error: Invalid command line argument. Command given: {1}'
+            if return_tuple[0] == 2:
+                msg = 'sshpass error: Conflicting arguments given. Command given: {1}'
+            if return_tuple[0] == 3:
+                msg = 'sshpass error: General runtime error.'
+            if return_tuple[0] == 4:
+                msg = 'sshpass error: Unrecognized response from ssh (parse error).'
+            if return_tuple[0] == 6:
+                msg = 'sshpass error: Host public key is unknown.'
             if no_log:
                 msg = '{0} <error censored due to no log>'.format(msg)
             else:
                 msg = '{0} {1}'.format(msg, to_native(return_tuple[2]).rstrip())
+            raise AnsibleConnectionFailure(msg)
 
     if return_tuple[0] == 255:
         SSH_ERROR = True
