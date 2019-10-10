@@ -229,9 +229,10 @@ node:
 from time import sleep
 import os.path
 import json
-from enum import Enum, unique
+import traceback
 
 from ansible.module_utils.remote_management.rsd.rsd_common import RSD
+from ansible.module_utils.basic import missing_required_lib
 
 try:
     import sushy
@@ -239,10 +240,17 @@ try:
 except ImportError:
     pass
 
+try:
+    from enum import Enum, unique
+    HAS_ENUM = True
+except ImportError:
+    HAS_ENUM = False
+    Enum = object
+    ENUM_IMP_ERR = traceback.format_exc()
+
 
 class RsdNodeCompose(RSD):
 
-    @unique
     class STATE(Enum):
         ABSENT = 'absent'
         ALLOCATING = 'allocating'
@@ -631,6 +639,10 @@ class RsdNodeCompose(RSD):
 
 
 def main():
+    if not HAS_ENUM:
+        rsd = RSD({})
+        rsd.module.fail_json(msg=missing_required_lib('enum34'),
+                             exception=ENUM_IMP_ERR)
     compose = RsdNodeCompose()
     compose.run()
 

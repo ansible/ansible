@@ -9,6 +9,10 @@
 #   - Marco Chiappero <marco.chiappero@intel.com>
 #######################################################
 
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
+
 
 class ModuleDocFragment(object):
 
