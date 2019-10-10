@@ -803,7 +803,7 @@ def main():
     timeout = module.params['timeout']
     interface = module.params['interface']
     masquerade = module.params['masquerade']
-    chain = None if not module.params['chain'] else module.params['chain']
+    chain = module.params['chain'] if module.params['chain'] else None
     direct_rule = None if not module.params['direct_rule'] else module.params['direct_rule']
     fw_family = None if not module.params['fw_family'] else module.params['fw_family']
     rule_priority = None if not module.params['rule_priority'] else module.params['rule_priority']
