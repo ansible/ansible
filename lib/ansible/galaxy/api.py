@@ -38,16 +38,34 @@ def g_connect(versions):
 
                 # Determine the type of Galaxy server we are talking to. First try it unauthenticated then with Bearer
                 # auth for Automation Hub.
-                n_url = _urljoin(self.api_server, 'api')
+                n_url = self.api_server
                 error_context_msg = 'Error when finding available api versions from %s (%s)' % (self.name, n_url)
 
-                data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg)
+                if self.api_server == 'https://galaxy.ansible.com' or self.api_server == 'https://galaxy.ansible.com/':
+                    n_url = 'https://galaxy.ansible.com/api/'
+
+                try:
+                    data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg)
+                except (AnsibleError, GalaxyError, ValueError, KeyError):
+                    # Either the URL doesnt exist, or other error. Or the URL exists, but isn't a galaxy API
+                    # root (not JSON, no 'available_versions') so try appending '/api/'
+                    n_url = _urljoin(n_url, '/api/')
+
+                    # let exceptions here bubble up
+                    data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg)
+                    if 'available_versions' not in data:
+                        raise AnsibleError("Tried to find galaxy API root at %s but no 'available_versions' are available on %s"
+                                           % (n_url, self.api_server))
+
+                    # Update api_server to point to the "real" API root, which in this case
+                    # was the configured url + '/api/' appended.
+                    self.api_server = n_url
 
                 # Default to only supporting v1, if only v1 is returned we also assume that v2 is available even though
                 # it isn't returned in the available_versions dict.
-                available_versions = data.get('available_versions', {u'v1': u'/api/v1'})
+                available_versions = data.get('available_versions', {u'v1': u'v1/'})
                 if list(available_versions.keys()) == [u'v1']:
-                    available_versions[u'v2'] = u'/api/v2'
+                    available_versions[u'v2'] = u'v2/'
 
                 self._available_api_versions = available_versions
                 display.vvvv("Found API version '%s' with Galaxy server %s (%s)"
