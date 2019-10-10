@@ -1,0 +1,2 @@
+minor_changes:
+- mysql_replication - add support of ``resetmaster`` choice to ``mode`` parameter (https://github.com/ansible/ansible/issues/42870).
