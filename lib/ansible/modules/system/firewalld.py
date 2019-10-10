@@ -793,7 +793,7 @@ def main():
             table=dict(required=False, default=None),
             direct_rule=dict(type='str'),
             fw_family=dict(required=False, default=None),
-            rule_priority=dict(type='int', required=False, default=0)
+            rule_priority=dict(type='int', default=0),
         ),
         supports_check_mode=True,
     )
