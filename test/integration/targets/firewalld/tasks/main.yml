@@ -29,8 +29,26 @@
       register: check_output
       ignore_errors: true
 
-    - import_tasks: run_all_tests.yml
+    - name: Test Online Operations
+      block:
+        - name: start firewalld
+          service:
+            name: firewalld
+            state: started
+
+        - import_tasks: run_all_tests.yml
       when: check_output.rc == 0
+
+    - name: Test Offline Operations
+      block:
+        - name: stop firewalld
+          service:
+            name: firewalld
+            state: stopped
+
+        - import_tasks: run_all_tests.yml
+      when: check_output.rc == 0
+
   when:
   - not (ansible_os_family == "RedHat" and ansible_distribution_major_version|int < 7)
   - not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "14.04")
