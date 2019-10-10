@@ -225,7 +225,7 @@ EXAMPLES = r'''
     chain: sshg
     fw_family: ipv4
     table: filter
-    direct_rule: '-m tcp -p tcp --dport 332 -j ACCEPT'
+    direct_rule: -m tcp -p tcp --dport 332 -j ACCEPT
     permanent: true
     state: disabled
 
