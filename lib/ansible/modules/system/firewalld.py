@@ -784,7 +784,7 @@ def main():
             interface=dict(type='str'),
             masquerade=dict(type='str'),
             offline=dict(type='bool'),
-            chain=dict(required=False, default=None),
+            chain=dict(type='str'),
             table=dict(required=False, default=None),
             direct_rule=dict(required=False, default=None),
             fw_family=dict(required=False, default=None),
