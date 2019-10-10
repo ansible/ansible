@@ -149,11 +149,6 @@ class OnyxSyslogFilesModule(BaseOnyxModule):
             self._module.fail_json(
                 msg='Invalid url, make sure that you use "[ftp, scp, tftp, sftp]://username:password@hostname:/location" format')
 
-    def validate_rotation_max_num(self, max_num):
-        if max_num and (max_num < 1 or max_num > self.MAX_FILES):
-            self._module.fail_json(
-                msg='logging max_num must be between 1 and 999999')
-
     def show_logging(self):
         show_logging = show_cmd(self._module, "show logging", json_fmt=True, fail_on_error=False)
         running_config = show_cmd(self._module, "show running-config | include .*logging.*debug-files.*", json_fmt=True, fail_on_error=False)
@@ -206,13 +201,16 @@ class OnyxSyslogFilesModule(BaseOnyxModule):
         required_config = dict()
         module_params = self._module.params
 
-        if module_params.get('delete_group', None):
-            required_config['delete_group'] = module_params['delete_group']
-        if module_params.get('upload_file', None):
-            required_config.update({'upload_file': module_params['upload_file'],
-                                    'upload_url': module_params['upload_url']})
-        if module_params.get('rotation', None):
-            required_config['rotation'] = module_params['rotation']
+        delete_group = module_params.get('delete_group')
+        upload_file = module_params.get('upload_file')
+        rotation = module_params.get('rotation')
+        if delete_group:
+            required_config['delete_group'] = delete_group
+        if upload_file:
+            required_config.update({'upload_file': upload_file,
+                                    'upload_url': module_params.get('upload_url')})
+        if rotation:
+            required_config['rotation'] = rotation
         required_config['debug'] = module_params['debug']
 
         self.validate_param_values(required_config)
@@ -224,21 +222,24 @@ class OnyxSyslogFilesModule(BaseOnyxModule):
 
         logging_files_type = 'debug-files' if required_config['debug'] else 'files'
         debug_prefix = 'debug_' if required_config['debug'] else ''
-        if required_config.get('rotation', None):
-            rotation = required_config['rotation']
+
+        rotation = required_config.get('rotation')
+        if rotation:
             for key in rotation:
-                if rotation.get(key) and current_config.get(debug_prefix + key, None) != rotation.get(key):
+                if rotation.get(key) and current_config.get(debug_prefix + key) != rotation.get(key):
                     cmd = self.ROTATION_CMDS[key].format(logging_files_type, rotation[key]) if key != 'force' else\
                         self.ROTATION_CMDS[key].format(logging_files_type)
                     self._commands.append(cmd)
 
-        if required_config.get('delete_group', None):
+        delete_group = required_config.get('delete_group')
+        if delete_group:
             self._commands.append('logging {0} delete {1}'.format(logging_files_type,
-                                                                  required_config['delete_group']))
+                                                                  delete_group))
 
-        if required_config.get('upload_file', None):
+        upload_file = required_config.get('upload_file')
+        if upload_file:
             self._commands.append('logging {0} upload {1} {2}'.format(logging_files_type,
-                                                                      required_config['upload_file'], required_config['upload_url']))
+                                                                      upload_file, required_config.get('upload_url')))
 
 
 def main():
