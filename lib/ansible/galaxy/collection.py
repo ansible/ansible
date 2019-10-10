@@ -31,6 +31,7 @@ import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.api import CollectionVersionMetadata, GalaxyError
+from ansible.galaxy import user_agent
 from ansible.module_utils import six
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils.collection_loader import AnsibleCollectionRef
@@ -843,6 +844,9 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
 def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
     bufsize = 65536
     digest = sha256()
+
+    headers = headers or {}
+    headers['User-Agent'] = user_agent.user_agent()
 
     urlsplit = os.path.splitext(to_text(url.rsplit('/', 1)[1]))
     b_file_name = to_bytes(urlsplit[0], errors='surrogate_or_strict')

@@ -29,6 +29,7 @@ from stat import S_IRUSR, S_IWUSR
 import yaml
 
 from ansible import constants as C
+from ansible.galaxy import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
@@ -73,9 +74,11 @@ class KeycloakToken(object):
         #         or 'azp' (Authorized party - the party to which the ID Token was issued)
         payload = self._form_payload()
 
+        headers = {'User-Agent': user_agent.user_agent()}
         resp = open_url(to_native(self.auth_url),
                         data=payload,
                         validate_certs=self.validate_certs,
+                        headers=headers,
                         method='POST')
 
         # TODO: handle auth errors

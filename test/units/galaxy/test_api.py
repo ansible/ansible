@@ -199,7 +199,8 @@ def test_initialise_automation_hub(monkeypatch):
     assert api.available_api_versions['v3'] == u'v3/'
 
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api/'
-    assert mock_open.mock_calls[0][2]['headers'] == {'Authorization': 'Bearer my_token'}
+    assert mock_open.mock_calls[0][2]['headers']['Authorization'] == 'Bearer my_token'
+    assert 'ansible-galaxy' in mock_open.mock_calls[0][2]['headers']['User-Agent']
 
 
 def test_initialise_unknown(monkeypatch):

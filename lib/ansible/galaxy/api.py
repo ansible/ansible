@@ -13,6 +13,7 @@ import time
 
 from ansible import context
 from ansible.errors import AnsibleError
+from ansible.galaxy import user_agent
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode
@@ -162,6 +163,7 @@ class GalaxyAPI:
         self.api_server = url
         self.validate_certs = not context.CLIARGS['ignore_certs']
         self._available_api_versions = {}
+        self.user_agent = user_agent.user_agent()
 
         display.debug('Validate TLS certificates for %s: %s' % (self.api_server, self.validate_certs))
 
@@ -172,12 +174,14 @@ class GalaxyAPI:
         return self._available_api_versions
 
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None):
-        headers = headers or {}
-        self._add_auth_token(headers, url, required=auth_required)
+        _headers = {'User-Agent': user_agent.user_agent()}
+        _headers.update(headers or {})
+
+        self._add_auth_token(_headers, url, required=auth_required)
 
         try:
             display.vvvv("Calling Galaxy at %s" % url)
-            resp = open_url(to_native(url), data=args, validate_certs=self.validate_certs, headers=headers,
+            resp = open_url(to_native(url), data=args, validate_certs=self.validate_certs, headers=_headers,
                             method=method, timeout=20)
         except HTTPError as e:
             raise GalaxyError(e, error_context_msg)
