@@ -239,8 +239,7 @@ class HwcModule(AnsibleModule):
                 region=dict(
                     type='str',
                     fallback=(env_fallback, ['ANSIBLE_HWC_REGION']),
-                ),
-                id=dict(type='str')
+                )
             )
         )
 

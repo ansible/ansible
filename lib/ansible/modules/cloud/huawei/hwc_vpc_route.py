@@ -23,7 +23,7 @@ description:
     - vpc route management.
 short_description: Creates a resource of Vpc/Route in Huawei Cloud
 notes:
-  - I(destination), I(vpc_id), I(type) and I(next_hop) is used for route selection. If more than one route with this options exists, execution is aborted.
+  - I(destination), I(vpc_id), I(type) and I(next_hop) are used for route selection. If more than one route with this options exists, execution is aborted.
   - No one parameter support update. If one of option changed, it will create a new resource.
 version_added: '2.10'
 author: Huawei Inc. (@huaweicloud)
@@ -89,6 +89,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+    id:
+        description:
+            - UUID of the route.
+        type: str
+        returned: success
     destination:
         description:
             - Specifies the destination IP address or CIDR block.
@@ -138,17 +143,14 @@ def main():
 
     try:
         resource = None
-        if module.params['id']:
-            resource = True
-        else:
-            v = search_resource(config)
-            if len(v) > 1:
-                raise Exception("find more than one resources(%s)" % ", ".join([
-                                navigate_value(i, ["id"]) for i in v]))
+        v = search_resource(config)
+        if len(v) > 1:
+            raise Exception("find more than one resources(%s)" % ", ".join([
+                            navigate_value(i, ["id"]) for i in v]))
 
-            if len(v) == 1:
-                resource = v[0]
-                module.params['id'] = navigate_value(resource, ["id"])
+        if len(v) == 1:
+            resource = v[0]
+            module.params['id'] = navigate_value(resource, ["id"])
 
         result = {}
         changed = False
@@ -336,9 +338,9 @@ def fill_read_resp_body(body):
 
     result["id"] = body.get("id")
 
-    result["nexthop"] = body.get("nexthop")
-
     result["tenant_id"] = body.get("tenant_id")
+
+    result["nexthop"] = body.get("nexthop")
 
     result["type"] = body.get("type")
 
@@ -384,12 +386,11 @@ def _build_identity_object(all_opts):
     v = navigate_value(all_opts, ["destination"], None)
     result["destination"] = v
 
-    result["id"] = None
+    v = navigate_value(all_opts, ["id"], None)
+    result["id"] = v
 
     v = navigate_value(all_opts, ["next_hop"], None)
     result["nexthop"] = v
-
-    result["tenant_id"] = None
 
     v = navigate_value(all_opts, ["type"], None)
     result["type"] = v
@@ -408,8 +409,6 @@ def fill_list_resp_body(body):
     result["id"] = body.get("id")
 
     result["nexthop"] = body.get("nexthop")
-
-    result["tenant_id"] = body.get("tenant_id")
 
     result["type"] = body.get("type")
 
