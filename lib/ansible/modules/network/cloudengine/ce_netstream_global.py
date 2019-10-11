@@ -369,7 +369,7 @@ class NetStreamGlobal(object):
         if not config:
             sampler_tmp["sampler_interval"] = "null"
             sampler_tmp["sampler_direction"] = "null"
-            sampler_tmp["interface"] = null
+            sampler_tmp["interface"] = "null"
         else:
             config_list = config.split(' ')
             config_num = len(config_list)
