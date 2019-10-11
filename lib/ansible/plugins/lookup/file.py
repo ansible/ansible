@@ -37,6 +37,8 @@ DOCUMENTATION = """
 EXAMPLES = """
 - debug: msg="the value of foo.txt is {{lookup('file', '/etc/foo.txt') }}"
 
+- debug: msg="the value of foo.txt is {{ lookup('file', '/tmp/test.sql', encoding='utf-16') }}"
+
 - name: display multiple file contents
   debug: var=item
   with_file:
