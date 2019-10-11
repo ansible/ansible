@@ -79,7 +79,8 @@ def test_list_no_log_values_invalid_suboptions(argument_spec, module_parameters,
         }
     }
 
-    with pytest.raises(TypeError, match=r"(Value '.*?' in the sub parameter field '.*?' must by a dict, not '.*?')|(dictionary requested, could not parse JSON or key=value)"):
+    with pytest.raises(TypeError, match=r"(Value '.*?' in the sub parameter field '.*?' must by a dict, not '.*?')"
+                                        r"|(dictionary requested, could not parse JSON or key=value)"):
         list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
 
 
@@ -204,3 +205,24 @@ def test_list_no_log_values_sub_suboptions_list(argument_spec, module_parameters
 
     expected = set(('under', 'makeshift', 'playroom', 'luxury', 'basis', 'gave', 'composure', 'thumping'))
     assert expected == list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
+
+
+@pytest.mark.parametrize('extra_params, expected', (
+    ({'subopt_dict': 'dict_subopt1=rekindle-scandal,dict_subopt2=subgroupavenge'}, ('rekindle-scandal',)),
+    ({'subopt_dict': 'dict_subopt1=aversion-mutable dict_subopt2=subgroupavenge'}, ('aversion-mutable',)),
+    ({'subopt_dict': ['dict_subopt1=blip-marine,dict_subopt2=subgroupavenge', 'dict_subopt1=tipping,dict_subopt2=hardening']}, ('blip-marine', 'tipping')),
+))
+def test_string_suboptions_as_string(argument_spec, module_parameters, extra_params, expected):
+    extra_opts = {
+        'subopt_dict': {
+            'type': 'dict',
+            'options': {
+                'dict_subopt1': {'no_log': True},
+                'dict_subopt2': {},
+            },
+        },
+    }
+
+    result = set(('under', 'makeshift'))
+    result.update(expected)
+    assert result == list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
