@@ -129,7 +129,8 @@ def build_module():
             destination=dict(type='str', required=True),
             next_hop=dict(type='str', required=True),
             vpc_id=dict(type='str', required=True),
-            type=dict(type='str', default='peering')
+            type=dict(type='str', default='peering'),
+            id=dict(type='str')
         ),
         supports_check_mode=True,
     )
@@ -143,25 +144,35 @@ def main():
 
     try:
         resource = None
-        v = search_resource(config)
-        if len(v) > 1:
-            raise Exception("find more than one resources(%s)" % ", ".join([
-                            navigate_value(i, ["id"]) for i in v]))
+        if module.params.get("id"):
+            resource = get_resource_by_id(config)
+            if module.params['state'] == 'present':
+                opts = user_input_parameters(module)
+                if are_different_dicts(resource, opts):
+                    raise Exception(
+                        "Cannot change option from (%s) to (%s)of an"
+                        " existing route.(%s)" % (resource, opts,
+                                                  config.module.params.get(
+                                                      'id')))
+        else:
+            v = search_resource(config)
+            if len(v) > 1:
+                raise Exception("find more than one resources(%s)" % ", ".join([
+                                navigate_value(i, ["id"]) for i in v]))
 
-        if len(v) == 1:
-            resource = v[0]
-            module.params['id'] = navigate_value(resource, ["id"])
+            if len(v) == 1:
+                resource = update_properties(module, {"read": v[0]}, None)
+                module.params['id'] = navigate_value(resource, ["id"])
 
         result = {}
         changed = False
         if module.params['state'] == 'present':
             if resource is None:
                 if not module.check_mode:
-                    create(config)
+                    resource = create(config)
                 changed = True
 
-            result = read_resource(config)
-            result['id'] = module.params.get('id')
+            result = resource
         else:
             if resource:
                 if not module.check_mode:
@@ -182,6 +193,7 @@ def user_input_parameters(module):
         "next_hop": module.params.get("next_hop"),
         "type": module.params.get("type"),
         "vpc_id": module.params.get("vpc_id"),
+        "id": module.params.get("id"),
     }
 
 
@@ -194,6 +206,9 @@ def create(config):
     r = send_create_request(module, params, client)
     module.params['id'] = navigate_value(r, ["route", "id"])
 
+    result = update_properties(module, {"read": fill_resp_body(r)}, None)
+    return result
+
 
 def delete(config):
     module = config.module
@@ -202,16 +217,17 @@ def delete(config):
     send_delete_request(module, None, client)
 
 
-def read_resource(config, exclude_output=False):
+def get_resource_by_id(config, exclude_output=False):
     module = config.module
     client = config.client(get_region(module), "network", "project")
 
     res = {}
 
     r = send_read_request(module, client)
-    res["read"] = fill_read_resp_body(r)
+    res["read"] = fill_resp_body(r)
 
-    return update_properties(module, res, None, exclude_output)
+    result = update_properties(module, res, None, exclude_output)
+    return result
 
 
 def _build_query_link(opts):
@@ -331,14 +347,12 @@ def send_read_request(module, client):
     return navigate_value(r, ["route"], None)
 
 
-def fill_read_resp_body(body):
+def fill_resp_body(body):
     result = dict()
 
     result["destination"] = body.get("destination")
 
     result["id"] = body.get("id")
-
-    result["tenant_id"] = body.get("tenant_id")
 
     result["nexthop"] = body.get("nexthop")
 
@@ -363,6 +377,9 @@ def update_properties(module, response, array_index, exclude_output=False):
 
     v = navigate_value(response, ["read", "vpc_id"], array_index)
     r["vpc_id"] = v
+
+    v = navigate_value(response, ["read", "id"], array_index)
+    r["id"] = v
 
     return r
 
