@@ -733,7 +733,7 @@ class Lldp(object):
                 if self.management_address:
                     self.updates_cmd.append("lldp management-address %s" % self.management_address)
                 if self.bind_name:
-                    self.updates_cmd.append("lldp management-address bind interface %s" %  self.bind_name)
+                    self.updates_cmd.append("lldp management-address bind interface %s" % self.bind_name)
             elif self.lldpenable == "disabled":
                 self.updates_cmd.append("undo lldp enable")
             else:

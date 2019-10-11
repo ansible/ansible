@@ -66,19 +66,18 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
         self.get_nc_config.side_effect = self.get_side_effect
         self.set_nc_config.side_effect = [self.result_ok] * 11
         set_module_args(dict(
-                            lldpenable='enabled',
-                            mdnstatus='rxOnly',
-                            interval=8,
-                            hold_multiplier=8,
-                            restart_delay=8,
-                            transmit_delay=8,
-                            notification_interval=8,
-                            fast_count=8,
-                            mdn_notification_interval=8,
-                            management_address='1.1.1.1',
-                            bind_name='bind-name'
-                          )
-                    )
+            lldpenable='enabled',
+            mdnstatus='rxOnly',
+            interval=8,
+            hold_multiplier=8,
+            restart_delay=8,
+            transmit_delay=8,
+            notification_interval=8,
+            fast_count=8,
+            mdn_notification_interval=8,
+            management_address='1.1.1.1',
+            bind_name='bind-name')
+            )
         result = self.execute_module(changed=True)
         self.assertEquals(sorted(result['updates']), sorted(update))
 
@@ -108,8 +107,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
             fast_count=8,
             mdn_notification_interval=8,
             management_address='1.1.1.1',
-            bind_name='bind-name'
-        )
-        )
+            bind_name='bind-name')
+            )
         result = self.execute_module(changed=True)
         self.assertEquals(sorted(result['updates']), sorted(update))
