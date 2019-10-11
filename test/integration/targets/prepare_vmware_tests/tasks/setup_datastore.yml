@@ -30,9 +30,6 @@
 - name: The vcenter needs a bit of time to refresh the DS list
   vmware_datastore_info:
     validate_certs: false
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
     cluster: '{{ ccr1 }}'
   register: setup_datastore_datatstore_info
   failed_when: setup_datastore_datatstore_info.datastores|selectattr('type', 'equalto', 'NFS')|list|length != 2
