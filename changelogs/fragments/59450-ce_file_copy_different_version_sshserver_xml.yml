@@ -1,0 +1,2 @@
+bugfixes:
+  - ce_file_copy - update to Compatible with multiple version of NETCONF API(sshServer). (https://github.com/ansible/ansible/pull/59450)
