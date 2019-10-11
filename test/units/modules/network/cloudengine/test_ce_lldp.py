@@ -42,7 +42,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
         xml_existing_2 = load_fixture('ce_lldp', 'ce_lldp_global_01.txt')
         xml_end_state_1 = load_fixture('ce_lldp', 'ce_lldpSysParameter_00.txt')
         xml_end_state_2 = load_fixture('ce_lldp', 'ce_lldpSysParameter_01.txt')
-        self.get_side_effect =(xml_existing_1, xml_existing_2, xml_end_state_1, xml_end_state_2)
+        self.get_side_effect = (xml_existing_1, xml_existing_2, xml_end_state_1, xml_end_state_2)
         self.result_ok = load_fixture('ce_lldp', 'result_ok.txt')
 
     def tearDown(self):
@@ -64,21 +64,21 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
                   'lldp management-address 1.1.1.1',
                   'lldp management-address bind interface bind-name']
         self.get_nc_config.side_effect = self.get_side_effect
-        self.set_nc_config.side_effect = [self.result_ok]*11
+        self.set_nc_config.side_effect = [self.result_ok] * 11
         set_module_args(dict(
-            lldpenable='enabled',
-            mdnstatus='rxOnly',
-            interval=8,
-            hold_multiplier=8,
-            restart_delay=8,
-            transmit_delay=8,
-            notification_interval=8,
-            fast_count=8,
-            mdn_notification_interval=8,
-            management_address='1.1.1.1',
-            bind_name='bind-name'
-          )
-        )
+                            lldpenable='enabled',
+                            mdnstatus='rxOnly',
+                            interval=8,
+                            hold_multiplier=8,
+                            restart_delay=8,
+                            transmit_delay=8,
+                            notification_interval=8,
+                            fast_count=8,
+                            mdn_notification_interval=8,
+                            management_address='1.1.1.1',
+                            bind_name='bind-name'
+                          )
+                    )
         result = self.execute_module(changed=True)
         self.assertEquals(sorted(result['updates']), sorted(update))
 

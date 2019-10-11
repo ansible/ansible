@@ -706,63 +706,61 @@ class Lldp(object):
         if self.conf_exsit and self.conf_exsit_lldp:
             return
 
-        cli_str = ""
         if self.state == "present":
             if self.lldpenable == "enabled":
-                cli_str = "%s %s" % (cli_str, "lldp enable")
+                self.updates_cmd.append("lldp enable")
 
                 if self.mdnstatus:
-                    cli_str = "%s %s" % (cli_str, "lldp mdn enable")
+                    self.updates_cmd.append("lldp mdn enable")
                     if self.mdnstatus == "rxOnly":
-                        cli_str = "%s %s" % (cli_str, "lldp mdn enable")
+                        self.updates_cmd.append("lldp mdn enable")
                     else:
-                        cli_str = "%s %s" % (cli_str, "undo lldp mdn enable")
+                        self.updates_cmd.append("undo lldp mdn enable")
                 if self.interval:
-                    cli_str = "%s %s %s" % (cli_str, "lldp transmit interval", self.interval)
+                    self.updates_cmd.append("lldp transmit interval %s" % self.interval)
                 if self.hold_multiplier:
-                    cli_str = "%s %s %s" % (cli_str, "lldp transmit multiplier", self.hold_multiplier)
+                    self.updates_cmd.append("lldp transmit multiplier %s" % self.hold_multiplier)
                 if self.restart_delay:
-                    cli_str = "%s %s %s" % (cli_str, "lldp restart", self.restart_delay)
+                    self.updates_cmd.append("lldp restart %s" % self.restart_delay)
                 if self.transmit_delay:
-                    cli_str = "%s %s %s" % (cli_str, "lldp transmit delay", self.transmit_delay)
+                    self.updates_cmd.append("lldp transmit delay %s" % self.transmit_delay)
                 if self.notification_interval:
-                    cli_str = "%s %s %s" % (cli_str, "lldp trap-interval", self.notification_interval)
+                    self.updates_cmd.append("lldp trap-interval %s" % self.notification_interval)
                 if self.fast_count:
-                    cli_str = "%s %s %s" % (cli_str, "lldp fast-count", self.fast_count)
+                    self.updates_cmd.append("lldp fast-count %s" % self.fast_count)
                 if self.mdn_notification_interval:
-                    cli_str = "%s %s %s" % (cli_str, "lldp mdn trap-interval", self.mdn_notification_interval)
+                    self.updates_cmd.append("lldp mdn trap-interval %s" % self.mdn_notification_interval)
                 if self.management_address:
-                    cli_str = "%s %s %s" % (cli_str, "lldp management-address", self.management_address)
+                    self.updates_cmd.append("lldp management-address %s" % self.management_address)
                 if self.bind_name:
-                    cli_str = "%s %s %s" % (cli_str, "lldp management-address bind interface", self.bind_name)
+                    self.updates_cmd.append("lldp management-address bind interface %s" %  self.bind_name)
             elif self.lldpenable == "disabled":
-                cli_str = "%s %s" % (cli_str, "undo lldp enable")
+                self.updates_cmd.append("undo lldp enable")
             else:
                 if self.enable_flag == 1:
                     if self.mdnstatus:
                         if self.mdnstatus == "rxOnly":
-                            cli_str = "%s %s" % (cli_str, "lldp mdn enable")
+                            self.updates_cmd.append("lldp mdn enable")
                         else:
-                            cli_str = "%s %s" % (cli_str, "undo lldp mdn enable")
+                            self.updates_cmd.append("undo lldp mdn enable")
                     if self.interval:
-                        cli_str = "%s %s %s" % (cli_str, "lldp transmit interval", self.interval)
+                        self.updates_cmd.append("lldp transmit interval %s" % self.interval)
                     if self.hold_multiplier:
-                        cli_str = "%s %s %s" % (cli_str, "lldp transmit multiplier", self.hold_multiplier)
+                        self.updates_cmd.append("lldp transmit multiplier %s" % self.hold_multiplier)
                     if self.restart_delay:
-                        cli_str = "%s %s %s" % (cli_str, "lldp restart", self.restart_delay)
+                        self.updates_cmd.append("lldp restart %s" % self.restart_delay)
                     if self.transmit_delay:
-                        cli_str = "%s %s %s" % (cli_str, "lldp transmit delay", self.transmit_delay)
+                        self.updates_cmd.append("lldp transmit delay %s" % self.transmit_delay)
                     if self.notification_interval:
-                        cli_str = "%s %s %s" % (cli_str, "lldp trap-interval", self.notification_interval)
+                        self.updates_cmd.append("lldp trap-interval %s" % self.notification_interval)
                     if self.fast_count:
-                        cli_str = "%s %s %s" % (cli_str, "lldp fast-count", self.fast_count)
+                        self.updates_cmd.append("lldp fast-count %s" % self.fast_count)
                     if self.mdn_notification_interval:
-                        cli_str = "%s %s %s" % (cli_str, "lldp mdn trap-interval", self.mdn_notification_interval)
+                        self.updates_cmd.append( "lldp mdn trap-interval %s" % self.mdn_notification_interval)
                     if self.management_address:
-                        cli_str = "%s %s %s" % (cli_str, "lldp management-address", self.management_address)
+                        self.updates_cmd.append("lldp management-address %s" % self.management_address)
                     if self.bind_name:
-                        cli_str = "%s %s %s" % (cli_str, "lldp management-address bind interface", self.bind_name)
-        self.updates_cmd.append(cli_str)
+                        self.updates_cmd.append( "lldp management-address bind interface %s" % self.bind_name)
 
     def work(self):
         """Excute task"""
