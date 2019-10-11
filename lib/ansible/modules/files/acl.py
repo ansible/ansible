@@ -190,10 +190,10 @@ def build_command(module, mode, path, follow, default, recursive, recalculate_ma
     '''Builds and returns a getfacl/setfacl command.'''
     if mode == 'set':
         cmd = [module.get_bin_path('setfacl', True)]
-        cmd.append('-m "%s"' % entry)
+        cmd.extend(['-m', entry])
     elif mode == 'rm':
         cmd = [module.get_bin_path('setfacl', True)]
-        cmd.append('-x "%s"' % entry)
+        cmd.extend(['-x', entry])
     else:  # mode == 'get'
         cmd = [module.get_bin_path('getfacl', True)]
         # prevents absolute path warnings and removes headers
@@ -241,7 +241,7 @@ def acl_changed(module, cmd):
 def run_acl(module, cmd, check_rc=True):
 
     try:
-        (rc, out, err) = module.run_command(' '.join(cmd), check_rc=check_rc)
+        (rc, out, err) = module.run_command(cmd, check_rc=check_rc)
     except Exception as e:
         module.fail_json(msg=to_native(e))
 
