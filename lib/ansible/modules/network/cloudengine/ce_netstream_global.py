@@ -274,7 +274,7 @@ def get_config(module, flags):
             cfg = rm_config_prefix(cfg)
             break
     lines = cfg.split('\n')
-    lines = [l for l in lines if time_stamp_regex.match(l) is not None]
+    lines = [l for l in lines if time_stamp_regex.match(l) is None]
     if cfg.startswith('display'):
         if len(lines) > 1:
             lines.pop(0)
