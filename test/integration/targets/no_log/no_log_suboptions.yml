@@ -1,48 +1,24 @@
 - name: test no log with suboptions
   hosts: testhost
   gather_facts: no
-  ignore_errors: yes
 
   tasks:
     - name: Task with suboptions
       module:
-        secret: UNTURNED-SPILT
+        secret: GLAMOROUS
         subopt_dict:
-          str_sub_opt1: ANTIRUST-VERIFY
+          str_sub_opt1: AFTERMATH
           str_sub_opt2: otherstring
           nested_subopt:
-            n_subopt1: WHEAT-PROBATION
+            n_subopt1: MANPOWER
 
         subopt_list:
-          - subopt1: GLAMOROUS-AFTERMATH
+          - subopt1: UNTAPPED
             subopt2: thridstring
 
-          - subopt1: VERY-TWIDDLING
+          - subopt1: CONCERNED
 
-    - name: Task with suboptions and invalid parameter
+    - name: Task with suboptions as string
       module:
-        secret: UNTURNED-SPILT
-        invalid: param
-        subopt_dict:
-          str_sub_opt1: ANTIRUST-VERIFY
-          str_sub_opt2: otherstring
-          nested_subopt:
-            n_subopt1: WHEAT-PROBATION
-
-        subopt_list:
-          - subopt1: GLAMOROUS-AFTERMATH
-            subopt2: thridstring
-
-          - subopt1: VERY-TWIDDLING
-
-    - name: Task with suboptions and invalid data
-      module:
-        secret: UNTURNED-SPILT
-        subopt_dict:
-          str_sub_opt1: ANTIRUST-VERIFY
-          str_sub_opt2: otherstring
-          nested_subopt:
-            n_subopt1: WHEAT-PROBATION
-
-        subopt_list:
-          foo: bar
+        secret: MARLIN
+        subopt_dict: str_sub_opt1=FLICK
