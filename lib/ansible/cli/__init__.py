@@ -42,7 +42,7 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 from ansible.utils.vars import load_extra_vars, load_options_vars
-from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText
 from ansible.vars.manager import VariableManager
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
 
@@ -329,8 +329,6 @@ class CLI(with_metaclass(ABCMeta, object)):
             if op.ask_pass:
                 sshpass = getpass.getpass(prompt="SSH password: ")
                 become_prompt = "%s password[defaults to SSH password]: " % become_prompt_method
-                if sshpass:
-                    sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
             else:
                 become_prompt = "%s password: " % become_prompt_method
 
@@ -338,17 +336,15 @@ class CLI(with_metaclass(ABCMeta, object)):
                 becomepass = getpass.getpass(prompt=become_prompt)
                 if op.ask_pass and becomepass == '':
                     becomepass = sshpass
-                if becomepass:
-                    becomepass = to_bytes(becomepass)
         except EOFError:
             pass
 
         # we 'wrap' the passwords to prevent templating as
         # they can contain special chars and trigger it incorrectly
         if sshpass:
-            sshpass = AnsibleUnsafeBytes(sshpass)
+            sshpass = AnsibleUnsafeText(to_text(sshpass))
         if becomepass:
-            becomepass = AnsibleUnsafeBytes(becomepass)
+            becomepass = AnsibleUnsafeText(to_text(becomepass))
 
         return (sshpass, becomepass)
 
