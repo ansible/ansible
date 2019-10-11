@@ -135,7 +135,7 @@ return_contains_schema = Any(
         Schema(
             {
                 Required('description'): Any(list_string_types, *string_types),
-                Required('returned'): Any(*string_types),
+                'returned': Any(*string_types),  # only returned on top level
                 Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
                 'version_added': Any(float, *string_types),
                 'sample': Any(None, list, dict, int, float, *string_types),
