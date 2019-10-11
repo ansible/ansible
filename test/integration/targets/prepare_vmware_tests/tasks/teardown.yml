@@ -1,10 +1,6 @@
 ---
 - name: Remove the VM prepared by prepare_vmware_tests
   vmware_guest:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    validate_certs: no
     name: "{{ item.name }}"
     force: yes
     state: absent
@@ -12,10 +8,6 @@
 
 - name: Remove the test_vm* VMs
   vmware_guest:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    validate_certs: no
     name: "{{ item }}"
     force: yes
     state: absent
@@ -26,10 +18,6 @@
 
 - name: Remove the DVSwitch
   vmware_dvswitch:
-    validate_certs: no
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
     datacenter_name: '{{ dc1 }}'
     state: absent
     switch_name: '{{ item }}'
@@ -41,7 +29,6 @@
 
 - name: Remove the vSwitches
   vmware_vswitch:
-    validate_certs: no
     hostname: '{{ item }}'
     username: '{{ esxi_user }}'
     password: '{{ esxi_password }}'
@@ -52,16 +39,12 @@
 
 - name: Remove ESXi Hosts to vCenter
   vmware_host:
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
     datacenter_name: '{{ dc1 }}'
     cluster_name: ccr1
     esxi_hostname: '{{ item }}'
     esxi_username: '{{ esxi_user }}'
     esxi_password: '{{ esxi_password }}'
     state: absent
-    validate_certs: no
   with_items: "{{ esxi_hosts }}"
   ignore_errors: yes
 
@@ -73,7 +56,6 @@
       esxi_hostname: '{{ item }}'  # Won't be necessary with  https://github.com/ansible/ansible/pull/56516
       datastore_name: '{{ ds1 }}'
       state: absent
-      validate_certs: no
   with_items: "{{ esxi_hosts }}"
 
 - name: Umount NFS datastores to ESXi (2/2)
@@ -84,15 +66,10 @@
       esxi_hostname: '{{ item }}'  # Won't be necessary with  https://github.com/ansible/ansible/pull/56516
       datastore_name: '{{ ds2 }}'
       state: absent
-      validate_certs: no
   with_items: "{{ esxi_hosts }}"
 
 - name: Delete a datastore cluster to datacenter
   vmware_datastore_cluster:
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
-    validate_certs: no
     datacenter_name: "{{ dc1 }}"
     datastore_cluster_name: '{{ item }}'
     state: absent
@@ -103,10 +80,6 @@
 
 - name: Remove the datacenter
   vmware_datacenter:
-    validate_certs: no
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
     datacenter_name: '{{ item }}'
     state: absent
   when: vcsim is not defined

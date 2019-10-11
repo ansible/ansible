@@ -1,11 +1,7 @@
 ---
 - name: Create VMs
   vmware_guest:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    validate_certs: no
     folder: '{{ item.folder }}'
     name: '{{ item.name }}'
     state: poweredoff
@@ -28,11 +24,7 @@
 
 - name: Create VMs in cluster
   vmware_guest:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    validate_certs: no
     folder: '{{ item.folder }}'
     cluster: '{{ item.cluster }}'
     name: '{{ item.name }}'

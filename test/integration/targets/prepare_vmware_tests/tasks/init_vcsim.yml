@@ -38,10 +38,6 @@
 
 - name: set state to poweroff on all VMs
   vmware_guest:
-    validate_certs: False
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
     name: "{{ item.name }}"
     state: poweredoff
   with_items: "{{ virtual_machines + virtual_machines_in_cluster }}"
