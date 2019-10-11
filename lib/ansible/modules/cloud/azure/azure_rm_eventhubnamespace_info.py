@@ -17,7 +17,7 @@ module: azure_rm_eventhubnamespace_info
 version_added: "2.10"
 short_description: Get Azure eventhub namespace information
 description:
-    - Get information for an a specific eventhub namespace or all eventhub namespaces.
+    - Get information for a specific eventhub namespace or all eventhub namespaces.
 
 options:
     resource_group:
