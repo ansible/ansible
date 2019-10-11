@@ -53,7 +53,7 @@ options:
   blade_letter:
     description:
       - Specify a blade letter.
-    default: ['A']
+    default: 'A'
     type: str
   ipaddress:
     description:
@@ -203,11 +203,8 @@ def main():
     responses = None
     cur_version, cond = check_version(module)
     while cond and retries > 0:
-        cmd = construct_update_command(module)
 
-        print(cmd)
-        responses = run_commands(module, [cmd])
-        #responses = run_commands(module, [construct_update_command(module)])
+        responses = run_commands(module, [construct_update_command(module)])
 
         for item in list(conditionals):
             if item(responses):
