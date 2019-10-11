@@ -635,10 +635,8 @@ class TestBaseSubClass(TestBase):
         self.assertEquals(bsc.test_attr_method_missing, a_string)
 
     def test_get_validated_value_string_rewrap_unsafe(self):
-        attribute = FieldAttribute(isa='string')
         value = AnsibleUnsafeText(u'bar')
-        templar = Templar(None)
-        bsc = self.ClassUnderTest()
-        result = bsc.get_validated_value('foo', attribute, value, templar)
-        self.assertIsInstance(result, AnsibleUnsafeText)
-        self.assertEquals(result, AnsibleUnsafeText(u'bar'))
+        ds = {'test_attr_string': value}
+        bsc = self._base_validate(ds)
+        self.assertIsInstance(bsc.test_attr_string, AnsibleUnsafeText)
+        self.assertEquals(bsc.test_attr_string, AnsibleUnsafeText(u'bar'))
