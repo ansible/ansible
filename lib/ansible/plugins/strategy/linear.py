@@ -30,6 +30,7 @@ DOCUMENTATION = '''
      - This was the default Ansible behaviour before 'strategy plugins' were introduced in 2.0.
     author: Ansible Core Team
 '''
+import time
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.executor.play_iterator import PlayIterator
@@ -218,8 +219,8 @@ class StrategyModule(StrategyBase):
                 callback_sent = False
                 work_to_do = False
 
-                host_results = []
                 host_tasks = self._get_next_task_lockstep(hosts_left, iterator)
+                #print("done calculating next task")
 
                 # skip control
                 skip_rest = False
@@ -229,6 +230,25 @@ class StrategyModule(StrategyBase):
                 any_errors_fatal = False
 
                 results = []
+
+                target_task = None
+                for (host, task) in host_tasks:
+                    if task:
+                        target_task = task
+                        break
+
+                action = None
+                if target_task:
+                    # test to see if the task across all hosts points to an action plugin which
+                    # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
+                    # will only send this task to the first host in the list.
+                    try:
+                        action = action_loader.get(target_task.action, class_only=True)
+                    except KeyError:
+                        # we don't care here, because the action may simply not have a
+                        # corresponding action plugin
+                        pass
+
                 for (host, task) in host_tasks:
                     if not task:
                         continue
@@ -238,17 +258,6 @@ class StrategyModule(StrategyBase):
 
                     run_once = False
                     work_to_do = True
-
-                    # test to see if the task across all hosts points to an action plugin which
-                    # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
-                    # will only send this task to the first host in the list.
-
-                    try:
-                        action = action_loader.get(task.action, class_only=True)
-                    except KeyError:
-                        # we don't care here, because the action may simply not have a
-                        # corresponding action plugin
-                        action = None
 
                     # check to see if this task should be skipped, due to it being a member of a
                     # role which has already run (and whether that role allows duplicate execution)
@@ -305,8 +314,10 @@ class StrategyModule(StrategyBase):
                             callback_sent = True
                             display.debug("sending task start callback")
 
-                        self._blocked_hosts[host.get_name()] = True
+                        self._blocked_hosts[host.name] = True
+                        #print("queuing task for %s (%s)" % (host.name, time.time()))
                         self._queue_task(host, task, task_vars, play_context)
+                        #print("queued task for %s (%s)" % (host.name, time.time()))
                         del task_vars
 
                     # if we're bypassing the host loop, break out now
@@ -319,16 +330,17 @@ class StrategyModule(StrategyBase):
                 if skip_rest:
                     continue
 
+                #print("done queuing things up for %s, now waiting for results queue to drain" % task)
                 display.debug("done queuing things up, now waiting for results queue to drain")
                 if self._pending_results > 0:
+                    #print("waiting on pending results")
                     results += self._wait_on_pending_results(iterator)
-
-                host_results.extend(results)
+                    #print("done waiting on pending results")
 
                 self.update_active_connections(results)
 
                 included_files = IncludedFile.process_include_results(
-                    host_results,
+                    results,
                     iterator=iterator,
                     loader=self._loader,
                     variable_manager=self._variable_manager

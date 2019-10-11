@@ -305,7 +305,6 @@ class StrategyBase:
         #    #json.dump(task_vars, f, cls=AnsibleJSONEncoder)
         #    json.dump({}, f)
         task_vars_path = ''
-        del task_vars
         display.debug("done dumping task vars to tmp file")
 
         try:
@@ -313,23 +312,19 @@ class StrategyBase:
             self._queued_task_cache[(host.name, task._uuid)] = {
                 'host': host,
                 'task': task,
-                #'task_vars': task_vars,
+                'task_vars': task_vars,
                 'play_context': play_context
             }
             display.debug("done adding host/task info to queued task cache")
             display.debug("copying/squashing task and play context for queue")
-            t = task.copy(exclude_parent=False, exclude_tasks=True)
-            t.squash()
-            pc = play_context.copy()
-            pc.squash()
             display.debug("done copying/squashing task and play context for queue")
             display.debug("putting the task/etc. in the queue")
             worker, in_q = self._workers[self._cur_worker]
             in_q.put((
-                host.serialize(),
-                t.serialize(),
+                host._serialized_view,
+                task.serialize(),
                 task_vars_path,
-                pc.serialize(),
+                play_context.serialize(),
                 {}, # plugin paths dict
             ), block=False)
             display.debug("done putting the task/etc. in the queue")

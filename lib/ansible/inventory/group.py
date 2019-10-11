@@ -89,19 +89,23 @@ class Group:
     def __setstate__(self, data):
         return self.deserialize(data)
 
-    def serialize(self):
+    def serialize(self, exclude_hosts=False):
         parent_groups = []
         for parent in self.parent_groups:
             parent_groups.append(parent.serialize())
 
         self._hosts = None
+        if exclude_hosts:
+            hosts = []
+        else:
+            hosts = self.hosts
 
         result = dict(
             name=self.name,
             vars=self.vars.copy(),
             parent_groups=parent_groups,
             depth=self.depth,
-            hosts=self.hosts,
+            hosts=hosts,
         )
 
         return result

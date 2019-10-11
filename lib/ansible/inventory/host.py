@@ -57,7 +57,7 @@ class Host:
     def serialize(self):
         groups = []
         for group in self.groups:
-            groups.append(group.serialize())
+            groups.append(group.serialize(exclude_hosts=True))
 
         return dict(
             name=self.name,
@@ -99,6 +99,8 @@ class Host:
             self._uuid = get_unique_id()
         self.implicit = False
 
+        self._serialized_view = self.serialize()
+
     def get_name(self):
         return self.name
 
@@ -111,6 +113,7 @@ class Host:
             for group in additions:
                 if group not in self.groups:
                     self.groups.append(group)
+        self._serialized_view = self.serialize()
 
     def add_group(self, group):
 
@@ -122,6 +125,7 @@ class Host:
         # actually add group
         if group not in self.groups:
             self.groups.append(group)
+            self._serialized_view = self.serialize()
 
     def remove_group(self, group):
 
@@ -136,12 +140,14 @@ class Host:
                             break
                     else:
                         self.remove_group(oldg)
+            self._serialized_view = self.serialize()
 
     def set_variable(self, key, value):
         if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
             self.vars[key] = combine_vars(self.vars[key], value)
         else:
             self.vars[key] = value
+        self._serialized_view = self.serialize()
 
     def get_groups(self):
         return self.groups
