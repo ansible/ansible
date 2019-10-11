@@ -11,6 +11,16 @@
       setup_datastore: true
       setup_virtualmachines: true
 
+  - name: set state to poweron the first VM
+    vmware_guest_powerstate:
+      validate_certs: no
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines[0].name }}"
+      folder: '{{ f0 }}'
+      state: powered-on
+
   - name: send keys to virtual machine
     vmware_guest_sendkey:
       validate_certs: False
