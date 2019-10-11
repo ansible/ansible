@@ -47,8 +47,8 @@ class TestEosVlansModule(TestEosModule):
 
     def load_fixtures(self, commands=None, transport='cli'):
         file_cmd = load_fixture('eos_vlan_config.cfg').split()
-#       comprehension failing in zuul with syntax error
-#       file_cmd_dict = {file_cmd[i]: file_cmd[i + 1] for i in range(0, len(file_cmd), 2)}
+        #       comprehension failing in zuul with syntax error
+        #       file_cmd_dict = {file_cmd[i]: file_cmd[i + 1] for i in range(0, len(file_cmd), 2)}
         file_cmd_dict = {}
         for i in range(0, len(file_cmd), 2):
             if file_cmd[i] == 'vlan_id':
@@ -56,7 +56,7 @@ class TestEosVlansModule(TestEosModule):
             else:
                 y = file_cmd[i + 1]
             file_cmd_dict.update({file_cmd[i]: y})
-#        self.execute_show_command.return_value = [{x: int(y) if x == 'vlan_id' else y   for x, y in file_cmd_dict.items()}]
+        #        self.execute_show_command.return_value = [{x: int(y) if x == 'vlan_id' else y   for x, y in file_cmd_dict.items()}]
         self.execute_show_command.return_value = [file_cmd_dict]
 
     def test_eos_vlan_default(self):
@@ -126,19 +126,19 @@ class TestEosVlansModule(TestEosModule):
         commands = ['vlan 10', 'name ten']
         self.execute_module(changed=False, commands=[])
 
-#Bug exists. Will be uncommented once the bug is fixed
+    # Bug exists. Will be uncommented once the bug is fixed
 
-#    def test_eos_vlan_overridden(self):
-#        self.execute_show_command.return_value = []
-#        set_module_args(dict(
-#            config=[dict(
-#                vlan_id=30,
-#                name="thirty",
-#                state="suspend"
-#            )], state="overridden"
-#        ))
-#        commands = ['vlan 30', 'name thirty', 'state suspend']
-#        self.execute_module(changed=True, commands=commands)
+    #    def test_eos_vlan_overridden(self):
+    #        self.execute_show_command.return_value = []
+    #        set_module_args(dict(
+    #            config=[dict(
+    #                vlan_id=30,
+    #                name="thirty",
+    #                state="suspend"
+    #            )], state="overridden"
+    #        ))
+    #        commands = ['vlan 30', 'name thirty', 'state suspend']
+    #        self.execute_module(changed=True, commands=commands)
 
     def test_eos_vlan_overridden_idempotent(self):
         self.execute_show_command.return_value = load_fixture('eos_vlan_config.cfg')
@@ -171,17 +171,17 @@ class TestEosVlansModule(TestEosModule):
         result = self.execute_module(failed=True)
         self.assertIn("we were unable to convert to int", result['msg'])
 
-#Bug exists. Will be uncommented once the bug is fixed
+    # Bug exists. Will be uncommented once the bug is fixed
 
-#    def test_eos_vlan_id_datarange(self):
-#        set_module_args(dict(
-#            config=[dict(
-#                vlan_id=20000
-#            )]
-#        ))
-#        commands = ['vlan outofrange']
-#        result = self.execute_module(failed=True)
-#        self.assertIn("we were unable to convert to int", result['msg'])
+    #    def test_eos_vlan_id_datarange(self):
+    #        set_module_args(dict(
+    #            config=[dict(
+    #                vlan_id=20000
+    #            )]
+    #        ))
+    #        commands = ['vlan outofrange']
+    #        result = self.execute_module(failed=True)
+    #        self.assertIn("we were unable to convert to int", result['msg'])
 
     def test_eos_vlan_state_datatype(self):
         set_module_args(dict(
