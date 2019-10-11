@@ -86,6 +86,20 @@ extensions:
     description: Extensions applied to the cert
     returned: success
     type: list
+    elements: dict
+    contains:
+        critical:
+            returned: success
+            type: bool
+            description: Whether the extension is critical.
+        asn1_data:
+            returned: success
+            type: str
+            description: The Base64 encoded ASN.1 content of the extnesion.
+        name:
+            returned: success
+            type: str
+            description: The extension's name.
 issuer:
     description: Information about the issuer of the cert
     returned: success
