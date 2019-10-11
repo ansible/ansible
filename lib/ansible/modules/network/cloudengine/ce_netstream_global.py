@@ -277,7 +277,7 @@ def get_config(module, flags):
     lines = [l for l in lines if time_stamp_regex.match(l) is not None]
     if cfg.startswith('display'):
         if len(lines) > 1:
-           lines.pop(0)
+            lines.pop(0)
         else:
             return ''
     return '\n'.join(lines)
