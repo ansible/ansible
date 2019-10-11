@@ -1,0 +1,30 @@
+
+- name: Create John Doe for tests purpose through uri module
+  uri:
+    url: http://127.0.0.1:3000/api/admin/users
+    method: POST
+    user: 'admin'
+    password: 'admin'
+    force_basic_auth: yes
+    body:
+      name: "John"
+      email: "john.doe@example.com"
+      login: "john"
+      password: "userpassword"
+    body_format: json
+    status_code: 200
+
+- name: Create Jane Doe for tests purpose through uri module
+  uri:
+    url: http://127.0.0.1:3000/api/admin/users
+    method: POST
+    user: 'admin'
+    password: 'admin'
+    force_basic_auth: yes
+    body:
+      name: "Jane"
+      email: "jane.doe@example.com"
+      login: "jane"
+      password: "userpassword"
+    body_format: json
+    status_code: 200

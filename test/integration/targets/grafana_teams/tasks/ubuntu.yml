@@ -1,0 +1,91 @@
+---
+
+- name: Create a Team without members
+  grafana_teams:
+      url: "http://127.0.0.1:3000"
+      url_username: admin
+      url_password: admin
+      name: "grafana_working_group"
+      email: "foo.bar@example.com"
+      state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.team.name == 'grafana_working_group'"
+      - "result.team.memberCount == 0"
+      - "result.team.members == []"
+      - "result.team.email == 'foo.bar@example.com'"
+
+- name: Check idempotency on team creation
+  grafana_teams:
+      url: "http://127.0.0.1:3000"
+      url_username: admin
+      url_password: admin
+      name: "grafana_working_group"
+      email: "foo.bar@example.com"
+      state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.team.name == 'grafana_working_group'"
+      - "result.team.memberCount == 0"
+      - "result.team.members == []"
+      - "result.team.email == 'foo.bar@example.com'"
+
+- name: Check a team can be deleted
+  grafana_teams:
+      url: "http://127.0.0.1:3000"
+      url_username: admin
+      url_password: admin
+      name: "grafana_working_group"
+      email: "foo.bar@example.com"
+      state: absent
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.message == 'Team deleted'"
+
+- name: Check idempotency on team deletion
+  grafana_teams:
+      url: "http://127.0.0.1:3000"
+      url_username: admin
+      url_password: admin
+      name: "grafana_working_group"
+      email: "foo.bar@example.com"
+      state: absent
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.message == 'No team found'"
+
+- name: Create users for tests purpose
+  include_tasks: create_user.yml
+
+- name: Create a Team with members
+  grafana_teams:
+      url: "http://127.0.0.1:3000"
+      url_username: admin
+      url_password: admin
+      name: "grafana_working_group"
+      email: "foo.bar@example.com"
+      members:
+          - "john.doe@example.com"
+          - "jane.doe@example.com"
+      state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.team.name == 'grafana_working_group'"
+      - "result.team.memberCount == 2"
+      - "result.team.members == ['jane.doe@example.com', 'john.doe@example.com']"
+      - "result.team.email == 'foo.bar@example.com'"

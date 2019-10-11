@@ -350,6 +350,7 @@ def main():
                 for member in plan.get("to_del"):
                     grafana_iface.delete_team_member(team.get("id"), member)
                     changed = True
+            team = grafana_iface.get_team(name)
         team['members'] = grafana_iface.get_team_members(team.get("id"))
         module.exit_json(failed=False, changed=changed, team=team)
     elif state == 'absent':
