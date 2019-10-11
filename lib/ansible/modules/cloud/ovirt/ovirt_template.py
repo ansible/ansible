@@ -1025,11 +1025,6 @@ def main():
                 if template is None:
                     raise TimeoutError("Image/template '%s' could not be imported. Try again with larger timeout." % template_name)
                 ret = templates_module.create(result_state=otypes.TemplateStatus.OK)
-                ret = {
-                    'changed': True,
-                    'id': template.id,
-                    'template': get_dict_of_struct(template),
-                }
         elif state == 'registered':
             storage_domains_service = connection.system_service().storage_domains_service()
             # Find the storage domain with unregistered template:
