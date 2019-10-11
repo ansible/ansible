@@ -26,6 +26,7 @@ from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 from ansible.playbook import base
+from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
 
 from units.mock.loader import DictDataLoader
 
@@ -626,3 +627,10 @@ class TestBaseSubClass(TestBase):
         ds = {'test_attr_method_missing': a_string}
         bsc = self._base_validate(ds)
         self.assertEquals(bsc.test_attr_method_missing, a_string)
+
+    def test_get_validated_value_string_rewrap_unsafe(self):
+        value = AnsibleUnsafeText(u'bar')
+        ds = {'test_attr_string': value}
+        bsc = self._base_validate(ds)
+        self.assertIsInstance(bsc.test_attr_string, AnsibleUnsafeText)
+        self.assertEquals(bsc.test_attr_string, AnsibleUnsafeText(u'bar'))
