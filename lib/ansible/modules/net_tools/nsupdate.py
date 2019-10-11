@@ -232,7 +232,7 @@ class RecordManager(object):
         else:
             self.algorithm = module.params['key_algorithm']
 
-        if self.module.params['type'].lower() == 'txt':
+        if self.module.params['type'].lower() == 'txt' and self.module.params['value'] is not None:
             self.value = list(map(self.txt_helper, self.module.params['value']))
         else:
             self.value = self.module.params['value']
