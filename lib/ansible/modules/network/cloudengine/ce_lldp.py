@@ -756,11 +756,11 @@ class Lldp(object):
                     if self.fast_count:
                         self.updates_cmd.append("lldp fast-count %s" % self.fast_count)
                     if self.mdn_notification_interval:
-                        self.updates_cmd.append( "lldp mdn trap-interval %s" % self.mdn_notification_interval)
+                        self.updates_cmd.append("lldp mdn trap-interval %s" % self.mdn_notification_interval)
                     if self.management_address:
                         self.updates_cmd.append("lldp management-address %s" % self.management_address)
                     if self.bind_name:
-                        self.updates_cmd.append( "lldp management-address bind interface %s" % self.bind_name)
+                        self.updates_cmd.append("lldp management-address bind interface %s" % self.bind_name)
 
     def work(self):
         """Excute task"""
