@@ -340,7 +340,7 @@ class NetstreamTemplate(object):
             cmd = "netstream record %s vxlan inner-ip" % self.record_name
         cmds.append(cmd)
 
-        if self.existing.get('type') is not None:
+        if self.existing.get('record_name') != self.record_name:
             self.updates_cmd.append(cmd)
             need_create_record = True
 
