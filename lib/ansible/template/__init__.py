@@ -272,7 +272,7 @@ class AnsibleContext(Context):
             for item in val:
                 if self._is_unsafe(item):
                     return True
-        elif isinstance(val, string_types) and hasattr(val, '__UNSAFE__'):
+        elif hasattr(val, '__UNSAFE__'):
             return True
         return False
 
