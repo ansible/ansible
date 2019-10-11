@@ -19,7 +19,7 @@ module: zabbix_user_group
 short_description: Create/update/delete/dump Zabbix user group
 description:
     - Create/update/delete/dump Zabbix user group.
-version_added: "2.9"
+version_added: "2.10"
 author:
     - Emmanuel Riviere (@emriver)
 requirements:
