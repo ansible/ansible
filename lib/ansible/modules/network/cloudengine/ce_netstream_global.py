@@ -274,7 +274,7 @@ def get_config(module, flags):
             cfg = rm_config_prefix(cfg)
             break
     lines = cfg.split('\n')
-    lines =[l for l in lines if time_stamp_regex.match(l) is not None]
+    lines = [l for l in lines if time_stamp_regex.match(l) is not None]
     if cfg.startswith('display'):
         if len(lines) > 1:
            lines.pop(0)
@@ -363,12 +363,13 @@ class NetStreamGlobal(object):
         sampler_tmp = dict()
         sampler_tmp1 = dict()
         flags = list()
-        exp = " | ignore-case  include ^netstream sampler random-packets"
+        exp = " | ignore-case include ^netstream sampler random-packets"
         flags.append(exp)
         config = get_config(self.module, flags)
         if not config:
             sampler_tmp["sampler_interval"] = "null"
             sampler_tmp["sampler_direction"] = "null"
+            sampler_tmp["interface"] = null
         else:
             config_list = config.split(' ')
             config_num = len(config_list)
@@ -398,7 +399,7 @@ class NetStreamGlobal(object):
                         sampler_tmp1["sampler_interval"] = config_mem_list[
                             config_num - 2]
                         sampler_tmp1["interface"] = self.interface
-        self.existing["sampler"].append(sampler_tmp1)
+                        self.existing["sampler"].append(sampler_tmp1)
 
     def get_exist_statistic_record(self):
         """get exist netstream statistic record parameter"""
@@ -524,7 +525,7 @@ class NetStreamGlobal(object):
         sampler_tmp = dict()
         sampler_tmp1 = dict()
         flags = list()
-        exp = " | ignore-case  include ^netstream sampler random-packets"
+        exp = " | ignore-case include ^netstream sampler random-packets"
         flags.append(exp)
         config = get_config(self.module, flags)
         if not config:
@@ -540,7 +541,7 @@ class NetStreamGlobal(object):
         self.end_state["sampler"].append(sampler_tmp)
         if self.interface != "all":
             flags = list()
-            exp = r" | ignore-case  section include ^#\s+interface %s" \
+            exp = r" | ignore-case section include ^#\s+interface %s" \
                   r" | include netstream sampler random-packets" % self.interface
             flags.append(exp)
             config = get_config(self.module, flags)
