@@ -781,11 +781,7 @@ def main():
             disk = disks_module.wait_for_import(
                 condition=lambda t: t.status == otypes.DiskStatus.OK
             )
-            ret = {
-                'changed': True,
-                'id': disk.id,
-                'disk': get_dict_of_struct(disk),
-            }
+            ret = disks_module.create(result_state=otypes.DiskStatus.OK)
         elif state == 'absent':
             ret = disks_module.remove()
 
