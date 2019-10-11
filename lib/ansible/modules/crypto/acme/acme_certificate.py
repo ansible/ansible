@@ -324,7 +324,8 @@ challenge_data:
     - Per identifier / challenge type challenge data.
     - Since Ansible 2.8.5, only challenges which are not yet valid are returned.
   returned: changed
-  type: complex
+  type: list
+  elements: dict
   contains:
     resource:
       description: The challenge resource that must be created for validation.
@@ -366,14 +367,12 @@ challenge_data_dns:
   type: dict
   version_added: "2.5"
 authorizations:
-  description: ACME authorization data.
+  description:
+    - ACME authorization data.
+    - Maps an identifier to ACME authorization objects. See U(https://tools.ietf.org/html/rfc8555#section-7.1.4).
   returned: changed
-  type: complex
-  contains:
-      authorization:
-        description: ACME authorization object. See U(https://tools.ietf.org/html/rfc8555#section-7.1.4)
-        returned: success
-        type: dict
+  type: dict
+  sample: '{"example.com":{...}}'
 order_uri:
   description: ACME order URI.
   returned: changed
@@ -397,6 +396,7 @@ all_chains:
     - See L(Section 7.4.2 of RFC8555,https://tools.ietf.org/html/rfc8555#section-7.4.2) for details.
   returned: when certificate was retrieved and I(retrieve_all_alternates) is set to C(yes)
   type: list
+  elements: dict
   contains:
     cert:
       description:

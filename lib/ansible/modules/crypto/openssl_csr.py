@@ -365,26 +365,31 @@ subject:
     description: A list of the subject tuples attached to the CSR
     returned: changed or success
     type: list
+    elements: list
     sample: "[('CN', 'www.ansible.com'), ('O', 'Ansible')]"
 subjectAltName:
     description: The alternative names this CSR is valid for
     returned: changed or success
     type: list
+    elements: str
     sample: [ 'DNS:www.ansible.com', 'DNS:m.ansible.com' ]
 keyUsage:
     description: Purpose for which the public key may be used
     returned: changed or success
     type: list
+    elements: str
     sample: [ 'digitalSignature', 'keyAgreement' ]
 extendedKeyUsage:
     description: Additional restriction on the public key purposes
     returned: changed or success
     type: list
+    elements: str
     sample: [ 'clientAuth' ]
 basicConstraints:
     description: Indicates if the certificate belongs to a CA
     returned: changed or success
     type: list
+    elements: str
     sample: ['CA:TRUE', 'pathLenConstraint:0']
 ocsp_must_staple:
     description: Indicates whether the certificate has the OCSP

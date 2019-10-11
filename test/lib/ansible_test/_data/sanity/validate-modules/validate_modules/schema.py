@@ -142,6 +142,8 @@ return_schema = Any(
                     'sample': Any(None, list, dict, int, float, *string_types),
                     'example': Any(None, list, dict, int, float, *string_types),
                     'contains': object,
+                    # in case of type='list' elements define type of individual item in list
+                    'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
                 }
             }
         ),
