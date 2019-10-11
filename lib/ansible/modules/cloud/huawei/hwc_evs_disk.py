@@ -375,7 +375,7 @@ def main():
 
     try:
         _init(config)
-        is_exist = module.params['id']
+        is_exist = module.params.get('id')
 
         result = None
         changed = False
@@ -421,7 +421,7 @@ def main():
 
 def _init(config):
     module = config.module
-    if module.params['id']:
+    if module.params.get('id'):
         return
 
     v = search_resource(config)
