@@ -473,7 +473,7 @@ def main():
         filter_ = [f.strip() for f in filter_]
 
     if exclude_fields:
-        exclude_fields = {f.strip() for f in exclude_fields}
+        exclude_fields = set([f.strip() for f in exclude_fields])
 
     if mysql_driver is None:
         module.fail_json(msg=mysql_driver_fail_msg)
