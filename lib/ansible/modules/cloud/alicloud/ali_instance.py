@@ -468,7 +468,8 @@ instances:
         security_groups:
             description: One or more security groups for the instance.
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
             contains:
                 group_id:
                     description: The ID of the security group.

@@ -216,7 +216,8 @@ updates:
         kb:
             description: A list of KB article IDs that apply to the update.
             returned: always
-            type: list of strings
+            type: list
+            elements: str
             sample: [ '3004365' ]
         id:
             description: Internal Windows Update GUID.
@@ -231,7 +232,8 @@ updates:
         categories:
             description: A list of category strings for this update.
             returned: always
-            type: list of strings
+            type: list
+            elements: str
             sample: [ 'Critical Updates', 'Windows Server 2012 R2' ]
         failure_hresult_code:
             description: The HRESULT code from a failed update.

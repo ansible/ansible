@@ -87,20 +87,23 @@ nacls:
         subnets:
             description: A list of subnet IDs that are associated with the NACL.
             returned: always
-            type: list of string
+            type: list
+            elements: str
         ingress:
             description:
               - A list of NACL ingress rules with the following format.
               - "C([rule no, protocol, allow/deny, v4 or v6 cidr, icmp_type, icmp_code, port from, port to])"
             returned: always
-            type: list of list
+            type: list
+            elements: list
             sample: [[100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]]
         egress:
             description:
               - A list of NACL egress rules with the following format.
               - "C([rule no, protocol, allow/deny, v4 or v6 cidr, icmp_type, icmp_code, port from, port to])"
             returned: always
-            type: list of list
+            type: list
+            elements: list
             sample: [[100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]]
 '''
 
