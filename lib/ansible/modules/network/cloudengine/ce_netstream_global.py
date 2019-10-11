@@ -212,6 +212,7 @@ changed:
     sample: true
 '''
 
+import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import load_config
 from ansible.module_utils.network.cloudengine.ce import get_connection, rm_config_prefix
@@ -252,6 +253,7 @@ def get_config(module, flags):
 
     """Retrieves the current config from the device or cache
     """
+    time_stamp_regex = re.compile(r'\s*\d{4}-\d{1,2}-\d{1,2}\s+\d{2}\:\d{2}\:\d{2}\.\d+\s*')
     flags = [] if flags is None else flags
     if isinstance(flags, str):
         flags = [flags]
@@ -271,13 +273,14 @@ def get_config(module, flags):
         if "include-default" in flag:
             cfg = rm_config_prefix(cfg)
             break
+    lines = cfg.split('\n')
+    lines =[l for l in lines if time_stamp_regex.match(l) is not None]
     if cfg.startswith('display'):
-        lines = cfg.split('\n')
         if len(lines) > 1:
-            return '\n'.join(lines[1:])
+           lines.pop(0)
         else:
             return ''
-    return cfg
+    return '\n'.join(lines)
 
 
 class NetStreamGlobal(object):
