@@ -24,7 +24,6 @@ class TestEosVlansModule(TestEosModule):
         self.mock_load_config = patch('ansible.module_utils.network.common.network.Config.load_config')
         self.load_config = self.mock_load_config.start()
 
-
         self.mock_get_resource_connection_config = patch('ansible.module_utils.network.common.cfg.base.get_resource_connection')
         self.get_resource_connection_config = self.mock_get_resource_connection_config.start()
 
@@ -48,16 +47,16 @@ class TestEosVlansModule(TestEosModule):
 
     def load_fixtures(self, commands=None, transport='cli'):
         file_cmd = load_fixture('eos_vlan_config.cfg').split()
-        #comprehension failing in zuul with syntax error
-        #file_cmd_dict = {file_cmd[i]: file_cmd[i + 1] for i in range(0, len(file_cmd), 2)}
-        file_cmd_dict={}
+#       comprehension failing in zuul with syntax error
+#       file_cmd_dict = {file_cmd[i]: file_cmd[i + 1] for i in range(0, len(file_cmd), 2)}
+        file_cmd_dict = {}
         for i in range(0, len(file_cmd), 2):
             if file_cmd[i] == 'vlan_id':
-                y = int(file_cmd[i+1])
+                y = int(file_cmd[i + 1])
             else:
-                y = file_cmd[i+1]
-            file_cmd_dict.update({file_cmd[i] : y})
-        #self.execute_show_command.return_value = [{x: int(y) if x == 'vlan_id' else y   for x, y in file_cmd_dict.items()}]
+                y = file_cmd[i + 1]
+            file_cmd_dict.update({file_cmd[i]: y})
+#        self.execute_show_command.return_value = [{x: int(y) if x == 'vlan_id' else y   for x, y in file_cmd_dict.items()}]
         self.execute_show_command.return_value = [file_cmd_dict]
 
     def test_eos_vlan_default(self):
@@ -71,19 +70,17 @@ class TestEosVlansModule(TestEosModule):
         commands = ['vlan 30', 'name thirty']
         self.execute_module(changed=True, commands=commands)
 
-
     def test_eos_vlan_default_idempotent(self):
         self.execute_show_command.return_value = load_fixture('eos_vlan_config.cfg')
         set_module_args(dict(
             config=[dict(
                 vlan_id=10,
                 name="ten"
-                )
-            ]
+            )]
         ))
         commands = ['vlan 10', 'name ten']
         self.execute_module(changed=False, commands=[])
-    
+
     def test_eos_vlan_merged(self):
         self.execute_show_command.return_value = []
         set_module_args(dict(
@@ -101,8 +98,7 @@ class TestEosVlansModule(TestEosModule):
             config=[dict(
                 vlan_id=10,
                 name="ten"
-                )
-            ], state="merged"
+            )], state="merged"
         ))
         commands = ['vlan 10', 'name ten']
         self.execute_module(changed=False, commands=[])
@@ -125,8 +121,7 @@ class TestEosVlansModule(TestEosModule):
             config=[dict(
                 vlan_id=10,
                 name="ten"
-                )
-            ], state="replaced"
+            )], state="replaced"
         ))
         commands = ['vlan 10', 'name ten']
         self.execute_module(changed=False, commands=[])
@@ -140,7 +135,7 @@ class TestEosVlansModule(TestEosModule):
 #                vlan_id=30,
 #                name="thirty",
 #                state="suspend"
-#            )], state="overridden" 
+#            )], state="overridden"
 #        ))
 #        commands = ['vlan 30', 'name thirty', 'state suspend']
 #        self.execute_module(changed=True, commands=commands)
@@ -151,8 +146,7 @@ class TestEosVlansModule(TestEosModule):
             config=[dict(
                 vlan_id=10,
                 name="ten"
-                )
-            ], state="overridden"
+            )], state="overridden"
         ))
         commands = ['vlan 10', 'name ten']
         self.execute_module(changed=False, commands=[])
