@@ -41,6 +41,7 @@ from ansible.errors import AnsibleConnectionFailure
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
+from ansible.module_utils.urls import ParseResultDottedDict as DottedDict
 from ansible.parsing.ajson import AnsibleJSONDecoder
 from ansible.utils.display import Display
 from ansible.utils.multiprocessing import context as multiprocessing_context
@@ -182,7 +183,10 @@ class WorkerProcess(multiprocessing_context.Process):
                 task_vars = {}
                 try:
                     (host, task, task_vars_path, play_context, plugin_paths) = job
-                    display.debug("running TaskExecutor() for %s/%s [name: %s]" % (host['name'], task['uuid'], task['name']))
+                    host = DottedDict(host)
+                    task = DottedDict(task)
+                    play_context = DottedDict(play_context)
+                    display.debug("running TaskExecutor() for %s/%s [name: %s]" % (host.name, task.uuid, task.name))
                     #with open(task_vars_path, 'rt') as f:
                     #    task_vars = json.load(f, cls=AnsibleJSONDecoder)
                     task_vars = {}
@@ -204,23 +208,23 @@ class WorkerProcess(multiprocessing_context.Process):
                     self._final_q,
                 ).run()
 
-                display.debug("done running TaskExecutor() for %s/%s [name: %s]" % (host['name'], task['uuid'], task['name']))
+                display.debug("done running TaskExecutor() for %s/%s [name: %s]" % (host.name, task.uuid, task.name))
                 task_result = TaskResult(
-                    host['name'],
-                    task['uuid'],
+                    host.name,
+                    task.uuid,
                     executor_result,
                     task_fields=task,
                 )
 
                 # put the result on the result queue
-                display.debug("sending task result for task %s" % task['uuid'])
+                display.debug("sending task result for task %s" % task.uuid)
                 self._final_q.put(task_result)
-                display.debug("done sending task result for task %s" % task['uuid'])
+                display.debug("done sending task result for task %s" % task.uuid)
 
             except AnsibleConnectionFailure:
                 task_result = TaskResult(
-                    host['name'],
-                    task['uuid'],
+                    host.name,
+                    task.uuid,
                     dict(unreachable=True),
                     task_fields=task,
                 )
@@ -230,8 +234,8 @@ class WorkerProcess(multiprocessing_context.Process):
                 if not isinstance(e, (IOError, EOFError, KeyboardInterrupt, SystemExit)) or isinstance(e, TemplateNotFound):
                     try:
                         task_result = TaskResult(
-                            host['name'],
-                            task['uuid'],
+                            host.name,
+                            task.uuid,
                             dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''),
                             task_fields=task,
                         )

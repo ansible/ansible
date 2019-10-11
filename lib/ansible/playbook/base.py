@@ -196,7 +196,7 @@ def post_validate(data, templar):
         except (TypeError, ValueError) as e:
             value = data[name]
             raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
-                                     "The error was: %s" % (name, value, attribute['isa'], e), obj=data['ds'], orig_exc=e)
+                                     "The error was: %s" % (name, value, attribute['isa'], e), obj=data.ds, orig_exc=e)
         except (AnsibleUndefinedVariable, UndefinedError) as e:
             if templar._fail_on_undefined_errors and name != 'name':
                 if name == 'args':
