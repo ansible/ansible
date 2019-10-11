@@ -456,7 +456,7 @@
       <<: *aws_connection_info
     register: update_tags
 
-  - name: assert purge tags worked
+  - name: assert update tags worked
     assert:
       that:
         - update_tags.changed
@@ -583,6 +583,19 @@
       filters:
         route-table-id: "{{ create_private_table.route_table.id }}"
       <<: *aws_connection_info
+    register: route_table_facts
+
+  - name: assert route_table_facts has correct attributes
+    assert:
+      that:
+        - '"route_tables" in route_table_facts'
+        - 'route_table_facts.route_tables | length == 1'
+        - '"id" in route_table_facts.route_tables[0]'
+        - '"routes" in route_table_facts.route_tables[0]'
+        - '"associations" in route_table_facts.route_tables[0]'
+        - '"tags" in route_table_facts.route_tables[0]'
+        - '"vpc_id" in route_table_facts.route_tables[0]'
+        - 'route_table_facts.route_tables[0].id == create_private_table.route_table.id'
 
   - name: create NAT GW
     ec2_vpc_nat_gateway:
