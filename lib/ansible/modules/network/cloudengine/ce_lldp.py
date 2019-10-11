@@ -27,7 +27,7 @@ DOCUMENTATION = '''
 ---
 
 module: ce_lldp
-version_added: "2.9"
+version_added: "2.10"
 short_description: Manages LLDP configuration on HUAWEI CloudEngine switches.
 description:
     - Manages LLDP configuration on HUAWEI CloudEngine switches.
@@ -100,21 +100,9 @@ options:
         default: present
         type: str
         choices: ['present','absent']
-    provider:
-        type: dict
-        description:
-            - A dict parameter that is used to connect hosts and is not required and will removed.
-        required: false
 '''
 
 EXAMPLES = '''
-- name: LLDP test
-  hosts: cloudengine
-  connection: local
-  gather_facts: no
-
-  tasks:
-
   - name: "Configure global LLDP enable state"
     ce_lldp:
       lldpenable: enabled
@@ -240,7 +228,7 @@ import copy
 import re
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, set_nc_config, get_nc_config, execute_nc_action
+from ansible.module_utils.network.cloudengine.ce import set_nc_config, get_nc_config, execute_nc_action
 
 CE_NC_GET_GLOBAL_LLDPENABLE_CONFIG = """
 <filter type="subtree">
@@ -804,7 +792,6 @@ def main():
         bind_name=dict(required=False, type='str'),
         state=dict(choices=['absent', 'present'], default='present'),
     )
-    argument_spec.update(ce_argument_spec)
     lldp_obj = Lldp(argument_spec)
     lldp_obj.work()
 
