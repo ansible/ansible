@@ -19,7 +19,7 @@ module: zabbix_service
 short_description: Create/update/delete/dump Zabbix service
 description:
     - Create/update/delete/dump Zabbix service.
-version_added: "2.9"
+version_added: "2.10"
 author:
     - "Emmanuel Riviere (@emriver)"
 requirements:
