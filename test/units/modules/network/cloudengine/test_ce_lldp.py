@@ -77,7 +77,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
             mdn_notification_interval=8,
             management_address='1.1.1.1',
             bind_name='bind-name')
-            )
+        )
         result = self.execute_module(changed=True)
         self.assertEquals(sorted(result['updates']), sorted(update))
 
@@ -108,6 +108,6 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
             mdn_notification_interval=8,
             management_address='1.1.1.1',
             bind_name='bind-name')
-            )
+        )
         result = self.execute_module(changed=True)
         self.assertEquals(sorted(result['updates']), sorted(update))
