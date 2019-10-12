@@ -23,8 +23,9 @@ description:
     - vpc route management.
 short_description: Creates a resource of Vpc/Route in Huawei Cloud
 notes:
+  - If I(id) option is provided, it takes precedence over I(destination), I(vpc_id), I(type) and I(next_hop) for route selection.
   - I(destination), I(vpc_id), I(type) and I(next_hop) are used for route selection. If more than one route with this options exists, execution is aborted.
-  - No one parameter support update. If one of option changed, it will create a new resource.
+  - No parameter support updating. If one of option is changed, the module will create a new resource.
 version_added: '2.10'
 author: Huawei Inc. (@huaweicloud)
 requirements:
@@ -150,14 +151,14 @@ def main():
                 opts = user_input_parameters(module)
                 if are_different_dicts(resource, opts):
                     raise Exception(
-                        "Cannot change option from (%s) to (%s)of an"
+                        "Cannot change option from (%s) to (%s) for an"
                         " existing route.(%s)" % (resource, opts,
                                                   config.module.params.get(
                                                       'id')))
         else:
             v = search_resource(config)
             if len(v) > 1:
-                raise Exception("find more than one resources(%s)" % ", ".join([
+                raise Exception("Found more than one resource(%s)" % ", ".join([
                                 navigate_value(i, ["id"]) for i in v]))
 
             if len(v) == 1:
