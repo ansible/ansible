@@ -253,7 +253,7 @@ class Hardware(FactsBase):
 
         data = self.responses[0]
         if data:
-            self.facts['filesystems'] = re.findall(r'^Directory of (.*)/', data)[0]
+            self.facts['filesystems'] = re.findall(r'Directory of (.*)/', data)[0]
             self.facts['flash_total'] = re.findall(r'(.*) total', data)[0].replace(",", "")
             self.facts['flash_free'] = re.findall(r'total \((.*) free\)', data)[0].replace(",", "")
 
