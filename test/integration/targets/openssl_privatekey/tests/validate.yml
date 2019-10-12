@@ -183,4 +183,4 @@
       - privatekey_fmt_2_step_4 is not changed
       - privatekey_fmt_2_step_5 is not changed
       - privatekey_fmt_2_step_6 is changed
-  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version('2.6', '>=')'
+  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=")'

@@ -385,4 +385,4 @@
       select_crypto_backend: '{{ select_crypto_backend }}'
     register: privatekey_fmt_1_step_6
 
-  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version('2.6', '>=')'
+  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=")'
