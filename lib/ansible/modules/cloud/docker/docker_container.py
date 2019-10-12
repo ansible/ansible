@@ -93,6 +93,22 @@ options:
       - See the examples for details.
     type: dict
     version_added: "2.8"
+  container_default_behavior:
+    description:
+      - Various module options used to have default values. This causes problems with
+        containers which use different values for these options.
+      - The default value is C(compatibility), which will ensure that the default values
+        are used when the values are not explicitly specified by the user.
+      - From Ansible 2.14 on, the default value will switch to C(no_defaults). To avoid
+        deprecation warnings, please set I(container_default_behavior) to an explicit
+        value.
+      - This affects the I(auto_remove), I(detach), I(init), I(interactive), I(memory),
+        I(paused), I(privileged), I(read_only) and I(tty) options.
+    type: str
+    choices:
+      - compatibility
+      - no_defaults
+    version_added: "2.10"
   cpu_period:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period.
@@ -793,22 +809,6 @@ options:
       - Path to the working directory.
     type: str
     version_added: "2.4"
-  container_default_behavior:
-    description:
-      - Various module options used to have default values. This causes problems with
-        containers which use different values for these options.
-      - The default value is C(compatibility), which will ensure that the default values
-        are used when the values are not explicitly specified by the user.
-      - From Ansible 2.14 on, the default value will switch to C(no_defaults). To avoid
-        deprecation warnings, please set I(container_default_behavior) to an explicit
-        value.
-      - This affects the I(auto_remove), I(detach), I(init), I(interactive), I(memory),
-        I(paused), I(privileged), I(read_only) and I(tty) options.
-    type: str
-    choices:
-      - compatibility
-      - no_defaults
-    version_added: "2.10"
 extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation
@@ -3180,7 +3180,9 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             self.module.params['container_default_behavior'] = 'compatibility'
             self.module.deprecate(
                 'The container_default_behavior option will change its default value from "compatibility" to '
-                '"no_defaults" in Ansible 2.14. To remove this warning, please specify an explicit value for it now')
+                '"no_defaults" in Ansible 2.14. To remove this warning, please specify an explicit value for it now',
+                version='2.14'
+            )
         if self.module.params['container_default_behavior'] == 'compatibility':
             old_default_values = dict(
                 auto_remove=False,
@@ -3207,6 +3209,7 @@ def main():
         cleanup=dict(type='bool', default=False),
         command=dict(type='raw'),
         comparisons=dict(type='dict'),
+        container_default_behavior=dict(type='str', choices=['compatibility', 'no_defaults']),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
         cpuset_cpus=dict(type='str'),
