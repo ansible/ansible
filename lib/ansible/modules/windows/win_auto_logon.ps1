@@ -49,25 +49,25 @@ try {
     }
     $actionTaken = $null
     $autoLogonRegPath   = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\'
-    $autoLogonKeyRegList   = Get-ItemProperty -Path $autoLogonRegPath -Name $autoLogonKeyList.GetEnumerator().Name -ErrorAction SilentlyContinue
+    $autoLogonKeyRegList   = Get-ItemProperty -LiteralPath $autoLogonRegPath -Name $autoLogonKeyList.GetEnumerator().Name -ErrorAction SilentlyContinue
 
     Foreach($key in $autoLogonKeyList.GetEnumerator().Name){
         $currentKeyValue = $autoLogonKeyRegList | Select-Object -ExpandProperty $key -ErrorAction SilentlyContinue
         if (-not [String]::IsNullOrEmpty($currentKeyValue)) {
             $expectedValue = $autoLogonKeyList[$key]
             if(($state -eq 'present') -and ($currentKeyValue -ne $expectedValue)) {
-                Set-ItemProperty -Path $autoLogonRegPath -Name $key -Value $autoLogonKeyList[$key] -Force
+                Set-ItemProperty -LiteralPath $autoLogonRegPath -Name $key -Value $autoLogonKeyList[$key] -Force
                 $actionTaken = $true
             }
             elseif($state -eq 'absent') {
                 $actionTaken = $true
-                Remove-ItemProperty -Path $autoLogonRegPath -Name $key -Force
+                Remove-ItemProperty -LiteralPath  $autoLogonRegPath -Name $key -Force
             }
         }
         else {
             if ($state -eq 'present') {
                 $actionTaken = $true
-                New-ItemProperty -Path $autoLogonRegPath -Name $key -Value $autoLogonKeyList[$key] -Force | Out-Null
+                New-ItemProperty -LiteralPath $autoLogonRegPath -Name $key -Value $autoLogonKeyList[$key] -Force | Out-Null
             }
         }
     }

@@ -14,7 +14,7 @@ module: win_auto_logon
 short_description: Adds or Sets auto logon registry keys.
 description:
   - Used to apply auto logon registry setting.
-version_added: "2.9"
+version_added: "2.10"
 options:
   user:
     description:
