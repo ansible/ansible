@@ -61,13 +61,14 @@ class TestIosBannerModule(TestIosModule):
         set_module_args(dict(banner='login', text=banner_text))
         self.execute_module()
 
+
 class TestIosBannerIos12Module(TestIosBannerModule):
 
     def load_fixtures(self, commands):
         show_banner_return_value = (1, '', None)
         show_running_config_return_value = \
-                (0, load_fixture('ios_banner_show_running_config_ios12.txt').strip(), None)
-        self.exec_command.side_effect = [show_banner_return_value, 
+            (0, load_fixture('ios_banner_show_running_config_ios12.txt').strip(), None)
+        self.exec_command.side_effect = [show_banner_return_value,
                                          show_running_config_return_value]
 
     def test_ios_banner_nochange(self):
