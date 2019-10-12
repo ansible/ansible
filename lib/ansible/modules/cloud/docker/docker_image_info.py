@@ -79,6 +79,7 @@ images:
       - The list only contains inspection results of images existing locally.
     returned: always
     type: list
+    elements: dict
     sample: [
         {
             "Architecture": "amd64",
