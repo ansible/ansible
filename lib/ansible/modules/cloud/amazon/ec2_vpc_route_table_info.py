@@ -207,6 +207,7 @@ def list_route_tables(route_table, module):
                            ignore_list=['Tags']) for route_table in result['RouteTables']]
     if snaked_route_tables:
         for route_table in snaked_route_tables:
+            route_table['id'] = route_table['route_table_id']
             route_table['tags'] = boto3_tag_list_to_ansible_dict(route_table.get('tags', []))
     module.exit_json(changed=False, route_tables=snaked_route_tables)
 
