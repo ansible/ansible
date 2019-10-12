@@ -391,6 +391,9 @@ class PrivateKeyPyOpenSSL(PrivateKeyBase):
         else:
             module.fail_json(msg="PyOpenSSL backend only supports RSA and DSA keys.")
 
+        if self.format != 'auto_ignore':
+            module.fail_json(msg="PyOpenSSL backend only supports auto_ignore format.")
+
     def _generate_private_key_data(self):
         self.privatekey = crypto.PKey()
 
