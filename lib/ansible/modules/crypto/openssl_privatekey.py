@@ -134,7 +134,7 @@ options:
         type: str
         default: auto_ignore
         choices: [ pkcs1, pkcs8, raw, auto, auto_ignore ]
-        version_added: "2.9"
+        version_added: "2.10"
     backup:
         description:
             - Create a backup file including a timestamp so you can get
