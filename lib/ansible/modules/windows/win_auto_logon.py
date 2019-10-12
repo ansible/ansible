@@ -59,3 +59,11 @@ EXAMPLES = r'''
   win_auto_logon:
     state: absent
 '''
+
+RETURN = r'''
+changed:
+    description: Returns true if autologon keys successfully set.
+    returned: true/false
+    type: boolean
+    sample: true
+'''
