@@ -579,9 +579,13 @@ class PrivateKeyCryptography(PrivateKeyBase):
                 format=export_format,
                 encryption_algorithm=encryption_algorithm
             )
+        except ValueError as e:
+            self.module.fail_json(
+                msg='Cryptography backend cannot serialize the private key in the required format "{0}"'.format(self.format)
+            )
         except Exception as dummy:
             self.module.fail_json(
-                msg='Cryptography backend cannot serialize the private key in the required format "{0}"'.format(self.format),
+                msg='Error while serializing the private key in the required format "{0}"'.format(self.format),
                 exception=traceback.format_exc()
             )
 
