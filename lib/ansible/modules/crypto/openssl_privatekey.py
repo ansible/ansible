@@ -597,7 +597,21 @@ class PrivateKeyCryptography(PrivateKeyBase):
             # Interpret bytes depending on format.
             format = crypto_utils.identify_private_key_format(data)
             if format == 'raw':
-                raise PrivateKeyError('Cannot load raw keys')
+                if len(data) == 56 and CRYPTOGRAPHY_HAS_X448:
+                    return cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey.from_private_bytes(data)
+                if len(data) == 57 and CRYPTOGRAPHY_HAS_ED448:
+                    return cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey.from_private_bytes(data)
+                if len(data) == 32:
+                    if CRYPTOGRAPHY_HAS_X25519 and (self.type == 'X25519' or not CRYPTOGRAPHY_HAS_ED25519):
+                        return cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.from_private_bytes(data)
+                    if CRYPTOGRAPHY_HAS_ED25519 and (self.type == 'Ed25519' or not CRYPTOGRAPHY_HAS_X25519):
+                        return cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey.from_private_bytes(data)
+                    if CRYPTOGRAPHY_HAS_X25519 and CRYPTOGRAPHY_HAS_ED25519:
+                        try:
+                            return cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.from_private_bytes(data)
+                        except Exception:
+                            return cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey.from_private_bytes(data)
+                raise PrivateKeyError('Cannot load raw key')
             else:
                 return cryptography.hazmat.primitives.serialization.load_pem_private_key(
                     data,
