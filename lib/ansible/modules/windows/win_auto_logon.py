@@ -64,6 +64,6 @@ RETURN = r'''
 changed:
     description: Returns true if autologon keys successfully set.
     returned: true/false
-    type: boolean
+    type: bool
     sample: true
 '''
