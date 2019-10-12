@@ -172,6 +172,8 @@
       - privatekey_fmt_1_step_6 is not changed
       - privatekey_fmt_1_step_7 is changed
       - privatekey_fmt_1_step_8 is failed
+      - privatekey_fmt_1_step_9 is changed
+      - privatekey_fmt_1_step_9_before.public_key == privatekey_fmt_1_step_9_after.public_key
   when: 'select_crypto_backend == "cryptography"'
 
 - name: Validate format 2

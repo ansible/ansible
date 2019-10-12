@@ -130,10 +130,23 @@ options:
             - The value C(auto) selects a backend depending on the key format. The value C(auto_ignore) does the same,
               but for existing private key files, it will not force a regenerate when its format is not the automatically
               selected one for generation.
+            - Note that if the format for an existing private key mismatches, the key is *regenerated* by default.
+              To change this behavior, use the I(format_mismatch) option.
             - Only supported by the C(cryptography) backend.
         type: str
         default: auto_ignore
         choices: [ pkcs1, pkcs8, raw, auto, auto_ignore ]
+        version_added: "2.10"
+    format_mismatch:
+        description:
+            - Determines behavior of the module if the format of a private key does not match the expected format, but all
+              other parameters are as expected.
+            - If set to C(regenerate) (default), generates a new private key.
+            - If set to C(convert), the key will be converted to the new format instead.
+            - Only supported by the C(cryptography) backend.
+        type: str
+        default: regenerate
+        choices: [ regenerate, convert ]
         version_added: "2.10"
     backup:
         description:
@@ -306,6 +319,7 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         self.privatekey = None
         self.fingerprint = {}
         self.format = module.params['format']
+        self.format_mismatch = module.params['format_mismatch']
 
         self.backup = module.params['backup']
         self.backup_file = None
@@ -314,7 +328,13 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
             module.params['mode'] = '0600'
 
     @abc.abstractmethod
-    def _generate_private_key_data(self):
+    def _generate_private_key(self):
+        """(Re-)Generate private key."""
+        pass
+
+    @abc.abstractmethod
+    def _get_private_key_data(self):
+        """Return bytes for self.privatekey"""
         pass
 
     @abc.abstractmethod
@@ -324,10 +344,19 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
     def generate(self, module):
         """Generate a keypair."""
 
-        if not self.check(module, perms_required=False) or self.force:
+        if not self.check(module, perms_required=False, ignore_conversion=True) or self.force:
+            # Regenerate
             if self.backup:
                 self.backup_file = module.backup_local(self.path)
-            privatekey_data = self._generate_private_key_data()
+            self._generate_private_key()
+            privatekey_data = self._get_private_key_data()
+            crypto_utils.write_file(module, privatekey_data, 0o600)
+            self.changed = True
+        elif not self.check(module, perms_required=False, ignore_conversion=False):
+            # Convert
+            if self.backup:
+                self.backup_file = module.backup_local(self.path)
+            privatekey_data = self._get_private_key_data()
             crypto_utils.write_file(module, privatekey_data, 0o600)
             self.changed = True
 
@@ -353,7 +382,7 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
     def _check_format(self):
         pass
 
-    def check(self, module, perms_required=True):
+    def check(self, module, perms_required=True, ignore_conversion=True):
         """Ensure the resource is in its desired state."""
 
         state_and_perms = super(PrivateKeyBase, self).check(module, perms_required)
@@ -361,7 +390,14 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         if not state_and_perms or not self._check_passphrase():
             return False
 
-        return self._check_format() and self._check_size_and_type()
+        if not self._check_size_and_type():
+            return False
+
+        if not self._check_format():
+            if ignore_conversion or self.format_mismatch != 'convert':
+                return False
+
+        return True
 
     def dump(self):
         """Serialize the object into a dictionary."""
@@ -394,14 +430,16 @@ class PrivateKeyPyOpenSSL(PrivateKeyBase):
         if self.format != 'auto_ignore':
             module.fail_json(msg="PyOpenSSL backend only supports auto_ignore format.")
 
-    def _generate_private_key_data(self):
+    def _generate_private_key(self):
+        """(Re-)Generate private key."""
         self.privatekey = crypto.PKey()
-
         try:
             self.privatekey.generate_key(self.type, self.size)
         except (TypeError, ValueError) as exc:
             raise PrivateKeyError(exc)
 
+    def _get_private_key_data(self):
+        """Return bytes for self.privatekey"""
         if self.cipher and self.passphrase:
             return crypto.dump_privatekey(crypto.FILETYPE_PEM, self.privatekey,
                                           self.cipher, to_bytes(self.passphrase))
@@ -521,7 +559,8 @@ class PrivateKeyCryptography(PrivateKeyBase):
         else:
             return 'pkcs1'
 
-    def _generate_private_key_data(self):
+    def _generate_private_key(self):
+        """(Re-)Generate private key."""
         try:
             if self.type == 'RSA':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
@@ -552,6 +591,8 @@ class PrivateKeyCryptography(PrivateKeyBase):
         except cryptography.exceptions.UnsupportedAlgorithm as dummy:
             self.module.fail_json(msg='Cryptography backend does not support the algorithm required for {0}'.format(self.type))
 
+    def _get_private_key_data(self):
+        """Return bytes for self.privatekey"""
         # Select export format and encoding
         try:
             export_format = self._get_wanted_format()
@@ -717,6 +758,7 @@ def main():
             cipher=dict(type='str'),
             backup=dict(type='bool', default=False),
             format=dict(type='str', default='auto_ignore', choices=['pkcs1', 'pkcs8', 'raw', 'auto', 'auto_ignore']),
+            format_mismatch=dict(type='str', default='regenerate', choices=['regenerate', 'convert']),
             select_crypto_backend=dict(type='str', choices=['auto', 'pyopenssl', 'cryptography'], default='auto'),
         ),
         supports_check_mode=True,

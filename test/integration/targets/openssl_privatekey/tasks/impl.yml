@@ -336,6 +336,26 @@
     ignore_errors: yes
     register: privatekey_fmt_1_step_8
 
+  - name: Generate privatekey_fmt_1 - PKCS8 format (convert)
+    openssl_privatekey_info:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_9_before
+
+  - name: Generate privatekey_fmt_1 - PKCS8 format (convert)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: pkcs8
+      format_mismatch: convert
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_9
+
+  - name: Generate privatekey_fmt_1 - PKCS8 format (convert)
+    openssl_privatekey_info:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_9_after
+
   when: 'select_crypto_backend == "cryptography"'
 
 - block:
