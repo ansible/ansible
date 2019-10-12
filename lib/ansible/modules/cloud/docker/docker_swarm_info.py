@@ -175,6 +175,7 @@ nodes:
         See description for I(verbose_output).
     returned: When I(nodes) is C(yes)
     type: list
+    elements: dict
 services:
     description:
       - List of dict objects containing the basic information about each volume.
@@ -182,6 +183,7 @@ services:
         See description for I(verbose_output).
     returned: When I(services) is C(yes)
     type: list
+    elements: dict
 tasks:
     description:
       - List of dict objects containing the basic information about each volume.
@@ -189,6 +191,7 @@ tasks:
         See description for I(verbose_output).
     returned: When I(tasks) is C(yes)
     type: list
+    elements: dict
 
 '''
 
