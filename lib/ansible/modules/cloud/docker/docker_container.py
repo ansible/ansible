@@ -723,7 +723,7 @@ options:
   trust_image_content:
     description:
       - If C(yes), skip image verification.
-      - Is not used. Will be removed in Ansible 2.14.
+      - The option has never been used by the module. It will be removed in Ansible 2.14.
     type: bool
     default: no
   tmpfs:
