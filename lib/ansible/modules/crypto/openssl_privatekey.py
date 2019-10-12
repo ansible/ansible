@@ -549,16 +549,18 @@ class PrivateKeyCryptography(PrivateKeyBase):
         except cryptography.exceptions.UnsupportedAlgorithm as dummy:
             self.module.fail_json(msg='Cryptography backend does not support the algorithm required for {0}'.format(self.type))
 
-        # Select export format
+        # Select export format and encoding
         try:
             export_format = self._get_wanted_format()
+            export_encoding = cryptography.hazmat.primitives.serialization.Encoding.PEM
             if export_format == 'pkcs1':
                 # "TraditionalOpenSSL" format is PKCS1
                 export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL
             elif export_format == 'pkcs8':
                 export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             elif export_format == 'raw':
-                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.RAW
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.Raw
+                export_encoding = cryptography.hazmat.primitives.serialization.Encoding.Raw
         except AttributeError:
             self.module.fail_json(msg='Cryptography backend does not support the selected output format "{0}"'.format(self.format))
 
@@ -573,7 +575,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
         # Serialize key
         try:
             return self.privatekey.private_bytes(
-                encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM,
+                encoding=export_encoding,
                 format=export_format,
                 encryption_algorithm=encryption_algorithm
             )
