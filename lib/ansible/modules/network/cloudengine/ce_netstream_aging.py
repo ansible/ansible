@@ -191,6 +191,7 @@ changed:
     sample: true
 '''
 
+import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import exec_command, load_config
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
@@ -285,14 +286,14 @@ class NetStreamAging(object):
             for config_mem in config_list:
                 config_mem = config_mem.lstrip()
                 config_mem_list = config_mem.split(' ')
-                if config_mem_list[2] == "ip":
+                if len(config_mem_list) > 4 and config_mem_list[2] == "ip":
                     if config_mem_list[3] == "active":
                         active_tmp["ip"] = config_mem_list[4]
                     if config_mem_list[3] == "inactive":
                         inactive_tmp["ip"] = config_mem_list[4]
                     if config_mem_list[3] == "tcp-session":
                         tcp_tmp["ip"] = "present"
-                if config_mem_list[2] == "vxlan":
+                if len(config_mem_list) > 4 and config_mem_list[2] == "vxlan":
                     if config_mem_list[4] == "active":
                         active_tmp["vxlan"] = config_mem_list[5]
                     if config_mem_list[4] == "inactive":
@@ -333,7 +334,7 @@ class NetStreamAging(object):
                         inactive_tmp["ip"] = config_mem_list[4]
                     if config_mem_list[3] == "tcp-session":
                         tcp_tmp["ip"] = "present"
-                if len(config_mem_list) > 5 and config_mem_list[2] == "vxlan":
+                if len(config_mem_list) > 4 and config_mem_list[2] == "vxlan":
                     if config_mem_list[4] == "active":
                         active_tmp["vxlan"] = config_mem_list[5]
                     if config_mem_list[4] == "inactive":
@@ -363,7 +364,7 @@ class NetStreamAging(object):
             if not self.manual_slot:
                 self.module.fail_json(
                     msg="Error: If use manual timeout mode,slot number is needed.")
-            if not str(self.manual_slot).isdigit():
+            if re.match(r'^\d+(\/\d*)?$', self.manual_slot) is None:
                 self.module.fail_json(
                     msg='Error: Slot number should be numerical.')
 
@@ -481,6 +482,8 @@ class NetStreamAging(object):
         self.get_proposed()
         self.operate_time_out()
         self.get_end_state()
+        if self.existing == self.end_state:
+            self.changed = False
         self.results['changed'] = self.changed
         self.results['proposed'] = self.proposed
         self.results['existing'] = self.existing
