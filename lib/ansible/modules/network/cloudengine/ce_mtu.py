@@ -534,6 +534,8 @@ class Mtu(object):
             else:
                 self.end_state[
                     "jumboframe"] = "jumboframe enable %s %s" % (self.jbf_max, 1518)
+        if self.end_state == self.existing:
+            self.changed = False
 
     def work(self):
         """worker"""
