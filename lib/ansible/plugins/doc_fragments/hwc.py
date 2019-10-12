@@ -41,9 +41,9 @@ options:
         description:
             - The region to which the project belongs.
         type: str
-    id:	
-        description:	
-            - The id of resource to be managed.	
+    id:
+        description:
+            - The id of resource to be managed.
         type: str
 notes:
   - For authentication, you can set identity_endpoint using the
