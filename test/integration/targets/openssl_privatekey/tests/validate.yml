@@ -171,4 +171,5 @@
       - privatekey_fmt_1_step_5 is not changed
       - privatekey_fmt_1_step_6 is not changed
       - privatekey_fmt_1_step_7 is changed
+      - privatekey_fmt_1_step_8 is failed
   when: 'select_crypto_backend == "cryptography"'
