@@ -19,7 +19,7 @@
 - name: Set autologon registry keys
   win_auto_logon:
     user: "{{test_win_user_name}}"
-    password: "{{test_win_user_password$hell1}}"
+    password: "{{test_win_user_password}}"
     state: present
   register: win_auto_logon_create_registry_key_set
 
