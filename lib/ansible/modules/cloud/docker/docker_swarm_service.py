@@ -901,6 +901,7 @@ changes:
   description:
     - List of changed service attributes if a service has been altered, [] otherwise.
   type: list
+  elements: str
   sample: ['container_labels', 'replicas']
 rebuilt:
   returned: always
