@@ -585,9 +585,16 @@ class PrivateKeyCryptography(PrivateKeyBase):
 
     def _load_privatekey(self):
         try:
+            # Read bytes
             with open(self.path, 'rb') as f:
+                data = f.read()
+            # Interpret bytes depending on format.
+            format = crypto_utils.identify_private_key_format(data)
+            if format == 'raw':
+                raise PrivateKeyError('Cannot load raw keys')
+            else:
                 return cryptography.hazmat.primitives.serialization.load_pem_private_key(
-                    f.read(),
+                    data,
                     None if self.passphrase is None else to_bytes(self.passphrase),
                     backend=self.cryptography_backend
                 )
@@ -608,12 +615,17 @@ class PrivateKeyCryptography(PrivateKeyBase):
     def _check_passphrase(self):
         try:
             with open(self.path, 'rb') as f:
+                data = f.read()
+            format = crypto_utils.identify_private_key_format(data)
+            if format == 'raw':
+                # Raw keys cannot be encrypted
+                return self.passphrase is None
+            else:
                 return cryptography.hazmat.primitives.serialization.load_pem_private_key(
-                    f.read(),
+                    data,
                     None if self.passphrase is None else to_bytes(self.passphrase),
                     backend=self.cryptography_backend
                 )
-            return True
         except Exception as dummy:
             return False
 
@@ -646,14 +658,8 @@ class PrivateKeyCryptography(PrivateKeyBase):
             return True
         try:
             with open(self.path, 'rb') as f:
-                content = f.read().decode('utf-8').splitlines(False)
-            format = 'raw'
-            # The PKCS1/PKCS8 detection doesn't work yet!
-            if content[0].startswith('-----'):
-                if 'BEGIN PRIVATE KEY' in content[0]:
-                    format = 'pkcs8'
-                else:
-                    format = 'pkcs1'
+                content = f.read()
+            format = crypto_utils.identify_private_key_format(content)
             return format == self._get_wanted_format()
         except Exception as dummy:
             return False
