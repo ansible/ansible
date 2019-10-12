@@ -1,0 +1,2 @@
+bugfixes:
+  - facts/virtual #62857 detect FreeBSD jails guest
