@@ -202,17 +202,17 @@ def main():
         try:
             using_collection = False
             if (not any(path.startswith(uri) for uri in api_get_not_allowed) and
-                not any(path.endswith(uri) for uri in sub_api_get_not_allowed)):
-                    if 'name' in data:
-                        gparams['name'] = data['name']
-                    using_collection = True
+                    not any(path.endswith(uri) for uri in sub_api_get_not_allowed)):
+                if 'name' in data:
+                    gparams['name'] = data['name']
+                using_collection = True
             if (not any(path.startswith(uri) for uri in api_get_not_allowed) and
-                not any(path.endswith(uri) for uri in sub_api_get_not_allowed)):
-                    rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
-                            params=gparams, api_version=api_version)
-                    existing_obj = rsp.json()
-                    if using_collection:
-                        existing_obj = existing_obj['results'][0]
+                    not any(path.endswith(uri) for uri in sub_api_get_not_allowed)):
+                rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
+                              params=gparams, api_version=api_version)
+                existing_obj = rsp.json()
+                if using_collection:
+                    existing_obj = existing_obj['results'][0]
         except (IndexError, KeyError):
             # object is not found
             pass
