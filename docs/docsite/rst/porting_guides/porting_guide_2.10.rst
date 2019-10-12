@@ -58,6 +58,11 @@ The following functionality will be removed in Ansible 2.14. Please update updat
 * :ref:`docker_container <docker_container_module>`: the ``trust_image_content`` option will be removed. It has always been ignored by the module.
 
 
+The following functionality will change in Ansible 2.14. Please update update your playbooks accordingly.
+
+* The :ref:`docker_container <docker_container_module>` module has a new option, ``container_default_behavior``, whose default value will change from ``compatibility`` to ``no_defaults``. Set to an explicit value to avoid deprecation warnings.
+
+
 Noteworthy module changes
 -------------------------
 
