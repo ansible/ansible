@@ -368,57 +368,58 @@ class VMwareDvsPortgroup(PyVmomi):
 
         if self.dvs_portgroup is None:
             return 'absent'
+
+        # Check config
+        # Basic config
+        if self.dvs_portgroup.config.numPorts != self.module.params['num_ports']:
+            return 'update'
+
+        # Default port config
+        defaultPortConfig = self.dvs_portgroup.config.defaultPortConfig
+        if self.module.params['vlan_trunk']:
+            if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.TrunkVlanSpec):
+                return 'update'
+            if map(lambda x: (x.start, x.end), defaultPortConfig.vlan.vlanId) != self.create_vlan_list():
+                return 'update'
         else:
-            # Basic config
-            if self.dvs_portgroup.config.numPorts != self.module.params['num_ports']:
+            if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec):
+                return 'update'
+            if defaultPortConfig.vlan.vlanId != int(self.module.params['vlan_id']):
                 return 'update'
 
-            # Default port config
-            defaultPortConfig = self.dvs_portgroup.config.defaultPortConfig
-            if self.module.params['vlan_trunk']:
-                if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.TrunkVlanSpec):
-                    return 'update'
-                if map(lambda x: (x.start, x.end), defaultPortConfig.vlan.vlanId) != self.create_vlan_list():
-                    return 'update'
-            else:
-                if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec):
-                    return 'update'
-                if defaultPortConfig.vlan.vlanId != int(self.module.params['vlan_id']):
-                    return 'update'
+        if defaultPortConfig.securityPolicy.allowPromiscuous.value != self.module.params['network_policy']['promiscuous'] or \
+                defaultPortConfig.securityPolicy.forgedTransmits.value != self.module.params['network_policy']['forged_transmits'] or \
+                defaultPortConfig.securityPolicy.macChanges.value != self.module.params['network_policy']['mac_changes']:
+            return 'update'
 
-            if defaultPortConfig.securityPolicy.allowPromiscuous.value != self.module.params['network_policy']['promiscuous'] or \
-                    defaultPortConfig.securityPolicy.forgedTransmits.value != self.module.params['network_policy']['forged_transmits'] or \
-                    defaultPortConfig.securityPolicy.macChanges.value != self.module.params['network_policy']['mac_changes']:
-                return 'update'
+        # Teaming Policy
+        teamingPolicy = self.dvs_portgroup.config.defaultPortConfig.uplinkTeamingPolicy
+        if teamingPolicy.policy.value != self.module.params['teaming_policy']['load_balance_policy'] or \
+                teamingPolicy.reversePolicy.value != self.module.params['teaming_policy']['inbound_policy'] or \
+                teamingPolicy.notifySwitches.value != self.module.params['teaming_policy']['notify_switches'] or \
+                teamingPolicy.rollingOrder.value != self.module.params['teaming_policy']['rolling_order']:
+            return 'update'
 
-            # Teaming Policy
-            teamingPolicy = self.dvs_portgroup.config.defaultPortConfig.uplinkTeamingPolicy
-            if teamingPolicy.policy.value != self.module.params['teaming_policy']['load_balance_policy'] or \
-                    teamingPolicy.reversePolicy.value != self.module.params['teaming_policy']['inbound_policy'] or \
-                    teamingPolicy.notifySwitches.value != self.module.params['teaming_policy']['notify_switches'] or \
-                    teamingPolicy.rollingOrder.value != self.module.params['teaming_policy']['rolling_order']:
-                return 'update'
+        # PG policy (advanced_policy)
+        policy = self.dvs_portgroup.config.policy
+        if policy.blockOverrideAllowed != self.module.params['port_policy']['block_override'] or \
+                policy.ipfixOverrideAllowed != self.module.params['port_policy']['ipfix_override'] or \
+                policy.livePortMovingAllowed != self.module.params['port_policy']['live_port_move'] or \
+                policy.networkResourcePoolOverrideAllowed != self.module.params['port_policy']['network_rp_override'] or \
+                policy.portConfigResetAtDisconnect != self.module.params['port_policy']['port_config_reset_at_disconnect'] or \
+                policy.securityPolicyOverrideAllowed != self.module.params['port_policy']['security_override'] or \
+                policy.shapingOverrideAllowed != self.module.params['port_policy']['shaping_override'] or \
+                policy.trafficFilterOverrideAllowed != self.module.params['port_policy']['traffic_filter_override'] or \
+                policy.uplinkTeamingOverrideAllowed != self.module.params['port_policy']['uplink_teaming_override'] or \
+                policy.vendorConfigOverrideAllowed != self.module.params['port_policy']['vendor_config_override'] or \
+                policy.vlanOverrideAllowed != self.module.params['port_policy']['vlan_override']:
+            return 'update'
 
-            # PG policy (advanced_policy)
-            policy = self.dvs_portgroup.config.policy
-            if policy.blockOverrideAllowed != self.module.params['port_policy']['block_override'] or \
-                    policy.ipfixOverrideAllowed != self.module.params['port_policy']['ipfix_override'] or \
-                    policy.livePortMovingAllowed != self.module.params['port_policy']['live_port_move'] or \
-                    policy.networkResourcePoolOverrideAllowed != self.module.params['port_policy']['network_rp_override'] or \
-                    policy.portConfigResetAtDisconnect != self.module.params['port_policy']['port_config_reset_at_disconnect'] or \
-                    policy.securityPolicyOverrideAllowed != self.module.params['port_policy']['security_override'] or \
-                    policy.shapingOverrideAllowed != self.module.params['port_policy']['shaping_override'] or \
-                    policy.trafficFilterOverrideAllowed != self.module.params['port_policy']['traffic_filter_override'] or \
-                    policy.uplinkTeamingOverrideAllowed != self.module.params['port_policy']['uplink_teaming_override'] or \
-                    policy.vendorConfigOverrideAllowed != self.module.params['port_policy']['vendor_config_override'] or \
-                    policy.vlanOverrideAllowed != self.module.params['port_policy']['vlan_override']:
-                return 'update'
+        # PG Type
+        if self.dvs_portgroup.config.type != self.module.params['portgroup_type']:
+            return 'update'
 
-            # PG Type
-            if self.dvs_portgroup.config.type != self.module.params['portgroup_type']:
-                return 'update'
-
-            return 'present'
+        return 'present'
 
 
 def main():
