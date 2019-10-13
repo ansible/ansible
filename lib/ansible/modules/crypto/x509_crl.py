@@ -434,7 +434,11 @@ class CRL(crypto_utils.OpenSSLObject):
                     )
                 try:
                     cert = crypto_utils.load_certificate(rc['path'], backend='cryptography')
-                    result['serial_number'] = cert.serial_number
+                    try:
+                        result['serial_number'] = cert.serial_number
+                    except AttributeError:
+                        # The property was called "serial" before cryptography 1.4
+                        result['serial_number'] = cert.serial
                     try:
                         ext = cert.extensions.get_extension_for_class(x509.AuthorityKeyIdentifier)
                         if ext.value.authority_cert_issuer is not None:
