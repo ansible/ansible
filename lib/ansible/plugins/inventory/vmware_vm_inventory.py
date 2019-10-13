@@ -234,22 +234,36 @@ from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 # so that everything is correctly quoted
 try:
     # python3
-    import urllib.parse
-    urllib.parse._ALWAYS_SAFE = frozenset(b'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+    # Import copy of urllib.parse to also encode all special chars.
+    import sys
+    import importlib.util
+    import urllib
+    SPEC_urllib_parse = importlib.util.find_spec('urllib.parse')
+    my_urllib_parse = importlib.util.module_from_spec(SPEC_urllib_parse)
+    SPEC_urllib_parse.loader.exec_module(my_urllib_parse)
+    sys.modules['my_urllib_parse'] = my_urllib_parse
+    del SPEC_urllib_parse
+
+    # overwrite allowed characters e.g. list of characters that are not encoded.
+    my_urllib_parse._ALWAYS_SAFE = frozenset(b'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
                                           b'abcdefghijklmnopqrstuvwxyz'
                                           b'0123456789')
-    urllib.parse._ALWAYS_SAFE_BYTES = bytes(urllib.parse._ALWAYS_SAFE)
+    my_urllib_parse._ALWAYS_SAFE_BYTES = bytes(my_urllib_parse._ALWAYS_SAFE)
 except ImportError:
     # python2
-    import urllib
+
+    # Import copy of urllib to also encode all special chars.
+    import imp
+    my_urllib_parse=imp.load_module('urllib', *imp.find_module('urllib'))
     from past.builtins import xrange
-    urllib.always_safe = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+    my_urllib_parse.always_safe = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ'
                           'abcdefghijklmnopqrstuvwxyz'
                           '0123456789')
-    urllib._safe_map = {}
+    my_urllib_parse._safe_map = {}
     for i, c in zip(xrange(256), str(bytearray(xrange(256)))):
-        urllib._safe_map[c] = c if (i < 128 and c in urllib.always_safe) else '%{0:02x}'.format(i)
-    urllib.parse = urllib  # fake pyton3 structure, so that python3 syntax can be used afterwards
+        my_urllib_parse._safe_map[c] = c if (i < 128 and c in my_urllib_parse.always_safe) else '%{0:02x}'.format(i)
 
 
 class BaseVMwareInventory:
@@ -505,7 +519,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
           so foldernames need to be encoded first and transformed into a pseudo path.
         """
         if(vm_obj_obj.parent):
-            return self._get_fullName(vm_obj_obj.parent) + '/' + urllib.parse.quote_plus(vm_obj_obj.name, safe='')
+            return self._get_fullName(vm_obj_obj.parent) + '/' + my_urllib_parse.quote_plus(vm_obj_obj.name, safe='')
         else:
             # For some reason the api returns 'Datencenter' (not Datacenter) as the
             # root item, but VMware has also not included it within there path schema,
