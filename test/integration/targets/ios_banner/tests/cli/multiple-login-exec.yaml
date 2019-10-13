@@ -32,7 +32,7 @@
 - assert:
     that:
       - "result.changed == false"
-      - "resut.commands | length == 0"
+      - "result.commands | length == 0"
 
 - name: Set exec
   ios_banner:
@@ -52,4 +52,4 @@
 - assert:
     that:
       - "result.changed == false"
-      - "resut.commands | length == 0"
+      - "result.commands | length == 0"
