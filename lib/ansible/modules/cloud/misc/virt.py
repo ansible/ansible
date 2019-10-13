@@ -535,14 +535,16 @@ def core(module):
                 #
                 # In case a domain would be indeed overwritten, we should protect idempotency:
                 try:
-                    existing_domain = v.get_vm(domain_name)
+                    existing_domain_xml = v.get_vm(domain_name).XMLDesc(
+                        libvirt.VIR_DOMAIN_XML_INACTIVE
+                    )
                 except VMNotFound:
-                    existing_domain = None
+                    existing_domain_xml = None
                 try:
                     domain = v.define(xml)
-                    if existing_domain:
+                    if existing_domain_xml:
                         # if we are here, then libvirt redefined existing domain as the doc promised
-                        if existing_domain.XMLDesc() != domain.XMLDesc():
+                        if existing_domain_xml != domain.XMLDesc(libvirt.VIR_DOMAIN_XML_INACTIVE):
                             res = {'changed': True, 'change_reason': 'config changed'}
                     else:
                         res = {'changed': True, 'created': domain.name()}

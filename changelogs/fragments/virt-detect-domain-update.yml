@@ -1,0 +1,2 @@
+bugfixes:
+  - virt - Return "changed" status when using "define" command and domain XML was updated
