@@ -446,7 +446,7 @@ class CRL(crypto_utils.OpenSSLObject):
                             result['issuer_critical'] = rc['issuer_critical']
                     except x509.ExtensionNotFound:
                         pass
-                except Exception as e:
+                except crypto_utils.OpenSSLObjectError as e:
                     module.fail_json(
                         msg='Cannot read certificate "{1}" from {0}path: {2}'.format(path_prefix, rc['path'], to_native(e))
                     )
