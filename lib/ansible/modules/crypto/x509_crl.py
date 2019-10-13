@@ -557,7 +557,7 @@ class CRL(crypto_utils.OpenSSLObject):
             return False
         if self.next_update != self.crl.next_update:
             return False
-        if type(self.digest) != type(self.crl.signature_hash_algorithm):
+        if self.digest.name != self.crl.signature_hash_algorithm.name:
             return False
 
         want_issuer = [(crypto_utils.cryptography_name_to_oid(entry[0]), entry[1]) for entry in self.issuer]
