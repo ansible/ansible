@@ -213,7 +213,7 @@ Try {
                 if ($site_name) {
                     $install_params.SiteName = $site_name
                 }
-                if ($install_dns -ne $null) {
+                if ($null -ne $install_dns) {
                     $install_params.InstallDns = $install_dns
                 }
                 try
