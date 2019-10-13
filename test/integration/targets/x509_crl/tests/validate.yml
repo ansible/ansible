@@ -1,0 +1,7 @@
+---
+- assert:
+    that:
+      - crl_1_check is changed
+      - crl_1 is changed
+      - crl_1_idem_check is not changed
+      - crl_1_idem is not changed
