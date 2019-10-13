@@ -689,7 +689,13 @@ class CRL(crypto_utils.OpenSSLObject):
         elif self.crl:
             result['last_update'] = self.crl.last_update.strftime(TIMESTAMP_FORMAT)
             result['next_update'] = self.crl.next_update.strftime(TIMESTAMP_FORMAT)
-            result['digest'] = crypto_utils.cryptography_oid_to_name(self.crl.signature_algorithm_oid)
+            try:
+                result['digest'] = crypto_utils.cryptography_oid_to_name(self.crl.signature_algorithm_oid)
+            except AttributeError:
+                # Older cryptography versions don't have signature_algorithm_oid yet
+                dotted = crypto_utils._obj2txt(self.crl._backend, self.crl._x509_crl.sig_alg.algorithm)
+                oid = x509.oid.ObjectIdentifier(dotted)
+                result['digest'] = crypto_utils.cryptography_oid_to_name(oid)
             issuer = []
             for attribute in self.crl.issuer:
                 issuer.append([crypto_utils.cryptography_oid_to_name(attribute.oid), attribute.value])
