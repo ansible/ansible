@@ -9,13 +9,16 @@
   gather_facts: no
   vars:
     ansible_python_interpreter: '{{ ansible_playbook_python }}' # to get the same behavior as implicit localhost
-    vcsim_user: user
-    vcsim_pass: pass
+    vcsim: "{{ lookup('env', 'VCENTER_HOST') }}"
+    vcsim_user: "{{ lookup('env', 'VMWARE_USERNAME') }}"
+    vcsim_pass: "{{ lookup('env', 'VMWARE_PASSWORD') }}"
     datacenter: DC0
   tasks:
-    - name: store the vcenter container ip
-      set_fact:
-        vcsim: "{{ lookup('env', 'VCENTER_HOST') }}"
+    - name: Initialize vmware tests
+      import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_datacenter: true
 
     - debug:
         var: vcsim
