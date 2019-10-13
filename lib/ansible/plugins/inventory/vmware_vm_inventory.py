@@ -247,20 +247,20 @@ try:
 
     # overwrite allowed characters e.g. list of characters that are not encoded.
     my_urllib_parse._ALWAYS_SAFE = frozenset(b'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                                          b'abcdefghijklmnopqrstuvwxyz'
-                                          b'0123456789')
+                                             b'abcdefghijklmnopqrstuvwxyz'
+                                             b'0123456789')
     my_urllib_parse._ALWAYS_SAFE_BYTES = bytes(my_urllib_parse._ALWAYS_SAFE)
 except ImportError:
     # python2
 
     # Import copy of urllib to also encode all special chars.
     import imp
-    my_urllib_parse=imp.load_module('urllib', *imp.find_module('urllib'))
+    my_urllib_parse = imp.load_module('urllib', *imp.find_module('urllib'))
     from past.builtins import xrange
 
     my_urllib_parse.always_safe = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                          'abcdefghijklmnopqrstuvwxyz'
-                          '0123456789')
+                                   'abcdefghijklmnopqrstuvwxyz'
+                                   '0123456789')
     my_urllib_parse._safe_map = {}
     for i, c in zip(xrange(256), str(bytearray(xrange(256)))):
         my_urllib_parse._safe_map[c] = c if (i < 128 and c in my_urllib_parse.always_safe) else '%{0:02x}'.format(i)
