@@ -426,11 +426,11 @@ class CRL(crypto_utils.OpenSSLObject):
                 # Load certificate from file
                 if rc['serial_number'] is not None:
                     module.fail_json(
-                        '{0}serial_number must not be specified if {0}path is specified'.format(path_prefix)
+                        msg='{0}serial_number must not be specified if {0}path is specified'.format(path_prefix)
                     )
                 if rc['issuer'] is not None:
                     module.fail_json(
-                        '{0}issuer must not be specified if {0}path is specified'.format(path_prefix)
+                        msg='{0}issuer must not be specified if {0}path is specified'.format(path_prefix)
                     )
                 try:
                     cert = crypto_utils.load_certificate(rc['path'], backend='cryptography')
@@ -444,13 +444,13 @@ class CRL(crypto_utils.OpenSSLObject):
                         pass
                 except Exception as e:
                     module.fail_json(
-                        'Cannot read certificate "{1}" from {0}path: {2}'.format(path_prefix, rc['path'], to_native(e))
+                        msg='Cannot read certificate "{1}" from {0}path: {2}'.format(path_prefix, rc['path'], to_native(e))
                     )
             else:
                 # Specify serial_number (and potentially issuer) directly
                 if rc['serial_number'] is None:
                     module.fail_json(
-                        '{0}serial_number must be specified if {0}path is not specified'.format(path_prefix)
+                        msg='{0}serial_number must be specified if {0}path is not specified'.format(path_prefix)
                     )
                 result['serial_number'] = rc['serial_number']
                 if rc['issuer']:
