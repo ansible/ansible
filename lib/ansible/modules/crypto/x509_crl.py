@@ -693,7 +693,11 @@ class CRL(crypto_utils.OpenSSLObject):
                 result['digest'] = crypto_utils.cryptography_oid_to_name(self.crl.signature_algorithm_oid)
             except AttributeError:
                 # Older cryptography versions don't have signature_algorithm_oid yet
-                dotted = crypto_utils._obj2txt(self.crl._backend, self.crl._x509_crl.sig_alg.algorithm)
+                dotted = crypto_utils._obj2txt(
+                    self.crl._backend._lib,
+                    self.crl._backend._ffi,
+                    self.crl._x509_crl.sig_alg.algorithm
+                )
                 oid = x509.oid.ObjectIdentifier(dotted)
                 result['digest'] = crypto_utils.cryptography_oid_to_name(oid)
             issuer = []
