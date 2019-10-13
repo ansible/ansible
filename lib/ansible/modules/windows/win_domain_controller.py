@@ -75,7 +75,7 @@ options:
     - Whether to install the DNS service.
     - If not specified then the -InstallDns option is not supplied to Install-ADDSDomainController command, see https://docs.microsoft.com/en-us/powershell/module/addsdeployment/install-addsdomaincontroller.
     type: bool
-    version_added: '2.8'
+    version_added: '2.10'
 seealso:
 - module: win_domain
 - module: win_domain_computer

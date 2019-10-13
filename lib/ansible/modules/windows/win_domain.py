@@ -76,7 +76,7 @@ options:
     - Whether to install the DNS service.
     type: bool
     default: yes
-    version_added: '2.8'
+    version_added: '2.10'
 seealso:
 - module: win_domain_controller
 - module: win_domain_computer
