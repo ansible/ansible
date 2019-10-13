@@ -51,7 +51,9 @@ The following modules no longer exist:
 Deprecation notices
 -------------------
 
-No notable changes
+The following functionality will be removed in Ansible 2.14. Please update update your playbooks accordingly.
+
+* The :ref:`openssl_csr <openssl_csr_module>` module's option ``version`` will be removed.
 
 
 Noteworthy module changes
