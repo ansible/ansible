@@ -346,7 +346,7 @@ try:
         'aa_compromise': ReasonFlags.aa_compromise,
         'remove_from_crl': ReasonFlags.remove_from_crl,
     }
-    REASON_MAP_INVERSE = {v: k for k, v in REASON_MAP.items()}
+    REASON_MAP_INVERSE = dict(v=k for k, v in REASON_MAP.items())
 except ImportError:
     CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
     CRYPTOGRAPHY_FOUND = False
@@ -721,7 +721,7 @@ def main():
                     path=dict(type='path'),
                     serial_number=dict(type='int'),
                     revocation_date=dict(type='str', required=True),
-                    issuer=dict(type='dict'),
+                    issuer=dict(type='list'),
                     issuer_critical=dict(type='bool', default=False),
                     reason=dict(
                         type='str',
