@@ -99,6 +99,14 @@ options:
     default: false
     required: false
     type: bool
+  reconfigure:
+    description:
+      - This is used when switching between backends (e.g. different S3 buckets) to
+        ensure the init terraform command "hard resets" your .terraform directory.
+      - This option is ignored when force_init is false.
+    default: false
+    required: false
+    type: bool
   backend_config:
     description:
       - A group of key-values to provide at init stage to the -backend-config parameter.
@@ -191,8 +199,12 @@ def _state_args(state_file):
     return []
 
 
-def init_plugins(bin_path, project_path, backend_config):
+def init_plugins(bin_path, project_path, backend_config, reconfigure):
     command = [bin_path, 'init', '-input=false']
+
+    if reconfigure:
+      command.extend(['-reconfigure'])
+
     if backend_config:
         for key, val in backend_config.items():
             command.extend([
@@ -284,6 +296,7 @@ def main():
             lock=dict(type='bool', default=True),
             lock_timeout=dict(type='int',),
             force_init=dict(type='bool', default=False),
+            reconfigure=dict(type='bool', default=False),
             backend_config=dict(type='dict', default=None),
         ),
         required_if=[('state', 'planned', ['plan_file'])],
@@ -300,6 +313,7 @@ def main():
     plan_file = module.params.get('plan_file')
     state_file = module.params.get('state_file')
     force_init = module.params.get('force_init')
+    reconfigure = module.params.get('reconfigure')
     backend_config = module.params.get('backend_config')
 
     if bin_path is not None:
@@ -307,15 +321,15 @@ def main():
     else:
         command = [module.get_bin_path('terraform', required=True)]
 
-    if force_init:
-        init_plugins(command[0], project_path, backend_config)
-
     workspace_ctx = get_workspace_context(command[0], project_path)
     if workspace_ctx["current"] != workspace:
         if workspace not in workspace_ctx["all"]:
             create_workspace(command[0], project_path, workspace)
         else:
             select_workspace(command[0], project_path, workspace)
+    
+    if force_init:
+        init_plugins(command[0], project_path, backend_config, reconfigure)
 
     if state == 'present':
         command.extend(APPLY_ARGS)
@@ -359,7 +373,6 @@ def main():
                                                                      module.params.get('targets'), state, plan_file)
         command.append(plan_file)
 
-    out, err = '', ''
     if needs_application and not module.check_mode and not state == 'planned':
         rc, out, err = module.run_command(command, cwd=project_path)
         # checks out to decide if changes were made during execution
