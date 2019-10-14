@@ -48,9 +48,12 @@ options:
     - Private group creation can be disabled when this option is enabled.
     - If this is set, the gidnumber is mandatory.
     required: False
-    default: "no"
-    choices: ["yes", "no"]
-    version_added: "2.9.1"
+    type: bool
+    default: False
+    choices:
+      - True
+      - False
+    version_added: "2.10"
   password:
     description:
     - Password for a user. Will not be set for an existing user unless C(update_password) is set to C(always), which is the default.
@@ -328,7 +331,7 @@ def main():
                          uid=dict(type='str', required=True, aliases=['name']),
                          gidnumber=dict(type='str'),
                          uidnumber=dict(type='str'),
-                         noprivate=dict(type=bool, default=False),
+                         noprivate=dict(type='bool', required=False, default=False, choices=[True, False]),
                          password=dict(type='str', no_log=True),
                          sshpubkey=dict(type='list'),
                          state=dict(type='str', default='present',
