@@ -69,7 +69,8 @@ ansible_facts:
   description: Returns the facts collected from the FlashArray
   returned: always
   type: complex
-  contains:
+  sample: >
+    {
         "capacity": {}
         "config": {
             "directory_service": {
@@ -333,6 +334,7 @@ ansible_facts:
                 "source": null
             }
         }
+    }
 '''
 
 

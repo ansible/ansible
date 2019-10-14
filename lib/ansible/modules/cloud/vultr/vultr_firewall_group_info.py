@@ -69,7 +69,7 @@ vultr_firewall_group_info:
   description: Response from Vultr API
   returned: success
   type: complex
-  contains:
+  sample:
     "vultr_firewall_group_info": [
       {
         "date_created": "2018-07-12 10:27:14",

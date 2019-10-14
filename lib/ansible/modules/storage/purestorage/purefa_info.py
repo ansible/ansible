@@ -76,7 +76,8 @@ purefa_info:
   description: Returns the information collected from the FlashArray
   returned: always
   type: complex
-  contains:
+  sample: >
+    {
         "admins": {
             "pureuser": {
                 "role": "array_admin",
@@ -401,6 +402,7 @@ purefa_info:
                 "source": null
             }
         }
+    }
 '''
 
 

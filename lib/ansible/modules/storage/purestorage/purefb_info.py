@@ -76,7 +76,8 @@ purefb_info:
   description: Returns the information collected from the FlashBlade
   returned: always
   type: complex
-  contains:
+  sample: >
+    {
         "capacity": {
             "aggregate": {
                 "data_reduction": 1.1179228,
@@ -371,6 +372,7 @@ purefb_info:
                 "vlan": 2200
             }
         }
+    }
 '''
 
 
