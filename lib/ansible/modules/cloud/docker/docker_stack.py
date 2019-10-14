@@ -261,8 +261,8 @@ def main():
 
         if rc != 0:
             module.fail_json(msg="docker stack up deploy command failed",
-                             out=out,
-                             rc=rc, err=err)
+                             stdout=out,
+                             rc=rc, stderr=err)
 
         before_after_differences = json_diff(before_stack_services,
                                              after_stack_services)
@@ -274,10 +274,17 @@ def main():
                     before_after_differences.pop(k)
 
         if not before_after_differences:
-            module.exit_json(changed=False)
+            module.exit_json(
+              changed=False
+              rc=rc,
+              stdout=out,
+              stderr=err)
         else:
             module.exit_json(
                 changed=True,
+                rc=rc,
+                stdout=out,
+                stderr=err,
                 stack_spec_diff=json_diff(before_stack_services,
                                           after_stack_services,
                                           dump=True))
@@ -287,11 +294,11 @@ def main():
             rc, out, err = docker_stack_rm(module, name, absent_retries, absent_retries_interval)
             if rc != 0:
                 module.fail_json(msg="'docker stack down' command failed",
-                                 out=out,
+                                 stdout=out,
                                  rc=rc,
-                                 err=err)
+                                 stderr=err)
             else:
-                module.exit_json(changed=True, msg=out, err=err, rc=rc)
+                module.exit_json(changed=True, msg=out, stdout=out, stderr=err, rc=rc)
         module.exit_json(changed=False)
 
 
