@@ -79,7 +79,7 @@ class HostVars(Mapping):
 
     def __getitem__(self, host_name):
         data = self.raw_get(host_name)
-        if isinstance(data, Undefined):
+        if isinstance(data, AnsibleUndefined):
             return data
         return HostVarsVars(data, loader=self._loader)
 
