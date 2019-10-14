@@ -73,7 +73,7 @@ class HostVars(Mapping):
         '''
         host = self._find_host(host_name)
         if host is None:
-            return AnsibleUndefined(key=host_name)
+            return AnsibleUndefined(name=host_name)
 
         return self._variable_manager.get_vars(host=host, include_hostvars=False)
 
