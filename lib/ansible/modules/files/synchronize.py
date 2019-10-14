@@ -83,6 +83,7 @@ options:
     description:
       - Delete files in C(dest) that don't exist (after transfer, not before) in the C(src) path.
       - This option requires C(recursive=yes).
+      - This option ignores excluded files and behaves like the rsync opt --delete-excluded.
     type: bool
     default: no
   dirs:
