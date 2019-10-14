@@ -18,32 +18,49 @@ module: mysql_variables
 
 short_description: Manage MySQL global variables
 description:
-    - Query / Set MySQL variables.
+- Query / Set MySQL variables.
 version_added: 1.3
 author:
 - Balazs Pocze (@banyek)
 options:
-    variable:
-        description:
-            - Variable name to operate
-        type: str
-        required: True
-    value:
-        description:
-            - If set, then sets variable value to this
-        type: str
+  variable:
+    description:
+    - Variable name to operate
+    type: str
+    required: yes
+  value:
+    description:
+    - If set, then sets variable value to this
+    type: str
+
+seealso:
+- module: mysql_info
+- name: MySQL SET command reference
+  description: Complete reference of the MySQL SET command documentation.
+  link: https://dev.mysql.com/doc/refman/8.0/en/set-statement.html
+
 extends_documentation_fragment:
 - mysql
 '''
+
 EXAMPLES = r'''
 - name: Check for sync_binlog setting
-- mysql_variables:
+  mysql_variables:
     variable: sync_binlog
 
 - name: Set read_only variable to 1
-- mysql_variables:
+  mysql_variables:
     variable: read_only
     value: 1
+'''
+
+RETURN = r'''
+queries:
+  description: List of executed queries which modified DB's state.
+  returned: if executed
+  type: list
+  sample: ["SET GLOBAL `read_only` = 1"]
+  version_added: '2.10'
 '''
 
 import os
@@ -54,6 +71,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, mysql_quote_identifier
 from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
+
+executed_queries = []
 
 
 def typedvalue(value):
@@ -102,6 +121,7 @@ def setvariable(cursor, mysqlvar, value):
     query = "SET GLOBAL %s = " % mysql_quote_identifier(mysqlvar, 'vars')
     try:
         cursor.execute(query + "%s", (value,))
+        executed_queries.append(query + "%s" % value)
         cursor.fetchall()
         result = True
     except Exception as e:
@@ -151,8 +171,9 @@ def main():
                                connect_timeout=connect_timeout)
     except Exception as e:
         if os.path.exists(config_file):
-            module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
-                                 "Exception message: %s" % (config_file, to_native(e)))
+            module.fail_json(msg=("unable to connect to database, check login_user and "
+                                  "login_password are correct or %s has the credentials. "
+                                  "Exception message: %s" % (config_file, to_native(e))))
         else:
             module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, to_native(e)))
 
@@ -173,7 +194,8 @@ def main():
             result = to_native(e)
 
         if result is True:
-            module.exit_json(msg="Variable change succeeded prev_value=%s" % value_actual, changed=True)
+            module.exit_json(msg="Variable change succeeded prev_value=%s" % value_actual,
+                             changed=True, queries=executed_queries)
         else:
             module.fail_json(msg=result, changed=False)
 

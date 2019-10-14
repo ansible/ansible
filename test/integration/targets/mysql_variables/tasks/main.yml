@@ -71,6 +71,10 @@
     login_unix_socket: '{{ mysql_socket }}'
   register: result
 
+- assert:
+    that:
+    - result.queries == ["SET GLOBAL `{{ set_name }}` = {{ set_value }}"]
+
 - include: assert_var.yml changed=true output={{result}} var_name={{set_name}} var_value='{{set_value}}'
 
 # ============================================================
