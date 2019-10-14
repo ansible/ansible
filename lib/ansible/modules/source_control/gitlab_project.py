@@ -33,7 +33,6 @@ options:
   server_url:
     description:
       - The URL of the GitLab server, with protocol (i.e. http or https).
-    required: true
     type: str
   login_user:
     description:
@@ -289,7 +288,9 @@ class GitLabProject(object):
 def deprecation_warning(module):
     deprecated_aliases = ['login_token']
 
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), "2.10")
+    for aliase in deprecated_aliases:
+        if aliase in module.params:
+            module.deprecate("Alias \'{aliase}\' is deprecated".format(aliase=aliase), "2.10")
 
 
 def main():
@@ -328,7 +329,8 @@ def main():
             ['login_user', 'login_password'],
         ],
         required_one_of=[
-            ['api_username', 'api_token', 'login_user', 'login_token']
+            ['api_username', 'api_token', 'login_user', 'login_token'],
+            ['server_url', 'api_url']
         ],
         supports_check_mode=True,
     )
