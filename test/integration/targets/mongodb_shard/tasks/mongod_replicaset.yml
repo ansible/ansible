@@ -31,15 +31,62 @@
     mode: 0600
   when: mongod_auth == True
 
+- name: generate openssl keys
+  openssl_privatekey:
+    path: "{{ remote_tmp_dir }}/{{item}}_key.pem"
+  with_items:
+    - ca
+    - mongo
+    - mongo-client
+
+- name: Generate CSRs
+  openssl_csr:
+    path: "{{ remote_tmp_dir }}/{{item}}.csr"
+    privatekey_path: "{{ remote_tmp_dir }}/{{item}}_key.pem"
+    country_name: US
+    organization_name: Ansible
+    email_address: integration-tests@ansible.com
+    common_name: "{{item}}.ansible.com"
+  with_items:
+    - ca
+    - mongo
+    - mongo-client
+
+- name: Generate a Self Signed OpenSSL CA certificate
+  openssl_certificate:
+    path: "{{ remote_tmp_dir }}/ca.pem"
+    privatekey_path: "{{ remote_tmp_dir }}/ca_key.pem"
+    csr_path: "{{ remote_tmp_dir }}/ca.csr"
+    provider: selfsigned
+
+- name: Generate an OpenSSL certificate signed with your own CA certificate
+  openssl_certificate:
+    path: "{{ remote_tmp_dir }}/{{item}}.pem"
+    csr_path: "{{ remote_tmp_dir }}/{{item}}.csr"
+    ownca_path: "{{ remote_tmp_dir }}/ca.pem"
+    ownca_privatekey_path: "{{ remote_tmp_dir }}/ca_key.pem"
+    provider: ownca
+  with_items:
+    - mongo
+    - mongo-client
+    
+- name: create cert chains
+  shell: "cat {{ item }}.pem {{ item }}_key.pem > {{ item }}-chain.pem"
+  args:
+    chdir: "{{remote_tmp_dir}}"
+  with_items:
+    - mongo
+    - mongo-client
+
 - name: Spawn mongod process without auth
-  command: mongod --shardsvr --smallfiles {{ mongod_storage_engine_opts }} --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork
+  command: mongod --sslAllowConnectionsWithoutCertificates --sslCAFile {{ remote_tmp_dir }}/ca.pem --sslPEMKeyFile  {{ remote_tmp_dir }}/mongochain.pem --sslAllowInvalidHostnames --shardsvr --smallfiles {{ mongod_storage_engine_opts }} --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork
   args:
     chdir: "{{ remote_tmp_dir }}"
   with_items: "{{ mongodb_nodes | sort }}"
   when: mongod_auth == False
 
 - name: Spawn mongod process with auth
-  command: mongod --shardsvr --smallfiles {{ mongod_storage_engine_opts }} --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork --auth --keyFile my.key
+  command: mongod --sslAllowConnectionsWithoutCertificates --sslCAFile {{ remote_tmp_dir }}/ca.pem --sslPEMKeyFile  {{ remote_tmp_dir }}/mongochain.pem --sslAllowInvalidHostnames --shardsvr --smallfiles {{ mongod_storage_engine_opts }} --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork --auth --keyFile my.key
   args:
     chdir: "{{ remote_tmp_dir }}"
   with_items: "{{ mongodb_nodes | sort }}"

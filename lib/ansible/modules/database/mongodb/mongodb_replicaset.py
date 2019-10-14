@@ -70,6 +70,25 @@ options:
     type: str
     default: CERT_REQUIRED
     choices: [ CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED ]
+  ssl_ca_certs:
+    version_added: "2.8"
+    description:
+        - The path to a file containing certificate(s) of CA(s) that may be trusted to create the SSL cert presented by the MongoDB server
+        - Implies ssl=True
+  ssl_certfile:
+    version_added: "2.8"
+    description:
+        - Path to the file containing a TLS client certificate and (optionally) private key, in PEM encoding
+        - If the private key is not in this file, ssl_keyfile is required
+        - Only required when using TLS client certificates for "TLS mutual authentication"
+        - Implies ssl=True
+  ssl_keyfile:
+    version_added: "2.8"
+    description:
+        - Path to the file containing the private key corresponding to the certificate specified via ssl_certfile, in PEM encoding
+        - If the private key is already in the ssl_certfile, this parameter is optional
+        - Only required when using TLS client certificates for "TLS mutual authentication"
+        - Implies ssl=True
   arbiter_at_index:
     description:
     - Identifies the position of the member in the array that is an arbiter.
@@ -304,6 +323,9 @@ def main():
             validate=dict(type='bool', default=True),
             ssl=dict(type='bool', default=False),
             ssl_cert_reqs=dict(type='str', default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
+            ssl_certfile=dict(default=None),
+            ssl_keyfile=dict(default=None),
+            ssl_ca_certs=dict(default=None),
             protocol_version=dict(type='int', default=1, choices=[0, 1]),
             chaining_allowed=dict(type='bool', default=True),
             heartbeat_timeout_secs=dict(type='int', default=10),
@@ -325,6 +347,9 @@ def main():
     arbiter_at_index = module.params['arbiter_at_index']
     validate = module.params['validate']
     ssl = module.params['ssl']
+    ssl_certfile = module.params['ssl_certfile']
+    ssl_keyfile = module.params['ssl_keyfile']
+    ssl_ca_certs = module.params['ssl_ca_certs']
     protocol_version = module.params['protocol_version']
     chaining_allowed = module.params['chaining_allowed']
     heartbeat_timeout_secs = module.params['heartbeat_timeout_secs']
@@ -349,6 +374,12 @@ def main():
     if ssl:
         connection_params["ssl"] = ssl
         connection_params["ssl_cert_reqs"] = getattr(ssl_lib, module.params['ssl_cert_reqs'])
+    if ssl_certfile:
+        connection_params["ssl_certfile"] = ssl_certfile
+    if ssl_keyfile:
+        connection_params["ssl_keyfile"] = ssl_keyfile
+    if ssl_ca_certs:
+        connection_params["ssl_ca_certs"] = ssl_ca_certs
 
     try:
         client = MongoClient(**connection_params)
