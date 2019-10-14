@@ -13,3 +13,9 @@ set -eux
 
 # no log disabled, should produce 0 censored
 [ "$(ansible-playbook dynamic.yml -i ../../inventory -vvvvv "$@" -e unsafe_show_logs=yes|grep -c 'output has been hidden')" = "0" ]
+
+# test no log for sub options
+[ "$(ansible-playbook no_log_suboptions.yml -i ../../inventory -vvvvv "$@" | grep -Ec '(MANPOWER|UNTAPPED|CONCERNED|MARLIN|FLICK)')" = "0" ]
+
+# test invalid data passed to a suboption
+[ "$(ansible-playbook no_log_suboptions_invalid.yml -i ../../inventory -vvvvv "$@" | grep -Ec '(SUPREME|IDIOM|MOCKUP|EDUCATED|FOOTREST|CRAFTY|FELINE|CRYSTAL|EXPECTANT|AGROUND|GOLIATH|FREEFALL)')" = "0" ]
