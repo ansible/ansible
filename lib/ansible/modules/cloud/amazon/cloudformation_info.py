@@ -23,7 +23,9 @@ requirements:
   - boto3 >= 1.0.0
   - python >= 2.6
 version_added: "2.2"
-author: Justin Menga (@jmenga)
+author:
+    - Justin Menga (@jmenga)
+    - Kevin Coming (@waffie1)
 options:
     stack_name:
         description:
