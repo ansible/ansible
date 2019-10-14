@@ -2006,6 +2006,8 @@ lib/ansible/modules/cloud/scaleway/scaleway_ip_info.py validate-modules:doc-miss
 lib/ansible/modules/cloud/scaleway/scaleway_ip_info.py validate-modules:return-syntax-error
 lib/ansible/modules/cloud/scaleway/scaleway_lb.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/scaleway/scaleway_lb.py validate-modules:doc-missing-type
+lib/ansible/modules/cloud/scaleway/_scaleway_organization_facts.py validate-modules:return-syntax-error
+lib/ansible/modules/cloud/scaleway/scaleway_organization_info.py validate-modules:return-syntax-error
 lib/ansible/modules/cloud/scaleway/_scaleway_security_group_facts.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/scaleway/_scaleway_security_group_facts.py validate-modules:return-syntax-error
 lib/ansible/modules/cloud/scaleway/scaleway_security_group_info.py validate-modules:doc-missing-type
