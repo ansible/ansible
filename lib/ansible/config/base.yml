@@ -692,6 +692,10 @@ DEFAULT_HASH_BEHAVIOUR:
   env: [{name: ANSIBLE_HASH_BEHAVIOUR}]
   ini:
   - {key: hash_behaviour, section: defaults}
+  deprecated:
+    why: This feature is fragile and not portable, leading to continual confusion and misuse
+    version: "2.13"
+    alternatives: the ``combine`` filter explicitly
 DEFAULT_HOST_LIST:
   name: Inventory Source
   default: /etc/ansible/hosts
