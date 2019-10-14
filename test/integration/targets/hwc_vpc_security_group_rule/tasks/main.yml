@@ -61,7 +61,7 @@
     remote_ip_prefix: "0.0.0.0/0"
     state: present
   register: result
-- name: assert changed is true
+- name: idemponent
   assert:
     that:
       - not result.changed
@@ -127,7 +127,7 @@
     remote_ip_prefix: "0.0.0.0/0"
     state: absent
   register: result
-- name: assert changed is true
+- name: idemponent
   assert:
     that:
       - not result.changed
