@@ -43,6 +43,14 @@ options:
     - List of mail addresses assigned to the user.
     - If an empty list is passed all assigned email addresses will be deleted.
     - If None is passed email addresses will not be checked or changed.
+  noprivate:
+    description:
+    - Private group creation can be disabled when this option is enabled.
+    - If this is set, the gidnumber is mandatory.
+    required: False
+    default: "no"
+    choices: ["yes", "no"]
+    version_added: "2.9.1"
   password:
     description:
     - Password for a user. Will not be set for an existing user unless C(update_password) is set to C(always), which is the default.
@@ -167,7 +175,7 @@ class UserIPAClient(IPAClient):
 
 def get_user_dict(displayname=None, givenname=None, krbpasswordexpiration=None, loginshell=None,
                   mail=None, nsaccountlock=False, sn=None, sshpubkey=None, telephonenumber=None,
-                  title=None, userpassword=None, gidnumber=None, uidnumber=None):
+                  title=None, userpassword=None, gidnumber=None, uidnumber=None, noprivate=None):
     user = {}
     if displayname is not None:
         user['displayname'] = displayname
@@ -194,6 +202,8 @@ def get_user_dict(displayname=None, givenname=None, krbpasswordexpiration=None, 
         user['gidnumber'] = gidnumber
     if uidnumber is not None:
         user['uidnumber'] = uidnumber
+    if noprivate is not None:
+        user['noprivate'] = noprivate
 
     return user
 
@@ -272,6 +282,7 @@ def ensure(module, client):
                                 givenname=module.params.get('givenname'),
                                 loginshell=module.params['loginshell'],
                                 mail=module.params['mail'], sn=module.params['sn'],
+                                noprivate=module.params.get('noprivate'),
                                 sshpubkey=module.params['sshpubkey'], nsaccountlock=nsaccountlock,
                                 telephonenumber=module.params['telephonenumber'], title=module.params['title'],
                                 userpassword=module.params['password'],
@@ -287,6 +298,7 @@ def ensure(module, client):
             if not module.check_mode:
                 ipa_user = client.user_add(name=name, item=module_user)
         else:
+            module_user.pop('noprivate', None)
             if update_password == 'on_create':
                 module_user.pop('userpassword', None)
             diff = get_user_diff(client, ipa_user, module_user)
@@ -316,6 +328,7 @@ def main():
                          uid=dict(type='str', required=True, aliases=['name']),
                          gidnumber=dict(type='str'),
                          uidnumber=dict(type='str'),
+                         noprivate=dict(type=bool, default=False),
                          password=dict(type='str', no_log=True),
                          sshpubkey=dict(type='list'),
                          state=dict(type='str', default='present',
@@ -337,6 +350,9 @@ def main():
     if module.params['sshpubkey'] is not None:
         if len(module.params['sshpubkey']) == 1 and module.params['sshpubkey'][0] == "":
             module.params['sshpubkey'] = None
+
+    if module.params['noprivate'] and not module.params['gidnumber']:
+        module.fail_json(msg="'gidnumber' is mandatory with 'noprivate' enabled")
 
     try:
         client.login(username=module.params['ipa_user'],
