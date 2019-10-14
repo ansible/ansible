@@ -107,7 +107,7 @@ options:
     default: false
     required: false
     type: bool
-    version_added 2.10
+    version_added: 2.10
   backend_config:
     description:
       - A group of key-values to provide at init stage to the -backend-config parameter.
