@@ -1,0 +1,2 @@
+bugfixes:
+- ce_facts - update to fix some bugs - Modifying regular expression errors. (https://github.com/ansible/ansible/pull/63331)
