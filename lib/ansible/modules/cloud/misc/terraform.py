@@ -327,7 +327,7 @@ def main():
             create_workspace(command[0], project_path, workspace)
         else:
             select_workspace(command[0], project_path, workspace)
-    
+
     if force_init:
         init_plugins(command[0], project_path, backend_config, reconfigure)
 
