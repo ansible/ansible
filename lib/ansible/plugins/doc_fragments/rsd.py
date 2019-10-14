@@ -108,6 +108,7 @@ requirements:
   - rsd-lib > 0.2.2
   - RSD PODM API >= 2.1
   - cachetools
+  - python >= 2.7
 seealso:
     - name: Rack Scale Design documentation
       description: Reference RSD documentation, including the latest PODM API
