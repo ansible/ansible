@@ -115,8 +115,8 @@ EXAMPLES = r'''
 - name: Gather some info from a host using the vSphere API output schema
   vmware_host_facts:
     hostname: "{{ vcenter_server }}"
-    username: "{{ esxi_username }}"
-    password: "{{ esxi_password }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
     esxi_hostname: "{{ esxi_hostname }}"
     schema: vsphere
     properties:
