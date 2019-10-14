@@ -85,7 +85,7 @@ This is a generic example to show how Ansible can be utilized to consume VMware 
             options:
               'Config.HostAgent.log.level': 'error'
             validate_certs: no
-          with_items: "{{ vchosts.json.value }}"
+          loop: "{{ vchosts.json.value }}"
           register: host_config_results
 
 
