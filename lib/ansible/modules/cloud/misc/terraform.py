@@ -107,6 +107,7 @@ options:
     default: false
     required: false
     type: bool
+    version_added 2.10
   backend_config:
     description:
       - A group of key-values to provide at init stage to the -backend-config parameter.
@@ -203,7 +204,7 @@ def init_plugins(bin_path, project_path, backend_config, reconfigure):
     command = [bin_path, 'init', '-input=false']
 
     if reconfigure:
-      command.extend(['-reconfigure'])
+        command.extend(['-reconfigure'])
 
     if backend_config:
         for key, val in backend_config.items():
