@@ -76,7 +76,7 @@ hcloud_volume_info:
         linux_device:
             description: Path to the device that contains the volume.
             returned: always
-            type: src
+            type: str
             sample: /dev/disk/by-id/scsi-0HC_Volume_12345
             version_added: "2.10"
         location:
