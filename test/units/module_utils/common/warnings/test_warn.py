@@ -15,7 +15,7 @@ from ansible.module_utils.six import PY3
 
 def test_warn():
     warn('Warning message')
-    assert warnings._global_warnings == ['Warning message']
+    assert warnings.global_warnings == ['Warning message']
 
 
 def test_multiple_warningss():
@@ -27,7 +27,7 @@ def test_multiple_warningss():
     for w in warning_messages:
         warn(w)
 
-    assert warning_messages == warnings._global_warnings
+    assert warning_messages == warnings.global_warnings
 
 
 @pytest.mark.parametrize(

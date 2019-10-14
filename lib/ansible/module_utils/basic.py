@@ -1403,7 +1403,7 @@ class AnsibleModule(object):
         alias_warnings = []
         alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings=alias_warnings)
         for option, alias in alias_warnings:
-            warnings._global_warnings.append('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
+            warnings.global_warnings.append('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
 
         deprecated_aliases = []
         for i in spec.keys():
@@ -1413,7 +1413,7 @@ class AnsibleModule(object):
 
         for deprecation in deprecated_aliases:
             if deprecation['name'] in param.keys():
-                warnings._global_deprecations.append(
+                warnings.global_deprecations.append(
                     {'msg': "Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
                      'version': deprecation['version']})
         return alias_results
@@ -2020,8 +2020,8 @@ class AnsibleModule(object):
             else:
                 self.warn(kwargs['warnings'])
 
-        if warnings._global_warnings:
-            kwargs['warnings'] = warnings._global_warnings
+        if warnings.global_warnings:
+            kwargs['warnings'] = warnings.global_warnings
 
         if 'deprecations' in kwargs:
             if isinstance(kwargs['deprecations'], list):
@@ -2035,8 +2035,8 @@ class AnsibleModule(object):
             else:
                 self.deprecate(kwargs['deprecations'])  # pylint: disable=ansible-deprecated-no-version
 
-        if warnings._global_deprecations:
-            kwargs['deprecations'] = warnings._global_deprecations
+        if warnings.global_deprecations:
+            kwargs['deprecations'] = warnings.global_deprecations
 
         kwargs = remove_values(kwargs, self.no_log_values)
         print('\n%s' % self.jsonify(kwargs))
