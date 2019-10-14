@@ -57,6 +57,7 @@ try:
 except ImportError:
     HAS_LOGSTASH = False
 
+from ansible.module_utils.six import PY3
 from ansible.plugins.callback import CallbackBase
 
 
@@ -95,8 +96,9 @@ class CallbackModule(CallbackBase):
 
         if not HAS_LOGSTASH:
             self.disabled = True
-            self._display.warning("The required python-logstash is not installed. "
-                                  "pip install python3-logstash")
+            logstash_lib = 'python3-logstash' if PY3 else 'python-logstash'
+            self._display.warning("The required python logstash library is not installed. "
+                                  "pip install {}".format(logstash_lib))
         else:
             self.logger = logging.getLogger('python-logstash-logger')
             self.logger.setLevel(logging.DEBUG)
