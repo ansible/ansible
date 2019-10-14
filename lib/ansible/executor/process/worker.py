@@ -187,10 +187,9 @@ class WorkerProcess(multiprocessing_context.Process):
                     task = DottedDict(task)
                     play_context = DottedDict(play_context)
                     display.debug("running TaskExecutor() for %s/%s [name: %s]" % (host.name, task.uuid, task.name))
-                    #with open(task_vars_path, 'rt') as f:
-                    #    task_vars = json.load(f, cls=AnsibleJSONDecoder)
-                    task_vars = {}
-                    #os.unlink(task_vars_path)
+                    with open(task_vars_path, 'rt') as f:
+                        task_vars = json.load(f, cls=AnsibleJSONDecoder)
+                    os.unlink(task_vars_path)
                 except ValueError as e:
                     # FIXME: send back a failed result re: invalid job params
                     # FIXME: catch possible errors from JSON and unlink

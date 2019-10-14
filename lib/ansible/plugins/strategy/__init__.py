@@ -300,11 +300,10 @@ class StrategyBase:
 
         # FIXME: get the ansible secure working directory properly instead of hard-coding it here
         display.debug("dumping task vars to tmp file")
-        #task_vars_fd, task_vars_path = tempfile.mkstemp(prefix='task_vars', dir=unfrackpath('~/.ansible/tmp'), text=True)
-        #with os.fdopen(task_vars_fd, 'wt') as f:
-        #    #json.dump(task_vars, f, cls=AnsibleJSONEncoder)
-        #    json.dump({}, f)
-        task_vars_path = ''
+        task_vars_fd, task_vars_path = tempfile.mkstemp(prefix='task_vars', dir=unfrackpath('~/.ansible/tmp'), text=True)
+        with os.fdopen(task_vars_fd, 'wt') as f:
+            json.dump(task_vars, f)
+            #json.dump({}, f)
         display.debug("done dumping task vars to tmp file")
 
         try:
@@ -320,11 +319,15 @@ class StrategyBase:
             display.debug("done copying/squashing task and play context for queue")
             display.debug("putting the task/etc. in the queue")
             worker, in_q = self._workers[self._cur_worker]
+            t = task.copy(exclude_parent=False, exclude_tasks=True)
+            t.squash()
+            pc = play_context.copy()
+            pc.squash()
             in_q.put((
                 host._serialized_view,
-                task.serialize(),
+                t.serialize(),
                 task_vars_path,
-                play_context.serialize(),
+                pc.serialize(),
                 {}, # plugin paths dict
             ), block=False)
             display.debug("done putting the task/etc. in the queue")
