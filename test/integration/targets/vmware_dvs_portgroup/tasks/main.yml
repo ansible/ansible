@@ -345,3 +345,43 @@
   assert:
     that:
         - dvs_pg_result_0015.changed
+
+- name: create complex trunk portgroup
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    switch_name: "{{ dvswitch1 }}"
+    portgroup_name: "complex-trunk"
+    vlan_id: 1-1000, 1005, 1100-1200
+    vlan_trunk: True
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+  register: dvs_pg_result_0016
+
+- name: ensure dvs portgroup is present
+  assert:
+    that:
+        - dvs_pg_result_0016.changed
+
+- name: change complex trunk portgroup
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    switch_name: "{{ dvswitch1 }}"
+    portgroup_name: "complex-trunk"
+    vlan_id: 1-1000, 1006, 1100-1200
+    vlan_trunk: True
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+  register: dvs_pg_result_0017
+
+- name: ensure dvs portgroup is changed
+  assert:
+    that:
+        - dvs_pg_result_0017.changed
