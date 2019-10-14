@@ -9,21 +9,25 @@ is an open source project, you may be running your own internal Galaxy server an
 or by setting the Galaxy server value in your *ansible.cfg* file. For information on setting the value in *ansible.cfg* see :ref:`galaxy_server`.
 
 
-Installing Roles
+Installing roles
 ----------------
 
 Use the ``ansible-galaxy`` command to download roles from the `Galaxy website <https://galaxy.ansible.com>`_
 
 .. code-block:: bash
 
-  $ ansible-galaxy install username.role_name
+  $ ansible-galaxy install namespace.role_name
 
-roles_path
-^^^^^^^^^^
+Setting where to install roles
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default Ansible downloads roles to the first writable directory in the default list of paths ``~/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles``. This will install roles in the home directory of the user running ``ansible-galaxy``.
+By default, Ansible downloads roles to the first writable directory in the default list of paths ``~/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles``. This installs roles in the home directory of the user running ``ansible-galaxy``.
 
-You can override this by setting the environment variable :envvar:`ANSIBLE_ROLES_PATH` in your session, defining ``roles_path`` in an ``ansible.cfg`` file, or by using the ``--roles-path`` option.
+You can override this one of the following options:
+
+* Set the environment variable :envvar:`ANSIBLE_ROLES_PATH` in your session.
+* Define ``roles_path`` in an ``ansible.cfg`` file.
+* Use the ``--roles-path`` option for the ``ansible-galaxy`` command.
 
 The following provides an example of using ``--roles-path`` to install the role into the current working directory:
 
@@ -39,27 +43,35 @@ The following provides an example of using ``--roles-path`` to install the role 
 Installing a specific version of a role
 ---------------------------------------
 
-You can install a specific version of a role from Galaxy by appending a comma and the value of a GitHub release tag. For example:
+When the Galaxy server imports a role, it imports any git tags matching the Semantic Version format as versions. In turn, you can download a specific version of a role by specifying one of the imported tags.
+
+To see the available versions for a role:
+
+#. Locate the role on the Galaxy search page.
+#. Click on the name to view more details, including the available versions.
+
+You can also navigate directly to the role using the /<namespace>/<role name>. For example, to view the role geerlingguy.apache, go to `<https://galaxy.ansible.com/geerlingguy/apache>`_.
+
+To install a specific version of a role from Galaxy, append a comma and the value of a GitHub release tag. For example:
 
 .. code-block:: bash
 
    $ ansible-galaxy install geerlingguy.apache,v1.0.0
 
-It's also possible to point directly to the git repository and specify a branch name or commit hash as the version. For example, the following will
+It is also possible to point directly to the git repository and specify a branch name or commit hash as the version. For example, the following will
 install a specific commit:
 
 .. code-block:: bash
 
    $ ansible-galaxy install git+https://github.com/geerlingguy/ansible-role-apache.git,0b7cd353c0250e87a26e0499e59e7fd265cc2f25
 
-
 Installing multiple roles from a file
 -------------------------------------
 
-Beginning with Ansible 1.8 it is possible to install multiple roles by including the roles in a *requirements.yml* file. The format of the file is YAML, and the
+You can install multiple roles by including the roles in a :file:`requirements.yml` file. The format of the file is YAML, and the
 file extension must be either *.yml* or *.yaml*.
 
-Use the following command to install roles included in *requirements.yml*:
+Use the following command to install roles included in :file:`requirements.yml:`
 
 .. code-block:: bash
 
@@ -71,7 +83,7 @@ Again, the extension is important. If the *.yml* extension is left off, the ``an
 Each role in the file will have one or more of the following attributes:
 
    src
-     The source of the role. Use the format *username.role_name*, if downloading from Galaxy; otherwise, provide a URL pointing
+     The source of the role. Use the format *namespace.role_name*, if downloading from Galaxy; otherwise, provide a URL pointing
      to a repository within a git based SCM. See the examples below. This is a required attribute.
    scm
      Specify the SCM. As of this writing only *git* or *hg* are allowed. See the examples below. Defaults to *git*.
@@ -83,7 +95,7 @@ Each role in the file will have one or more of the following attributes:
 
 Use the following example as a guide for specifying roles in *requirements.yml*:
 
-.. code-block:: text
+.. code-block:: yaml
 
     # from galaxy
     - src: yatesr.timezone
@@ -124,34 +136,35 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
 Installing multiple roles from multiple files
 ---------------------------------------------
 
-At a basic level, including requirements files allows you to break up bits of roles into smaller files. Role includes pull in roles from other files.
+For large projects, the ``include`` directive in a :file:`requirements.yml` file provides the ability to split a large file into multiple smaller files.
 
-Use the following command to install roles includes in *requirements.yml*  + *webserver.yml*
+For example, a project may have a :file:`requirements.yml` file, and a :file:`webserver.yml` file.
+
+Below are the contents of the :file:`webserver.yml` file:
 
 .. code-block:: bash
-
-    ansible-galaxy install -r requirements.yml
-
-Content of the *requirements.yml* file:
-
-.. code-block:: text
-
-    # from galaxy
-    - src: yatesr.timezone
-
-    - include: <path_to_requirements>/webserver.yml
-
-
-Content of the *webserver.yml* file:
-
-.. code-block:: text
 
     # from github
     - src: https://github.com/bennojoy/nginx
 
     # from Bitbucket
-    - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
+    - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
+
+The following shows the contents of the :file:`requirements.yml` file that now includes the :file:`webserver.yml` file:
+
+.. code-block:: bash
+
+  # from galaxy
+  - src: yatesr.timezone
+  - include: <path_to_requirements>/webserver.yml
+
+To install all the roles from both files, pass the root file, in this case :file:`requirements.yml` on the
+command line, as follows:
+
+.. code-block:: bash
+
+    $ ansible-galaxy install -r requirements.yml
 
 .. _galaxy_dependencies:
 
@@ -161,25 +174,58 @@ Dependencies
 Roles can also be dependent on other roles, and when you install a role that has dependencies, those dependencies will automatically be installed.
 
 You specify role dependencies in the ``meta/main.yml`` file by providing a list of roles. If the source of a role is Galaxy, you can simply specify the role in
-the format ``username.role_name``. You can also use the more complex format in ``requirements.yml``, allowing you to provide ``src``, ``scm``, ``version``, and ``name``.
+the format ``namespace.role_name``. You can also use the more complex format in ``requirements.yml``, allowing you to provide ``src``, ``scm``, ``version``, and ``name``.
+
+The following shows an example ``meta/main.yml`` file with dependent roles:
+
+.. code-block:: yaml
+
+    ---
+    dependencies:
+      - geerlingguy.java
+
+    galaxy_info:
+      author: geerlingguy
+      description: Elasticsearch for Linux.
+      company: "Midwestern Mac, LLC"
+      license: "license (BSD, MIT)"
+      min_ansible_version: 2.4
+      platforms:
+      - name: EL
+        versions:
+        - all
+      - name: Debian
+        versions:
+        - all
+      - name: Ubuntu
+        versions:
+        - all
+      galaxy_tags:
+        - web
+        - system
+        - monitoring
+        - logging
+        - lucene
+        - elk
+        - elasticsearch
 
 Tags are inherited *down* the dependency chain. In order for tags to be applied to a role and all its dependencies, the tag should be applied to the role, not to all the tasks within a role.
 
 Roles listed as dependencies are subject to conditionals and tag filtering, and may not execute fully depending on
 what tags and conditionals are applied.
 
-Dependencies found in Galaxy can be specified as follows:
+If the source of a role is Galaxy, specify the role in the format *namespace.role_name*:
 
-.. code-block:: text
+.. code-block:: yaml
 
     dependencies:
       - geerlingguy.apache
       - geerlingguy.ansible
 
 
-The complex form can also be used as follows:
+Alternately, you can specify the role dependencies in the complex form used in  :file:`requirements.yml` as follows:
 
-.. code-block:: text
+.. code-block:: yaml
 
     dependencies:
       - src: geerlingguy.ansible
@@ -191,8 +237,8 @@ When dependencies are encountered by ``ansible-galaxy``, it will automatically i
 
 .. note::
 
-    At the time of this writing, the Galaxy website expects all role dependencies to exist in Galaxy, and therefore dependencies to be specified in the
-    ``username.role_name`` format. If you import a role with a dependency where the ``src`` value is a URL, the import process will fail.
+    Galaxy expects all role dependencies to exist in Galaxy, and therefore dependencies to be specified in the
+    ``namespace.role_name`` format. If you import a role with a dependency where the ``src`` value is a URL, the import process will fail.
 
 List installed roles
 --------------------
@@ -202,11 +248,11 @@ Use ``list`` to show the name and version of each role installed in the *roles_p
 .. code-block:: bash
 
     $ ansible-galaxy list
-
-    - chouseknecht.role-install_mongod, master
-    - chouseknecht.test-role-1, v1.0.2
-    - chrismeyersfsu.role-iptables, master
-    - chrismeyersfsu.role-required_vars, master
+      - ansible-network.network-engine, v2.7.2
+      - ansible-network.config_manager, v2.6.2
+      - ansible-network.cisco_nxos, v2.7.1
+      - ansible-network.vyos, v2.7.3
+    - ansible-network.cisco_ios, v2.7.0
 
 Remove an installed role
 ------------------------
@@ -215,4 +261,4 @@ Use ``remove`` to delete a role from *roles_path*:
 
 .. code-block:: bash
 
-    $ ansible-galaxy remove username.role_name
+    $ ansible-galaxy remove namespace.role_name
