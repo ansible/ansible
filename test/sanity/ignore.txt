@@ -2250,7 +2250,6 @@ lib/ansible/modules/files/file.py validate-modules:undocumented-parameter
 lib/ansible/modules/files/file.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/files/find.py use-argspec-type-path # fix needed
 lib/ansible/modules/files/find.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/files/ini_file.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/files/iso_extract.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/files/lineinfile.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/files/lineinfile.py validate-modules:doc-default-does-not-match-spec
