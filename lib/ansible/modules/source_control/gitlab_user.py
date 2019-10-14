@@ -34,7 +34,6 @@ options:
   server_url:
     description:
       - The URL of the GitLab server, with protocol (i.e. http or https).
-    required: true
     type: str
   login_user:
     description:
@@ -411,13 +410,15 @@ class GitLabUser(object):
 def deprecation_warning(module):
     deprecated_aliases = ['login_token']
 
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), "2.10")
+    for aliase in deprecated_aliases:
+        if aliase in module.params:
+            module.deprecate("Alias \'{aliase}\' is deprecated".format(aliase=aliase), "2.10")
 
 
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        server_url=dict(type='str', required=True, removed_in_version="2.10"),
+        server_url=dict(type='str', removed_in_version="2.10"),
         login_user=dict(type='str', no_log=True, removed_in_version="2.10"),
         login_password=dict(type='str', no_log=True, removed_in_version="2.10"),
         api_token=dict(type='str', no_log=True, aliases=["login_token"]),
@@ -451,7 +452,8 @@ def main():
             ['login_user', 'login_password'],
         ],
         required_one_of=[
-            ['api_username', 'api_token', 'login_user', 'login_token']
+            ['api_username', 'api_token', 'login_user', 'login_token'],
+            ['server_url', 'api_url']
         ],
         supports_check_mode=True,
     )

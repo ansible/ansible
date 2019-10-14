@@ -41,7 +41,6 @@ options:
   url:
     description:
       - The URL of the GitLab server, with protocol (i.e. http or https).
-    required: true
     type: str
   api_token:
     description:
@@ -286,15 +285,17 @@ class GitLabRunner(object):
 
 
 def deprecation_warning(module):
-    deprecated_aliases = ['login_token']
+    deprecated_aliases = ['private_token']
 
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), "2.10")
+    for aliase in deprecated_aliases:
+        if aliase in module.params:
+            module.deprecate("Alias \'{aliase}\' is deprecated".format(aliase=aliase), "2.10")
 
 
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        url=dict(type='str', required=True, removed_in_version="2.10"),
+        url=dict(type='str', removed_in_version="2.10"),
         api_token=dict(type='str', no_log=True, aliases=["private_token"]),
         description=dict(type='str', required=True, aliases=["name"]),
         active=dict(type='bool', default=True),
@@ -319,14 +320,16 @@ def main():
             ['login_user', 'login_password'],
         ],
         required_one_of=[
-            ['api_username', 'api_token']
+            ['api_username', 'api_token'],
+            ['api_url', 'url']
         ],
         supports_check_mode=True,
     )
 
     deprecation_warning(module)
 
-    url = re.sub('/api.*', '', module.params['url'])
+    if module.params['url'] is not None:
+        url = re.sub('/api.*', '', module.params['url'])
 
     api_url = module.params['api_url']
     validate_certs = module.params['validate_certs']
