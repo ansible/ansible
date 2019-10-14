@@ -578,13 +578,14 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         for vm_obj in objects:
             for vm_obj_property in vm_obj.propSet:
+                # VMware does not provide a way to uniquely identify VM by its name
+                # i.e. there can be two virtual machines with same name
+                # Appending "_" and VMware UUID to make it unique
                 if not vm_obj.obj.config:
                     # Sometime orphaned VMs return no configurations
                     continue
-                # VMware does not provide a way to uniquely identify a VM by its name
-                # i.e. there can be two virtual machines with same name
-                # The full name instead is unique and recognizable to users.
-                current_host = self._get_fullName(vm_obj.obj)
+
+                current_host = vm_obj_property.val + "_" + vm_obj.obj.config.uuid
 
                 if current_host not in hostvars:
                     hostvars[current_host] = {}
@@ -624,7 +625,10 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                         self.inventory.add_child(vm_guest_id, current_host)
 
                     # Based on folder of virtual machine
-                    folders = current_host.split('/')
+                    fullName = self._get_fullName(vm_obj.obj)
+                    # Add the full path of the vm to the variables
+                    self.inventory.set_variable(current_host, 'path', fullName)
+                    folders = fullName.split('/')
                     if folders[-2] not in cacheable_results:
                         parent_folders = []
                         self.inventory.add_group(folders[0])
@@ -687,9 +691,6 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             host_FQDN = str(vm_obj.obj.guest.hostName)
             host_domain_name = '.'.join(host_FQDN.split(".")[1:])
             self.inventory.set_variable(current_host, 'guest.hostDomainName', host_domain_name)
-
-        # Add the full path of the vm to the variables
-        self.inventory.set_variable(current_host, 'path', current_host)
 
         # Set inventory variables, so that if multiple inventories are used one can differentiate
         # to which host/vcenter the vm belongs to (e.g. production or staging)
