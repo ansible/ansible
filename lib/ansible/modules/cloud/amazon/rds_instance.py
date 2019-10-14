@@ -887,7 +887,7 @@ def get_current_attributes_with_inconsistent_keys(instance):
     if instance.get('PendingModifiedValues', {}).get('Port'):
         options['DBPortNumber'] = instance['PendingModifiedValues']['Port']
     else:
-        options['DBPortNumber'] = instance['Endpoint']['Port']
+        options['DBPortNumber'] = instance.get('Endpoint', {}).get('Port')
     if instance.get('PendingModifiedValues', {}).get('DBSubnetGroupName'):
         options['DBSubnetGroupName'] = instance['PendingModifiedValues']['DBSubnetGroupName']
     else:
@@ -1064,6 +1064,38 @@ def start_or_stop_instance(client, module, instance, state):
     return changed
 
 
+def get_parameters_and_do_method(client, module, instance, method_name, parameter_options):
+    changed = False
+    state = module.params['state']
+
+    raw_parameters = arg_spec_to_rds_params(dict((k, module.params[k]) for k in module.params if k in parameter_options))
+    parameters = get_parameters(client, module, raw_parameters, method_name)
+
+    if parameters:
+        result, changed = call_method(client, module, method_name, parameters)
+
+    instance_id = get_final_identifier(method_name, module)
+
+    # Check tagging/promoting/rebooting/starting/stopping instance
+    if state != 'absent' and (not module.check_mode or instance):
+        changed |= update_instance(client, module, instance, instance_id)
+
+    if changed:
+        instance = get_instance(client, module, instance_id)
+        if state != 'absent' and (instance or not module.check_mode):
+            for attempt_to_wait in range(0, 10):
+                instance = get_instance(client, module, instance_id)
+                if instance:
+                    break
+                else:
+                    sleep(5)
+
+    if state == 'absent' and changed and not module.params['skip_final_snapshot']:
+        instance.update(FinalSnapshot=get_final_snapshot(client, module, module.params['final_db_snapshot_identifier']))
+
+    return instance, changed
+
+
 def main():
     arg_spec = dict(
         state=dict(choices=['present', 'absent', 'terminated', 'running', 'started', 'stopped', 'rebooted', 'restarted'], default='present'),
@@ -1185,30 +1217,28 @@ def main():
     method_name = get_rds_method_attribute_name(instance, state, module.params['creation_source'], module.params['read_replica'])
 
     if method_name:
-        raw_parameters = arg_spec_to_rds_params(dict((k, module.params[k]) for k in module.params if k in parameter_options))
-        parameters = get_parameters(client, module, raw_parameters, method_name)
+        original_unformatted_parameters = arg_spec_to_rds_params(dict((k, module.params[k]) for k in module.params if k in parameter_options))
+        original_parameters = get_parameters(client, module, original_unformatted_parameters, method_name)
+        instance, changed = get_parameters_and_do_method(client, module, instance, method_name, parameter_options)
 
-        if parameters:
-            result, changed = call_method(client, module, method_name, parameters)
-
-        instance_id = get_final_identifier(method_name, module)
-
-        # Check tagging/promoting/rebooting/starting/stopping instance
-        if state != 'absent' and (not module.check_mode or instance):
-            changed |= update_instance(client, module, instance, instance_id)
-
-        if changed:
-            instance = get_instance(client, module, instance_id)
-            if state != 'absent' and (instance or not module.check_mode):
-                for attempt_to_wait in range(0, 10):
-                    instance = get_instance(client, module, instance_id)
-                    if instance:
-                        break
-                    else:
-                        sleep(5)
-
-        if state == 'absent' and changed and not module.params['skip_final_snapshot']:
-            instance.update(FinalSnapshot=get_final_snapshot(client, module, module.params['final_db_snapshot_identifier']))
+        # Some options are only able to be customized upon modification of the instance (such as CACertificateIdentifier)
+        # If the instance hasn't already been modified and the user is waiting for the changes see if there are any modifications
+        # (There is no need to do this for check mode because if the instance is to be created we already know changed is True)
+        if state == 'present' and method_name != 'modify_db_instance' and not module.check_mode:
+            method_name = get_rds_method_attribute_name(instance, state, module.params['creation_source'], module.params['read_replica'])
+            if module.params['wait']:
+                instance, modification_only_change = get_parameters_and_do_method(client, module, instance, method_name, parameter_options)
+                changed |= modification_only_change
+            else:
+                # WIP - this will lead to false positives for port and probably other things. Unsure if it's better to warn or not.
+                # Shouldn't fix this by hardcoding the list of possible modification-only parameters, since those can differ by the initial API call.
+                raw_parameters = arg_spec_to_rds_params(dict((k, module.params[k]) for k in module.params if k in parameter_options))
+                updated_parameters = get_parameters(client, module, raw_parameters, method_name)
+                changes = dict((k, updated_parameters[k]) for k in updated_parameters if k not in original_parameters)
+                if changes:
+                    module.warn('It appears there are modification-only changes specified in your playbook: {0}. '
+                                'Set wait to True to allow the instance to be created and then updated with the options '
+                                'or run the task again.'.format(changes))
 
     pending_processor_features = None
     if instance.get('PendingModifiedValues', {}).get('ProcessorFeatures'):
