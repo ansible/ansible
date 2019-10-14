@@ -18,6 +18,8 @@ author:
 description:
     - This module manages whole lifecycle of the Virtual Machine(VM) in oVirt/RHV.
     - Since VM can hold many states in oVirt/RHV, this see notes to see how the states of the VM are handled.
+    - WARNING: If VM parameter, which requires reboot, is updated, then internally oVirt engine always create new snapshot
+      for the VM and that is why we report the VM as changed.
 options:
     name:
         description:
