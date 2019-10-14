@@ -260,8 +260,7 @@ def map_config_to_obj(module):
                         speed = match.group(1).strip("'")
                         interface['speed'] = speed
                     elif param == 'mtu':
-                        match = re.search(r'mtu (\S+)', line, re.M)
-                        mtu = match.group(1).strip("'")
+                        mtu = re.search(r'mtu \'(\d+)\'', line, re.M).group(1)
                         interface['mtu'] = int(mtu)
                     elif param == 'duplex':
                         match = re.search(r'duplex (\S+)', line, re.M)
