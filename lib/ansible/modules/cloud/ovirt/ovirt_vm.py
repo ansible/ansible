@@ -783,6 +783,7 @@ options:
             protocol:
                 description:
                     - Graphical protocol, a list of I(spice), I(vnc), or both.
+                type: list
             disconnect_action:
                 description:
                     - "Returns the action that will take place when the graphic console(SPICE only) is disconnected. The options are:"
@@ -1826,9 +1827,6 @@ class VmsModule(BaseModule):
 
         # If there are not gc add any gc to be added:
         protocol = graphical_console.get('protocol')
-        if isinstance(protocol, str):
-            protocol = [protocol]
-
         current_protocols = [str(gc.protocol) for gc in graphical_consoles]
         if not current_protocols:
             if not self._module.check_mode:
@@ -2437,7 +2435,7 @@ def main():
             type='dict',
             options=dict(
                 headless_mode=dict(type='bool'),
-                protocol=dict(),
+                protocol=dict(type='list'),
                 disconnect_action=dict(type='str'),
                 keyboard_layout=dict(type='str'),
                 monitors=dict(type='int'),
