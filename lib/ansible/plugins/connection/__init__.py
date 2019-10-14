@@ -84,8 +84,8 @@ class ConnectionBase(AnsiblePlugin):
 
         # we always must have shell
         if not self._shell:
-            shell_type = play_context['shell'] if play_context['shell'] else getattr(self, '_shell_type', None)
-            self._shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context['executable'])
+            shell_type = play_context.shell if play_context.shell else getattr(self, '_shell_type', None)
+            self._shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
 
         self.become = None
 
@@ -216,15 +216,15 @@ class ConnectionBase(AnsiblePlugin):
         pass
 
     def connection_lock(self):
-        f = self._play_context['connection_lockfd']
-        display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f), host=self._play_context['remote_addr'])
+        f = self._play_context.connection_lockfd
+        display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
         fcntl.lockf(f, fcntl.LOCK_EX)
-        display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f), host=self._play_context['remote_addr'])
+        display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
 
     def connection_unlock(self):
-        f = self._play_context['connection_lockfd']
+        f = self._play_context.connection_lockfd
         fcntl.lockf(f, fcntl.LOCK_UN)
-        display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context['remote_addr'])
+        display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
 
     def reset(self):
         display.warning("Reset is not implemented for this connection")
