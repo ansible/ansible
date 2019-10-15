@@ -8,17 +8,6 @@
       vars:
         setup_attach_host: true
 
-    - name: Disable the Firewall vvold rule on the ESXi
-      vmware_host_firewall_manager:
-        hostname: '{{ vcenter_hostname }}'
-        username: '{{ vcenter_username }}'
-        password: '{{ vcenter_password }}'
-        cluster_name: '{{ ccr1 }}'
-        validate_certs: no
-        rules:
-            - name: vvold
-              enabled: False
-
     - name: Enable vvold rule set on all hosts of {{ ccr1 }}
       vmware_host_firewall_manager:
         hostname: "{{ vcenter_hostname }}"
@@ -139,11 +128,12 @@
           - name: CIMHttpServer
             enabled: True
             allowed_hosts:
-              - all_ip: False
-                ip_address:
-                  - "192.168.100.11"
-                ip_network:
-                  - "192.168.200.0/24"
+              all_ip: False
+              ip_address:
+                - "192.168.100.11"
+                - "192.168.100.12"
+              ip_network:
+                - "192.168.200.0/24"
       register: all_hosts_ip_specific
     - debug: var=all_hosts_ip_specific
     - name: ensure everything is changed for all hosts of {{ ccr1 }}
@@ -161,9 +151,11 @@
           - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['current_allowed_all'] == False
           - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['previous_allowed_all'] == True
           - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['desired_allowed_all'] == False
-          - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['current_allowed_ip'] == ["192.168.100.11"]
+          - "'192.168.100.11' in all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['current_allowed_ip']"
+          - "'192.168.100.12' in all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['current_allowed_ip']"
           - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['previous_allowed_ip'] == []
-          - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['desired_allowed_ip'] == ["192.168.100.11"]
+          - "'192.168.100.11' in all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['desired_allowed_ip']"
+          - "'192.168.100.12' in all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['desired_allowed_ip']"
           - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['current_allowed_networks'] == ["192.168.200.0/24"]
           - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['previous_allowed_networks'] == []
           - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['desired_allowed_networks'] == ["192.168.200.0/24"]
@@ -182,23 +174,49 @@
           - name: NFC
             enabled: True
             allowed_hosts:
-              - all_ip: False
-                ip_address:
-                  - "192.168.100.11"
+              all_ip: False
+              ip_address:
+                - "192.168.100.11"
       register: single_host_ip_specific
+    - set_fact:
+        nfc_state: "{{ single_host_ip_specific.rule_set_state[esxi1]['NFC'] }}"
     - debug: var=single_host_ip_specific
+    - debug: var=nfc_state
     - name: ensure NFC is configured on that host
       assert:
         that:
-          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['current_state'] == True
-          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['desired_state'] == True
-          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['previous_state'] == True
-          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['current_allowed_all'] == False
-          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['previous_allowed_all'] == True
-          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['desired_allowed_all'] == False
-          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['current_allowed_ip'] == ["192.168.100.11"]
-          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['previous_allowed_ip'] == None
-          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['desired_allowed_ip'] == ["192.168.100.11"]
-          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['current_allowed_networks'] == []
-          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['previous_allowed_networks'] == []
-          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['desired_allowed_networks'] == []
+          - nfc_state.current_state == true
+          - nfc_state.desired_state == true
+          - nfc_state.previous_state == true
+          - nfc_state.allowed_hosts.current_allowed_all == False
+          - nfc_state.allowed_hosts.previous_allowed_all == True
+          - nfc_state.allowed_hosts.desired_allowed_all == False
+          - nfc_state.allowed_hosts.current_allowed_ip == ["192.168.100.11"]
+          - nfc_state.allowed_hosts.previous_allowed_all == True
+          - nfc_state.allowed_hosts.desired_allowed_ip == ["192.168.100.11"]
+          - nfc_state.allowed_hosts.current_allowed_networks == []
+          - nfc_state.allowed_hosts.previous_allowed_networks == []
+          - nfc_state.allowed_hosts.desired_allowed_networks == []
+
+    - name: Ensure we can still pass the allowed_hosts configuration through a list for compat
+      vmware_host_firewall_manager:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        esxi_hostname: "{{ esxi1 }}"
+        rules:
+          - name: NFC
+            enabled: True
+            allowed_hosts:
+              - all_ip: False
+                ip_address:
+                  - "1.2.3.4"
+      register: using_list
+    - debug: var=using_list
+    - set_fact:
+        nfc_state: "{{ using_list.rule_set_state[esxi1]['NFC'] }}"
+    - name: ensure the correct host is set
+      assert:
+        that:
+          - nfc_state.allowed_hosts.current_allowed_ip == ["1.2.3.4"]
