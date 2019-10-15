@@ -26,7 +26,7 @@ author:
 notes:
     - Tested on vSphere 6.0, 6.5, 6.7
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - PyVmomi
 options:
    name:
@@ -74,7 +74,6 @@ options:
    datacenter:
      description:
      - The datacenter name to which virtual machine belongs to.
-     default: ha-datacenter
      type: str
 extends_documentation_fragment: vmware.documentation
 '''
@@ -86,7 +85,6 @@ EXAMPLES = '''
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter_name }}"
-    validate_certs: no
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
   delegate_to: localhost
   register: vmtools_info
@@ -96,7 +94,6 @@ EXAMPLES = '''
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: no
     datacenter: "{{ datacenter_name }}"
     name: "{{ vm_name }}"
   delegate_to: localhost
@@ -182,7 +179,7 @@ def main():
             type='str'
         ),
         folder=dict(type='str'),
-        datacenter=dict(type='str', default='ha-datacenter'),
+        datacenter=dict(type='str'),
     )
 
     module = AnsibleModule(
