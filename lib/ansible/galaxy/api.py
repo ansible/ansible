@@ -15,7 +15,7 @@ from ansible import context
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode
+from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode, urlparse
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
@@ -454,9 +454,16 @@ class GalaxyAPI:
         start = time.time()
         wait = 2
 
+        # v3 returns relative task urls, v3 returns full urls
+        if 'v3' in self.available_api_versions:
+            parsed = urlparse(self.api_server)
+            n_url = parsed._replace(path=task_url).geturl()
+        else:
+            n_url = task_url
+
         while timeout == 0 or (time.time() - start) < timeout:
-            data = self._call_galaxy(task_url, method='GET', auth_required=True,
-                                     error_context_msg='Error when getting import task results at %s' % task_url)
+            data = self._call_galaxy(n_url, method='GET', auth_required=True,
+                                     error_context_msg='Error when getting import task results at %s' % n_url)
 
             state = data.get('state', 'waiting')
 
