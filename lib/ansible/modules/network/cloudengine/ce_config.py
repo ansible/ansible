@@ -220,7 +220,7 @@ backup_path:
   sample: /playbooks/ansible/backup/ce_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import ConnectionError
+from ansible.module_utils.connection import ConnectionError, Connection
 from ansible.module_utils.network.common.config import NetworkConfig as _NetworkConfig
 from ansible.module_utils.network.common.config import dumps, ConfigLine, ignore_line
 from ansible.module_utils.network.cloudengine.ce import get_config, run_commands, exec_command, cli_err_msg
@@ -236,43 +236,43 @@ def check_args(module, warnings):
 def _load_config(module, config):
     """Sends configuration commands to the remote device
     """
-
-    # ensure that context is user-view
-    rc, out, err = exec_command(module, 'return')
+    regex_user_view = re.compile(r'<.+>')
+    connection = Connection(module._socket_path)
+    rc, out, err = exec_command(module, 'mmi-mode enable')
     if rc != 0:
-        module.fail_json(msg='unable to return', output=err)
-    # enter 'system-view'
-    rc, out, err = exec_command(module, 'system-view')
+        module.fail_json(msg='unable to set mmi-mode enable', output=err)
+    rc, out, err = exec_command(module, 'system-view immediately')
     if rc != 0:
         module.fail_json(msg='unable to enter system-view', output=err)
-    # iter commands and execute them
-    for index, cmd in enumerate(config):
-        command = {"command": cmd, "prompt": "Y/N", "answer": "Y"}
-        run_commands(module, command)
+    current_view_prompt = system_view_prompt = connection.get_prompt()
 
-    # try to commit, if it is necessary.may be unnecessary,but have a try
-    try:
-        exec_command(module, 'commit')
-    except ConnectionError:
-        pass
+    for index, cmd in enumerate(config):
+        current_view_prompt = connection.get_prompt()
+        if cmd.strip() == '#':
+            if current_view_prompt != system_view_prompt and regex_user_view.search(current_view_prompt) is None:
+                exec_command(module, "quit")
+        rc, out, err = exec_command(module, cmd)
+        if rc != 0:
+            print_msg = cli_err_msg(cmd.strip(), err)
+            for i in (1, 2, 3, 4):
+                current_view_prompt = connection.get_prompt()
+                if current_view_prompt != system_view_prompt and regex_user_view.search(current_view_prompt) is None:
+                    exec_command(module, "quit")
+                elif current_view_prompt == system_view_prompt or regex_user_view.search(current_view_prompt) is not None:
+                    break
+                rc, out, err = exec_command(module, cmd)
+                if rc == 0:
+                    print_msg = None
+                    break
+            if print_msg is not None:
+                module.fail_json(msg=print_msg)
+
     rc, out, err = exec_command(module, 'return')
     if rc != 0:
         module.fail_json(msg='unable to return', output=err)
-
-
-def conversion_src(module):
-    src_list = module.params['src'].split('\n')
-    src_list_organize = []
-    if src_list[0].strip() == '#':
-        src_list.pop(0)
-    for per_config in src_list:
-        if re.search(r'^#\s*$', per_config) is not None:
-            src_list_organize.append('commit')
-        elif re.search(r'^\s+#\s*$', per_config) is not None:
-            continue
-        src_list_organize.append(per_config)
-    src_str = '\n'.join(src_list_organize)
-    return src_str
+    rc, out, err = exec_command(module, 'undo mmi-mode enable')
+    if rc != 0:
+        module.fail_json(msg='unable to undo mmi-mode enable', output=err)
 
 
 def get_running_config(module):
@@ -288,7 +288,7 @@ def get_running_config(module):
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
-        config = conversion_src(module)
+        config = module.params['src']
         candidate.load(config)
     elif module.params['lines']:
         parents = module.params['parents'] or list()
@@ -321,7 +321,7 @@ def run(module, result):
 
         command_display = []
         for per_command in commands:
-            if per_command.strip() not in ['quit', 'return', 'system-view', 'commit']:
+            if per_command.strip() not in ['quit', 'return', 'system-view']:
                 command_display.append(per_command)
 
         result['commands'] = command_display
