@@ -152,5 +152,5 @@ EXAMPLES = r'''
     direction: in
     protocol: tcp
     state: present
-    enabled: yes        
+    enabled: yes
 '''
