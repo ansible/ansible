@@ -33,13 +33,6 @@ options:
         type: str
         choices: ['present', 'absent']
         default: 'present'
-    filters:
-        description:
-            - A list of filters to apply when deciding whether existing
-              resources match and should be altered. The item of filters
-              is the name of input options.
-        type: list
-        required: true
     timeouts:
         description:
             - The timeouts for each operations.
@@ -247,8 +240,6 @@ EXAMPLES = '''
     name: "ansible_network_subnet_test"
     dhcp_enable: true
     vpc_id: "{{ vpc.id }}"
-    filters:
-      - "name"
     cidr: "192.168.100.0/26"
   register: subnet
 - name: create a eip
@@ -258,14 +249,9 @@ EXAMPLES = '''
       name: "ansible_test_dedicated_bandwidth"
       size: 1
     type: "5_bgp"
-    filters:
-      - "type"
-      - "dedicated_bandwidth"
   register: eip
 - name: create a disk
   hwc_evs_disk:
-    filters:
-      - "name"
     availability_zone: "cn-north-1a"
     name: "ansible_evs_disk_test"
     volume_type: "SATA"
@@ -288,8 +274,6 @@ EXAMPLES = '''
       my_server: "my_server"
     image_id: "8da46d6d-6079-4e31-ad6d-a7167efff892"
     flavor_name: "s3.small.1"
-    filters:
-      - "name"
     vpc_id: "{{ vpc.id }}"
     root_volume:
       volume_type: "SAS"
@@ -536,7 +520,6 @@ def build_module():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'],
                        type='str'),
-            filters=dict(required=True, type='list', elements='str'),
             timeouts=dict(type='dict', options=dict(
                 create=dict(default='30m', type='str'),
                 update=dict(default='30m', type='str'),
@@ -638,7 +621,7 @@ def _init(config):
     v = search_resource(config)
     n = len(v)
     if n > 1:
-        raise Exception("find more than one resources(%s)" % ", ".join([
+        raise Exception("Found more than one resource(%s)" % ", ".join([
             navigate_value(i, ["id"])
             for i in v
         ]))
@@ -824,7 +807,7 @@ def search_resource(config):
     module = config.module
     client = config.client(get_region(module), "ecs", "project")
     opts = user_input_parameters(module)
-    identity_obj = _build_identity_object(module, opts)
+    identity_obj = _build_identity_object(opts)
     query_link = _build_query_link(opts)
     link = "cloudservers/detail" + query_link
 
@@ -1942,24 +1925,19 @@ def send_list_request(module, client, url):
     return navigate_value(r, ["servers"], None)
 
 
-def _build_identity_object(module, all_opts):
-    filters = module.params.get("filters")
-    opts = dict()
-    for k, v in all_opts.items():
-        opts[k] = v if k in filters else None
-
+def _build_identity_object(all_opts):
     result = dict()
 
     result["OS-DCF:diskConfig"] = None
 
-    v = navigate_value(opts, ["availability_zone"], None)
+    v = navigate_value(all_opts, ["availability_zone"], None)
     result["OS-EXT-AZ:availability_zone"] = v
 
     result["OS-EXT-SRV-ATTR:hostname"] = None
 
     result["OS-EXT-SRV-ATTR:instance_name"] = None
 
-    v = navigate_value(opts, ["user_data"], None)
+    v = navigate_value(all_opts, ["user_data"], None)
     result["OS-EXT-SRV-ATTR:user_data"] = v
 
     result["OS-EXT-STS:power_state"] = None
@@ -1968,32 +1946,32 @@ def _build_identity_object(module, all_opts):
 
     result["created"] = None
 
-    v = navigate_value(opts, ["description"], None)
+    v = navigate_value(all_opts, ["description"], None)
     result["description"] = v
 
-    v = navigate_value(opts, ["enterprise_project_id"], None)
+    v = navigate_value(all_opts, ["enterprise_project_id"], None)
     result["enterprise_project_id"] = v
 
-    v = expand_list_flavor(opts, None)
+    v = expand_list_flavor(all_opts, None)
     result["flavor"] = v
 
     result["id"] = None
 
-    v = expand_list_image(opts, None)
+    v = expand_list_image(all_opts, None)
     result["image"] = v
 
-    v = navigate_value(opts, ["ssh_key_name"], None)
+    v = navigate_value(all_opts, ["ssh_key_name"], None)
     result["key_name"] = v
 
-    v = expand_list_metadata(opts, None)
+    v = expand_list_metadata(all_opts, None)
     result["metadata"] = v
 
-    v = navigate_value(opts, ["name"], None)
+    v = navigate_value(all_opts, ["name"], None)
     result["name"] = v
 
     result["status"] = None
 
-    v = expand_list_tags(opts, None)
+    v = expand_list_tags(all_opts, None)
     result["tags"] = v
 
     return result
