@@ -68,7 +68,7 @@ options:
   members:
     description:
       - List of team members (emails).
-      - The list can be enforced with C(enable_member_removal) parameter.
+      - The list can be enforced with C(enforce_members) parameter.
     type: list
   state:
     description:
@@ -77,11 +77,11 @@ options:
     default: present
     type: str
     choices: ["present", "absent"]
-  enable_member_removal:
+  enforce_members:
     description:
       - Delete the members not found in the C(members) parameters from the
       - list of members found on the Team.
-    default: True
+    default: False
     type: bool
   use_proxy:
     description:
@@ -137,7 +137,7 @@ EXAMPLES = '''
       members:
           - john.doe@example.com
           - jane.doe@example.com
-      enable_member_removal: yes
+      enforce_members: yes
       state: present
 
 - name: Delete a team
@@ -316,7 +316,7 @@ argument_spec.update(
     members=dict(type='list', required=False),
     url=dict(type='str', required=True),
     grafana_api_key=dict(type='str', no_log=True),
-    enable_member_removal=dict(type='bool', default=True),
+    enforce_members=dict(type='bool', default=False),
     url_username=dict(aliases=['grafana_user'], default='admin'),
     url_password=dict(aliases=['grafana_password'], default='admin', no_log=True),
 )
@@ -329,7 +329,7 @@ def main():
     name = module.params['name']
     email = module.params['email']
     members = module.params['members']
-    enable_member_removal = module.params['enable_member_removal']
+    enforce_members = module.params['enforce_members']
 
     grafana_iface = GrafanaTeamInterface(module)
 
@@ -346,7 +346,7 @@ def main():
             for member in plan.get("to_add"):
                 grafana_iface.add_team_member(team.get("id"), member)
                 changed = True
-            if enable_member_removal:
+            if enforce_members:
                 for member in plan.get("to_del"):
                     grafana_iface.delete_team_member(team.get("id"), member)
                     changed = True

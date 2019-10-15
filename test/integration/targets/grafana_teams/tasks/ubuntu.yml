@@ -67,9 +67,89 @@
       - "result.message == 'No team found'"
 
 - name: Create users for tests purpose
-  include_tasks: create_user.yml
+  import_tasks: create_user.yml
 
 - name: Create a Team with members
+  grafana_teams:
+      url: "http://127.0.0.1:3000"
+      url_username: admin
+      url_password: admin
+      name: "grafana_working_group"
+      email: "foo.bar@example.com"
+      members:
+          - "john.doe@example.com"
+          - "jane.doe@example.com"
+      state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.team.name == 'grafana_working_group'"
+      - "result.team.memberCount == 2"
+      - "result.team.members == ['jane.doe@example.com', 'john.doe@example.com']"
+      - "result.team.email == 'foo.bar@example.com'"
+
+- name: Ensure a Team exists with member not enforced
+  grafana_teams:
+      url: "http://127.0.0.1:3000"
+      url_username: admin
+      url_password: admin
+      name: "grafana_working_group"
+      email: "foo.bar@example.com"
+      members:
+          - "john.doe@example.com"
+      state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.team.name == 'grafana_working_group'"
+      - "result.team.memberCount == 2"
+      - "result.team.members == ['jane.doe@example.com', 'john.doe@example.com']"
+      - "result.team.email == 'foo.bar@example.com'"
+
+- name: Ensure a Team exists with member enforced
+  grafana_teams:
+      url: "http://127.0.0.1:3000"
+      url_username: admin
+      url_password: admin
+      name: "grafana_working_group"
+      email: "foo.bar@example.com"
+      members:
+          - "john.doe@example.com"
+      enforce_members: true
+      state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.team.name == 'grafana_working_group'"
+      - "result.team.memberCount == 1"
+      - "result.team.members == ['john.doe@example.com']"
+      - "result.team.email == 'foo.bar@example.com'"
+
+- name: Ensure a Team exists with members omitted
+  grafana_teams:
+      url: "http://127.0.0.1:3000"
+      url_username: admin
+      url_password: admin
+      name: "grafana_working_group"
+      email: "foo.bar@example.com"
+      state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.team.name == 'grafana_working_group'"
+      - "result.team.memberCount == 1"
+      - "result.team.members == ['john.doe@example.com']"
+      - "result.team.email == 'foo.bar@example.com'"
+
+- name: Add new member to existing Team
   grafana_teams:
       url: "http://127.0.0.1:3000"
       url_username: admin
