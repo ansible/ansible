@@ -8,6 +8,7 @@ mongodb_admin_user: test_root
 mongodb_admin_password: saE_Rr9!gE6gh#e~R#nZ
 debug: yes
 mongod_auth: false
+mongo_ssl: false
 kill_signal: SIGTERM
 # Should be one of
 # --storageEngine wiredTiger --wiredTigerEngineConfigString="cache_size=200M"

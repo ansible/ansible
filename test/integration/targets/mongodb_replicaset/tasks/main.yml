@@ -142,8 +142,52 @@
       - "'Authentication failed' in mongodb_replicaset_bad_pw.module_stderr"
 
   #############################################################
+- include_tasks: mongod_teardown.yml
+
+- set_fact:
+    mongod_ssl: true
+
+- name: Execute mongod script to restart with SSL enabled
+  include_tasks: mongod_replicaset.yml
+
+- name: Create replicaset with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "{{ mongodb_replicaset1 }}"
+    ssl_cert_reqs: CERT_OPTIONAL
+    ssl_ca_certs: "{{ remote_tmp_dir }}/mongo_ca.pem"
+    ssl_certfile: "{{ remote_tmp_dir }}/mongo-client-chain.pem"
+    heartbeat_timeout_secs: 1
+    election_timeout_millis: 1000
+    members:
+     - "localhost:3001"
+     - "localhost:3002"
+     - "localhost:3003"
+
+- name: Get replicaset info
+  command: mongo admin --ssl --sslAllowInvalidHostnames --sslCAFile {{ remote_tmp_dir }}/mongo_ca.pem  --sslPEMKeyFile {{ remote_tmp_dir }}/mongo-client-chain.pem --eval "rs.status()" --port 3001
+  register: mongo_output
+
+- name: Assert replicaset name is in mongo_output
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset1 }}' in mongo_output.stdout"
+      - "'localhost:3001' in mongo_output.stdout"
+      - "'localhost:3002' in mongo_output.stdout"
+      - "'localhost:3003' in mongo_output.stdout"
+
+
+  #############################################################
 
 - include_tasks: mongod_teardown.yml
+
+- set_fact:
+    mongod_ssl: false
 
 - set_fact:
     current_replicaset: "{{ mongodb_replicaset2 }}"
