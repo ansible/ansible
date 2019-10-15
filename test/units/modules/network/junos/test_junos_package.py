@@ -37,15 +37,9 @@ module_patcher.start()
 from ansible.modules.network.junos import junos_package
 
 
-class TestJunosCommandModule(TestJunosModule):
+class TestJunosPackageModule(TestJunosModule):
 
     module = junos_package
-
-    def setUp(self):
-        super(TestJunosCommandModule, self).setUp()
-
-    def tearDown(self):
-        super(TestJunosCommandModule, self).tearDown()
 
     def test_junos_package_src(self):
         set_module_args(dict(src='junos-vsrx-12.1X46-D10.2-domestic.tgz'))

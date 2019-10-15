@@ -6,7 +6,6 @@
     lines:
       - no interface port-channel 20
       - no interface port-channel 100
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
 
@@ -14,7 +13,6 @@
   eos_config:
     lines:
       - no channel-group 20
-    authorize: yes
     provider: "{{ cli }}"
     parents: "{{ item }}"
   loop:
@@ -26,7 +24,6 @@
   eos_linkagg: &create
     group: 20
     state: present
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -52,7 +49,6 @@
     members:
       - Ethernet1
       - Ethernet2
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -80,7 +76,6 @@
     mode: active
     members:
       - Ethernet2
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -104,7 +99,6 @@
   eos_linkagg: &remove
     group: 20
     state: absent
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -128,7 +122,6 @@
     aggregate:
       - { group: 20, min_links: 3 }
       - { group: 100, min_links: 4 }
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -155,7 +148,6 @@
     aggregate:
       - { group: 20, min_links: 3 }
       - { group: 100, min_links: 4 }
-    authorize: yes
     provider: "{{ cli }}"
     state: absent
   become: yes
@@ -181,7 +173,6 @@
     lines:
       - no interface port-channel 20
       - no interface port-channel 100
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
 
@@ -189,7 +180,6 @@
   eos_config:
     lines:
       - no channel-group 20
-    authorize: yes
     provider: "{{ cli }}"
     parents: "{{ item }}"
   become: yes
