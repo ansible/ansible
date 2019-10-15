@@ -54,7 +54,7 @@ options:
         type: bool
         default: 'no'
     ssl_cert_reqs:
-        version_added: "2.8"
+        version_added: "2.10"
         description:
             - Specifies whether a certificate is required from the other side of the connection, and whether it will be validated if provided.
         required: false
@@ -65,7 +65,7 @@ options:
         description:
             - The path to a file containing certificate(s) of CA(s) that may be trusted to create the SSL cert presented by the MongoDB server
             - Implies ssl=True
-        type: str    
+        type: str
     ssl_certfile:
         version_added: "2.10"
         description:

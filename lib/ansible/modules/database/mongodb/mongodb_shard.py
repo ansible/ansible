@@ -82,7 +82,7 @@ options:
             - If the private key is already in the ssl_certfile, this parameter is optional
             - Only required when using TLS client certificates for "TLS mutual authentication"
             - Implies ssl=True
-        type: str    
+        type: str
     state:
         description:
             - Whether the shard should be present or absent from the Cluster.
