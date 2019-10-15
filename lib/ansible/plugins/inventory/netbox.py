@@ -193,18 +193,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     NAME = 'netbox'
 
     def _fetch_information(self, url):
-#        response = open_url(url, headers=self.headers, timeout=self.timeout, validate_certs=self.validate_certs)
-#
-#        try:
-#            raw_data = to_text(response.read(), errors='surrogate_or_strict')
-#        except UnicodeError:
-#            raise AnsibleError("Incorrect encoding of fetched payload from NetBox API.")
-#
-#        try:
-#            return json.loads(raw_data)
-#        except ValueError:
-#            raise AnsibleError("Incorrect JSON payload: %s" % raw_data)
-
         results = None
         cache_key = self.get_cache_key(url)
 
@@ -335,10 +323,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def extract_config_context(self, host):
         try:
-#            if self.config_context:
-#                url = self.api_endpoint + "/api/dcim/devices/" + str(host["id"])
-#                device_lookup = self._fetch_information(url)
-#                return device_lookup["config_context"]
             return host["config_context"]
         except Exception:
             return
@@ -497,8 +481,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if self.query_filters:
             query_parameters.extend(filter(lambda x: x,
                                            map(self.validate_query_parameters, self.query_filters)))
-#        self.device_url = self.api_endpoint + "/api/dcim/devices/?" + urlencode(query_parameters)
-#        self.virtual_machines_url = self.api_endpoint + "/api/virtualization/virtual-machines/?" + urlencode(query_parameters)
         if self.config_context:
             self.device_url = self.api_endpoint + "/api/dcim/devices/?" + urlencode(query_parameters)
             self.virtual_machines_url = self.api_endpoint + "/api/virtualization/virtual-machines/?" + urlencode(query_parameters)
