@@ -98,7 +98,7 @@ class CallbackModule(CallbackBase):
             self.disabled = True
             logstash_lib = 'python3-logstash' if PY3 else 'python-logstash'
             self._display.warning("The required python logstash library is not installed. "
-                                  "pip install {}".format(logstash_lib))
+                                  "pip install {0}".format(logstash_lib))
         else:
             self.logger = logging.getLogger('python-logstash-logger')
             self.logger.setLevel(logging.DEBUG)
