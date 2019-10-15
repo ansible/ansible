@@ -122,7 +122,7 @@ hcloud_volume:
             sample: 12345
         name:
             description: Name of the volume
-            type: string
+            type: str
             returned: Always
             sample: my-volume
         size:
@@ -132,7 +132,7 @@ hcloud_volume:
             sample: 1337
         location:
             description: Location name where the volume is located at
-            type: string
+            type: str
             returned: Always
             sample: "fsn1"
         labels:
@@ -144,7 +144,7 @@ hcloud_volume:
                 mylabel: 123
         server:
             description: Server name where the volume is attached to
-            type: string
+            type: str
             returned: Always
             sample: "my-server"
 """
