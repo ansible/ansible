@@ -69,7 +69,7 @@ vultr_dns_domain_info:
   description: Response from Vultr API
   returned: success
   type: complex
-  contains:
+  sample:
     "vultr_dns_domain_info": [
       {
         "date_created": "2018-07-19 07:14:21",
