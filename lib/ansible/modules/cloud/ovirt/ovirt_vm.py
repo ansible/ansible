@@ -18,8 +18,6 @@ author:
 description:
     - This module manages whole lifecycle of the Virtual Machine(VM) in oVirt/RHV.
     - Since VM can hold many states in oVirt/RHV, this see notes to see how the states of the VM are handled.
-    - "WARNING: If VM parameter, which requires reboot, is updated, then internally oVirt engine always create new snapshot
-      for the VM and that is why we report the VM as changed."
 options:
     name:
         description:
@@ -885,6 +883,8 @@ notes:
       I(REBOOTING), I(POWERING_UP), I(RESTORING_STATE), I(WAIT_FOR_LAUNCH). If VM is in I(PAUSED) or I(DOWN) state,
       we start the VM. Then we suspend the VM.
       When user specify I(absent) C(state), we forcibly stop the VM in any state and remove it.
+    - "If you update a VM parameter that requires a reboot, the oVirt engine always creates a new snapshot for the VM,
+      and an Ansible playbook will report this as changed."
 extends_documentation_fragment: ovirt
 '''
 
