@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import cmd
 import functools
-import json
+import msgpack
 import os
 import pprint
 import sys
@@ -38,7 +38,6 @@ from ansible.executor import action_write_locks
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.module_utils.six.moves import queue as Queue
-from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.six import iteritems, itervalues, string_types
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
@@ -301,9 +300,8 @@ class StrategyBase:
         # FIXME: get the ansible secure working directory properly instead of hard-coding it here
         display.debug("dumping task vars to tmp file")
         task_vars_fd, task_vars_path = tempfile.mkstemp(prefix='task_vars', dir=unfrackpath('~/.ansible/tmp'), text=True)
-        with os.fdopen(task_vars_fd, 'wt') as f:
-            json.dump(task_vars, f)
-            #json.dump({}, f)
+        with os.fdopen(task_vars_fd, 'wb') as f:
+            f.write(msgpack.packb(task_vars, use_bin_type=True))
         display.debug("done dumping task vars to tmp file")
 
         try:

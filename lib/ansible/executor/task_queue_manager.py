@@ -176,6 +176,7 @@ manager object with shared datastructures/queues for coordinating
                 self._final_q,
                 self._loader,
                 self._variable_manager,
+                self.hostvars,
                 plugin_loader,
             )
             self._workers.append((proc, in_q))

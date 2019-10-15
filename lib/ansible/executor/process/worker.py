@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
+import msgpack
 import multiprocessing
 import os
 import sys
@@ -42,7 +42,6 @@ from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import ParseResultDottedDict as DottedDict
-from ansible.parsing.ajson import AnsibleJSONDecoder
 from ansible.utils.display import Display
 from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.sentinel import Sentinel
@@ -59,7 +58,7 @@ class WorkerProcess(multiprocessing_context.Process):
     for reading later.
     '''
 
-    def __init__(self, in_q, final_q, loader, variable_manager, shared_loader_obj):
+    def __init__(self, in_q, final_q, loader, variable_manager, hostvars, shared_loader_obj):
 
         super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
@@ -68,6 +67,7 @@ class WorkerProcess(multiprocessing_context.Process):
         self._loader = loader
         self._variable_manager = variable_manager
         self._shared_loader_obj = shared_loader_obj
+        self._hostvars = hostvars
 
     def _save_stdin(self):
         self._new_stdin = os.devnull
@@ -186,9 +186,8 @@ class WorkerProcess(multiprocessing_context.Process):
                     host = DottedDict(host)
                     task = DottedDict(task)
                     play_context = DottedDict(play_context)
-                    display.debug("running TaskExecutor() for %s/%s [name: %s]" % (host.name, task.uuid, task.name))
-                    with open(task_vars_path, 'rt') as f:
-                        task_vars = json.load(f, cls=AnsibleJSONDecoder)
+                    with open(task_vars_path, 'rb') as f:
+                        task_vars = msgpack.unpackb(f.read(), raw=False)
                     os.unlink(task_vars_path)
                 except ValueError as e:
                     # FIXME: send back a failed result re: invalid job params
@@ -196,6 +195,10 @@ class WorkerProcess(multiprocessing_context.Process):
                     print("OOPS: %s" % e)
                     break
 
+                # readd the hostvars to task_vars (which were excluded earlier)
+                task_vars['hostvars'] = self._hostvars
+
+                display.debug("running TaskExecutor() for %s/%s [name: %s]" % (host.name, task.uuid, task.name))
                 executor_result = TaskExecutor(
                     host,
                     task,
@@ -206,8 +209,8 @@ class WorkerProcess(multiprocessing_context.Process):
                     self._shared_loader_obj,
                     self._final_q,
                 ).run()
-
                 display.debug("done running TaskExecutor() for %s/%s [name: %s]" % (host.name, task.uuid, task.name))
+
                 task_result = TaskResult(
                     host.name,
                     task.uuid,
