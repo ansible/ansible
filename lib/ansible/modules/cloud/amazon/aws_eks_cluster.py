@@ -47,6 +47,12 @@ options:
       The duration in seconds to wait for the cluster to become active. Defaults
       to 1200 seconds (20 minutes).
     default: 1200
+  endpoint_access:
+    description: Enable private or public API server endpoint access
+    choices:
+      - private
+      - public
+    default: public
 
 
 requirements: [ 'botocore', 'boto3' ]
@@ -65,6 +71,7 @@ EXAMPLES = '''
     role_arn: my_eks_role
     subnets:
       - subnet-aaaa1111
+    endpoint_access: public
     security_groups:
       - my_eks_sg
       - sg-abcd1234
@@ -202,6 +209,12 @@ def ensure_present(client, module):
                       clientRequestToken='ansible-create-%s' % name)
         if module.params['version']:
             params['version'] = module.params['version']
+        if module.params['endpoint_access'] == 'private':
+            params['resourcesVpcConfig']['endpointPrivateAccess'] = True
+            params['resourcesVpcConfig']['endpointPublicAccess'] = False
+        if module.params['endpoint_access'] == 'public':
+            params['resourcesVpcConfig']['endpointPublicAccess'] = True
+            params['resourcesVpcConfig']['endpointPrivateAccess'] = False
         cluster = client.create_cluster(**params)['cluster']
     except botocore.exceptions.EndpointConnectionError as e:
         module.fail_json(msg="Region %s is not supported by EKS" % client.meta.region_name)
@@ -267,7 +280,8 @@ def main():
         security_groups=dict(type='list'),
         state=dict(choices=['absent', 'present'], default='present'),
         wait=dict(default=False, type='bool'),
-        wait_timeout=dict(default=1200, type='int')
+        wait_timeout=dict(default=1200, type='int'),
+        endpoint_access=dict(choices=['private', 'public'], default='public')
     )
 
     module = AnsibleAWSModule(
