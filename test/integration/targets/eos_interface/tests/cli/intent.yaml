@@ -12,6 +12,7 @@
     state: up
     tx_rate: ge(0)
     rx_rate: ge(0)
+    authorize: yes
   become: yes
   register: result
 

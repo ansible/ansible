@@ -430,10 +430,12 @@ def validate_prefix(prefix):
 
 
 def load_provider(spec, args):
-    provider = args.get('provider') or {}
+    provider = args.get('provider', {})
     for key, value in iteritems(spec):
         if key not in provider:
-            if 'fallback' in value:
+            if key in args:
+                provider[key] = args[key]
+            elif 'fallback' in value:
                 provider[key] = _fallback(value['fallback'])
             elif 'default' in value:
                 provider[key] = value['default']

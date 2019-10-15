@@ -101,12 +101,6 @@ options:
     type: bool
     default: 'no'
     aliases: ['enable_socket']
-  timeout:
-    description:
-      - The time (in seconds) to wait for the eAPI configuration to be
-        reflected in the running-config.
-    type: int
-    default: 30
   vrf:
     description:
       - The C(vrf) argument will configure eAPI to listen for connections
@@ -184,9 +178,10 @@ from ansible.module_utils.network.eos.eos import eos_argument_spec
 
 
 def check_transport(module):
-    transport = (module.params['provider'] or {}).get('transport')
+    transport = module.params['transport']
+    provider_transport = (module.params['provider'] or {}).get('transport')
 
-    if transport == 'eapi':
+    if 'eapi' in (transport, provider_transport):
         module.fail_json(msg='eos_eapi module is only supported over cli transport')
 
 
@@ -339,7 +334,7 @@ def verify_state(updates, module):
                      ('local_http', 'localHttpServer'),
                      ('socket', 'unixSocketServer')]
 
-    timeout = module.params["timeout"]
+    timeout = module.params['timeout'] or 30
     state = module.params['state']
 
     while invalid_state:
@@ -386,7 +381,6 @@ def main():
         local_http_port=dict(type='int'),
 
         socket=dict(aliases=['enable_socket'], type='bool'),
-        timeout=dict(type="int", default=30),
 
         vrf=dict(default='default'),
 

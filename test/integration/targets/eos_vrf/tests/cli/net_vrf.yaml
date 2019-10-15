@@ -8,6 +8,7 @@
   net_vrf:
     name: test
     state: absent
+    authorize: yes
     provider: "{{ cli }}"
   become: yes
 
@@ -16,6 +17,7 @@
     name: test
     rd: 1:200
     state: present
+    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -32,6 +34,7 @@
   net_vrf:
     name: test
     state: absent
+    authorize: yes
     provider: "{{ cli }}"
   become: yes
 

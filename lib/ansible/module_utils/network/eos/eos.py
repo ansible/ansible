@@ -36,6 +36,7 @@ from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list, ComplexList
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
 
 _DEVICE_CONNECTION = None
@@ -60,15 +61,41 @@ eos_provider_spec = {
 eos_argument_spec = {
     'provider': dict(type='dict', options=eos_provider_spec),
 }
+eos_top_spec = {
+    'host': dict(removed_in_version=2.9),
+    'port': dict(removed_in_version=2.9, type='int'),
+    'username': dict(removed_in_version=2.9),
+    'password': dict(removed_in_version=2.9, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
+
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(removed_in_version=2.9, no_log=True),
+
+    'use_ssl': dict(removed_in_version=2.9, type='bool'),
+    'validate_certs': dict(removed_in_version=2.9, type='bool'),
+    'timeout': dict(removed_in_version=2.9, type='int'),
+
+    'transport': dict(removed_in_version=2.9, choices=['cli', 'eapi'])
+}
+eos_argument_spec.update(eos_top_spec)
 
 
 def get_provider_argspec():
     return eos_provider_spec
 
 
+def load_params(module):
+    provider = module.params.get('provider') or dict()
+    for key, value in iteritems(provider):
+        if key in eos_argument_spec:
+            if module.params.get(key) is None and value is not None:
+                module.params[key] = value
+
+
 def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
+        load_params(module)
         if is_local_eapi(module):
             conn = LocalEapi(module)
         else:
@@ -183,24 +210,23 @@ class LocalEapi:
         self._session_support = None
         self._device_configs = {}
 
-        provider = module.params.get("provider") or {}
-        host = provider.get('host')
-        port = provider.get('port')
+        host = module.params['provider']['host']
+        port = module.params['provider']['port']
 
-        self._module.params['url_username'] = provider.get('username')
-        self._module.params['url_password'] = provider.get('password')
+        self._module.params['url_username'] = self._module.params['username']
+        self._module.params['url_password'] = self._module.params['password']
 
-        if provider.get('use_ssl'):
+        if module.params['provider']['use_ssl']:
             proto = 'https'
         else:
             proto = 'http'
 
-        module.params['validate_certs'] = provider.get('validate_certs')
+        module.params['validate_certs'] = module.params['provider']['validate_certs']
 
         self._url = '%s://%s:%s/command-api' % (proto, host, port)
 
-        if provider.get("auth_pass"):
-            self._enable = {'cmd': 'enable', 'input': provider.get('auth_pass')}
+        if module.params['auth_pass']:
+            self._enable = {'cmd': 'enable', 'input': module.params['auth_pass']}
         else:
             self._enable = 'enable'
 
@@ -225,7 +251,7 @@ class LocalEapi:
         data = self._module.jsonify(body)
 
         headers = {'Content-Type': 'application/json-rpc'}
-        timeout = self._module.params['provider']['timeout']
+        timeout = self._module.params['timeout']
         use_proxy = self._module.params['provider']['use_proxy']
 
         response, headers = fetch_url(
@@ -569,10 +595,12 @@ def is_json(cmd):
 
 
 def is_local_eapi(module):
+    transports = []
+    transports.append(module.params.get('transport', ""))
     provider = module.params.get('provider')
     if provider:
-        return provider.get('transport') == 'eapi'
-    return False
+        transports.append(provider.get('transport', ""))
+    return 'eapi' in transports
 
 
 def to_command(module, commands):

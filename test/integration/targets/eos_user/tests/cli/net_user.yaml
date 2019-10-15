@@ -18,6 +18,7 @@
     role: network-operator
     state: present
     configured_password: test1
+    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
