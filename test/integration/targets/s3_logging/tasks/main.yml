@@ -3,7 +3,11 @@
 #
 # Notes:
 # - s3_logging doesn't support check_mode and the only output is 'changed'
-# - Because S3 is 'eventually consistent' we need various pauses in here
+# - During initial testing we hit issues with boto reporting
+#   "You must give the log-delivery group WRITE and READ_ACP permissions
+#   to the target bucket"
+#   a long term solution might be to port s3_logging to AnsibleAWSModule
+#   so we can add retries
 #
 - module_defaults:
     group/aws:
@@ -60,10 +64,6 @@
       - output is changed
       - output.name == log_bucket_2
 
-  - name: Pause for eventual consistency (initial setup)
-    pause:
-      seconds: 30
-
 # ============================================================
 
   - name: Enable logging
@@ -101,10 +101,6 @@
       that:
       - result is changed
 
-  - name: Pause for eventual consistency (enable logging)
-    pause:
-      seconds: 15
-
   - name: Change logging bucket idempotency
     s3_logging:
       state: present
@@ -129,10 +125,6 @@
   - assert:
       that:
       - result is changed
-
-  - name: Pause for eventual consistency (add/change prefix)
-    pause:
-      seconds: 15
 
   - name: Change logging prefix idempotency
     s3_logging:
@@ -159,10 +151,6 @@
       that:
       - result is changed
 
-  - name: Pause for eventual consistency (remove prefix)
-    pause:
-      seconds: 15
-
   - name: Remove logging prefix idempotency
     s3_logging:
       state: present
@@ -185,10 +173,6 @@
   - assert:
       that:
       - result is changed
-
-  - name: Pause for eventual consistency (disable logging)
-    pause:
-      seconds: 15
 
   - name: Disable logging idempotency
     s3_logging:

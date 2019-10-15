@@ -1,2 +1,4 @@
 cloud/aws
-shippable/aws/group1
+#shippable/aws/group1
+# when running tests we saw an ~20% failure rate
+unsupported
