@@ -92,15 +92,15 @@ openstack_groups:
         name:
             description: Name given to the group.
             returned: success
-            type: string
+            type: str
         description:
             description: Description of the group.
             returned: success
-            type: string
+            type: str
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         domain_id:
             description: Domain ID containing the group (keystone v3 clouds only)
             returned: success

@@ -50,7 +50,7 @@ scaleway_ip_info:
   description: Response from Scaleway API
   returned: success
   type: complex
-  contains:
+  sample:
     "scaleway_ip_info": [
         {
             "address": "163.172.170.243",

@@ -45,7 +45,7 @@ scaleway_organization_facts:
   description: Response from Scaleway API
   returned: success
   type: complex
-  contains:
+  sample:
     "scaleway_organization_facts": [
         {
             "address_city_name": "Paris",

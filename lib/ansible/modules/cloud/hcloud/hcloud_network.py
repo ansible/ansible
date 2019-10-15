@@ -88,7 +88,7 @@ hcloud_network:
             sample: 12345
         name:
             description: Name of the Network
-            type: string
+            type: str
             returned: always
             sample: my-volume
         ip_range:

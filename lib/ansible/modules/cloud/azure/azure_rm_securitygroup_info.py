@@ -209,7 +209,7 @@ securitygroups:
                     "securityRules": []
             }
         tags:
-            descripition:
+            description:
                 - Tags to assign to the security group.
             returned: always
             type: dict

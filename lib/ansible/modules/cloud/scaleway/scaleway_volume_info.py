@@ -50,7 +50,7 @@ scaleway_volume_info:
   description: Response from Scaleway API
   returned: success
   type: complex
-  contains:
+  sample:
     "scaleway_volume_info": [
         {
             "creation_date": "2018-08-14T20:56:24.949660+00:00",

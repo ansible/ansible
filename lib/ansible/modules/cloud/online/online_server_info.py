@@ -40,7 +40,7 @@ online_server_info:
   description: Response from Online API
   returned: success
   type: complex
-  contains:
+  sample:
     "online_server_info": [
         {
             "abuse": "abuse@example.com",

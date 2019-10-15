@@ -177,7 +177,7 @@ cluster_template:
           description:
             - Indicates whether created clusters should have a floating ip or not
           type: bool
-          default: true
+          sample: true
       keypair_id:
           description:
             - Name or ID of the keypair to use.

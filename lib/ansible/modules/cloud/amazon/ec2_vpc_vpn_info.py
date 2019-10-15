@@ -120,26 +120,26 @@ vpn_connections:
              returned: always
              type: int
              sample: 0
-         last_status_change:
-             description: The date and time of the last change in status.
-             returned: always
-             type: datetime
-             sample: 2018-02-09T14:35:27+00:00
-         outside_ip_address:
-             description: The Internet-routable IP address of the virtual private gateway's outside interface.
-             returned: always
-             type: str
-             sample: 13.127.79.191
-         status:
-             description: The status of the VPN tunnel.
-             returned: always
-             type: str
-             sample: DOWN
-         status_message:
-             description: If an error occurs, a description of the error.
-             returned: always
-             type: str
-             sample: IPSEC IS DOWN
+           last_status_change:
+               description: The date and time of the last change in status.
+               returned: always
+               type: datetime
+               sample: "2018-02-09T14:35:27+00:00"
+           outside_ip_address:
+               description: The Internet-routable IP address of the virtual private gateway's outside interface.
+               returned: always
+               type: str
+               sample: 13.127.79.191
+           status:
+               description: The status of the VPN tunnel.
+               returned: always
+               type: str
+               sample: DOWN
+           status_message:
+               description: If an error occurs, a description of the error.
+               returned: always
+               type: str
+               sample: IPSEC IS DOWN
       vpn_connection_id:
         description: The ID of the VPN connection.
         returned: always

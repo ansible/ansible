@@ -114,7 +114,7 @@ clusters:
             description:
                 - The list of roles in the cluster.
             type: list
-            suboptions:
+            contains:
                 name:
                     description:
                         - The name of the role.

@@ -37,7 +37,7 @@ online_user_info:
   description: Response from Online API
   returned: success
   type: complex
-  contains:
+  sample:
     "online_user_info": {
         "company": "foobar LLC",
         "email": "foobar@example.com",

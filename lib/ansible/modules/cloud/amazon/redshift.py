@@ -214,7 +214,7 @@ cluster:
         enhanced_vpc_routing:
             description: status of the enhanced vpc routing feature.
             returned: success
-            type: boolean
+            type: bool
 '''
 
 try:

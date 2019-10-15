@@ -195,19 +195,19 @@ project:
   type: complex
   contains:
     name:
-      descriptoin: Name of the CodeBuild project
+      description: Name of the CodeBuild project
       returned: always
-      type: string
+      type: str
       sample: my_project
     arn:
       description: ARN of the CodeBuild project
       returned: always
-      type: string
+      type: str
       sample: arn:aws:codebuild:us-east-1:123123123:project/vod-api-app-builder
     description:
       description: A description of the build project
       returned: always
-      type: string
+      type: str
       sample: My nice little project
     source:
       description: Information about the build input source code.
@@ -217,12 +217,12 @@ project:
         type:
           description: The type of the repository
           returned: always
-          type: string
+          type: str
           sample: CODEPIPELINE
         location:
           description: Location identifier, depending on the source type.
           returned: when configured
-          type: string
+          type: str
         git_clone_depth:
           description: The git clone depth
           returned: when configured
@@ -230,9 +230,9 @@ project:
         build_spec:
           description: The build spec declaration to use for the builds in this build project.
           returned: always
-          type: string
+          type: str
         auth:
-          desription: Information about the authorization settings for AWS CodeBuild to access the source code to be built.
+          description: Information about the authorization settings for AWS CodeBuild to access the source code to be built.
           returned: when configured
           type: complex
         insecure_ssl:
@@ -247,12 +247,12 @@ project:
         type:
           description: The type of build artifact.
           returned: always
-          type: string
+          type: str
           sample: CODEPIPELINE
         location:
           description: Output location for build artifacts
           returned: when configured
-          type: string
+          type: str
         # and more... see http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project
     cache:
       description: Cache settings for the build project.
@@ -265,7 +265,7 @@ project:
     service_role:
       description: IAM role to be used during build to access other AWS services.
       returned: always
-      type: string
+      type: str
       sample: arn:aws:iam::123123123:role/codebuild-service-role
     timeout_in_minutes:
       description: The timeout of a build in minutes
@@ -279,8 +279,8 @@ project:
     created:
       description: Timestamp of the create time of the project
       returned: always
-      type: string
-      sample: 2018-04-17T16:56:03.245000+02:00
+      type: str
+      sample: "2018-04-17T16:56:03.245000+02:00"
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule, get_boto3_client_method_parameters
