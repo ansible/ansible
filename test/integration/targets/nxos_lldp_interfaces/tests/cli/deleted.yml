@@ -11,10 +11,10 @@
     - name: Setup
       cli_config:
         config: |
-          interface Ethernet1/2
+          interface Ethernet1/1
             lldp receive
             no lldp transmit
-          interface Ethernet1/5
+          interface Ethernet1/2
             no lldp receive
             lldp tlv-set vlan 12
 
@@ -33,9 +33,9 @@
     - assert:
         that:
           - "ansible_facts.network_resources.lldp_interfaces == result.before"
-          - "'interface Ethernet1/2' in result.commands"
+          - "'interface Ethernet1/1' in result.commands"
           - "'lldp transmit' in result.commands"
-          - "'interface Ethernet1/5' in result.commands"
+          - "'interface Ethernet1/2' in result.commands"
           - "'lldp receive' in result.commands"
           - "'no lldp tlv-set vlan 12' in result.commands"
           - "result.changed == true "

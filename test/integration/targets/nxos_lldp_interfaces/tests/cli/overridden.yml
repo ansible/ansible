@@ -11,10 +11,9 @@
       - name: Setup
         cli_config: 
           config: |
-            interface Ethernet1/4
+            interface Ethernet1/1
               no lldp receive
-            interface Ethernet1/5
-              lldp tlv-set vlan 10
+              lldp tlv-set management-address 12.12.12.12
 
       - name: Gather lldp_interfaces facts
         nxos_facts: &facts
@@ -26,7 +25,7 @@
       - name: Overridden
         nxos_lldp_interfaces: &overridden
           config:
-              - name: Ethernet1/7
+              - name: Ethernet1/2
                 receive: no
                 tlv_set:
                   vlan: 12
@@ -36,14 +35,13 @@
       - assert:
           that:
             - "ansible_facts.network_resources.lldp_interfaces == result.before"
-            - "'interface Ethernet1/4' in result.commands"
+            - "'interface Ethernet1/1' in result.commands"
             - "'lldp receive' in result.commands"
-            - "'interface Ethernet1/5' in result.commands"
-            - "'no lldp tlv-set vlan 10' in result.commands"
-            - "'interface Ethernet1/7' in result.commands"
+            - "'no lldp tlv-set management-address 12.12.12.12' in result.commands"
+            - "'interface Ethernet1/2' in result.commands"
             - "'no lldp receive' in result.commands"
             - "'lldp tlv-set vlan 12' in result.commands"
-            - "result.commands | length == 7"
+            - "result.commands | length == 6"
               
       - name: Gather lldp_interfaces post facts
         nxos_facts: *facts

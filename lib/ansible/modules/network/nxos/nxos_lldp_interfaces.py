@@ -21,7 +21,6 @@
 #   builder template.
 #
 #############################################
-
 """
 The module file for nxos_lldp_interfaces
 """
@@ -30,9 +29,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
-  'metadata_version': '1.1',
-  'status': ['preview'],
-  'supported_by': 'network'
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'network'
 }
 
 DOCUMENTATION = """
@@ -43,7 +42,8 @@ short_description: Manages interfaces' configuration for Link Layer Discovery Pr
 description: This module manages interfaces' configuration for Link Layer Discovery Protocol (LLDP) on NX-OS platforms.
 author: Adharsh Srivats Rangarajan (@adharshsrivatsr)
 notes:
-  - Tested against NxOS 7.3.(0)D1(1) on VIRL
+  - Tested against NXOS 7.3.(0)D1(1) on VIRL
+  - The LLDP feature needs to be enabled before using this module
 options:
   config:
     description:
@@ -93,7 +93,7 @@ EXAMPLES = """
 
 # Before state:
 # -------------
-# 
+#
 
 - name : Merge provided configuration with device configuration
   nxos_lldp_interfaces:
@@ -108,7 +108,7 @@ EXAMPLES = """
 
 # After state:
 # -------------
-# 
+#
 # interface Ethernet1/4
 #   no lldp receive
 #   lldp tlv-set management-address 192.168.122.64
@@ -119,7 +119,7 @@ EXAMPLES = """
 
 # Before state:
 # ------------
-# 
+#
 # interface Ethernet1/4
 #   no lldp receive
 #   lldp tlv-set management-address 192.168.122.64
@@ -152,7 +152,7 @@ EXAMPLES = """
 
 # Before state:
 # ------------
-# 
+#
 # interface Ethernet1/4
 #   no lldp receive
 #   lldp tlv-set management-address 192.168.122.64
@@ -192,10 +192,10 @@ EXAMPLES = """
 - name: Delete LLDP interfaces configuration
   nxos_lldp_interfaces:
     state: deleted
-    
+
 # After state:
 # ------------
-# 
+#
 
 
 """
@@ -203,12 +203,14 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
@@ -216,9 +218,8 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['interface Ethernet1/2', 'lldp receive', 'lldp tlv-set vlan 12']
 """
-
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.argspec.lldp_interfaces.lldp_interfaces import Lldp_interfacesArgs

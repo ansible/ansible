@@ -11,17 +11,14 @@
     - name: Setup
       cli_config:
         config: |
-          interface Ethernet1/4
+          interface Ethernet1/2
             no lldp receive
             lldp tlv-set management-address 192.168.122.64
-          interface Ethernet1/5
-            no lldp transmit
-            lldp tlv-set vlan 10
 
     - name: Replaced
       nxos_lldp_interfaces: &replaced
         config:
-          - name: Ethernet1/4
+          - name: Ethernet1/2
             transmit: false
             tlv_set:
               vlan: 2
@@ -31,7 +28,7 @@
     - assert:
         that:
           - "result.changed == true"
-          - "'interface Ethernet1/4' in result.commands"
+          - "'interface Ethernet1/2' in result.commands"
           - "'lldp receive' in result.commands"
           - "'no lldp tlv-set management-address 192.168.122.64' in result.commands"
           - "'no lldp transmit' in result.commands"

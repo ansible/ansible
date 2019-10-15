@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
 # GNU General Public License v3.0+
@@ -10,6 +9,8 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, remove_empties, dict_diff
@@ -87,10 +88,10 @@ class Lldp_interfaces(ConfigBase):
         want = []
         if config:
             for w in config:
-                if get_interface_type(w['name']) not in ('management', 'ethernet'):
-                    self._module.fail_json(
-                        msg='This module works with either management or ethernet')
-                w.update({'name': normalize_interface(w['name'])})
+                if get_interface_type(w['name']) not in ('management',
+                                                         'ethernet'):
+                    self._module.fail_json(msg='This module works with either management or ethernet')
+                w.update({'name':normalize_interface(w['name'])})
                 want.append(remove_empties(w))
         have = existing_lldp_interfaces_facts
         resp = self.set_state(want, have)
@@ -165,7 +166,7 @@ class Lldp_interfaces(ConfigBase):
             if h['name'] in want_intfs:
                 for w in want:
                     if w['name'] == h['name']:
-                        delete_keys = list(set(h)-set(flatten_dict(w)))
+                        delete_keys = list(set(h) - set(flatten_dict(w)))
                         for k in delete_keys:
                             delete_dict.update({k: h[k]})
                         delete_dict.update({'name': h['name']})
@@ -192,7 +193,7 @@ class Lldp_interfaces(ConfigBase):
 
         :rtype: A list
         :returns: the commands necessary to remove the current configuration
-                  of the provided objects
+        of the provided objects
         """
         commands = []
         if want:
@@ -227,12 +228,12 @@ class Lldp_interfaces(ConfigBase):
         commands.append('interface ' + d['name'])
 
         if 'transmit' in d:
-            if(d['transmit']):
+            if (d['transmit']):
                 commands.append('lldp transmit')
             else:
                 commands.append('no lldp transmit')
         if 'receive' in d:
-            if(d['receive']):
+            if (d['receive']):
                 commands.append('lldp receive')
             else:
                 commands.append('no lldp receive')
@@ -240,7 +241,7 @@ class Lldp_interfaces(ConfigBase):
             commands.append('lldp tlv-set management-address ' +
                             d['management_address'])
         if 'vlan' in d:
-            commands.append('lldp tlv-set vlan '+str(d['vlan']))
+            commands.append('lldp tlv-set vlan ' + str(d['vlan']))
 
         return commands
 
@@ -255,9 +256,9 @@ class Lldp_interfaces(ConfigBase):
         if 'receive' in obj:
             commands.append('lldp receive')
         if 'management_address' in obj:
-            commands.append(
-                'no lldp tlv-set management-address ' + obj['management_address'])
+            commands.append('no lldp tlv-set management-address ' +
+                            obj['management_address'])
         if 'vlan' in obj:
-            commands.append('no lldp tlv-set vlan '+str(obj['vlan']))
+            commands.append('no lldp tlv-set vlan ' + str(obj['vlan']))
 
         return commands

@@ -1,4 +1,4 @@
-#
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
 # GNU General Public License v3.0+
@@ -21,27 +21,50 @@
 #   builder template.
 #
 #############################################
-
 """
 The arg spec for the nxos_lldp_interfaces module
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 class Lldp_interfacesArgs(object):  # pylint: disable=R0903
     """The arg spec for the nxos_lldp_interfaces module
     """
-
     def __init__(self, **kwargs):
         pass
 
-    argument_spec = {'config': {'elements': 'dict',
-            'options': {'name': {'required': True, 'type': 'str'},
-                        'receive': {'type': 'bool'},
-                        'tlv_set': {'options': {'management_address': {'type': 'str'},
-                                                'vlan': {'type': 'int'}},
-                                    'type': 'dict'},
-                        'transmit': {'type': 'bool'}},
-            'type': 'list'},
- 'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'],
-           'default': 'merged',
-           'type': 'str'}}  # pylint: disable=C0301
+    argument_spec = {
+        'config': {
+            'elements': 'dict',
+            'options': {
+                'name': {
+                    'required': True,
+                    'type': 'str'
+                },
+                'receive': {
+                    'type': 'bool'
+                },
+                'tlv_set': {
+                    'options': {
+                        'management_address': {
+                            'type': 'str'
+                        },
+                        'vlan': {
+                            'type': 'int'
+                        }
+                    },
+                    'type': 'dict'
+                },
+                'transmit': {
+                    'type': 'bool'
+                }
+            },
+            'type': 'list'
+        },
+        'state': {
+            'choices': ['merged', 'replaced', 'overridden', 'deleted'],
+            'default': 'merged',
+            'type': 'str'
+        }
+    }  # pylint: disable=C0301
