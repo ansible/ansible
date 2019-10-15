@@ -123,32 +123,32 @@ hcloud_floating_ip:
             sample: 12345
         name:
             description: Name of the Floating IP
-            type: string
+            type: str
             returned: Always
             sample: my-floating-ip
         description:
             description: Description of the Floating IP
-            type: string
+            type: str
             returned: Always
             sample: my-floating-ip
         ip:
             description: IP Address of the Floating IP
-            type: string
+            type: str
             returned: Always
             sample: 116.203.104.109
         type:
             description: Type of the Floating IP
-            type: string
+            type: str
             returned: Always
             sample: ipv4
         home_location:
             description: Name of the home location of the Floating IP
-            type: string
+            type: str
             returned: Always
             sample: fsn1
         server:
             description: Name of the server the Floating IP is assigned to.
-            type: string
+            type: str
             returned: Always
             sample: "my-server"
         labels:

@@ -52,7 +52,7 @@ scaleway_image_info:
   description: Response from Scaleway API
   returned: success
   type: complex
-  contains:
+  sample:
     "scaleway_image_info": [
         {
            "arch": "x86_64",
