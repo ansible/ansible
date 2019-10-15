@@ -1,0 +1,7 @@
+major_changes:
+- netbox - add region grouping
+- netbox - interfaces and vlans gathering
+- netbox - use slug, and group name prefix length
+- netbox - get only master device of virtual-chassis members
+minor_changes:
+ - netbox - use inventory cache if configured #57644
