@@ -7,18 +7,18 @@ __metaclass__ = type
 
 import pytest
 
-import ansible.module_utils.common.warnings as warnings
+import ansible.module_utils.common.notice as notice
 
-from ansible.module_utils.common.warnings import warn
+from ansible.module_utils.common.notice import warn
 from ansible.module_utils.six import PY3
 
 
-def test_warn():
+def test_debug():
     warn('Warning message')
-    assert warnings.global_warnings == ['Warning message']
+    assert notice.global_warnings == ['Warning message']
 
 
-def test_multiple_warningss():
+def test_multiple_notices():
     warning_messages = [
         'First warning',
         'Second warning',
@@ -27,7 +27,7 @@ def test_multiple_warningss():
     for w in warning_messages:
         warn(w)
 
-    assert warning_messages == warnings.global_warnings
+    assert warning_messages == notice.global_warnings
 
 
 @pytest.mark.parametrize(

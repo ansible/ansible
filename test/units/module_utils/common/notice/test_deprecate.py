@@ -7,20 +7,20 @@ __metaclass__ = type
 
 import pytest
 
-import ansible.module_utils.common.warnings as warnings
+import ansible.module_utils.common.notice as notice
 
-from ansible.module_utils.common.warnings import deprecate
+from ansible.module_utils.common.notice import deprecate
 from ansible.module_utils.six import PY3
 
 
 def test_deprecate_message_only():
     deprecate('Deprecation message')
-    assert warnings.global_deprecations == [{'msg': 'Deprecation message', 'version': None}]
+    assert notice.global_deprecations == [{'msg': 'Deprecation message', 'version': None}]
 
 
 def test_deprecate_with_version():
     deprecate(msg='Deprecation message', version='2.14')
-    assert warnings.global_deprecations == [{'msg': 'Deprecation message', 'version': '2.14'}]
+    assert notice.global_deprecations == [{'msg': 'Deprecation message', 'version': '2.14'}]
 
 
 def test_multiple_deprecations():
@@ -32,7 +32,7 @@ def test_multiple_deprecations():
     for d in deprecations:
         deprecate(**d)
 
-    assert deprecations == warnings.global_deprecations
+    assert deprecations == notice.global_deprecations
 
 
 @pytest.mark.parametrize(
