@@ -161,6 +161,8 @@ lib/ansible/modules/cloud/oneandone/oneandone_private_network.py E326
 lib/ansible/modules/cloud/oneandone/oneandone_public_ip.py E324
 lib/ansible/modules/cloud/oneandone/oneandone_public_ip.py E326
 lib/ansible/modules/cloud/oneandone/oneandone_server.py E326
+lib/ansible/modules/cloud/online/online_server_facts.py E319
+lib/ansible/modules/cloud/online/online_user_facts.py E319
 lib/ansible/modules/cloud/openstack/os_flavor_facts.py E324
 lib/ansible/modules/cloud/openstack/os_flavor_facts.py E335
 lib/ansible/modules/cloud/openstack/os_image.py E324
@@ -174,6 +176,7 @@ lib/ansible/modules/cloud/openstack/os_ironic_node.py E326
 lib/ansible/modules/cloud/openstack/os_ironic_node.py E335
 lib/ansible/modules/cloud/openstack/os_keystone_endpoint.py E322
 lib/ansible/modules/cloud/openstack/os_keystone_endpoint.py E326
+lib/ansible/modules/cloud/openstack/os_quota.py E319
 lib/ansible/modules/cloud/openstack/os_quota.py E322
 lib/ansible/modules/cloud/openstack/os_quota.py E323
 lib/ansible/modules/cloud/openstack/os_quota.py E326
@@ -281,6 +284,13 @@ lib/ansible/modules/cloud/rackspace/rax_network.py E324
 lib/ansible/modules/cloud/rackspace/rax_queue.py E324
 lib/ansible/modules/cloud/rackspace/rax_scaling_group.py E324
 lib/ansible/modules/cloud/rackspace/rax_scaling_policy.py E324
+lib/ansible/modules/cloud/scaleway/scaleway_image_facts.py E319
+lib/ansible/modules/cloud/scaleway/scaleway_ip_facts.py E319
+lib/ansible/modules/cloud/scaleway/scaleway_organization_facts.py E319
+lib/ansible/modules/cloud/scaleway/scaleway_security_group_facts.py E319
+lib/ansible/modules/cloud/scaleway/scaleway_server_facts.py E319
+lib/ansible/modules/cloud/scaleway/scaleway_snapshot_facts.py E319
+lib/ansible/modules/cloud/scaleway/scaleway_volume_facts.py E319
 lib/ansible/modules/cloud/smartos/imgadm.py E317
 lib/ansible/modules/cloud/smartos/vmadm.py E322
 lib/ansible/modules/cloud/smartos/vmadm.py E324
