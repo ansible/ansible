@@ -59,7 +59,7 @@ In Ansible 2.7 and older::
 Module option conversion to string
 ----------------------------------
 
-Beginning in version 2.8, Ansible will warn if a module expects a string, but a non-string value is passed and automatically converted to a string. This highlights potential problems where, for example, a ``yes`` or ``true`` (parsed as truish boolean value) would be converted to the string ``'True'``, or where a version number ``1.10`` (parsed as float value) would be converted to ``'1.0'``. Such conversions can result in unexpected behavior depending on context.
+Beginning in version 2.8, Ansible will warn if a module expects a string, but a non-string value is passed and automatically converted to a string. This highlights potential problems where, for example, a ``yes`` or ``true`` (parsed as truish boolean value) would be converted to the string ``'True'``, or where a version number ``1.10`` (parsed as float value) would be converted to ``'1.1'``. Such conversions can result in unexpected behavior depending on context.
 
 This behavior can be changed to be an error or to be ignored by setting the ``ANSIBLE_STRING_CONVERSION_ACTION`` environment variable, or by setting the ``string_conversion_action`` configuration in the ``defaults`` section of ``ansible.cfg``.
 
