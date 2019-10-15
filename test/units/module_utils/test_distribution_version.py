@@ -1343,6 +1343,29 @@ TESTSETS = [
             "name": "Linux Mint"
         },
     },
+    {
+        "platform.dist": [
+            "dragonfly",
+            "5.2",
+            ""
+        ],
+        "input": {},
+        "result": {
+            "distribution_release": "5.2-RELEASE",
+            "distribution": "DragonFly",
+            "distribution_major_version": "N/A",
+            "os_family": "DragonFly",
+            "distribution_version": "DragonFly v5.2.0-RELEASE #1: Mo"
+        },
+        "name": "DragonFly DragonFly v5.2.0-RELEASE #1: Mo",
+        "distro": {
+            "codename": "",
+            "version": "5.2",
+            "id": "dragonfly",
+            "version_best": "5.2",
+            "name": "DragonFly"
+        }
+    }
 ]
 
 

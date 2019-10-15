@@ -1,0 +1,2 @@
+bugfixes:
+  - add distribution family for DragonFly BSD (https://github.com/ansible/ansible/issues/43739)

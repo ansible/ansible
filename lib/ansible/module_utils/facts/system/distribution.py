@@ -464,27 +464,26 @@ class Distribution(object):
     }
 
     # keep keys in sync with Conditionals page of docs
-    OS_FAMILY_MAP = {'RedHat': ['RedHat', 'Fedora', 'CentOS', 'Scientific', 'SLC',
-                                'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
-                                'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba'],
-                     'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
-                                'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux'],
-                     'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
-                              'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
-                     'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
-                     'Mandrake': ['Mandrake', 'Mandriva'],
-                     'Solaris': ['Solaris', 'Nexenta', 'OmniOS', 'OpenIndiana', 'SmartOS'],
-                     'Slackware': ['Slackware'],
-                     'Altlinux': ['Altlinux'],
-                     'SGML': ['SGML'],
-                     'Gentoo': ['Gentoo', 'Funtoo'],
-                     'Alpine': ['Alpine'],
-                     'AIX': ['AIX'],
-                     'HP-UX': ['HPUX'],
-                     'Darwin': ['MacOSX'],
-                     'FreeBSD': ['FreeBSD', 'TrueOS'],
-                     'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix'],
-                     'DragonFly': ['DragonflyBSD', 'Gentoo/DragonflyBSD']}
+    OS_FAMILY_MAP = {
+        'RedHat': ['RedHat', 'Fedora', 'CentOS', 'Scientific', 'SLC', 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux',
+                   'OVS', 'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba'],
+        'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon', 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux'],
+        'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed', 'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
+        'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
+        'Mandrake': ['Mandrake', 'Mandriva'],
+        'Solaris': ['Solaris', 'Nexenta', 'OmniOS', 'OpenIndiana', 'SmartOS'],
+        'Slackware': ['Slackware'],
+        'Altlinux': ['Altlinux'],
+        'SGML': ['SGML'],
+        'Gentoo': ['Gentoo', 'Funtoo'],
+        'Alpine': ['Alpine'],
+        'AIX': ['AIX'],
+        'HP-UX': ['HPUX'],
+        'Darwin': ['MacOSX'],
+        'FreeBSD': ['FreeBSD', 'TrueOS'],
+        'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix'],
+        'DragonFly': ['DragonflyBSD', 'DragonFlyBSD', 'Gentoo/DragonflyBSD', 'Gentoo/DragonFlyBSD'],
+    }
 
     OS_FAMILY = {}
     for family, names in OS_FAMILY_MAP.items():
@@ -582,6 +581,12 @@ class Distribution(object):
         return openbsd_facts
 
     def get_distribution_DragonFly(self):
+        dragonfly_facts = {}
+        dragonfly_facts['distribution_version'] = platform.release()
+        rc, out, err = self.module.run_command("/sbin/sysctl -n kern.version")
+        match = re.match(r'(\d+)\.(\d+)\.(\d+)-(RELEASE|STABLE|CURRENT).*', out)
+        if match:
+            dragonfly_facts['distribution_release'] = '%s.%s' % (match.group(1), match.group(2))
         return {}
 
     def get_distribution_NetBSD(self):
