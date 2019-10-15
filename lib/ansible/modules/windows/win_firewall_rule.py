@@ -144,7 +144,6 @@ EXAMPLES = r'''
     protocol: tcp
     state: present
     enabled: yes
-    
 - name: Firewall rule to allow port range
   win_firewall_rule:
     name: Sample port range
