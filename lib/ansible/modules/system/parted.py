@@ -115,35 +115,34 @@ partition_info:
     partitions:
       description: List of device partitions.
       type: list
-    sample: >
-      {
-        "disk": {
-          "dev": "/dev/sdb",
-          "logical_block": 512,
-          "model": "VMware Virtual disk",
-          "physical_block": 512,
-          "size": 5.0,
-          "table": "msdos",
-          "unit": "gib"
-        },
-        "partitions": [{
-          "begin": 0.0,
-          "end": 1.0,
-          "flags": ["boot", "lvm"],
-          "fstype": "",
-          "name": "",
-          "num": 1,
-          "size": 1.0
-        }, {
-          "begin": 1.0,
-          "end": 5.0,
-          "flags": [],
-          "fstype": "",
-          "name": "",
-          "num": 2,
-          "size": 4.0
-        }]
-      }
+  sample: {
+      "disk": {
+        "dev": "/dev/sdb",
+        "logical_block": 512,
+        "model": "VMware Virtual disk",
+        "physical_block": 512,
+        "size": 5.0,
+        "table": "msdos",
+        "unit": "gib"
+      },
+      "partitions": [{
+        "begin": 0.0,
+        "end": 1.0,
+        "flags": ["boot", "lvm"],
+        "fstype": "",
+        "name": "",
+        "num": 1,
+        "size": 1.0
+      }, {
+        "begin": 1.0,
+        "end": 5.0,
+        "flags": [],
+        "fstype": "",
+        "name": "",
+        "num": 2,
+        "size": 4.0
+      }]
+    }
 '''
 
 EXAMPLES = r'''

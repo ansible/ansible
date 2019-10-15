@@ -53,34 +53,34 @@ result:
     contains:
         _ref:
             description: The reference name of the object
-            type: string
+            type: str
         _locked:
             description: Whether or not the object is currently locked
-            type: boolean
+            type: bool
         _type:
             description: The type of the object
-            type: string
+            type: str
         name:
             description: The name of the object
-            type: string
+            type: str
         ca:
             description: A reference to an existing utm_ca_signing_ca or utm_ca_verification_ca object.
-            type: string
+            type: str
         meta:
             description: A reference to an existing utm_ca_meta_x509 object.
-            type: string
+            type: str
         certificate:
             description: The certificate in PEM format
-            type: string
+            type: str
         comment:
             description: Comment string (may be empty string)
-            type: string
+            type: str
         encrypted:
             description: If encryption is enabled
             type: bool
         key:
             description: Private key in PEM format (may be empty string)
-            type: string
+            type: str
 """
 
 from ansible.module_utils.utm_utils import UTM, UTMModule

@@ -69,7 +69,7 @@ vultr_network_info:
   description: Response from Vultr API
   returned: success
   type: complex
-  contains:
+  sample:
     "vultr_network_info": [
       {
         "date_created": "2018-08-02 11:18:49",

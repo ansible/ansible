@@ -73,7 +73,7 @@ ansible_facts:
   description: Response from Vultr API
   returned: success
   type: complex
-  contains:
+  sample:
     "vultr_ssh_key_facts": [
       {
         "date_created": "2018-02-24 15:04:01",

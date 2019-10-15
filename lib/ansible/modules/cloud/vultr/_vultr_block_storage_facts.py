@@ -72,7 +72,7 @@ vultr_block_storage_facts:
   description: Response from Vultr API
   returned: success
   type: complex
-  contains:
+  sample:
     "vultr_block_storage_facts": [
       {
         "attached_to_id": null,

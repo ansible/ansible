@@ -122,12 +122,12 @@ data:
       host:
         description: Hostname or IP address of syslog server.
         returned: success
-        type: string
+        type: str
         sample: 192.0.1.1
       port:
         description: Port number for syslog communication.
         returned: success
-        type: string
+        type: str
         sample: 443
       roles:
         description: List of roles assigned to syslog server.

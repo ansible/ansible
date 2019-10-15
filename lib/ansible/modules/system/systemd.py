@@ -137,7 +137,7 @@ status:
     description: A dictionary with the key=value pairs returned from `systemctl show`
     returned: success
     type: complex
-    contains: {
+    sample: {
             "ActiveEnterTimestamp": "Sun 2016-05-15 18:28:49 EDT",
             "ActiveEnterTimestampMonotonic": "8135942",
             "ActiveExitTimestampMonotonic": "0",

@@ -70,7 +70,7 @@ vultr_region_info:
   description: Response from Vultr API
   returned: success
   type: complex
-  contains:
+  sample:
     "vultr_region_info": [
       {
         "block_storage": false,

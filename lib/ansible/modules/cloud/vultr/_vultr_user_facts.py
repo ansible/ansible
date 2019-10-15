@@ -72,7 +72,7 @@ vultr_user_facts:
   description: Response from Vultr API
   returned: success
   type: complex
-  contains:
+  sample:
     "vultr_user_facts": [
       {
         "acls": [],

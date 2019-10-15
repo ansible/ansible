@@ -102,7 +102,7 @@ vultr_block_storage_info:
       description: Date created of the block storage.
       returned: success
       type: str
-      sample: 2018-07-24 12:59:59
+      sample: "2018-07-24 12:59:59"
     status:
       description: Status of the block storage.
       returned: success
