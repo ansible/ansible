@@ -275,10 +275,10 @@ def main():
 
         if not before_after_differences:
             module.exit_json(
-              changed=False,
-              rc=rc,
-              stdout=out,
-              stderr=err)
+                changed=False,
+                rc=rc,
+                stdout=out,
+                stderr=err)
         else:
             module.exit_json(
                 changed=True,
