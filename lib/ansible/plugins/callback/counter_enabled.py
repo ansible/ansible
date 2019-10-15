@@ -10,6 +10,7 @@ from ansible import constants as C
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
 from ansible.template import Templar
+from ansible.plugins.strategy import SharedPluginLoaderObj
 from ansible.playbook.task_include import TaskInclude
 
 DOCUMENTATION = '''
@@ -41,8 +42,9 @@ class CallbackModule(CallbackBase):
 
     _task_counter = 1
     _task_total = 0
-    _host_counter = 1
+    _host_counter = 0
     _host_total = 0
+    _host_names = []
 
     def __init__(self):
         super(CallbackModule, self).__init__()
@@ -74,6 +76,12 @@ class CallbackModule(CallbackBase):
         self._display.banner(msg)
         self._play = play
 
+        self._host_names = []
+        if self._task_counter == self._task_total:
+            self._task_counter = 1
+        if self._host_counter == self._host_total:
+            self._host_counter = 0
+
         self._host_total = len(self._all_vars()['vars']['ansible_play_hosts_all'])
         self._task_total = len(self._play.get_tasks()[0])
 
@@ -84,25 +92,21 @@ class CallbackModule(CallbackBase):
         for host in hosts:
             stat = stats.summarize(host)
 
-            self._display.display(u"%s : %s %s %s %s %s %s" % (
+            self._display.display(u"%s : %s %s %s %s" % (
                 hostcolor(host, stat),
                 colorize(u'ok', stat['ok'], C.COLOR_OK),
                 colorize(u'changed', stat['changed'], C.COLOR_CHANGED),
                 colorize(u'unreachable', stat['unreachable'], C.COLOR_UNREACHABLE),
-                colorize(u'failed', stat['failures'], C.COLOR_ERROR),
-                colorize(u'rescued', stat['rescued'], C.COLOR_OK),
-                colorize(u'ignored', stat['ignored'], C.COLOR_WARN)),
+                colorize(u'failed', stat['failures'], C.COLOR_ERROR)),
                 screen_only=True
             )
 
-            self._display.display(u"%s : %s %s %s %s %s %s" % (
+            self._display.display(u"%s : %s %s %s %s" % (
                 hostcolor(host, stat, False),
                 colorize(u'ok', stat['ok'], None),
                 colorize(u'changed', stat['changed'], None),
                 colorize(u'unreachable', stat['unreachable'], None),
-                colorize(u'failed', stat['failures'], None),
-                colorize(u'rescued', stat['rescued'], None),
-                colorize(u'ignored', stat['ignored'], None)),
+                colorize(u'failed', stat['failures'], None)),
                 log_only=True
             )
 
@@ -143,12 +147,18 @@ class CallbackModule(CallbackBase):
             path = task.get_path()
             if path:
                 self._display.display("task path: %s" % path, color=C.COLOR_DEBUG)
-        self._host_counter = 0
-        self._task_counter += 1
+
+        if len(self._host_names) == self._host_total:
+            self._host_names = []
+            self._host_counter = 0
+        if self._task_counter < self._task_total:
+            self._task_counter += 1
 
     def v2_runner_on_ok(self, result):
 
-        self._host_counter += 1
+        if result._host.get_name() not in self._host_names or len(self._host_names) == 0:
+           self._host_counter += 1
+           self._host_names.append(result._host.get_name())
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
 
@@ -177,13 +187,15 @@ class CallbackModule(CallbackBase):
         else:
             self._clean_results(result._result, result._task.action)
 
-            if self._run_is_verbose(result):
+            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
                 msg += " => %s" % (self._dump_results(result._result),)
             self._display.display(msg, color=color)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
 
-        self._host_counter += 1
+        if result._host.get_name() not in self._host_names or len(self._host_names) == 0:
+           self._host_counter += 1
+           self._host_names.append(result._host.get_name())
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         self._clean_results(result._result, result._task.action)
@@ -212,7 +224,9 @@ class CallbackModule(CallbackBase):
             self._display.display("...ignoring", color=C.COLOR_SKIP)
 
     def v2_runner_on_skipped(self, result):
-        self._host_counter += 1
+        if result._host.get_name() not in self._host_names or len(self._host_names) == 0:
+           self._host_counter += 1
+           self._host_names.append(result._host.get_name())
 
         if self._plugin_options.get('show_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS):  # fallback on constants for inherited plugins missing docs
 
@@ -225,12 +239,14 @@ class CallbackModule(CallbackBase):
                 self._process_items(result)
             else:
                 msg = "skipping: %d/%d [%s]" % (self._host_counter, self._host_total, result._host.get_name())
-                if self._run_is_verbose(result):
+                if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
                     msg += " => %s" % self._dump_results(result._result)
                 self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_runner_on_unreachable(self, result):
-        self._host_counter += 1
+        if result._host.get_name() not in self._host_names or len(self._host_names) == 0:
+           self._host_counter += 1
+           self._host_names.append(result._host.get_name())
 
         if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
@@ -245,3 +261,48 @@ class CallbackModule(CallbackBase):
             self._display.display("fatal: %d/%d [%s]: UNREACHABLE! => %s" % (self._host_counter, self._host_total,
                                                                              result._host.get_name(), self._dump_results(result._result)),
                                   color=C.COLOR_UNREACHABLE)
+
+    def v2_runner_item_on_ok(self, result):
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        self._clean_results(result._result, result._task.action)
+        if isinstance(result._task, TaskInclude):
+            return
+        elif result._result.get('changed', False):
+            msg = 'changed'
+            color = C.COLOR_CHANGED
+        else:
+            msg = 'ok'
+            color = C.COLOR_OK
+
+        if delegated_vars:
+            msg += ": [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+        else:
+            msg += ": [%s]" % result._host.get_name()
+
+        msg += " => (item=%s)" % (self._get_item(result._result),)
+
+        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+            msg += " => %s" % self._dump_results(result._result)
+        self._display.display(msg, color=color)
+
+    def v2_runner_item_on_failed(self, result):
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        self._clean_results(result._result, result._task.action)
+        self._handle_exception(result._result)
+
+        msg = "failed: "
+        if delegated_vars:
+            msg += "[%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+        else:
+            msg += "[%s]" % (result._host.get_name())
+
+        self._handle_warnings(result._result)
+        self._display.display(msg + " (item=%s) => %s" % (self._get_item(result._result), self._dump_results(result._result)), color=C.COLOR_ERROR)
+
+    def v2_runner_item_on_skipped(self, result):
+        if self._plugin_options.get('show_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS):  # fallback on constants for inherited plugins missing docs
+            self._clean_results(result._result, result._task.action)
+            msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item(result._result))
+            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+                msg += " => %s" % self._dump_results(result._result)
+            self._display.display(msg, color=C.COLOR_SKIP)
