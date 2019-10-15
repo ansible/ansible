@@ -1269,14 +1269,6 @@ lib/ansible/modules/cloud/centurylink/clc_server.py validate-modules:doc-missing
 lib/ansible/modules/cloud/centurylink/clc_server_snapshot.py validate-modules:implied-parameter-type-mismatch
 lib/ansible/modules/cloud/centurylink/clc_server_snapshot.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/centurylink/clc_server_snapshot.py validate-modules:doc-missing-type
-lib/ansible/modules/cloud/cloudscale/cloudscale_floating_ip.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/cloud/cloudscale/cloudscale_floating_ip.py validate-modules:doc-missing-type
-lib/ansible/modules/cloud/cloudscale/cloudscale_server.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/cloud/cloudscale/cloudscale_server.py validate-modules:doc-missing-type
-lib/ansible/modules/cloud/cloudscale/cloudscale_server_group.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/cloud/cloudscale/cloudscale_server_group.py validate-modules:doc-missing-type
-lib/ansible/modules/cloud/cloudscale/cloudscale_volume.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/cloud/cloudscale/cloudscale_volume.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/cloudstack/cs_account.py future-import-boilerplate
 lib/ansible/modules/cloud/cloudstack/cs_account.py metaclass-boilerplate
 lib/ansible/modules/cloud/cloudstack/cs_affinitygroup.py future-import-boilerplate
@@ -5715,8 +5707,6 @@ lib/ansible/plugins/doc_fragments/checkpoint_commands.py future-import-boilerpla
 lib/ansible/plugins/doc_fragments/checkpoint_commands.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/checkpoint_objects.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/checkpoint_objects.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/cloudscale.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/cloudscale.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/cloudstack.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/cloudstack.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/cnos.py future-import-boilerplate
@@ -5949,8 +5939,6 @@ test/integration/targets/inventory_aws_conformance/lib/boto/mocks/instances.py f
 test/integration/targets/inventory_aws_conformance/lib/boto/mocks/instances.py metaclass-boilerplate
 test/integration/targets/inventory_aws_conformance/lib/boto/session.py future-import-boilerplate
 test/integration/targets/inventory_aws_conformance/lib/boto/session.py metaclass-boilerplate
-test/integration/targets/inventory_cloudscale/filter_plugins/group_name.py future-import-boilerplate
-test/integration/targets/inventory_cloudscale/filter_plugins/group_name.py metaclass-boilerplate
 test/integration/targets/inventory_kubevirt_conformance/inventory_diff.py future-import-boilerplate
 test/integration/targets/inventory_kubevirt_conformance/inventory_diff.py metaclass-boilerplate
 test/integration/targets/inventory_kubevirt_conformance/server.py future-import-boilerplate
