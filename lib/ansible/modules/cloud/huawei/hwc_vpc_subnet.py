@@ -33,13 +33,6 @@ options:
         type: str
         choices: ['present', 'absent']
         default: 'present'
-    filters:
-        description:
-            - A list of filters to apply when deciding whether existing
-              resources match and should be altered. The item of filters
-              is the name of input options.
-        type: list
-        required: true
     timeouts:
         description:
             - The timeouts for each operations.
@@ -59,13 +52,13 @@ options:
         description:
             - Specifies the subnet CIDR block. The value must be within the VPC
               CIDR block and be in CIDR format. The subnet mask cannot be
-              greater than 28.
+              greater than 28. Cannot be changed after creating the subnet.
         type: str
         required: true
     gateway_ip:
         description:
             - Specifies the gateway of the subnet. The value must be an IP
-              address in the subnet.
+              address in the subnet. Cannot be changed after creating the subnet.
         type: str
         required: true
     name:
@@ -77,12 +70,14 @@ options:
         required: true
     vpc_id:
         description:
-            - Specifies the ID of the VPC to which the subnet belongs.
+            - Specifies the ID of the VPC to which the subnet belongs. Cannot
+              be changed after creating the subnet.
         type: str
         required: true
     availability_zone:
         description:
-            - Specifies the AZ to which the subnet belongs.
+            - Specifies the AZ to which the subnet belongs. Cannot be changed
+              after creating the subnet.
         type: str
         required: false
     dhcp_enable:
@@ -112,8 +107,6 @@ EXAMPLES = '''
   register: vpc
 - name: create subnet
   hwc_vpc_subnet:
-    filters:
-      - "name"
     vpc_id: "{{ vpc.id }}"
     cidr: "192.168.100.0/26"
     gateway_ip: "192.168.100.32"
@@ -180,7 +173,6 @@ def build_module():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'],
                        type='str'),
-            filters=dict(required=True, type='list', elements='str'),
             timeouts=dict(type='dict', options=dict(
                 create=dict(default='15m', type='str'),
                 update=dict(default='15m', type='str'),
@@ -205,12 +197,12 @@ def main():
 
     try:
         resource = None
-        if module.params['id']:
+        if module.params.get('id'):
             resource = True
         else:
             v = search_resource(config)
             if len(v) > 1:
-                raise Exception("find more than one resources(%s)" % ", ".join([
+                raise Exception("Found more than one resource(%s)" % ", ".join([
                                 navigate_value(i, ["id"]) for i in v]))
 
             if len(v) == 1:
@@ -337,7 +329,7 @@ def search_resource(config):
     module = config.module
     client = config.client(get_region(module), "vpc", "project")
     opts = user_input_parameters(module)
-    identity_obj = _build_identity_object(module, opts)
+    identity_obj = _build_identity_object(opts)
     query_link = _build_query_link(opts)
     link = "subnets" + query_link
 
@@ -668,32 +660,27 @@ def send_list_request(module, client, url):
     return navigate_value(r, ["subnets"], None)
 
 
-def _build_identity_object(module, all_opts):
-    filters = module.params.get("filters")
-    opts = dict()
-    for k, v in all_opts.items():
-        opts[k] = v if k in filters else None
-
+def _build_identity_object(all_opts):
     result = dict()
 
-    v = navigate_value(opts, ["availability_zone"], None)
+    v = navigate_value(all_opts, ["availability_zone"], None)
     result["availability_zone"] = v
 
-    v = navigate_value(opts, ["cidr"], None)
+    v = navigate_value(all_opts, ["cidr"], None)
     result["cidr"] = v
 
-    v = navigate_value(opts, ["dhcp_enable"], None)
+    v = navigate_value(all_opts, ["dhcp_enable"], None)
     result["dhcp_enable"] = v
 
-    v = navigate_value(opts, ["dns_address"], None)
+    v = navigate_value(all_opts, ["dns_address"], None)
     result["dnsList"] = v
 
-    v = navigate_value(opts, ["gateway_ip"], None)
+    v = navigate_value(all_opts, ["gateway_ip"], None)
     result["gateway_ip"] = v
 
     result["id"] = None
 
-    v = navigate_value(opts, ["name"], None)
+    v = navigate_value(all_opts, ["name"], None)
     result["name"] = v
 
     result["neutron_network_id"] = None
@@ -706,7 +693,7 @@ def _build_identity_object(module, all_opts):
 
     result["status"] = None
 
-    v = navigate_value(opts, ["vpc_id"], None)
+    v = navigate_value(all_opts, ["vpc_id"], None)
     result["vpc_id"] = v
 
     return result
