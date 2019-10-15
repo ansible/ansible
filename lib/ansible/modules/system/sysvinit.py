@@ -92,8 +92,7 @@ results:
     description: results from actions taken
     returned: always
     type: complex
-    sample: >
-        {
+    sample: {
             "attempts": 1,
             "changed": true,
             "name": "apache2",

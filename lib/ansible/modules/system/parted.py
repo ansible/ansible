@@ -115,8 +115,7 @@ partition_info:
     partitions:
       description: List of device partitions.
       type: list
-  sample: >
-    {
+  sample: {
       "disk": {
         "dev": "/dev/sdb",
         "logical_block": 512,

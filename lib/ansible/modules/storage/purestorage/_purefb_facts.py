@@ -69,8 +69,7 @@ ansible_facts:
   description: Returns the facts collected from the FlashBlade
   returned: always
   type: complex
-  sample: >
-    {
+  sample: {
         "capacity": {
             "aggregate": {
                 "data_reduction": 1.1179228,
