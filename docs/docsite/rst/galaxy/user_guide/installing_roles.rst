@@ -23,7 +23,7 @@ Setting where to install roles
 
 By default, Ansible downloads roles to the first writable directory in the default list of paths ``~/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles``. This installs roles in the home directory of the user running ``ansible-galaxy``.
 
-You can override this one of the following options:
+You can override this with one of the following options:
 
 * Set the environment variable :envvar:`ANSIBLE_ROLES_PATH` in your session.
 * Define ``roles_path`` in an ``ansible.cfg`` file.
