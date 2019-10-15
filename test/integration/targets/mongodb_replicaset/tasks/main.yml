@@ -145,7 +145,7 @@
 - include_tasks: mongod_teardown.yml
 
 - set_fact:
-    mongod_ssl: true
+    mongo_ssl: true
 
 - name: Execute mongod script to restart with SSL enabled
   include_tasks: mongod_replicaset.yml
