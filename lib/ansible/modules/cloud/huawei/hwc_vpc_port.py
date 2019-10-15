@@ -33,13 +33,6 @@ options:
         type: str
         choices: ['present', 'absent']
         default: 'present'
-    filters:
-        description:
-            - A list of filters to apply when deciding whether existing
-              resources match and should be altered. The item of filters
-              is the name of input options.
-        type: list
-        required: true
     timeouts:
         description:
             - The timeouts for each operations.
@@ -127,18 +120,12 @@ EXAMPLES = '''
     name: "ansible_network_subnet_test"
     dhcp_enable: True
     vpc_id: "{{ vpc.id }}"
-    filters:
-      - "name"
     cidr: "192.168.100.0/26"
   register: subnet
 - name: create a port
   hwc_vpc_port:
     subnet_id: "{{ subnet.id }}"
     ip_address: "192.168.100.33"
-    filters:
-      - "name"
-      - "network_id"
-      - "ip_address"
 '''
 
 RETURN = '''
@@ -221,7 +208,6 @@ def build_module():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'],
                        type='str'),
-            filters=dict(required=True, type='list', elements='str'),
             timeouts=dict(type='dict', options=dict(
                 create=dict(default='15m', type='str'),
             ), default=dict()),
@@ -259,7 +245,7 @@ def main():
         else:
             v = search_resource(config)
             if len(v) > 1:
-                raise Exception("find more than one resources(%s)" % ", ".join([
+                raise Exception("Found more than one resource(%s)" % ", ".join([
                                 navigate_value(i, ["id"]) for i in v]))
 
             if len(v) == 1:
@@ -401,7 +387,7 @@ def search_resource(config):
     module = config.module
     client = config.client(get_region(module), "vpc", "project")
     opts = user_input_parameters(module)
-    identity_obj = _build_identity_object(module, opts)
+    identity_obj = _build_identity_object(opts)
     query_link = _build_query_link(opts)
     link = "ports" + query_link
 
@@ -952,18 +938,13 @@ def send_list_request(module, client, url):
     return navigate_value(r, ["ports"], None)
 
 
-def _build_identity_object(module, all_opts):
-    filters = module.params.get("filters")
-    opts = dict()
-    for k, v in all_opts.items():
-        opts[k] = v if k in filters else None
-
+def _build_identity_object(all_opts):
     result = dict()
 
-    v = navigate_value(opts, ["admin_state_up"], None)
+    v = navigate_value(all_opts, ["admin_state_up"], None)
     result["admin_state_up"] = v
 
-    v = expand_list_allowed_address_pairs(opts, None)
+    v = expand_list_allowed_address_pairs(all_opts, None)
     result["allowed_address_pairs"] = v
 
     result["binding_host_id"] = None
@@ -976,23 +957,23 @@ def _build_identity_object(module, all_opts):
 
     result["dns_name"] = None
 
-    v = expand_list_extra_dhcp_opts(opts, None)
+    v = expand_list_extra_dhcp_opts(all_opts, None)
     result["extra_dhcp_opts"] = v
 
-    v = expand_list_fixed_ips(opts, None)
+    v = expand_list_fixed_ips(all_opts, None)
     result["fixed_ips"] = v
 
     result["id"] = None
 
     result["mac_address"] = None
 
-    v = navigate_value(opts, ["name"], None)
+    v = navigate_value(all_opts, ["name"], None)
     result["name"] = v
 
-    v = navigate_value(opts, ["subnet_id"], None)
+    v = navigate_value(all_opts, ["subnet_id"], None)
     result["network_id"] = v
 
-    v = navigate_value(opts, ["security_groups"], None)
+    v = navigate_value(all_opts, ["security_groups"], None)
     result["security_groups"] = v
 
     result["status"] = None
