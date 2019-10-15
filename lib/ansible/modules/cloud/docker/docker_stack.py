@@ -275,7 +275,7 @@ def main():
 
         if not before_after_differences:
             module.exit_json(
-              changed=False
+              changed=False,
               rc=rc,
               stdout=out,
               stderr=err)
