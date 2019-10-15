@@ -22,6 +22,10 @@ module: hwc_vpc_private_ip
 description:
     - vpc private ip management.
 short_description: Creates a resource of Vpc/PrivateIP in Huawei Cloud
+notes:
+  - If I(id) option is provided, it takes precedence over I(subnet_id), I(ip_address) for private ip selection.
+  - I(subnet_id), I(ip_address) are used for private ip selection. If more than one private ip with this options exists, execution is aborted.
+  - No parameter support updating. If one of option is changed, the module will create a new resource.
 version_added: '2.10'
 author: Huawei Inc. (@huaweicloud)
 requirements:
@@ -33,24 +37,18 @@ options:
         type: str
         choices: ['present', 'absent']
         default: 'present'
-    filters:
-        description:
-            - A list of filters to apply when deciding whether existing
-              resources match and should be altered. The item of filters
-              is the name of input options.
-        type: list
-        required: true
     subnet_id:
         description:
             - Specifies the ID of the subnet from which IP addresses are
-              assigned.
+              assigned. Cannot be changed after creating the private ip.
         type: str
         required: true
     ip_address:
         description:
             - Specifies the target IP address. The value can be an available IP
               address in the subnet. If it is not specified, the system
-              automatically assigns an IP address.
+              automatically assigns an IP address. Cannot be changed after
+              creating the private ip.
         type: str
         required: false
 extends_documentation_fragment: hwc
@@ -69,16 +67,12 @@ EXAMPLES = '''
     name: "ansible_network_subnet_test"
     dhcp_enable: True
     vpc_id: "{{ vpc.id }}"
-    filters:
-      - "name"
     cidr: "192.168.100.0/26"
   register: subnet
 - name: create a private ip
   hwc_vpc_private_ip:
     subnet_id: "{{ subnet.id }}"
     ip_address: "192.168.100.33"
-    filters:
-      - "ip_address"
 '''
 
 RETURN = '''
@@ -107,7 +101,6 @@ def build_module():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'],
                        type='str'),
-            filters=dict(required=True, type='list', elements='str'),
             subnet_id=dict(type='str', required=True),
             ip_address=dict(type='str')
         ),
@@ -128,7 +121,7 @@ def main():
         else:
             v = search_resource(config)
             if len(v) > 1:
-                raise Exception("find more than one resources(%s)" % ", ".join([
+                raise Exception("Found more than one resource(%s)" % ", ".join([
                                 navigate_value(i, ["id"]) for i in v]))
 
             if len(v) == 1:
@@ -142,6 +135,13 @@ def main():
                 if not module.check_mode:
                     create(config)
                 changed = True
+
+            current = read_resource(config, exclude_output=True)
+            expect = user_input_parameters(module)
+            if are_different_dicts(expect, current):
+                raise Exception(
+                    "Cannot change option from (%s) to (%s)of an"
+                    " existing resource.(%s)" % (current, expect, module.params.get('id')))
 
             result = read_resource(config)
             result['id'] = module.params.get('id')
@@ -206,7 +206,7 @@ def search_resource(config):
     module = config.module
     client = config.client(get_region(module), "vpc", "project")
     opts = user_input_parameters(module)
-    identity_obj = _build_identity_object(module, opts)
+    identity_obj = _build_identity_object(opts)
     query_link = _build_query_link(opts)
     link = build_path(module, "subnets/{subnet_id}/privateips") + query_link
 
@@ -326,20 +326,15 @@ def send_list_request(module, client, url):
     return navigate_value(r, ["privateips"], None)
 
 
-def _build_identity_object(module, all_opts):
-    filters = module.params.get("filters")
-    opts = dict()
-    for k, v in all_opts.items():
-        opts[k] = v if k in filters else None
-
+def _build_identity_object(all_opts):
     result = dict()
 
     result["id"] = None
 
-    v = navigate_value(opts, ["ip_address"], None)
+    v = navigate_value(all_opts, ["ip_address"], None)
     result["ip_address"] = v
 
-    v = navigate_value(opts, ["subnet_id"], None)
+    v = navigate_value(all_opts, ["subnet_id"], None)
     result["subnet_id"] = v
 
     return result
