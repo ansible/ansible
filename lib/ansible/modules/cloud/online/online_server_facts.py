@@ -36,7 +36,7 @@ online_server_facts:
   description: Response from Online API
   returned: success
   type: complex
-  contains:
+  sample:
     "online_server_facts": [
         {
             "abuse": "abuse@example.com",

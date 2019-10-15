@@ -102,7 +102,7 @@ keys:
       description: Date of creation of the key
       type: str
       returned: always
-      sample: 2017-04-18T15:12:08.551000+10:00
+      sample: "2017-04-18T15:12:08.551000+10:00"
     description:
       description: Description of the key
       type: str
@@ -178,7 +178,7 @@ keys:
           description: Date of creation of the grant
           type: str
           returned: always
-          sample: 2017-04-18T15:12:08+10:00
+          sample: "2017-04-18T15:12:08+10:00"
         grant_id:
           description: The unique ID for the grant
           type: str
