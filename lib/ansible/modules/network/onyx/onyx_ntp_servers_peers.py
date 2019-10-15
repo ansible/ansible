@@ -19,7 +19,7 @@ short_description: Configures NTP peers and servers parameters
 description:
   - This module provides declarative management of NTP peers and servers configuration on Mellanox ONYX network devices.
 options:
-  peers:
+  peer:
     type: list
     description:
       - List of ntp peers.
@@ -36,7 +36,7 @@ options:
       version:
         description:
           - version number for the ntp peer
-        choices: ['3','4']
+        choices: [3, 4]
         type: int
       key_id:
         description:
@@ -45,9 +45,9 @@ options:
       state:
         description:
           - Indicates if the ntp peer exists or should be deleted
-        choices: ['present','absent']
+        choices: ['present', 'absent']
         type: str
-  servers:
+  server:
     type: list
     description:
       - List of ntp servers.
@@ -64,12 +64,12 @@ options:
       trusted_enable:
         description:
           - Disables/Enables the trusted state for the ntp server.
-        choices: ['yes','no']
+        choices: ['yes', 'no']
         type: str
       version:
         description:
           - version number for the ntp server
-        choices: [3,4]
+        choices: [3, 4]
         type: int
       key_id:
         description:
@@ -77,8 +77,8 @@ options:
         type: int
       state:
         description:
-          - Indicates if the ntp peer exists or should be deleted
-        choices: ['present','absent']
+          - Indicates if the ntp peer exists or should be deleted.
+        choices: ['present', 'absent']
         type: str
   ntpdate:
     description:
