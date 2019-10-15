@@ -69,7 +69,7 @@ options:
             - Field introduced in 18.2.6.
             - Default value when not specified in API or module is interpreted by Avi Controller as
             - TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256.
-        version_added: "2.9"
+        version_added: "2.10"
         type: str
     description:
         description:
@@ -85,7 +85,7 @@ options:
             - Enable early data processing for tls1. 3 connections.
             - Field introduced in 18.2.6.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
-        version_added: "2.9"
+        version_added: "2.10"
         type: bool
     enable_ssl_session_reuse:
         description:

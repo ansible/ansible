@@ -146,7 +146,7 @@ options:
             - Allowed values are 60-3600.
             - Field introduced in 18.2.6.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     dns_refresh_period:
         description:
@@ -285,7 +285,7 @@ options:
             - Pool of scp connections used in copy task during serviceenginegroup upgrade.
             - Field introduced in 18.2.6.
             - Default value when not specified in API or module is interpreted by Avi Controller as 5.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     seupgrade_fabric_pool_size:
         description:
@@ -302,7 +302,7 @@ options:
             - SSL Certificates in the admin tenant can be used in non-admin tenants.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
-        version_added: "2.9"
+        version_added: "2.10"
         type: bool
     ssl_certificate_expiry_warning_days:
         description:

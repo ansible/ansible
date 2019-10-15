@@ -147,7 +147,7 @@ options:
             - This field indicates that for a cname query, respond with resolved cnames in the additional section with a records.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
-        version_added: "2.9"
+        version_added: "2.10"
         type: bool
     site_persistence_enabled:
         description:

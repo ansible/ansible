@@ -69,7 +69,7 @@ options:
     obj_password:
         description:
             - Password of cloudconnectoruser.
-        version_added: "2.9"
+        version_added: "2.10"
         type: str
     oci_credentials:
         description:

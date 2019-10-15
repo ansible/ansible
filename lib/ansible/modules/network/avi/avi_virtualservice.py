@@ -501,7 +501,7 @@ options:
             - Used for testing se datastore upgrade 2. 0 functionality.
             - It is a reference to an object of type testsedatastorelevel1.
             - Field introduced in 18.2.6.
-        version_added: "2.9"
+        version_added: "2.10"
         type: str
     topology_policies:
         description:

@@ -300,14 +300,14 @@ options:
             - Distributes vnic ownership among cores so multiple cores handle dispatcher duties. requires se reboot.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
-        version_added: "2.9"
+        version_added: "2.10"
         type: bool
     enable_gratarp_permanent:
         description:
             - Enable gratarp for vip_ip.
             - Field introduced in 18.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
-        version_added: "2.9"
+        version_added: "2.10"
         type: bool
     enable_hsm_priming:
         description:
@@ -332,7 +332,7 @@ options:
             - TSO feature is not supported with TX Ring enabled. Requires SE Reboot.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
-        version_added: "2.9"
+        version_added: "2.10"
         type: bool
     enable_routing:
         description:
@@ -407,7 +407,7 @@ options:
             - Allowed values are 5-30.
             - Field introduced in 18.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     ha_mode:
         description:
@@ -650,7 +650,7 @@ options:
             - Allowed values are 1-3600.
             - Field deprecated in 18.2.5.
             - Field introduced in 18.2.5.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     nat_flow_tcp_established_timeout:
         description:
@@ -658,7 +658,7 @@ options:
             - Allowed values are 1-3600.
             - Field deprecated in 18.2.5.
             - Field introduced in 18.2.5.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     nat_flow_tcp_half_closed_timeout:
         description:
@@ -666,7 +666,7 @@ options:
             - Allowed values are 1-3600.
             - Field deprecated in 18.2.5.
             - Field introduced in 18.2.5.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     nat_flow_tcp_handshake_timeout:
         description:
@@ -674,7 +674,7 @@ options:
             - Allowed values are 1-3600.
             - Field deprecated in 18.2.5.
             - Field introduced in 18.2.5.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     nat_flow_udp_noresponse_timeout:
         description:
@@ -682,7 +682,7 @@ options:
             - Allowed values are 1-3600.
             - Field deprecated in 18.2.5.
             - Field introduced in 18.2.5.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     nat_flow_udp_response_timeout:
         description:
@@ -690,7 +690,7 @@ options:
             - Allowed values are 1-3600.
             - Field deprecated in 18.2.5.
             - Field introduced in 18.2.5.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     non_significant_log_throttle:
         description:
@@ -757,7 +757,7 @@ options:
             - Reboot the vm or host on kernel panic.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
-        version_added: "2.9"
+        version_added: "2.10"
         type: bool
     reboot_on_stop:
         description:
@@ -789,35 +789,35 @@ options:
             - Time (in seconds) service engine waits for after generating a vnic transmit queue stall event before resetting thenic.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     se_dp_vnic_queue_stall_threshold:
         description:
             - Number of consecutive transmit failures to look for before generating a vnic transmit queue stall event.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2000.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     se_dp_vnic_queue_stall_timeout:
         description:
             - Time (in milliseconds) to wait for network/nic recovery on detecting a transmit queue stall after which service engine resets the nic.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10000.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     se_dp_vnic_restart_on_queue_stall_count:
         description:
             - Number of consecutive transmit queue stall events in se_dp_vnic_stall_se_restart_window to look for before restarting se.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 3.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     se_dp_vnic_stall_se_restart_window:
         description:
             - Window of time (in seconds) during which se_dp_vnic_restart_on_queue_stall_count number of consecutive stalls results in a se restart.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 3600.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     se_dpdk_pmd:
         description:
@@ -842,7 +842,7 @@ options:
             - Allowed values are 20-50.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 40.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     se_flow_probe_timer:
         description:
@@ -867,7 +867,7 @@ options:
             - Allowed values are 0-2.
             - Field introduced in 18.2.6.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     se_lro:
         description:
@@ -875,7 +875,7 @@ options:
             - Requires se reboot.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
-        version_added: "2.9"
+        version_added: "2.10"
         type: bool
     se_name_prefix:
         description:
@@ -897,7 +897,7 @@ options:
             - The optimum value will be chosen based on se-memory, cloud type and number of interfaces. requires se reboot.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     se_pcap_pkt_sz:
         description:
@@ -905,7 +905,7 @@ options:
             - Requires se reboot.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 69632.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     se_pcap_qdisc_bypass:
         description:
@@ -914,7 +914,7 @@ options:
             - Note   brief packet reordering or loss may occur upon toggle.
             - Field introduced in 18.2.6.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
-        version_added: "2.9"
+        version_added: "2.10"
         type: bool
     se_pcap_reinit_frequency:
         description:
@@ -964,28 +964,28 @@ options:
             - Minimum time to wait on server between taking sampleswhen sampling the navigation timing data from the end user client.
             - Field introduced in 18.2.6.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     se_rum_sampling_nav_percent:
         description:
             - Percentage of navigation timing data from the end user client, used for sampling to get client insights.
             - Field introduced in 18.2.6.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     se_rum_sampling_res_interval:
         description:
             - Minimum time to wait on server between taking sampleswhen sampling the resource timing data from the end user client.
             - Field introduced in 18.2.6.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     se_rum_sampling_res_percent:
         description:
             - Percentage of resource timing data from the end user client used for sampling to get client insight.
             - Field introduced in 18.2.6.
             - Default value when not specified in API or module is interpreted by Avi Controller as 100.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     se_sb_dedicated_core:
         description:
@@ -1035,7 +1035,7 @@ options:
             - Requires se reboot.
             - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 64.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     se_udp_encap_ipc:
         description:

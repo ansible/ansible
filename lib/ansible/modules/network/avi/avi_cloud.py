@@ -98,7 +98,7 @@ options:
             - This is useful in scenarios where pool member fqdns can only be resolved from service engines and not from the controller.
             - Field introduced in 18.2.6.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
-        version_added: "2.9"
+        version_added: "2.10"
         type: bool
     docker_configuration:
         description:
@@ -208,7 +208,7 @@ options:
             - The service engine group to use as template.
             - It is a reference to an object of type serviceenginegroup.
             - Field introduced in 18.2.5.
-        version_added: "2.9"
+        version_added: "2.10"
         type: str
     state_based_dns_registration:
         description:

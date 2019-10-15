@@ -84,7 +84,7 @@ options:
             - Special values are 0 - 'disable'.
             - Field introduced in 18.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
-        version_added: "2.9"
+        version_added: "2.10"
         type: int
     is_federated:
         description:
