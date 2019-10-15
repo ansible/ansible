@@ -22,7 +22,7 @@ module: hwc_vpc_eip
 description:
     - elastic ip management.
 short_description: Creates a resource of Vpc/EIP in Huawei Cloud
-version_added: '2.9'
+version_added: '2.10'
 author: Huawei Inc. (@huaweicloud)
 requirements:
     - keystoneauth1 >= 3.6.0
@@ -33,13 +33,6 @@ options:
         type: str
         choices: ['present', 'absent']
         default: 'present'
-    filters:
-        description:
-            - A list of filters to apply when deciding whether existing
-              resources match and should be altered. The item of filters
-              is the name of input options.
-        type: list
-        required: true
     timeouts:
         description:
             - The timeouts for each operations.
@@ -146,18 +139,12 @@ EXAMPLES = '''
     name: "ansible_network_subnet_test"
     dhcp_enable: True
     vpc_id: "{{ vpc.id }}"
-    filters:
-      - "name"
     cidr: "192.168.100.0/26"
   register: subnet
 - name: create a port
   hwc_vpc_port:
     subnet_id: "{{ subnet.id }}"
     ip_address: "192.168.100.33"
-    filters:
-      - "name"
-      - "network_id"
-      - "ip_address"
   register: port
 - name: create an eip and bind it to a port
   hwc_vpc_eip:
@@ -167,9 +154,6 @@ EXAMPLES = '''
       name: "ansible_test_dedicated_bandwidth"
       size: 1
     port_id: "{{ port.id }}"
-    filters:
-      - "type"
-      - "dedicated_bandwidth"
 '''
 
 RETURN = '''
@@ -283,7 +267,6 @@ def build_module():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'],
                        type='str'),
-            filters=dict(required=True, type='list', elements='str'),
             timeouts=dict(type='dict', options=dict(
                 create=dict(default='5m', type='str'),
                 update=dict(default='5m', type='str'),
@@ -317,7 +300,7 @@ def main():
         else:
             v = search_resource(config)
             if len(v) > 1:
-                raise Exception("find more than one resources(%s)" % ", ".join([
+                raise Exception("Found more than one resource(%s)" % ", ".join([
                                 navigate_value(i, ["id"]) for i in v]))
 
             if len(v) == 1:
@@ -457,7 +440,7 @@ def search_resource(config):
     module = config.module
     client = config.client(get_region(module), "vpc", "project")
     opts = user_input_parameters(module)
-    identity_obj = _build_identity_object(module, opts)
+    identity_obj = _build_identity_object(opts)
     query_link = _build_query_link(opts)
     link = "publicips" + query_link
 
@@ -802,41 +785,36 @@ def send_list_request(module, client, url):
     return navigate_value(r, ["publicips"], None)
 
 
-def _build_identity_object(module, all_opts):
-    filters = module.params.get("filters")
-    opts = dict()
-    for k, v in all_opts.items():
-        opts[k] = v if k in filters else None
-
+def _build_identity_object(all_opts):
     result = dict()
 
-    v = expand_list_bandwidth_id(opts, None)
+    v = expand_list_bandwidth_id(all_opts, None)
     result["bandwidth_id"] = v
 
-    v = navigate_value(opts, ["dedicated_bandwidth", "name"], None)
+    v = navigate_value(all_opts, ["dedicated_bandwidth", "name"], None)
     result["bandwidth_name"] = v
 
     result["bandwidth_share_type"] = None
 
-    v = navigate_value(opts, ["dedicated_bandwidth", "size"], None)
+    v = navigate_value(all_opts, ["dedicated_bandwidth", "size"], None)
     result["bandwidth_size"] = v
 
     result["create_time"] = None
 
-    v = navigate_value(opts, ["enterprise_project_id"], None)
+    v = navigate_value(all_opts, ["enterprise_project_id"], None)
     result["enterprise_project_id"] = v
 
     result["id"] = None
 
-    v = navigate_value(opts, ["ip_version"], None)
+    v = navigate_value(all_opts, ["ip_version"], None)
     result["ip_version"] = v
 
-    v = navigate_value(opts, ["port_id"], None)
+    v = navigate_value(all_opts, ["port_id"], None)
     result["port_id"] = v
 
     result["private_ip_address"] = None
 
-    v = navigate_value(opts, ["ipv4_address"], None)
+    v = navigate_value(all_opts, ["ipv4_address"], None)
     result["public_ip_address"] = v
 
     result["public_ipv6_address"] = None
@@ -845,7 +823,7 @@ def _build_identity_object(module, all_opts):
 
     result["tenant_id"] = None
 
-    v = navigate_value(opts, ["type"], None)
+    v = navigate_value(all_opts, ["type"], None)
     result["type"] = v
 
     return result
