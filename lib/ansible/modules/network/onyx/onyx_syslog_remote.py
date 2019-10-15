@@ -22,7 +22,7 @@ notes:
 options:
     enabled:
         description:
-          - Disable/Enable logging feature
+          - Disable/Enable logging to given remote host
         default: true
         type: bool
     host:
@@ -37,7 +37,7 @@ options:
     trap:
         description:
           - Minimum severity level for messages to this syslog server
-        choices: ['alert', 'crit', 'debug', 'emerg', 'err', 'info', 'none', 'notice', 'warning']
+        choices: ['none', 'info', 'notice', 'alert', 'debug', 'warning', 'err', 'emerg', 'crit']
         type: str
     trap_override:
         description:
@@ -53,8 +53,14 @@ options:
             override_priority:
                 description:
                   -Specify a priority whose log level to override
-                choices: ['alert', 'crit', 'debug', 'emerg', 'err', 'info', 'none', 'notice', 'warning']
+                choices: ['none', 'info', 'notice', 'alert', 'debug', 'warning', 'err', 'emerg', 'crit']
                 type: str
+            override_enabled:
+                description:
+                  - disable override priorities for specific class.
+                default: True
+                type: bool
+
     filter:
         description:
           - Specify a filter type
@@ -100,12 +106,13 @@ EXAMPLES = """
     enabled: False
     host: 10.10.10.10
 
+- name : enable/disable override class
 - onyx_syslog_remote:
     host: 10.7.144.71
-    enabled: False
     trap_override:
         - override_class: events
           override_priority: emerg
+          override_enabled: False
         - override_class: mgmt-front
           override_priority: alert
 """
@@ -131,7 +138,7 @@ from ansible.module_utils.network.onyx.onyx import BaseOnyxModule
 
 class OnyxSyslogRemoteModule(BaseOnyxModule):
     MAX_PORT = 65535
-    LEVELS = ['alert', 'crit', 'debug', 'emerg', 'err', 'info', 'none', 'notice', 'warning']
+    LEVELS = ['none', 'info', 'notice', 'alert', 'debug', 'warning', 'err', 'emerg', 'crit']
     CLASSES = ['mgmt-front', 'mgmt-back', 'mgmt-core', 'events', 'debug-module', 'sx-sdk', 'mlx-daemons', 'protocol-stack']
     FILTER = ['include', 'exclude']
 
@@ -145,12 +152,14 @@ class OnyxSyslogRemoteModule(BaseOnyxModule):
         """" Ansible module initialization
         """
         override_spec = dict(override_priority=dict(choices=self.LEVELS, type='str'),
-                             override_class=dict(choices=self.CLASSES, required=True, type='str'))
+                             override_class=dict(choices=self.CLASSES, required=True, type='str'),
+                             override_enabled=dict(default=True, type="bool"))
+
         element_spec = dict(enabled=dict(type="bool", default=True),
                             host=dict(type="str", required=True),
                             port=dict(type="int"),
                             trap=dict(choices=self.LEVELS, type='str'),
-                            trap_override=dict(type="list", options=override_spec),
+                            trap_override=dict(type="list", elements='dict', options=override_spec),
                             filter=dict(choices=self.FILTER, type='str'),
                             filter_str=dict(type="str"))
 
@@ -165,7 +174,7 @@ class OnyxSyslogRemoteModule(BaseOnyxModule):
 
     def validate_port(self, port):
         if port and (port < 1 or port > self.MAX_PORT):
-            self._module.fail_json(msg='logging port must be between 1 and 65535')
+            self._module.fail_json(msg='logging port must be between 1 and {0}'.format(self.MAX_PORT))
 
     def show_logging(self):
         # we can't use show logging it has lack of information
@@ -180,6 +189,7 @@ class OnyxSyslogRemoteModule(BaseOnyxModule):
             if match:
                 host = match.group(1)
                 self._current_config[host] = dict()
+                continue
 
             match = self.LOGGING_PORT.match(line)
             if match:
@@ -189,6 +199,7 @@ class OnyxSyslogRemoteModule(BaseOnyxModule):
                     self._current_config[host]['port'] = port
                 else:
                     self._current_config[host] = dict(port=port)
+                continue
 
             match = self.LOGGING_TRAP.match(line)
             if match:
@@ -199,6 +210,7 @@ class OnyxSyslogRemoteModule(BaseOnyxModule):
                     self._current_config[host]['trap'] = trap
                 else:
                     self._current_config[host] = dict(trap=trap)
+                continue
 
             match = self.LOGGING_TRAP_OVERRIDE.match(line)
             if match:
@@ -214,6 +226,7 @@ class OnyxSyslogRemoteModule(BaseOnyxModule):
                         self._current_config[host]['trap_override'] = [dict(override_class=override_class, override_priority=override_priority)]
                 else:
                     self._current_config[host] = {'trap_override': [dict(override_class=override_class, override_priority=override_priority)]}
+                continue
 
             match = self.LOGGING_FILTER.match(line)
             if match:
@@ -254,43 +267,34 @@ class OnyxSyslogRemoteModule(BaseOnyxModule):
         required_config = self._required_config
         current_config = self._current_config
         host = required_config.get('host')
+        enabled = required_config['enabled']
         '''
         cases:
         if host in current config and current config != required config and its enable
-        if host in current config and current config == required config and its disable
-        if host not in current config and its enable
+        if host in current config and its disable
+        if host in current and it has override_class with disable flag
         '''
         host_config = current_config.get(host, dict())
-        if 'port' in required_config:
-            if required_config['enabled']:
+
+        if host in current_config and not enabled:
+            self._commands.append('no logging {0}'.format(host))
+        else:
+            if host not in current_config:
+                self._commands.append('logging {0}'.format(host))
+            if 'port' in required_config:
                 if required_config['port'] != host_config.get('port', None) or not host_config:
                     '''Edit/Create new one'''
                     self._commands.append('logging {0} port {1}'.format(host, required_config['port']))
 
-            elif 'port' in host_config:
-                self._commands.append('no logging {0} port'.format(host))
+            if 'trap' in required_config or 'trap_override' in required_config:
+                trap_commands = self._get_trap_commands(host)
+                self._commands += trap_commands
 
-        if 'trap' in required_config or 'trap_override':
-            trap_commands = self._get_trap_commands(host)
-            self._commands += trap_commands
-
-        if 'filter' in required_config:
-            is_change = host_config.get('filter', None) != required_config['filter'] or \
-                host_config.get('filter_str', None) != required_config['filter_str']
-            if required_config['enabled']:
+            if 'filter' in required_config:
+                is_change = host_config.get('filter', None) != required_config['filter'] or \
+                    host_config.get('filter_str', None) != required_config['filter_str']
                 if is_change or not host_config:
                     self._commands.append('logging {0} filter {1} {2}'.format(host, required_config['filter'], required_config['filter_str']))
-
-            else:
-                if 'filter' in host_config:
-                    self._commands.append('no logging {0} filter'.format(host))
-
-        if len(required_config) == 2:
-            '''just host key and enabled default ones'''
-            if required_config['enabled'] and host not in current_config:
-                self._commands.append('logging {0}'.format(host))
-            elif host in current_config and not required_config['enabled']:
-                self._commands.append('no logging {0}'.format(host))
 
     ''' ********** private methods ********** '''
     def _get_trap_commands(self, host):
@@ -298,7 +302,6 @@ class OnyxSyslogRemoteModule(BaseOnyxModule):
         required_config = self._required_config
         trap_commands = []
         host_config = current_config.get(host, dict())
-        is_disabled = not required_config['enabled']
 
         override_list = required_config.get('trap_override')
         if override_list:
@@ -307,17 +310,18 @@ class OnyxSyslogRemoteModule(BaseOnyxModule):
             for override_trap in override_list:
                 override_class = override_trap.get('override_class')
                 override_priority = override_trap.get('override_priority')
+                override_enabled = override_trap.get('override_enabled')
                 found, found_class = False, False
                 for current_override in current_override_list:
                     if current_override.get('override_class') == override_class:
                         found_class = True
-                        if is_disabled:
+                        if not override_enabled:
                             break
                         if override_priority and current_override.get('override_priority') == override_priority:
                             found = True
                             break
 
-                if not is_disabled:
+                if override_enabled:
                     if not found and override_priority:
                         trap_commands.append('logging {0} trap override class {1} priority {2}'.format(
                             host, override_class, override_priority))

@@ -44,7 +44,7 @@ class TestOnyxSysLogRemoteModule(TestOnyxModule):
 
     def test_syslog_new_host_port(self):
         set_module_args(dict(host="10.10.20.20", port=8080))
-        commands = ["logging 10.10.20.20 port 8080"]
+        commands = ['logging 10.10.20.20', 'logging 10.10.20.20 port 8080']
         self.execute_module(changed=True, commands=commands)
 
     def test_syslog_override(self):
@@ -63,26 +63,16 @@ class TestOnyxSysLogRemoteModule(TestOnyxModule):
         commands = ['logging 10.10.10.10 filter include .*ERR.*']
         self.execute_module(changed=True, commands=commands)
 
-    def test_syslog_no_filter(self):
-        set_module_args(dict(host="10.10.10.10", filter="exclude", filter_str=".*ERR.*", enabled=False))
-        commands = ['no logging 10.10.10.10 filter']
-        self.execute_module(changed=True, commands=commands)
-
     def test_syslog_no_override(self):
-        set_module_args(dict(host="10.10.10.12", enabled=False, trap_override=[dict(override_class="sx-sdk"),
-                                                                               dict(override_class="mgmt-front")]))
+        set_module_args(dict(host="10.10.10.12", trap_override=[dict(override_class="sx-sdk", override_enabled=False),
+                                                                dict(override_class="mgmt-front", override_enabled=False)]))
         commands = ['no logging 10.10.10.12 trap override class sx-sdk']  # no mgmt-front because doesn't configured
         self.execute_module(changed=True, commands=commands)
 
     def test_syslog_no_port(self):
-        set_module_args(dict(host="10.10.10.12", port="80", enabled=False))
-        commands = ['no logging 10.10.10.12 port']
+        set_module_args(dict(host="10.10.10.12", enabled=False))
+        commands = ['no logging 10.10.10.12']
         self.execute_module(changed=True, commands=commands)
-
-    ''' nochange '''
-    def test_syslog_no_port_no_change(self):
-        set_module_args(dict(host="10.10.10.10", port="80", enabled=False))
-        self.execute_module(changed=False)
 
     def test_syslog_filter_no_change(self):
         set_module_args(dict(host="10.10.10.10", filter="exclude", filter_str=".*ERR.*"))
