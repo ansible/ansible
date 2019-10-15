@@ -20,7 +20,7 @@ module: vmware_guest_tools_info
 short_description: Gather info about VMware tools installed in VM
 description:
     - Gather information about the VMware tools installed in virtual machine.
-version_added: 2.10
+version_added: '2.10'
 author:
     - Diane Wang (@Tomorrow9) <dianew@vmware.com>
 notes:
