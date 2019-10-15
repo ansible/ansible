@@ -450,16 +450,16 @@ class GalaxyAPI:
         state = 'waiting'
         data = None
 
-        display.display("Waiting until Galaxy import task %s has completed" % task_url)
-        start = time.time()
-        wait = 2
-
         # v3 returns relative task urls, v3 returns full urls
         if 'v3' in self.available_api_versions:
             parsed = urlparse(self.api_server)
             n_url = parsed._replace(path=task_url).geturl()
         else:
             n_url = task_url
+
+        display.display("Waiting until Galaxy import task %s has completed" % n_url)
+        start = time.time()
+        wait = 2
 
         while timeout == 0 or (time.time() - start) < timeout:
             data = self._call_galaxy(n_url, method='GET', auth_required=True,
@@ -478,7 +478,7 @@ class GalaxyAPI:
             wait = min(30, wait * 1.5)
         if state == 'waiting':
             raise AnsibleError("Timeout while waiting for the Galaxy import process to finish, check progress at '%s'"
-                               % to_native(task_url))
+                               % to_native(n_url))
 
         for message in data.get('messages', []):
             level = message['level']
@@ -492,7 +492,7 @@ class GalaxyAPI:
         if state == 'failed':
             code = to_native(data['error'].get('code', 'UNKNOWN'))
             description = to_native(
-                data['error'].get('description', "Unknown error, see %s for more details" % task_url))
+                data['error'].get('description', "Unknown error, see %s for more details" % n_url))
             raise AnsibleError("Galaxy import process failed: %s (Code: %s)" % (description, code))
 
     @g_connect(['v2', 'v3'])
