@@ -3077,7 +3077,7 @@ ltm_pools:
       type: str
       sample: pass-through
     current_sessions:
-      descriptions:
+      description:
         - Current sessions.
       returned: changed
       type: int
@@ -5149,7 +5149,7 @@ tcp_profiles:
       type: bool
       sample: no
     mptcp_rto_max:
-      decription:
+      description:
         - Specifies the number of RTOs (retransmission timeouts) before declaring
           the subflow dead.
       type: int

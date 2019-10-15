@@ -199,12 +199,12 @@ group:
       description: Group creation date
       returned: success
       type: str
-      example: 2018-08-12T08:37:55+00:00
+      sample: "2018-08-12T08:37:55+00:00"
     updated_on:
       description: Group update date
       returned: success
       type: int
-      example: 2018-08-12T08:37:55+00:00
+      sample: "2018-08-12T08:37:55+00:00"
 '''
 
 from ansible.module_utils.basic import AnsibleModule
