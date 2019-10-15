@@ -450,7 +450,7 @@ class GalaxyAPI:
         state = 'waiting'
         data = None
 
-        # v3 returns relative task urls, v3 returns full urls
+        # v3 returns relative task urls, v2 returns full urls
         if 'v3' in self.available_api_versions:
             parsed = urlparse(self.api_server)
             n_url = parsed._replace(path=task_url).geturl()
