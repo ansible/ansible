@@ -25,10 +25,14 @@ DOCUMENTATION = """
         type: bool
         required: False
         default: False
-      encoding:
-        description: encoding of files to be read
-        default: 'utf-8'
-        type: str
+      encodings:
+        description: encoding types of files to be read
+        default: ['utf-8', 'utf-16']
+        type: list
+      warnings:
+        description: display warnings for failed decodes
+        default: False
+        type: bool
     notes:
       - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
       - this lookup does not understand 'globing', use the fileglob lookup instead.
@@ -37,7 +41,7 @@ DOCUMENTATION = """
 EXAMPLES = """
 - debug: msg="the value of foo.txt is {{lookup('file', '/etc/foo.txt') }}"
 
-- debug: msg="the value of foo.txt is {{ lookup('file', '/tmp/test.sql', encoding='utf-16') }}"
+- debug: msg="the value of foo.txt is {{ lookup('file', '/tmp/test.sql', encodings=['utf-8', 'utf-16', 'utf-32'], warnings=True) }}"
 
 - name: display multiple file contents
   debug: var=item
@@ -60,6 +64,31 @@ from ansible.utils.display import Display
 
 display = Display()
 
+def attempt_decode(b_contents, encodings, warnings=False):
+    """
+    Attempts to decode content using passed encoding types.
+
+    Raises AnsibleError if all attempted encoding types fail.
+
+    Returns decoded contetn.
+    """
+    decode_errors = list()
+    for encoding in encodings:
+        try:
+            contents = to_text(b_contents,
+                               encoding=encoding,
+                               errors='surrogate_or_strict')
+        except UnicodeDecodeError as e:
+            if warnings:
+                display.warning(e)
+            decode_errors.append(e.encoding)
+        else:
+            return contents
+
+    raise AnsibleError(
+          'Failed to decode file using [{encoding_types}] encoding types.'\
+          .format(encoding_types=', '.join(decode_errors))
+    )
 
 class LookupModule(LookupBase):
 
@@ -76,8 +105,9 @@ class LookupModule(LookupBase):
             try:
                 if lookupfile:
                     b_contents, show_data = self._loader._get_file_contents(lookupfile)
-                    encoding = kwargs.get('encoding', 'utf-8')
-                    contents = to_text(b_contents, encoding=encoding, errors='surrogate_or_strict')
+                    encodings = kwargs.get('encodings', ['utf-8', 'utf-16'])
+                    warnings = kwargs.get('warnings', False)
+                    contents = attempt_decode(b_contents, encodings, warnings=warnings)
                     if kwargs.get('lstrip', False):
                         contents = contents.lstrip()
                     if kwargs.get('rstrip', True):
