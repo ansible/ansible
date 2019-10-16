@@ -23,14 +23,10 @@
       state: overridden
     register: result
 
-  - name: Assert that correct set of requests were generated
+  - name: Assert that correct set of results were generated
     assert:
       that:
         - "overridden['requests']|symmetric_difference(result['requests']) == []"
-
-  - name: Assert that before dicts were correctly generated
-    assert:
-      that:
         - "ansible_facts.network_resources.lldp_interfaces|symmetric_difference(result.before) == []"
 
   - exos_facts:
@@ -40,9 +36,6 @@
     assert:
       that:
         - "ansible_facts.network_resources.lldp_interfaces|symmetric_difference(result.after) == []"
-
-  - assert:
-      that:
         - "config|difference(ansible_facts.network_resources.lldp_interfaces) == []"
 
   - name: Override device LLDP interface configuration with provided configurations (IDEMPOTENT)
@@ -60,7 +53,4 @@
     assert:
       that:
         - "ansible_facts.network_resources.lldp_interfaces|symmetric_difference(result.before) == []"
-
-  - assert:
-      that:
         - "config|difference(ansible_facts.network_resources.lldp_interfaces) == []"

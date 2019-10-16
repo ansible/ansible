@@ -27,10 +27,6 @@
     assert:
       that:
         - "replaced['requests']|symmetric_difference(result['requests']) == []"
-
-  - name: Assert that before dicts were correctly generated
-    assert:
-      that:
         - "ansible_facts.network_resources.lldp_interfaces|symmetric_difference(result.before) == []"
 
   - exos_facts:
@@ -40,9 +36,6 @@
     assert:
       that:
         - "ansible_facts.network_resources.lldp_interfaces|symmetric_difference(result.after) == []"
-
-  - assert:
-      that:
         - "config|difference(ansible_facts.network_resources.lldp_interfaces) == []"
 
   - name: Replace LLDP interface configuration with provided configuration (IDEMPOTENT)
@@ -61,7 +54,4 @@
     assert:
       that:
         - "ansible_facts.network_resources.lldp_interfaces|symmetric_difference(result.before) == []"
-
-  - assert:
-      that:
         - "config|difference(ansible_facts.network_resources.lldp_interfaces) == []"
