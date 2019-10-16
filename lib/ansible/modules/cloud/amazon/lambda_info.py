@@ -44,6 +44,12 @@ options:
   event_source_arn:
     description:
       - For query type 'mappings', this is the Amazon Resource Name (ARN) of the Amazon Kinesis or DynamoDB stream.
+  max_items:
+    description:
+      - Maximum number of items to return for various get/list requests.
+  next_marker:
+    description:
+      - Specifies the NextMarker entry from the first response to get the next page of results.
 author: Pierre Jodouin (@pjodouin)
 requirements:
     - boto3
@@ -341,7 +347,9 @@ def main():
     argument_spec = dict(
         function_name=dict(required=False, default=None, aliases=['function', 'name']),
         query=dict(required=False, choices=['aliases', 'all', 'config', 'mappings', 'policy', 'versions'], default='all'),
-        event_source_arn=dict(required=False, default=None)
+        event_source_arn=dict(required=False, default=None),
+        max_items=dict(),
+        next_marker=dict(),
     )
 
     module = AnsibleAWSModule(

@@ -1,0 +1,2 @@
+minor_changes:
+- Add missing max_items and next_marker parameters in lambda_info module which was missing since inception (https://github.com/ansible/ansible/issues/63489).
