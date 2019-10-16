@@ -310,6 +310,12 @@ class VMwareHostVirtualSwitch(PyVmomi):
             all_nics += remain_pnic
             diff = True
 
+        # Remove nics not specfied by user
+        for notdesired_pnic in all_nics:
+            if notdesired_pnic not in self.nics:
+                all_nics.remove(notdesired_pnic)
+                diff = True
+
         if vswitch_pnic_info['mtu'] != self.mtu or \
                 vswitch_pnic_info['num_ports'] != self.number_of_ports:
             diff = True
