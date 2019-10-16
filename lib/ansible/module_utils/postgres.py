@@ -252,7 +252,7 @@ class PgMembership(object):
                 if "." in role:
                     role = '"%s"' % role
 
-                query = "REVOKE %s FROM %s" % (group, role, 'role')
+                query = "REVOKE %s FROM %s" % (group, role)
                 self.changed = exec_sql(self, query, ddl=True)
 
                 if self.changed:
