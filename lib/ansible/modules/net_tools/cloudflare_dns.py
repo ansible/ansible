@@ -270,7 +270,7 @@ record:
             description: The record creation date.
             returned: success
             type: str
-            sample: 2016-03-25T19:09:42.516553Z
+            sample: "2016-03-25T19:09:42.516553Z"
         data:
             description: Additional record data.
             returned: success, if type is SRV, DS, SSHFP or TLSA
@@ -303,7 +303,7 @@ record:
             description: Record modification date.
             returned: success
             type: str
-            sample: 2016-03-25T19:09:42.516553Z
+            sample: "2016-03-25T19:09:42.516553Z"
         name:
             description: The record name as FQDN (including _service and _proto for SRV).
             returned: success
