@@ -43,11 +43,6 @@ options:
       - Whether to use the VMware instance UUID rather than the BIOS UUID.
     default: no
     type: bool
-  force:
-    description:
-      - Forcefully power off the VM before creating a serial port.
-    type: bool
-    default: false
   backings:
     type: list
     description:
@@ -57,11 +52,14 @@ options:
       - ' - C(backing_type) (str): Backing type is required for the serial ports to be added or reconfigured or removed.'
       - ' - C(state) (str): is required to identify whether we are adding, modifying or removing the serial port.
             - choices:
-              - C(new): create a new serial port.
               - C(present): modify an existing serial port. C(backing_type) is required to determine the port.
-                The first matching C(backing_type) will be modified.
+                The first matching C(backing_type) and either of C(service_uri) or C(pipe_name) or C(device_name) or C(file_path) will be modified.
+                If there is only one device with a backing type, the secondary details are not needed.
+                We will match the last such device with the given backing type.
               - C(absent): remove an existing serial port. C(backing_type) is required to determine the port.
-                The first matching C(backing_type) will be removed.'
+                The first matching C(backing_type) and either of C(service_uri) or C(pipe_name) or C(device_name) or C(file_path) will be removed.'
+                If there is only one device with a backing type, the secondary details are not needed.
+                We will match the last such device with the given backing type.
       - ' - C(yield_on_poll) (bool): Enables CPU yield behavior. Default value is true.'
       - ' - C(direction) (str): Required when I(backing_type=network).
             The direction of the connection.
@@ -103,22 +101,17 @@ EXAMPLES = '''
     name: "test_vm1"
     backings:
     - type: 'network'
-      state: 'new'
       direction: 'client'
       service_uri: 'tcp://6000'
       yield_on_poll: True
     - type: 'pipe'
-      state: 'new'
       pipe_name: 'serial_pipe'
       endpoint: 'client'
     - type: 'device'
-      state: 'new'
       device_name: '/dev/char/serial/uart0'
     - type: 'file'
-      state: 'new'
       file_path: 'newfile'
       yield_on_poll:  True
-    force: True
     register: create_multiple_ports
 
 # Modify existing serial port
@@ -132,7 +125,7 @@ EXAMPLES = '''
     - type: 'network'
       state: 'present'
       direction: 'server'
-      service_uri: 'tcp://1000'
+      service_uri: 'tcp://6000'
   delegate_to: localhost
 
 # Remove serial port
@@ -199,12 +192,10 @@ class PyVmomiHelper(PyVmomi):
         facts = gather_vm_facts(self.content, vm_obj)
         current_state = facts['hw_power_status'].lower()
         if current_state == "poweredoff":
-            return [True, current_state]
-        elif self.params.get('force'):
-            set_vm_power_state(self.content, vm_obj, 'poweredoff', True)
-            return [True, current_state]
+            return True
         else:
-            return [False, current_state]
+            self.module.fail_json(msg="A serial device cannot be added to a VM in the current state( " + current_state + ")."
+                                  + "Please use the vmware_guest_powerstate module to power off the VM")
 
     def get_serial_port_config_spec(self, vm_obj):
         """
@@ -214,21 +205,23 @@ class PyVmomiHelper(PyVmomi):
         """
         # create serial config spec for adding, editing, removing
         for backing in self.params.get('backings'):
-            if backing['state'].lower() == 'new':
+            backing_keys = backing.keys()
+            serial_port = get_serial_port(vm_obj, backing)
+            if serial_port is None and 'state' not in backing_keys:
+                # if serial port is None and state is not mentioned
                 # create a new serial port
-                serial_port_spec = create_serial_port(backing)
+                serial_port_spec = self.create_serial_port(backing)
                 serial_port_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
                 self.change_applied = True
                 self.config_spec.deviceChange.append(serial_port_spec)
             else:
-                serial_port = get_serial_port(vm_obj, backing)
-                if serial_port is not None:
+                if serial_port is not None and 'state' in backing_keys:
                     serial_spec = vim.vm.device.VirtualDeviceSpec()
                     serial_spec.device = serial_port
                     if backing['state'].lower() == 'present':
                         # modify existing serial port
                         serial_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
-                        serial_spec.device.backing = get_backing_info(serial_port, backing, backing['type'])
+                        serial_spec.device.backing = self.get_backing_info(serial_port, backing, backing['type'])
                         self.change_applied = True
                         self.config_spec.deviceChange.append(serial_spec)
                     elif backing['state'].lower() == 'absent':
@@ -259,6 +252,88 @@ class PyVmomiHelper(PyVmomi):
 
         return results
 
+    def set_network_backing(self, serial_port, backing_info):
+        """
+        Set the networking backing params
+        """
+        required_params = ['service_uri', 'direction']
+        if set(required_params).issubset(backing_info.keys()):
+            backing = serial_port.URIBackingInfo()
+            backing.serviceURI = backing_info['service_uri']
+            backing.direction = backing_info['direction']
+        else:
+            self.module.fail_json(msg="Failed to create a new serial port of network backing type due to insufficient parameters."
+                                  + "The required parameters are service_uri and direction")
+        return backing
+
+    def set_pipe_backing(self, serial_port, backing_info):
+        """
+        Set the pipe backing params
+        """
+        required_params = ['pipe_name', 'endpoint']
+        if set(required_params).issubset(backing_info.keys()):
+            backing = serial_port.PipeBackingInfo()
+            backing.pipeName = backing_info['pipe_name']
+            backing.endpoint = backing_info['endpoint']
+        else:
+            self.module.fail_json(msg="Failed to create a new serial port of pipe backing type due to insufficient parameters."
+                                  + "The required parameters are pipe_name and endpoint")
+
+        # since no_rx_loss is an optional argument, so check if the key is present
+        if 'no_rx_loss' in backing_info.keys() and backing_info['no_rx_loss']:
+            backing.noRxLoss = backing_info['no_rx_loss']
+        return backing
+
+    def set_device_backing(self, serial_port, backing_info):
+        """
+        Set the device backing params
+        """
+        required_params = ['device_name']
+        if set(required_params).issubset(backing_info.keys()):
+            backing = serial_port.DeviceBackingInfo()
+            backing.deviceName = backing_info['device_name']
+        else:
+            self.module.fail_json(msg="Failed to create a new serial port of device backing type due to insufficient parameters."
+                                  + "The required parameters are device_name")
+        return backing
+
+    def set_file_backing(self, serial_port, backing_info):
+        """
+        Set the file backing params
+        """
+        required_params = ['file_path']
+        if set(required_params).issubset(backing_info.keys()):
+            backing = serial_port.FileBackingInfo()
+            backing.fileName = backing_info['file_path']
+        else:
+            self.module.fail_json(msg="Failed to create a new serial port of file backing type due to insufficient parameters."
+                                  + "The required parameters are file_path")
+        return backing
+
+    def get_backing_info(self, serial_port, backing, backing_type):
+        """
+        Returns the call to the appropriate backing function based on the backing type
+        """
+        switcher = {
+            "network": self.set_network_backing,
+            "pipe": self.set_pipe_backing,
+            "device": self.set_device_backing,
+            "file": self.set_file_backing
+        }
+        backing_func = switcher.get(backing_type, "Invalid Backing Info")
+        return backing_func(serial_port, backing)
+
+    def create_serial_port(self, backing):
+        """
+        Create a new serial port
+        """
+        serial_spec = vim.vm.device.VirtualDeviceSpec()
+        serial_port = vim.vm.device.VirtualSerialPort()
+        serial_port.yieldOnPoll = backing['yield_on_poll'] if 'yield_on_poll' in backing.keys() else True
+        serial_port.backing = self.get_backing_info(serial_port, backing, backing['type'])
+        serial_spec.device = serial_port
+        return serial_spec
+
 
 def get_serial_port(vm_obj, backing):
     """
@@ -271,12 +346,30 @@ def get_serial_port(vm_obj, backing):
         'device': vim.vm.device.VirtualSerialPort.DeviceBackingInfo,
         'file': vim.vm.device.VirtualSerialPort.FileBackingInfo
     }
+    valid_params = backing.keys()
     for device in vm_obj.config.hardware.device:
         if isinstance(device, vim.vm.device.VirtualSerialPort):
             if isinstance(device.backing, backing_type_mapping[backing['type']]):
+                if 'service_uri' in valid_params and device.backing.serviceURI == backing['service_uri']:
+                    # network backing type
+                    serial_port = device
+                    break
+                elif 'pipe_name' in valid_params and device.backing.pipeName == backing['pipe_name']:
+                    # named pipe backing type
+                    serial_port = device
+                    break
+                elif 'device_name' in valid_params and device.backing.deviceName == backing['device_name']:
+                    # physical serial device backing type
+                    serial_port = device
+                    break
+                elif 'file_path' in valid_params and device.backing.fileName == backing['file_path']:
+                    # file backing type
+                    serial_port = device
+                    break
+                # if there is a backing of only one type, user need not provide secondary details like service_uri, pipe_name, device_name or file_path
+                # we will match the serial port with backing type only
+                # in this case, the last matching serial port will be returned
                 serial_port = device
-                break
-
     return serial_port
 
 
@@ -311,79 +404,6 @@ def get_serial_port_info(vm_obj):
     return serial_port_info
 
 
-def create_serial_port(backing):
-    """
-    Create a new serial port
-    """
-    serial_spec = vim.vm.device.VirtualDeviceSpec()
-    serial_port = vim.vm.device.VirtualSerialPort()
-    serial_port.yieldOnPoll = backing['yield_on_poll'] if 'yield_on_poll' in backing.keys() else True
-    serial_port.backing = get_backing_info(serial_port, backing, backing['type'])
-    serial_spec.device = serial_port
-    return serial_spec
-
-
-def get_backing_info(serial_port, backing, backing_type):
-    """
-    Returns the call to the appropriate backing function based on the backing type
-    """
-    switcher = {
-        "network": set_network_backing,
-        "pipe": set_pipe_backing,
-        "device": set_device_backing,
-        "file": set_file_backing
-    }
-    backing_func = switcher.get(backing_type, "Invalid Backing Info")
-    return backing_func(serial_port, backing)
-
-
-def set_network_backing(serial_port, backing_info):
-    """
-    Set the networking backing params
-    """
-    backing = serial_port.URIBackingInfo()
-    if backing_info['service_uri']:
-        backing.serviceURI = backing_info['service_uri']
-    if backing_info['direction']:
-        backing.direction = backing_info['direction']
-    return backing
-
-
-def set_pipe_backing(serial_port, backing_info):
-    """
-    Set the pipe backing params
-    """
-    backing = serial_port.PipeBackingInfo()
-    if backing_info['pipe_name']:
-        backing.pipeName = backing_info['pipe_name']
-    if backing_info['endpoint']:
-        backing.endpoint = backing_info['endpoint']
-    # since no_rx_loss is an optional argument, so check if the key is present
-    if 'no_rx_loss' in backing_info.keys() and backing_info['no_rx_loss']:
-        backing.noRxLoss = backing_info['no_rx_loss']
-    return backing
-
-
-def set_device_backing(serial_port, backing_info):
-    """
-    Set the device backing params
-    """
-    backing = serial_port.DeviceBackingInfo()
-    if backing_info['device_name']:
-        backing.deviceName = backing_info['device_name']
-    return backing
-
-
-def set_file_backing(serial_port, backing_info):
-    """
-    Set the file backing params
-    """
-    backing = serial_port.FileBackingInfo()
-    if backing_info['file_path']:
-        backing.fileName = backing_info['file_path']
-    return backing
-
-
 def main():
     """
     Main method
@@ -394,7 +414,6 @@ def main():
         uuid=dict(type='str'),
         moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
-        force=dict(type='bool', default=False),
         backings=dict(type='list', default=[])
     )
 
@@ -414,13 +433,9 @@ def main():
     vm_obj = pyv.get_vm()
 
     if vm_obj:
-        proceed, current_state = pyv.check_vm_state(vm_obj)
+        proceed = pyv.check_vm_state(vm_obj)
         if proceed:
             result = pyv.reconfigure_vm_serial_port(vm_obj)
-        else:
-            module.fail_json(msg="The attempted operation cannot be performed in the current state ("
-                             + current_state
-                             + "), use the force option to forcefully power off the VM")
 
     else:
         # We are unable to find the virtual machine user specified
