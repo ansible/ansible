@@ -258,7 +258,7 @@ class L2_interfaces(ConfigBase):
                 l2_request["data"]["openconfig-vlan:config"]["access-vlan"] = want["access"]["vlan"]
                 l2_request["path"] = self.L2_PATH + str(want["name"]) + "/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config"
             else:
-                self._module.fail_json(msg="VLAN %s is not a valid VLAN" % (want["access"]["vlan"]))
+                self._module.fail_json(msg="VLAN %s does not exists" % (want["access"]["vlan"]))
 
         elif want.get("trunk"):
             if want["trunk"]["native_vlan"]:
@@ -270,9 +270,9 @@ class L2_interfaces(ConfigBase):
                         if int(vlan) in vlan_id:
                             l2_request["data"]["openconfig-vlan:config"]["trunk-vlans"].append(int(vlan))
                         else:
-                            self._module.fail_json(msg="VLAN %s is not a valid VLAN" % (vlan))
+                            self._module.fail_json(msg="VLAN %s does not exists" % (vlan))
                 else:
-                    self._module.fail_json(msg="VLAN %s is not a valid VLAN" % (want["trunk"]["native_vlan"]))
+                    self._module.fail_json(msg="VLAN %s does not exists" % (want["trunk"]["native_vlan"]))
             else:
                 l2_request = deepcopy(self.L2_INTERFACE_TRUNK)
                 l2_request["path"] = self.L2_PATH + str(want["name"]) + "/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config"
@@ -280,7 +280,7 @@ class L2_interfaces(ConfigBase):
                     if int(vlan) in vlan_id:
                         l2_request["data"]["openconfig-vlan:config"]["trunk-vlans"].append(int(vlan))
                     else:
-                        self._module.fail_json(msg="VLAN %s is not a valid VLAN" % (vlan))
+                        self._module.fail_json(msg="VLAN %s does not exists" % (vlan))
         return l2_request
 
     def _update_delete_request(self, have):

@@ -92,4 +92,4 @@
       that:
         - "result.changed == false"
         - "result.failed == true"
-        - "result.msg == 'VLAN 50 is not a valid VLAN'"
+        - "result.msg == 'VLAN 50 does not exists'"
