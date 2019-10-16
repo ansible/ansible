@@ -94,12 +94,8 @@ def connect_to_db(module, conn_params, autocommit=False, fail_on_conn=True):
         if module.params.get('session_role'):
             cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-            # If the session_role name contains dots:
-            if "." in module.params['session_role']:
-                module.params['session_role'] = '"%s"' % module.params['session_role']
-
             try:
-                cursor.execute('SET ROLE %s' % module.params['session_role'])
+                cursor.execute('SET ROLE "%s"' % module.params['session_role'])
             except Exception as e:
                 module.fail_json(msg="Could not switch role: %s" % to_native(e))
             finally:
