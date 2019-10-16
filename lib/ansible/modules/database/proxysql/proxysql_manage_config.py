@@ -164,7 +164,7 @@ def main():
                                                          'MYSQL SERVERS',
                                                          'MYSQL QUERY RULES',
                                                          'MYSQL VARIABLES',
-                                                         'PROXYSQL SERVERS'
+                                                         'PROXYSQL SERVERS',
                                                          'ADMIN VARIABLES',
                                                          'SCHEDULER']),
             direction=dict(required=True, choices=['FROM',
