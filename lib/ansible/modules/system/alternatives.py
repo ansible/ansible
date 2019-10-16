@@ -53,7 +53,7 @@ options:
       - A list of slaves
       - Each slave needs a name, a link and a path parameter
     type: list
-    version_added: "2.8"
+    version_added: "2.10"
 requirements: [ update-alternatives ]
 '''
 
