@@ -693,11 +693,13 @@
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
   register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Checks
 - assert:
     that:
       - result is changed
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - name: Get type privileges
   become: yes
@@ -707,10 +709,12 @@
     login_db: "{{ db_name }}"
     query: SELECT typacl FROM pg_catalog.pg_type WHERE typname = 'numeric';
   register: typ_result
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - assert:
     that:
       - "'{{ db_user2 }}' in typ_result.query_result[0].typacl"
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - name: Grant type privileges again using check_mode
   postgresql_privs:
@@ -723,11 +727,13 @@
     login_user: "{{ pg_user }}"
   register: result
   check_mode: yes
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Checks
 - assert:
     that:
       - result is not changed
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - name: Get type privileges
   become: yes
@@ -737,10 +743,12 @@
     login_db: "{{ db_name }}"
     query: SELECT typacl FROM pg_catalog.pg_type WHERE typname = 'numeric';
   register: typ_result
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - assert:
     that:
       - "'{{ db_user2 }}' in typ_result.query_result[0].typacl"
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - name: Grant type privileges again
   postgresql_privs:
@@ -752,11 +760,13 @@
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
   register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Checks
 - assert:
     that:
       - result is not changed
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - name: Get type privileges
   become: yes
@@ -766,10 +776,12 @@
     login_db: "{{ db_name }}"
     query: SELECT typacl FROM pg_catalog.pg_type WHERE typname = 'numeric';
   register: typ_result
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - assert:
     that:
       - "'{{ db_user2 }}' in typ_result.query_result[0].typacl"
+  when: postgres_version_resp.stdout is version('10', '>=')
   
 - name: Revoke type privileges in check_mode
   postgresql_privs:
@@ -782,11 +794,13 @@
     login_user: "{{ pg_user }}"
   register: result
   check_mode: yes
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Checks
 - assert:
     that:
       - result is changed
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - name: Get type privileges
   become: yes
@@ -796,10 +810,12 @@
     login_db: "{{ db_name }}"
     query: SELECT typacl FROM pg_catalog.pg_type WHERE typname = 'numeric';
   register: typ_result
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - assert:
     that:
       - "'{{ db_user2 }}' in typ_result.query_result[0].typacl"
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - name: Revoke type privileges
   postgresql_privs:
@@ -811,11 +827,13 @@
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
   register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Checks
 - assert:
     that:
       - result is changed
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - name: Get type privileges
   become: yes
@@ -825,10 +843,12 @@
     login_db: "{{ db_name }}"
     query: SELECT typacl FROM pg_catalog.pg_type WHERE typname = 'numeric';
   register: typ_result
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - assert:
     that:
       - "'{{ db_user2 }}' not in typ_result.query_result[0].typacl"
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Cleanup
 - name: Remove user given permissions
