@@ -29,10 +29,6 @@ DOCUMENTATION = """
         description: encoding types of files to be read
         default: ['utf-8', 'utf-16']
         type: list
-      warnings:
-        description: display warnings for failed decodes
-        default: False
-        type: bool
     notes:
       - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
       - this lookup does not understand 'globing', use the fileglob lookup instead.
@@ -41,7 +37,7 @@ DOCUMENTATION = """
 EXAMPLES = """
 - debug: msg="the value of foo.txt is {{lookup('file', '/etc/foo.txt') }}"
 
-- debug: msg="the value of foo.txt is {{ lookup('file', '/tmp/test.sql', encodings=['utf-8', 'utf-16', 'utf-32'], warnings=True) }}"
+- debug: msg="the value of foo.txt is {{ lookup('file', '/tmp/test.sql', encodings=['utf-8', 'utf-16', 'utf-32'] }}"
 
 - name: display multiple file contents
   debug: var=item
@@ -64,7 +60,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
-def attempt_decode(b_contents, encodings, warnings=False):
+def attempt_decode(b_contents, encodings):
     """
     Attempts to decode content using passed encoding types.
 
@@ -79,8 +75,6 @@ def attempt_decode(b_contents, encodings, warnings=False):
                                encoding=encoding,
                                errors='surrogate_or_strict')
         except UnicodeDecodeError as e:
-            if warnings:
-                display.warning(e)
             decode_errors.append(e.encoding)
         else:
             return contents
@@ -106,8 +100,7 @@ class LookupModule(LookupBase):
                 if lookupfile:
                     b_contents, show_data = self._loader._get_file_contents(lookupfile)
                     encodings = kwargs.get('encodings', ['utf-8', 'utf-16'])
-                    warnings = kwargs.get('warnings', False)
-                    contents = attempt_decode(b_contents, encodings, warnings=warnings)
+                    contents = attempt_decode(b_contents, encodings)
                     if kwargs.get('lstrip', False):
                         contents = contents.lstrip()
                     if kwargs.get('rstrip', True):
