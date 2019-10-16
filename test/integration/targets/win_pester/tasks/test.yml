@@ -121,7 +121,7 @@
 - name: Run Pester test(s) specifying a test file by generating test result xml
   win_pester:
     path: '{{test_win_pester_path}}\test03.test.ps1'
-    aoutput_file: '{{test_report_file}}'
+    output_file: '{{test_report_file}}'
 
 - name: Checks if the output result file exists
   win_stat:
