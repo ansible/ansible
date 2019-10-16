@@ -80,9 +80,10 @@ def attempt_decode(b_contents, encodings):
             return contents
 
     raise AnsibleError(
-          'Failed to decode file using [{encoding_types}] encoding types.'\
+          'Failed to decode file using [{encoding_types}] encoding types.'
           .format(encoding_types=', '.join(decode_errors))
     )
+
 
 class LookupModule(LookupBase):
 
