@@ -486,7 +486,9 @@ class ModuleValidator(Validator):
                     pass
                 names.extend([n.name for n in child.names])
 
-                if [n for n in names if n.startswith('ansible.module_utils') or (self.collection and 'plugins.module_utils' in n)]:
+                if [n for n in names if n.startswith(('ansible.module_utils', '..module_utils')) or
+                        (self.collection and n.split('.')[3:5] == ['plugins', 'module_utils'])]:
+
                     linenos.append(child.lineno)
 
                     for name in child.names:
