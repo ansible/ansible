@@ -147,6 +147,10 @@ options:
     type: str
     version_added: '2.10'
 
+notes:
+- If an empty value for the parameter of string type is needed,
+  use string with a single space.
+
 extends_documentation_fragment:
 - mysql
 
@@ -333,6 +337,11 @@ def start_slave(cursor, connection_name='', channel=''):
 
 
 def changemaster(cursor, chm, connection_name='', channel=''):
+    # Params ransformation for issue #23976:
+    for num, param in enumerate(chm):
+        if "=' '" in param:
+            chm[num] = chm[num].replace("=' '","=''")
+
     if connection_name:
         query = "CHANGE MASTER '%s' TO %s" % (connection_name, ','.join(chm))
     else:
