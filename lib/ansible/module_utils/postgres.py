@@ -227,6 +227,10 @@ class PgMembership(object):
                 if self.__check_membership(group, role):
                     continue
 
+                # If role name has dots:
+                if "." in role:
+                    role = '"%s"' % role
+
                 query = "GRANT %s TO %s" % (group, role)
                 self.changed = exec_sql(self, query, ddl=True)
 
@@ -243,6 +247,10 @@ class PgMembership(object):
                 # If role is not in a group now, pass:
                 if not self.__check_membership(group, role):
                     continue
+
+                # If role name has dots:
+                if "." in role:
+                    role = '"%s"' % role
 
                 query = "REVOKE %s FROM %s" % (group, role, 'role')
                 self.changed = exec_sql(self, query, ddl=True)

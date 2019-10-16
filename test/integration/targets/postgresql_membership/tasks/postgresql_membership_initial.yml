@@ -41,7 +41,7 @@
     that:
     - result is changed
     - result.groups == ["group1"]
-    - result.queries == ["GRANT \"group1\" TO \"user1\""]
+    - result.queries == ["GRANT group1 TO user1"]
     - result.granted.group1 == ["user1"]
     - result.state == "present"
     - result.target_roles == ["user1"]
@@ -88,7 +88,7 @@
     that:
     - result is changed
     - result.groups == ["group1"]
-    - result.queries == ["GRANT \"group1\" TO \"user1\""]
+    - result.queries == ["GRANT group1 TO user1"]
     - result.granted.group1 == ["user1"]
     - result.state == "present"
     - result.target_roles == ["user1"]
@@ -132,7 +132,7 @@
     that:
     - result is changed
     - result.groups == ["group1"]
-    - result.queries == ["REVOKE \"group1\" FROM \"user1\""]
+    - result.queries == ["REVOKE group1 FROM user1"]
     - result.revoked.group1 == ["user1"]
     - result.state == "absent"
     - result.target_roles == ["user1"]
@@ -180,7 +180,7 @@
     that:
     - result is changed
     - result.groups == ["group1", "group2"]
-    - result.queries == ["GRANT \"group1\" TO \"user1\"", "GRANT \"group1\" TO \"user2\"", "GRANT \"group2\" TO \"user1\"", "GRANT \"group2\" TO \"user2\""]
+    - result.queries == ["GRANT group1 TO user1", "GRANT group1 TO user2", "GRANT group2 TO user1", "GRANT group2 TO user2"]
     - result.granted.group1 == ["user1", "user2"]
     - result.granted.group2 == ["user1", "user2"]
     - result.state == "present"
@@ -230,7 +230,7 @@
     that:
     - result is changed
     - result.groups == ["group1"]
-    - result.queries == ["REVOKE \"group1\" FROM \"user1\""]
+    - result.queries == ["REVOKE group1 FROM user1"]
     - result.revoked.group1 == ["user1"]
     - result.state == "absent"
     - result.target_roles == ["user1"]
@@ -256,7 +256,7 @@
     that:
     - result is changed
     - result.groups == ["group1", "group2"]
-    - result.queries == ["GRANT \"group1\" TO \"user1\""]
+    - result.queries == ["GRANT group1 TO user1"]
     - result.granted.group1 == ["user1"]
     - result.granted.group2 == []
     - result.state == "present"

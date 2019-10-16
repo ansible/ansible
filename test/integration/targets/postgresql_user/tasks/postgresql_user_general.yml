@@ -642,7 +642,7 @@
       that:
       - result is changed
       - result.user == '{{ test_user }}'
-      - result.queries == ['GRANT {{ test_group1 }} TO {{ test_user }}', 'GRANT {{ test_group2 }} TO {{ test_user }}']
+      - result.queries == ['GRANT {{ test_group1 }} TO "{{ test_user }}"', 'GRANT {{ test_group2 }} TO "{{ test_user }}"']
 
   - name: check membership
     <<: *task_parameters
