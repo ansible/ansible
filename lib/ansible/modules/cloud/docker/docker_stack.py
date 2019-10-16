@@ -262,7 +262,7 @@ def main():
         if rc != 0:
             module.fail_json(msg="docker stack up deploy command failed",
                              rc=rc,
-                             out=out, err=err
+                             out=out, err=err # Deprecated
                              stdout=out, stderr=err)
 
         before_after_differences = json_diff(before_stack_services,
