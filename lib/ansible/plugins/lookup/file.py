@@ -2,6 +2,7 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -60,6 +61,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
+
 def attempt_decode(b_contents, encodings):
     """
     Attempts to decode content using passed encoding types.
@@ -68,20 +70,19 @@ def attempt_decode(b_contents, encodings):
 
     Returns decoded contetn.
     """
+
     decode_errors = list()
     for encoding in encodings:
         try:
-            contents = to_text(b_contents,
-                               encoding=encoding,
-                               errors='surrogate_or_strict')
+            contents = to_text(b_contents, encoding=encoding, errors='surrogate_or_strict')
         except UnicodeDecodeError as e:
             decode_errors.append(e.encoding)
         else:
             return contents
 
     raise AnsibleError(
-          'Failed to decode file using [{encoding_types}] encoding types.'
-          .format(encoding_types=', '.join(decode_errors))
+        'Failed to decode file using [{encoding_types}] encoding types.'
+            .format(encoding_types=', '.join(decode_errors))
     )
 
 
