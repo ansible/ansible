@@ -157,7 +157,6 @@ notes:
   Use NOLOGIN role_attr_flags to change this behaviour.
 - If you specify PUBLIC as the user (role), then the privilege changes will apply to all users (roles).
   You may not specify password or role_attr_flags when the PUBLIC user is specified.
-- The ca_cert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
 - SCRAM-hashed passwords require PostgreSQL version 10 or newer. Module does
   not perform any version check, so on previous versions the whole hashed
   string will be used as password.
@@ -168,9 +167,6 @@ seealso:
 - name: PostgreSQL database roles
   description: Complete reference of the PostgreSQL database roles documentation.
   link: https://www.postgresql.org/docs/current/user-manag.html
-
-requirements:
-- psycopg2
 
 author:
 - Ansible Core Team
@@ -204,7 +200,6 @@ EXAMPLES = r'''
   environment:
     PGOPTIONS: "-c password_encryption=scram-sha-256"
 
-# Remove test user privileges from acme
 - name: Connect to acme database and remove test user privileges from there
   postgresql_user:
     db: acme
