@@ -286,24 +286,29 @@ options:
 '''
 
 EXAMPLES = '''
-- name: Make instance with an instance_role
+- name: Create an ec2 launch template
   ec2_launch_template:
-    name: "test-with-instance-role"
-    image_id: "ami-foobarbaz"
+    name: "my_template"
+    image_id: "ami-04b762b4289fba92b"
     key_name: my_ssh_key
     instance_type: t2.micro
     iam_instance_profile: myTestProfile
     disable_api_termination: true
 
-- name: Make one with a different instance type, but leave the older version as default
+- name: >
+    Create a new version of an existing ec2 launch template with a different instance type,
+    while leaving an older version as the default version
   ec2_launch_template:
-    name: "test-with-instance-role"
-    image_id: "ami-foobarbaz"
+    name: "my_template"
     default_version: 1
-    key_name: my_ssh_key
     instance_type: c5.4xlarge
-    iam_instance_profile: myTestProfile
-    disable_api_termination: true
+
+- name: Delete an ec2 launch template
+  ec2_launch_template:
+    name: "my_template"
+    state: absent
+
+# This module does not yet allow deletion of specific versions of launch templates
 '''
 
 RETURN = '''

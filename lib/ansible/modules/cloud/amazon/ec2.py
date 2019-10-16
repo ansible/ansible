@@ -118,7 +118,7 @@ options:
   spot_wait_timeout:
     version_added: "1.5"
     description:
-      - How long to wait for the spot instance request to be fulfilled.
+      - How long to wait for the spot instance request to be fulfilled. Affects 'Request valid until' for setting spot request lifespan.
     default: 600
     type: int
   count:
@@ -370,6 +370,7 @@ EXAMPLES = '''
     vpc_subnet_id: subnet-29e63245
     assign_public_ip: yes
     spot_launch_group: report_generators
+    instance_initiated_shutdown_behavior: terminate
 
 # Examples using pre-existing network interfaces
 - ec2:
