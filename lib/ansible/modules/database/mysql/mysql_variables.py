@@ -19,7 +19,7 @@ module: mysql_variables
 short_description: Manage MySQL global variables
 description:
 - Query / Set MySQL variables.
-version_added: 1.3
+version_added: '1.3'
 author:
 - Balazs Pocze (@banyek)
 options:
@@ -32,6 +32,16 @@ options:
     description:
     - If set, then sets variable value to this
     type: str
+  mode:
+    description:
+    - C(persist) persists a global system variable to
+      the mysqld-auto.cnf option file in the data directory (the variable will survive service restarts).
+    - C(persist_only) behaves like C(persist) but without setting the global variable runtime value.
+    - Supported from MySQL 8.0.
+    - For more information see U(https://dev.mysql.com/doc/refman/8.0/en/set-variable.html).
+    type: str
+    choices: ['persist', 'persist_only']
+    version_added: '2.10'
 
 seealso:
 - module: mysql_info
@@ -48,10 +58,11 @@ EXAMPLES = r'''
   mysql_variables:
     variable: sync_binlog
 
-- name: Set read_only variable to 1
+- name: Set read_only variable to 1 persistently
   mysql_variables:
     variable: read_only
     value: 1
+    mode: persist
 '''
 
 RETURN = r'''
@@ -110,7 +121,7 @@ def getvariable(cursor, mysqlvar):
         return None
 
 
-def setvariable(cursor, mysqlvar, value):
+def setvariable(cursor, mysqlvar, value, mode=''):
     """ Set a global mysql variable to a given value
 
     The DB driver will handle quoting of the given value based on its
@@ -118,7 +129,12 @@ def setvariable(cursor, mysqlvar, value):
     should be passed as numeric literals.
 
     """
-    query = "SET GLOBAL %s = " % mysql_quote_identifier(mysqlvar, 'vars')
+    if mode == 'persist':
+        query = "SET PERSIST %s = " % mysql_quote_identifier(mysqlvar, 'vars')
+    elif mode == 'persist_only':
+        query = "SET PERSIST_ONLY %s = " % mysql_quote_identifier(mysqlvar, 'vars')
+    else:
+        query = "SET GLOBAL %s = " % mysql_quote_identifier(mysqlvar, 'vars')
     try:
         cursor.execute(query + "%s", (value,))
         executed_queries.append(query + "%s" % value)
@@ -144,6 +160,7 @@ def main():
             ca_cert=dict(type='path', aliases=['ssl_ca']),
             connect_timeout=dict(type='int', default=30),
             config_file=dict(type='path', default='~/.my.cnf'),
+            mode=dict(type='str', choices=['persist', 'persist_only']),
         ),
     )
     user = module.params["login_user"]
@@ -157,6 +174,8 @@ def main():
 
     mysqlvar = module.params["variable"]
     value = module.params["value"]
+    mode = module.params["mode"]
+
     if mysqlvar is None:
         module.fail_json(msg="Cannot run without variable to operate with")
     if match('^[0-9a-z_]+$', mysqlvar) is None:
@@ -189,7 +208,7 @@ def main():
         if value_wanted == value_actual:
             module.exit_json(msg="Variable already set to requested value", changed=False)
         try:
-            result = setvariable(cursor, mysqlvar, value_wanted)
+            result = setvariable(cursor, mysqlvar, value_wanted, mode)
         except SQLParseError as e:
             result = to_native(e)
 

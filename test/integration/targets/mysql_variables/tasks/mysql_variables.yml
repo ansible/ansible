@@ -308,3 +308,53 @@
     login_unix_socket: '{{ mysql_socket }}'
     login_user: root
     login_password: '{{ root_pass }}'
+
+#=========================================
+# Check mode 'persist' and 'persist_only':
+#
+- name: set mysql variable to a temp value
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: '200'
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: root
+    login_password: '{{ root_pass }}'
+
+- name: update mysql variable value (expect changed=true) in persist mode
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: '{{set_value}}'
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: root
+    login_password: '{{ root_pass }}'
+    mode: persist
+  register: result
+
+- assert:
+    that:
+    - result.queries == ["SET PERSIST `{{ set_name }}` = {{ set_value }}"]
+
+- include: assert_var.yml changed=true output={{result}} var_name={{set_name}} var_value='{{set_value}}'
+
+- name: set mysql variable to a temp value
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: '200'
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: root
+    login_password: '{{ root_pass }}'
+
+- name: update mysql variable value (expect changed=true) in persist_only mode
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: '{{set_value}}'
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: root
+    login_password: '{{ root_pass }}'
+    mode: persist_only
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["SET PERSIST_ONLY `{{ set_name }}` = {{ set_value }}"]
