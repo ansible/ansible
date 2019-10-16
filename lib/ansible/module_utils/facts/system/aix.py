@@ -70,7 +70,7 @@ class AIXSystemFactCollector(BaseFactCollector):
                     firstline = False
                 else:
                     values = [line[0:18].strip(), line[18:34].strip(),
-                             line[34:48].strip(), line[48:60].strip()]
+                              line[34:48].strip(), line[48:60].strip()]
                     adict = dict(itertools.izip(keys, values))
                     lssrc.append(adict)
         lssrc_facts['lssrc'] = lssrc
@@ -183,7 +183,7 @@ class AIXSystemFactCollector(BaseFactCollector):
         rc, out, err = self.module.run_command(["/usr/bin/lparstat", "-i"])
         if rc != 0:
             self.module.fail_json(msg="ERROR: could not run lparstat command", rc=rc,
-                         err=err)
+                                  err=err)
         for line in out.splitlines():
             key, value = line.split(":")
             key = key.strip().replace(' ', '_')
@@ -218,18 +218,18 @@ class AIXSystemFactCollector(BaseFactCollector):
                    ],
         """
         options = {
-        "systemid": "-F",
-        "lannumber": "-l",
-        "lpar": "-L",
-        "id": "-m",
-        "model": "-M",
-        "name": "-n",
-        "architecture": "-p",
-        "release": "-r",
-        "os": "-s",
-        "serial": "-u",
-        "version": "-v",
-    }
+                   "systemid": "-F",
+                   "lannumber": "-l",
+                   "lpar": "-L",
+                   "id": "-m",
+                   "model": "-M",
+                   "name": "-n",
+                   "architecture": "-p",
+                   "release": "-r",
+                   "os": "-s",
+                   "serial": "-u",
+                   "version": "-v",
+                  }
         uname_facts = {}
 
         uname_facts['uname'] = []
