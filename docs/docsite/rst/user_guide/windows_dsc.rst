@@ -12,7 +12,7 @@ is the same as Ansible, it is just executed in a different manner. Since
 Ansible 2.4, the ``win_dsc`` module has been added and can be used to leverage
 existing DSC resources when interacting with a Windows host.
 
-More details on DSC can be viewed at `DSC Overview <https://docs.microsoft.com/en-us/powershell/dsc/overview>`_.
+More details on DSC can be viewed at `DSC Overview <https://docs.microsoft.com/en-us/powershell/scripting/dsc/overview/overview>`_.
 
 Host Requirements
 `````````````````
@@ -27,7 +27,7 @@ Why Use DSC?
 ````````````
 DSC and Ansible modules have a common goal which is to define and ensure the state of a
 resource. Because of
-this, resources like the DSC `File resource <https://docs.microsoft.com/en-us/powershell/dsc/fileresource>`_
+this, resources like the DSC `File resource <https://docs.microsoft.com/en-us/powershell/scripting/dsc/reference/resources/windows/fileresource>`_
 and Ansible ``win_file`` can be used to achieve the same result. Deciding which to use depends
 on the scenario.
 
@@ -59,9 +59,9 @@ How to Use DSC?
 ```````````````
 The ``win_dsc`` module takes in a free-form of options so that it changes
 according to the resource it is managing. A list of built in resources can be
-found at `resources <https://docs.microsoft.com/en-us/powershell/dsc/resources>`_.
+found at `resources <https://docs.microsoft.com/en-us/powershell/scripting/dsc/resources/resources>`_.
 
-Using the `Registry <https://docs.microsoft.com/en-us/powershell/dsc/registryresource>`_
+Using the `Registry <https://docs.microsoft.com/en-us/powershell/scripting/dsc/reference/resources/windows/registryresource>`_
 resource as an example, this is the DSC definition as documented by Microsoft:
 
 .. code-block:: powershell
