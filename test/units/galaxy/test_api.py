@@ -334,10 +334,10 @@ def test_publish_failure(api_version, collection_url, response, expected, collec
 
 @pytest.mark.parametrize('api_version, token_type, token_ins, import_uri, full_import_uri', [
     ('v2', 'Token', GalaxyToken('my token'),
-     'https://galaxy.server.com/api/v2/collection-imports/1234',
+     '1234',
      'https://galaxy.server.com/api/v2/collection-imports/1234'),
     ('v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
-     '/api/automation-hub/v3/imports/collections/1234/',
+     '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
 ])
 def test_wait_import_task(api_version, token_type, token_ins, import_uri, full_import_uri, monkeypatch):
@@ -367,10 +367,10 @@ def test_wait_import_task(api_version, token_type, token_ins, import_uri, full_i
 
 @pytest.mark.parametrize('api_version, token_type, token_ins, import_uri, full_import_uri', [
     ('v2', 'Token', GalaxyToken('my token'),
-     'https://galaxy.server.com/api/v2/collection-imports/1234',
+     '1234',
      'https://galaxy.server.com/api/v2/collection-imports/1234'),
     ('v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
-     '/api/automation-hub/v3/imports/collections/1234/',
+     '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
 ])
 def test_wait_import_task_multiple_requests(api_version, token_type, token_ins, import_uri, full_import_uri, monkeypatch):
@@ -414,10 +414,10 @@ def test_wait_import_task_multiple_requests(api_version, token_type, token_ins, 
 
 @pytest.mark.parametrize('api_version, token_type, token_ins, import_uri, full_import_uri,', [
     ('v2', 'Token', GalaxyToken('my token'),
-     'https://galaxy.server.com/api/v2/collection-imports/1234',
+     '1234',
      'https://galaxy.server.com/api/v2/collection-imports/1234'),
     ('v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
-     '/api/automation-hub/v3/imports/collections/1234/',
+     '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
 ])
 def test_wait_import_task_with_failure(api_version, token_type, token_ins, import_uri, full_import_uri, monkeypatch):
@@ -491,10 +491,10 @@ def test_wait_import_task_with_failure(api_version, token_type, token_ins, impor
 
 @pytest.mark.parametrize('api_version, token_type, token_ins, import_uri, full_import_uri', [
     ('v2', 'Token', GalaxyToken('my_token'),
-     'https://galaxy.server.com/api/v2/collection-imports/1234',
+     '1234',
      'https://galaxy.server.com/api/v2/collection-imports/1234'),
     ('v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
-     '/api/automation-hub/v3/imports/collections/1234/',
+     '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
 ])
 def test_wait_import_task_with_failure_no_error(api_version, token_type, token_ins, import_uri, full_import_uri, monkeypatch):
@@ -541,8 +541,8 @@ def test_wait_import_task_with_failure_no_error(api_version, token_type, token_i
     mock_err = MagicMock()
     monkeypatch.setattr(Display, 'error', mock_err)
 
-    expected = 'Galaxy import process failed: Unknown error, see %s for more details (Code: UNKNOWN)' % full_import_uri
-    with pytest.raises(AnsibleError, match=re.escape(expected)):
+    expected = 'Galaxy import process failed: Unknown error, see %s for more details \\(Code: UNKNOWN\\)' % full_import_uri
+    with pytest.raises(AnsibleError, match=expected):
         api.wait_import_task(import_uri)
 
     assert mock_open.call_count == 1
@@ -564,10 +564,10 @@ def test_wait_import_task_with_failure_no_error(api_version, token_type, token_i
 
 @pytest.mark.parametrize('api_version, token_type, token_ins, import_uri, full_import_uri', [
     ('v2', 'Token', GalaxyToken('my token'),
-     'https://galaxy.server.com/api/v2/collection-imports/1234/',
-     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
+     '1234',
+     'https://galaxy.server.com/api/v2/collection-imports/1234'),
     ('v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
-     '/api/automation-hub/v3/imports/collections/1234/',
+     '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
 ])
 def test_wait_import_task_timeout(api_version, token_type, token_ins, import_uri, full_import_uri, monkeypatch):
