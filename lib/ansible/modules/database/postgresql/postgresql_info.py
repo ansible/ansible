@@ -192,16 +192,16 @@ databases:
               returned: always
               type: dict
               contains:
-              major:
-                description: Extension major version.
-                returned: always
-                type: int
-                sample: 1
-              minor:
-                description: Extension minor version.
-                returned: always
-                type: int
-                sample: 0
+                major:
+                  description: Extension major version.
+                  returned: always
+                  type: int
+                  sample: 1
+                minor:
+                  description: Extension minor version.
+                  returned: always
+                  type: int
+                  sample: 0
             nspname:
               description: Namespace where the extension is.
               returned: always

@@ -65,7 +65,7 @@ ansible_facts:
   description: Returns the facts collected from the FlashBlade
   returned: always
   type: complex
-  contains:
+  sample: {
         "capacity": {
             "aggregate": {
                 "data_reduction": 1.1179228,
@@ -89,7 +89,7 @@ ansible_facts:
                 "virtual": 6477716992
             },
             "total": 83359896948925
-        }
+        },
         "config": {
             "alert_watchers": {
                 "enabled": true,
@@ -184,7 +184,7 @@ ansible_facts:
                 "valid_from": "1508433967000",
                 "valid_to": "2458833967000"
             }
-        }
+        },
         "default": {
             "blades": 15,
             "buckets": 7,
@@ -195,7 +195,7 @@ ansible_facts:
             "purity_version": "2.2.0",
             "snapshots": 1,
             "total_capacity": 83359896948925
-        }
+        },
         "filesystems": {
             "k8s-pvc-d24b1357-579e-11e8-811f-ecf4bbc88f54": {
                 "destroyed": false,
@@ -212,7 +212,7 @@ ansible_facts:
                 "provisioned": 1073741824,
                 "snapshot_enabled": false
             }
-        }
+        },
         "lag": {
             "uplink": {
                 "lag_speed": 0,
@@ -227,7 +227,7 @@ ansible_facts:
                 ],
                 "status": "healthy"
             }
-        }
+        },
         "network": {
             "fm1.admin0": {
                 "address": "10.10.100.6",
@@ -273,7 +273,7 @@ ansible_facts:
                 "type": "vip",
                 "vlan": 2200
             }
-        }
+        },
         "performance": {
             "aggregate": {
                 "bytes_per_op": 0,
@@ -323,7 +323,7 @@ ansible_facts:
                 "write_bytes_per_sec": 0,
                 "writes_per_sec": 0
             }
-        }
+        },
         "snapshots": {
             "z.188": {
                 "destroyed": false,
@@ -331,7 +331,7 @@ ansible_facts:
                 "source_destroyed": false,
                 "suffix": "188"
             }
-        }
+        },
         "subnet": {
             "new-mgmt": {
                 "gateway": "10.10.100.1",
@@ -360,6 +360,7 @@ ansible_facts:
                 "vlan": 2200
             }
         }
+    }
 '''
 
 

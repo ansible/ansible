@@ -319,6 +319,16 @@ lib/ansible/modules/cloud/vmware/vca_vapp.py E322
 lib/ansible/modules/cloud/vmware/vca_vapp.py E324
 lib/ansible/modules/cloud/vmware/vmware_guest.py E322
 lib/ansible/modules/cloud/vmware/vsphere_copy.py E322
+lib/ansible/modules/cloud/vultr/vultr_block_storage_facts.py E319
+lib/ansible/modules/cloud/vultr/vultr_dns_domain_facts.py E319
+lib/ansible/modules/cloud/vultr/vultr_firewall_group_facts.py E319
+lib/ansible/modules/cloud/vultr/vultr_network_facts.py E319
+lib/ansible/modules/cloud/vultr/vultr_os_facts.py E319
+lib/ansible/modules/cloud/vultr/vultr_region_facts.py E319
+lib/ansible/modules/cloud/vultr/vultr_server_facts.py E319
+lib/ansible/modules/cloud/vultr/vultr_ssh_key_facts.py E319
+lib/ansible/modules/cloud/vultr/vultr_startup_script_facts.py E319
+lib/ansible/modules/cloud/vultr/vultr_user_facts.py E319
 lib/ansible/modules/clustering/consul.py E322
 lib/ansible/modules/clustering/consul.py E324
 lib/ansible/modules/clustering/consul_kv.py E322
@@ -707,6 +717,7 @@ lib/ansible/modules/packaging/os/portage.py E322
 lib/ansible/modules/packaging/os/portinstall.py E322
 lib/ansible/modules/packaging/os/pulp_repo.py E322
 lib/ansible/modules/packaging/os/pulp_repo.py E324
+lib/ansible/modules/packaging/os/redhat_subscription.py E319
 lib/ansible/modules/packaging/os/rhn_channel.py E322
 lib/ansible/modules/packaging/os/rhn_channel.py E326
 lib/ansible/modules/packaging/os/rhsm_repository.py E324
@@ -795,6 +806,8 @@ lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E323
 lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E324
 lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E326
 lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E335
+lib/ansible/modules/storage/purestorage/purefa_facts.py E319
+lib/ansible/modules/storage/purestorage/purefb_facts.py E319
 lib/ansible/modules/storage/purestorage/purefb_fs.py E324
 lib/ansible/modules/storage/zfs/zfs.py E322
 lib/ansible/modules/storage/zfs/zfs.py E323
@@ -807,7 +820,9 @@ lib/ansible/modules/system/runit.py E322
 lib/ansible/modules/system/runit.py E324
 lib/ansible/modules/system/service.py E210
 lib/ansible/modules/system/service.py E323
+lib/ansible/modules/system/systemd.py E319
 lib/ansible/modules/system/systemd.py E336
+lib/ansible/modules/system/sysvinit.py E319
 lib/ansible/modules/system/user.py E210
 lib/ansible/modules/system/user.py E324
 lib/ansible/modules/system/user.py E327

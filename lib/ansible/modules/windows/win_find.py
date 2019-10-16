@@ -281,7 +281,7 @@ files:
             sample: 1477984205.15
         lnk_source:
             description: The target of the symbolic link, will return null if not a link or the link is broken.
-            return: success, path exists, path is a symbolic link
+            returned: success, path exists, path is a symbolic link
             type: str
             sample: C:\temp
         owner:
