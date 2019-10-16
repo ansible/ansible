@@ -439,23 +439,27 @@ class GalaxyAPI:
         return resp['task']
 
     @g_connect(['v2', 'v3'])
-    def wait_import_task(self, task_url, timeout=0):
+    def wait_import_task(self, task_id, timeout=0):
         """
         Waits until the import process on the Galaxy server has completed or the timeout is reached.
 
-        :param task_url: The full URI of the import task to wait for, this is returned by publish_collection.
+        :param task_id: The id of the import task to wait for. This can be parsed out of the return
+            value for GalaxyAPI.publish_collection.
         :param timeout: The timeout in seconds, 0 is no timeout.
         """
         # TODO: actually verify that v3 returns the same structure as v2, right now this is just an assumption.
         state = 'waiting'
         data = None
 
-        # v3 returns relative task urls, v2 returns full urls
+        # Construct the appropriate URL per version
         if 'v3' in self.available_api_versions:
-            parsed = urlparse(self.api_server)
-            full_url = parsed._replace(path=task_url).geturl()
+            full_url = _urljoin(self.api_server, 'automation-hub', self.available_api_versions['v3'],
+                                'imports/collections', task_id, '/')
         else:
-            full_url = task_url
+            # TODO: Should we have a trailing slash here?  I'm working with what the unittests ask
+            # for but a trailing slash may be more correct
+            full_url = _urljoin(self.api_server, self.available_api_versions['v2'],
+                                'collection-imports', task_id)
 
         display.display("Waiting until Galaxy import task %s has completed" % full_url)
         start = time.time()
