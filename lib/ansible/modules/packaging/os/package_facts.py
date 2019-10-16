@@ -255,8 +255,11 @@ class APT(LibMgr):
         we_have_lib = super(APT, self).is_available()
         if not we_have_lib:
             for exe in ('apt', 'apt-get', 'aptitude'):
-                if get_bin_path(exe):
-                    module.warn('Found "%s" but %s' % (exe, missing_required_lib('apt')))
+                try:
+                    if get_bin_path(exe):
+                        module.warn('Found "%s" but %s' % (exe, missing_required_lib('apt')))
+                        break
+                except ValueError:
                     break
         return we_have_lib
 

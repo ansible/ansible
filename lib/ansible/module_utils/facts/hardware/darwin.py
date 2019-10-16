@@ -90,7 +90,10 @@ class DarwinHardware(Hardware):
 
         total_used = 0
         page_size = 4096
-        vm_stat_command = get_bin_path('vm_stat')
+        try:
+            vm_stat_command = get_bin_path('vm_stat')
+        except ValueError:
+            vm_stat_command = None
         rc, out, err = self.module.run_command(vm_stat_command)
         if rc == 0:
             # Free = Total - (Wired + active + inactive)

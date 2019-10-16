@@ -80,7 +80,11 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                     iscsi_facts['iscsi_iqn'] = line.split('=', 1)[1]
                     break
         elif sys.platform.startswith('aix'):
-            cmd = get_bin_path('lsattr')
+            try:
+                cmd = get_bin_path('lsattr')
+            except ValueError:
+                cmd = None
+
             if cmd:
                 cmd += " -E -l iscsi0"
                 rc, out, err = module.run_command(cmd)
@@ -89,7 +93,11 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                     iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
         elif sys.platform.startswith('hp-ux'):
             # try to find it in the default PATH and opt_dirs
-            cmd = get_bin_path('iscsiutil', opt_dirs=['/opt/iscsi/bin'])
+            try:
+                cmd = get_bin_path('iscsiutil', opt_dirs=['/opt/iscsi/bin'])
+            except ValueError:
+                cmd = None
+
             if cmd:
                 cmd += " -l"
                 rc, out, err = module.run_command(cmd)
