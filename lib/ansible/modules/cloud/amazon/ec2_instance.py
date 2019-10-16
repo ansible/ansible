@@ -477,7 +477,7 @@ instances:
                 groups:
                     description: One or more security groups.
                     returned: always
-                    type: complex
+                    type: list of complex
                     contains:
                         group_id:
                             description: The ID of the security group.
@@ -522,7 +522,7 @@ instances:
                 private_ip_addresses:
                     description: The private IPv4 addresses associated with the network interface.
                     returned: always
-                    type: complex
+                    type: list of complex
                     contains:
                         association:
                             description: The association information for an Elastic IP address (IPv4) associated with the network interface.
@@ -607,7 +607,7 @@ instances:
         product_codes:
             description: One or more product codes.
             returned: always
-            type: complex
+            type: list of complex
             contains:
                 product_code_id:
                     description: The product code.
@@ -642,7 +642,7 @@ instances:
         security_groups:
             description: One or more security groups for the instance.
             returned: always
-            type: complex
+            type: list of complex
             contains:
                 group_id:
                     description: The ID of the security group.

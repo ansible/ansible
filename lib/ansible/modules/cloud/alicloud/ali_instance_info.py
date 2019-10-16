@@ -309,7 +309,7 @@ instances:
         security_groups:
             description: One or more security groups for the instance.
             returned: always
-            type: complex
+            type: list of complex
             contains:
                 group_id:
                     description: The ID of the security group.
