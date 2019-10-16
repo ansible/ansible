@@ -684,6 +684,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if allow_unauthenticated:
             cmd += " --allow-unauthenticated"
 
+        # Make this optionsl ?
+        cmd += " -o Dpkg::Use-Pty=0"
+
         with PolicyRcD(m):
             rc, out, err = m.run_command(cmd)
 
