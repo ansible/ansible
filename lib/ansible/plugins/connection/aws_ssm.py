@@ -15,11 +15,11 @@ connection: aws_ssm
 short_description: execute via AWS Systems Manager
 description:
 - This connection plugin allows ansible to execute tasks on an EC2 instance via the aws ssm CLI.
-version_added: "2.8"
+version_added: "2.10"
 requirements:
 - The remote EC2 instance must be running the AWS Systems Manager Agent (SSM Agent).
 - The control machine must have the aws session manager plugin installed.
-- The remote EC2 instance must have the curl installed.
+- The remote EC2 linux instance must have the curl installed.
 options:
   instance_id:
     description: The EC2 instance ID.
@@ -217,6 +217,12 @@ def _ssm_retry(func):
     return wrapped
 
 
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
 class Connection(ConnectionBase):
     ''' AWS SSM based connections '''
 
@@ -245,14 +251,13 @@ class Connection(ConnectionBase):
             self.protocol = None
             self.shell_id = None
             self._shell_type = 'powershell'
+            self.is_windows = True
 
     def _connect(self):
         ''' connect to the host via ssm '''
 
         self._play_context.remote_user = getpass.getuser()
 
-        if getattr(self._shell, "SHELL_FAMILY", '') == 'powershell':
-            self.is_windows = True
         if not self._session_id:
             self.start_session()
         return self
@@ -335,10 +340,8 @@ class Connection(ConnectionBase):
         self._flush_stderr(session)
 
         # Handle the back-end throttling
-        for c in cmd:
-            session.stdin.write(c.encode('utf-8'))
-            if self.is_windows:
-                time.sleep(15 / 1000.0)
+        for chunk in chunks(cmd, 1024):
+            session.stdin.write(to_bytes(chunk, errors='surrogate_or_strict'))
 
         # Read stdout between the markers
         stdout = ''
@@ -381,8 +384,7 @@ class Connection(ConnectionBase):
 
         if not self.is_windows:
             cmd = "stty -echo\n" + "PS1=''\n"
-            if PY3:
-                cmd = to_bytes(cmd)
+            cmd = to_bytes(cmd, errors='surrogate_or_strict')
             self._session.stdin.write(cmd)
 
     def _wrap_command(self, cmd, sudoable, mark_start, mark_end):
@@ -390,7 +392,6 @@ class Connection(ConnectionBase):
 
         if self.is_windows:
             cmd = cmd + "; echo " + mark_start + " $? $LASTEXITCODE\necho " + mark_end + "\n"
-            time.sleep(1)
         else:
             if sudoable:
                 cmd = "sudo " + cmd
@@ -403,6 +404,12 @@ class Connection(ConnectionBase):
         ''' extract command status and strip unwanted lines '''
 
         if self.is_windows:
+            stdout = stdout[:stdout.rfind('\n')]
+            if stdout.splitlines()[-1].isdigit():
+                returncode = int(stdout.splitlines()[-1])
+                stdout = stdout[:stdout.rfind('\n') + 1]
+                stdout = stdout.replace('\r\n', '').replace('\n', '')
+
             success = stdout.rfind('True')
             fail = stdout.rfind('False')
 
@@ -475,19 +482,23 @@ class Connection(ConnectionBase):
         bucket_url = 's3://%s/%s' % (self.get_option('bucket_name'), s3_path)
 
         if self.is_windows:
-            put_command = "curl -Method PUT -InFile '%s' -Uri '%s'" % (in_path, self._get_url('put_object', self.get_option('bucket_name'), s3_path, 'PUT'))
+            put_command = "Invoke-WebRequest -Method PUT -InFile '%s' -Uri '%s' -UseBasicParsing" % (
+                in_path, self._get_url('put_object', self.get_option('bucket_name'), s3_path, 'PUT'))
+            get_command = "Invoke-WebRequest '%s' -OutFile '%s'" % (
+                self._get_url('get_object', self.get_option('bucket_name'), s3_path, 'GET'), out_path)
         else:
-            put_command = "curl --request PUT --upload-file '%s' '%s'" % (in_path, self._get_url('put_object', self.get_option('bucket_name'), s3_path, 'PUT'))
-
-        get_command = "curl '%s' -o '%s'" % (self._get_url('get_object', self.get_option('bucket_name'), s3_path, 'GET'), out_path)
+            put_command = "curl --request PUT --upload-file '%s' '%s'" % (
+                in_path, self._get_url('put_object', self.get_option('bucket_name'), s3_path, 'PUT'))
+            get_command = "curl '%s' -o '%s'" % (
+                self._get_url('get_object', self.get_option('bucket_name'), s3_path, 'GET'), out_path)
 
         client = boto3.client('s3')
         if ssm_action == 'get':
             (returncode, stdout, stderr) = self.exec_command(put_command, in_data=None, sudoable=False)
-            with open(out_path.encode('utf-8'), 'wb') as data:
+            with open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb') as data:
                 client.download_fileobj(self.get_option('bucket_name'), s3_path, data)
         else:
-            with open(in_path.encode('utf-8'), 'rb') as data:
+            with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as data:
                 client.upload_fileobj(data, self.get_option('bucket_name'), s3_path)
             (returncode, stdout, stderr) = self.exec_command(get_command, in_data=None, sudoable=False)
 
@@ -525,9 +536,7 @@ class Connection(ConnectionBase):
             if self._timeout:
                 self._session.terminate()
             else:
-                cmd = "\nexit\n"
-                if PY3:
-                    cmd = to_bytes(cmd)
+                cmd = b"\nexit\n"
                 self._session.communicate(cmd)
 
             display.vvvv(u"TERMINATE SSM SESSION: {0}".format(self._session_id), host=self.host)

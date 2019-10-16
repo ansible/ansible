@@ -28,7 +28,7 @@
 
     - name: Ensure IAM instance role exists
       iam_role:
-        name: "{{resource_prefix}}-aws-ssm-role"
+        name: "ansible-test-{{resource_prefix}}-aws-ssm-role"
         assume_role_policy_document: "{{ lookup('file','ec2-trust-policy.json') }}"
         state: present
         create_instance_profile: yes
