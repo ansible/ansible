@@ -58,8 +58,8 @@ options:
     version:
         description:
             - The version of the certificate signing request.
-            - The only allowed value according to L(RFC 2986,https://tools.ietf.org/html/rfc2986#section-4.1)
-              is 1.
+            - "The only allowed value according to L(RFC 2986,https://tools.ietf.org/html/rfc2986#section-4.1)
+               is 1."
             - This option will no longer accept unsupported values from Ansible 2.14 on.
         type: int
         default: 1
