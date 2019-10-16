@@ -312,7 +312,7 @@ class VMwareHostVirtualSwitch(PyVmomi):
 
         # Remove nics not specfied by user
         for notdesired_pnic in all_nics:
-            if notdesired_pnic not in self.nics:
+            if notdesired_pnic not in self.nics[:]:
                 all_nics.remove(notdesired_pnic)
                 diff = True
 
