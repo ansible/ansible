@@ -340,7 +340,7 @@ def changemaster(cursor, chm, connection_name='', channel=''):
     # Params ransformation for issue #23976:
     for num, param in enumerate(chm):
         if "=' '" in param:
-            chm[num] = chm[num].replace("=' '","=''")
+            chm[num] = chm[num].replace("=' '", "=''")
 
     if connection_name:
         query = "CHANGE MASTER '%s' TO %s" % (connection_name, ','.join(chm))
