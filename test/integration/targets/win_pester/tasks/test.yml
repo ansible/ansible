@@ -125,7 +125,7 @@
 
 - name: Checks if the output result file exists
   win_stat:
-    path: '{{test_with_output_file}}'
+    path: '{{test_report_file}}'
   register: test_output_file
 
 - name: Checks if the output result file exists
