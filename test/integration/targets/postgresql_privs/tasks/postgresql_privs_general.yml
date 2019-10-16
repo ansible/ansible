@@ -677,7 +677,159 @@
     login_password: password
   ignore_errors: yes
   when: postgres_version_resp.stdout is version('10', '>=')
+
+###########################################
+# Test for 'type' value of type parameter #
+###########################################
+
+# Test
+- name: Grant type privileges
+  postgresql_privs:
+    state: present
+    type: type
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: numeric
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+# Checks
+- assert:
+    that:
+      - result is changed
+
+- name: Get type privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    login_db: "{{ db_name }}"
+    query: SELECT typacl FROM pg_catalog.pg_type WHERE typname = 'numeric';
+  register: typ_result
+
+- assert:
+    that:
+      - "'{{ db_user2 }}' in typ_result.query_result[0].typacl"
+
+- name: Grant type privileges again using check_mode
+  postgresql_privs:
+    state: present
+    type: type
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: numeric
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  check_mode: yes
+
+# Checks
+- assert:
+    that:
+      - result is not changed
+
+- name: Get type privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    login_db: "{{ db_name }}"
+    query: SELECT typacl FROM pg_catalog.pg_type WHERE typname = 'numeric';
+  register: typ_result
+
+- assert:
+    that:
+      - "'{{ db_user2 }}' in typ_result.query_result[0].typacl"
+
+- name: Grant type privileges again
+  postgresql_privs:
+    state: present
+    type: type
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: numeric
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+# Checks
+- assert:
+    that:
+      - result is not changed
+
+- name: Get type privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    login_db: "{{ db_name }}"
+    query: SELECT typacl FROM pg_catalog.pg_type WHERE typname = 'numeric';
+  register: typ_result
+
+- assert:
+    that:
+      - "'{{ db_user2 }}' in typ_result.query_result[0].typacl"
   
+- name: Revoke type privileges in check_mode
+  postgresql_privs:
+    state: absent
+    type: type
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: numeric
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  check_mode: yes
+
+# Checks
+- assert:
+    that:
+      - result is changed
+
+- name: Get type privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    login_db: "{{ db_name }}"
+    query: SELECT typacl FROM pg_catalog.pg_type WHERE typname = 'numeric';
+  register: typ_result
+
+- assert:
+    that:
+      - "'{{ db_user2 }}' in typ_result.query_result[0].typacl"
+
+- name: Revoke type privileges
+  postgresql_privs:
+    state: absent
+    type: type
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: numeric
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+# Checks
+- assert:
+    that:
+      - result is changed
+
+- name: Get type privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    login_db: "{{ db_name }}"
+    query: SELECT typacl FROM pg_catalog.pg_type WHERE typname = 'numeric';
+  register: typ_result
+
+- assert:
+    that:
+      - "'{{ db_user2 }}' not in typ_result.query_result[0].typacl"
+
 # Cleanup
 - name: Remove user given permissions
   postgresql_user:

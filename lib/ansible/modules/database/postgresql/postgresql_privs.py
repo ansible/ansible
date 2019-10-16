@@ -45,12 +45,13 @@ options:
   type:
     description:
     - Type of database object to set privileges on.
-    - The `default_privs` choice is available starting at version 2.7.
-    - The 'foreign_data_wrapper' and 'foreign_server' object types are available from Ansible version '2.8'.
+    - The C(default_privs) choice is available starting at version 2.7.
+    - The C(foreign_data_wrapper) and C(foreign_server) object types are available from Ansible version '2.8'.
+    - The C(type) choice is available from Ansible version '2.10'.
     type: str
     default: table
     choices: [ database, default_privs, foreign_data_wrapper, foreign_server, function,
-               group, language, table, tablespace, schema, sequence ]
+               group, language, table, tablespace, schema, sequence, type ]
   objs:
     description:
     - Comma separated list of database objects to set privileges on.
@@ -324,6 +325,15 @@ EXAMPLES = r'''
     objs: fdw
     privs: ALL
     type: foreign_data_wrapper
+    role: reader
+
+# Available since version 2.10
+- name: GRANT ALL PRIVILEGES ON TYPE customtype TO reader
+  postgresql_privs:
+    db: test
+    objs: customtype
+    privs: ALL
+    type: type
     role: reader
 
 # Available since version 2.8
@@ -616,6 +626,12 @@ class Connection(object):
         self.cursor.execute(query, (fdws,))
         return [t[0] for t in self.cursor.fetchall()]
 
+    def get_type_acls(self, types):
+        query = """SELECT typacl FROM pg_catalog.pg_type
+                   WHERE typname = ANY (%s) ORDER BY typname"""
+        self.cursor.execute(query, (types,))
+        return [t[0] for t in self.cursor.fetchall()]
+
     def get_foreign_server_acls(self, fs):
         query = """SELECT srvacl FROM pg_catalog.pg_foreign_server
                    WHERE srvname = ANY (%s) ORDER BY srvname"""
@@ -669,6 +685,8 @@ class Connection(object):
             get_status = self.get_foreign_data_wrapper_acls
         elif obj_type == 'foreign_server':
             get_status = self.get_foreign_server_acls
+        elif obj_type == 'type':
+            get_status = self.get_type_acls
         else:
             raise Error('Unsupported database object type "%s".' % obj_type)
 
@@ -892,7 +910,8 @@ def main():
                            'group',
                            'default_privs',
                            'foreign_data_wrapper',
-                           'foreign_server']),
+                           'foreign_server',
+                           'type', ]),
         objs=dict(required=False, aliases=['obj']),
         schema=dict(required=False),
         roles=dict(required=True, aliases=['role']),
