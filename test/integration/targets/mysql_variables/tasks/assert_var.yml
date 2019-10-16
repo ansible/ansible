@@ -23,7 +23,7 @@
   assert: { that: "output.changed == {{changed}}" }
 
 - name: run mysql command to show variable
-  command: mysql "-e show variables like '{{var_name}}';"
+  command: "mysql -uroot -p{{ root_pass }} \"-e show variables like '{{var_name}}';\""
   register: result
 
 - name: assert output mysql variable name and value
