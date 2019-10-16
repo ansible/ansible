@@ -57,9 +57,9 @@ options:
                 If there is only one device with a backing type, the secondary details are not needed.
                 We will match the last such device with the given backing type.
               - C(absent): remove an existing serial port. C(backing_type) is required to determine the port.
-                The first matching C(backing_type) and either of C(service_uri) or C(pipe_name) or C(device_name) or C(file_path) will be removed.'
+                The first matching C(backing_type) and either of C(service_uri) or C(pipe_name) or C(device_name) or C(file_path) will be removed.
                 If there is only one device with a backing type, the secondary details are not needed.
-                We will match the last such device with the given backing type.
+                We will match the last such device with the given backing type.'
       - ' - C(yield_on_poll) (bool): Enables CPU yield behavior. Default value is true.'
       - ' - C(direction) (str): Required when I(backing_type=network).
             The direction of the connection.
