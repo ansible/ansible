@@ -56,6 +56,10 @@ options:
   opts:
     description:
     - List of options to be passed to mkfs command.
+  mount_dir:
+    description:
+    - To grow XFS filesystem mount point required.
+    version_added: "2.10"
 requirements:
   - Uses tools related to the I(fstype) (C(mkfs)) and C(blkid) command. When I(resizefs) is enabled, C(blockdev) command is required too.
 notes:
@@ -120,7 +124,7 @@ class Filesystem(object):
     def fstype(self):
         return type(self).__name__
 
-    def get_fs_size(self, dev):
+    def get_fs_size(self, dev, mount_dir=""):
         """ Return size in bytes of filesystem on device. Returns int """
         raise NotImplementedError()
 
@@ -139,12 +143,12 @@ class Filesystem(object):
         cmd = self.module.get_bin_path(self.GROW, required=True)
         return [cmd, str(dev)]
 
-    def grow(self, dev):
+    def grow(self, dev, mount_dir=""):
         """Get dev and fs size and compare. Returns stdout of used command."""
         devsize_in_bytes = dev.size()
 
         try:
-            fssize_in_bytes = self.get_fs_size(dev)
+            fssize_in_bytes = self.get_fs_size(dev, mount_dir=mount_dir)
         except NotImplementedError:
             self.module.fail_json(changed=False, msg="module does not support resizing %s filesystem yet." % self.fstype)
 
@@ -153,7 +157,11 @@ class Filesystem(object):
         elif self.module.check_mode:
             self.module.exit_json(changed=True, msg="Resizing filesystem %s on device %s" % (self.fstype, dev))
         else:
-            _, out, _ = self.module.run_command(self.grow_cmd(dev), check_rc=True)
+            out = None
+            if self.fstype == 'XFS':
+                _, out, _ = self.module.run_command(self.grow_cmd(dev=mount_dir), check_rc=True)
+            else:
+                _, out, _ = self.module.run_command(self.grow_cmd(dev), check_rc=True)
             return out
 
 
@@ -161,7 +169,7 @@ class Ext(Filesystem):
     MKFS_FORCE_FLAGS = '-F'
     GROW = 'resize2fs'
 
-    def get_fs_size(self, dev):
+    def get_fs_size(self, dev, mount_dir=""):
         cmd = self.module.get_bin_path('tune2fs', required=True)
         # Get Block count and Block size
         _, size, _ = self.module.run_command([cmd, '-l', str(dev)], check_rc=True, environ_update=self.LANG_ENV)
@@ -190,9 +198,9 @@ class XFS(Filesystem):
     MKFS_FORCE_FLAGS = '-f'
     GROW = 'xfs_growfs'
 
-    def get_fs_size(self, dev):
+    def get_fs_size(self, dev, mount_dir=""):
         cmd = self.module.get_bin_path('xfs_growfs', required=True)
-        _, size, _ = self.module.run_command([cmd, '-n', str(dev)], check_rc=True, environ_update=self.LANG_ENV)
+        _, size, _ = self.module.run_command([cmd, '-n', str(mount_dir)], check_rc=True, environ_update=self.LANG_ENV)
         for line in size.splitlines():
             col = line.split('=')
             if col[0].strip() == 'data':
@@ -257,7 +265,7 @@ class F2fs(Filesystem):
 
         return ''
 
-    def get_fs_size(self, dev):
+    def get_fs_size(self, dev, mount_dir=""):
         cmd = self.module.get_bin_path('dump.f2fs', required=True)
         # Get sector count and sector size
         _, dump, _ = self.module.run_command([cmd, str(dev)], check_rc=True, environ_update=self.LANG_ENV)
@@ -287,7 +295,7 @@ class VFAT(Filesystem):
         MKFS = 'mkfs.vfat'
     GROW = 'fatresize'
 
-    def get_fs_size(self, dev):
+    def get_fs_size(self, dev, mount_dir=""):
         cmd = self.module.get_bin_path(self.GROW, required=True)
         _, output, _ = self.module.run_command([cmd, '--info', str(dev)], check_rc=True, environ_update=self.LANG_ENV)
         for line in output.splitlines()[1:]:
@@ -350,6 +358,7 @@ def main():
             opts=dict(),
             force=dict(type='bool', default=False),
             resizefs=dict(type='bool', default=False),
+            mount_dir=dict()
         ),
         supports_check_mode=True,
     )
@@ -359,6 +368,7 @@ def main():
     opts = module.params['opts']
     force = module.params['force']
     resizefs = module.params['resizefs']
+    mount_dir = module.params['mount_dir']
 
     if fstype in friendly_names:
         fstype = friendly_names[fstype]
@@ -389,7 +399,7 @@ def main():
         if not filesystem.GROW:
             module.fail_json(changed=False, msg="module does not support resizing %s filesystem yet." % fstype)
 
-        out = filesystem.grow(dev)
+        out = filesystem.grow(dev, mount_dir=mount_dir)
 
         module.exit_json(changed=True, msg=out)
     elif fs and not force:
