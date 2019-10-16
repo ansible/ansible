@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+  <ShortName>Ansible Galaxy</ShortName>
+  <Description>Search Ansible Galaxy Documentation</Description>
+  <InputEncoding>utf-8</InputEncoding>
+  <Url type="text/html" method="get"
+       template="https://docs.ansible.com/ansible/latest/search.html?q={searchTerms}"/>
+  <LongName>Ansible Galaxy Documentation</LongName>
+  
+</OpenSearchDescription>
