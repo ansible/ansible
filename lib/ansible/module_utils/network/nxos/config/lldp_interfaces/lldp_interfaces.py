@@ -90,8 +90,9 @@ class Lldp_interfaces(ConfigBase):
             for w in config:
                 if get_interface_type(w['name']) not in ('management',
                                                          'ethernet'):
-                    self._module.fail_json(msg='This module works with either management or ethernet')
-                w.update({'name':normalize_interface(w['name'])})
+                    self._module.fail_json(
+                        msg='This module works with either management or ethernet')
+                w.update({'name': normalize_interface(w['name'])})
                 want.append(remove_empties(w))
         have = existing_lldp_interfaces_facts
         resp = self.set_state(want, have)
