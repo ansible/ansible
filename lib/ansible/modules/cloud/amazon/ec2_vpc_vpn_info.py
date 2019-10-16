@@ -123,7 +123,7 @@ vpn_connections:
            last_status_change:
                description: The date and time of the last change in status.
                returned: always
-               type: datetime
+               type: str
                sample: "2018-02-09T14:35:27+00:00"
            outside_ip_address:
                description: The Internet-routable IP address of the virtual private gateway's outside interface.

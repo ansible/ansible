@@ -119,7 +119,7 @@ secret:
     version_ids_to_stages:
       description: Provide the secret version ids and the associated secret stage.
       returned: always
-      type: complex
+      type: dict
       sample: { "dc1ed59b-6d8e-4450-8b41-536dfe4600a9": [ "AWSCURRENT" ] }
 '''
 
