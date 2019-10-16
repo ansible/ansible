@@ -97,17 +97,17 @@ hcloud_ssh_key:
             sample: 12345
         name:
             description: Name of the ssh_key
-            type: string
+            type: str
             returned: Always
             sample: my-ssh-key
         fingerprint:
             description: Fingerprint of the ssh_key
-            type: string
+            type: str
             returned: Always
             sample: b7:2f:30:a0:2f:6c:58:6c:21:04:58:61:ba:06:3b:2f
         public_key:
             description: Public key of the ssh_key
-            type: string
+            type: str
             returned: Always
             sample: "ssh-rsa AAAjjk76kgf...Xt"
         labels:

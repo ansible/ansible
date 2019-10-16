@@ -115,7 +115,6 @@ subnets:
                 service:
                     description:
                         - The type of the endpoint service.
-                    required: True
                 locations:
                     description:
                         - A list of location names.

@@ -77,7 +77,7 @@ roleassignments:
             returned: always
             sample: myRoleAssignment
         type:
-            descripition:
+            description:
                 - Type of role assignment.
             type: str
             returned: always
