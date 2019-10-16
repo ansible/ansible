@@ -644,7 +644,7 @@ def get_template_by_id(module, client, template_id):
 
 
 def get_template_id(module, client, requested_id, requested_name):
-    template = get_template_by_id(module, client, requested_id) if requested_id else get_template_by_name(module, client, requested_name)
+    template = get_template_by_id(module, client, requested_id) if requested_id is not None else get_template_by_name(module, client, requested_name)
     if template:
         return template.ID
     else:
@@ -1430,10 +1430,10 @@ def main():
 
     # Fetch template
     template_id = None
-    if requested_template_id or requested_template_name:
+    if requested_template_id is not None or requested_template_name:
         template_id = get_template_id(module, one_client, requested_template_id, requested_template_name)
         if template_id is None:
-            if requested_template_id:
+            if requested_template_id is not None:
                 module.fail_json(msg='There is no template with template_id: ' + str(requested_template_id))
             elif requested_template_name:
                 module.fail_json(msg="There is no template with name: " + requested_template_name)
