@@ -279,7 +279,11 @@ class Rhn(redhat.RegistrationBase):
         '''
         if self.server is None:
             if self.hostname != 'rhn.redhat.com':
-                url = "https://%s/rpc/api" % self.hostname
+                url = urllib.parse.urlparse(self.server_url)
+                if url[0] == 'http':
+                    url = "http://%s/rpc/api" % self.hostname
+                else:
+                    url = "https://%s/rpc/api" % self.hostname
             else:
                 url = "https://xmlrpc.%s/rpc/api" % self.hostname
             self.server = xmlrpc_client.ServerProxy(url)
