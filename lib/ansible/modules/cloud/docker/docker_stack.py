@@ -297,8 +297,7 @@ def main():
                 module.fail_json(msg="'docker stack down' command failed",
                                  rc=rc,
                                  out=out, err=err,  # Deprecated
-                                 stdout=out, stderr=std)
-                                 
+                                 stdout=out, stderr=err)
             else:
                 module.exit_json(changed=True,
                                  msg=out, rc=rc,
