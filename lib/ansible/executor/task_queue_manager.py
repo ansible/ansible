@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import multiprocessing
 import os
 import tempfile
 
@@ -41,6 +40,7 @@ from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
 from ansible.utils.display import Display
+from ansible.utils.multiprocessing import context as multiprocessing_context
 
 
 __all__ = ['TaskQueueManager']
@@ -97,7 +97,7 @@ class TaskQueueManager:
         self._unreachable_hosts = dict()
 
         try:
-            self._final_q = multiprocessing.Queue()
+            self._final_q = multiprocessing_context.Queue()
         except OSError as e:
             raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
 
