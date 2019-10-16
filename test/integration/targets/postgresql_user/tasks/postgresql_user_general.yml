@@ -551,7 +551,7 @@
       that:
       - result is changed
       - result.user == '{{ test_group1 }}'
-      - result.queries == ['CREATE USER {{ test_group1 }} NOLOGIN', 'GRANT {{ test_group2 }} TO {{ test_group1 }}']
+      - result.queries == ['CREATE USER "{{ test_group1 }}" NOLOGIN', 'GRANT "{{ test_group2 }}" TO "{{ test_group1 }}"']
 
   - name: check that the user doesn't exist
     <<: *task_parameters
@@ -585,7 +585,7 @@
       that:
       - result is changed
       - result.user == '{{ test_group1 }}'
-      - result.queries == ['CREATE USER {{ test_group1 }} NOLOGIN', 'GRANT {{ test_group2 }} TO {{ test_group1 }}']
+      - result.queries == ['CREATE USER "{{ test_group1 }}" NOLOGIN', 'GRANT "{{ test_group2 }}" TO "{{ test_group1 }}"']
 
   - name: check that the user exists
     <<: *task_parameters
@@ -642,7 +642,7 @@
       that:
       - result is changed
       - result.user == '{{ test_user }}'
-      - result.queries == ['GRANT {{ test_group1 }} TO "{{ test_user }}"', 'GRANT {{ test_group2 }} TO "{{ test_user }}"']
+      - result.queries == ['GRANT "{{ test_group1 }}" TO "{{ test_user }}"', 'GRANT "{{ test_group2 }}" TO "{{ test_user }}"']
 
   - name: check membership
     <<: *task_parameters

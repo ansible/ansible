@@ -299,14 +299,10 @@ def user_exists(cursor, user):
 
 def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_limit):
     """Create a new database user (role)."""
-    # For cases when the user name contains dots:
-    if "." in user:
-        user = '"%s"' % user
-
     # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a
     # literal
     query_password_data = dict(password=password, expires=expires)
-    query = ['CREATE USER %(user)s' %
+    query = ['CREATE USER "%(user)s"' %
              {"user": user}]
     if password is not None and password != '':
         query.append("WITH %(crypt)s" % {"crypt": encrypted})
@@ -362,11 +358,6 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
     """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
 
-    # Variable for DML queries for cases when the user name contains dots:
-    dml_user = user
-    if "." in user:
-        dml_user = '"%s"' % user
-
     cursor = db_connection.cursor(cursor_factory=DictCursor)
     # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a
     # literal
@@ -381,7 +372,6 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
     # Handle passwords.
     if not no_password_changes and (password is not None or role_attr_flags != '' or expires is not None or conn_limit is not None):
         # Select password and all flag-like columns in order to verify changes.
-
         try:
             select = "SELECT * FROM pg_authid where rolname=%(user)s"
             cursor.execute(select, {"user": user})
@@ -430,7 +420,7 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
         if not pwchanging and not role_attr_flags_changing and not expires_changing and not conn_limit_changing:
             return False
 
-        alter = ['ALTER USER %(user)s' % {"user": dml_user}]
+        alter = ['ALTER USER "%(user)s"' % {"user": user}]
         if pwchanging:
             if password != '':
                 alter.append("WITH %(crypt)s" % {"crypt": encrypted})
@@ -485,8 +475,8 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
         if not role_attr_flags_changing:
             return False
 
-        alter = ['ALTER USER %(user)s' %
-                 {"user": dml_user}]
+        alter = ['ALTER USER "%(user)s"' %
+                 {"user": user}]
         if role_attr_flags:
             alter.append('WITH %s' % role_attr_flags)
 
@@ -514,13 +504,9 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
 
 def user_delete(cursor, user):
     """Try to remove a user. Returns True if successful otherwise False"""
-    # For cases when the user name contains dots:
-    if "." in user:
-        user = '"%s"' % user
-
     cursor.execute("SAVEPOINT ansible_pgsql_user_delete")
     try:
-        query = "DROP USER %s" % user
+        query = 'DROP USER "%s"' % user
         executed_queries.append(query)
         cursor.execute(query)
     except Exception:
@@ -561,26 +547,18 @@ def get_table_privileges(cursor, user, table):
 
 
 def grant_table_privileges(cursor, user, table, privs):
-    # For cases when the user name contains dots:
-    if "." in user:
-        user = '"%s"' % user
-
     # Note: priv escaped by parse_privs
     privs = ', '.join(privs)
-    query = 'GRANT %s ON TABLE %s TO %s' % (
+    query = 'GRANT %s ON TABLE %s TO "%s"' % (
         privs, pg_quote_identifier(table, 'table'), user)
     executed_queries.append(query)
     cursor.execute(query)
 
 
 def revoke_table_privileges(cursor, user, table, privs):
-    # For cases when the user name contains dots:
-    if "." in user:
-        user = '"%s"' % user
-
     # Note: priv escaped by parse_privs
     privs = ', '.join(privs)
-    query = 'REVOKE %s ON TABLE %s FROM %s' % (
+    query = 'REVOKE %s ON TABLE %s FROM "%s"' % (
         privs, pg_quote_identifier(table, 'table'), user)
     executed_queries.append(query)
     cursor.execute(query)
@@ -624,36 +602,27 @@ def has_database_privileges(cursor, user, db, privs):
 
 
 def grant_database_privileges(cursor, user, db, privs):
-    # For cases when the user name contains dots:
-    if "." in user:
-        user = '"%s"' % user
-
     # Note: priv escaped by parse_privs
     privs = ', '.join(privs)
     if user == "PUBLIC":
         query = 'GRANT %s ON DATABASE %s TO PUBLIC' % (
                 privs, pg_quote_identifier(db, 'database'))
     else:
-        query = 'GRANT %s ON DATABASE %s TO %s' % (
-                privs, pg_quote_identifier(db, 'database'),
-                pg_quote_identifier(user, 'role'))
+        query = 'GRANT %s ON DATABASE %s TO "%s"' % (
+                privs, pg_quote_identifier(db, 'database'), user)
 
     executed_queries.append(query)
     cursor.execute(query)
 
 
 def revoke_database_privileges(cursor, user, db, privs):
-    # For cases when the user name contains dots:
-    if "." in user:
-        user = '"%s"' % user
-
     # Note: priv escaped by parse_privs
     privs = ', '.join(privs)
     if user == "PUBLIC":
         query = 'REVOKE %s ON DATABASE %s FROM PUBLIC' % (
                 privs, pg_quote_identifier(db, 'database'))
     else:
-        query = 'REVOKE %s ON DATABASE %s FROM %s' % (
+        query = 'REVOKE %s ON DATABASE %s FROM "%s"' % (
                 privs, pg_quote_identifier(db, 'database'), user)
 
     executed_queries.append(query)
