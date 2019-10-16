@@ -106,15 +106,16 @@ DOCUMENTATION = """
           - section: callback_grafana_annotations
             key: grafana_dashboard_id
         type: integer
-      grafana_panel_id:
+      grafana_panel_ids:
         description: The grafana panel ids where the annotation shall be created.
                      Give a single integer or a comma-separated list of integers.
         env:
-          - name: GRAFANA_PANEL_ID
+          - name: GRAFANA_PANEL_IDS
         ini:
           - section: callback_grafana_annotations
-            key: grafana_panel_id
-        type: string
+            key: grafana_panel_ids
+        default: []
+        type: list
 """
 
 
@@ -189,7 +190,7 @@ class CallbackModule(CallbackBase):
         self.grafana_user = self.get_option('grafana_user')
         self.grafana_password = self.get_option('grafana_password')
         self.dashboard_id = self.get_option('grafana_dashboard_id')
-        self.panel_id = self.get_option('grafana_panel_id')
+        self.panel_ids = self.get_option('grafana_panel_ids')
 
         if self.grafana_api_key:
             self.headers['Authorization'] = "Bearer %s" % self.grafana_api_key
@@ -251,22 +252,11 @@ class CallbackModule(CallbackBase):
         self.errors += 1
         self._send_annotations(data)
 
-    def _get_panels(self):
-        panels = list()
-        if self.panel_id:
-            if ',' in str(self.panel_id):
-                panels_input = str(self.panel_id).split(',')
-                for p in panels_input:
-                    panels.append(int(p))
-            else:
-                panels.append(int(self.panel_id))
-        return panels
-
     def _send_annotations(self, data):
         if self.dashboard_id:
             data["dashboardId"] = int(self.dashboard_id)
-        if self.panel_id:
-            for panel_id in self._get_panels():
+        if self.panel_ids:
+            for panel_id in self.panel_ids:
                 data["panelId"] = panel_id
                 self._send_annotation(data)
         else:
