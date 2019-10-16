@@ -117,3 +117,18 @@
     - test_with_parameter.changed
     - test_with_parameter.output.PassedCount == 2
     - test_with_parameter.output.TotalCount == 2
+
+- name: Run Pester test(s) specifying a test file by generating test result xml
+  win_pester:
+    path: '{{test_win_pester_path}}\test03.test.ps1'
+    aoutput_file: '{{test_report_file}}'
+
+- name: Checks if the output result file exists
+  win_stat:
+    path: '{{test_with_output_file}}'
+  register: test_output_file
+
+- name: Checks if the output result file exists
+  assert:
+    that:
+    - test_output_file.stat.exists
