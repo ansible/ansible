@@ -302,7 +302,7 @@ def main():
             else:
                 module.exit_json(changed=True,
                                  msg=out, rc=rc,
-                                 err=stderr,  # Deprecated
+                                 err=err,  # Deprecated
                                  stdout=out, stderr=err)
         module.exit_json(changed=False)
 
