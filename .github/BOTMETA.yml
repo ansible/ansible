@@ -281,8 +281,9 @@ files:
     labels: [ asa, cisco, networking ]
   $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
-  $modules/network/cloudengine/:
+  $modules/network/cloudengine/: &cloudengine
     maintainers: $team_huawei
+    labels: [ huawei, cloudengine, networking ]
   $modules/network/cnos/: dkasberg amuraleedhar
   $modules/network/cumulus/: $team_cumulus
   $modules/network/dellos10/: skg-net
@@ -727,7 +728,7 @@ files:
   $module_utils/network/bigswitch:
     maintainers: jayakody tedelhourani vuile
   $module_utils/network/cloudengine:
-    maintainers: $team_huawei
+    <<: *cloudengine
   $module_utils/network/cnos:
     maintainers: dkasberg amuraleedhar
   $module_utils/network/common:
@@ -946,6 +947,9 @@ files:
   $plugins/action/bigiq:
     maintainers: caphrim007 wojtek0806
     labels: networking
+  $plugins/action/ce:
+    <<: *cloudengine
+    support: network
   $plugins/action/dellos:
     maintainers: skg-net
     labels: networking
@@ -1037,6 +1041,8 @@ files:
 
   $plugins/cliconf/:
     labels: networking
+  $plugins/cliconf/ce.py:
+    <<: *cloudengine
   $plugins/cliconf/edgeswitch.py:
     maintainers: f-bor
   $plugins/cliconf/eos.py:
@@ -1327,8 +1333,7 @@ files:
     maintainers: Im0
     support: community
   $plugins/netconf/ce.py:
-    maintainers: $team_huawei
-    labels: networking
+    <<: *cloudengine
   $plugins/netconf/sros.py:
     maintainers: wisotzky $team_networking
     labels: networking
@@ -1348,6 +1353,8 @@ files:
   $plugins/terminal/__init__.py:
     support: network
   $plugins/terminal/asa.py: *asa
+  $plugins/terminal/ce.py:
+    <<: *cloudengine
   $plugins/terminal/dellos10:
     maintainers: skg-net
   $plugins/terminal/edgeos.py:
@@ -1472,6 +1479,7 @@ files:
   test/integration/targets/asa_: *asa
   test/integration/targets/acme: *crypto
   test/integration/targets/aix: *aix
+  test/integration/targets/ce_: *cloudengine
   test/integration/targets/cloudscale:
     maintainers: $team_cloudscale
     labels: cloud
@@ -1537,6 +1545,7 @@ files:
     maintainers: $team_networking
     labels: networking
   test/units/modules/network/aireos: *aireos
+  test/units/modules/network/cloudengine: *cloudengine
   test/units/modules/network/exos: $team_extreme
   test/units/modules/network/ftd: *ftd
   test/units/modules/network/ios: *ios
@@ -1622,4 +1631,3 @@ macros:
   team_vultr: resmo Spredzy
   team_windows: jborean93 jhawkesworth nitzmahone ShachafGoldstein
   team_windows_core: nitzmahone jborean93
- 
