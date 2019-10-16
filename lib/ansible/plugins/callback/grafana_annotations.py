@@ -257,7 +257,7 @@ class CallbackModule(CallbackBase):
             data["dashboardId"] = int(self.dashboard_id)
         if self.panel_ids:
             for panel_id in self.panel_ids:
-                data["panelId"] = panel_id
+                data["panelId"] = int(panel_id)
                 self._send_annotation(data)
         else:
             self._send_annotation(data)
