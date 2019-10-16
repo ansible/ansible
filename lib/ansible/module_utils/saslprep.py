@@ -65,6 +65,9 @@ This code is mostly a copy of saslpre implementation available at
 https://bitbucket.org/ecollins/passlib/src/default/passlib/utils/__init__.py
 """
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import sys
 from ansible.module_utils.six import text_type
 from unicodedata import normalize
