@@ -247,6 +247,16 @@ data:
                             returned: success
                             type: str
                             sample: meraki:layer7/application/4
+                id:
+                    description: URI of application category.
+                    returned: success
+                    type: string
+                    sample: Email
+                name:
+                    description: Descriptive name of application category.
+                    returned: success
+                    type: string
+                    sample: layer7/category/1
 '''
 
 import copy
