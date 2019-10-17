@@ -272,7 +272,7 @@ import copy
 import re
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, set_nc_config, get_nc_config, execute_nc_action
+from ansible.module_utils.network.cloudengine.ce import set_nc_config, get_nc_config, execute_nc_action
 
 CE_NC_GET_GLOBAL_LLDPENABLE_CONFIG = """
 <filter type="subtree">
@@ -1383,7 +1383,7 @@ def main():
         dcbx=dict(required=False, choices=['true', 'false', '']),
         state=dict(required=False, choices=['absent', 'present'], default='present'),
     )
-    argument_spec.update(ce_argument_spec)
+
     lldp_interface_obj = Lldp_interface(argument_spec)
     lldp_interface_obj.work()
 
