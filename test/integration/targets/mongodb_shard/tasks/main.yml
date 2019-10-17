@@ -441,7 +441,7 @@
  # SSL testing
  ############################################################
 
- - include_tasks: mongod_teardown.yml
+- include_tasks: mongod_teardown.yml
 
 - set_fact:
     mongo_ssl: True
