@@ -19,11 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import re
-
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
-
-PRIVATE_KEYS_RE = re.compile('__.+__')
 
 
 class ActionModule(ActionNetworkModule):
@@ -31,5 +27,7 @@ class ActionModule(ActionNetworkModule):
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        self._config_module = True
+        self._config_module = True if self._task.action == 'voss_config' else False
+        if self._play_context.connection not in ('network_cli'):
+            return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
         return super(ActionModule, self).run(task_vars=task_vars)

@@ -5674,6 +5674,8 @@ lib/ansible/plugins/action/nxos.py action-plugin-docs # base class for deprecate
 lib/ansible/plugins/action/sros.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/vyos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/exos.py action-plugin-docs # undocumented action plugin to fix
+lib/ansible/plugins/action/slxos.py action-plugin-docs # undocumented action plugin to fix
+lib/ansible/plugins/action/voss.py action-plugin-docs # undocumented action plugin to fix
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
 lib/ansible/plugins/callback/hipchat.py pylint:blacklisted-name
 lib/ansible/plugins/connection/lxc.py pylint:blacklisted-name
