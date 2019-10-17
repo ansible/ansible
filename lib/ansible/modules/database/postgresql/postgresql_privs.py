@@ -72,7 +72,7 @@ options:
     - Schema that contains the database objects specified via I(objs).
     - May only be provided if I(type) is C(table), C(sequence), C(function), C(type),
       or C(default_privs). Defaults to C(public) in these cases.
-    - Pay attantion, for embedded types when I(type=type)
+    - Pay attention, for embedded types when I(type=type)
       I(schema) can be C(pg_catalog) or C(information_schema) respectively.
     type: str
   roles:
