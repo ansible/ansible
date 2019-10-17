@@ -437,6 +437,31 @@
       - "'{{ mongodb_replicaset2 }}/localhost:3004,localhost:3005,localhost:3006' not in mongo_output.stdout"
       - "'balancer' in mongo_output.stdout"
 
+ ############################################################
+ # SSL testing
+ ############################################################
+
+ - include_tasks: mongod_teardown.yml
+
+- set_fact:
+    mongo_ssl: True
+
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset1 }}"
+
+- set_fact:
+    mongodb_nodes: [ 3001, 3002, 3003 ]
+
+- include_tasks: mongod_replicaset.yml
+
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset2 }}"
+
+- set_fact:
+    mongodb_nodes: [ 3004, 3005, 3006 ]
+
+- include_tasks: mongod_replicaset.yml
+
 # TODO - Readd this test once we support serverSelectionTimeoutMS / connectTimeoutMS
 #- name: Run test with unknown host
 #  mongodb_shard:
