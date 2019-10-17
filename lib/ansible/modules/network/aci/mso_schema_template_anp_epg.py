@@ -347,7 +347,7 @@ def main():
             proxyArp=intersite_multicaste_source,
             # FIXME: Missing functionality
             # uSegAttrs=[],
-            contractRelationships=[],
+            # contractRelationships=[],
             subnets=subnets,
             bdRef=bd_ref,
             preferredGroup=preferred_group,
