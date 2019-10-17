@@ -173,10 +173,25 @@
       networks:
         - state: present
           mac: "00:50:56:58:59:61"
-          directpath_io: false
+          directpath_io: False
     register: disable_directpath_io
 
   - debug: var=disable_directpath_io
+
+  - name: enable DirectPath I/O on a Vmxnet3 adapter
+    vmware_guest_network:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines[0].name }}"
+      networks:
+        - state: present
+          mac: "00:50:56:58:59:61"
+          directpath_io: True
+    register: enable_directpath_io
+
+  - debug: var=enable_directpath_io
 
   - name: disconnect one specified network adapter
     vmware_guest_network:
