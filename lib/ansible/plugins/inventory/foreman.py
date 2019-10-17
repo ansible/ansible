@@ -76,8 +76,6 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name, Constructable
-from ansible.utils.vars import combine_vars
-from ansible.inventory.helpers import get_group_vars
 
 # 3rd party imports
 try:
@@ -233,13 +231,12 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
                 if self.get_option('want_facts'):
                     self.inventory.set_variable(host_name, 'ansible_facts', self._get_facts(host))
 
-                strict=self.get_option('strict')
+                strict = self.get_option('strict')
 
                 hostvars = self.inventory.get_host(host_name).get_vars()
                 self._set_composite_vars(self.get_option('compose'), hostvars, host_name, strict)
                 self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host_name, strict)
                 self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host_name, strict)
-
 
     def parse(self, inventory, loader, path, cache=True):
 
