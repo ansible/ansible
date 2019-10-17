@@ -234,8 +234,8 @@ class GitLabUser(object):
         # Assign ssh keys
         if options['sshkey_name'] and options['sshkey_file']:
             key_changed = self.addSshKeyToUser(user, {
-              'name': options['sshkey_name'],
-              'file': options['sshkey_file']})
+                'name': options['sshkey_name'],
+                'file': options['sshkey_file']})
             changed = changed or key_changed
 
         # Assign group
