@@ -206,7 +206,7 @@ class Vlans(ConfigBase):
 def generate_commands(vlan_id, to_set, to_remove):
     commands = []
     if "vlan_id" in to_remove:
-        return ["no vlan {}".format(vlan_id)]
+        return ["no vlan {0}".format(vlan_id)]
 
     for key, value in to_set.items():
         if value is None:
