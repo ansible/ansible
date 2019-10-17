@@ -501,6 +501,14 @@ releases:
     - win_unzip_share-discard-cmdlet-output.yaml
     - win_user-validate-fixes.yaml
     release_date: '2018-07-27'
+  2.6.20:
+    codename: Heartbreaker
+    fragments:
+    - boto-logging-credentials.yml
+    - dont-template-cli-passwords.yml
+    - no-log-sub-options-invalid-parameter.yaml
+    - v2.6.20_summary.yaml
+    release_date: '2019-10-17'
   2.6.3:
     codename: Heartbreaker
     fragments:
