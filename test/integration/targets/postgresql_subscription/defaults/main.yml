@@ -1,0 +1,4 @@
+pg_user: postgres
+db_default: postgres
+master_port: 5433
+replica_port: 5434
