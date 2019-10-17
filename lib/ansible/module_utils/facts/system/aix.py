@@ -218,18 +218,18 @@ class AIXSystemFactCollector(BaseFactCollector):
                    ],
         """
         options = {
-              "systemid": "-F",
-              "lannumber": "-l",
-              "lpar": "-L",
-              "id": "-m",
-              "model": "-M",
-              "name": "-n",
-              "architecture": "-p",
-              "release": "-r",
-              "os": "-s",
-              "serial": "-u",
-              "version": "-v",
-              }
+            "systemid": "-F",
+            "lannumber": "-l",
+            "lpar": "-L",
+            "id": "-m",
+            "model": "-M",
+            "name": "-n",
+            "architecture": "-p",
+            "release": "-r",
+            "os": "-s",
+            "serial": "-u",
+            "version": "-v",
+        }
         uname_facts = {}
 
         uname_facts['uname'] = []
