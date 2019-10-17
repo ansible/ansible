@@ -113,7 +113,7 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ virtual_machines[0].name }}"
+      name: test_vm1
       datacenter: '{{ dc1 }}'
     register: guest_info
 
@@ -125,14 +125,14 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      uuid: "{{ vm1_instance_uuid }}"
+      uuid: '{{ vm1_instance_uuid }}'
       use_instance_uuid: True
       networks:
         - name: "VM Network"
           state: new
           connected: True
           device_type: e1000e
-          manual_mac: "00:50:56:58:59:60"
+          manual_mac: "bb:50:56:58:59:60"
     register: add_netadapter_instanceuuid
 
   - debug: var=add_netadapter_instanceuuid
@@ -149,10 +149,10 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ virtual_machines[0].name }}"
+      name: test_vm1
       networks:
         - state: absent
-          mac: "00:50:56:58:59:60"
+          mac: "bb:50:56:58:59:60"
     register: del_again_netadapter
 
   - debug: var=del_again_netadapter
