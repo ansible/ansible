@@ -193,7 +193,13 @@ class ForemanInventory(object):
                 return json['results']
             # List of all hosts is returned paginaged
             results = results + json['results']
-            if len(results) >= json['subtotal']:
+            fetched = len(results)
+            self._debug("subtotal: {}, fetched {}".format(json['subtotal'], fetched))
+            # We're done if we get a page that isn't full when using a filter
+            if json['subtotal'] < params['per_page']:
+                break
+            # Without a filter subtotal == total, so check for number of hosts
+            if fetched >= json['total']:
                 break
             page += 1
             if len(json['results']) == 0:
