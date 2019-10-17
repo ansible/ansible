@@ -28,8 +28,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.network.common.netconf import remove_namespaces
 from ansible.module_utils.network.iosxr.iosxr import build_xml, etree_find
 from ansible.errors import AnsibleConnectionFailure
-from ansible.plugins.netconf import NetconfBase
-from ansible.plugins.netconf import ensure_connected, ensure_ncclient
+from ansible.plugins.netconf import NetconfBase, ensure_ncclient
 
 try:
     from ncclient import manager
@@ -42,7 +41,6 @@ except (ImportError, AttributeError):  # paramiko and gssapi are incompatible an
 
 
 class Netconf(NetconfBase):
-    @ensure_connected
     def get_device_info(self):
         device_info = {}
         device_info['network_os'] = 'iosxr'
@@ -122,8 +120,6 @@ class Netconf(NetconfBase):
         return guessed_os
 
     # TODO: change .xml to .data_xml, when ncclient supports data_xml on all platforms
-    @ensure_ncclient
-    @ensure_connected
     def get(self, filter=None, remove_ns=False):
         if isinstance(filter, list):
             filter = tuple(filter)
@@ -137,8 +133,6 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
-    @ensure_ncclient
-    @ensure_connected
     def get_config(self, source=None, filter=None, remove_ns=False):
         if isinstance(filter, list):
             filter = tuple(filter)
@@ -152,8 +146,6 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
-    @ensure_ncclient
-    @ensure_connected
     def edit_config(self, config=None, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None, remove_ns=False):
         if config is None:
             raise ValueError('config value must be provided')
@@ -168,8 +160,6 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
-    @ensure_ncclient
-    @ensure_connected
     def commit(self, confirmed=False, timeout=None, persist=None, remove_ns=False):
         try:
             resp = self.m.commit(confirmed=confirmed, timeout=timeout, persist=persist)
@@ -181,8 +171,6 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
-    @ensure_ncclient
-    @ensure_connected
     def validate(self, source="candidate", remove_ns=False):
         try:
             resp = self.m.validate(source=source)
@@ -194,8 +182,6 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
-    @ensure_ncclient
-    @ensure_connected
     def discard_changes(self, remove_ns=False):
         try:
             resp = self.m.discard_changes()
