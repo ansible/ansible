@@ -1,0 +1,2 @@
+minor_changes:
+  - podman connection - allow to add extra arguments to podman command and to configure the executable.

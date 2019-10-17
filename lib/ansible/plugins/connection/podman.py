@@ -10,6 +10,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import distutils.spawn
 import shlex
 import shutil
 import subprocess
@@ -48,6 +49,25 @@ DOCUMENTATION = """
           - name: ANSIBLE_REMOTE_USER
         vars:
           - name: ansible_user
+      podman_extra_args:
+        description:
+          - Extra arguments to pass to the podman command line.
+        default: ''
+        ini:
+          - section: defaults
+            key: podman_extra_args
+        vars:
+          - name: ansible_podman_extra_args
+        env:
+          - name: ANSIBLE_PODMAN_EXTRA_ARGS
+      podman_executable:
+        description:
+          - Executable for podman command.
+        default: podman
+        vars:
+          - name: ansible_podman_executable
+        env:
+          - name: ANSIBLE_PODMAN_EXECUTABLE
 """
 
 
@@ -79,7 +99,17 @@ class Connection(ConnectionBase):
         :param in_data: data passed to podman's stdin
         :return: return code, stdout, stderr
         """
-        local_cmd = ['podman', cmd]
+        podman_exec = self.get_option('podman_executable')
+        podman_cmd = distutils.spawn.find_executable(podman_exec)
+        if not podman_cmd:
+            raise AnsibleError("%s command not found in PATH" % podman_exec)
+        local_cmd = [podman_cmd]
+        if self.get_option('podman_extra_args'):
+            local_cmd += shlex.split(
+                to_native(
+                    self.get_option('podman_extra_args'),
+                    errors='surrogate_or_strict'))
+        local_cmd.append(cmd)
         if use_container_id:
             local_cmd.append(self._container_id)
         if cmd_args:
