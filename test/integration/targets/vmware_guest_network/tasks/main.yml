@@ -163,6 +163,21 @@
         - del_again_netadapter is changed
         - "{{ del_again_netadapter.network_data | length | int }} == {{ netadapter_num | int + 1 }}"
 
+  - name: disable DirectPath I/O on a Vmxnet3 adapter
+    vmware_guest_network:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines[0].name }}"
+      networks:
+        - state: present
+          mac: "00:50:56:58:59:61"
+          directpath_io: false
+    register: disable_directpath_io
+
+  - debug: var=disable_directpath_io
+
   - name: disconnect one specified network adapter
     vmware_guest_network:
       validate_certs: False
