@@ -15,6 +15,8 @@ Install multiple collections with a requirements file
 
 .. include:: ../../../../../docsite/rst/shared_snippets/installing_multiple_collections.txt
 
+.. _galaxy_server_list:
+
 Galaxy server configuration list
 --------------------------------
 
