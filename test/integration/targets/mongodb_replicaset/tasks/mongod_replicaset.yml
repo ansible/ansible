@@ -39,7 +39,7 @@
     country_name: US
     organization_name: Ansible
     email_address: integration-tests@ansible.com
-    common_name: "{{item}}.ansible.com"
+    common_name: "localhost"
   with_items:
     - ca
     - mongo
