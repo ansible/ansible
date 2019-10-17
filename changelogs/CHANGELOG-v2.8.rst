@@ -5,6 +5,96 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.6
+======
+
+Release Summary
+---------------
+
+| Release Date: 2019-10-17
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test defaults to redacting sensitive values (disable with the ``--no-redact`` option)
+- dnf - Properly handle idempotent transactions with package name wildcard globs (https://github.com/ansible/ansible/issues/62809)
+
+Bugfixes
+--------
+
+- **SECURITY** - CVE-2019-14846 - Several Ansible plugins could disclose aws credentials in log files.  inventory/aws_ec2.py, inventory/aws_rds.py, lookup/aws_account_attribute.py, and lookup/aws_secret.py, lookup/aws_ssm.py use the boto3 library from the Ansible process. The boto3 library logs credentials at log level DEBUG.  If Ansible's logging was enabled (by setting LOG_PATH to a value) Ansible would set the global log level to DEBUG.  This was inherited by boto and would then log boto credentials to the file specified by LOG_PATH.  This did not affect aws ansible modules as those are executed in a separate process.  This has been fixed by switching to log level INFO
+- **security issue** - Convert CLI provided passwords to text initially, to prevent unsafe context being lost when converting from bytes->text during post processing of PlayContext. This prevents CLI provided passwords from being incorrectly templated (CVE-2019-14856)
+
+- **security issue** - properly hide parameters marked with ``no_log`` in suboptions when invalid parameters are passed to the module (CVE-2019-14858)
+- ACI modules - Fix a whitespace issue in filters for ACI 4.2 strict validation
+- ACME modules: fix bug in ACME v1 account update code
+- ACME modules: support Buypass' ACME v1 endpoint
+- Cloudengine module_utils - the ``set-id`` (RPC-REPLY XML attribute) may change over the time althougth ``set-id`` is the identity of the next RPC packet.
+- Cloudengine netconf plugin - add a dispatch RPC function,just return original RPC-REPLY, the function is used by ``Cloudengine module_utils``.
+- For package_facts, correct information about apt being missing and fix missing attribute.
+- ansible-podman connection plugin - Fix case when mount of podman container fails and files can't be copied to/from container. Also add error handling in case of failed podman commands. (https://github.com/ansible/ansible/issues/57740)
+- ansible-test now updates SSH keys it generates with newer versions of ssh-keygen to function with Paramiko
+- ce_bgp - update to fix some bugs - When the vrf_name parameter is in the module and the configuration is repeatedly sent to the device, the module displays change = True. (https://github.com/ansible/ansible/pull/60573)
+- ce_bgp_af - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/62589)
+- ce_bgp_neighbor - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/60934)
+- ce_bgp_neighbor_af - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/60937)
+- ce_evpn_bgp - update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61136)
+- ce_evpn_bgp_rr - update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61168)
+- ce_evpn_global - update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61013)
+- ce_facts - update to fix some bugs - Modifying regular expression errors. (https://github.com/ansible/ansible/pull/63331)
+- ce_file_copy - update to Compatible with multiple version of NETCONF API(sshServer). (https://github.com/ansible/ansible/pull/59450)
+- ce_info_center_global- update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/61283)
+- ce_interface_ospf- update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/61431)
+- ce_link_status - fix some bugs, result of interface <get> operation involves a large amount of data,interact with the device through the <get-next>.(https://github.com/ansible/ansible/pull/62417).
+- ce_mtu- update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61442)
+- ce_netstream_aging - Fix bugs(list index out of range).
+- ce_netstream_aging- update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61653)
+- ce_netstream_export- update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61652)
+- ce_netstream_global -  Fix bugs(list index out of range and key error).
+- ce_netstream_template - Fix bugs(list index out of range and update commands error).
+- ce_ntp - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/61654)
+- ce_ospf - update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61684)
+- ce_snmp_target_host - update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61842)
+- ce_snmp_traps - update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61843)
+- ce_static_route - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/62498)
+- ce_stp - update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61774)
+- ce_vrf_af - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/61683)
+- ce_vxlan_arp - update to fix some bugs - Modifying regular expressions. (https://github.com/ansible/ansible/pull/61995)
+- ce_vxlan_vap - update to fix some bugs - Modify the Operator Difference between Python 2 and Python 3. (https://github.com/ansible/ansible/pull/61996)
+- clarify error messages for 'auto' and missing libs, add missing lib msg for rpm.
+- cron and cronvar - use get_bin_path utility to locate the default crontab executable instead of the hardcoded /usr/bin/crontab. (https://github.com/ansible/ansible/pull/59765)
+- cron cronvar - only run ``get_bin_path()`` once
+- cronvar - use correct binary name (https://github.com/ansible/ansible/issues/63274)
+- debug - fixed an issue introduced in Ansible 2.4 where a loop of debug tasks would lose the "changed" status on each item.
+- display - remove leading space when displaying WARNING messages
+- docker_container - fix idempotency for IP addresses for networks. The old implementation checked the effective IP addresses assigned by the Docker daemon, and not the specified ones. This causes idempotency issues for containers which are not running, since they have no effective IP addresses assigned.
+- docker_container - make sure that when image is missing, check mode indicates a change (image will be pulled).
+- docker_image - make sure that deprecated options also emit proper deprecation warnings next to warnings which indicate how to replace them.
+- docker_login - correct broken fix for https://github.com/ansible/ansible/pull/60381 which crashes for Python 3.
+- docker_node_info - improve error handling when service inspection fails, for example because node name being ambiguous (https://github.com/ansible/ansible/issues/63353, PR https://github.com/ansible/ansible/pull/63418).
+- eos_bgp - Fix fetching AS failure if BGP is not already configured (https://github.com/ansible/ansible/pull/58756)
+- facts/virtual
+- firewalld - enable the firewalld module to function offline with firewalld version 0.7.0 and newer (https://github.com/ansible/ansible/issues/63254)
+- get_url - Don't treat no checksum as a checksum match (https://github.com/ansible/ansible/issues/61978)
+- jenkins modules - CSRF handling fixed accordingly the latest updates in Jenkins Security model for versions > 2.173.3
+- junos_user - Add no_log=True to junos_user `encrypted_password` (https://github.com/ansible/ansible/pull/62184)
+- junos_user - fixed issue with adding multiple values for a Junos account with aggregate mode
+- lineinfile - fix bug that caused multiple line insertions (https://github.com/ansible/ansible/issues/58923).
+- mso_schema_template_bd - Fix incorrect payload when setting intersiteBUMTrafficAllow.
+- openssl_certificate - fix ``assertonly`` provider certificate verification, causing 'private key mismatch' and 'subject mismatch' errors.
+- package_facts - use module warnings rather than a custom implementation for reporting warnings
+- plugins-netconf-ce - to get attribute 'set-id' from rpc-reply.
+- psexec - Fix issue where the Kerberos package was not detected as being available.
+- psexec - Fix issue where the ``interactive`` option was not being passed down to the library.
+- rabbitmq lookup plugin - Fix for rabbitmq lookups failing when using pika v1.0.0 and newer.
+- rabbitmq_publish - Fix to ensure the module works correctly for pika v1.0.0 and later. (https://github.com/ansible/ansible/pull/61960)
+- sts_assume_role - fix assertion text in integration test
+- user - fix stack trace on AIX when attempting to parse shadow file that does not exist (https://github.com/ansible/ansible/issues/62510)
+- vmware_deploy_ovf use user specified resource pool or resource pool pod rather than cluster default (https://github.com/ansible/ansible/issues/61645).
+- win_exec_wrapper - Be more defensive when it comes to getting unhandled exceptions
+
 v2.8.5
 ======
 
@@ -2126,7 +2216,7 @@ fortios
 - fortios_report_layout - Report layout configuration in Fortinet's FortiOS and FortiGate.
 - fortios_report_setting - Report setting configuration in Fortinet's FortiOS and FortiGate.
 - fortios_report_style - Report style configuration in Fortinet's FortiOS and FortiGate.
-- fortios_report_theme - Report themes configuratio in Fortinet's FortiOS and FortiGate.
+- fortios_report_theme - Report themes configuration in Fortinet's FortiOS and FortiGate.
 - fortios_router_access_list - Configure access lists in Fortinet's FortiOS and FortiGate.
 - fortios_router_auth_path - Configure authentication based routing in Fortinet's FortiOS and FortiGate.
 - fortios_router_bfd - Configure BFD in Fortinet's FortiOS and FortiGate.

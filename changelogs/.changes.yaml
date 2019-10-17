@@ -1890,3 +1890,74 @@ releases:
     - win_domain-exceptions-2.yaml
     - win_domain-exceptions.yaml
     release_date: '2019-09-12'
+  2.8.6:
+    codename: How Many More Times
+    fragments:
+    - 55919-rabbitmq_publish-fix-for-recent-pika-versions.yml
+    - 57741-podman-connection-plugin-fix-mount.yaml
+    - 58756-fix_eos_bgp_fetching_as.yaml
+    - 58978-junos_user-fix-ssh-key-assignment.yaml
+    - 59450-ce_file_copy_different_version_sshserver_xml.yml
+    - 59765-cron-cronvar-use-get-bin-path.yaml
+    - 60569-plugins-netconf-ce.yml
+    - 60573-ce_bgp-to-fix-bugs.yml
+    - 60634-ce_bgp_neighbor-to-fix-bugs.yml
+    - 60937-ce_bgp_neighbor_af-to-fix-bugs.yml
+    - 61013-ce_evpn_bgp-to-fix-bugs.yml
+    - 61136-ce_evpn_bgp-to-fix-bugs.yml
+    - 61168-ce_evpn_bgp_rrl-to-fix-bugs.yml
+    - 61283-ce_info_center_global-to-fix-bugs.yml
+    - 61431-ce_interface_ospf-to-fix-bugs.yml
+    - 61442-ce_mtu-to-fix-bugs.yml
+    - 61652-ce_netstream_export-to-fix-bugs.yml
+    - 61653-ce_netstream_aging-to-fix-bugs.yml
+    - 61654-ce_ntp-to-fix-bugs.yml
+    - 61672-jenkins_modules-csrf-handling-in-versions-more-2.173.3.yaml
+    - 61683-ce_vrf_af-to-fix-bugs.yml
+    - 61684-ce_ospf-to-fix-bugs.yml
+    - 61693-acme-buypass-acme-v1.yml
+    - 61774-ce_stp-to-fix-bugs.yml
+    - 61842-ce_snmp_target_host-to-fix-bugs.yml
+    - 61843-ce_snmp_traps-to-fix-bugs.yml
+    - 61978-get-url-no-checksum.yml
+    - 61995-ce_vxlan_arp-to-fix-bugs.yml
+    - 61996-ce_vxlan_vap-to-fix-bugs.yml
+    - 62184-junos_user_encrypted_password_fix.yaml
+    - 62498-ce_static_route-to-fix-bugs.yml
+    - 62587-module_utils-network-cloudengine.yml
+    - 62589-ce_bgp_af-to-fix-bugs.yml
+    - 62621-docker_login-fix-60381.yaml
+    - 62790-openssl_certificate_fix_assert.yml
+    - 62809-dnf-wildcard-absent-failure.yml
+    - 62857-detect-freebsd-jails.yaml
+    - 62928-docker_container-ip-address-idempotency.yml
+    - 62971-docker_container-image-finding.yml
+    - 63194-lineinfile_insertafter_duplicate.yaml
+    - 63249-fix-sts-assume-role-test.yml
+    - 63331-ce_facts-to-fix-bugs.yml
+    - 63345-docker_image-deprecation-warnings.yml
+    - 63388_ce_netsream_list_index_out_of_range.yml
+    - 63418-docker_node_info-errors.yml
+    - 63422-ce_link_status_fix_bugs.yaml
+    - aci-42-filter-whitespace.yaml
+    - ansible-test-redact.yml
+    - ansible-test-ssh-keygen-fix.yml
+    - boto-logging-credentials.yml
+    - cron-only-get-bin-path-once.yaml
+    - cronvar-correct-binary-name.yaml
+    - debug_loop_changed.yaml
+    - display-warning-remove-erroneous-space.yaml
+    - dont-template-cli-passwords.yml
+    - firewalld-version-0_7_0.yml
+    - lookup_rabbitmq-is_closing-bug.yml
+    - mso_schema_template_bd-payload-fix.yaml
+    - no-log-sub-options-invalid-parameter.yaml
+    - package-facts-use-module-warnings.yaml
+    - package_facts_apt_fix.yml
+    - package_facts_clarify.yml
+    - psexec-kerb-and-interactive.yaml
+    - user-aix-shadow-unbound-local.yaml
+    - v2.8.6_summary.yaml
+    - vmware-use_non_default.yml
+    - win_exec-error.yaml
+    release_date: '2019-10-17'
