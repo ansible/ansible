@@ -1,0 +1,2 @@
+bugfixes:
+- "ansible-galaxy cli - fixed ``--version`` argument"
