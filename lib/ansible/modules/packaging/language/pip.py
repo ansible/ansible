@@ -97,7 +97,7 @@ options:
     description:
       - The explicit executable or pathname for the pip executable,
         if different from the Ansible Python interpreter. For
-        example C(pip-3.3), if there are both Python 2.7 and 3.3 installations
+        example C(pip3.3), if there are both Python 2.7 and 3.3 installations
         in the system and you want to run pip for the Python 3.3 installation.
       - Mutually exclusive with I(virtualenv) (added in 2.1).
       - Does not affect the Ansible Python interpreter.
@@ -212,10 +212,10 @@ EXAMPLES = '''
     requirements: /my_app/requirements.txt
     extra_args: "--no-index --find-links=file:///my_downloaded_packages_dir"
 
-# Install (Bottle) for Python 3.3 specifically,using the 'pip-3.3' executable.
+# Install (Bottle) for Python 3.3 specifically,using the 'pip3.3' executable.
 - pip:
     name: bottle
-    executable: pip-3.3
+    executable: pip3.3
 
 # Install (Bottle), forcing reinstallation if it's already installed
 - pip:
