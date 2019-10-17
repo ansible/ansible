@@ -69,6 +69,7 @@ decide to do something conditionally based on success or failure::
 
 
 .. note:: both `success` and `succeeded` work (`fail`/`failed`, etc).
+.. warning:: Do NOT use `defined` or `default` to check if a variable was skipped. A skipped variable is still defined - metadata is inserted into the variable to record whether it was skipped, among other things.
 
 
 To see what facts are available on a particular system, you can do the following in a playbook::
