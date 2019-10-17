@@ -159,7 +159,7 @@
     login_database: "admin"
     replica_set: "{{ mongodb_replicaset1 }}"
     ssl_cert_reqs: CERT_OPTIONAL
-    ssl_ca_certs: "{{ remote_tmp_dir }}/mongo_ca.pem"
+    ssl_ca_certs: "{{ remote_tmp_dir }}/ca.pem"
     ssl_certfile: "{{ remote_tmp_dir }}/mongo-client-chain.pem"
     heartbeat_timeout_secs: 1
     election_timeout_millis: 1000
@@ -169,7 +169,7 @@
      - "localhost:3003"
 
 - name: Get replicaset info
-  command: mongo admin --ssl --sslAllowInvalidHostnames --sslCAFile {{ remote_tmp_dir }}/mongo_ca.pem  --sslPEMKeyFile {{ remote_tmp_dir }}/mongo-client-chain.pem --eval "rs.status()" --port 3001
+  command: mongo admin --ssl --sslAllowInvalidHostnames --sslCAFile {{ remote_tmp_dir }}/ca.pem  --sslPEMKeyFile {{ remote_tmp_dir }}/mongo-client-chain.pem --eval "rs.status()" --port 3001
   register: mongo_output
 
 - name: Assert replicaset name is in mongo_output
