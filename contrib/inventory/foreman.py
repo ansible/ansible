@@ -156,7 +156,12 @@ class ForemanInventory(object):
         parser.add_argument('--host', action='store', help='Get all the variables about a specific instance')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
                             help='Force refresh of cache by making API requests to foreman (default: False - use cache files)')
+        parser.add_argument('--debug', action='store_true', default=False, help='Enable debug output (default: False)')
         self.args = parser.parse_args()
+
+    def _debug(self, msg):
+        if self.args.debug:
+            print(msg)
 
     def _get_session(self):
         if not self.session:
