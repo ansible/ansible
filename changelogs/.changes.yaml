@@ -1283,3 +1283,15 @@ releases:
     - galaxy_api_config.yaml
     - v2.9.0rc3_summary.yaml
     release_date: '2019-10-10'
+  2.9.0rc4:
+    codename: Immigrant Song
+    fragments:
+    - 63628-ansible-galaxy-fix-version.yml
+    - ansible-galaxy-handle-import-task-url-changes.yml
+    - ansible-test-default-test-container-1.10.1.yml
+    - ansile-galaxy-preserve-api-append.yml
+    - dont-template-cli-passwords.yml
+    - firewalld-version-0_7_0.yml
+    - no-log-sub-options-invalid-parameter.yaml
+    - v2.9.0rc4_summary.yaml
+    release_date: '2019-10-17'
