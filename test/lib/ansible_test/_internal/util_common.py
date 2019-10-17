@@ -335,6 +335,8 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
     """
     if not env:
         env = common_environment()
+    else:
+        env = env.copy()
 
     cmd = list(cmd)
     version = python_version or args.python_version
