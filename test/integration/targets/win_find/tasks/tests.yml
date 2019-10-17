@@ -7,19 +7,19 @@
 
 - name: expect failure when setting paths to a file
   win_find:
-    paths: "{{win_output_dir}}\\win_find\\single\\large.ps1"
+    paths: "{{win_find_dir}}\\single\\large.ps1"
   register: actual
-  failed_when: actual.msg != 'Argument path ' + win_output_dir + '\\win_find\\single\\large.ps1 is a file not a directory'
+  failed_when: actual.msg != 'Argument path ' + win_find_dir + '\\single\\large.ps1 is a file not a directory'
 
 - name: expect failure when path is set to a non existent folder
   win_find:
-    paths: "{{win_output_dir}}\\win_find\\thisisafakefolder"
+    paths: "{{win_find_dir}}\\thisisafakefolder"
   register: actual
-  failed_when: actual.msg != 'Argument path ' + win_output_dir + '\\win_find\\thisisafakefolder does not exist cannot get information on'
+  failed_when: actual.msg != 'Argument path ' + win_find_dir + '\\thisisafakefolder does not exist cannot get information on'
 
 - name: get files in single directory
   win_find:
-    paths: "{{win_output_dir}}\\win_find\\single"
+    paths: "{{win_find_dir}}\\single"
   register: actual
 
 - name: set expected value for files in a single directory
@@ -197,22 +197,6 @@
           checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
           creationtime: 1477984205,
           extension: .ps1,
-          filename: test.ps1,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\sub-nest\\test.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 14 }
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
-          creationtime: 1477984205,
-          extension: .ps1,
           filename: file.ps1,
           ishidden: False,
           isdir: False,
@@ -221,6 +205,22 @@
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
           path: "{{win_find_dir}}\\nested\\file.ps1",
+          isreadonly: False,
+          isshared: False,
+          size: 14 }
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
+          creationtime: 1477984205,
+          extension: .ps1,
+          filename: test.ps1,
+          ishidden: False,
+          isdir: False,
+          islnk: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_find_dir}}\\nested\\sub-nest\\test.ps1",
           isreadonly: False,
           isshared: False,
           size: 14 }
@@ -266,6 +266,22 @@
           checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
           creationtime: 1477984205,
           extension: .ps1,
+          filename: file.ps1,
+          ishidden: False,
+          isdir: False,
+          islnk: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_find_dir}}\\nested\\file.ps1",
+          isreadonly: False,
+          isshared: False,
+          size: 14 }
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
+          creationtime: 1477984205,
+          extension: .ps1,
           filename: link.ps1,
           ishidden: False,
           isdir: False,
@@ -290,22 +306,6 @@
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
           path: "{{win_find_dir}}\\nested\\sub-nest\\test.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 14 }
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
-          creationtime: 1477984205,
-          extension: .ps1,
-          filename: file.ps1,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\file.ps1",
           isreadonly: False,
           isshared: False,
           size: 14 }

@@ -148,12 +148,12 @@ RETURN = '''
 identity:
     description: The identity being modified.
     returned: success
-    type: string
+    type: str
     sample: example@example.com
 identity_arn:
     description: The arn of the identity being modified.
     returned: success
-    type: string
+    type: str
     sample: arn:aws:ses:us-east-1:12345678:identity/example@example.com
 verification_attributes:
     description: The verification information for the identity.
@@ -166,11 +166,11 @@ verification_attributes:
     contains:
         verification_status:
             description: The verification status of the identity.
-            type: string
+            type: str
             sample: "Pending"
         verification_token:
             description: The verification token for a domain identity.
-            type: string
+            type: str
 notification_attributes:
     description: The notification setup for the identity.
     returned: success
@@ -189,17 +189,17 @@ notification_attributes:
             description:
               - The ARN of the topic bounce notifications are delivered to.
               - Omitted if bounce notifications are not delivered to a topic.
-            type: string
+            type: str
         complaint_topic:
             description:
               - The ARN of the topic complaint notifications are delivered to.
               - Omitted if complaint notifications are not delivered to a topic.
-            type: string
+            type: str
         delivery_topic:
             description:
               - The ARN of the topic delivery notifications are delivered to.
               - Omitted if delivery notifications are not delivered to a topic.
-            type: string
+            type: str
         forwarding_enabled:
             description: Whether or not feedback forwarding is enabled.
             type: bool
@@ -215,7 +215,7 @@ notification_attributes:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, get_aws_connection_info
 
 import time
 
@@ -526,7 +526,7 @@ def main():
     state = module.params.get("state")
 
     if state == 'present':
-        region = module.params.get('region')
+        region = get_aws_connection_info(module, boto3=True)[0]
         account_id = get_account_id(module)
         validate_params_for_identity_present(module)
         create_or_update_identity(connection, module, region, account_id)

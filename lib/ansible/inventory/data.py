@@ -156,20 +156,24 @@ class InventoryData(object):
         return matching_host
 
     def add_group(self, group):
-        ''' adds a group to inventory if not there already '''
+        ''' adds a group to inventory if not there already, returns named actually used '''
 
         if group:
             if not isinstance(group, string_types):
                 raise AnsibleError("Invalid group name supplied, expected a string but got %s for %s" % (type(group), group))
             if group not in self.groups:
                 g = Group(group)
-                self.groups[group] = g
-                self._groups_dict_cache = {}
-                display.debug("Added group %s to inventory" % group)
+                if g.name not in self.groups:
+                    self.groups[g.name] = g
+                    self._groups_dict_cache = {}
+                    display.debug("Added group %s to inventory" % group)
+                group = g.name
             else:
                 display.debug("group %s already in inventory" % group)
         else:
             raise AnsibleError("Invalid empty/false group name provided: %s" % group)
+
+        return group
 
     def remove_group(self, group):
 
@@ -188,6 +192,8 @@ class InventoryData(object):
         if host:
             if not isinstance(host, string_types):
                 raise AnsibleError("Invalid host name supplied, expected a string but got %s for %s" % (type(host), host))
+
+            # TODO: add to_safe_host_name
             g = None
             if group:
                 if group in self.groups:
@@ -223,6 +229,8 @@ class InventoryData(object):
         else:
             raise AnsibleError("Invalid empty host name provided: %s" % host)
 
+        return host
+
     def remove_host(self, host):
 
         if host.name in self.hosts:
@@ -233,7 +241,7 @@ class InventoryData(object):
             g.remove_host(host)
 
     def set_variable(self, entity, varname, value):
-        ''' sets a varible for an inventory object '''
+        ''' sets a variable for an inventory object '''
 
         if entity in self.groups:
             inv_object = self.groups[entity]

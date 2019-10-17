@@ -150,8 +150,8 @@ RETURN = '''
 msg:
   description: Success or failure message
   returned: always
-  type: string
-  sample: "Config file tranferred to server"
+  type: str
+  sample: "Config file transferred to server"
 '''
 
 import sys
@@ -165,13 +165,13 @@ import os
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True
-except:
+except Exception:
     HAS_LIB = False
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
 
 
-# Utility Method to back up the running config or start up copnfig
+# Utility Method to back up the running config or start up config
 # This method supports only SCP or SFTP or FTP or TFTP
 # Tuning of timeout parameter is pending
 def doConfigBackUp(module, prompt, answer):
@@ -266,7 +266,7 @@ def main():
     # Logic to check when changes occur or not
     errorMsg = cnos.checkOutputForError(output)
     if(errorMsg is None):
-        module.exit_json(changed=True, msg="Config file tranferred to server")
+        module.exit_json(changed=True, msg="Config file transferred to server")
     else:
         module.fail_json(msg=errorMsg)
 

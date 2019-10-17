@@ -78,7 +78,7 @@ EXAMPLES = '''
     name: www
     ttl: 7200
 
-# Delete recorset named "www.example.net."
+# Delete recordset named "www.example.net."
 - os_recordset:
     cloud: mycloud
     state: absent
@@ -94,23 +94,23 @@ recordset:
     contains:
         id:
             description: Unique recordset ID
-            type: string
+            type: str
             sample: "c1c530a3-3619-46f3-b0f6-236927b2618c"
         name:
             description: Recordset name
-            type: string
+            type: str
             sample: "www.example.net."
         zone_id:
             description: Zone id
-            type: string
+            type: str
             sample: 9508e177-41d8-434e-962c-6fe6ca880af7
         type:
             description: Recordset type
-            type: string
+            type: str
             sample: "A"
         description:
             description: Recordset description
-            type: string
+            type: str
             sample: "Test description"
         ttl:
             description: Zone TTL value

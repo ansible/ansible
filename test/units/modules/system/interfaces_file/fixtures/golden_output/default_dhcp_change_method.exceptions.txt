@@ -1,0 +1,8 @@
+fail_json message: Error: interface eth1 not found
+options:
+{
+    "iface": "eth1",
+    "option": "method",
+    "state": "present",
+    "value": "dhcp"
+}

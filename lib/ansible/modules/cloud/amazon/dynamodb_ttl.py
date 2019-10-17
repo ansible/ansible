@@ -74,9 +74,8 @@ try:
 except ImportError:
     pass
 
-import ansible.module_utils.ec2
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, camel_dict_to_snake_dict, HAS_BOTO3
+from ansible.module_utils.ec2 import HAS_BOTO3, boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
 
 
 def get_current_ttl_state(c, table_name):
@@ -137,8 +136,8 @@ def main():
         module.fail_json(msg='Found botocore in version {0}, but >= {1} is required for TTL support'.format(botocore.__version__, '1.5.24'))
 
     try:
-        region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(module, boto3=True)
-        dbclient = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='dynamodb', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        dbclient = boto3_conn(module, conn_type='client', resource='dynamodb', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg=str(e))
 

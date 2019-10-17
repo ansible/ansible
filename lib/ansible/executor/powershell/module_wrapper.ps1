@@ -29,13 +29,18 @@ value is a base64 string of the module util code.
 
 .PARAMETER ModuleName
 [String] The name of the module that is being executed.
+
+.PARAMETER Breakpoints
+A list of line breakpoints to add to the runspace debugger. This is used to
+track module and module_utils coverage.
 #>
 param(
     [Object[]]$Scripts,
     [System.Collections.ArrayList][AllowEmptyCollection()]$Variables,
     [System.Collections.IDictionary]$Environment,
     [System.Collections.IDictionary]$Modules,
-    [String]$ModuleName
+    [String]$ModuleName,
+    [System.Management.Automation.LineBreakpoint[]]$Breakpoints = @()
 )
 
 Write-AnsibleLog "INFO - creating new PowerShell pipeline for $ModuleName" "module_wrapper"
@@ -92,6 +97,23 @@ foreach ($script in $Scripts) {
     $ps.AddScript($script).AddStatement() > $null
 }
 
+if ($Breakpoints.Count -gt 0) {
+    Write-AnsibleLog "INFO - adding breakpoint to runspace that will run the modules" "module_wrapper"
+    if ($PSVersionTable.PSVersion.Major -eq 3) {
+        # The SetBreakpoints method was only added in PowerShell v4+. We need to rely on a private method to
+        # achieve the same functionality in this older PowerShell version. This should be removed once we drop
+        # support for PowerShell v3.
+        $set_method = $ps.Runspace.Debugger.GetType().GetMethod(
+            'AddLineBreakpoint', [System.Reflection.BindingFlags]'Instance, NonPublic'
+        )
+        foreach ($b in $Breakpoints) {
+            $set_method.Invoke($ps.Runspace.Debugger, [Object[]]@(,$b)) > $null
+        }
+    } else {
+        $ps.Runspace.Debugger.SetBreakpoints($Breakpoints)
+    }
+}
+
 Write-AnsibleLog "INFO - start module exec with Invoke() - $ModuleName" "module_wrapper"
 
 # temporarily override the stdout stream and create our own in a StringBuilder
@@ -106,8 +128,22 @@ try {
 } catch {
     # uncaught exception while executing module, present a prettier error for
     # Ansible to parse
-    Write-AnsibleError -Message "Unhandled exception while executing module" `
-        -ErrorRecord $_.Exception.InnerException.ErrorRecord
+    $error_params = @{
+        Message = "Unhandled exception while executing module"
+        ErrorRecord = $_
+    }
+
+    # Be more defensive when trying to find the InnerException in case it isn't
+    # set. This shouldn't ever be the case but if it is then it makes it more
+    # difficult to track down the problem.
+    if ($_.Exception.PSObject.Properties.Name -contains "InnerException") {
+        $inner_exception = $_.Exception.InnerException
+        if ($inner_exception.PSObject.Properties.Name -contains "ErrorRecord") {
+            $error_params.ErrorRecord = $inner_exception.ErrorRecord
+        }
+    }
+
+    Write-AnsibleError @error_params
     $host.SetShouldExit(1)
     return
 } finally {
@@ -118,8 +154,24 @@ try {
 # other types of errors may not throw an exception in Invoke but rather just
 # set the pipeline state to failed
 if ($ps.InvocationStateInfo.State -eq "Failed" -and $ModuleName -ne "script") {
-    Write-AnsibleError -Message "Unhandled exception while executing module" `
-        -ErrorRecord $ps.InvocationStateInfo.Reason.ErrorRecord
+    $reason = $ps.InvocationStateInfo.Reason
+    $error_params = @{
+        Message = "Unhandled exception while executing module"
+    }
+
+    # The error record should always be set on the reason but this does not
+    # always happen on Server 2008 R2 for some reason (probably memory hotfix).
+    # Be defensive when trying to get the error record and fall back to other
+    # options.
+    if ($null -eq $reason) {
+        $error_params.Message += ": Unknown error"
+    } elseif ($reason.PSObject.Properties.Name -contains "ErrorRecord") {
+        $error_params.ErrorRecord = $reason.ErrorRecord
+    } else {
+        $error_params.Message += ": $($reason.ToString())"
+    }
+
+    Write-AnsibleError @error_params
     $host.SetShouldExit(1)
     return
 }

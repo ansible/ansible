@@ -113,11 +113,11 @@ RETURN = '''
 put_parameter:
     description: Add one or more parameters to the system.
     returned: success
-    type: dictionary
+    type: dict
 delete_parameter:
     description: Delete a parameter from the system.
     returned: success
-    type: dictionary
+    type: dict
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -166,7 +166,7 @@ def create_update_parameter(client, module):
 
     try:
         existing_parameter = client.get_parameter(Name=args['Name'], WithDecryption=True)
-    except:
+    except Exception:
         pass
 
     if existing_parameter:

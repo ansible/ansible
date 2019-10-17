@@ -1,0 +1,140 @@
+---
+
+- name: Ensure testing1 namespace exists
+  k8s:
+    api_version: v1
+    kind: Namespace
+    name: testing1
+
+- block:
+  - name: Create configmaps
+    k8s:
+      namespace: testing1
+      definition:
+        apiVersion: v1
+        kind: ConfigMapList
+        items: '{{ configmaps }}'
+
+  - name: Get ConfigMaps
+    k8s_info:
+      api_version: v1
+      kind: ConfigMap
+      namespace: testing1
+      label_selectors:
+      - app=test
+    register: cms
+
+  - name: All three configmaps should exist
+    assert:
+      that: item.data.a is defined
+    with_items: '{{ cms.resources }}'
+
+  - name: Delete configmaps
+    k8s:
+      state: absent
+      namespace: testing1
+      definition:
+        apiVersion: v1
+        kind: ConfigMapList
+        items: '{{ configmaps }}'
+
+  - name: Get ConfigMaps
+    k8s_info:
+      api_version: v1
+      kind: ConfigMap
+      namespace: testing1
+      label_selectors:
+      - app=test
+    register: cms
+
+  - name: All three configmaps should not exist
+    assert:
+      that: not cms.resources
+  vars:
+    configmaps:
+    - metadata:
+        name: list-example-1
+        labels:
+          app: test
+      data:
+        a: first
+    - metadata:
+        name: list-example-2
+        labels:
+          app: test
+      data:
+        a: second
+    - metadata:
+        name: list-example-3
+        labels:
+          app: test
+      data:
+        a: third
+
+- block:
+  - name: Create list of arbitrary resources
+    k8s:
+      namespace: testing1
+      definition:
+        apiVersion: v1
+        kind: List
+        namespace: testing1
+        items: '{{ resources }}'
+
+  - name: Get the created resources
+    k8s_info:
+      api_version: '{{ item.apiVersion }}'
+      kind: '{{ item.kind }}'
+      namespace: testing1
+      name: '{{ item.metadata.name }}'
+    register: list_resources
+    with_items: '{{ resources }}'
+
+  - name: All resources should exist
+    assert:
+      that: ((list_resources.results | sum(attribute="resources", start=[])) | length) == (resources | length)
+
+  - name: Delete list of arbitrary resources
+    k8s:
+      state: absent
+      namespace: testing1
+      definition:
+        apiVersion: v1
+        kind: List
+        namespace: testing1
+        items: '{{ resources }}'
+
+  - name: Get the resources
+    k8s_info:
+      api_version: '{{ item.apiVersion }}'
+      kind: '{{ item.kind }}'
+      namespace: testing1
+      name: '{{ item.metadata.name }}'
+    register: list_resources
+    with_items: '{{ resources }}'
+
+  - name: The resources should not exist
+    assert:
+      that: not ((list_resources.results | sum(attribute="resources", start=[])) | length)
+  vars:
+    resources:
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: list-example-4
+      data:
+        key: value
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: list-example-svc
+        labels:
+          app: test
+      spec:
+        selector:
+          app: test
+        ports:
+        - protocol: TCP
+          targetPort: 8000
+          name: port-8000-tcp
+          port: 8000

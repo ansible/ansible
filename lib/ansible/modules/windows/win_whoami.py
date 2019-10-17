@@ -24,12 +24,16 @@ notes:
 - If running this module with a non admin user, the logon rights will be an
   empty list as Administrator rights are required to query LSA for the
   information.
+seealso:
+- module: win_credential
+- module: win_group_membership
+- module: win_user_right
 author:
 - Jordan Borean (@jborean93)
 '''
 
 EXAMPLES = r'''
-- name: get whoami information
+- name: Get whoami information
   win_whoami:
 '''
 
@@ -174,7 +178,7 @@ rights:
       "SeRemoteInteractiveLogonRight"
   ]
 logon_server:
-  description: The name of the server used to authentcate the owner of the
+  description: The name of the server used to authenticate the owner of the
     logon session.
   returned: success
   type: str

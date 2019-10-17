@@ -13,17 +13,18 @@ module: win_reboot
 short_description: Reboot a windows machine
 description:
 - Reboot a Windows machine, wait for it to go down, come back up, and respond to commands.
+- For non-Windows targets, use the M(reboot) module instead.
 version_added: '2.1'
 options:
   pre_reboot_delay:
     description:
-    - Seconds for shutdown to wait before requesting reboot.
+    - Seconds to wait before reboot. Passed as a parameter to the reboot command.
     type: int
     default: 2
     aliases: [ pre_reboot_delay_sec ]
   post_reboot_delay:
     description:
-    - Seconds to wait after the reboot was successful and the connection was re-established.
+    - Seconds to wait after the reboot command was successful before attempting to validate the system rebooted successfully.
     - This is useful if you want wait for something to settle despite your connection already working.
     type: int
     default: 0
@@ -40,7 +41,7 @@ options:
   reboot_timeout:
     description:
     - Maximum seconds to wait for machine to re-appear on the network and respond to a test command.
-    - This timeout is evaluated separately for both network appearance and test command success (so maximum clock time is actually twice this value).
+    - This timeout is evaluated separately for both reboot verification and test command success so maximum clock time is actually twice this value.
     type: int
     default: 600
     aliases: [ reboot_timeout_sec ]
@@ -64,7 +65,11 @@ notes:
 - If a shutdown was already scheduled on the system, C(win_reboot) will abort the scheduled shutdown and enforce its own shutdown.
 - Beware that when C(win_reboot) returns, the Windows system may not have settled yet and some base services could be in limbo.
   This can result in unexpected behavior. Check the examples for ways to mitigate this.
-- For non-Windows targets, use the M(reboot) module instead.
+- The connection user must have the C(SeRemoteShutdownPrivilege) privilege enabled, see
+  U(https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/force-shutdown-from-a-remote-system)
+  for more information.
+seealso:
+- module: reboot
 author:
 - Matt Davis (@nitzmahone)
 '''
@@ -107,9 +112,9 @@ EXAMPLES = r'''
 
 RETURN = r'''
 rebooted:
-  description: true if the machine was rebooted
+  description: True if the machine was rebooted.
   returned: always
-  type: boolean
+  type: bool
   sample: true
 elapsed:
   description: The number of seconds that elapsed waiting for the system to be rebooted.

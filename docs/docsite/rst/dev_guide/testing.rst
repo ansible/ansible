@@ -45,7 +45,7 @@ development.
 
 Even for non developers, helping to test pull requests for bug fixes and features is still
 immensely valuable.  Ansible users who understand writing playbooks and roles should be
-able to add integration tests and so Github pull requests with integration tests that show
+able to add integration tests and so GitHub pull requests with integration tests that show
 bugs in action will also be a great way to help.
 
 
@@ -207,7 +207,7 @@ The code coverage reports only cover the ``devel`` branch of Ansible where new f
 development takes place.  Pull requests and new code will be missing from the codecov.io
 coverage reports so local reporting is needed.  Most ``ansible-test`` commands allow you
 to collect code coverage, this is particularly useful to indicate where to extend
-testing. See :doc:`testing_running_locally` for more information.
+testing. See :ref:`testing_running_locally` for more information.
 
 
 Want to know more about testing?

@@ -20,10 +20,13 @@ short_description: Execute commands on targets
 version_added: historical
 description:
      - The C(command) module takes the command name followed by a list of space-delimited arguments.
-     - The given command will be executed on all selected nodes. It will not be
+     - The given command will be executed on all selected nodes.
+     - The command(s) will not be
        processed through the shell, so variables like C($HOME) and operations
-       like C("<"), C(">"), C("|"), C(";") and C("&") will not work (use the M(shell)
-       module if you need these features).
+       like C("<"), C(">"), C("|"), C(";") and C("&") will not work.
+       Use the M(shell) module if you need these features.
+     - To create C(command) tasks that are easier to read,
+       pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task).
      - For Windows targets, use the M(win_command) module instead.
 options:
   free_form:
@@ -33,18 +36,24 @@ options:
       - See the examples on how to use this module.
     required: yes
   argv:
+    type: list
     description:
-      - Allows the user to provide the command as a list vs. a string.  Only the string or the list form can be
+      - Passes the command as a list rather than a string.
+      - Use C(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
+      - Only the string or the list form can be
         provided, not both.  One or the other must be provided.
     version_added: "2.6"
   creates:
+    type: path
     description:
       - A filename or (since 2.0) glob pattern. If it already exists, this step B(won't) be run.
   removes:
+    type: path
     description:
       - A filename or (since 2.0) glob pattern. If it already exists, this step B(will) be run.
     version_added: "0.8"
   chdir:
+    type: path
     description:
       - Change into this directory before running the command.
     version_added: "0.6"
@@ -64,6 +73,12 @@ options:
     description:
       - If set to C(yes), append a newline to stdin data.
     version_added: "2.8"
+  strip_empty_ends:
+    description:
+      - Strip empty lines from the end of stdout/stderr in result.
+    version_added: "2.8"
+    type: bool
+    default: yes
 notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead.
        Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
@@ -74,6 +89,12 @@ notes:
        check for the existence of the file and report the correct changed status. If these are not supplied, the task will be skipped.
     -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(shell) module instead.
     -  For Windows targets, use the M(win_command) module instead.
+    -  For rebooting systems, use the M(reboot) or M(win_reboot) module.
+seealso:
+- module: raw
+- module: script
+- module: shell
+- module: win_command
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -84,24 +105,30 @@ EXAMPLES = r'''
   command: cat /etc/motd
   register: mymotd
 
-- name: Run the command if the specified file does not exist.
-  command: /usr/bin/make_database.sh arg1 arg2
+- name: Run command if /path/to/database does not exist (without 'args').
+  command: /usr/bin/make_database.sh db_user db_name creates=/path/to/database
+
+# 'args' is a task keyword, passed at the same level as the module
+- name: Run command if /path/to/database does not exist (with 'args').
+  command: /usr/bin/make_database.sh db_user db_name
   args:
     creates: /path/to/database
 
-# You can also use the 'args' form to provide the options.
-- name: This command will change the working directory to somedir/ and will only run when /path/to/database doesn't exist.
-  command: /usr/bin/make_database.sh arg1 arg2
+- name: Change the working directory to somedir/ and run the command as db_owner if /path/to/database does not exist.
+  command: /usr/bin/make_database.sh db_user db_name
+  become: yes
+  become_user: db_owner
   args:
     chdir: somedir/
     creates: /path/to/database
 
-- name: use argv to send the command as a list.  Be sure to leave command empty
+# 'argv' is a parameter, indented one level from the module
+- name: Use 'argv' to send a command as a list - leave 'command' empty
   command:
-  args:
     argv:
-      - echo
-      - testing
+      - /usr/bin/make_database.sh
+      - Username with whitespace
+      - dbname with whitespace
 
 - name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
   command: cat {{ myfile|quote }}
@@ -119,17 +146,17 @@ cmd:
 delta:
   description: cmd end time - cmd start time
   returned: always
-  type: string
+  type: str
   sample: 0:00:00.001529
 end:
   description: cmd end time
   returned: always
-  type: string
+  type: str
   sample: '2017-09-29 22:03:48.084657'
 start:
   description: cmd start time
   returned: always
-  type: string
+  type: str
   sample: '2017-09-29 22:03:48.083128'
 '''
 
@@ -139,7 +166,7 @@ import os
 import shlex
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.collections import is_iterable
 
 
@@ -160,18 +187,18 @@ def check_command(module, commandline):
     command = os.path.basename(command)
 
     disable_suffix = "If you need to use command because {mod} is insufficient you can add" \
-                     " warn=False to this command task or set command_warnings=False in" \
+                     " 'warn: false' to this command task or set 'command_warnings=False' in" \
                      " ansible.cfg to get rid of this message."
     substitutions = {'mod': None, 'cmd': command}
 
     if command in arguments:
-        msg = "Consider using the {mod} module with {subcmd} rather than running {cmd}.  " + disable_suffix
+        msg = "Consider using the {mod} module with {subcmd} rather than running '{cmd}'.  " + disable_suffix
         substitutions['mod'] = 'file'
         substitutions['subcmd'] = arguments[command]
         module.warn(msg.format(**substitutions))
 
     if command in commands:
-        msg = "Consider using the {mod} module rather than running {cmd}.  " + disable_suffix
+        msg = "Consider using the {mod} module rather than running '{cmd}'.  " + disable_suffix
         substitutions['mod'] = commands[command]
         module.warn(msg.format(**substitutions))
 
@@ -196,6 +223,7 @@ def main():
             warn=dict(type='bool', default=True),
             stdin=dict(required=False),
             stdin_add_newline=dict(type='bool', default=True),
+            strip_empty_ends=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
     )
@@ -209,6 +237,7 @@ def main():
     warn = module.params['warn']
     stdin = module.params['stdin']
     stdin_add_newline = module.params['stdin_add_newline']
+    strip = module.params['strip_empty_ends']
 
     if not shell and executable:
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
@@ -230,8 +259,15 @@ def main():
         args = [to_native(arg, errors='surrogate_or_strict', nonstring='simplerepr') for arg in args]
 
     if chdir:
-        chdir = os.path.abspath(chdir)
-        os.chdir(chdir)
+        try:
+            chdir = to_bytes(os.path.abspath(chdir), errors='surrogate_or_strict')
+        except ValueError as e:
+            module.fail_json(msg='Unable to use supplied chdir: %s' % to_text(e))
+
+        try:
+            os.chdir(chdir)
+        except (IOError, OSError) as e:
+            module.fail_json(msg='Unable to change directory before execution: %s' % to_text(e))
 
     if creates:
         # do not run the command if the line contains creates=filename
@@ -273,10 +309,14 @@ def main():
     endd = datetime.datetime.now()
     delta = endd - startd
 
+    if strip:
+        out = out.rstrip(b"\r\n")
+        err = err.rstrip(b"\r\n")
+
     result = dict(
         cmd=args,
-        stdout=out.rstrip(b"\r\n"),
-        stderr=err.rstrip(b"\r\n"),
+        stdout=out,
+        stderr=err,
         rc=rc,
         start=str(startd),
         end=str(endd),

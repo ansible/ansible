@@ -59,7 +59,7 @@ options:
         is 1000.
   max_replication_lag:
     description:
-      - If greater than 0, ProxySQL will reguarly monitor replication lag. If
+      - If greater than 0, ProxySQL will regularly monitor replication lag. If
         replication lag goes above I(max_replication_lag), proxysql will
         temporarily shun the server until replication catches up. If omitted
         the proxysql database default for I(max_replication_lag) is 0.

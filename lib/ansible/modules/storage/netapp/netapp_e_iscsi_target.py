@@ -39,7 +39,8 @@ options:
             - When this value is specified, we will always trigger an update (changed=True). We have no way of verifying
               whether or not the password has changed.
             - The chap secret may only use ascii characters with values between 32 and 126 decimal.
-            - The chap secret must be no less than 12 characters, but no more than 16 characters in length.
+            - The chap secret must be no less than 12 characters, but no greater than 57 characters in length.
+            - The chap secret is cleared when not specified or an empty string.
         aliases:
             - chap
             - password
@@ -87,20 +88,20 @@ RETURN = """
 msg:
     description: Success message
     returned: on success
-    type: string
+    type: str
     sample: The iSCSI target settings have been updated.
 alias:
     description:
         - The alias assigned to the iSCSI target.
     returned: on success
     sample: myArray
-    type: string
+    type: str
 iqn:
     description:
         - The iqn (iSCSI Qualified Name), assigned to the iSCSI target.
     returned: on success
     sample: iqn.1992-08.com.netapp:2800.000a132000b006d2000000005a0e8f45
-    type: string
+    type: str
 """
 import json
 import logging
@@ -157,10 +158,10 @@ class IscsiTarget(object):
 
         if not self.url.endswith('/'):
             self.url += '/'
-        self._logger.info(self.chap_secret)
-        if self.chap_secret is not None:
-            if len(self.chap_secret) < 12 or len(self.chap_secret) > 16:
-                self.module.fail_json(msg="The provided CHAP secret is not valid, it must be between 12 and 16"
+
+        if self.chap_secret:
+            if len(self.chap_secret) < 12 or len(self.chap_secret) > 57:
+                self.module.fail_json(msg="The provided CHAP secret is not valid, it must be between 12 and 57"
                                           " characters in length.")
 
             for c in self.chap_secret:
@@ -226,7 +227,7 @@ class IscsiTarget(object):
             body['alias'] = self.name
 
         # If the CHAP secret was provided, we trigger an update.
-        if self.chap_secret is not None:
+        if self.chap_secret:
             update = True
             body.update(dict(enableChapAuthentication=True,
                              chapSecret=self.chap_secret))
@@ -234,8 +235,6 @@ class IscsiTarget(object):
         elif target['chap']:
             update = True
             body.update(dict(enableChapAuthentication=False))
-
-        self._logger.info(pformat(body))
 
         if update and not self.check_mode:
             try:

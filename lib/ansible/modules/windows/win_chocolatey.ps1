@@ -24,7 +24,8 @@ $spec = @{
         ignore_dependencies = @{ type = "bool"; default = $false }
         force = @{ type = "bool"; default = $false }
         name = @{ type = "list"; elements = "str"; required = $true }
-        package_params = @{ type = "str"; aliases = "params" }
+        package_params = @{ type = "str"; aliases = @("params") }
+        pinned = @{ type = "bool" }
         proxy_url = @{ type = "str" }
         proxy_username = @{ type = "str" }
         proxy_password = @{ type = "str"; no_log = $true }
@@ -33,8 +34,8 @@ $spec = @{
         source_username = @{ type = "str" }
         source_password = @{ type = "str"; no_log = $true }
         state = @{ type = "str"; default = "present"; choices = "absent", "downgrade", "latest", "present", "reinstalled" }
-        timeout = @{ type = "int"; default = 2700; aliases = "execution_timeout" }
-        validate_certs = @{ type = "bool"; default = $false }
+        timeout = @{ type = "int"; default = 2700; aliases = @("execution_timeout") }
+        validate_certs = @{ type = "bool"; default = $true }
         version = @{ type = "str" }
     }
     supports_check_mode = $true
@@ -51,6 +52,7 @@ $ignore_dependencies = $module.Params.ignore_dependencies
 $force = $module.Params.force
 $name = $module.Params.name
 $package_params = $module.Params.package_params
+$pinned = $module.Params.pinned
 $proxy_url = $module.Params.proxy_url
 $proxy_username = $module.Params.proxy_username
 $proxy_password = $module.Params.proxy_password
@@ -192,7 +194,8 @@ Function Install-Chocolatey {
         [String]$proxy_password,
         [String]$source,
         [String]$source_username,
-        [String]$source_password
+        [String]$source_password,
+        [String]$version
     )
 
     $choco_app = Get-Command -Name choco.exe -CommandType Application -ErrorAction SilentlyContinue
@@ -209,19 +212,30 @@ Function Install-Chocolatey {
         [Net.ServicePointManager]::SecurityProtocol = $security_protocols
 
         $client = New-Object -TypeName System.Net.WebClient
-        $environment = @{}
+        $new_environment = @{}
         if ($proxy_url) {
             # the env values are used in the install.ps1 script when getting
             # external dependencies
-            $environment.chocolateyProxyLocation = $proxy_url
+            $new_environment.chocolateyProxyLocation = $proxy_url
             $web_proxy = New-Object -TypeName System.Net.WebProxy -ArgumentList $proxy_url, $true
             $client.Proxy = $web_proxy
             if ($proxy_username -and $proxy_password) {
-                $environment.chocolateyProxyUser = $proxy_username
-                $environment.chocolateyProxyPassword = $proxy_password
+                $new_environment.chocolateyProxyUser = $proxy_username
+                $new_environment.chocolateyProxyPassword = $proxy_password
                 $sec_proxy_password = ConvertTo-SecureString -String $proxy_password -AsPlainText -Force
                 $web_proxy.Credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $proxy_username, $sec_proxy_password
             }
+        }
+        if ($version) {
+            # Set the chocolateyVersion environment variable when bootstrapping Chocolatey to install that specific
+            # version.
+            $new_environment.chocolateyVersion = $version
+        }
+
+        $environment = @{}
+        if ($new_environment.Count -gt 0) {
+            $environment = [Environment]::GetEnvironmentVariables()
+            $environment += $new_environment
         }
 
         if ($source) {
@@ -291,7 +305,15 @@ Function Install-Chocolatey {
     }
 
     $actual_version = (Get-ChocolateyPackageVersion -choco_path $choco_app.Path -name chocolatey)[0]
-    if ([Version]$actual_version -lt [Version]"0.10.5") {
+    try {
+        # The Chocolatey version may not be in the strict form of major.minor.build and will fail to cast to
+        # System.Version. We want to warn if this is the case saying module behaviour may be incorrect.
+        $actual_version = [Version]$actual_version
+    } catch {
+        $module.Warn("Failed to parse Chocolatey version '$actual_version' for checking module requirements, module may not work correctly: $($_.Exception.Message)")
+        $actual_version = $null
+    }
+    if ($null -ne $actual_version -and $actual_version -lt [Version]"0.10.5") {
         if ($module.CheckMode) {
             $module.Result.skipped = $true
             $module.Result.msg = "Skipped check mode run on win_chocolatey as choco.exe is too old, a real run would have upgraded the executable. Actual: '$actual_version', Minimum Version: '0.10.5'"
@@ -308,29 +330,131 @@ Function Install-Chocolatey {
 }
 
 Function Get-ChocolateyPackageVersion {
-    param(
-        [Parameter(Mandatory=$true)][String]$choco_path,
-        [Parameter(Mandatory=$true)][String]$name
+    Param (
+        [Parameter(Mandatory=$true)]
+        [System.String]
+        $choco_path,
+
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [System.String]
+        $name
     )
 
-    $command = Argv-ToString -arguments @($choco_path, "list", "--local-only", "--exact", "--limit-output", "--all-versions", $name)
+    Begin {
+        # Due to https://github.com/chocolatey/choco/issues/1843, we get a list of all the installed packages and
+        # filter it ourselves. This has the added benefit of being quicker when dealing with multiple packages as we
+        # only call choco.exe once.
+        $command = Argv-ToString -arguments @($choco_path, 'list', '--local-only', '--limit-output', '--all-versions')
+        $res = Run-Command -command $command
+
+        # Chocolatey v0.10.12 introduced enhanced exit codes, 2 means no results, e.g. no package
+        if ($res.rc -notin @(0, 2)) {
+            $module.Result.command = $command
+            $module.Result.rc = $res.rc
+            $module.Result.stdout = $res.stdout
+            $module.Result.stderr = $res.stderr
+            $module.FailJson('Error checking installation status for chocolatey packages')
+        }
+
+        # Parse the stdout to get a list of all packages installed and their versions.
+        $installed_packages = $res.stdout.Trim().Split([System.Environment]::NewLine) | ForEach-Object -Process {
+            if ($_.Contains('|')) {  # Sanity in case further output is added in the future.
+                $package_split = $_.Split('|', 2)
+                @{ Name = $package_split[0]; Version = $package_split[1] }
+            }
+        }
+
+        # Create a hashtable that will store our package version info.
+        $installed_info = @{}
+    }
+
+    Process {
+        if ($name -eq 'all') {
+            # All is a special package name that means all installed packages, we set a dummy version so absent, latest
+            # and downgrade will run with all.
+            $installed_info.'all' = @('0.0.0')
+        } else {
+            $package_info = $installed_packages | Where-Object { $_.Name -eq $name }
+            if ($null -eq $package_info) {
+                $installed_info.$name = $null
+            } else {
+                $installed_info.$name = @($package_info.Version)
+            }
+        }
+    }
+
+    End {
+        return $installed_info
+    }
+}
+
+Function Get-ChocolateyPin {
+    param(
+        [Parameter(Mandatory=$true)][String]$choco_path
+    )
+
+    $command = Argv-ToString -arguments @($choco_path, "pin", "list", "--limit-output")
     $res = Run-Command -command $command
     if ($res.rc -ne 0) {
         $module.Result.command = $command
         $module.Result.rc = $res.rc
         $module.Result.stdout = $res.stdout
         $module.Result.stderr = $res.stderr
-        $module.FailJson("Error checking installation status for the package '$name'")
-    }
-    $stdout = $res.stdout.Trim()
-    $versions = $null
-    if ($stdout) {
-        # if a match occurs it is in the format of "package|version" we split
-        # by the last | to get the version in case package contains a pipe char
-        $versions = @($stdout.Split("`r`n", [System.StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object { $_.Substring($_.LastIndexOf("|") + 1) })
+        $module.FailJson("Error getting list of pinned packages")
     }
 
-    return ,$versions
+    $stdout = $res.stdout.Trim()
+    $pins = @{}
+
+    $stdout.Split("`r`n", [System.StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object {
+        $package = $_.Substring(0, $_.LastIndexOf("|"))
+        $version = $_.Substring($_.LastIndexOf("|") + 1)
+
+        if ($pins.ContainsKey($package)) {
+            $pinned_versions = $pins.$package
+        } else {
+            $pinned_versions = [System.Collections.Generic.List`1[String]]@()
+        }
+        $pinned_versions.Add($version)
+        $pins.$package = $pinned_versions
+    }
+    return ,$pins
+}
+
+Function Set-ChocolateyPin {
+    param(
+        [Parameter(Mandatory=$true)][String]$choco_path,
+        [Parameter(Mandatory=$true)][String]$name,
+        [Switch]$pin,
+        [String]$version
+    )
+    if ($pin) {
+        $action = "add"
+        $err_msg = "Error pinning package '$name'"
+    } else {
+        $action = "remove"
+        $err_msg = "Error unpinning package '$name'"
+    }
+
+    $arguments = [System.Collections.ArrayList]@($choco_path, "pin", $action, "--name", $name)
+    if ($version) {
+        $err_msg += " at '$version'"
+        $arguments.Add("--version") > $null
+        $arguments.Add($version) > $null
+    }
+    $common_args = Get-CommonChocolateyArguments
+    $arguments.AddRange($common_args)
+
+    $command = Argv-ToString -arguments $arguments
+    $res = Run-Command -command $command
+    if ($res.rc -ne 0) {
+        $module.Result.command = $command
+        $module.Result.rc = $res.rc
+        $module.Result.stdout = $res.stdout
+        $module.Result.stderr = $res.stderr
+        $module.FailJson($err_msg)
+    }
+    $module.result.changed = $true
 }
 
 Function Update-ChocolateyPackage {
@@ -536,25 +660,27 @@ Function Uninstall-ChocolateyPackage {
 }
 
 # get the full path to choco.exe, otherwise install/upgrade to at least 0.10.5
-$choco_path = Install-Chocolatey -proxy_url $proxy_url -proxy_username $proxy_username `
-    -proxy_password $proxy_password -source $source -source_username $source_username `
-    -source_password $source_password
+$install_params = @{
+    proxy_url = $proxy_url
+    proxy_username = $proxy_username
+    proxy_password = $proxy_password
+    source = $source
+    source_username = $source_username
+    source_password = $source_password
+}
+if ($version -and "chocolatey" -in $name) {
+    # If a version is set and chocolatey is in the package list, pass the chocolatey version to the bootstrapping
+    # process.
+    $install_params.version = $version
+}
+$choco_path = Install-Chocolatey @install_params
+
+if ('all' -in $name -and $state -in @('present', 'reinstalled')) {
+    $module.FailJson("Cannot specify the package name as 'all' when state=$state")
+}
 
 # get the version of all specified packages
-$package_info = @{}
-foreach ($package in $name) {
-    # all is a special package name that means all installed packages, we set
-    # a dummy version so absent, latest, and downgrade will run with all
-    if ($package -eq "all") {
-        if ($state -in @("present", "reinstalled")) {
-            $module.FailJson("Cannot specify the package name as 'all' when state=$state")
-        }
-        $package_versions = @("0.0.0")
-    } else {
-        $package_versions = Get-ChocolateyPackageVersion -choco_path $choco_path -name $package
-    }
-    $package_info.$package = $package_versions
-}
+$package_info = $name | Get-ChocolateyPackageVersion -choco_path $choco_path
 
 if ($state -in "absent", "reinstalled") {
     $installed_packages = ($package_info.GetEnumerator() | Where-Object { $null -ne $_.Value }).Key
@@ -635,6 +761,30 @@ if ($state -in @("downgrade", "latest", "present", "reinstalled")) {
         $installed_packages = ($package_info.GetEnumerator() | Where-Object { $null -ne $_.Value }).Key
         if ($null -ne $installed_packages) {
             Update-ChocolateyPackage -packages $installed_packages @common_args
+        }
+    }
+
+    # Now we want to pin/unpin any packages now that it has been installed/upgraded
+    if ($null -ne $pinned) {
+        $pins = Get-ChocolateyPin -choco_path $choco_path
+
+        foreach ($package in $name) {
+            if ($pins.ContainsKey($package)) {
+                if (-not $pinned -and $null -eq $version) {
+                    # No version is set and pinned=no, we want to remove all pins on the package. There is a bug in
+                    # 'choco pin remove' with multiple versions where an older version might be pinned but
+                    # 'choco pin remove' will still fail without an explicit version. Instead we take the literal
+                    # interpretation that pinned=no and no version means the package has no pins at all
+                    foreach ($v in $pins.$package) {
+                        Set-ChocolateyPin -choco_path $choco_path -name $package -version $v
+                    }
+                } elseif ($null -ne $version -and $pins.$package.Contains($version) -ne $pinned) {
+                    Set-ChocolateyPin -choco_path $choco_path -name $package -pin:$pinned -version $version
+                }
+            } elseif ($pinned) {
+                # Package had no pins but pinned=yes is set.
+                Set-ChocolateyPin -choco_path $choco_path -name $package -pin -version $version
+            }
         }
     }
 }

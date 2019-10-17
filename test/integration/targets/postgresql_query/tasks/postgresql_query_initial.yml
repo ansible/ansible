@@ -1,0 +1,470 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Prepare for tests:
+- name: postgresql_query - drop test table if exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: psql postgres -U "{{ pg_user }}" -t -c "DROP TABLE IF EXISTS test_table;"
+  ignore_errors: yes
+
+# Create test_table:
+- name: postgresql_query - create test table called test_table
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: psql postgres -U "{{ pg_user }}" -t -c "CREATE TABLE test_table (id int, story text);"
+  ignore_errors: yes
+
+- name: postgresql_query - insert some data into test_table
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: psql postgres -U "{{ pg_user }}" -t -c "INSERT INTO test_table (id, story) VALUES (1, 'first'), (2, 'second'), (3, 'third');"
+  ignore_errors: yes
+
+# Prepare SQL script:
+- name: postgresql_query - remove SQL script if exists
+  become: yes
+  file:
+    path: '~{{ pg_user}}/test.sql'
+    state: absent
+  ignore_errors: yes
+
+- name: postgresql_query - create an empty file to check permission
+  become: yes
+  file:
+    path: '~{{ pg_user}}/test.sql'
+    state: touch
+    owner: '{{ pg_user }}'
+    group: '{{ pg_user }}'
+    mode: 0644
+  register: sql_file_created
+  ignore_errors: yes
+
+- name: postgresql_query - prepare SQL script
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: 'echo "{{ item }}" >> ~{{ pg_user}}/test.sql'
+  ignore_errors: yes
+  with_items:
+  - SELECT version();
+  - SELECT story FROM test_table
+  - WHERE id = %s;
+  when: sql_file_created
+
+##############
+# Start tests:
+#
+
+# Run ANALYZE command:
+- name: postgresql_query - analyze test_table
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: ANALYZE test_table
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.query == 'ANALYZE test_table'
+    - result.rowcount == 0
+    - result.statusmessage == 'ANALYZE'
+    - result.query_result == {}
+
+# Run queries from SQL script:
+- name: postgresql_query - run queries from SQL script
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    path_to_script: '~{{ pg_user }}/test.sql'
+    positional_args:
+    - 1
+  register: result
+  ignore_errors: yes
+  when: sql_file_created
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == 'SELECT version();\nSELECT story FROM test_table\nWHERE id = 1;\n'
+    - result.rowcount == 1
+    - result.statusmessage == 'SELECT 1' or result.statusmessage == 'SELECT'
+    - result.query_result[0].story == 'first'
+  when: sql_file_created
+
+# Simple select query:
+- name: postgresql_query - simple select query to test_table
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: SELECT * FROM test_table
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == 'SELECT * FROM test_table'
+    - result.rowcount == 3
+    - result.statusmessage == 'SELECT 3' or result.statusmessage == 'SELECT'
+    - result.query_result[0].id == 1
+    - result.query_result[1].id == 2
+    - result.query_result[2].id == 3
+    - result.query_result[0].story == 'first'
+    - result.query_result[1].story == 'second'
+    - result.query_result[2].story == 'third'
+
+# Select query with named_args:
+- name: postgresql_query - select query with named args
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: SELECT id FROM test_table WHERE id = %(id_val)s AND story = %(story_val)s
+    named_args:
+      id_val: 1
+      story_val: first
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "SELECT id FROM test_table WHERE id = 1 AND story = 'first'" or result.query == "SELECT id FROM test_table WHERE id = 1 AND story = E'first'"
+    - result.rowcount == 1
+    - result.statusmessage == 'SELECT 1' or result.statusmessage == 'SELECT'
+    - result.query_result[0].id == 1
+
+# Select query with positional arguments:
+- name: postgresql_query - select query with positional arguments
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: SELECT story FROM test_table WHERE id = %s AND story = %s
+    positional_args:
+    - 2
+    - second
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "SELECT story FROM test_table WHERE id = 2 AND story = 'second'" or result.query == "SELECT story FROM test_table WHERE id = 2 AND story = E'second'"
+    - result.rowcount == 1
+    - result.statusmessage == 'SELECT 1' or result.statusmessage == 'SELECT'
+    - result.query_result[0].story == 'second'
+
+# Simple update query (positional_args and named args were checked by the previous tests):
+- name: postgresql_query - simple update query
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: UPDATE test_table SET story = 'new' WHERE id = 3
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.query == "UPDATE test_table SET story = 'new' WHERE id = 3"
+    - result.rowcount == 1
+    - result.statusmessage == 'UPDATE 1'
+    - result.query_result == {}
+
+# Check:
+- name: check the previous update
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: SELECT * FROM test_table WHERE story = 'new' AND id = 3
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# Test check_mode:
+- name: postgresql_query - simple update query in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: UPDATE test_table SET story = 'CHECK_MODE' WHERE id = 3
+  register: result
+  check_mode: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.query == "UPDATE test_table SET story = 'CHECK_MODE' WHERE id = 3"
+    - result.rowcount == 1
+    - result.statusmessage == 'UPDATE 1'
+    - result.query_result == {}
+
+# Check:
+- name: check the previous update that nothing has been changed
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: SELECT * FROM test_table WHERE story = 'CHECK_MODE' AND id = 3
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
+
+# Try to update not existing row:
+- name: postgresql_query - try to update not existing row
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: UPDATE test_table SET story = 'new' WHERE id = 100
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "UPDATE test_table SET story = 'new' WHERE id = 100"
+    - result.rowcount == 0
+    - result.statusmessage == 'UPDATE 0'
+    - result.query_result == {}
+
+# Simple insert query positional_args:
+- name: postgresql_query - insert query
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: INSERT INTO test_table (id, story) VALUES (%s, %s)
+    positional_args:
+    - 4
+    - fourth
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.query == "INSERT INTO test_table (id, story) VALUES (4, 'fourth')" or result.query == "INSERT INTO test_table (id, story) VALUES (4, E'fourth')"
+    - result.rowcount == 1
+    - result.statusmessage == 'INSERT 0 1'
+    - result.query_result == {}
+
+# Truncate table:
+- name: postgresql_query - truncate test_table
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: TRUNCATE test_table
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.query == "TRUNCATE test_table"
+    - result.rowcount == 0
+    - result.statusmessage == 'TRUNCATE TABLE'
+    - result.query_result == {}
+
+# Try DDL query:
+- name: postgresql_query - alter test_table
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: ALTER TABLE test_table ADD COLUMN foo int
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.query == "ALTER TABLE test_table ADD COLUMN foo int"
+    - result.rowcount == 0
+    - result.statusmessage == 'ALTER TABLE'
+
+#############################
+# Test autocommit parameter #
+#############################
+- name: postgresql_query - vacuum without autocommit must fail
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: VACUUM
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.failed == true
+
+- name: postgresql_query - autocommit in check_mode must fail
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: VACUUM
+    autocommit: yes
+  check_mode: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.failed == true
+    - result.msg == "Using autocommit is mutually exclusive with check_mode"
+
+- name: postgresql_query - vacuum with autocommit
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: VACUUM
+    autocommit: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.query == "VACUUM"
+    - result.rowcount == 0
+    - result.statusmessage == 'VACUUM'
+    - result.query_result == {}
+
+#
+# Issue 59955
+#
+- name: postgresql_query - create test table for issue 59955
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    login_user: "{{ pg_user }}"
+    login_db: postgres
+    name: test_array_table
+    columns:
+    - arr_col int[]
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- set_fact:
+    my_list:
+    - 1
+    - 2
+    - 3
+    my_arr: '{1, 2, 3}'
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- name: postgresql_query - insert array into test table by positional args
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    login_db: postgres
+    query: INSERT INTO test_array_table (arr_col) VALUES (%s)
+    positional_args:
+    - '{{ my_list }}'
+  register: result
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- assert:
+    that:
+    - result is changed
+    - result.query == "INSERT INTO test_array_table (arr_col) VALUES ('{1, 2, 3}')"
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- name: postgresql_query - select array from test table by passing positional_args
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    login_db: postgres
+    query: SELECT * FROM test_array_table WHERE arr_col = %s
+    positional_args:
+    - '{{ my_list }}'
+  register: result
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "SELECT * FROM test_array_table WHERE arr_col = '{1, 2, 3}'"
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- name: postgresql_query - select array from test table by passing named_args
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    login_db: postgres
+    query: SELECT * FROM test_array_table WHERE arr_col = %(arr_val)s
+    named_args:
+      arr_val:
+      - '{{ my_list }}'
+  register: result
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "SELECT * FROM test_array_table WHERE arr_col = '{1, 2, 3}'"
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- name: postgresql_query - select array from test table by passing positional_args as a string
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    login_db: postgres
+    query: SELECT * FROM test_array_table WHERE arr_col = %s
+    positional_args:
+      - '{{ my_arr|string }}'
+  register: result
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "SELECT * FROM test_array_table WHERE arr_col = '{1, 2, 3}'"
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- name: postgresql_query - clean up
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    login_user: "{{ pg_user }}"
+    login_db: postgres
+    name: test_array_table
+    state: absent
+  when: postgres_version_resp.stdout is version('9.4', '>=')

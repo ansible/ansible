@@ -23,17 +23,18 @@ options:
   name:
     description:
       - The name of the policy exported to create a file on the remote device for downloading.
+    type: str
     required: True
   dest:
     description:
       - A directory to save the policy file into.
-      - Di
       - This option is ignored when C(inline) is set to c(yes).
     type: path
   file:
     description:
       - The name of the file to be create on the remote device for downloading.
       - When C(binary) is set to C(no) the ASM policy will be in XML format.
+    type: str
   inline:
     description:
       - If C(yes), the ASM policy will be exported C(inline) as a string instead of a file.
@@ -61,7 +62,8 @@ options:
     type: bool
   partition:
     description:
-      - Device partition to which contain ASM policy to export.
+      - Device partition which contains ASM policy to export.
+    type: str
     default: Common
 extends_documentation_fragment: f5
 author:
@@ -73,7 +75,7 @@ EXAMPLES = r'''
   bigip_asm_policy_fetch:
     name: foobar
     file: export_foo
-    dst: /root/download
+    dest: /root/download
     binary: yes
     provider:
       password: secret
@@ -96,7 +98,7 @@ EXAMPLES = r'''
   bigip_asm_policy_fetch:
     name: foobar
     file: export_foo
-    dst: /root/download
+    dest: /root/download
     provider:
       password: secret
       server: lb.mydomain.com
@@ -107,7 +109,7 @@ EXAMPLES = r'''
   bigip_asm_policy_fetch:
     name: foobar
     file: export_foo.xml
-    dst: /root/download/
+    dest: /root/download/
     compact: yes
     provider:
       password: secret
@@ -118,7 +120,7 @@ EXAMPLES = r'''
 - name: Export policy in binary format, autogenerate name
   bigip_asm_policy_fetch:
     name: foobar
-    dst: /root/download/
+    dest: /root/download/
     binary: yes
     provider:
       password: secret
@@ -131,19 +133,19 @@ RETURN = r'''
 name:
   description: Name of the ASM policy to be exported.
   returned: changed
-  type: string
+  type: str
   sample: Asm_APP1_Transparent
-dst:
+dest:
   description: Local path to download exported ASM policy.
   returned: changed
-  type: string
+  type: str
   sample: /root/downloads/foobar.xml
 file:
   description:
     - Name of the policy file on the remote BIG-IP to download. If not
       specified, then this will be a randomly generated filename.
   returned: changed
-  type: string
+  type: str
   sample: foobar.xml
 inline:
   description: Set when ASM policy to be exported inline
@@ -178,25 +180,19 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import flatten_boolean
-    from library.module_utils.network.f5.icontrol import download_file
+    from library.module_utils.network.f5.icontrol import download_asm_file
     from library.module_utils.network.f5.icontrol import module_provisioned
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import flatten_boolean
-    from ansible.module_utils.network.f5.icontrol import download_file
+    from ansible.module_utils.network.f5.icontrol import download_asm_file
     from ansible.module_utils.network.f5.icontrol import module_provisioned
 
 
@@ -242,7 +238,9 @@ class ModuleParameters(Parameters):
             self.client.provider['server'],
             self.client.provider['server_port'],
         )
-        query = '?$filter=name+eq+{0}+and+partition+eq+{1}&$select=name'.format(self.want.name, self.want.partition)
+        query = "?$filter=contains(name,'{0}')+and+contains(partition,'{1}')&$select=name,partition".format(
+            self.want.name, self.want.partition
+        )
         resp = self.client.api.get(uri + query)
         try:
             response = resp.json()
@@ -352,7 +350,7 @@ class ReportableChanges(Changes):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
 
@@ -394,11 +392,10 @@ class ModuleManager(object):
             return self.create()
 
     def update(self):
-        if os.path.exists(self.want.dest):
-            if not self.want.force:
-                raise F5ModuleError(
-                    "File '{0}' already exists".format(self.want.fulldest)
-                )
+        if not self.want.force:
+            raise F5ModuleError(
+                "File '{0}' already exists.".format(self.want.fulldest)
+            )
         self.execute()
 
     def create(self):
@@ -432,37 +429,9 @@ class ModuleManager(object):
         return True
 
     def exists(self):
-        name = '{0}~{1}'.format(self.client.provider['user'], self.want.file)
-        tpath = '/ts/var/rest/{0}'.format(
-            name,
-        )
-        params = dict(
-            command='run',
-            utilCmdArgs=tpath
-        )
-
-        uri = "https://{0}:{1}/mgmt/tm/util/unix-ls/".format(
-            self.client.provider['server'],
-            self.client.provider['server_port']
-        )
-
-        resp = self.client.api.post(uri, json=params)
-
-        try:
-            response = resp.json()
-        except ValueError as ex:
-            raise F5ModuleError(str(ex))
-
-        if 'code' in response and response['code'] in [400, 403]:
-            if 'message' in response:
-                raise F5ModuleError(response['message'])
-            else:
-                raise F5ModuleError(resp.content)
-
-        if 'commandResult' in response:
-            if 'cannot access' in response['commandResult']:
-                return False
-            return True
+        if not self.want.inline:
+            if os.path.exists(self.want.fulldest):
+                return True
         return False
 
     def create_on_device(self):
@@ -532,7 +501,9 @@ class ModuleManager(object):
             self.client.provider['server'],
             self.client.provider['server_port'],
         )
-        query = '?$filter=name+eq+{0}+and+partition+eq+{1}&$select=name'.format(self.want.name, self.want.partition)
+        query = "?$filter=contains(name,'{0}')+and+contains(partition,'{1}')&$select=name,partition".format(
+            self.want.name, self.want.partition
+        )
         resp = self.client.api.get(uri + query)
         try:
             response = resp.json()
@@ -621,7 +592,7 @@ class ModuleManager(object):
             self.want.file
         )
         try:
-            download_file(self.client, url, dest)
+            download_asm_file(self.client, url, dest)
         except F5ModuleError:
             raise F5ModuleError(
                 "Failed to download the file."
@@ -705,16 +676,12 @@ def main():
         mutually_exclusive=spec.mutually_exclusive,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

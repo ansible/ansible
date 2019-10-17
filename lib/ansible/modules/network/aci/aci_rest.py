@@ -18,6 +18,45 @@ short_description: Direct access to the Cisco APIC REST API
 description:
 - Enables the management of the Cisco ACI fabric through direct access to the Cisco APIC REST API.
 - Thanks to the idempotent nature of the APIC, this module is idempotent and reports changes.
+version_added: '2.4'
+requirements:
+- lxml (when using XML payload)
+- xmljson >= 0.1.8 (when using XML payload)
+- python 2.7+ (when using xmljson)
+options:
+  method:
+    description:
+    - The HTTP method of the request.
+    - Using C(delete) is typically used for deleting objects.
+    - Using C(get) is typically used for querying objects.
+    - Using C(post) is typically used for modifying objects.
+    type: str
+    choices: [ delete, get, post ]
+    default: get
+    aliases: [ action ]
+  path:
+    description:
+    - URI being used to execute API calls.
+    - Must end in C(.xml) or C(.json).
+    type: str
+    required: yes
+    aliases: [ uri ]
+  content:
+    description:
+    - When used instead of C(src), sets the payload of the API request directly.
+    - This may be convenient to template simple requests.
+    - For anything complex use the C(template) lookup plugin (see examples)
+      or the M(template) module with parameter C(src).
+    type: raw
+  src:
+    description:
+    - Name of the absolute path of the filename that includes the body
+      of the HTTP request being sent to the ACI fabric.
+    - If you require a templated payload, use the C(content) parameter
+      together with the C(template) lookup plugin, or use M(template).
+    type: path
+    aliases: [ config_file ]
+extends_documentation_fragment: aci
 notes:
 - Certain payloads are known not to be idempotent, so be careful when constructing payloads,
   e.g. using C(status="created") will cause idempotency issues, use C(status="modified") instead.
@@ -33,42 +72,6 @@ seealso:
   link: http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html
 author:
 - Dag Wieers (@dagwieers)
-version_added: '2.4'
-requirements:
-- lxml (when using XML payload)
-- xmljson >= 0.1.8 (when using XML payload)
-- python 2.7+ (when using xmljson)
-options:
-  method:
-    description:
-    - The HTTP method of the request.
-    - Using C(delete) is typically used for deleting objects.
-    - Using C(get) is typically used for querying objects.
-    - Using C(post) is typically used for modifying objects.
-    default: get
-    choices: [ delete, get, post ]
-    aliases: [ action ]
-  path:
-    description:
-    - URI being used to execute API calls.
-    - Must end in C(.xml) or C(.json).
-    required: yes
-    aliases: [ uri ]
-  content:
-    description:
-    - When used instead of C(src), sets the payload of the API request directly.
-    - This may be convenient to template simple requests.
-    - For anything complex use the C(template) lookup plugin (see examples)
-      or the M(template) module with parameter C(src).
-  src:
-    description:
-    - Name of the absolute path of the filname that includes the body
-      of the HTTP request being sent to the ACI fabric.
-    - If you require a templated payload, use the C(content) parameter
-      together with the C(template) lookup plugin, or use M(template).
-    type: path
-    aliases: [ config_file ]
-extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
@@ -104,7 +107,7 @@ EXAMPLES = r'''
       fvTenant:
         attributes:
           name: Sales
-          descr: Sales departement
+          descr: Sales department
   delegate_to: localhost
 
 - name: Add a tenant using a JSON string
@@ -120,7 +123,7 @@ EXAMPLES = r'''
         "fvTenant": {
           "attributes": {
             "name": "Sales",
-            "descr": "Sales departement"
+            "descr": "Sales department"
           }
         }
       }
@@ -130,7 +133,7 @@ EXAMPLES = r'''
   aci_rest:
     host: apic
     username: admin
-    private_key: pki/{{ aci_username}}.key
+    private_key: pki/{{ aci_username }}.key
     validate_certs: no
     path: /api/mo/uni.xml
     method: post
@@ -197,27 +200,27 @@ error_code:
 error_text:
   description: The REST ACI descriptive text, useful for troubleshooting on failure
   returned: always
-  type: string
+  type: str
   sample: unknown managed object class foo
 imdata:
   description: Converted output returned by the APIC REST (register this for post-processing)
   returned: always
-  type: string
+  type: str
   sample: [{"error": {"attributes": {"code": "122", "text": "unknown managed object class foo"}}}]
 payload:
   description: The (templated) payload send to the APIC REST API (xml or json)
   returned: always
-  type: string
+  type: str
   sample: '<foo bar="boo"/>'
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 response:
   description: HTTP response string
   returned: always
-  type: string
+  type: str
   sample: 'HTTP Error 400: Bad Request'
 status:
   description: HTTP status code
@@ -227,12 +230,12 @@ status:
 totalCount:
   description: Number of items in the imdata array
   returned: always
-  type: string
+  type: str
   sample: '0'
 url:
   description: URL used for APIC REST call
   returned: success
-  type: string
+  type: str
   sample: https://1.2.3.4/api/mo/uni/tn-[Dag].json?rsp-subtree=modified
 '''
 
@@ -242,7 +245,7 @@ import os
 try:
     from ansible.module_utils.six.moves.urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
     HAS_URLPARSE = True
-except:
+except Exception:
     HAS_URLPARSE = False
 
 # Optional, only used for XML payload
@@ -263,7 +266,7 @@ except ImportError:
 try:
     import yaml
     HAS_YAML = True
-except:
+except Exception:
     HAS_YAML = False
 
 from ansible.module_utils.basic import AnsibleModule

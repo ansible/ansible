@@ -1,9 +1,13 @@
 ---
 - block:
+  - shell: "docker info --format '{% raw %}{{json .}}{% endraw %}' | python -m json.tool"
+
   - name: Make sure we're not already using Docker swarm
     docker_swarm:
       state: absent
       force: true
+
+  - shell: "docker info --format '{% raw %}{{json .}}{% endraw %}' | python -m json.tool"
 
   - name: Create a Swarm cluster
     docker_swarm:
@@ -66,6 +70,19 @@
     register: output
 
   - name: assert create config is idempotent
+    assert:
+      that:
+         - not output.changed
+
+  - name: Create config again (base64)
+    docker_config:
+      name: db_password
+      data: b3BlbnNlc2FtZSE=
+      data_is_b64: true
+      state: present
+    register: output
+
+  - name: assert create config (base64) is idempotent
     assert:
       that:
          - not output.changed

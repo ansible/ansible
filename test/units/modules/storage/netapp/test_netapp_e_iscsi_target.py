@@ -2,10 +2,8 @@
 # (c) 2018, NetApp Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from mock import MagicMock
-
 from ansible.modules.storage.netapp.netapp_e_iscsi_target import IscsiTarget
-from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
+from units.modules.utils import AnsibleFailJson, ModuleTestCase, set_module_args
 
 __metaclass__ = type
 
@@ -35,13 +33,13 @@ class IscsiTargetTest(ModuleTestCase):
 
     def test_validate_params(self):
         """Ensure we can pass valid parameters to the module"""
-        for i in range(12, 16):
+        for i in range(12, 57):
             secret = 'a' * i
             self._set_args(dict(chap=secret))
             tgt = IscsiTarget()
 
     def test_invalid_chap_secret(self):
-        for secret in [11 * 'a', 17 * 'a', u'©' * 12]:
+        for secret in [11 * 'a', 58 * 'a']:
             with self.assertRaisesRegexp(AnsibleFailJson, r'.*?CHAP secret is not valid.*') as result:
                 self._set_args(dict(chap=secret))
                 tgt = IscsiTarget()

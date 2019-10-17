@@ -47,7 +47,8 @@ def build_aggregate_spec(element_spec, required, *extra_spec):
         aggregate=dict(type='list', elements='dict', options=aggregate_spec)
     )
     argument_spec.update(element_spec)
-    argument_spec.update(*extra_spec)
+    for elt in extra_spec:
+        argument_spec.update(elt)
     return argument_spec
 
 

@@ -1,0 +1,6 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: template in register warns, but no template should not
+      debug: msg=unimportant
+      register: thisshouldnotwarn

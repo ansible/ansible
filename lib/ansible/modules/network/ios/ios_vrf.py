@@ -256,7 +256,7 @@ from functools import partial
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network.ios.ios import load_config, get_config
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import ios_argument_spec
 from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.six import iteritems
 
@@ -332,40 +332,40 @@ def map_obj_to_commands(updates, module):
                 add_command_to_vrf(want['name'], cmd, commands)
 
         if needs_update(want, have, 'route_import_ipv4'):
-                cmd = 'address-family ipv4'
+            cmd = 'address-family ipv4'
+            add_command_to_vrf(want['name'], cmd, commands)
+            for route in want['route_import_ipv4']:
+                cmd = 'route-target import %s' % route
                 add_command_to_vrf(want['name'], cmd, commands)
-                for route in want['route_import_ipv4']:
-                    cmd = 'route-target import %s' % route
-                    add_command_to_vrf(want['name'], cmd, commands)
-                cmd = 'exit-address-family'
-                add_command_to_vrf(want['name'], cmd, commands)
+            cmd = 'exit-address-family'
+            add_command_to_vrf(want['name'], cmd, commands)
 
         if needs_update(want, have, 'route_export_ipv4'):
-                cmd = 'address-family ipv4'
+            cmd = 'address-family ipv4'
+            add_command_to_vrf(want['name'], cmd, commands)
+            for route in want['route_export_ipv4']:
+                cmd = 'route-target export %s' % route
                 add_command_to_vrf(want['name'], cmd, commands)
-                for route in want['route_export_ipv4']:
-                    cmd = 'route-target export %s' % route
-                    add_command_to_vrf(want['name'], cmd, commands)
-                cmd = 'exit-address-family'
-                add_command_to_vrf(want['name'], cmd, commands)
+            cmd = 'exit-address-family'
+            add_command_to_vrf(want['name'], cmd, commands)
 
         if needs_update(want, have, 'route_import_ipv6'):
-                cmd = 'address-family ipv6'
+            cmd = 'address-family ipv6'
+            add_command_to_vrf(want['name'], cmd, commands)
+            for route in want['route_import_ipv6']:
+                cmd = 'route-target import %s' % route
                 add_command_to_vrf(want['name'], cmd, commands)
-                for route in want['route_import_ipv6']:
-                    cmd = 'route-target import %s' % route
-                    add_command_to_vrf(want['name'], cmd, commands)
-                cmd = 'exit-address-family'
-                add_command_to_vrf(want['name'], cmd, commands)
+            cmd = 'exit-address-family'
+            add_command_to_vrf(want['name'], cmd, commands)
 
         if needs_update(want, have, 'route_export_ipv6'):
-                cmd = 'address-family ipv6'
+            cmd = 'address-family ipv6'
+            add_command_to_vrf(want['name'], cmd, commands)
+            for route in want['route_export_ipv6']:
+                cmd = 'route-target export %s' % route
                 add_command_to_vrf(want['name'], cmd, commands)
-                for route in want['route_export_ipv6']:
-                    cmd = 'route-target export %s' % route
-                    add_command_to_vrf(want['name'], cmd, commands)
-                cmd = 'exit-address-family'
-                add_command_to_vrf(want['name'], cmd, commands)
+            cmd = 'exit-address-family'
+            add_command_to_vrf(want['name'], cmd, commands)
 
         if want['interfaces'] is not None:
             # handle the deletes
@@ -691,7 +691,6 @@ def main():
     result = {'changed': False}
 
     warnings = list()
-    check_args(module, warnings)
     result['warnings'] = warnings
 
     want = map_params_to_obj(module)

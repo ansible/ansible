@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -35,7 +34,7 @@ description:
 - Represents a SSL policy. SSL policies give you the ability to control the features
   of SSL that your SSL proxy or HTTPS load balancer negotiates.
 short_description: Creates a GCP SslPolicy
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -49,10 +48,12 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -62,53 +63,96 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   profile:
     description:
     - Profile specifies the set of SSL features that can be used by the load balancer
       when negotiating SSL with clients. This can be one of `COMPATIBLE`, `MODERN`,
       `RESTRICTED`, or `CUSTOM`. If using `CUSTOM`, the set of SSL features to enable
       must be specified in the `customFeatures` field.
+    - 'Some valid choices include: "COMPATIBLE", "MODERN", "RESTRICTED", "CUSTOM"'
     required: false
-    choices:
-    - COMPATIBLE
-    - MODERN
-    - RESTRICTED
-    - CUSTOM
+    type: str
   min_tls_version:
     description:
     - The minimum version of SSL protocol that can be used by the clients to establish
       a connection with the load balancer. This can be one of `TLS_1_0`, `TLS_1_1`,
       `TLS_1_2`.
+    - 'Some valid choices include: "TLS_1_0", "TLS_1_1", "TLS_1_2"'
     required: false
-    choices:
-    - TLS_1_0
-    - TLS_1_1
-    - TLS_1_2
+    type: str
   custom_features:
     description:
     - A list of features enabled when the selected profile is CUSTOM. The method returns
       the set of features that can be specified in this list. This field must be empty
       if the profile is not CUSTOM.
     required: false
-extends_documentation_fragment: gcp
+    type: list
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/sslPolicies)'
 - 'Using SSL Policies: U(https://cloud.google.com/compute/docs/load-balancing/ssl-policies)'
+- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
-- name: create a ssl policy
+- name: create a SSL policy
   gcp_compute_ssl_policy:
-      name: "test_object"
-      profile: CUSTOM
-      min_tls_version: TLS_1_2
-      custom_features:
-      - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
-      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    profile: CUSTOM
+    min_tls_version: TLS_1_2
+    custom_features:
+    - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -210,9 +254,9 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            profile=dict(type='str', choices=['COMPATIBLE', 'MODERN', 'RESTRICTED', 'CUSTOM']),
-            min_tls_version=dict(type='str', choices=['TLS_1_0', 'TLS_1_1', 'TLS_1_2']),
-            custom_features=dict(type='list', elements='str')
+            profile=dict(type='str'),
+            min_tls_version=dict(type='str'),
+            custom_features=dict(type='list', elements='str'),
         )
     )
 
@@ -269,11 +313,11 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'profile': module.params.get('profile'),
         u'minTlsVersion': module.params.get('min_tls_version'),
-        u'customFeatures': module.params.get('custom_features')
+        u'customFeatures': module.params.get('custom_features'),
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
@@ -304,8 +348,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -344,7 +388,7 @@ def response_to_hash(module, response):
         u'enabledFeatures': response.get(u'enabledFeatures'),
         u'customFeatures': response.get(u'customFeatures'),
         u'fingerprint': response.get(u'fingerprint'),
-        u'warnings': SslPolicyWarningsArray(response.get(u'warnings', []), module).from_response()
+        u'warnings': SslPolicyWarningsArray(response.get(u'warnings', []), module).from_response(),
     }
 
 
@@ -370,9 +414,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -404,16 +448,10 @@ class SslPolicyWarningsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'code': item.get('code'),
-            u'message': item.get('message')
-        })
+        return remove_nones_from_dict({})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'code': item.get(u'code'),
-            u'message': item.get(u'message')
-        })
+        return remove_nones_from_dict({})
 
 
 if __name__ == '__main__':

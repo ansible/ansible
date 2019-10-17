@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_swarm_service - The ``publish``.``mode`` parameter was being ignored if docker-py version was < 3.0.0. Added a parameter validation test."

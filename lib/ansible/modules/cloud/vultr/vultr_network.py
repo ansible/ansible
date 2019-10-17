@@ -64,7 +64,7 @@ vultr_api:
     api_account:
       description: Account used in the ini file to select the key
       returned: success
-      type: string
+      type: str
       sample: default
     api_timeout:
       description: Timeout used for the API requests
@@ -76,10 +76,16 @@ vultr_api:
       returned: success
       type: int
       sample: 5
+    api_retry_max_delay:
+      description: Exponential backoff delay in seconds between retries up to this max delay value.
+      returned: success
+      type: int
+      sample: 12
+      version_added: '2.9'
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
-      type: string
+      type: str
       sample: "https://api.vultr.com"
 vultr_network:
   description: Response from Vultr API
@@ -89,27 +95,27 @@ vultr_network:
     id:
       description: ID of the network
       returned: success
-      type: string
+      type: str
       sample: "net5b62c6dc63ef5"
     name:
       description: Name (label) of the network
       returned: success
-      type: string
+      type: str
       sample: "mynetwork"
     date_created:
       description: Date when the network was created
       returned: success
-      type: string
+      type: str
       sample: "2018-08-02 08:54:52"
     region:
       description: Region the network was deployed into
       returned: success
-      type: string
+      type: str
       sample: "Amsterdam"
     v4_subnet:
       description: IPv4 Network address
       returned: success
-      type: string
+      type: str
       sample: "192.168.42.0"
     v4_subnet_mask:
       description: Ipv4 Network mask

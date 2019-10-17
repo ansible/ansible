@@ -83,7 +83,7 @@ RETURN = '''
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: "Password Updated Successfully"
 '''
 import json
@@ -120,7 +120,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
             data = json.loads(raw_data)
         else:
             raw_data = None
-    except:
+    except Exception:
         if ignore_errors:
             pass
         else:
@@ -207,7 +207,7 @@ def set_password(module, ssid, api_url, user, pwd, current_password=None, new_pa
         try:
             rc, data = request(url, method='POST', data=post_body, headers=HEADERS, url_username=user, url_password=pwd,
                                validate_certs=module.validate_certs)
-        except:
+        except Exception:
             # TODO(lorenp): Resolve ignored rc, data
             module.fail_json(msg="Wrong or no admin password supplied. Please update your playbook and try again")
 

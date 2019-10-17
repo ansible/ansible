@@ -1,0 +1,16 @@
+---
+- name: Populate Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      interface GigabitEthernet 0/0/0/0
+      description this is interface0
+      mtu 65
+      speed 10
+      no shutdown
+      interface GigabitEthernet 0/0/0/1
+      description this is interface1
+      mtu 65
+      speed 10
+      no shutdown

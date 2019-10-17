@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mysqlserver
 version_added: "2.5"
-short_description: Manage MySQL Server instance.
+short_description: Manage MySQL Server instance
 description:
     - Create, update and delete instance of MySQL Server.
 
@@ -36,14 +36,16 @@ options:
         suboptions:
             name:
                 description:
-                    - The name of the sku, typically, a letter + Number code, e.g. P3.
+                    - The name of the sku, typically, tier + family + cores, for example C(B_Gen4_1), C(GP_Gen5_8).
             tier:
                 description:
-                    - The tier of the particular SKU, e.g. Basic.
-                choices: ['basic', 'standard']
+                    - The tier of the particular SKU, for example C(Basic).
+                choices:
+                    - basic
+                    - standard
             capacity:
                 description:
-                    - "The scale up/out capacity, representing server's compute units."
+                    - The scale up/out capacity, representing server's compute units.
             size:
                 description:
                     - The size code, to be interpreted by resource as appropriate.
@@ -53,10 +55,13 @@ options:
     storage_mb:
         description:
             - The maximum storage allowed for a server.
+        type: int
     version:
         description:
             - Server version.
-        choices: ['5.6', '5.7']
+        choices:
+            - 5.6
+            - 5.7
     enforce_ssl:
         description:
             - Enable SSL enforcement.
@@ -64,17 +69,17 @@ options:
         default: False
     admin_username:
         description:
-            - "The administrator's login name of a server. Can only be specified when the server is being created (and is required for creation)."
+            - The administrator's login name of a server. Can only be specified when the server is being created (and is required for creation).
     admin_password:
         description:
             - The password of the administrator login.
     create_mode:
         description:
-            - Create mode of SQL Server
+            - Create mode of SQL Server.
         default: Default
     state:
         description:
-            - Assert the state of the MySQL Server. Use 'present' to create or update a server and 'absent' to delete it.
+            - Assert the state of the MySQL Server. Use C(present) to create or update a server and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -85,19 +90,18 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
   - name: Create (or update) MySQL Server
     azure_rm_mysqlserver:
-      resource_group: TestGroup
+      resource_group: myResourceGroup
       name: testserver
       sku:
-        name: GP_Gen4_2
-        tier: GeneralPurpose
-        capacity: 2
+        name: B_Gen5_1
+        tier: Basic
       location: eastus
       storage_mb: 1024
       enforce_ssl: True
@@ -109,19 +113,19 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Resource ID
+        - Resource ID.
     returned: always
     type: str
-    sample: /subscriptions/12345678-1234-1234-1234-123412341234/testrg/providers/Microsoft.DBforMySQL/servers/mysqlsrv1b6dd89593
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/mysqlsrv1b6dd89593
 version:
     description:
-        - 'Server version. Possible values include: C(5.6), C(5.7)'
+        - Server version. Possible values include C(5.6), C(5.7).
     returned: always
     type: str
     sample: 5.6
 state:
     description:
-        - 'A state of a server that is visible to user. Possible values include: C(Ready), C(Dropping), C(Disabled)'
+        - A state of a server that is visible to user. Possible values include C(Ready), C(Dropping), C(Disabled).
     returned: always
     type: str
     sample: Ready
@@ -150,7 +154,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMServers(AzureRMModuleBase):
+class AzureRMMySqlServers(AzureRMModuleBase):
     """Configuration class for an Azure RM MySQL Server resource"""
 
     def __init__(self):
@@ -207,9 +211,9 @@ class AzureRMServers(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMServers, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                             supports_check_mode=True,
-                                             supports_tags=True)
+        super(AzureRMMySqlServers, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                  supports_check_mode=True,
+                                                  supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -229,7 +233,7 @@ class AzureRMServers(AzureRMModuleBase):
                 elif key == "location":
                     self.parameters["location"] = kwargs[key]
                 elif key == "storage_mb":
-                    self.parameters.setdefault("properties", {})["storage_mb"] = kwargs[key]
+                    self.parameters.setdefault("properties", {}).setdefault("storage_profile", {})["storage_mb"] = kwargs[key]
                 elif key == "version":
                     self.parameters.setdefault("properties", {})["version"] = kwargs[key]
                 elif key == "enforce_ssl":
@@ -322,6 +326,8 @@ class AzureRMServers(AzureRMModuleBase):
                                                             server_name=self.name,
                                                             parameters=self.parameters)
             else:
+                # structure of parameters for update must be changed
+                self.parameters.update(self.parameters.pop("properties", {}))
                 response = self.mysql_client.servers.update(resource_group_name=self.resource_group,
                                                             server_name=self.name,
                                                             parameters=self.parameters)
@@ -373,7 +379,7 @@ class AzureRMServers(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMServers()
+    AzureRMMySqlServers()
 
 
 if __name__ == '__main__':

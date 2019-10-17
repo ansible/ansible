@@ -49,7 +49,7 @@ author: Anders Ingemann (@andsens)
 
 RETURN = '''
 reasons:
-    description: the reasons why the moule changed or did not change something
+    description: the reasons why the module changed or did not change something
     returned: success
     type: list
     sample: ["channel subscription was absent and state is `present'"]
@@ -79,7 +79,7 @@ def sensu_subscription(module, path, name, state='present', backup=False):
     try:
         config = json.load(open(path))
     except IOError as e:
-        if e.errno is 2:  # File not found, non-fatal
+        if e.errno == 2:  # File not found, non-fatal
             if state == 'absent':
                 reasons.append('file did not exist and state is `absent\'')
                 return changed, reasons

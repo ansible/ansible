@@ -168,7 +168,7 @@ class TestCertChanged(ModuleTestCase):
         )
 
         with patch('os.remove', return_value=True):
-            self.run_commands.side_effect = [(0, 'foo=abcd:1234:efgh', ''), (0, 'foo: abcd:1234:efgh', '')]
+            self.run_commands.side_effect = [(0, 'foo=abcd:1234:efgh', ''), (0, 'SHA256: abcd:1234:efgh', '')]
             result = cert_changed(module, "openssl", "keytool", "/path/to/keystore.jks", "changeit", 'foo')
             self.assertFalse(result, 'Fingerprint is identical')
 
@@ -187,7 +187,7 @@ class TestCertChanged(ModuleTestCase):
         )
 
         with patch('os.remove', return_value=True):
-            self.run_commands.side_effect = [(0, 'foo=abcd:1234:efgh', ''), (0, 'foo: wxyz:9876:stuv', '')]
+            self.run_commands.side_effect = [(0, 'foo=abcd:1234:efgh', ''), (0, 'SHA256: wxyz:9876:stuv', '')]
             result = cert_changed(module, "openssl", "keytool", "/path/to/keystore.jks", "changeit", 'foo')
             self.assertTrue(result, 'Fingerprint mismatch')
 
@@ -228,10 +228,10 @@ class TestCertChanged(ModuleTestCase):
         module.fail_json = Mock()
 
         with patch('os.remove', return_value=True):
-            self.run_commands.side_effect = [(1, '', 'Oops'), (0, 'foo: wxyz:9876:stuv', '')]
+            self.run_commands.side_effect = [(1, '', 'Oops'), (0, 'SHA256: wxyz:9876:stuv', '')]
             cert_changed(module, "openssl", "keytool", "/path/to/keystore.jks", "changeit", 'foo')
             module.fail_json.assert_called_once_with(
-                cmd="openssl x509 -noout -in /tmp/foo.crt -fingerprint -sha1",
+                cmd="openssl x509 -noout -in /tmp/foo.crt -fingerprint -sha256",
                 msg='',
                 err='Oops',
                 rc=1
@@ -257,7 +257,7 @@ class TestCertChanged(ModuleTestCase):
             self.run_commands.side_effect = [(0, 'foo: wxyz:9876:stuv', ''), (1, '', 'Oops')]
             cert_changed(module, "openssl", "keytool", "/path/to/keystore.jks", "changeit", 'foo')
             module.fail_json.assert_called_with(
-                cmd="keytool -list -alias 'foo' -keystore '/path/to/keystore.jks' -storepass 'changeit'",
+                cmd="keytool -list -alias 'foo' -keystore '/path/to/keystore.jks' -storepass 'changeit' -v",
                 msg='',
                 err='Oops',
                 rc=1

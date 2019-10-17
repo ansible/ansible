@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_postgresqldatabase
 version_added: "2.5"
-short_description: Manage PostgreSQL Database instance.
+short_description: Manage PostgreSQL Database instance
 description:
     - Create, update and delete instance of PostgreSQL Database.
 
@@ -37,24 +37,20 @@ options:
     charset:
         description:
             - The charset of the database. Check PostgreSQL documentation for possible values.
-            - This is only set on creation, use I(force_update) to recreate a database if the
-              values don't match.
+            - This is only set on creation, use I(force_update) to recreate a database if the values don't match.
     collation:
         description:
             - The collation of the database. Check PostgreSQL documentation for possible values.
-            - This is only set on creation, use I(force_update) to recreate a database if the
-              values don't match.
+            - This is only set on creation, use I(force_update) to recreate a database if the values don't match.
     force_update:
-      description:
-          - When set to C(true), will delete and recreate the existing PostgreSQL database if any
-            of the properties don't match what is set.
-          - When set to C(false), no change will occur to the database even if any
-            of the properties do not match.
-      type: bool
-      default: 'no'
+        description:
+            - When set to C(true), will delete and recreate the existing PostgreSQL database if any of the properties don't match what is set.
+            - When set to C(false), no change will occur to the database even if any of the properties do not match.
+        type: bool
+        default: 'no'
     state:
         description:
-            - Assert the state of the PostgreSQL database. Use 'present' to create or update a database and 'absent' to delete it.
+            - Assert the state of the PostgreSQL database. Use C(present) to create or update a database and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -64,14 +60,14 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
   - name: Create (or update) PostgreSQL Database
     azure_rm_postgresqldatabase:
-      resource_group: TestGroup
+      resource_group: myResourceGroup
       server_name: testserver
       name: db1
 '''
@@ -79,10 +75,11 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Resource ID
+        - Resource ID.
     returned: always
     type: str
-    sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/databases/db1
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroups/providers/Microsoft.DBforPostgreSQL/servers/testserve
+             r/databases/db1"
 name:
     description:
         - Resource name.
@@ -108,7 +105,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMDatabases(AzureRMModuleBase):
+class AzureRMPostgreSqlDatabases(AzureRMModuleBase):
     """Configuration class for an Azure RM PostgreSQL Database resource"""
 
     def __init__(self):
@@ -145,6 +142,7 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
+        self.force_update = None
         self.parameters = dict()
 
         self.results = dict(changed=False)
@@ -152,9 +150,9 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMDatabases, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                               supports_check_mode=True,
-                                               supports_tags=False)
+        super(AzureRMPostgreSqlDatabases, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                         supports_check_mode=True,
+                                                         supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -199,6 +197,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                 if not self.check_mode:
                     self.delete_postgresqldatabase()
             else:
+                self.fail("Database properties cannot be updated without setting 'force_update' option")
                 self.to_do = Actions.NoAction
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
@@ -297,7 +296,7 @@ class AzureRMDatabases(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMDatabases()
+    AzureRMPostgreSqlDatabases()
 
 
 if __name__ == '__main__':

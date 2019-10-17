@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -39,7 +38,7 @@ description:
   manipulation of an existing bucket's access controls.
 - A bucket is always owned by the project team owners group.
 short_description: Creates a GCP Bucket
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -53,28 +52,23 @@ options:
     - present
     - absent
     default: present
+    type: str
   acl:
     description:
     - Access controls on the bucket.
     required: false
+    type: list
     suboptions:
       bucket:
         description:
         - The name of the bucket.
         - 'This field represents a link to a Bucket resource in GCP. It can be specified
-          in two ways. You can add `register: name-of-resource` to a gcp_storage_bucket
-          task and then set this bucket field to "{{ name-of-resource }}" Alternatively,
-          you can set this bucket to a dictionary with the name key where the value
-          is the name of your Bucket'
+          in two ways. First, you can place a dictionary with key ''name'' and value
+          of your resource''s name Alternatively, you can add `register: name-of-resource`
+          to a gcp_storage_bucket task and then set this bucket field to "{{ name-of-resource
+          }}"'
         required: true
-      domain:
-        description:
-        - The domain associated with the entity.
-        required: false
-      email:
-        description:
-        - The email address associated with the entity.
-        required: false
+        type: dict
       entity:
         description:
         - 'The entity holding the permission, in one of the following forms: user-userId
@@ -85,88 +79,83 @@ options:
         - To refer to all members of the Google Apps for Business domain example.com,
           the entity would be domain-example.com.
         required: true
+        type: str
       entity_id:
         description:
         - The ID for the entity.
         required: false
-      id:
-        description:
-        - The ID of the access-control entry.
-        required: false
+        type: str
       project_team:
         description:
         - The project team associated with the entity.
         required: false
+        type: dict
         suboptions:
           project_number:
             description:
             - The project team associated with the entity.
             required: false
+            type: str
           team:
             description:
             - The team.
+            - 'Some valid choices include: "editors", "owners", "viewers"'
             required: false
-            choices:
-            - editors
-            - owners
-            - viewers
+            type: str
       role:
         description:
         - The access permission for the entity.
+        - 'Some valid choices include: "OWNER", "READER", "WRITER"'
         required: false
-        choices:
-        - OWNER
-        - READER
-        - WRITER
+        type: str
   cors:
     description:
     - The bucket's Cross-Origin Resource Sharing (CORS) configuration.
     required: false
+    type: list
     suboptions:
       max_age_seconds:
         description:
         - The value, in seconds, to return in the Access-Control-Max-Age header used
           in preflight responses.
         required: false
+        type: int
       method:
         description:
         - 'The list of HTTP methods on which to include CORS response headers, (GET,
           OPTIONS, POST, etc) Note: "*" is permitted in the list of methods, and means
           "any method".'
         required: false
+        type: list
       origin:
         description:
         - The list of Origins eligible to receive CORS response headers.
         - 'Note: "*" is permitted in the list of origins, and means "any Origin".'
         required: false
+        type: list
       response_header:
         description:
         - The list of HTTP headers other than the simple response headers to give
           permission for the user-agent to share across domains.
         required: false
+        type: list
   default_object_acl:
     description:
     - Default access controls to apply to new objects when no ACL is provided.
     required: false
-    version_added: 2.7
+    type: list
+    version_added: '2.7'
     suboptions:
       bucket:
         description:
         - The name of the bucket.
         - 'This field represents a link to a Bucket resource in GCP. It can be specified
-          in two ways. You can add `register: name-of-resource` to a gcp_storage_bucket
-          task and then set this bucket field to "{{ name-of-resource }}" Alternatively,
-          you can set this bucket to a dictionary with the name key where the value
-          is the name of your Bucket'
+          in two ways. First, you can place a dictionary with key ''name'' and value
+          of your resource''s name Alternatively, you can add `register: name-of-resource`
+          to a gcp_storage_bucket task and then set this bucket field to "{{ name-of-resource
+          }}"'
         required: true
-      domain:
-        description:
-        - The domain associated with the entity.
-        required: false
-      email:
-        description:
-        - The email address associated with the entity.
-        required: false
+        type: dict
       entity:
         description:
         - 'The entity holding the permission, in one of the following forms: * user-{{userId}}
@@ -175,91 +164,69 @@ options:
           (such as "domain-example.com") * project-team-{{projectId}} * allUsers *
           allAuthenticatedUsers .'
         required: true
-      entity_id:
-        description:
-        - The ID for the entity.
-        required: false
-      generation:
-        description:
-        - The content generation of the object, if applied to an object.
-        required: false
-      id:
-        description:
-        - The ID of the access-control entry.
-        required: false
+        type: str
       object:
         description:
         - The name of the object, if applied to an object.
         required: false
-      project_team:
-        description:
-        - The project team associated with the entity.
-        required: false
-        suboptions:
-          project_number:
-            description:
-            - The project team associated with the entity.
-            required: false
-          team:
-            description:
-            - The team.
-            required: false
-            choices:
-            - editors
-            - owners
-            - viewers
+        type: str
       role:
         description:
         - The access permission for the entity.
+        - 'Some valid choices include: "OWNER", "READER"'
         required: true
-        choices:
-        - OWNER
-        - READER
+        type: str
   lifecycle:
     description:
     - The bucket's lifecycle configuration.
     - See U(https://developers.google.com/storage/docs/lifecycle) for more information.
     required: false
+    type: dict
     suboptions:
       rule:
         description:
         - A lifecycle management rule, which is made of an action to take and the
           condition(s) under which the action will be taken.
         required: false
+        type: list
         suboptions:
           action:
             description:
             - The action to take.
             required: false
+            type: dict
             suboptions:
               storage_class:
                 description:
                 - Target storage class. Required iff the type of the action is SetStorageClass.
                 required: false
+                type: str
               type:
                 description:
                 - Type of the action. Currently, only Delete and SetStorageClass are
                   supported.
+                - 'Some valid choices include: "Delete", "SetStorageClass"'
                 required: false
-                choices:
-                - Delete
-                - SetStorageClass
+                type: str
           condition:
             description:
             - The condition(s) under which the action will be taken.
             required: false
+            type: dict
             suboptions:
               age_days:
                 description:
                 - Age of an object (in days). This condition is satisfied when an
                   object reaches the specified age.
                 required: false
+                type: int
               created_before:
                 description:
                 - A date in RFC 3339 format with only the date part (for instance,
                   "2013-01-15"). This condition is satisfied when an object is created
                   before midnight of the specified date in UTC.
                 required: false
+                type: str
               is_live:
                 description:
                 - Relevant only for versioned objects. If the value is true, this
@@ -273,53 +240,59 @@ options:
                   will be matched. Values include MULTI_REGIONAL, REGIONAL, NEARLINE,
                   COLDLINE, STANDARD, and DURABLE_REDUCED_AVAILABILITY.
                 required: false
+                type: list
               num_newer_versions:
                 description:
                 - Relevant only for versioned objects. If the value is N, this condition
                   is satisfied when there are at least N versions (including the live
                   version) newer than this version of the object.
                 required: false
+                type: int
   location:
     description:
     - The location of the bucket. Object data for objects in the bucket resides in
       physical storage within this region. Defaults to US. See the developer's guide
       for the authoritative list.
     required: false
+    type: str
   logging:
     description:
     - The bucket's logging configuration, which defines the destination bucket and
       optional name prefix for the current bucket's logs.
     required: false
+    type: dict
     suboptions:
       log_bucket:
         description:
         - The destination bucket where the current bucket's logs should be placed.
         required: false
+        type: str
       log_object_prefix:
         description:
         - A prefix for log object names.
         required: false
+        type: str
   metageneration:
     description:
     - The metadata generation of this bucket.
     required: false
+    type: int
   name:
     description:
     - The name of the bucket.
     required: false
+    type: str
   owner:
     description:
     - The owner of the bucket. This is always the project team's owner group.
     required: false
+    type: dict
     suboptions:
       entity:
         description:
         - The entity, in the form project-owner-projectId.
         required: false
-      entity_id:
-        description:
-        - The ID for the entity.
-        required: false
+        type: str
   storage_class:
     description:
     - The bucket's default storage class, used whenever no storageClass is specified
@@ -328,18 +301,15 @@ options:
     - Values include MULTI_REGIONAL, REGIONAL, STANDARD, NEARLINE, COLDLINE, and DURABLE_REDUCED_AVAILABILITY.
       If this value is not specified when the bucket is created, it will default to
       STANDARD. For more information, see storage classes.
+    - 'Some valid choices include: "MULTI_REGIONAL", "REGIONAL", "STANDARD", "NEARLINE",
+      "COLDLINE", "DURABLE_REDUCED_AVAILABILITY"'
     required: false
-    choices:
-    - MULTI_REGIONAL
-    - REGIONAL
-    - STANDARD
-    - NEARLINE
-    - COLDLINE
-    - DURABLE_REDUCED_AVAILABILITY
+    type: str
   versioning:
     description:
     - The bucket's versioning configuration.
     required: false
+    type: dict
     suboptions:
       enabled:
         description:
@@ -352,6 +322,7 @@ options:
       accessing bucket contents as a web site. See the Static Website Examples for
       more information.
     required: false
+    type: dict
     suboptions:
       main_page_suffix:
         description:
@@ -360,16 +331,18 @@ options:
           object. This allows the creation of index.html objects to represent directory
           pages.
         required: false
+        type: str
       not_found_page:
         description:
         - If the requested object path is missing, and any mainPageSuffix object is
           missing, if applicable, the service will return the named object from this
           bucket as the content for a 404 Not Found result.
         required: false
+        type: str
   project:
     description:
-    - A valid API project identifier.
-    required: false
+    - The Google Cloud Platform project to use.
+    type: str
   predefined_default_object_acl:
     description:
     - Apply a predefined set of default object access controls to this bucket.
@@ -383,25 +356,53 @@ options:
     - '- "projectPrivate": Object owner gets OWNER access, and project team members
       get access according to their roles.'
     - '- "publicRead": Object owner gets OWNER access, and allUsers get READER access.'
+    - 'Some valid choices include: "authenticatedRead", "bucketOwnerFullControl",
+      "bucketOwnerRead", "private", "projectPrivate", "publicRead"'
     required: false
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
     choices:
-    - authenticatedRead
-    - bucketOwnerFullControl
-    - bucketOwnerRead
-    - private
-    - projectPrivate
-    - publicRead
-extends_documentation_fragment: gcp
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
-      name: ansible-storage-module
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: ansible-storage-module
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -792,81 +793,69 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            acl=dict(type='list', elements='dict', options=dict(
-                bucket=dict(required=True, type='dict'),
-                domain=dict(type='str'),
-                email=dict(type='str'),
-                entity=dict(required=True, type='str'),
-                entity_id=dict(type='str'),
-                id=dict(type='str'),
-                project_team=dict(type='dict', options=dict(
-                    project_number=dict(type='str'),
-                    team=dict(type='str', choices=['editors', 'owners', 'viewers'])
-                )),
-                role=dict(type='str', choices=['OWNER', 'READER', 'WRITER'])
-            )),
-            cors=dict(type='list', elements='dict', options=dict(
-                max_age_seconds=dict(type='int'),
-                method=dict(type='list', elements='str'),
-                origin=dict(type='list', elements='str'),
-                response_header=dict(type='list', elements='str')
-            )),
-            default_object_acl=dict(type='list', elements='dict', options=dict(
-                bucket=dict(required=True, type='dict'),
-                domain=dict(type='str'),
-                email=dict(type='str'),
-                entity=dict(required=True, type='str'),
-                entity_id=dict(type='str'),
-                generation=dict(type='int'),
-                id=dict(type='str'),
-                object=dict(type='str'),
-                project_team=dict(type='dict', options=dict(
-                    project_number=dict(type='str'),
-                    team=dict(type='str', choices=['editors', 'owners', 'viewers'])
-                )),
-                role=dict(required=True, type='str', choices=['OWNER', 'READER'])
-            )),
-            lifecycle=dict(type='dict', options=dict(
-                rule=dict(type='list', elements='dict', options=dict(
-                    action=dict(type='dict', options=dict(
-                        storage_class=dict(type='str'),
-                        type=dict(type='str', choices=['Delete', 'SetStorageClass'])
-                    )),
-                    condition=dict(type='dict', options=dict(
-                        age_days=dict(type='int'),
-                        created_before=dict(type='str'),
-                        is_live=dict(type='bool'),
-                        matches_storage_class=dict(type='list', elements='str'),
-                        num_newer_versions=dict(type='int')
-                    ))
-                ))
-            )),
+            acl=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    bucket=dict(required=True, type='dict'),
+                    entity=dict(required=True, type='str'),
+                    entity_id=dict(type='str'),
+                    project_team=dict(type='dict', options=dict(project_number=dict(type='str'), team=dict(type='str'))),
+                    role=dict(type='str'),
+                ),
+            ),
+            cors=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    max_age_seconds=dict(type='int'),
+                    method=dict(type='list', elements='str'),
+                    origin=dict(type='list', elements='str'),
+                    response_header=dict(type='list', elements='str'),
+                ),
+            ),
+            default_object_acl=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    bucket=dict(required=True, type='dict'),
+                    entity=dict(required=True, type='str'),
+                    object=dict(type='str'),
+                    role=dict(required=True, type='str'),
+                ),
+            ),
+            lifecycle=dict(
+                type='dict',
+                options=dict(
+                    rule=dict(
+                        type='list',
+                        elements='dict',
+                        options=dict(
+                            action=dict(type='dict', options=dict(storage_class=dict(type='str'), type=dict(type='str'))),
+                            condition=dict(
+                                type='dict',
+                                options=dict(
+                                    age_days=dict(type='int'),
+                                    created_before=dict(type='str'),
+                                    is_live=dict(type='bool'),
+                                    matches_storage_class=dict(type='list', elements='str'),
+                                    num_newer_versions=dict(type='int'),
+                                ),
+                            ),
+                        ),
+                    )
+                ),
+            ),
             location=dict(type='str'),
-            logging=dict(type='dict', options=dict(
-                log_bucket=dict(type='str'),
-                log_object_prefix=dict(type='str')
-            )),
+            logging=dict(type='dict', options=dict(log_bucket=dict(type='str'), log_object_prefix=dict(type='str'))),
             metageneration=dict(type='int'),
             name=dict(type='str'),
-            owner=dict(type='dict', options=dict(
-                entity=dict(type='str'),
-                entity_id=dict(type='str')
-            )),
-            storage_class=dict(type='str', choices=['MULTI_REGIONAL', 'REGIONAL', 'STANDARD', 'NEARLINE', 'COLDLINE', 'DURABLE_REDUCED_AVAILABILITY']),
-            versioning=dict(type='dict', options=dict(
-                enabled=dict(type='bool')
-            )),
-            website=dict(type='dict', options=dict(
-                main_page_suffix=dict(type='str'),
-                not_found_page=dict(type='str')
-            )),
+            owner=dict(type='dict', options=dict(entity=dict(type='str'))),
+            storage_class=dict(type='str'),
+            versioning=dict(type='dict', options=dict(enabled=dict(type='bool'))),
+            website=dict(type='dict', options=dict(main_page_suffix=dict(type='str'), not_found_page=dict(type='str'))),
             project=dict(type='str'),
-            predefined_default_object_acl=dict(type='str', choices=['authenticatedRead',
-                                                                    'bucketOwnerFullControl',
-                                                                    'bucketOwnerRead',
-                                                                    'private',
-                                                                    'projectPrivate',
-                                                                    'publicRead'])
+            predefined_default_object_acl=dict(type='str'),
         )
     )
 
@@ -932,11 +921,11 @@ def resource_to_request(module):
         u'owner': BucketOwner(module.params.get('owner', {}), module).to_request(),
         u'storageClass': module.params.get('storage_class'),
         u'versioning': BucketVersioning(module.params.get('versioning', {}), module).to_request(),
-        u'website': BucketWebsite(module.params.get('website', {}), module).to_request()
+        u'website': BucketWebsite(module.params.get('website', {}), module).to_request(),
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
@@ -967,8 +956,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -1013,7 +1002,7 @@ def response_to_hash(module, response):
         u'timeCreated': response.get(u'timeCreated'),
         u'updated': response.get(u'updated'),
         u'versioning': BucketVersioning(response.get(u'versioning', {}), module).from_response(),
-        u'website': BucketWebsite(response.get(u'website', {}), module).from_response()
+        u'website': BucketWebsite(response.get(u'website', {}), module).from_response(),
     }
 
 
@@ -1038,28 +1027,26 @@ class BucketAclArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'bucket': replace_resource_dict(item.get(u'bucket', {}), 'name'),
-            u'domain': item.get('domain'),
-            u'email': item.get('email'),
-            u'entity': item.get('entity'),
-            u'entityId': item.get('entity_id'),
-            u'id': item.get('id'),
-            u'projectTeam': BucketProjectteam(item.get('project_team', {}), self.module).to_request(),
-            u'role': item.get('role')
-        })
+        return remove_nones_from_dict(
+            {
+                u'bucket': replace_resource_dict(item.get(u'bucket', {}), 'name'),
+                u'entity': item.get('entity'),
+                u'entityId': item.get('entity_id'),
+                u'projectTeam': BucketProjectteam(item.get('project_team', {}), self.module).to_request(),
+                u'role': item.get('role'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'bucket': item.get(u'bucket'),
-            u'domain': item.get(u'domain'),
-            u'email': item.get(u'email'),
-            u'entity': item.get(u'entity'),
-            u'entityId': item.get(u'entityId'),
-            u'id': item.get(u'id'),
-            u'projectTeam': BucketProjectteam(item.get(u'projectTeam', {}), self.module).from_response(),
-            u'role': item.get(u'role')
-        })
+        return remove_nones_from_dict(
+            {
+                u'bucket': item.get(u'bucket'),
+                u'entity': item.get(u'entity'),
+                u'entityId': item.get(u'entityId'),
+                u'projectTeam': BucketProjectteam(item.get(u'projectTeam', {}), self.module).from_response(),
+                u'role': item.get(u'role'),
+            }
+        )
 
 
 class BucketProjectteam(object):
@@ -1071,16 +1058,10 @@ class BucketProjectteam(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'projectNumber': self.request.get('project_number'),
-            u'team': self.request.get('team')
-        })
+        return remove_nones_from_dict({u'projectNumber': self.request.get('project_number'), u'team': self.request.get('team')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'projectNumber': self.request.get(u'projectNumber'),
-            u'team': self.request.get(u'team')
-        })
+        return remove_nones_from_dict({u'projectNumber': self.request.get(u'projectNumber'), u'team': self.request.get(u'team')})
 
 
 class BucketCorsArray(object):
@@ -1104,20 +1085,24 @@ class BucketCorsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'maxAgeSeconds': item.get('max_age_seconds'),
-            u'method': item.get('method'),
-            u'origin': item.get('origin'),
-            u'responseHeader': item.get('response_header')
-        })
+        return remove_nones_from_dict(
+            {
+                u'maxAgeSeconds': item.get('max_age_seconds'),
+                u'method': item.get('method'),
+                u'origin': item.get('origin'),
+                u'responseHeader': item.get('response_header'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'maxAgeSeconds': item.get(u'maxAgeSeconds'),
-            u'method': item.get(u'method'),
-            u'origin': item.get(u'origin'),
-            u'responseHeader': item.get(u'responseHeader')
-        })
+        return remove_nones_from_dict(
+            {
+                u'maxAgeSeconds': item.get(u'maxAgeSeconds'),
+                u'method': item.get(u'method'),
+                u'origin': item.get(u'origin'),
+                u'responseHeader': item.get(u'responseHeader'),
+            }
+        )
 
 
 class BucketDefaultobjectaclArray(object):
@@ -1141,32 +1126,19 @@ class BucketDefaultobjectaclArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'bucket': replace_resource_dict(item.get(u'bucket', {}), 'name'),
-            u'domain': item.get('domain'),
-            u'email': item.get('email'),
-            u'entity': item.get('entity'),
-            u'entityId': item.get('entity_id'),
-            u'generation': item.get('generation'),
-            u'id': item.get('id'),
-            u'object': item.get('object'),
-            u'projectTeam': BucketProjectteam(item.get('project_team', {}), self.module).to_request(),
-            u'role': item.get('role')
-        })
+        return remove_nones_from_dict(
+            {
+                u'bucket': replace_resource_dict(item.get(u'bucket', {}), 'name'),
+                u'entity': item.get('entity'),
+                u'object': item.get('object'),
+                u'role': item.get('role'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'bucket': item.get(u'bucket'),
-            u'domain': item.get(u'domain'),
-            u'email': item.get(u'email'),
-            u'entity': item.get(u'entity'),
-            u'entityId': item.get(u'entityId'),
-            u'generation': item.get(u'generation'),
-            u'id': item.get(u'id'),
-            u'object': item.get(u'object'),
-            u'projectTeam': BucketProjectteam(item.get(u'projectTeam', {}), self.module).from_response(),
-            u'role': item.get(u'role')
-        })
+        return remove_nones_from_dict(
+            {u'bucket': item.get(u'bucket'), u'entity': item.get(u'entity'), u'object': item.get(u'object'), u'role': item.get(u'role')}
+        )
 
 
 class BucketProjectteam(object):
@@ -1178,16 +1150,10 @@ class BucketProjectteam(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'projectNumber': self.request.get('project_number'),
-            u'team': self.request.get('team')
-        })
+        return remove_nones_from_dict({u'projectNumber': self.request.get('project_number'), u'team': self.request.get('team')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'projectNumber': self.request.get(u'projectNumber'),
-            u'team': self.request.get(u'team')
-        })
+        return remove_nones_from_dict({u'projectNumber': self.request.get(u'projectNumber'), u'team': self.request.get(u'team')})
 
 
 class BucketLifecycle(object):
@@ -1199,14 +1165,10 @@ class BucketLifecycle(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'rule': BucketRuleArray(self.request.get('rule', []), self.module).to_request()
-        })
+        return remove_nones_from_dict({u'rule': BucketRuleArray(self.request.get('rule', []), self.module).to_request()})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'rule': BucketRuleArray(self.request.get(u'rule', []), self.module).from_response()
-        })
+        return remove_nones_from_dict({u'rule': BucketRuleArray(self.request.get(u'rule', []), self.module).from_response()})
 
 
 class BucketRuleArray(object):
@@ -1230,16 +1192,20 @@ class BucketRuleArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'action': BucketAction(item.get('action', {}), self.module).to_request(),
-            u'condition': BucketCondition(item.get('condition', {}), self.module).to_request()
-        })
+        return remove_nones_from_dict(
+            {
+                u'action': BucketAction(item.get('action', {}), self.module).to_request(),
+                u'condition': BucketCondition(item.get('condition', {}), self.module).to_request(),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'action': BucketAction(item.get(u'action', {}), self.module).from_response(),
-            u'condition': BucketCondition(item.get(u'condition', {}), self.module).from_response()
-        })
+        return remove_nones_from_dict(
+            {
+                u'action': BucketAction(item.get(u'action', {}), self.module).from_response(),
+                u'condition': BucketCondition(item.get(u'condition', {}), self.module).from_response(),
+            }
+        )
 
 
 class BucketAction(object):
@@ -1251,16 +1217,10 @@ class BucketAction(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'storageClass': self.request.get('storage_class'),
-            u'type': self.request.get('type')
-        })
+        return remove_nones_from_dict({u'storageClass': self.request.get('storage_class'), u'type': self.request.get('type')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'storageClass': self.request.get(u'storageClass'),
-            u'type': self.request.get(u'type')
-        })
+        return remove_nones_from_dict({u'storageClass': self.request.get(u'storageClass'), u'type': self.request.get(u'type')})
 
 
 class BucketCondition(object):
@@ -1272,22 +1232,26 @@ class BucketCondition(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'age': self.request.get('age_days'),
-            u'createdBefore': self.request.get('created_before'),
-            u'isLive': self.request.get('is_live'),
-            u'matchesStorageClass': self.request.get('matches_storage_class'),
-            u'numNewerVersions': self.request.get('num_newer_versions')
-        })
+        return remove_nones_from_dict(
+            {
+                u'age': self.request.get('age_days'),
+                u'createdBefore': self.request.get('created_before'),
+                u'isLive': self.request.get('is_live'),
+                u'matchesStorageClass': self.request.get('matches_storage_class'),
+                u'numNewerVersions': self.request.get('num_newer_versions'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'age': self.request.get(u'ageDays'),
-            u'createdBefore': self.request.get(u'createdBefore'),
-            u'isLive': self.request.get(u'isLive'),
-            u'matchesStorageClass': self.request.get(u'matchesStorageClass'),
-            u'numNewerVersions': self.request.get(u'numNewerVersions')
-        })
+        return remove_nones_from_dict(
+            {
+                u'age': self.request.get(u'age'),
+                u'createdBefore': self.request.get(u'createdBefore'),
+                u'isLive': self.request.get(u'isLive'),
+                u'matchesStorageClass': self.request.get(u'matchesStorageClass'),
+                u'numNewerVersions': self.request.get(u'numNewerVersions'),
+            }
+        )
 
 
 class BucketLogging(object):
@@ -1299,16 +1263,10 @@ class BucketLogging(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'logBucket': self.request.get('log_bucket'),
-            u'logObjectPrefix': self.request.get('log_object_prefix')
-        })
+        return remove_nones_from_dict({u'logBucket': self.request.get('log_bucket'), u'logObjectPrefix': self.request.get('log_object_prefix')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'logBucket': self.request.get(u'logBucket'),
-            u'logObjectPrefix': self.request.get(u'logObjectPrefix')
-        })
+        return remove_nones_from_dict({u'logBucket': self.request.get(u'logBucket'), u'logObjectPrefix': self.request.get(u'logObjectPrefix')})
 
 
 class BucketOwner(object):
@@ -1320,16 +1278,10 @@ class BucketOwner(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'entity': self.request.get('entity'),
-            u'entityId': self.request.get('entity_id')
-        })
+        return remove_nones_from_dict({u'entity': self.request.get('entity')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'entity': self.request.get(u'entity'),
-            u'entityId': self.request.get(u'entityId')
-        })
+        return remove_nones_from_dict({u'entity': self.request.get(u'entity')})
 
 
 class BucketVersioning(object):
@@ -1341,14 +1293,10 @@ class BucketVersioning(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'enabled': self.request.get('enabled')
-        })
+        return remove_nones_from_dict({u'enabled': self.request.get('enabled')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'enabled': self.request.get(u'enabled')
-        })
+        return remove_nones_from_dict({u'enabled': self.request.get(u'enabled')})
 
 
 class BucketWebsite(object):
@@ -1360,16 +1308,10 @@ class BucketWebsite(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'mainPageSuffix': self.request.get('main_page_suffix'),
-            u'notFoundPage': self.request.get('not_found_page')
-        })
+        return remove_nones_from_dict({u'mainPageSuffix': self.request.get('main_page_suffix'), u'notFoundPage': self.request.get('not_found_page')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'mainPageSuffix': self.request.get(u'mainPageSuffix'),
-            u'notFoundPage': self.request.get(u'notFoundPage')
-        })
+        return remove_nones_from_dict({u'mainPageSuffix': self.request.get(u'mainPageSuffix'), u'notFoundPage': self.request.get(u'notFoundPage')})
 
 
 if __name__ == '__main__':

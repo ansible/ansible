@@ -97,19 +97,19 @@ EXAMPLES = '''
 RETURN = '''
 db_parameter_group_name:
     description: Name of DB parameter group
-    type: string
+    type: str
     returned: when state is present
 db_parameter_group_family:
     description: DB parameter group family that this DB parameter group is compatible with.
-    type: string
+    type: str
     returned: when state is present
 db_parameter_group_arn:
     description: ARN of the DB parameter group
-    type: string
+    type: str
     returned: when state is present
 description:
     description: description of the DB parameter group
-    type: string
+    type: str
     returned: when state is present
 errors:
     description: list of errors from attempting to modify parameters that are not modifiable

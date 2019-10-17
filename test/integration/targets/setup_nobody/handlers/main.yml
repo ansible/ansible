@@ -1,0 +1,5 @@
+---
+- name: remove nobody user
+  user:
+    name: nobody
+    state: absent

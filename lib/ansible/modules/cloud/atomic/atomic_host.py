@@ -48,7 +48,7 @@ RETURN = '''
 msg:
     description: The command standard output
     returned: always
-    type: string
+    type: str
     sample: 'Already on latest'
 '''
 import os

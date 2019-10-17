@@ -1,0 +1,23 @@
+---
+# test code for the git_config module
+
+- name: setup
+  import_tasks: setup.yml
+
+- block:
+    # testing parameters exclusion: state and list_all
+    - import_tasks: exclusion_state_list-all.yml
+    # testing get/set option without state
+    - import_tasks: get_set_no_state.yml
+    # testing get/set option with state=present
+    - import_tasks: get_set_state_present.yml
+    # testing state=absent without value to delete
+    - import_tasks: unset_no_value.yml
+    # testing state=absent with value to delete
+    - import_tasks: unset_value.yml
+    # testing state=absent with value to delete and a defined value parameter
+    - import_tasks: precedence_between_unset_and_value.yml
+    # testing state=absent with check mode
+    - import_tasks: unset_check_mode.yml
+  when: git_installed is succeeded and git_version.stdout is version(git_version_supporting_includes, ">=")
+...

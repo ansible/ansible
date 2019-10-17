@@ -23,7 +23,9 @@ description:
       the IETF. It is documented in RFC 6241.
     - This module allows the user to send a configuration XML file to a netconf
       device, and detects if there was a configuration change.
-extends_documentation_fragment: netconf
+extends_documentation_fragment:
+    - netconf
+    - network_agnostic
 options:
   content:
     description:
@@ -89,11 +91,13 @@ options:
     version_added: "2.7"
   error_option:
     description:
-    - This option control the netconf server action after a error is occured while editing the configuration.
-      If the value is I(stop-on-error) abort the config edit on first error, if value is I(continue-on-error)
-      it continues to process configuration data on error, error is recorded and negative response is generated
-      if any errors occur. If value is C(rollback-on-error) it rollback to the original configuration in case
-      any error occurs, this requires the remote Netconf server to support the :rollback-on-error capability.
+    - This option controls the netconf server action after an error occurs while editing the configuration.
+    - If I(error_option=stop-on-error), abort the config edit on first error.
+    - If I(error_option=continue-on-error), continue to process configuration data on error.
+      The error is recorded and negative response is generated if any errors occur.
+    - If I(error_option=rollback-on-error), rollback to the original configuration if
+      any error occurs.
+      This requires the remote Netconf server to support the I(error_option=rollback-on-error) capability.
     default: stop-on-error
     choices: ['stop-on-error', 'continue-on-error', 'rollback-on-error']
     version_added: "2.7"
@@ -108,10 +112,10 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory or role root directory, if
-        playbook is part of an ansible role. If the directory does not exist,
-        it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory or role root directory, if playbook is part of an
+        ansible role. If the directory does not exist, it is created.
     type: bool
     default: 'no'
     version_added: "2.7"
@@ -133,7 +137,7 @@ options:
   validate:
     description:
       - This boolean flag if set validates the content of datastore given in C(target) option.
-        For this option to work remote Netconf server shoule support :validate capability.
+        For this option to work remote Netconf server should support :validate capability.
     type: bool
     default: False
     version_added: "2.7"
@@ -143,6 +147,28 @@ options:
       to load. The path to the source file can either be the full path on the Ansible control host or
       a relative path from the playbook or role root directory. This argument is mutually exclusive with I(xml).
     version_added: "2.4"
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 requirements:
   - "ncclient"
 notes:
@@ -193,6 +219,13 @@ EXAMPLES = '''
   register: backup_junos_location
   vars:
     ansible_private_key_file: /home/admin/.ssh/newprivatekeyfile
+
+- name: configurable backup path
+  netconf_config:
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 '''
 
 RETURN = '''
@@ -204,7 +237,7 @@ server_capabilities:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
 diff:
   description: If --diff option in enabled while running, the before and after configuration change are
@@ -221,10 +254,19 @@ from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.netconf.netconf import get_capabilities, get_config, sanitize_xml
 
+try:
+    from lxml.etree import tostring
+except ImportError:
+    from xml.etree.ElementTree import tostring
+
 
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         content=dict(aliases=['xml']),
         target=dict(choices=['auto', 'candidate', 'running'], default='auto', aliases=['datastore']),
@@ -236,6 +278,7 @@ def main():
         confirm_commit=dict(type='bool', default=False),
         error_option=dict(choices=['stop-on-error', 'continue-on-error', 'rollback-on-error'], default='stop-on-error'),
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
         save=dict(type='bool', default=False),
         delete=dict(type='bool', default=False),
         commit=dict(type='bool', default=True),
@@ -329,7 +372,7 @@ def main():
     try:
         if module.params['backup']:
             response = get_config(module, target, lock=execute_lock)
-            before = to_text(response, errors='surrogate_then_replace').strip()
+            before = to_text(tostring(response), errors='surrogate_then_replace').strip()
             result['__backup__'] = before.strip()
         if validate:
             conn.validate(target)
@@ -345,7 +388,7 @@ def main():
             if not module.check_mode:
                 conn.commit()
             result['changed'] = True
-        else:
+        elif config:
             if module.check_mode and not supports_commit:
                 module.warn("check mode not supported as Netconf server doesn't support candidate capability")
                 result['changed'] = True

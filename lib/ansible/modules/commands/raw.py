@@ -15,12 +15,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: raw
-short_description: Executes a low-down and dirty SSH command
+short_description: Executes a low-down and dirty command
 version_added: historical
 options:
   free_form:
     description:
-      - The raw module takes a free form command to run. There is no parameter actually named 'free form'; see the examples!
+      - The raw module takes a free form command to run.
+      - There is no parameter actually named 'free form'; see the examples!
     required: true
   executable:
     description:
@@ -53,6 +54,11 @@ notes:
       which means it only works if C(executable) is set or using the module
       with privilege escalation (C(become)).
     - This module is also supported for Windows targets.
+seealso:
+- module: command
+- module: shell
+- module: win_command
+- module: win_shell
 author:
     - Ansible Core Team
     - Michael DeHaan

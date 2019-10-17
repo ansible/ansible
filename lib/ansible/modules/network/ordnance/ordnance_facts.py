@@ -112,7 +112,7 @@ class FactsBase(object):
     def run(self, cmd):
         try:
             return self.module.cli(cmd)[0]
-        except:
+        except Exception:
             self.failed_commands.append(cmd)
 
 

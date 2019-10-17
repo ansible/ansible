@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -34,7 +33,7 @@ module: gcp_compute_instance
 description:
 - An instance is a virtual machine (VM) hosted on Google's infrastructure.
 short_description: Creates a GCP Instance
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -48,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   can_ip_forward:
     description:
     - Allows this instance to send and receive packets with non-matching destination
@@ -55,11 +55,20 @@ options:
       routes.
     required: false
     type: bool
+    aliases:
+    - ip_forward
+  deletion_protection:
+    description:
+    - Whether the resource should be protected against deletion.
+    required: false
+    type: bool
+    version_added: '2.9'
   disks:
     description:
     - An array of disks that are associated with the instances that are created from
       this template.
     required: false
+    type: list
     suboptions:
       auto_delete:
         description:
@@ -82,26 +91,25 @@ options:
           the instance. This name can be used to reference the device for mounting,
           resizing, and so on, from within the instance.
         required: false
+        type: str
       disk_encryption_key:
         description:
         - Encrypts or decrypts a disk using a customer-supplied encryption key.
         required: false
+        type: dict
         suboptions:
           raw_key:
             description:
             - Specifies a 256-bit customer-supplied encryption key, encoded in RFC
               4648 base64 to either encrypt or decrypt this resource.
             required: false
+            type: str
           rsa_encrypted_key:
             description:
             - Specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied
               encryption key to either encrypt or decrypt this resource.
             required: false
-          sha256:
-            description:
-            - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
-              key that protects this resource.
-            required: false
+            type: str
       index:
         description:
         - Assigns a zero-based index to this disk, where 0 is reserved for the boot
@@ -109,28 +117,33 @@ options:
           disk would have a unique index number. If not specified, the server will
           choose an appropriate value.
         required: false
+        type: int
       initialize_params:
         description:
         - Specifies the parameters for a new disk that will be created alongside the
           new instance. Use initialization parameters to create boot disks or local
           SSDs attached to the new instance.
         required: false
+        type: dict
         suboptions:
           disk_name:
             description:
             - Specifies the disk name. If not specified, the default is to use the
               name of the instance.
             required: false
+            type: str
           disk_size_gb:
             description:
             - Specifies the size of the disk in base-2 GB.
             required: false
+            type: int
           disk_type:
             description:
-            - Reference to a gcompute_disk_type resource.
+            - Reference to a disk type.
             - Specifies the disk type to use to create the instance.
             - If not specified, the default is pd-standard.
             required: false
+            type: str
           source_image:
             description:
             - The source image to create this disk. When creating a new instance,
@@ -138,6 +151,10 @@ options:
               create a disk with one of the public operating system images, specify
               the image by its family name.
             required: false
+            type: str
+            aliases:
+            - image
+            - image_family
           source_image_encryption_key:
             description:
             - The customer-supplied encryption key of the source image. Required if
@@ -146,90 +163,98 @@ options:
               you cannot create disks for instances in a managed instance group if
               the source images are encrypted with your own keys.
             required: false
+            type: dict
             suboptions:
               raw_key:
                 description:
                 - Specifies a 256-bit customer-supplied encryption key, encoded in
                   RFC 4648 base64 to either encrypt or decrypt this resource.
                 required: false
-              sha256:
-                description:
-                - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied
-                  encryption key that protects this resource.
-                required: false
+                type: str
       interface:
         description:
         - Specifies the disk interface to use for attaching this disk, which is either
           SCSI or NVME. The default is SCSI.
         - Persistent disks must always use SCSI and the request will fail if you attempt
           to attach a persistent disk in any other format than SCSI.
+        - 'Some valid choices include: "SCSI", "NVME"'
         required: false
-        choices:
-        - SCSI
-        - NVME
+        type: str
       mode:
         description:
         - The mode in which to attach this disk, either READ_WRITE or READ_ONLY. If
           not specified, the default is to attach the disk in READ_WRITE mode.
+        - 'Some valid choices include: "READ_WRITE", "READ_ONLY"'
         required: false
-        choices:
-        - READ_WRITE
-        - READ_ONLY
+        type: str
       source:
         description:
-        - Reference to a gcompute_disk resource. When creating a new instance, one
-          of initializeParams.sourceImage or disks.source is required.
+        - Reference to a disk. When creating a new instance, one of initializeParams.sourceImage
+          or disks.source is required.
         - If desired, you can also attach existing non-root persistent disks using
           this property. This field is only applicable for persistent disks.
         - 'This field represents a link to a Disk resource in GCP. It can be specified
-          in two ways. You can add `register: name-of-resource` to a gcp_compute_disk
-          task and then set this source field to "{{ name-of-resource }}" Alternatively,
-          you can set this source to a dictionary with the selfLink key where the
-          value is the selfLink of your Disk'
+          in two ways. First, you can place a dictionary with key ''selfLink'' and
+          value of your resource''s selfLink Alternatively, you can add `register:
+          name-of-resource` to a gcp_compute_disk task and then set this source field
+          to "{{ name-of-resource }}"'
         required: false
+        type: dict
       type:
         description:
         - Specifies the type of the disk, either SCRATCH or PERSISTENT. If not specified,
           the default is PERSISTENT.
+        - 'Some valid choices include: "SCRATCH", "PERSISTENT"'
         required: false
-        choices:
-        - SCRATCH
-        - PERSISTENT
+        type: str
   guest_accelerators:
     description:
     - List of the type and count of accelerator cards attached to the instance .
     required: false
+    type: list
     suboptions:
       accelerator_count:
         description:
         - The number of the guest accelerator cards exposed to this instance.
         required: false
+        type: int
       accelerator_type:
         description:
         - Full or partial URL of the accelerator type resource to expose to this instance.
         required: false
-  label_fingerprint:
+        type: str
+  hostname:
     description:
-    - A fingerprint for this request, which is essentially a hash of the metadata's
-      contents and used for optimistic locking. The fingerprint is initially generated
-      by Compute Engine and changes after every request to modify or update metadata.
-      You must always provide an up-to-date fingerprint hash in order to update or
-      change metadata.
+    - The hostname of the instance to be created. The specified hostname must be RFC1035
+      compliant. If hostname is not specified, the default hostname is [INSTANCE_NAME].c.[PROJECT_ID].internal
+      when using the global DNS, and [INSTANCE_NAME].[ZONE].c.[PROJECT_ID].internal
+      when using zonal DNS.
     required: false
+    type: str
+    version_added: '2.9'
+  labels:
+    description:
+    - Labels to apply to this instance. A list of key->value pairs.
+    required: false
+    type: dict
+    version_added: '2.9'
   metadata:
     description:
     - The metadata key/value pairs to assign to instances that are created from this
       template. These pairs can consist of custom metadata or predefined keys.
     required: false
+    type: dict
   machine_type:
     description:
     - A reference to a machine type which defines VM kind.
     required: false
+    type: str
   min_cpu_platform:
     description:
     - Specifies a minimum CPU platform for the VM instance. Applicable values are
       the friendly names of CPU platforms .
     required: false
+    type: str
   name:
     description:
     - The name of the resource, provided by the client when initially creating the
@@ -239,12 +264,14 @@ options:
       letter, and all following characters must be a dash, lowercase letter, or digit,
       except the last character, which cannot be a dash.
     required: false
+    type: str
   network_interfaces:
     description:
     - An array of configurations for this interface. This specifies how this interface
       is configured to interact with other network services, such as connecting to
       the internet. Only one network interface is supported per instance.
     required: false
+    type: list
     suboptions:
       access_configs:
         description:
@@ -252,6 +279,7 @@ options:
           config, ONE_TO_ONE_NAT, is supported. If there are no accessConfigs specified,
           then this instance will have no external internet access.
         required: false
+        type: list
         suboptions:
           name:
             description:
@@ -259,31 +287,34 @@ options:
               is External NAT but you can use any arbitrary string you would like.
               For example, My external IP or Network Access.
             required: true
+            type: str
           nat_ip:
             description:
-            - Specifies the title of a gcompute_address.
+            - Reference to an address.
             - An external IP address associated with this instance.
             - Specify an unused static external IP address available to the project
               or leave this field undefined to use an IP from a shared ephemeral IP
               address pool. If you specify a static external IP address, it must live
               in the same region as the zone of the instance.
             - 'This field represents a link to a Address resource in GCP. It can be
-              specified in two ways. You can add `register: name-of-resource` to a
-              gcp_compute_address task and then set this nat_ip field to "{{ name-of-resource
-              }}" Alternatively, you can set this nat_ip to a dictionary with the
-              address key where the value is the address of your Address'
+              specified in two ways. First, you can place a dictionary with key ''address''
+              and value of your resource''s address Alternatively, you can add `register:
+              name-of-resource` to a gcp_compute_address task and then set this nat_ip
+              field to "{{ name-of-resource }}"'
             required: false
+            type: dict
           type:
             description:
             - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
+            - 'Some valid choices include: "ONE_TO_ONE_NAT"'
             required: true
-            choices:
-            - ONE_TO_ONE_NAT
+            type: str
       alias_ip_ranges:
         description:
         - An array of alias IP ranges for this network interface. Can only be specified
           for network interfaces on subnet-mode networks.
         required: false
+        type: list
         suboptions:
           ip_cidr_range:
             description:
@@ -293,51 +324,51 @@ options:
               This range may be a single IP address (e.g. 10.2.3.4), a netmask (e.g.
               /24) or a CIDR format string (e.g. 10.1.2.0/24).
             required: false
+            type: str
           subnetwork_range_name:
             description:
             - Optional subnetwork secondary range name specifying the secondary range
               from which to allocate the IP CIDR range for this alias IP range. If
               left unspecified, the primary range of the subnetwork will be used.
             required: false
-      name:
-        description:
-        - The name of the network interface, generated by the server. For network
-          devices, these are eth0, eth1, etc .
-        required: false
+            type: str
       network:
         description:
-        - Specifies the title of an existing gcompute_network. When creating an instance,
-          if neither the network nor the subnetwork is specified, the default network
-          global/networks/default is used; if the network is not specified but the
-          subnetwork is specified, the network is inferred.
+        - Specifies the title of an existing network. Not setting the network title
+          will select the default network interface, which could have SSH already
+          configured .
         - 'This field represents a link to a Network resource in GCP. It can be specified
-          in two ways. You can add `register: name-of-resource` to a gcp_compute_network
-          task and then set this network field to "{{ name-of-resource }}" Alternatively,
-          you can set this network to a dictionary with the selfLink key where the
-          value is the selfLink of your Network'
+          in two ways. First, you can place a dictionary with key ''selfLink'' and
+          value of your resource''s selfLink Alternatively, you can add `register:
+          name-of-resource` to a gcp_compute_network task and then set this network
+          field to "{{ name-of-resource }}"'
         required: false
+        type: dict
       network_ip:
         description:
         - An IPv4 internal network address to assign to the instance for this network
           interface. If not specified by the user, an unused internal IP is assigned
           by the system.
         required: false
+        type: str
       subnetwork:
         description:
-        - Reference to a gcompute_subnetwork resource.
+        - Reference to a VPC network.
         - If the network resource is in legacy mode, do not provide this property.
           If the network is in auto subnet mode, providing the subnetwork is optional.
           If the network is in custom subnet mode, then this field should be specified.
         - 'This field represents a link to a Subnetwork resource in GCP. It can be
-          specified in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
-          task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
-          you can set this subnetwork to a dictionary with the selfLink key where
-          the value is the selfLink of your Subnetwork'
+          specified in two ways. First, you can place a dictionary with key ''selfLink''
+          and value of your resource''s selfLink Alternatively, you can add `register:
+          name-of-resource` to a gcp_compute_subnetwork task and then set this subnetwork
+          field to "{{ name-of-resource }}"'
         required: false
+        type: dict
   scheduling:
     description:
     - Sets the scheduling options for this instance.
     required: false
+    type: dict
     suboptions:
       automatic_restart:
         description:
@@ -354,6 +385,7 @@ options:
           and only possible behavior is TERMINATE.
         - For more information, see Setting Instance Scheduling Options.
         required: false
+        type: str
       preemptible:
         description:
         - Defines whether the instance is preemptible. This can only be set during
@@ -366,15 +398,51 @@ options:
     - A list of service accounts, with their specified scopes, authorized for this
       instance. Only one service account per VM instance is supported.
     required: false
+    type: list
     suboptions:
       email:
         description:
         - Email address of the service account.
         required: false
+        type: str
       scopes:
         description:
         - The list of scopes to be made available for this service account.
         required: false
+        type: list
+  shielded_instance_config:
+    description:
+    - Configuration for various parameters related to shielded instances.
+    required: false
+    type: dict
+    version_added: '2.9'
+    suboptions:
+      enable_secure_boot:
+        description:
+        - Defines whether the instance has Secure Boot enabled.
+        required: false
+        type: bool
+      enable_vtpm:
+        description:
+        - Defines whether the instance has the vTPM enabled.
+        required: false
+        type: bool
+      enable_integrity_monitoring:
+        description:
+        - Defines whether the instance has integrity monitoring enabled.
+        required: false
+        type: bool
+  status:
+    description:
+    - 'The status of the instance. One of the following values: PROVISIONING, STAGING,
+      RUNNING, STOPPING, SUSPENDING, SUSPENDED, and TERMINATED.'
+    - As a user, use RUNNING to keep a machine "on" and TERMINATED to turn a machine
+      off .
+    - 'Some valid choices include: "PROVISIONING", "STAGING", "RUNNING", "STOPPING",
+      "SUSPENDING", "SUSPENDED", "TERMINATED"'
+    required: false
+    type: str
+    version_added: '2.8'
   tags:
     description:
     - A list of tags to apply to this instance. Tags are used to identify valid sources
@@ -382,6 +450,7 @@ options:
       creation. The tags can be later modified by the setTags method. Each tag within
       the list must comply with RFC1035.
     required: false
+    type: dict
     suboptions:
       fingerprint:
         description:
@@ -391,72 +460,113 @@ options:
           every request to modify or update metadata. You must always provide an up-to-date
           fingerprint hash in order to update or change metadata.
         required: false
+        type: str
       items:
         description:
         - An array of tags. Each tag must be 1-63 characters long, and comply with
           RFC1035.
         required: false
+        type: list
   zone:
     description:
     - A reference to the zone where the machine resides.
     required: true
-extends_documentation_fragment: gcp
+    type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
 - name: create a disk
   gcp_compute_disk:
-      name: "disk-instance"
-      size_gb: 50
-      source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: disk-instance
+    size_gb: 50
+    source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: disk
 
 - name: create a network
   gcp_compute_network:
-      name: "network-instance"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-instance
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a address
   gcp_compute_address:
-      name: "address-instance"
-      region: us-central1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: address-instance
+    region: us-central1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: address
 
 - name: create a instance
   gcp_compute_instance:
-      name: "test_object"
-      machine_type: n1-standard-1
-      disks:
-      - auto_delete: true
-        boot: true
-        source: "{{ disk }}"
-      metadata:
-        startup-script-url: gs:://graphite-playground/bootstrap.sh
-        cost-center: '12345'
-      network_interfaces:
-      - network: "{{ network }}"
-        access_configs:
-        - name: External NAT
-          nat_ip: "{{ address }}"
-          type: ONE_TO_ONE_NAT
-      zone: us-central1-a
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    machine_type: n1-standard-1
+    disks:
+    - auto_delete: 'true'
+      boot: 'true'
+      source: "{{ disk }}"
+    metadata:
+      startup-script-url: gs:://graphite-playground/bootstrap.sh
+      cost-center: '12345'
+    labels:
+      environment: production
+    network_interfaces:
+    - network: "{{ network }}"
+      access_configs:
+      - name: External NAT
+        nat_ip: "{{ address }}"
+        type: ONE_TO_ONE_NAT
+    zone: us-central1-a
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -476,6 +586,11 @@ creationTimestamp:
   - Creation timestamp in RFC3339 text format.
   returned: success
   type: str
+deletionProtection:
+  description:
+  - Whether the resource should be protected against deletion.
+  returned: success
+  type: bool
 disks:
   description:
   - An array of disks that are associated with the instances that are created from
@@ -558,7 +673,7 @@ disks:
           type: int
         diskType:
           description:
-          - Reference to a gcompute_disk_type resource.
+          - Reference to a disk type.
           - Specifies the disk type to use to create the instance.
           - If not specified, the default is pd-standard.
           returned: success
@@ -609,8 +724,8 @@ disks:
       type: str
     source:
       description:
-      - Reference to a gcompute_disk resource. When creating a new instance, one of
-        initializeParams.sourceImage or disks.source is required.
+      - Reference to a disk. When creating a new instance, one of initializeParams.sourceImage
+        or disks.source is required.
       - If desired, you can also attach existing non-root persistent disks using this
         property. This field is only applicable for persistent disks.
       returned: success
@@ -637,6 +752,14 @@ guestAccelerators:
       - Full or partial URL of the accelerator type resource to expose to this instance.
       returned: success
       type: str
+hostname:
+  description:
+  - The hostname of the instance to be created. The specified hostname must be RFC1035
+    compliant. If hostname is not specified, the default hostname is [INSTANCE_NAME].c.[PROJECT_ID].internal
+    when using the global DNS, and [INSTANCE_NAME].[ZONE].c.[PROJECT_ID].internal
+    when using zonal DNS.
+  returned: success
+  type: str
 id:
   description:
   - The unique identifier for the resource. This identifier is defined by the server.
@@ -644,13 +767,15 @@ id:
   type: int
 labelFingerprint:
   description:
-  - A fingerprint for this request, which is essentially a hash of the metadata's
-    contents and used for optimistic locking. The fingerprint is initially generated
-    by Compute Engine and changes after every request to modify or update metadata.
-    You must always provide an up-to-date fingerprint hash in order to update or change
-    metadata.
+  - The fingerprint used for optimistic locking of this resource. Used internally
+    during updates.
   returned: success
   type: str
+labels:
+  description:
+  - Labels to apply to this instance. A list of key->value pairs.
+  returned: success
+  type: dict
 metadata:
   description:
   - The metadata key/value pairs to assign to instances that are created from this
@@ -703,7 +828,7 @@ networkInterfaces:
           type: str
         natIP:
           description:
-          - Specifies the title of a gcompute_address.
+          - Reference to an address.
           - An external IP address associated with this instance.
           - Specify an unused static external IP address available to the project
             or leave this field undefined to use an IP from a shared ephemeral IP
@@ -747,10 +872,9 @@ networkInterfaces:
       type: str
     network:
       description:
-      - Specifies the title of an existing gcompute_network. When creating an instance,
-        if neither the network nor the subnetwork is specified, the default network
-        global/networks/default is used; if the network is not specified but the subnetwork
-        is specified, the network is inferred.
+      - Specifies the title of an existing network. Not setting the network title
+        will select the default network interface, which could have SSH already configured
+        .
       returned: success
       type: dict
     networkIP:
@@ -762,7 +886,7 @@ networkInterfaces:
       type: str
     subnetwork:
       description:
-      - Reference to a gcompute_subnetwork resource.
+      - Reference to a VPC network.
       - If the network resource is in legacy mode, do not provide this property. If
         the network is in auto subnet mode, providing the subnetwork is optional.
         If the network is in custom subnet mode, then this field should be specified.
@@ -813,10 +937,33 @@ serviceAccounts:
       - The list of scopes to be made available for this service account.
       returned: success
       type: list
+shieldedInstanceConfig:
+  description:
+  - Configuration for various parameters related to shielded instances.
+  returned: success
+  type: complex
+  contains:
+    enableSecureBoot:
+      description:
+      - Defines whether the instance has Secure Boot enabled.
+      returned: success
+      type: bool
+    enableVtpm:
+      description:
+      - Defines whether the instance has the vTPM enabled.
+      returned: success
+      type: bool
+    enableIntegrityMonitoring:
+      description:
+      - Defines whether the instance has integrity monitoring enabled.
+      returned: success
+      type: bool
 status:
   description:
   - 'The status of the instance. One of the following values: PROVISIONING, STAGING,
     RUNNING, STOPPING, SUSPENDING, SUSPENDED, and TERMINATED.'
+  - As a user, use RUNNING to keep a machine "on" and TERMINATED to turn a machine
+    off .
   returned: success
   type: str
 statusMessage:
@@ -874,70 +1021,65 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            can_ip_forward=dict(type='bool'),
-            disks=dict(type='list', elements='dict', options=dict(
-                auto_delete=dict(type='bool'),
-                boot=dict(type='bool'),
-                device_name=dict(type='str'),
-                disk_encryption_key=dict(type='dict', options=dict(
-                    raw_key=dict(type='str'),
-                    rsa_encrypted_key=dict(type='str'),
-                    sha256=dict(type='str')
-                )),
-                index=dict(type='int'),
-                initialize_params=dict(type='dict', options=dict(
-                    disk_name=dict(type='str'),
-                    disk_size_gb=dict(type='int'),
-                    disk_type=dict(type='str'),
-                    source_image=dict(type='str'),
-                    source_image_encryption_key=dict(type='dict', options=dict(
-                        raw_key=dict(type='str'),
-                        sha256=dict(type='str')
-                    ))
-                )),
-                interface=dict(type='str', choices=['SCSI', 'NVME']),
-                mode=dict(type='str', choices=['READ_WRITE', 'READ_ONLY']),
-                source=dict(type='dict'),
-                type=dict(type='str', choices=['SCRATCH', 'PERSISTENT'])
-            )),
-            guest_accelerators=dict(type='list', elements='dict', options=dict(
-                accelerator_count=dict(type='int'),
-                accelerator_type=dict(type='str')
-            )),
-            label_fingerprint=dict(type='str'),
+            can_ip_forward=dict(type='bool', aliases=['ip_forward']),
+            deletion_protection=dict(type='bool'),
+            disks=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    auto_delete=dict(type='bool'),
+                    boot=dict(type='bool'),
+                    device_name=dict(type='str'),
+                    disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), rsa_encrypted_key=dict(type='str'))),
+                    index=dict(type='int'),
+                    initialize_params=dict(
+                        type='dict',
+                        options=dict(
+                            disk_name=dict(type='str'),
+                            disk_size_gb=dict(type='int'),
+                            disk_type=dict(type='str'),
+                            source_image=dict(type='str', aliases=['image', 'image_family']),
+                            source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'))),
+                        ),
+                    ),
+                    interface=dict(type='str'),
+                    mode=dict(type='str'),
+                    source=dict(type='dict'),
+                    type=dict(type='str'),
+                ),
+            ),
+            guest_accelerators=dict(type='list', elements='dict', options=dict(accelerator_count=dict(type='int'), accelerator_type=dict(type='str'))),
+            hostname=dict(type='str'),
+            labels=dict(type='dict'),
             metadata=dict(type='dict'),
             machine_type=dict(type='str'),
             min_cpu_platform=dict(type='str'),
             name=dict(type='str'),
-            network_interfaces=dict(type='list', elements='dict', options=dict(
-                access_configs=dict(type='list', elements='dict', options=dict(
-                    name=dict(required=True, type='str'),
-                    nat_ip=dict(type='dict'),
-                    type=dict(required=True, type='str', choices=['ONE_TO_ONE_NAT'])
-                )),
-                alias_ip_ranges=dict(type='list', elements='dict', options=dict(
-                    ip_cidr_range=dict(type='str'),
-                    subnetwork_range_name=dict(type='str')
-                )),
-                name=dict(type='str'),
-                network=dict(type='dict'),
-                network_ip=dict(type='str'),
-                subnetwork=dict(type='dict')
-            )),
-            scheduling=dict(type='dict', options=dict(
-                automatic_restart=dict(type='bool'),
-                on_host_maintenance=dict(type='str'),
-                preemptible=dict(type='bool')
-            )),
-            service_accounts=dict(type='list', elements='dict', options=dict(
-                email=dict(type='str'),
-                scopes=dict(type='list', elements='str')
-            )),
-            tags=dict(type='dict', options=dict(
-                fingerprint=dict(type='str'),
-                items=dict(type='list', elements='str')
-            )),
-            zone=dict(required=True, type='str')
+            network_interfaces=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    access_configs=dict(
+                        type='list',
+                        elements='dict',
+                        options=dict(name=dict(required=True, type='str'), nat_ip=dict(type='dict'), type=dict(required=True, type='str')),
+                    ),
+                    alias_ip_ranges=dict(type='list', elements='dict', options=dict(ip_cidr_range=dict(type='str'), subnetwork_range_name=dict(type='str'))),
+                    network=dict(type='dict'),
+                    network_ip=dict(type='str'),
+                    subnetwork=dict(type='dict'),
+                ),
+            ),
+            scheduling=dict(
+                type='dict', options=dict(automatic_restart=dict(type='bool'), on_host_maintenance=dict(type='str'), preemptible=dict(type='bool'))
+            ),
+            service_accounts=dict(type='list', elements='dict', options=dict(email=dict(type='str'), scopes=dict(type='list', elements='str'))),
+            shielded_instance_config=dict(
+                type='dict', options=dict(enable_secure_boot=dict(type='bool'), enable_vtpm=dict(type='bool'), enable_integrity_monitoring=dict(type='bool'))
+            ),
+            status=dict(type='str'),
+            tags=dict(type='dict', options=dict(fingerprint=dict(type='str'), items=dict(type='list', elements='str'))),
+            zone=dict(required=True, type='str'),
         )
     )
 
@@ -967,6 +1109,11 @@ def main():
         else:
             fetch = {}
 
+    if fetch:
+        instance = InstancePower(module, fetch.get('status'))
+        instance.run()
+        if module.params.get('status'):
+            fetch.update({'status': module.params['status']})
     fetch.update({'changed': changed})
 
     module.exit_json(**fetch)
@@ -978,26 +1125,34 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
+    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
     return fetch_resource(module, self_link(module), kind)
 
 
 def update_fields(module, request, response):
+    if response.get('deletionProtection') != request.get('deletionProtection'):
+        deletion_protection_update(module, request, response)
+    if response.get('labels') != request.get('labels'):
+        label_fingerprint_update(module, request, response)
     if response.get('machineType') != request.get('machineType'):
         machine_type_update(module, request, response)
+    if response.get('shieldedInstanceConfig') != request.get('shieldedInstanceConfig'):
+        shielded_instance_config_update(module, request, response)
+
+
+def label_fingerprint_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/zones/{zone}/instances/{name}/setLabels"]).format(**module.params),
+        {u'labelFingerprint': response.get('labelFingerprint'), u'labels': module.params.get('labels')},
+    )
 
 
 def machine_type_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projdcts/{project}/zones/{zone}/instances/{name}/setMachineType"
-        ]).format(**module.params),
-        {
-            u'machineType': machine_type_selflink(module.params.get('machine_type'), module.params)
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/zones/{zone}/instances/{name}/setMachineType"]).format(**module.params),
+        {u'machineType': machine_type_selflink(module.params.get('machine_type'), module.params)},
     )
 
 
@@ -1010,9 +1165,11 @@ def resource_to_request(module):
     request = {
         u'kind': 'compute#instance',
         u'canIpForward': module.params.get('can_ip_forward'),
+        u'deletionProtection': module.params.get('deletion_protection'),
         u'disks': InstanceDisksArray(module.params.get('disks', []), module).to_request(),
         u'guestAccelerators': InstanceGuestacceleratorsArray(module.params.get('guest_accelerators', []), module).to_request(),
-        u'labelFingerprint': module.params.get('label_fingerprint'),
+        u'hostname': module.params.get('hostname'),
+        u'labels': module.params.get('labels'),
         u'metadata': module.params.get('metadata'),
         u'machineType': machine_type_selflink(module.params.get('machine_type'), module.params),
         u'minCpuPlatform': module.params.get('min_cpu_platform'),
@@ -1020,12 +1177,14 @@ def resource_to_request(module):
         u'networkInterfaces': InstanceNetworkinterfacesArray(module.params.get('network_interfaces', []), module).to_request(),
         u'scheduling': InstanceScheduling(module.params.get('scheduling', {}), module).to_request(),
         u'serviceAccounts': InstanceServiceaccountsArray(module.params.get('service_accounts', []), module).to_request(),
-        u'tags': InstanceTags(module.params.get('tags', {}), module).to_request()
+        u'shieldedInstanceConfig': InstanceShieldedinstanceconfig(module.params.get('shielded_instance_config', {}), module).to_request(),
+        u'status': module.params.get('status'),
+        u'tags': InstanceTags(module.params.get('tags', {}), module).to_request(),
     }
     request = encode_request(request, module)
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
@@ -1056,8 +1215,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     result = decode_response(result, module)
 
@@ -1093,10 +1252,13 @@ def response_to_hash(module, response):
         u'canIpForward': response.get(u'canIpForward'),
         u'cpuPlatform': response.get(u'cpuPlatform'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
+        u'deletionProtection': response.get(u'deletionProtection'),
         u'disks': InstanceDisksArray(module.params.get('disks', []), module).to_request(),
         u'guestAccelerators': InstanceGuestacceleratorsArray(response.get(u'guestAccelerators', []), module).from_response(),
+        u'hostname': response.get(u'hostname'),
         u'id': response.get(u'id'),
         u'labelFingerprint': response.get(u'labelFingerprint'),
+        u'labels': response.get(u'labels'),
         u'metadata': response.get(u'metadata'),
         u'machineType': response.get(u'machineType'),
         u'minCpuPlatform': response.get(u'minCpuPlatform'),
@@ -1104,16 +1266,17 @@ def response_to_hash(module, response):
         u'networkInterfaces': InstanceNetworkinterfacesArray(response.get(u'networkInterfaces', []), module).from_response(),
         u'scheduling': InstanceScheduling(response.get(u'scheduling', {}), module).from_response(),
         u'serviceAccounts': InstanceServiceaccountsArray(response.get(u'serviceAccounts', []), module).from_response(),
+        u'shieldedInstanceConfig': InstanceShieldedinstanceconfig(response.get(u'shieldedInstanceConfig', {}), module).from_response(),
         u'status': response.get(u'status'),
         u'statusMessage': response.get(u'statusMessage'),
-        u'tags': InstanceTags(response.get(u'tags', {}), module).from_response()
+        u'tags': InstanceTags(response.get(u'tags', {}), module).from_response(),
     }
 
 
 def disk_type_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/[a-z1-9\-]*/diskTypes/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/.*/diskTypes/.*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/diskTypes/%s".format(**params) % name
     return name
@@ -1122,7 +1285,7 @@ def disk_type_selflink(name, params):
 def machine_type_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/[a-z1-9\-]*/machineTypes/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/.*/machineTypes/.*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/machineTypes/%s".format(**params) % name
     return name
@@ -1143,16 +1306,20 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
-    return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instance')
+    response = fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instance')
+    if response:
+        return decode_response(response, module)
+    else:
+        return {}
 
 
 def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -1175,7 +1342,7 @@ def decode_response(response, module):
     return response
 
 
-# TODO(alexstephen): Implement updating metadata on exsiting resources.
+# TODO(alexstephen): Implement updating metadata on existing resources.
 
 # Expose instance 'metadata' as a simple name/value pair hash. However the API
 # defines metadata as a NestedObject with the following layout:
@@ -1195,13 +1362,8 @@ def metadata_encoder(metadata):
     metadata_new = []
     for key in metadata:
         value = metadata[key]
-        metadata_new.append({
-            "key": key,
-            "value": value
-        })
-    return {
-        'items': metadata_new
-    }
+        metadata_new.append({"key": key, "value": value})
+    return {'items': metadata_new}
 
 
 # Map metadata.items[]{key:,value:} => metadata[key]=value
@@ -1212,6 +1374,65 @@ def metadata_decoder(metadata):
         for item in metadata_items:
             items[item['key']] = item['value']
     return items
+
+
+class InstancePower(object):
+    def __init__(self, module, current_status):
+        self.module = module
+        self.current_status = current_status
+        self.desired_status = self.module.params.get('status')
+
+    def run(self):
+        # GcpRequest handles unicode text handling
+        if GcpRequest({'status': self.current_status}) == GcpRequest({'status': self.desired_status}):
+            return
+        elif self.desired_status == 'RUNNING':
+            self.start()
+        elif self.desired_status == 'TERMINATED':
+            self.stop()
+        elif self.desired_status == 'SUSPENDED':
+            self.module.fail_json(msg="Instances cannot be suspended using Ansible")
+
+    def start(self):
+        auth = GcpSession(self.module, 'compute')
+        wait_for_operation(self.module, auth.post(self._start_url()))
+
+    def stop(self):
+        auth = GcpSession(self.module, 'compute')
+        wait_for_operation(self.module, auth.post(self._stop_url()))
+
+    def _start_url(self):
+        return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances/{name}/start".format(**self.module.params)
+
+    def _stop_url(self):
+        return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances/{name}/stop".format(**self.module.params)
+
+
+def deletion_protection_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join(
+            [
+                "https://www.googleapis.com/compute/v1/",
+                "projects/{project}/zones/{zone}/instances/{name}/setDeletionProtection?deletionProtection={deletionProtection}",
+            ]
+        ).format(**module.params),
+        {},
+    )
+
+
+def shielded_instance_config_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/zones/{zone}/instances/{name}/updateShieldedInstanceConfig"]).format(
+            **module.params
+        ),
+        {
+            u'enableSecureBoot': navigate_hash(module.params, ['shielded_instance_config', 'enable_secure_boot']),
+            u'enableVtpm': navigate_hash(module.params, ['shielded_instance_config', 'enable_vtpm']),
+            u'enableIntegrityMonitoring': navigate_hash(module.params, ['shielded_instance_config', 'enable_integrity_monitoring']),
+        },
+    )
 
 
 class InstanceDisksArray(object):
@@ -1235,32 +1456,36 @@ class InstanceDisksArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'autoDelete': item.get('auto_delete'),
-            u'boot': item.get('boot'),
-            u'deviceName': item.get('device_name'),
-            u'diskEncryptionKey': InstanceDiskencryptionkey(item.get('disk_encryption_key', {}), self.module).to_request(),
-            u'index': item.get('index'),
-            u'initializeParams': InstanceInitializeparams(item.get('initialize_params', {}), self.module).to_request(),
-            u'interface': item.get('interface'),
-            u'mode': item.get('mode'),
-            u'source': replace_resource_dict(item.get(u'source', {}), 'selfLink'),
-            u'type': item.get('type')
-        })
+        return remove_nones_from_dict(
+            {
+                u'autoDelete': item.get('auto_delete'),
+                u'boot': item.get('boot'),
+                u'deviceName': item.get('device_name'),
+                u'diskEncryptionKey': InstanceDiskencryptionkey(item.get('disk_encryption_key', {}), self.module).to_request(),
+                u'index': item.get('index'),
+                u'initializeParams': InstanceInitializeparams(item.get('initialize_params', {}), self.module).to_request(),
+                u'interface': item.get('interface'),
+                u'mode': item.get('mode'),
+                u'source': replace_resource_dict(item.get(u'source', {}), 'selfLink'),
+                u'type': item.get('type'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'autoDelete': item.get(u'autoDelete'),
-            u'boot': item.get(u'boot'),
-            u'deviceName': item.get(u'deviceName'),
-            u'diskEncryptionKey': InstanceDiskencryptionkey(item.get(u'diskEncryptionKey', {}), self.module).from_response(),
-            u'index': item.get(u'index'),
-            u'initializeParams': InstanceInitializeparams(self.module.params.get('initialize_params', {}), self.module).to_request(),
-            u'interface': item.get(u'interface'),
-            u'mode': item.get(u'mode'),
-            u'source': item.get(u'source'),
-            u'type': item.get(u'type')
-        })
+        return remove_nones_from_dict(
+            {
+                u'autoDelete': item.get(u'autoDelete'),
+                u'boot': item.get(u'boot'),
+                u'deviceName': item.get(u'deviceName'),
+                u'diskEncryptionKey': InstanceDiskencryptionkey(item.get(u'diskEncryptionKey', {}), self.module).from_response(),
+                u'index': item.get(u'index'),
+                u'initializeParams': InstanceInitializeparams(self.module.params.get('initialize_params', {}), self.module).to_request(),
+                u'interface': item.get(u'interface'),
+                u'mode': item.get(u'mode'),
+                u'source': item.get(u'source'),
+                u'type': item.get(u'type'),
+            }
+        )
 
 
 class InstanceDiskencryptionkey(object):
@@ -1272,18 +1497,10 @@ class InstanceDiskencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get('raw_key'),
-            u'rsaEncryptedKey': self.request.get('rsa_encrypted_key'),
-            u'sha256': self.request.get('sha256')
-        })
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'rsaEncryptedKey': self.request.get('rsa_encrypted_key')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get(u'rawKey'),
-            u'rsaEncryptedKey': self.request.get(u'rsaEncryptedKey'),
-            u'sha256': self.request.get(u'sha256')
-        })
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'rsaEncryptedKey': self.request.get(u'rsaEncryptedKey')})
 
 
 class InstanceInitializeparams(object):
@@ -1295,22 +1512,26 @@ class InstanceInitializeparams(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'diskName': self.request.get('disk_name'),
-            u'diskSizeGb': self.request.get('disk_size_gb'),
-            u'diskType': disk_type_selflink(self.request.get('disk_type'), self.module.params),
-            u'sourceImage': self.request.get('source_image'),
-            u'sourceImageEncryptionKey': InstanceSourceimageencryptionkey(self.request.get('source_image_encryption_key', {}), self.module).to_request()
-        })
+        return remove_nones_from_dict(
+            {
+                u'diskName': self.request.get('disk_name'),
+                u'diskSizeGb': self.request.get('disk_size_gb'),
+                u'diskType': disk_type_selflink(self.request.get('disk_type'), self.module.params),
+                u'sourceImage': self.request.get('source_image'),
+                u'sourceImageEncryptionKey': InstanceSourceimageencryptionkey(self.request.get('source_image_encryption_key', {}), self.module).to_request(),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'diskName': self.request.get(u'diskName'),
-            u'diskSizeGb': self.request.get(u'diskSizeGb'),
-            u'diskType': self.request.get(u'diskType'),
-            u'sourceImage': self.request.get(u'sourceImage'),
-            u'sourceImageEncryptionKey': InstanceSourceimageencryptionkey(self.request.get(u'sourceImageEncryptionKey', {}), self.module).from_response()
-        })
+        return remove_nones_from_dict(
+            {
+                u'diskName': self.request.get(u'diskName'),
+                u'diskSizeGb': self.request.get(u'diskSizeGb'),
+                u'diskType': self.request.get(u'diskType'),
+                u'sourceImage': self.request.get(u'sourceImage'),
+                u'sourceImageEncryptionKey': InstanceSourceimageencryptionkey(self.request.get(u'sourceImageEncryptionKey', {}), self.module).from_response(),
+            }
+        )
 
 
 class InstanceSourceimageencryptionkey(object):
@@ -1322,16 +1543,10 @@ class InstanceSourceimageencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get('raw_key'),
-            u'sha256': self.request.get('sha256')
-        })
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get(u'rawKey'),
-            u'sha256': self.request.get(u'sha256')
-        })
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey')})
 
 
 class InstanceGuestacceleratorsArray(object):
@@ -1355,16 +1570,10 @@ class InstanceGuestacceleratorsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'acceleratorCount': item.get('accelerator_count'),
-            u'acceleratorType': item.get('accelerator_type')
-        })
+        return remove_nones_from_dict({u'acceleratorCount': item.get('accelerator_count'), u'acceleratorType': item.get('accelerator_type')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'acceleratorCount': item.get(u'acceleratorCount'),
-            u'acceleratorType': item.get(u'acceleratorType')
-        })
+        return remove_nones_from_dict({u'acceleratorCount': item.get(u'acceleratorCount'), u'acceleratorType': item.get(u'acceleratorType')})
 
 
 class InstanceNetworkinterfacesArray(object):
@@ -1388,24 +1597,26 @@ class InstanceNetworkinterfacesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'accessConfigs': InstanceAccessconfigsArray(item.get('access_configs', []), self.module).to_request(),
-            u'aliasIpRanges': InstanceAliasiprangesArray(item.get('alias_ip_ranges', []), self.module).to_request(),
-            u'name': item.get('name'),
-            u'network': replace_resource_dict(item.get(u'network', {}), 'selfLink'),
-            u'networkIP': item.get('network_ip'),
-            u'subnetwork': replace_resource_dict(item.get(u'subnetwork', {}), 'selfLink')
-        })
+        return remove_nones_from_dict(
+            {
+                u'accessConfigs': InstanceAccessconfigsArray(item.get('access_configs', []), self.module).to_request(),
+                u'aliasIpRanges': InstanceAliasiprangesArray(item.get('alias_ip_ranges', []), self.module).to_request(),
+                u'network': replace_resource_dict(item.get(u'network', {}), 'selfLink'),
+                u'networkIP': item.get('network_ip'),
+                u'subnetwork': replace_resource_dict(item.get(u'subnetwork', {}), 'selfLink'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'accessConfigs': InstanceAccessconfigsArray(item.get(u'accessConfigs', []), self.module).from_response(),
-            u'aliasIpRanges': InstanceAliasiprangesArray(item.get(u'aliasIpRanges', []), self.module).from_response(),
-            u'name': item.get(u'name'),
-            u'network': item.get(u'network'),
-            u'networkIP': item.get(u'networkIP'),
-            u'subnetwork': item.get(u'subnetwork')
-        })
+        return remove_nones_from_dict(
+            {
+                u'accessConfigs': InstanceAccessconfigsArray(item.get(u'accessConfigs', []), self.module).from_response(),
+                u'aliasIpRanges': InstanceAliasiprangesArray(item.get(u'aliasIpRanges', []), self.module).from_response(),
+                u'network': item.get(u'network'),
+                u'networkIP': item.get(u'networkIP'),
+                u'subnetwork': item.get(u'subnetwork'),
+            }
+        )
 
 
 class InstanceAccessconfigsArray(object):
@@ -1429,18 +1640,12 @@ class InstanceAccessconfigsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'name': item.get('name'),
-            u'natIP': replace_resource_dict(item.get(u'nat_ip', {}), 'address'),
-            u'type': item.get('type')
-        })
+        return remove_nones_from_dict(
+            {u'name': item.get('name'), u'natIP': replace_resource_dict(item.get(u'nat_ip', {}), 'address'), u'type': item.get('type')}
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'name': item.get(u'name'),
-            u'natIP': item.get(u'natIP'),
-            u'type': item.get(u'type')
-        })
+        return remove_nones_from_dict({u'name': item.get(u'name'), u'natIP': item.get(u'natIP'), u'type': item.get(u'type')})
 
 
 class InstanceAliasiprangesArray(object):
@@ -1464,16 +1669,10 @@ class InstanceAliasiprangesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'ipCidrRange': item.get('ip_cidr_range'),
-            u'subnetworkRangeName': item.get('subnetwork_range_name')
-        })
+        return remove_nones_from_dict({u'ipCidrRange': item.get('ip_cidr_range'), u'subnetworkRangeName': item.get('subnetwork_range_name')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'ipCidrRange': item.get(u'ipCidrRange'),
-            u'subnetworkRangeName': item.get(u'subnetworkRangeName')
-        })
+        return remove_nones_from_dict({u'ipCidrRange': item.get(u'ipCidrRange'), u'subnetworkRangeName': item.get(u'subnetworkRangeName')})
 
 
 class InstanceScheduling(object):
@@ -1485,18 +1684,22 @@ class InstanceScheduling(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'automaticRestart': self.request.get('automatic_restart'),
-            u'onHostMaintenance': self.request.get('on_host_maintenance'),
-            u'preemptible': self.request.get('preemptible')
-        })
+        return remove_nones_from_dict(
+            {
+                u'automaticRestart': self.request.get('automatic_restart'),
+                u'onHostMaintenance': self.request.get('on_host_maintenance'),
+                u'preemptible': self.request.get('preemptible'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'automaticRestart': self.request.get(u'automaticRestart'),
-            u'onHostMaintenance': self.request.get(u'onHostMaintenance'),
-            u'preemptible': self.request.get(u'preemptible')
-        })
+        return remove_nones_from_dict(
+            {
+                u'automaticRestart': self.request.get(u'automaticRestart'),
+                u'onHostMaintenance': self.request.get(u'onHostMaintenance'),
+                u'preemptible': self.request.get(u'preemptible'),
+            }
+        )
 
 
 class InstanceServiceaccountsArray(object):
@@ -1520,16 +1723,37 @@ class InstanceServiceaccountsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'email': item.get('email'),
-            u'scopes': item.get('scopes')
-        })
+        return remove_nones_from_dict({u'email': item.get('email'), u'scopes': item.get('scopes')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'email': item.get(u'email'),
-            u'scopes': item.get(u'scopes')
-        })
+        return remove_nones_from_dict({u'email': item.get(u'email'), u'scopes': item.get(u'scopes')})
+
+
+class InstanceShieldedinstanceconfig(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict(
+            {
+                u'enableSecureBoot': self.request.get('enable_secure_boot'),
+                u'enableVtpm': self.request.get('enable_vtpm'),
+                u'enableIntegrityMonitoring': self.request.get('enable_integrity_monitoring'),
+            }
+        )
+
+    def from_response(self):
+        return remove_nones_from_dict(
+            {
+                u'enableSecureBoot': self.request.get(u'enableSecureBoot'),
+                u'enableVtpm': self.request.get(u'enableVtpm'),
+                u'enableIntegrityMonitoring': self.request.get(u'enableIntegrityMonitoring'),
+            }
+        )
 
 
 class InstanceTags(object):
@@ -1541,16 +1765,10 @@ class InstanceTags(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'fingerprint': self.request.get('fingerprint'),
-            u'items': self.request.get('items')
-        })
+        return remove_nones_from_dict({u'fingerprint': self.request.get('fingerprint'), u'items': self.request.get('items')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'fingerprint': self.request.get(u'fingerprint'),
-            u'items': self.request.get(u'items')
-        })
+        return remove_nones_from_dict({u'fingerprint': self.request.get(u'fingerprint'), u'items': self.request.get(u'items')})
 
 
 if __name__ == '__main__':

@@ -84,6 +84,12 @@ options:
       description:
         - Start the playbook at the task matching this name.
       version_added: 2.7
+    diff_mode_enabled:
+      description:
+        - Enable diff mode for the job template.
+      version_added: 2.7
+      type: bool
+      default: 'no'
     fact_caching_enabled:
       description:
         - Enable use of fact caching for the job template.
@@ -134,7 +140,7 @@ options:
       default: 'no'
     ask_inventory:
       description:
-        - Propmt user for inventory on launch.
+        - Prompt user for inventory on launch.
       type: bool
       default: 'no'
     ask_credential:
@@ -197,7 +203,7 @@ from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, t
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -320,7 +326,7 @@ def main():
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = jt.delete(**params)
-        except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.NotFound, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update job template: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']

@@ -36,7 +36,8 @@ options:
         - The key for the attribute.
         - This is not a unique identifier as multiple attributes can have the
           same key.
-        required: True
+        type: str
+        required: true
       data:
         description:
         - The value for the attribute.
@@ -44,13 +45,12 @@ options:
       data_format:
         description:
         - Controls the input type for I(data).
-        - If C(text), I(data) is a text string that is UTF-8 encoded to bytes.
+        - If C(text), I(data) is a text string that is UTF-16LE encoded to
+          bytes.
         - If C(base64), I(data) is a base64 string that is base64 decoded to
           bytes.
         type: str
-        choices:
-        - base64
-        - text
+        choices: [ base64, text ]
         default: text
   comment:
     description:
@@ -66,8 +66,8 @@ options:
     - See C(TargetName) in U(https://docs.microsoft.com/en-us/windows/desktop/api/wincred/ns-wincred-_credentiala)
       for more details on what this value can be.
     - This is used with I(type) to produce a unique credential.
-    required: True
     type: str
+    required: true
   persistence:
     description:
     - Defines the persistence of the credential.
@@ -76,9 +76,7 @@ options:
     - C(enterprise) is the same as C(local) but the credential is visible to
       the same domain user when running on other hosts and not just localhost.
     type: str
-    choices:
-    - enterprise
-    - local
+    choices: [ enterprise, local ]
     default: local
   secret:
     description:
@@ -91,13 +89,11 @@ options:
   secret_format:
     description:
     - Controls the input type for I(secret).
-    - If C(text), I(secret) is a text string that is UTF-8 encoded to bytes.
+    - If C(text), I(secret) is a text string that is UTF-16LE encoded to bytes.
     - If C(base64), I(secret) is a base64 string that is base64 decoded to
       bytes.
     type: str
-    choices:
-    - base64
-    - text
+    choices: [ base64, text ]
     default: text
   state:
     description:
@@ -106,9 +102,7 @@ options:
     - When C(present), the credential specified by I(name) and I(type) is
       removed.
     type: str
-    choices:
-    - absent
-    - present
+    choices: [ absent, present ]
     default: present
   type:
     description:
@@ -120,13 +114,9 @@ options:
       particular authentication package.
     - It is recommended to use a C(domain) type as only authentication
       providers can access the secret.
-    required: True
     type: str
-    choices:
-    - domain_password
-    - domain_certificate
-    - generic_password
-    - generic_certificate
+    required: true
+    choices: [ domain_certificate, domain_password, generic_certificate, generic_password ]
   update_secret:
     description:
     - When C(always), the secret will always be updated if they differ.
@@ -135,9 +125,7 @@ options:
     - If the secret cannot be retrieved and this is set to C(always), the
       module will always result in a change.
     type: str
-    choices:
-    - always
-    - on_create
+    choices: [ always, on_create ]
     default: always
   username:
     description:
@@ -156,6 +144,9 @@ notes:
 - There can only be one credential per host and type. if a second credential is
   defined that uses the same host and type, then the original credential is
   overwritten.
+seealso:
+- module: win_user_right
+- module: win_whoami
 author:
 - Jordan Borean (@jborean93)
 '''
@@ -203,7 +194,7 @@ EXAMPLES = r'''
     name: smbhost
     type: generic_password
     username: smbuser
-    password: smbuser
+    secret: smbuser
     state: present
 
 - name: Remove a generic credential

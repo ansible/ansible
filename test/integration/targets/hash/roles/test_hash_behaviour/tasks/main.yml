@@ -18,13 +18,13 @@
 
 - name: debug hash behaviour result
   debug:
-    var: ansible_env.ANSIBLE_HASH_BEHAVIOUR
+    var: "{{ lookup('env', 'ANSIBLE_HASH_BEHAVIOUR') }}"
     verbosity: 2
 
 - name: assert hash behaviour is merge or replace
   assert:
     that:
-      - ansible_env.ANSIBLE_HASH_BEHAVIOUR in ('merge', 'replace')
+      - lookup('env', 'ANSIBLE_HASH_BEHAVIOUR') in ('merge', 'replace')
 
 - name: debug test_hash var
   debug:
@@ -34,4 +34,4 @@
 - name: assert the dictionary values match
   assert:
     that:
-      - "ansible_env.ANSIBLE_HASH_BEHAVIOUR == 'merge' and test_hash == merged_hash or ansible_env.ANSIBLE_HASH_BEHAVIOUR == 'replace' and test_hash == replaced_hash"
+      - "lookup('env', 'ANSIBLE_HASH_BEHAVIOUR') == 'merge' and test_hash == merged_hash or lookup('env', 'ANSIBLE_HASH_BEHAVIOUR') == 'replace' and test_hash == replaced_hash"

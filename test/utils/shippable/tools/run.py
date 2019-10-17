@@ -18,8 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """CLI tool for starting new Shippable CI runs."""
-
-from __future__ import print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 # noinspection PyCompatibility
 import argparse
@@ -103,7 +103,7 @@ def main():
     )
 
     if args.branch:
-        data['branch'] = args.branch
+        data['branchName'] = args.branch
     elif args.run:
         data['runId'] = args.run
 

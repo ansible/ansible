@@ -117,23 +117,23 @@ user:
     contains:
         default_project_id:
             description: User default project ID. Only present with Keystone >= v3.
-            type: string
+            type: str
             sample: "4427115787be45f08f0ec22a03bfc735"
         domain_id:
             description: User domain ID. Only present with Keystone >= v3.
-            type: string
+            type: str
             sample: "default"
         email:
             description: User email address
-            type: string
+            type: str
             sample: "demo@example.com"
         id:
             description: User ID
-            type: string
+            type: str
             sample: "f59382db809c43139982ca4189404650"
         name:
             description: User name
-            type: string
+            type: str
             sample: "demouser"
 '''
 from distutils.version import StrictVersion
@@ -160,20 +160,20 @@ def _get_domain_id(cloud, domain):
     try:
         # We assume admin is passing domain id
         domain_id = cloud.get_domain(domain)['id']
-    except:
+    except Exception:
         # If we fail, maybe admin is passing a domain name.
         # Note that domains have unique names, just like id.
         try:
             domain_id = cloud.search_domains(filters={'name': domain})[0]['id']
-        except:
+        except Exception:
             # Ok, let's hope the user is non-admin and passing a sane id
             domain_id = domain
 
     return domain_id
 
 
-def _get_default_project_id(cloud, default_project, module):
-    project = cloud.get_project(default_project)
+def _get_default_project_id(cloud, default_project, domain_id, module):
+    project = cloud.get_project(default_project, domain_id=domain_id)
     if not project:
         module.fail_json(msg='Default project %s is not valid' % default_project)
 
@@ -224,7 +224,7 @@ def main():
                     module.fail_json(msg=msg)
             default_project_id = None
             if default_project:
-                default_project_id = _get_default_project_id(cloud, default_project, module)
+                default_project_id = _get_default_project_id(cloud, default_project, domain_id, module)
 
             if user is None:
                 if description is not None:

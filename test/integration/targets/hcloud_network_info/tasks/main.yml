@@ -1,0 +1,117 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+
+- name: setup ensure network is absent
+  hcloud_network:
+    name: "{{ hcloud_network_name }}"
+    state: absent
+  register: result
+
+- name: create network
+  hcloud_network:
+    name: "{{ hcloud_network_name }}"
+    ip_range: "10.0.0.0/16"
+    labels:
+      key: value
+  register: main_network
+- name: verify create network
+  assert:
+    that:
+      - main_network is changed
+      - main_network.hcloud_network.name == "{{ hcloud_network_name }}"
+      - main_network.hcloud_network.ip_range == "10.0.0.0/16"
+- name: create subnetwork
+  hcloud_subnetwork:
+    network: "{{ hcloud_network_name }}"
+    type: server
+    network_zone: eu-central
+    ip_range: "10.0.1.0/24"
+  register: main_subnetwork
+- name: verify create subnetwork
+  assert:
+    that:
+      - main_subnetwork is changed
+      - main_subnetwork.hcloud_subnetwork.network == "{{ hcloud_network_name }}"
+- name: create route
+  hcloud_route:
+    network: "{{ hcloud_network_name }}"
+    destination: "10.0.3.0/24"
+    gateway: "10.0.2.1"
+  register: main_route
+- name: verify create route
+  assert:
+    that:
+      - main_route is changed
+      - main_route.hcloud_route.network == "{{ hcloud_network_name }}"
+
+- name: test gather hcloud network info in check mode
+  hcloud_network_info:
+  check_mode: yes
+  register: hcloud_network
+- name: verify test gather hcloud network info in check mode
+  assert:
+    that:
+      - hcloud_network.hcloud_network_info | selectattr('name','equalto','{{ hcloud_network_name }}') | list | count >= 1
+
+
+- name: test gather hcloud network info with correct label selector
+  hcloud_network_info:
+    label_selector: "key=value"
+  register: hcloud_network
+- name: verify test gather hcloud network with correct label selector
+  assert:
+    that:
+      - hcloud_network.hcloud_network_info | selectattr('name','equalto','{{ hcloud_network_name }}') | list | count == 1
+
+- name: test gather hcloud network info with wrong label selector
+  hcloud_network_info:
+    label_selector: "key!=value"
+  register: hcloud_network
+- name: verify test gather hcloud network with wrong label selector
+  assert:
+    that:
+      - hcloud_network.hcloud_network_info | list | count == 0
+
+- name: test gather hcloud network info with correct name
+  hcloud_network_info:
+    name: "{{hcloud_network_name}}"
+  register: hcloud_network
+- name: verify test gather hcloud network with correct name
+  assert:
+    that:
+      - hcloud_network.hcloud_network_info | selectattr('name','equalto','{{ hcloud_network_name }}') | list | count == 1
+      - hcloud_network.hcloud_network_info[0].subnetworks | list | count >= 1
+      - hcloud_network.hcloud_network_info[0].routes | list | count >= 1
+
+- name: test gather hcloud network info with wrong name
+  hcloud_network_info:
+      name: "{{hcloud_network_name}}1"
+  register: hcloud_network
+- name: verify test gather hcloud network with wrong name
+  assert:
+    that:
+      - hcloud_network.hcloud_network_info | list | count == 0
+
+- name: test gather hcloud network info with correct id
+  hcloud_network_info:
+    id: "{{main_network.hcloud_network.id}}"
+  register: hcloud_network
+- name: verify test gather hcloud network with correct id
+  assert:
+    that:
+      - hcloud_network.hcloud_network_info | selectattr('name','equalto','{{ hcloud_network_name }}') | list | count == 1
+
+- name: test gather hcloud network info with wrong id
+  hcloud_network_info:
+      name: "4711"
+  register: hcloud_network
+- name: verify test gather hcloud network with wrong id
+  assert:
+    that:
+      - hcloud_network.hcloud_network_info | list | count == 0
+
+- name: cleanup
+  hcloud_network:
+    name: "{{ hcloud_network_name }}"
+    state: absent

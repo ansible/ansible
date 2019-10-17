@@ -17,7 +17,6 @@
     docker_volume:
       name: "{{ item }}"
       state: absent
-      force: yes
     with_items: "{{ vnames }}"
 
   when: docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.20', '>=')  # FIXME: find out API version!

@@ -16,28 +16,17 @@ module: aci_bd_subnet
 short_description: Manage Subnets (fv:Subnet)
 description:
 - Manage Subnets on Cisco ACI fabrics.
-notes:
-- The C(gateway) parameter is the root key used to access the Subnet (not name), so the C(gateway)
-  is required when the state is C(absent) or C(present).
-- The C(tenant) and C(bd) used must exist before using this module in your playbook.
-  The M(aci_tenant) module and M(aci_bd) can be used for these.
-seealso:
-- module: aci_bd
-- module: aci_tenant
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(fv:Subnet).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   bd:
     description:
     - The name of the Bridge Domain.
+    type: str
     aliases: [ bd_name ]
   description:
     description:
     - The description for the Subnet.
+    type: str
     aliases: [ descr ]
   enable_vip:
     description:
@@ -47,11 +36,12 @@ options:
   gateway:
     description:
     - The IPv4 or IPv6 gateway address for the Subnet.
+    type: str
     aliases: [ gateway_ip ]
   mask:
     description:
     - The subnet mask for the Subnet.
-    - This is the number assocated with CIDR notation.
+    - This is the number associated with CIDR notation.
     - For IPv4 addresses, accepted values range between C(0) and C(32).
     - For IPv6 addresses, accepted Values range between C(0) and C(128).
     type: int
@@ -59,6 +49,7 @@ options:
   nd_prefix_policy:
     description:
     - The IPv6 Neighbor Discovery Prefix Policy to associate with the Subnet.
+    type: str
   preferred:
     description:
     - Determines if the Subnet is preferred over all available Subnets. Only one Subnet per Address Family (IPv4/IPv6).
@@ -68,9 +59,11 @@ options:
   route_profile:
     description:
     - The Route Profile to the associate with the Subnet.
+    type: str
   route_profile_l3_out:
     description:
-    - The L3 Out that contains the assocated Route Profile.
+    - The L3 Out that contains the associated Route Profile.
+    type: str
   scope:
     description:
     - Determines the scope of the Subnet.
@@ -89,25 +82,42 @@ options:
     description:
     - Determines the Subnet's Control State.
     - The C(querier_ip) option is used to treat the gateway_ip as an IGMP querier source IP.
-    - The C(nd_ra) option is used to treate the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
+    - The C(nd_ra) option is used to treat the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
     - The C(no_gw) option is used to remove default gateway functionality from the gateway address.
     - The APIC defaults to C(nd_ra) when unset during creation.
+    type: str
     choices: [ nd_ra, no_gw, querier_ip, unspecified ]
   subnet_name:
     description:
     - The name of the Subnet.
+    type: str
     aliases: [ name ]
   tenant:
     description:
     - The name of the Tenant.
+    type: str
     aliases: [ tenant_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(gateway) parameter is the root key used to access the Subnet (not name), so the C(gateway)
+  is required when the state is C(absent) or C(present).
+- The C(tenant) and C(bd) used must exist before using this module in your playbook.
+  The M(aci_tenant) module and M(aci_bd) can be used for these.
+seealso:
+- module: aci_bd
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:Subnet).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -250,7 +260,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -299,17 +309,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -319,15 +329,19 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-SUBNET_CONTROL_MAPPING = dict(nd_ra='nd', no_gw='no-default-gateway', querier_ip='querier', unspecified='')
-
-
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
+
+SUBNET_CONTROL_MAPPING = dict(
+    nd_ra='nd',
+    no_gw='no-default-gateway',
+    querier_ip='querier',
+    unspecified='',
+)
 
 
 def main():
@@ -368,7 +382,7 @@ def main():
     gateway = module.params['gateway']
     mask = module.params['mask']
     if mask is not None and mask not in range(0, 129):
-        # TODO: split checkes between IPv4 and IPv6 Addresses
+        # TODO: split checks between IPv4 and IPv6 Addresses
         module.fail_json(msg='Valid Subnet Masks are 0 to 32 for IPv4 Addresses and 0 to 128 for IPv6 addresses')
     if gateway is not None:
         gateway = '{0}/{1}'.format(gateway, str(mask))

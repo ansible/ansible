@@ -25,7 +25,7 @@ __metaclass__ = type
 #
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
@@ -66,7 +66,7 @@ options:
     description:
       - B(Deprecated)
       - "Starting with Ansible 2.5 we recommend using C(connection: network_cli)."
-      - For more information please see the L(IOS Platform Options guide, ../network/user_guide/platform_ios.html).
+      - For more information please see the L(CNOS Platform Options guide, ../network/user_guide/platform_cnos.html).
       - HORIZONTALLINE
       - A dict object containing connection details.
     version_added: "2.8"

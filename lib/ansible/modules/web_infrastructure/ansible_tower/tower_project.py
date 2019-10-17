@@ -62,6 +62,21 @@ options:
         - Before an update to the local repository before launching a job with this project.
       type: bool
       default: 'no'
+    scm_update_cache_timeout:
+      version_added: "2.8"
+      description:
+        - Cache Timeout to cache prior project syncs for a certain number of seconds.
+            Only valid if scm_update_on_launch is to True, otherwise ignored.
+      default: 0
+    job_timeout:
+      version_added: "2.8"
+      description:
+        - The amount of time (in seconds) to run before the SCM Update is canceled. A value of 0 means no timeout.
+      default: 0
+    custom_virtualenv:
+      version_added: "2.8"
+      description:
+        - Local absolute file path containing a custom Python virtualenv to use
     organization:
       description:
         - Primary key of organization for project.
@@ -82,13 +97,24 @@ EXAMPLES = '''
     organization: "test"
     state: present
     tower_config_file: "~/tower_cli.cfg"
+
+- name: Add Tower Project with cache timeout and custom virtualenv
+  tower_project:
+    name: "Foo"
+    description: "Foo bar project"
+    organization: "test"
+    scm_update_on_launch: True
+    scm_update_cache_timeout: 60
+    custom_virtualenv: "/var/lib/awx/venv/ansible-2.2"
+    state: present
+    tower_config_file: "~/tower_cli.cfg"
 '''
 
 from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -107,8 +133,10 @@ def main():
         scm_clean=dict(type='bool', default=False),
         scm_delete_on_update=dict(type='bool', default=False),
         scm_update_on_launch=dict(type='bool', default=False),
+        scm_update_cache_timeout=dict(type='int', default=0),
+        job_timeout=dict(type='int', default=0),
+        custom_virtualenv=dict(),
         local_path=dict(),
-
         state=dict(choices=['present', 'absent'], default='present'),
     )
 
@@ -127,6 +155,9 @@ def main():
     scm_clean = module.params.get('scm_clean')
     scm_delete_on_update = module.params.get('scm_delete_on_update')
     scm_update_on_launch = module.params.get('scm_update_on_launch')
+    scm_update_cache_timeout = module.params.get('scm_update_cache_timeout')
+    job_timeout = module.params.get('job_timeout')
+    custom_virtualenv = module.params.get('custom_virtualenv')
     state = module.params.get('state')
 
     json_output = {'project': name, 'state': state}
@@ -146,10 +177,17 @@ def main():
                 if scm_credential:
                     try:
                         cred_res = tower_cli.get_resource('credential')
-                        cred = cred_res.get(name=scm_credential)
+                        try:
+                            cred = cred_res.get(name=scm_credential)
+                        except (tower_cli.exceptions.MultipleResults) as multi_res_excinfo:
+                            module.warn('Multiple credentials found for {0}, falling back looking in project organization'.format(scm_credential))
+                            cred = cred_res.get(name=scm_credential, organization=org['id'])
                         scm_credential = cred['id']
                     except (exc.NotFound) as excinfo:
                         module.fail_json(msg='Failed to update project, credential not found: {0}'.format(scm_credential), changed=False)
+
+                if (scm_update_cache_timeout is not None) and (scm_update_on_launch is not True):
+                    module.warn('scm_update_cache_timeout will be ignored since scm_update_on_launch was not set to true')
 
                 result = project.modify(name=name, description=description,
                                         organization=org['id'],
@@ -157,11 +195,14 @@ def main():
                                         scm_branch=scm_branch, scm_clean=scm_clean, credential=scm_credential,
                                         scm_delete_on_update=scm_delete_on_update,
                                         scm_update_on_launch=scm_update_on_launch,
+                                        scm_update_cache_timeout=scm_update_cache_timeout,
+                                        job_timeout=job_timeout,
+                                        custom_virtualenv=custom_virtualenv,
                                         create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = project.delete(name=name)
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update project: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']

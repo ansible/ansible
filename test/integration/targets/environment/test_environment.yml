@@ -1,4 +1,11 @@
 - hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: get PATH from target
+      command: echo $PATH
+      register: target_path
+
+- hosts: testhost
   vars:
     - test1:
         key1: val1
@@ -9,7 +16,7 @@
     - name: ensure special case with ansible_env is skipped but others still work
       assert:
         that:
-            - lookup('env', 'PATH') == ansible_env.PATH
+            - target_path.stdout == ansible_env.PATH
             - "'/lola' not in ansible_env.PATH"
             - ansible_env.lola == 'ido'
 

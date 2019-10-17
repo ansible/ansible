@@ -1,0 +1,249 @@
+- name: Prepare random number
+  set_fact:
+    dbname: "cosmos{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    vnname: "vn{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    subnetname: "subnet{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vnname }}"
+    address_prefixes_cidr:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+    dns_servers:
+      - 127.0.0.1
+      - 127.0.0.3
+
+- name: Add subnet
+  azure_rm_subnet:
+    name: "{{ subnetname }}"
+    virtual_network_name: "{{ vnname }}"
+    resource_group: "{{ resource_group }}"
+    address_prefix_cidr: "10.1.0.0/24"
+
+- name: Create instance of Database Account -- check mode
+  azure_rm_cosmosdbaccount:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dbname }}"
+    location: eastus
+    geo_rep_locations:
+      - name: eastus
+        failover_priority: 0
+    database_account_offer_type: Standard
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of Database Account
+  azure_rm_cosmosdbaccount:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dbname }}"
+    location: eastus
+    kind: global_document_db
+    geo_rep_locations:
+      - name: eastus
+        failover_priority: 0
+      - name: westus
+        failover_priority: 1
+    database_account_offer_type: Standard
+    is_virtual_network_filter_enabled: yes
+    virtual_network_rules:
+      - subnet:
+          resource_group: "{{ resource_group }}"
+          virtual_network_name: "{{ vnname }}"
+          subnet_name: "{{ subnetname }}"
+        ignore_missing_vnet_service_endpoint: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create again instance of Database Account
+  azure_rm_cosmosdbaccount:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dbname }}"
+    location: eastus
+    kind: global_document_db
+    geo_rep_locations:
+      - name: eastus
+        failover_priority: 0
+      - name: westus
+        failover_priority: 1
+    database_account_offer_type: Standard
+    is_virtual_network_filter_enabled: yes
+    virtual_network_rules:
+      - subnet:
+          resource_group: "{{ resource_group }}"
+          virtual_network_name: "{{ vnname }}"
+          subnet_name: "{{ subnetname }}"
+        ignore_missing_vnet_service_endpoint: yes
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Create again instance of Database Account -- change something
+  azure_rm_cosmosdbaccount:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dbname }}"
+    location: eastus
+    kind: global_document_db
+    geo_rep_locations:
+      - name: eastus
+        failover_priority: 0
+      - name: westus
+        failover_priority: 1
+    database_account_offer_type: Standard
+    is_virtual_network_filter_enabled: yes
+    virtual_network_rules:
+      - subnet:
+          resource_group: "{{ resource_group }}"
+          virtual_network_name: "{{ vnname }}"
+          subnet_name: "{{ subnetname }}"
+        ignore_missing_vnet_service_endpoint: yes
+    enable_automatic_failover: yes
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed
+
+- name: Get facts of single account
+  azure_rm_cosmosdbaccount_info:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dbname }}"
+  register: output
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.accounts[0]['id'] != None
+      - output.accounts[0]['resource_group'] != None
+      - output.accounts[0]['name'] != None
+      - output.accounts[0]['location'] != None
+      - output.accounts[0]['kind'] != None
+      - output.accounts[0]['consistency_policy'] != None
+      - output.accounts[0]['failover_policies'] != None
+      - output.accounts[0]['read_locations'] != None
+      - output.accounts[0]['write_locations'] != None
+      - output.accounts[0]['database_account_offer_type'] != None
+      - output.accounts[0]['ip_range_filter'] != None
+      - output.accounts[0]['is_virtual_network_filter_enabled'] != None
+      - output.accounts[0]['enable_automatic_failover'] != None
+      - output.accounts[0]['enable_cassandra'] != None
+      - output.accounts[0]['enable_table'] != None
+      - output.accounts[0]['enable_gremlin'] != None
+      - output.accounts[0]['virtual_network_rules'] != None
+      - output.accounts[0]['enable_multiple_write_locations'] != None
+      - output.accounts[0]['document_endpoint'] != None
+      - output.accounts[0]['provisioning_state'] != None
+      - output.accounts[0]['tags'] != None
+
+- name: Get facts with keys
+  azure_rm_cosmosdbaccount_info:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dbname }}"
+    retrieve_keys: all
+  register: output
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.accounts[0]['primary_master_key'] != None
+      - output.accounts[0]['secondary_master_key'] != None
+      - output.accounts[0]['primary_readonly_master_key'] != None
+      - output.accounts[0]['secondary_readonly_master_key'] != None
+
+- name: Get facts with readonly keys
+  azure_rm_cosmosdbaccount_info:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dbname }}"
+    retrieve_keys: readonly
+    retrieve_connection_strings: yes
+  register: output
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - "'primary_master_key' not in output.accounts[0]"
+      - "'secondary_master_key' not in output.accounts[0]"
+      - output.accounts[0]['primary_readonly_master_key'] != None
+      - output.accounts[0]['secondary_readonly_master_key'] != None
+      - output.accounts[0]['connection_strings'] | length > 0
+
+- name: List acounts by resource group
+  azure_rm_cosmosdbaccount_info:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dbname }}"
+  register: output
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.accounts[0]['id'] != None
+      - output.accounts[0]['resource_group'] != None
+      - output.accounts[0]['name'] != None
+      - output.accounts[0]['location'] != None
+      - output.accounts[0]['kind'] != None
+      - output.accounts[0]['consistency_policy'] != None
+      - output.accounts[0]['failover_policies'] != None
+      - output.accounts[0]['read_locations'] != None
+      - output.accounts[0]['write_locations'] != None
+      - output.accounts[0]['database_account_offer_type'] != None
+      - output.accounts[0]['ip_range_filter'] != None
+      - output.accounts[0]['is_virtual_network_filter_enabled'] != None
+      - output.accounts[0]['enable_automatic_failover'] != None
+      - output.accounts[0]['enable_cassandra'] != None
+      - output.accounts[0]['enable_table'] != None
+      - output.accounts[0]['enable_gremlin'] != None
+      - output.accounts[0]['virtual_network_rules'] != None
+      - output.accounts[0]['enable_multiple_write_locations'] != None
+      - output.accounts[0]['document_endpoint'] != None
+      - output.accounts[0]['provisioning_state'] != None
+      - output.accounts[0]['tags'] != None
+
+- name: Delete instance of Database Account -- check mode
+  azure_rm_cosmosdbaccount:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dbname }}"
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of Database Account
+  azure_rm_cosmosdbaccount:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dbname }}"
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+# currently disabled as there's a bug in SDK / Service
+#- name: Delete unexisting instance of Database Account
+#  azure_rm_cosmosdbaccount:
+#    resource_group: "{{ resource_group }}"
+#    name: "{{ dbname }}"
+#    state: absent
+#  register: output
+#- name: Assert the state has changed
+#  assert:
+#    that:
+#      - output.changed == false

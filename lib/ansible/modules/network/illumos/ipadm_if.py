@@ -58,17 +58,17 @@ RETURN = '''
 name:
     description: IP interface name
     returned: always
-    type: string
+    type: str
     sample: "vnic0"
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: "present"
 temporary:
     description: persistence of a IP interface
     returned: always
-    type: boolean
+    type: bool
     sample: "True"
 '''
 from ansible.module_utils.basic import AnsibleModule

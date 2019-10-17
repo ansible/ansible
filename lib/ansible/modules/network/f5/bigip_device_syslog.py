@@ -24,6 +24,7 @@ options:
     description:
       - Specifies the lowest level of messages about user authentication
         to include in the system log.
+    type: str
     choices:
       - alert
       - crit
@@ -37,6 +38,7 @@ options:
     description:
       - Specifies the highest level of messages about user authentication
         to include in the system log.
+    type: str
     choices:
       - alert
       - crit
@@ -55,6 +57,7 @@ options:
     description:
       - Specifies the lowest level of messages about time-based scheduling
         to include in the system log.
+    type: str
     choices:
       - alert
       - crit
@@ -68,6 +71,7 @@ options:
     description:
       - Specifies the highest level of messages about time-based
         scheduling to include in the system log.
+    type: str
     choices:
       - alert
       - crit
@@ -81,6 +85,7 @@ options:
     description:
       - Specifies the lowest level of messages about daemon performance to
         include in the system log.
+    type: str
     choices:
       - alert
       - crit
@@ -94,6 +99,7 @@ options:
     description:
       - Specifies the highest level of messages about daemon performance
         to include in the system log.
+    type: str
     choices:
       - alert
       - crit
@@ -106,6 +112,7 @@ options:
   include:
     description:
       - Syslog-NG configuration to include in the device syslog config.
+    type: str
   iso_date:
     description:
       - Enables or disables the ISO date format for messages in the log
@@ -115,6 +122,7 @@ options:
     description:
       - Specifies the lowest level of kernel messages to include in the
         system log.
+    type: str
     choices:
       - alert
       - crit
@@ -128,6 +136,7 @@ options:
     description:
       - Specifies the highest level of kernel messages to include in the
         system log.
+    type: str
     choices:
       - alert
       - crit
@@ -141,6 +150,7 @@ options:
     description:
       - Specifies the lowest error level for messages from the local6
         facility to include in the log.
+    type: str
     choices:
       - alert
       - crit
@@ -154,6 +164,7 @@ options:
     description:
       - Specifies the highest error level for messages from the local6
         facility to include in the log.
+    type: str
     choices:
       - alert
       - crit
@@ -167,6 +178,7 @@ options:
     description:
       - Specifies the lowest level of mail log messages to include in the
         system log.
+    type: str
     choices:
       - alert
       - crit
@@ -180,6 +192,7 @@ options:
     description:
       - Specifies the highest level of mail log messages to include in the
         system log.
+    type: str
     choices:
       - alert
       - crit
@@ -193,6 +206,7 @@ options:
     description:
       - Specifies the lowest level of system messages to include in the
         system log.
+    type: str
     choices:
       - alert
       - crit
@@ -206,6 +220,7 @@ options:
     description:
       - Specifies the highest level of system messages to include in the
         system log.
+    type: str
     choices:
       - alert
       - crit
@@ -219,6 +234,7 @@ options:
     description:
       - Specifies the lowest level of user account messages to include in
         the system log.
+    type: str
     choices:
       - alert
       - crit
@@ -232,6 +248,7 @@ options:
     description:
       - Specifies the highest level of user account messages to include in
         the system log.
+    type: str
     choices:
       - alert
       - crit
@@ -261,12 +278,12 @@ RETURN = r'''
 auth_priv_from:
   description: The new lowest user authentication logging level
   returned: changed
-  type: string
+  type: str
   sample: alert
 auth_priv_to:
   description: The new highest user authentication logging level.
   returned: changed
-  type: string
+  type: str
   sample: emerg
 console_log:
   description: Whether logging to console is enabled or not.
@@ -281,77 +298,77 @@ iso_date:
 cron_from:
   description: The new lowest time-based scheduling logging level.
   returned: changed
-  type: string
+  type: str
   sample: emerg
 cron_to:
   description: The new highest time-based scheduling logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 daemon_from:
   description: The new lowest daemon performance logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 daemon_to:
   description: The new highest daemon performance logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 include:
   description: The new extra syslog-ng configuration to include in syslog config.
   returned: changed
-  type: string
+  type: str
   sample: "filter f_remote_syslog { not (facility(local6)) };"
 kern_from:
   description: The new lowest kernel messages logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 kern_to:
   description: The new highest kernel messages logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 local6_from:
   description: The new lowest local6 facility logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 local6_to:
   description: The new highest local6 facility logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 mail_from:
   description: The new lowest mail log logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 mail_to:
   description: The new highest mail log logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 messages_from:
   description: The new lowest system logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 messages_to:
   description: The new highest system logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 user_log_from:
   description: The new lowest user account logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 user_log_to:
   description: The new highest user account logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 '''
 
@@ -361,22 +378,16 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
@@ -565,7 +576,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -712,16 +723,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

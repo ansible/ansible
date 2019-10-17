@@ -26,14 +26,17 @@ options:
   name:
     description:
       - The name of a node.js library to install
+    type: str
     required: false
   path:
     description:
       - The base path where to install the node.js libraries
+    type: path
     required: false
   version:
     description:
       - The version to be installed
+    type: str
     required: false
   global:
     description:
@@ -45,6 +48,7 @@ options:
     description:
       - The executable location for npm.
       - This is useful if you are using a version manager, such as nvm
+    type: path
     required: false
   ignore_scripts:
     description:
@@ -59,6 +63,12 @@ options:
     type: bool
     default: no
     version_added: "2.8"
+  ci:
+    description:
+      - Install packages based on package-lock file, same as running npm ci
+    type: bool
+    default: no
+    version_added: "2.8"
   production:
     description:
       - Install dependencies in production mode, excluding devDependencies
@@ -69,11 +79,13 @@ options:
     description:
       - The registry to install modules from.
     required: false
+    type: str
     version_added: "1.6"
   state:
     description:
       - The state of the node.js library
     required: false
+    type: str
     default: present
     choices: [ "present", "absent", "latest" ]
 requirements:
@@ -211,6 +223,9 @@ class Npm(object):
     def install(self):
         return self._exec(['install'])
 
+    def ci_install(self):
+        return self._exec(['ci'])
+
     def update(self):
         return self._exec(['update'])
 
@@ -232,15 +247,16 @@ class Npm(object):
 
 def main():
     arg_spec = dict(
-        name=dict(default=None),
+        name=dict(default=None, type='str'),
         path=dict(default=None, type='path'),
-        version=dict(default=None),
+        version=dict(default=None, type='str'),
         production=dict(default='no', type='bool'),
         executable=dict(default=None, type='path'),
-        registry=dict(default=None),
+        registry=dict(default=None, type='str'),
         state=dict(default='present', choices=['present', 'absent', 'latest']),
         ignore_scripts=dict(default=False, type='bool'),
         unsafe_perm=dict(default=False, type='bool'),
+        ci=dict(default=False, type='bool'),
     )
     arg_spec['global'] = dict(default='no', type='bool')
     module = AnsibleModule(
@@ -258,6 +274,7 @@ def main():
     state = module.params['state']
     ignore_scripts = module.params['ignore_scripts']
     unsafe_perm = module.params['unsafe_perm']
+    ci = module.params['ci']
 
     if not path and not glbl:
         module.fail_json(msg='path must be specified when not using global')
@@ -269,7 +286,10 @@ def main():
               unsafe_perm=unsafe_perm, state=state)
 
     changed = False
-    if state == 'present':
+    if ci:
+        npm.ci_install()
+        changed = True
+    elif state == 'present':
         installed, missing = npm.list()
         if missing:
             changed = True

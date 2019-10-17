@@ -115,8 +115,8 @@ RETURN = '''
 msg:
   description: Success or failure message
   returned: always
-  type: string
-  sample: "Image file tranferred to device"
+  type: str
+  sample: "Image file transferred to device"
 '''
 
 import sys
@@ -130,7 +130,7 @@ import os
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True
-except:
+except Exception:
     HAS_LIB = False
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
@@ -231,7 +231,7 @@ def main():
     # Logic to check when changes occur or not
     errorMsg = cnos.checkOutputForError(output)
     if(errorMsg is None):
-        module.exit_json(changed=True, msg="Image file tranferred to device")
+        module.exit_json(changed=True, msg="Image file transferred to device")
     else:
         module.fail_json(msg=errorMsg)
 

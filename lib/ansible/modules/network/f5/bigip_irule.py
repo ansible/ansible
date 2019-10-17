@@ -26,9 +26,11 @@ options:
         the specified value. This is for simple values, but can be used with
         lookup plugins for anything complex or with formatting. Either one
         of C(src) or C(content) must be provided.
+    type: str
   module:
     description:
       - The BIG-IP module to add the iRule to.
+    type: str
     required: True
     choices:
       - ltm
@@ -36,22 +38,26 @@ options:
   name:
     description:
       - The name of the iRule.
+    type: str
     required: True
   src:
     description:
       - The iRule file to interpret and upload to the BIG-IP. Either one
         of C(src) or C(content) must be provided.
+    type: path
     required: True
   state:
     description:
       - Whether the iRule should exist or not.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
 extends_documentation_fragment: f5
@@ -90,17 +96,17 @@ RETURN = r'''
 module:
   description: The module that the iRule was added to
   returned: changed and success
-  type: string
+  type: str
   sample: gtm
 src:
   description: The filename that included the iRule source
   returned: changed and success, when provided
-  type: string
+  type: str
   sample: /opt/src/irules/example1.tcl
 content:
   description: The content of the iRule that was managed
   returned: changed and success
-  type: string
+  type: str
   sample: "when LB_FAILED { set wipHost [LB::server addr] }"
 '''
 
@@ -113,20 +119,14 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -244,7 +244,7 @@ class ModuleManager(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
@@ -565,16 +565,12 @@ def main():
         mutually_exclusive=spec.mutually_exclusive
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

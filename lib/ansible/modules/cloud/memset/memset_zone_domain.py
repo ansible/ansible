@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: memset_zone_domain
-author: "Simon Weald (@analbeard)"
+author: "Simon Weald (@glitchcrab)"
 version_added: "2.6"
 short_description: Create and delete domains in Memset DNS zones.
 notes:
@@ -69,12 +69,12 @@ memset_api:
     domain:
       description: Domain name
       returned: always
-      type: string
+      type: str
       sample: "example.com"
     id:
       description: Domain ID
       returned: always
-      type: string
+      type: str
       sample: "b0bb1ce851aeea6feeb2dc32fe83bf9c"
 '''
 
@@ -165,7 +165,7 @@ def delete_zone_domain(args=None, payload=None):
         if not has_failed:
             has_changed = True
             memset_api = response.json()
-            # unset msg as we don't want to return unecessary info to the user.
+            # unset msg as we don't want to return unnecessary info to the user.
             msg = None
 
     return(has_failed, has_changed, memset_api, msg)

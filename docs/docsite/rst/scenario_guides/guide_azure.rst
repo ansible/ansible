@@ -99,7 +99,7 @@ Storing in a File
 `````````````````
 
 When working in a development environment, it may be desirable to store credentials in a file. The modules will look
-for credentials in $HOME/.azure/credentials. This file is an ini style file. It will look as follows:
+for credentials in ``$HOME/.azure/credentials``. This file is an ini style file. It will look as follows:
 
 .. code-block:: ini
 
@@ -108,6 +108,8 @@ for credentials in $HOME/.azure/credentials. This file is an ini style file. It 
     client_id=xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     secret=xxxxxxxxxxxxxxxxx
     tenant=xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+
+.. note:: If your secret values contain non-ASCII characters, you must `URL Encode <https://www.w3schools.com/tags/ref_urlencode.asp>`_ them to avoid login errors.
 
 It is possible to store multiple sets of credentials within the credentials file by creating multiple sections. Each
 section is considered a profile. The modules look for the [default] profile automatically. Define AZURE_PROFILE in the
@@ -260,7 +262,7 @@ If you are not familiar with Ansible's dynamic inventory scripts, check out :ref
 
 The Azure Resource Manager inventory script is called  `azure_rm.py  <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/azure_rm.py>`_. It authenticates with the Azure API exactly the same as the
 Azure modules, which means you will either define the same environment variables described above in `Using Environment Variables`_,
-create a $HOME/.azure/credentials file (also described above in `Storing in a File`_), or pass command line parameters. To see available command
+create a ``$HOME/.azure/credentials`` file (also described above in `Storing in a File`_), or pass command line parameters. To see available command
 line options execute the following:
 
 .. code-block:: bash

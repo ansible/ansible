@@ -123,7 +123,7 @@ options:
     description:
       - Length of time in seconds after a new EC2 instance comes into service that Auto Scaling starts checking its health.
     required: false
-    default: 500 seconds
+    default: 300 seconds
     version_added: "1.7"
   health_check_type:
     description:
@@ -629,10 +629,13 @@ def get_properties(autoscaling_group):
                 instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
                                                    'lifecycle_state': i['LifecycleState'],
                                                    'launch_config_name': i['LaunchConfigurationName']}
-            else:
+            elif i.get('LaunchTemplate'):
                 instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
                                                    'lifecycle_state': i['LifecycleState'],
                                                    'launch_template': i['LaunchTemplate']}
+            else:
+                instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
+                                                   'lifecycle_state': i['LifecycleState']}
             if i['HealthStatus'] == 'Healthy' and i['LifecycleState'] == 'InService':
                 properties['viable_instances'] += 1
             if i['HealthStatus'] == 'Healthy':
@@ -669,7 +672,10 @@ def get_properties(autoscaling_group):
     properties['termination_policies'] = autoscaling_group.get('TerminationPolicies')
     properties['target_group_arns'] = autoscaling_group.get('TargetGroupARNs')
     properties['vpc_zone_identifier'] = autoscaling_group.get('VPCZoneIdentifier')
-    properties['metrics_collection'] = autoscaling_group.get('EnabledMetrics')
+    metrics = autoscaling_group.get('EnabledMetrics')
+    if metrics:
+        metrics.sort(key=lambda x: x["Metric"])
+    properties['metrics_collection'] = metrics
 
     if properties['target_group_arns']:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
@@ -1029,6 +1035,10 @@ def create_autoscaling_group(connection):
         if len(set_tags) > 0:
             have_tags = as_group.get('Tags')
             want_tags = asg_tags
+            if have_tags:
+                have_tags.sort(key=lambda x: x["Key"])
+            if want_tags:
+                want_tags.sort(key=lambda x: x["Key"])
             dead_tags = []
             have_tag_keyvals = [x['Key'] for x in have_tags]
             want_tag_keyvals = [x['Key'] for x in want_tags]
@@ -1156,7 +1166,7 @@ def create_autoscaling_group(connection):
         else:
             try:
                 ag['LaunchConfigurationName'] = as_group['LaunchConfigurationName']
-            except:
+            except Exception:
                 launch_template = as_group['LaunchTemplate']
                 # Prefer LaunchTemplateId over Name as it's more specific.  Only one can be used for update_asg.
                 ag['LaunchTemplate'] = {"LaunchTemplateId": launch_template['LaunchTemplateId'], "Version": launch_template['Version']}
@@ -1400,7 +1410,7 @@ def get_instances_by_launch_config(props, lc_check, initial_instances):
 def get_instances_by_launch_template(props, lt_check, initial_instances):
     new_instances = []
     old_instances = []
-    # old instances are those that have the old launch template or version of the same launch templatec
+    # old instances are those that have the old launch template or version of the same launch template
     if lt_check:
         for i in props['instances']:
             # Check if migrating from launch_config_name to launch_template_name first
@@ -1488,6 +1498,8 @@ def terminate_batch(connection, replace_instances, initial_instances, leftovers=
     if num_new_inst_needed == 0:
         decrement_capacity = True
         if as_group['MinSize'] != min_size:
+            if min_size is None:
+                min_size = as_group['MinSize']
             updated_params = dict(AutoScalingGroupName=as_group['AutoScalingGroupName'], MinSize=min_size)
             update_asg(connection, **updated_params)
             module.debug("Updating minimum size back to original of %s" % min_size)

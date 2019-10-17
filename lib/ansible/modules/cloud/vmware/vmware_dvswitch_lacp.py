@@ -35,6 +35,7 @@ options:
             - The name of the Distributed Switch to manage.
         required: True
         aliases: ['dvswitch']
+        type: str
     support_mode:
         description:
             - The LACP support mode.
@@ -120,7 +121,7 @@ RETURN = """
 result:
     description: information about performed operation
     returned: always
-    type: string
+    type: str
     sample: {
         "changed": true,
         "dvswitch": "dvSwitch",

@@ -49,7 +49,7 @@ options:
       - Password of the user to login into OpenNebula OneFlow API server. If not set then the value of the C(ONEFLOW_PASSWORD) environment variable is used.
   template_name:
     description:
-      - Name of service template to use to create a new instace of a service
+      - Name of service template to use to create a new instance of a service
   template_id:
     description:
       - ID of a service template to use to create a new instance of a service
@@ -132,7 +132,7 @@ EXAMPLES = '''
       public_network_id: 21
       private_network_id: 26
 
-# Instiate a new service 'foo' if the service doesn't already exist, otherwise do nothing
+# Instantiate a new service 'foo' if the service doesn't already exist, otherwise do nothing
 - one_service:
     template_id: 53
     service_name: 'foo'
@@ -187,7 +187,7 @@ service_id:
     sample: 153
 service_name:
     description: service name
-    type: string
+    type: str
     returned: success
     sample: app1
 group_id:
@@ -197,7 +197,7 @@ group_id:
     sample: 1
 group_name:
     description: service's group name
-    type: string
+    type: str
     returned: success
     sample: one-users
 owner_id:
@@ -207,12 +207,12 @@ owner_id:
     sample: 143
 owner_name:
     description: service's owner name
-    type: string
+    type: str
     returned: success
     sample: ansible-test
 state:
     description: state of service instance
-    type: string
+    type: str
     returned: success
     sample: RUNNING
 mode:
@@ -731,7 +731,7 @@ def main():
     if template_id and state == 'absent':
         module.fail_json(msg="State absent is not valid for template")
 
-    if template_id and state == 'present':  # Intantiate a service
+    if template_id and state == 'present':  # Instantiate a service
         result = create_service_and_operation(module, auth, template_id, service_name, owner_id,
                                               group_id, permissions, custom_attrs, unique, wait, wait_timeout)
     else:

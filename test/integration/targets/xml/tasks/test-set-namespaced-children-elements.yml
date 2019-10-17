@@ -19,6 +19,7 @@
     copy:
       src: /tmp/ansible-xml-namespaced-beers.xml
       dest: /tmp/ansible-xml-namespaced-beers-1.xml
+      remote_src: yes
 
   - name: Set child elements again
     xml:
@@ -36,11 +37,13 @@
     copy:
       src: /tmp/ansible-xml-namespaced-beers.xml
       dest: /tmp/ansible-xml-namespaced-beers-2.xml
+      remote_src: yes
 
   - name: Compare to expected result
     copy:
       src: /tmp/ansible-xml-namespaced-beers-1.xml
       dest: /tmp/ansible-xml-namespaced-beers-2.xml
+      remote_src: yes
     check_mode: yes
     diff: yes
     register: comparison

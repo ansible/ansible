@@ -63,6 +63,10 @@ options:
     description:
       - Amount of memory to be assigned to new virtual instance.
     required: true
+  flavor:
+    description:
+      - Specify which SoftLayer flavor template to use instead of cpus and memory.
+    version_added: "2.10"
   disks:
     description:
       - List of disk sizes to be assigned to new virtual instance.
@@ -263,6 +267,7 @@ def create_virtual_instance(module):
         domain=module.params.get('domain'),
         cpus=module.params.get('cpus'),
         memory=module.params.get('memory'),
+        flavor=module.params.get('flavor'),
         hourly=module.params.get('hourly'),
         datacenter=module.params.get('datacenter'),
         os_code=module.params.get('os_code'),
@@ -294,7 +299,7 @@ def wait_for_instance(module, id):
             completed = vsManager.wait_for_ready(id, 10, 2)
             if completed:
                 instance = vsManager.get_instance(id)
-        except:
+        except Exception:
             completed = False
 
     return completed, instance
@@ -310,12 +315,12 @@ def cancel_instance(module):
         for instance in instances:
             try:
                 vsManager.cancel_instance(instance['id'])
-            except:
+            except Exception:
                 canceled = False
     elif module.params.get('instance_id') and module.params.get('instance_id') != 0:
         try:
             vsManager.cancel_instance(instance['id'])
-        except:
+        except Exception:
             canceled = False
     else:
         return False, None
@@ -338,6 +343,7 @@ def main():
             local_disk=dict(type='bool', default=True),
             cpus=dict(type='int', choices=CPU_SIZES),
             memory=dict(type='int', choices=MEMORY_SIZES),
+            flavor=dict(type='str'),
             disks=dict(type='list', default=[25]),
             os_code=dict(type='str'),
             image_id=dict(type='str'),

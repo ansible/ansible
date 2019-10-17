@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.collections import is_string
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -24,7 +25,7 @@ class TimedOutException(Exception):
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
-    _VALID_ARGS = frozenset(('connect_timeout', 'msg', 'post_reboot_delay', 'pre_reboot_delay', 'test_command', 'reboot_timeout'))
+    _VALID_ARGS = frozenset(('connect_timeout', 'msg', 'post_reboot_delay', 'pre_reboot_delay', 'test_command', 'reboot_timeout', 'search_paths'))
 
     DEFAULT_REBOOT_TIMEOUT = 600
     DEFAULT_CONNECT_TIMEOUT = None
@@ -46,6 +47,7 @@ class ActionModule(ActionBase):
         'solaris': 'who -b',
         'sunos': 'who -b',
         'vmkernel': 'grep booted /var/log/vmksummary.log | tail -n 1',
+        'aix': 'who -b',
     }
 
     SHUTDOWN_COMMANDS = {
@@ -62,6 +64,7 @@ class ActionModule(ActionBase):
         'solaris': '-y -g {delay_sec} -i 6 "{message}"',
         'sunos': '-y -g {delay_sec} -i 6 "{message}"',
         'vmkernel': '-d {delay_sec}',
+        'aix': '-Fr',
     }
 
     TEST_COMMANDS = {
@@ -128,13 +131,32 @@ class ActionModule(ActionBase):
 
     def get_shutdown_command(self, task_vars, distribution):
         shutdown_bin = self._get_value_from_facts('SHUTDOWN_COMMANDS', distribution, 'DEFAULT_SHUTDOWN_COMMAND')
+        default_search_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
+        search_paths = self._task.args.get('search_paths', default_search_paths)
 
-        display.debug('{action}: running find module to get path for "{command}"'.format(action=self._task.action, command=shutdown_bin))
+        # FIXME: switch all this to user arg spec validation methods when they are available
+        # Convert bare strings to a list
+        if is_string(search_paths):
+            search_paths = [search_paths]
+
+        # Error if we didn't get a list
+        err_msg = "'search_paths' must be a string or flat list of strings, got {0}"
+        try:
+            incorrect_type = any(not is_string(x) for x in search_paths)
+            if not isinstance(search_paths, list) or incorrect_type:
+                raise TypeError
+        except TypeError:
+            raise AnsibleError(err_msg.format(search_paths))
+
+        display.debug('{action}: running find module looking in {paths} to get path for "{command}"'.format(
+            action=self._task.action,
+            command=shutdown_bin,
+            paths=search_paths))
         find_result = self._execute_module(
             task_vars=task_vars,
             module_name='find',
             module_args={
-                'paths': ['/sbin', '/usr/sbin', '/usr/local/sbin'],
+                'paths': search_paths,
                 'patterns': [shutdown_bin],
                 'file_type': 'any'
             }
@@ -142,7 +164,7 @@ class ActionModule(ActionBase):
 
         full_path = [x['path'] for x in find_result['files']]
         if not full_path:
-            raise AnsibleError('Unable to find command "{0}" in system paths.'.format(shutdown_bin))
+            raise AnsibleError('Unable to find command "{0}" in search paths: {1}'.format(shutdown_bin, search_paths))
         self._shutdown_command = full_path[0]
         return self._shutdown_command
 
@@ -215,7 +237,7 @@ class ActionModule(ActionBase):
                 out=to_native(command_result['stdout']))
             raise RuntimeError(msg)
 
-        display.vvv("{action}: system sucessfully rebooted".format(action=self._task.action))
+        display.vvv("{action}: system successfully rebooted".format(action=self._task.action))
 
     def do_until_success_or_timeout(self, action, reboot_timeout, action_desc, distribution, action_kwargs=None):
         max_end_time = datetime.utcnow() + timedelta(seconds=reboot_timeout)
@@ -271,7 +293,7 @@ class ActionModule(ActionBase):
             reboot_result = self._low_level_execute_command(reboot_command, sudoable=self.DEFAULT_SUDOABLE)
         except AnsibleConnectionFailure as e:
             # If the connection is closed too quickly due to the system being shutdown, carry on
-            display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_native(e)))
+            display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_text(e)))
             reboot_result['rc'] = 0
 
         result['start'] = datetime.utcnow()
@@ -294,7 +316,6 @@ class ActionModule(ActionBase):
         try:
             # keep on checking system boot_time with short connection responses
             reboot_timeout = int(self._task.args.get('reboot_timeout', self._task.args.get('reboot_timeout_sec', self.DEFAULT_REBOOT_TIMEOUT)))
-            connect_timeout = self._task.args.get('connect_timeout', self._task.args.get('connect_timeout_sec', self.DEFAULT_CONNECT_TIMEOUT))
 
             self.do_until_success_or_timeout(
                 action=self.check_boot_time,
@@ -303,16 +324,23 @@ class ActionModule(ActionBase):
                 distribution=distribution,
                 action_kwargs=action_kwargs)
 
-            if connect_timeout and original_connection_timeout:
-                try:
-                    display.debug("{action}: setting connect_timeout back to original value of {value}".format(
-                        action=self._task.action,
-                        value=original_connection_timeout))
-                    self._connection.set_option("connection_timeout", original_connection_timeout)
-                    self._connection.reset()
-                except (AnsibleError, AttributeError) as e:
-                    # reset the connection to clear the custom connection timeout
-                    display.debug("{action}: failed to reset connection_timeout back to default: {error}".format(action=self._task.action, error=to_text(e)))
+            # Get the connect_timeout set on the connection to compare to the original
+            try:
+                connect_timeout = self._connection.get_option('connection_timeout')
+            except KeyError:
+                pass
+            else:
+                if original_connection_timeout != connect_timeout:
+                    try:
+                        display.debug("{action}: setting connect_timeout back to original value of {value}".format(
+                            action=self._task.action,
+                            value=original_connection_timeout))
+                        self._connection.set_option("connection_timeout", original_connection_timeout)
+                        self._connection.reset()
+                    except (AnsibleError, AttributeError) as e:
+                        # reset the connection to clear the custom connection timeout
+                        display.debug("{action}: failed to reset connection_timeout back to default: {error}".format(action=self._task.action,
+                                                                                                                     error=to_text(e)))
 
             # finally run test command to ensure everything is working
             # FUTURE: add a stability check (system must remain up for N seconds) to deal with self-multi-reboot updates
@@ -372,7 +400,7 @@ class ActionModule(ActionBase):
         try:
             original_connection_timeout = self._connection.get_option('connection_timeout')
             display.debug("{action}: saving original connect_timeout of {timeout}".format(action=self._task.action, timeout=original_connection_timeout))
-        except AnsibleError:
+        except KeyError:
             display.debug("{action}: connect_timeout connection option has not been set".format(action=self._task.action))
         # Initiate reboot
         reboot_result = self.perform_reboot(task_vars, distribution)

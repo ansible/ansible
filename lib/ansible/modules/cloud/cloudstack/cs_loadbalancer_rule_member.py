@@ -18,41 +18,49 @@ description:
     - Add and remove load balancer rule members.
 version_added: '2.0'
 author:
-    - "Darren Worrall (@dazworrall)"
-    - "René Moser (@resmo)"
+    - Darren Worrall (@dazworrall)
+    - René Moser (@resmo)
 options:
   name:
     description:
       - The name of the load balancer rule.
+    type: str
     required: true
   ip_address:
     description:
       - Public IP address from where the network traffic will be load balanced from.
-      - Only needed to find the rule if C(name) is not unique.
-    aliases: [ 'public_ip' ]
+      - Only needed to find the rule if I(name) is not unique.
+    type: str
+    aliases: [ public_ip ]
   vms:
     description:
       - List of VMs to assign to or remove from the rule.
+    type: list
     required: true
-    aliases: [ 'vm' ]
+    aliases: [ vm ]
   state:
     description:
       - Should the VMs be present or absent from the rule.
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, absent ]
   project:
     description:
       - Name of the project the firewall rule is related to.
+    type: str
   domain:
     description:
       - Domain the rule is related to.
+    type: str
   account:
     description:
       - Account the rule is related to.
+    type: str
   zone:
     description:
       - Name of the zone in which the rule should be located.
       - If not set, default zone is used.
+    type: str
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -63,41 +71,41 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 - name: Add VMs to an existing load balancer
-  local_action:
-    module: cs_loadbalancer_rule_member
+  cs_loadbalancer_rule_member:
     name: balance_http
     vms:
       - web01
       - web02
+  delegate_to: localhost
 
 - name: Remove a VM from an existing load balancer
-  local_action:
-    module: cs_loadbalancer_rule_member
+  cs_loadbalancer_rule_member:
     name: balance_http
     vms:
       - web01
       - web02
     state: absent
+  delegate_to: localhost
 
 # Rolling upgrade of hosts
 - hosts: webservers
   serial: 1
   pre_tasks:
     - name: Remove from load balancer
-      local_action:
-        module: cs_loadbalancer_rule_member
+      cs_loadbalancer_rule_member:
         name: balance_http
         vm: "{{ ansible_hostname }}"
         state: absent
+      delegate_to: localhost
   tasks:
     # Perform update
   post_tasks:
     - name: Add to load balancer
-      local_action:
-        module: cs_loadbalancer_rule_member
+      cs_loadbalancer_rule_member:
         name: balance_http
         vm: "{{ ansible_hostname }}"
         state: present
+      delegate_to: localhost
 '''
 
 RETURN = '''
@@ -105,68 +113,68 @@ RETURN = '''
 id:
   description: UUID of the rule.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 zone:
   description: Name of zone the rule is related to.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 project:
   description: Name of project the rule is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 account:
   description: Account the rule is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 domain:
   description: Domain the rule is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 algorithm:
   description: Load balancer algorithm used.
   returned: success
-  type: string
-  sample: "source"
+  type: str
+  sample: source
 cidr:
   description: CIDR to forward traffic from.
   returned: success
-  type: string
-  sample: ""
+  type: str
+  sample: 0.0.0.0/0
 name:
   description: Name of the rule.
   returned: success
-  type: string
-  sample: "http-lb"
+  type: str
+  sample: http-lb
 description:
   description: Description of the rule.
   returned: success
-  type: string
-  sample: "http load balancer rule"
+  type: str
+  sample: http load balancer rule
 protocol:
   description: Protocol of the rule.
   returned: success
-  type: string
-  sample: "tcp"
+  type: str
+  sample: tcp
 public_port:
   description: Public port.
   returned: success
-  type: string
+  type: int
   sample: 80
 private_port:
   description: Private IP address.
   returned: success
-  type: string
+  type: int
   sample: 80
 public_ip:
   description: Public IP address.
   returned: success
-  type: string
-  sample: "1.2.3.4"
+  type: str
+  sample: 1.2.3.4
 vms:
   description: Rule members.
   returned: success
@@ -175,13 +183,13 @@ vms:
 tags:
   description: List of resource tags associated with the rule.
   returned: success
-  type: dict
+  type: list
   sample: '[ { "key": "foo", "value": "bar" } ]'
 state:
   description: State of the rule.
   returned: success
-  type: string
-  sample: "Add"
+  type: str
+  sample: Add
 '''
 
 from ansible.module_utils.basic import AnsibleModule

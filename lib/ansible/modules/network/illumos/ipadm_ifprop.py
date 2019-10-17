@@ -29,7 +29,7 @@ options:
         aliases: [nic]
     protocol:
         description:
-            - Specifies the procotol for which we want to manage properties.
+            - Specifies the protocol for which we want to manage properties.
         required: true
     property:
         description:
@@ -88,7 +88,7 @@ interface:
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: present
 value:
     description: property's value

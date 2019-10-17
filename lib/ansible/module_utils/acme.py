@@ -20,6 +20,7 @@ import copy
 import datetime
 import hashlib
 import json
+import locale
 import os
 import re
 import shutil
@@ -29,6 +30,8 @@ import traceback
 
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.compat import ipaddress as compat_ipaddress
+from ansible.module_utils.six.moves.urllib.parse import unquote
 
 try:
     import cryptography
@@ -46,7 +49,7 @@ try:
     HAS_CURRENT_CRYPTOGRAPHY = (LooseVersion(CRYPTOGRAPHY_VERSION) >= LooseVersion('1.5'))
     if HAS_CURRENT_CRYPTOGRAPHY:
         _cryptography_backend = cryptography.hazmat.backends.default_backend()
-except Exception as _:
+except Exception as dummy:
     HAS_CURRENT_CRYPTOGRAPHY = False
 
 
@@ -90,7 +93,7 @@ def write_file(module, dest, content):
     except Exception as err:
         try:
             f.close()
-        except Exception as e:
+        except Exception as dummy:
             pass
         os.remove(tmpsrc)
         raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
@@ -101,7 +104,7 @@ def write_file(module, dest, content):
     if not os.path.exists(tmpsrc):
         try:
             os.remove(tmpsrc)
-        except Exception as e:
+        except Exception as dummy:
             pass
         raise ModuleFailException("Source %s does not exist" % (tmpsrc))
     if not os.access(tmpsrc, os.R_OK):
@@ -119,9 +122,10 @@ def write_file(module, dest, content):
             raise ModuleFailException("Destination %s not readable" % (dest))
         checksum_dest = module.sha1(dest)
     else:
-        if not os.access(os.path.dirname(dest), os.W_OK):
+        dirname = os.path.dirname(dest) or '.'
+        if not os.access(dirname, os.W_OK):
             os.remove(tmpsrc)
-            raise ModuleFailException("Destination dir %s not writable" % (os.path.dirname(dest)))
+            raise ModuleFailException("Destination dir %s not writable" % (dirname))
     if checksum_src != checksum_dest:
         try:
             shutil.copyfile(tmpsrc, dest)
@@ -173,7 +177,7 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
         except Exception as err:
             try:
                 f.close()
-            except Exception as e:
+            except Exception as dummy:
                 pass
             raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
         f.close()
@@ -228,13 +232,13 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
         if asn1_oid_curve == 'prime256v1' or nist_curve == 'p-256':
             bits = 256
             alg = 'ES256'
-            hash = 'sha256'
+            hashalg = 'sha256'
             point_size = 32
             curve = 'P-256'
         elif asn1_oid_curve == 'secp384r1' or nist_curve == 'p-384':
             bits = 384
             alg = 'ES384'
-            hash = 'sha384'
+            hashalg = 'sha384'
             point_size = 48
             curve = 'P-384'
         elif asn1_oid_curve == 'secp521r1' or nist_curve == 'p-521':
@@ -242,13 +246,13 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
             # https://github.com/letsencrypt/boulder/issues/2217
             bits = 521
             alg = 'ES512'
-            hash = 'sha512'
+            hashalg = 'sha512'
             point_size = 66
             curve = 'P-521'
         else:
             return 'unknown elliptic curve: %s / %s' % (asn1_oid_curve, nist_curve), {}
-        bytes = (bits + 7) // 8
-        if len(pub_hex) != 2 * bytes:
+        num_bytes = (bits + 7) // 8
+        if len(pub_hex) != 2 * num_bytes:
             return 'bad elliptic curve point (%s / %s)' % (asn1_oid_curve, nist_curve), {}
         return None, {
             'key_file': key_file,
@@ -257,10 +261,10 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
             'jwk': {
                 "kty": "EC",
                 "crv": curve,
-                "x": nopad_b64(pub_hex[:bytes]),
-                "y": nopad_b64(pub_hex[bytes:]),
+                "x": nopad_b64(pub_hex[:num_bytes]),
+                "y": nopad_b64(pub_hex[num_bytes:]),
             },
-            'hash': hash,
+            'hash': hashalg,
             'point_size': point_size,
         }
 
@@ -360,13 +364,13 @@ def _parse_key_cryptography(module, key_file=None, key_content=None):
         if pk.curve.name == 'secp256r1':
             bits = 256
             alg = 'ES256'
-            hash = 'sha256'
+            hashalg = 'sha256'
             point_size = 32
             curve = 'P-256'
         elif pk.curve.name == 'secp384r1':
             bits = 384
             alg = 'ES384'
-            hash = 'sha384'
+            hashalg = 'sha384'
             point_size = 48
             curve = 'P-384'
         elif pk.curve.name == 'secp521r1':
@@ -374,12 +378,12 @@ def _parse_key_cryptography(module, key_file=None, key_content=None):
             # https://github.com/letsencrypt/boulder/issues/2217
             bits = 521
             alg = 'ES512'
-            hash = 'sha512'
+            hashalg = 'sha512'
             point_size = 66
             curve = 'P-521'
         else:
             return 'unknown elliptic curve: {0}'.format(pk.curve.name), {}
-        bytes = (bits + 7) // 8
+        num_bytes = (bits + 7) // 8
         return None, {
             'key_obj': key,
             'type': 'ec',
@@ -387,10 +391,10 @@ def _parse_key_cryptography(module, key_file=None, key_content=None):
             'jwk': {
                 "kty": "EC",
                 "crv": curve,
-                "x": nopad_b64(_convert_int_to_bytes(bytes, pk.x)),
-                "y": nopad_b64(_convert_int_to_bytes(bytes, pk.y)),
+                "x": nopad_b64(_convert_int_to_bytes(num_bytes, pk.x)),
+                "y": nopad_b64(_convert_int_to_bytes(num_bytes, pk.y)),
             },
-            'hash': hash,
+            'hash': hashalg,
             'point_size': point_size,
         }
     else:
@@ -401,16 +405,16 @@ def _sign_request_cryptography(module, payload64, protected64, key_data):
     sign_payload = "{0}.{1}".format(protected64, payload64).encode('utf8')
     if isinstance(key_data['key_obj'], cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
         padding = cryptography.hazmat.primitives.asymmetric.padding.PKCS1v15()
-        hash = cryptography.hazmat.primitives.hashes.SHA256()
-        signature = key_data['key_obj'].sign(sign_payload, padding, hash)
+        hashalg = cryptography.hazmat.primitives.hashes.SHA256
+        signature = key_data['key_obj'].sign(sign_payload, padding, hashalg())
     elif isinstance(key_data['key_obj'], cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey):
         if key_data['hash'] == 'sha256':
-            hash = cryptography.hazmat.primitives.hashes.SHA256
+            hashalg = cryptography.hazmat.primitives.hashes.SHA256
         elif key_data['hash'] == 'sha384':
-            hash = cryptography.hazmat.primitives.hashes.SHA384
+            hashalg = cryptography.hazmat.primitives.hashes.SHA384
         elif key_data['hash'] == 'sha512':
-            hash = cryptography.hazmat.primitives.hashes.SHA512
-        ecdsa = cryptography.hazmat.primitives.asymmetric.ec.ECDSA(hash())
+            hashalg = cryptography.hazmat.primitives.hashes.SHA512
+        ecdsa = cryptography.hazmat.primitives.asymmetric.ec.ECDSA(hashalg())
         r, s = cryptography.hazmat.primitives.asymmetric.utils.decode_dss_signature(key_data['key_obj'].sign(sign_payload, ecdsa))
         rr = _pad_hex(r, 2 * key_data['point_size'])
         ss = _pad_hex(s, 2 * key_data['point_size'])
@@ -429,7 +433,7 @@ class ACMEDirectory(object):
     and allows to obtain a Replay-Nonce. The acme_directory URL
     needs to support unauthenticated GET requests; ACME endpoints
     requiring authentication are not supported.
-    https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.1.1
+    https://tools.ietf.org/html/rfc8555#section-7.1.1
     '''
 
     def __init__(self, module, account):
@@ -470,6 +474,9 @@ class ACMEAccount(object):
     '''
 
     def __init__(self, module):
+        # Set to true to enable logging of all signed requests
+        self._debug = False
+
         self.module = module
         self.version = module.params['acme_version']
         # account_key path and content are mutually exclusive
@@ -500,7 +507,7 @@ class ACMEAccount(object):
     def get_keyauthorization(self, token):
         '''
         Returns the key authorization for the given token
-        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-8.1
+        https://tools.ietf.org/html/rfc8555#section-8.1
         '''
         accountkey_json = json.dumps(self.jwk, sort_keys=True, separators=(',', ':'))
         thumbprint = nopad_b64(hashlib.sha256(accountkey_json.encode('utf8')).digest())
@@ -537,14 +544,24 @@ class ACMEAccount(object):
         else:
             return _sign_request_openssl(self._openssl_bin, self.module, payload64, protected64, key_data)
 
+    def _log(self, msg, data=None):
+        '''
+        Write arguments to acme.log when logging is enabled.
+        '''
+        if self._debug:
+            with open('acme.log', 'ab') as f:
+                f.write('[{0}] {1}\n'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%s'), msg).encode('utf-8'))
+                if data is not None:
+                    f.write('{0}\n\n'.format(json.dumps(data, indent=2, sort_keys=True)).encode('utf-8'))
+
     def send_signed_request(self, url, payload, key_data=None, jws_header=None, parse_json_result=True, encode_payload=True):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
         the response as dictionary
-        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-6.2
+        https://tools.ietf.org/html/rfc8555#section-6.2
 
         If payload is None, a POST-as-GET is performed.
-        (https://tools.ietf.org/html/draft-ietf-acme-acme-15#section-6.3)
+        (https://tools.ietf.org/html/rfc8555#section-6.3)
         '''
         key_data = key_data or self.key_data
         jws_header = jws_header or self.jws_header
@@ -555,9 +572,15 @@ class ACMEAccount(object):
             if self.version != 1:
                 protected["url"] = url
 
+            self._log('URL', url)
+            self._log('protected', protected)
+            self._log('payload', payload)
             data = self.sign_request(protected, payload, key_data, encode_payload=encode_payload)
             if self.version == 1:
-                data["header"] = jws_header
+                data["header"] = jws_header.copy()
+                for k, v in protected.items():
+                    hv = data["header"].pop(k, None)
+            self._log('signed request', data)
             data = self.module.jsonify(data)
 
             headers = {
@@ -574,8 +597,9 @@ class ACMEAccount(object):
                 if (parse_json_result and info['content-type'].startswith('application/json')) or 400 <= info['status'] < 600:
                     try:
                         decoded_result = self.module.from_json(content.decode('utf8'))
+                        self._log('parsed result', decoded_result)
                         # In case of badNonce error, try again (up to 5 times)
-                        # (https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-6.6)
+                        # (https://tools.ietf.org/html/rfc8555#section-6.7)
                         if (400 <= info['status'] < 600 and
                                 decoded_result.get('type') == 'urn:ietf:params:acme:error:badNonce' and
                                 failed_tries <= 5):
@@ -651,7 +675,7 @@ class ACMEAccount(object):
         ``False`` if it already existed (e.g. it was not newly created),
         or does not exist. In case the account was created or exists,
         ``data`` contains the account data; otherwise, it is ``None``.
-        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.3
+        https://tools.ietf.org/html/rfc8555#section-7.3
         '''
         contact = contact or []
 
@@ -670,7 +694,7 @@ class ACMEAccount(object):
                 'contact': contact
             }
             if not allow_creation:
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.3.1
+                # https://tools.ietf.org/html/rfc8555#section-7.3.1
                 new_reg['onlyReturnExisting'] = True
             if terms_agreed:
                 new_reg['termsOfServiceAgreed'] = True
@@ -686,9 +710,10 @@ class ACMEAccount(object):
         elif info['status'] == (409 if self.version == 1 else 200):
             # Account did exist
             if result.get('status') == 'deactivated':
-                # A probable bug in Pebble (https://github.com/letsencrypt/pebble/issues/179)
-                # and Boulder: this should not return a valid account object according to
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-16#section-7.3.6:
+                # A bug in Pebble (https://github.com/letsencrypt/pebble/issues/179) and
+                # Boulder (https://github.com/letsencrypt/boulder/issues/3971): this should
+                # not return a valid account object according to
+                # https://tools.ietf.org/html/rfc8555#section-7.3.6:
                 #     "Once an account is deactivated, the server MUST NOT accept further
                 #      requests authorized by that account's key."
                 if not allow_creation:
@@ -701,6 +726,14 @@ class ACMEAccount(object):
         elif info['status'] == 400 and result['type'] == 'urn:ietf:params:acme:error:accountDoesNotExist' and not allow_creation:
             # Account does not exist (and we didn't try to create it)
             return False, None
+        elif info['status'] == 403 and result['type'] == 'urn:ietf:params:acme:error:unauthorized' and 'deactivated' in (result.get('detail') or ''):
+            # Account has been deactivated; currently works for Pebble; hasn't been
+            # implemented for Boulder (https://github.com/letsencrypt/boulder/issues/3971),
+            # might need adjustment in error detection.
+            if not allow_creation:
+                return False, None
+            else:
+                raise ModuleFailException("Account is deactivated")
         else:
             raise ModuleFailException("Error registering: {0} {1}".format(info['status'], result))
 
@@ -755,7 +788,7 @@ class ACMEAccount(object):
         The account URI will be stored in ``self.uri``; if it is ``None``,
         the account does not exist.
 
-        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.3
+        https://tools.ietf.org/html/rfc8555#section-7.3
         '''
 
         if self.uri is not None:
@@ -793,7 +826,7 @@ class ACMEAccount(object):
         would be changed (check mode), and ``account_data`` the updated
         account data.
 
-        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.3.2
+        https://tools.ietf.org/html/rfc8555#section-7.3.2
         '''
         # Create request
         update_request = {}
@@ -809,25 +842,70 @@ class ACMEAccount(object):
             account_data = dict(account_data)
             account_data.update(update_request)
         else:
+            if self.version == 1:
+                update_request['resource'] = 'reg'
             account_data, dummy = self.send_signed_request(self.uri, update_request)
         return True, account_data
 
 
-def cryptography_get_csr_domains(module, csr_filename):
+def _normalize_ip(ip):
+    try:
+        return to_native(compat_ipaddress.ip_address(to_text(ip)).compressed)
+    except ValueError:
+        # We don't want to error out on something IPAddress() can't parse
+        return ip
+
+
+def openssl_get_csr_identifiers(openssl_binary, module, csr_filename):
     '''
-    Return a set of requested domains (CN and SANs) for the CSR.
+    Return a set of requested identifiers (CN and SANs) for the CSR.
+    Each identifier is a pair (type, identifier), where type is either
+    'dns' or 'ip'.
     '''
-    domains = set([])
+    openssl_csr_cmd = [openssl_binary, "req", "-in", csr_filename, "-noout", "-text"]
+    dummy, out, dummy = module.run_command(openssl_csr_cmd, check_rc=True)
+
+    identifiers = set([])
+    common_name = re.search(r"Subject:.* CN\s?=\s?([^\s,;/]+)", to_text(out, errors='surrogate_or_strict'))
+    if common_name is not None:
+        identifiers.add(('dns', common_name.group(1)))
+    subject_alt_names = re.search(
+        r"X509v3 Subject Alternative Name: (?:critical)?\n +([^\n]+)\n",
+        to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL)
+    if subject_alt_names is not None:
+        for san in subject_alt_names.group(1).split(", "):
+            if san.lower().startswith("dns:"):
+                identifiers.add(('dns', san[4:]))
+            elif san.lower().startswith("ip:"):
+                identifiers.add(('ip', _normalize_ip(san[3:])))
+            elif san.lower().startswith("ip address:"):
+                identifiers.add(('ip', _normalize_ip(san[11:])))
+            else:
+                raise ModuleFailException('Found unsupported SAN identifier "{0}"'.format(san))
+    return identifiers
+
+
+def cryptography_get_csr_identifiers(module, csr_filename):
+    '''
+    Return a set of requested identifiers (CN and SANs) for the CSR.
+    Each identifier is a pair (type, identifier), where type is either
+    'dns' or 'ip'.
+    '''
+    identifiers = set([])
     csr = cryptography.x509.load_pem_x509_csr(read_file(csr_filename), _cryptography_backend)
     for sub in csr.subject:
         if sub.oid == cryptography.x509.oid.NameOID.COMMON_NAME:
-            domains.add(sub.value)
+            identifiers.add(('dns', sub.value))
     for extension in csr.extensions:
         if extension.oid == cryptography.x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME:
             for name in extension.value:
                 if isinstance(name, cryptography.x509.DNSName):
-                    domains.add(name.value)
-    return domains
+                    identifiers.add(('dns', name.value))
+                elif isinstance(name, cryptography.x509.IPAddress):
+                    identifiers.add(('ip', name.value.compressed))
+                else:
+                    raise ModuleFailException('Found unsupported SAN identifier {0}'.format(name))
+    return identifiers
 
 
 def cryptography_get_cert_days(module, cert_file, now=None):
@@ -866,7 +944,7 @@ def set_crypto_backend(module):
     elif backend == 'cryptography':
         try:
             cryptography.__version__
-        except Exception as _:
+        except Exception as dummy:
             module.fail_json(msg='Cannot find cryptography module!')
         HAS_CURRENT_CRYPTOGRAPHY = True
     else:
@@ -876,3 +954,57 @@ def set_crypto_backend(module):
         module.debug('Using cryptography backend (library version {0})'.format(CRYPTOGRAPHY_VERSION))
     else:
         module.debug('Using OpenSSL binary backend')
+
+
+def process_links(info, callback):
+    '''
+    Process link header, calls callback for every link header with the URL and relation as options.
+    '''
+    if 'link' in info:
+        link = info['link']
+        for url, relation in re.findall(r'<([^>]+)>;\s*rel="(\w+)"', link):
+            callback(unquote(url), relation)
+
+
+def get_default_argspec():
+    '''
+    Provides default argument spec for the options documented in the acme doc fragment.
+    '''
+    return dict(
+        account_key_src=dict(type='path', aliases=['account_key']),
+        account_key_content=dict(type='str', no_log=True),
+        account_uri=dict(type='str'),
+        acme_directory=dict(type='str'),
+        acme_version=dict(type='int', choices=[1, 2]),
+        validate_certs=dict(type='bool', default=True),
+        select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
+    )
+
+
+def handle_standard_module_arguments(module, needs_acme_v2=False):
+    '''
+    Do standard module setup, argument handling and warning emitting.
+    '''
+    set_crypto_backend(module)
+
+    if not module.params['validate_certs']:
+        module.warn(
+            'Disabling certificate validation for communications with ACME endpoint. '
+            'This should only be done for testing against a local ACME server for '
+            'development purposes, but *never* for production purposes.'
+        )
+
+    if module.params['acme_version'] is None:
+        module.params['acme_version'] = 1
+        module.deprecate("The option 'acme_version' will be required from Ansible 2.14 on", version='2.14')
+
+    if module.params['acme_directory'] is None:
+        module.params['acme_directory'] = 'https://acme-staging.api.letsencrypt.org/directory'
+        module.deprecate("The option 'acme_directory' will be required from Ansible 2.14 on", version='2.14')
+
+    if needs_acme_v2 and module.params['acme_version'] < 2:
+        module.fail_json(msg='The {0} module requires the ACME v2 protocol!'.format(module._name))
+
+    # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+    locale.setlocale(locale.LC_ALL, 'C')

@@ -20,7 +20,6 @@ try:
     from library.modules.bigip_ucs_fetch import Parameters
     from library.modules.bigip_ucs_fetch import ModuleManager
     from library.modules.bigip_ucs_fetch import V1Manager
-    from library.modules.bigip_ucs_fetch import V2Manager
     from library.modules.bigip_ucs_fetch import ArgumentSpec
 
     # In Ansible 2.8, Ansible changed import paths.
@@ -33,7 +32,6 @@ except ImportError:
     from ansible.modules.network.f5.bigip_ucs_fetch import Parameters
     from ansible.modules.network.f5.bigip_ucs_fetch import ModuleManager
     from ansible.modules.network.f5.bigip_ucs_fetch import V1Manager
-    from ansible.modules.network.f5.bigip_ucs_fetch import V2Manager
     from ansible.modules.network.f5.bigip_ucs_fetch import ArgumentSpec
 
     # Ansible 2.8 imports
@@ -76,9 +74,6 @@ class TestParameters(unittest.TestCase):
             force='yes',
             fail_on_missing='no',
             src='remote.ucs',
-            password='password',
-            server='localhost',
-            user='admin'
         )
         p = Parameters(params=args)
         assert p.backup == 'yes'
@@ -97,14 +92,17 @@ class TestV1Manager(unittest.TestCase):
             force='yes',
             fail_on_missing='no',
             src='remote.ucs',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            add_file_common_args=self.spec.add_file_common_args
         )
 
         # Override methods to force specific logic in the module to happen

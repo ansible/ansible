@@ -175,7 +175,7 @@ RETURN = """
 schedule_id:
     description: Schedule ID of the newly created schedule
     returned: success
-    type: string
+    type: str
 """
 import traceback
 from ansible.module_utils.basic import AnsibleModule
@@ -187,7 +187,7 @@ HAS_SF_SDK = netapp_utils.has_sf_sdk()
 try:
     from solidfire.custom.models import DaysOfWeekFrequency, Weekday, DaysOfMonthFrequency
     from solidfire.common import ApiServerError
-except:
+except Exception:
     HAS_SF_SDK = False
 
 
@@ -202,7 +202,7 @@ class ElementSWSnapShotSchedule(object):
     def __init__(self):
         """
         Parse arguments, setup state variables,
-        check paramenters and ensure SDK is installed
+        check parameters and ensure SDK is installed
         """
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
@@ -490,15 +490,15 @@ class ElementSWSnapShotSchedule(object):
                             if schedule_detail.frequency.days != temp_frequency.days or \
                                schedule_detail.frequency.hours != temp_frequency.hours or \
                                schedule_detail.frequency.minutes != temp_frequency.minutes:
-                                    update_schedule = True
-                                    changed = True
+                                update_schedule = True
+                                changed = True
                         elif self.schedule_type == "DaysOfMonthFrequency":
                             # Check if there is any change in schedule.frequency, If schedule_type is days_of_month
                             if len(schedule_detail.frequency.monthdays) != len(temp_frequency.monthdays) or \
                                schedule_detail.frequency.hours != temp_frequency.hours or \
                                schedule_detail.frequency.minutes != temp_frequency.minutes:
-                                    update_schedule = True
-                                    changed = True
+                                update_schedule = True
+                                changed = True
                             elif len(schedule_detail.frequency.monthdays) == len(temp_frequency.monthdays):
                                 actual_frequency_monthday = schedule_detail.frequency.monthdays
                                 temp_frequency_monthday = temp_frequency.monthdays
@@ -511,15 +511,15 @@ class ElementSWSnapShotSchedule(object):
                             if len(schedule_detail.frequency.weekdays) != len(temp_frequency.weekdays) or \
                                schedule_detail.frequency.hours != temp_frequency.hours or \
                                schedule_detail.frequency.minutes != temp_frequency.minutes:
-                                    update_schedule = True
-                                    changed = True
+                                update_schedule = True
+                                changed = True
                             elif len(schedule_detail.frequency.weekdays) == len(temp_frequency.weekdays):
                                 actual_frequency_weekdays = schedule_detail.frequency.weekdays
                                 temp_frequency_weekdays = temp_frequency.weekdays
                                 if len([actual_weekday for actual_weekday, temp_weekday in
-                                   zip(actual_frequency_weekdays, temp_frequency_weekdays) if actual_weekday != temp_weekday]) != 0:
-                                        update_schedule = True
-                                        changed = True
+                                        zip(actual_frequency_weekdays, temp_frequency_weekdays) if actual_weekday != temp_weekday]) != 0:
+                                    update_schedule = True
+                                    changed = True
                     else:
                         update_schedule = True
                         changed = True

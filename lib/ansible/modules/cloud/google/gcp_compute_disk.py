@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -44,7 +43,7 @@ description:
 - Add a persistent disk to your instance when you need reliable and affordable storage
   with consistent performance characteristics.
 short_description: Creates a GCP Disk
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -58,20 +57,24 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   labels:
     description:
     - Labels to apply to this disk. A list of key->value pairs.
     required: false
-    version_added: 2.7
+    type: dict
+    version_added: '2.7'
   licenses:
     description:
     - Any applicable publicly visible licenses.
     required: false
+    type: list
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -81,6 +84,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   size_gb:
     description:
     - Size of the persistent disk, specified in GB. You can specify this field when
@@ -90,12 +94,24 @@ options:
       of sizeGb must not be less than the size of the sourceImage or the size of the
       snapshot.
     required: false
+    type: int
+  physical_block_size_bytes:
+    description:
+    - Physical block size of the persistent disk, in bytes. If not present in a request,
+      a default value is used. Currently supported sizes are 4096 and 16384, other
+      sizes may be added in the future.
+    - If an unsupported value is requested, the error message will list the supported
+      values for the caller's project.
+    required: false
+    type: int
+    version_added: '2.8'
   type:
     description:
     - URL of the disk type resource describing which disk type to use to create the
       disk. Provide this when creating the disk.
     required: false
-    version_added: 2.7
+    type: str
+    version_added: '2.7'
   source_image:
     description:
     - The source image used to create this disk. If the source image is deleted, this
@@ -110,26 +126,30 @@ options:
       image in that family. Replace the image name with family/family-name: global/images/family/my-private-family
       .'
     required: false
+    type: str
   zone:
     description:
     - A reference to the zone where the disk resides.
     required: true
+    type: str
   source_image_encryption_key:
     description:
     - The customer-supplied encryption key of the source image. Required if the source
       image is protected by a customer-supplied encryption key.
     required: false
+    type: dict
     suboptions:
       raw_key:
         description:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
         required: false
-      sha256:
+        type: str
+      kms_key_name:
         description:
-        - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
-          key that protects this resource.
+        - The name of the encryption key that is stored in Google Cloud KMS.
         required: false
+        type: str
   disk_encryption_key:
     description:
     - Encrypts the disk using a customer-supplied encryption key.
@@ -141,61 +161,112 @@ options:
       will be encrypted using an automatically generated key and you do not need to
       provide a key to use the disk later.
     required: false
+    type: dict
     suboptions:
       raw_key:
         description:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
         required: false
-      sha256:
+        type: str
+      kms_key_name:
         description:
-        - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
-          key that protects this resource.
+        - The name of the encryption key that is stored in Google Cloud KMS.
         required: false
+        type: str
   source_snapshot:
     description:
     - The source snapshot used to create this disk. You can provide this as a partial
       or full URL to the resource.
     - 'This field represents a link to a Snapshot resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_snapshot
-      task and then set this source_snapshot field to "{{ name-of-resource }}" Alternatively,
-      you can set this source_snapshot to a dictionary with the selfLink key where
-      the value is the selfLink of your Snapshot'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_snapshot task and then set this source_snapshot field to "{{
+      name-of-resource }}"'
     required: false
+    type: dict
   source_snapshot_encryption_key:
     description:
     - The customer-supplied encryption key of the source snapshot. Required if the
       source snapshot is protected by a customer-supplied encryption key.
     required: false
+    type: dict
     suboptions:
       raw_key:
         description:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
         required: false
-      sha256:
+        type: str
+      kms_key_name:
         description:
-        - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
-          key that protects this resource.
+        - The name of the encryption key that is stored in Google Cloud KMS.
         required: false
-extends_documentation_fragment: gcp
+        type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
-- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/disks)'
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/disks)'
 - 'Adding a persistent disk: U(https://cloud.google.com/compute/docs/disks/add-persistent-disk)'
+- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
 - name: create a disk
   gcp_compute_disk:
-      name: "test_object"
-      size_gb: 50
-      disk_encryption_key:
-        raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
-      zone: us-central1-a
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    size_gb: 50
+    disk_encryption_key:
+      raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
+    zone: us-central1-a
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -228,7 +299,7 @@ lastAttachTimestamp:
   type: str
 lastDetachTimestamp:
   description:
-  - Last dettach timestamp in RFC3339 text format.
+  - Last detach timestamp in RFC3339 text format.
   returned: success
   type: str
 labels:
@@ -267,6 +338,15 @@ users:
     .'
   returned: success
   type: list
+physicalBlockSizeBytes:
+  description:
+  - Physical block size of the persistent disk, in bytes. If not present in a request,
+    a default value is used. Currently supported sizes are 4096 and 16384, other sizes
+    may be added in the future.
+  - If an unsupported value is requested, the error message will list the supported
+    values for the caller's project.
+  returned: success
+  type: int
 type:
   description:
   - URL of the disk type resource describing which disk type to use to create the
@@ -312,6 +392,11 @@ sourceImageEncryptionKey:
         key that protects this resource.
       returned: success
       type: str
+    kmsKeyName:
+      description:
+      - The name of the encryption key that is stored in Google Cloud KMS.
+      returned: success
+      type: str
 sourceImageId:
   description:
   - The ID value of the image used to create this disk. This value identifies the
@@ -346,6 +431,11 @@ diskEncryptionKey:
         key that protects this resource.
       returned: success
       type: str
+    kmsKeyName:
+      description:
+      - The name of the encryption key that is stored in Google Cloud KMS.
+      returned: success
+      type: str
 sourceSnapshot:
   description:
   - The source snapshot used to create this disk. You can provide this as a partial
@@ -363,6 +453,11 @@ sourceSnapshotEncryptionKey:
       description:
       - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
         base64 to either encrypt or decrypt this resource.
+      returned: success
+      type: str
+    kmsKeyName:
+      description:
+      - The name of the encryption key that is stored in Google Cloud KMS.
       returned: success
       type: str
     sha256:
@@ -407,22 +502,14 @@ def main():
             licenses=dict(type='list', elements='str'),
             name=dict(required=True, type='str'),
             size_gb=dict(type='int'),
+            physical_block_size_bytes=dict(type='int'),
             type=dict(type='str'),
             source_image=dict(type='str'),
             zone=dict(required=True, type='str'),
-            source_image_encryption_key=dict(type='dict', options=dict(
-                raw_key=dict(type='str'),
-                sha256=dict(type='str')
-            )),
-            disk_encryption_key=dict(type='dict', options=dict(
-                raw_key=dict(type='str'),
-                sha256=dict(type='str')
-            )),
+            source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'))),
+            disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'))),
             source_snapshot=dict(type='dict'),
-            source_snapshot_encryption_key=dict(type='dict', options=dict(
-                raw_key=dict(type='str'),
-                sha256=dict(type='str')
-            ))
+            source_snapshot_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'))),
         )
     )
 
@@ -463,8 +550,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
+    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
     return fetch_resource(module, self_link(module), kind)
 
 
@@ -478,27 +564,16 @@ def update_fields(module, request, response):
 def label_fingerprint_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/zones/{zone}/disks/{name}/setLabels"
-        ]).format(**module.params),
-        {
-            u'labelFingerprint': response.get('labelFingerprint'),
-            u'labels': module.params.get('labels')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/zones/{zone}/disks/{name}/setLabels"]).format(**module.params),
+        {u'labelFingerprint': response.get('labelFingerprint'), u'labels': module.params.get('labels')},
     )
 
 
 def size_gb_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/zones/{zone}/disks/{name}/resize"
-        ]).format(**module.params),
-        {
-            u'sizeGb': module.params.get('size_gb')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/zones/{zone}/disks/{name}/resize"]).format(**module.params),
+        {u'sizeGb': module.params.get('size_gb')},
     )
 
 
@@ -518,12 +593,13 @@ def resource_to_request(module):
         u'licenses': module.params.get('licenses'),
         u'name': module.params.get('name'),
         u'sizeGb': module.params.get('size_gb'),
+        u'physicalBlockSizeBytes': module.params.get('physical_block_size_bytes'),
         u'type': disk_type_selflink(module.params.get('type'), module.params),
-        u'sourceImage': module.params.get('source_image')
+        u'sourceImage': module.params.get('source_image'),
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
@@ -554,8 +630,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -596,15 +672,16 @@ def response_to_hash(module, response):
         u'name': module.params.get('name'),
         u'sizeGb': response.get(u'sizeGb'),
         u'users': response.get(u'users'),
+        u'physicalBlockSizeBytes': response.get(u'physicalBlockSizeBytes'),
         u'type': response.get(u'type'),
-        u'sourceImage': module.params.get('source_image')
+        u'sourceImage': module.params.get('source_image'),
     }
 
 
 def disk_type_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/[a-z1-9\-]*/diskTypes/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/.*/diskTypes/.*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/diskTypes/%s".format(**params) % name
     return name
@@ -632,9 +709,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -654,16 +731,10 @@ class DiskSourceimageencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get('raw_key'),
-            u'sha256': self.request.get('sha256')
-        })
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get(u'rawKey'),
-            u'sha256': self.request.get(u'sha256')
-        })
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName')})
 
 
 class DiskDiskencryptionkey(object):
@@ -675,16 +746,10 @@ class DiskDiskencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get('raw_key'),
-            u'sha256': self.request.get('sha256')
-        })
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get(u'rawKey'),
-            u'sha256': self.request.get(u'sha256')
-        })
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName')})
 
 
 class DiskSourcesnapshotencryptionkey(object):
@@ -696,16 +761,10 @@ class DiskSourcesnapshotencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get('raw_key'),
-            u'sha256': self.request.get('sha256')
-        })
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get(u'rawKey'),
-            u'sha256': self.request.get(u'sha256')
-        })
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName')})
 
 
 if __name__ == '__main__':

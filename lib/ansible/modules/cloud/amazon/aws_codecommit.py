@@ -27,10 +27,12 @@ options:
     description:
       - name of repository.
     required: true
-  comment:
+  description:
     description:
       - description or comment of repository.
     required: false
+    aliases:
+      - comment
   state:
     description:
       - Specifies the state of repository.
@@ -51,47 +53,47 @@ repository_metadata:
     account_id:
       description: "The ID of the AWS account associated with the repository."
       returned: when state is present
-      type: string
+      type: str
       sample: "268342293637"
     arn:
       description: "The Amazon Resource Name (ARN) of the repository."
       returned: when state is present
-      type: string
+      type: str
       sample: "arn:aws:codecommit:ap-northeast-1:268342293637:username"
     clone_url_http:
       description: "The URL to use for cloning the repository over HTTPS."
       returned: when state is present
-      type: string
+      type: str
       sample: "https://git-codecommit.ap-northeast-1.amazonaws.com/v1/repos/reponame"
     clone_url_ssh:
       description: "The URL to use for cloning the repository over SSH."
       returned: when state is present
-      type: string
+      type: str
       sample: "ssh://git-codecommit.ap-northeast-1.amazonaws.com/v1/repos/reponame"
     creation_date:
       description: "The date and time the repository was created, in timestamp format."
       returned: when state is present
-      type: datetime
+      type: str
       sample: "2018-10-16T13:21:41.261000+09:00"
     last_modified_date:
       description: "The date and time the repository was last modified, in timestamp format."
       returned: when state is present
-      type: string
+      type: str
       sample: "2018-10-16T13:21:41.261000+09:00"
     repository_description:
       description: "A comment or description about the repository."
       returned: when state is present
-      type: string
+      type: str
       sample: "test from ptux"
     repository_id:
       description: "The ID of the repository that was created or deleted"
       returned: always
-      type: string
+      type: str
       sample: "e62a5c54-i879-497b-b62f-9f99e4ebfk8e"
     repository_name:
       description: "The repository's name."
       returned: when state is present
-      type: string
+      type: str
       sample: "reponame"
 
 response_metadata:
@@ -102,21 +104,21 @@ response_metadata:
     http_headers:
       description: "http headers of http response"
       returned: always
-      type: complex
+      type: dict
     http_status_code:
       description: "http status code of http response"
       returned: always
-      type: string
+      type: str
       sample: "200"
     request_id:
       description: "http request id"
       returned: always
-      type: string
+      type: str
       sample: "fb49cfca-d0fa-11e8-85cb-b3cc4b5045ef"
     retry_attempts:
       description: "numbers of retry attempts"
       returned: always
-      type: string
+      type: str
       sample: "0"
 '''
 
@@ -150,12 +152,20 @@ class CodeCommit(object):
     def process(self):
         result = dict(changed=False)
 
-        if self._module.params['state'] == 'present' and not self._repository_exists():
-            if not self._module.check_mode:
-                result = self._create_repository()
-            result['changed'] = True
+        if self._module.params['state'] == 'present':
+            if not self._repository_exists():
+                if not self._check_mode:
+                    result = self._create_repository()
+                result['changed'] = True
+            else:
+                metadata = self._get_repository()['repositoryMetadata']
+                if metadata['repositoryDescription'] != self._module.params['description']:
+                    if not self._check_mode:
+                        self._update_repository()
+                    result['changed'] = True
+                result.update(self._get_repository())
         if self._module.params['state'] == 'absent' and self._repository_exists():
-            if not self._module.check_mode:
+            if not self._check_mode:
                 result = self._delete_repository()
             result['changed'] = True
         return result
@@ -172,11 +182,30 @@ class CodeCommit(object):
             self._module.fail_json_aws(e, msg="couldn't get repository")
         return False
 
+    def _get_repository(self):
+        try:
+            result = self._client.get_repository(
+                repositoryName=self._module.params['name']
+            )
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self._module.fail_json_aws(e, msg="couldn't get repository")
+        return result
+
+    def _update_repository(self):
+        try:
+            result = self._client.update_repository_description(
+                repositoryName=self._module.params['name'],
+                repositoryDescription=self._module.params['description']
+            )
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self._module.fail_json_aws(e, msg="couldn't create repository")
+        return result
+
     def _create_repository(self):
         try:
             result = self._client.create_repository(
                 repositoryName=self._module.params['name'],
-                repositoryDescription=self._module.params['comment']
+                repositoryDescription=self._module.params['description']
             )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self._module.fail_json_aws(e, msg="couldn't create repository")
@@ -196,7 +225,7 @@ def main():
     argument_spec = dict(
         name=dict(required=True),
         state=dict(choices=['present', 'absent'], required=True),
-        comment=dict(default='')
+        description=dict(default='', aliases=['comment'])
     )
 
     ansible_aws_module = AnsibleAWSModule(

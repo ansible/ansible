@@ -33,7 +33,7 @@ from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.errors import AnsibleError, AnsibleFilterError
 from ansible.utils.display import Display
-from ansible.utils.encrypt import random_password
+from ansible.utils.encrypt import passlib_or_crypt, random_password
 
 try:
     import yaml
@@ -46,12 +46,6 @@ try:
     HAS_TEXTFSM = True
 except ImportError:
     HAS_TEXTFSM = False
-
-try:
-    from passlib.hash import md5_crypt
-    HAS_PASSLIB = True
-except ImportError:
-    HAS_PASSLIB = False
 
 display = Display()
 
@@ -93,7 +87,10 @@ def parse_cli(output, tmpl):
     except ImportError as exc:
         raise AnsibleError(to_native(exc))
 
-    spec = yaml.safe_load(open(tmpl).read())
+    with open(tmpl) as tmpl_fh:
+        tmpl_content = tmpl_fh.read()
+
+    spec = yaml.safe_load(tmpl_content)
     obj = {}
 
     for name, attrs in iteritems(spec['keys']):
@@ -102,7 +99,7 @@ def parse_cli(output, tmpl):
         try:
             variables = spec.get('vars', {})
             value = template(value, variables)
-        except:
+        except Exception:
             pass
 
         if 'start_block' in attrs and 'end_block' in attrs:
@@ -151,7 +148,7 @@ def parse_cli(output, tmpl):
                     for k, v in iteritems(value):
                         try:
                             obj[k] = template(v, {'item': items}, fail_on_undefined=False)
-                        except:
+                        except Exception:
                             obj[k] = None
                     objects.append(obj)
 
@@ -269,7 +266,7 @@ def _extract_param(template, root, attrs, value):
             fields = None
             try:
                 fields = element.findall(param_xpath)
-            except:
+            except Exception:
                 display.warning("Failed to evaluate value of '%s' with XPath '%s'.\nUnexpected error: %s." % (param, param_xpath, traceback.format_exc()))
 
             tags = param_xpath.split('/')
@@ -330,7 +327,10 @@ def parse_xml(output, tmpl):
     except ImportError as exc:
         raise AnsibleError(to_native(exc))
 
-    spec = yaml.safe_load(open(tmpl).read())
+    with open(tmpl) as tmpl_fh:
+        tmpl_content = tmpl_fh.read()
+
+    spec = yaml.safe_load(tmpl_content)
     obj = {}
 
     for name, attrs in iteritems(spec['keys']):
@@ -339,7 +339,7 @@ def parse_xml(output, tmpl):
         try:
             variables = spec.get('vars', {})
             value = template(value, variables)
-        except:
+        except Exception:
             pass
 
         if 'items' in attrs:
@@ -351,9 +351,6 @@ def parse_xml(output, tmpl):
 
 
 def type5_pw(password, salt=None):
-    if not HAS_PASSLIB:
-        raise AnsibleFilterError('type5_pw filter requires PassLib library to be installed')
-
     if not isinstance(password, string_types):
         raise AnsibleFilterError("type5_pw password input should be a string, but was given a input of %s" % (type(password).__name__))
 
@@ -369,7 +366,7 @@ def type5_pw(password, salt=None):
     elif not set(salt) <= set(salt_chars):
         raise AnsibleFilterError("type5_pw salt used inproper characters, must be one of %s" % (salt_chars))
 
-    encrypted_password = md5_crypt.encrypt(password, salt=salt)
+    encrypted_password = passlib_or_crypt(password, "md5_crypt", salt=salt)
 
     return encrypted_password
 

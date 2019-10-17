@@ -12,7 +12,6 @@ import tempfile
 from units.compat import unittest
 from units.compat.mock import patch
 from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
 
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -30,7 +29,7 @@ def load_fixture(name):
 
     try:
         data = json.loads(data)
-    except:
+    except Exception:
         pass
 
     fixture_data[path] = data

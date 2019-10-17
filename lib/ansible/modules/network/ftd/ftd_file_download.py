@@ -24,7 +24,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
@@ -49,7 +49,8 @@ options:
   destination:
     description:
       - Absolute path of where to download the file to.
-      - If destination is a directory, the module uses a filename from 'Content-Disposition' header specified by the server.
+      - If destination is a directory, the module uses a filename from 'Content-Disposition' header specified by
+        the server.
     required: true
     type: path
 """
@@ -67,7 +68,7 @@ RETURN = """
 msg:
     description: The error message describing why the module failed.
     returned: error
-    type: string
+    type: str
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection

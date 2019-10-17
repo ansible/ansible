@@ -74,7 +74,7 @@ def _6to4_query(v, vtype, value):
 
         try:
             return '2002:{:02x}{:02x}:{:02x}{:02x}::1/48'.format(*numbers)
-        except:
+        except Exception:
             return False
 
     elif v.version == 6:
@@ -128,7 +128,7 @@ def _cidr_lookup_query(v, iplist, value):
     try:
         if v in iplist:
             return value
-    except:
+    except Exception:
         return False
 
 
@@ -192,7 +192,7 @@ def _ipv4_query(v, value):
     if v.version == 6:
         try:
             return str(v.ipv4())
-        except:
+        except Exception:
             return False
     else:
         return value
@@ -563,14 +563,14 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
                 v.prefixlen = 128
 
         # IPv4 didn't work the first time, so it definitely has to be IPv6
-        except:
+        except Exception:
             try:
                 v = netaddr.IPNetwork('::/0')
                 v.value = int(value)
                 v.prefixlen = 128
 
             # The value is too big for IPv6. Are you a nanobot?
-            except:
+            except Exception:
                 return False
 
         # We got an IP address, let's mark it as such
@@ -588,11 +588,11 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
             try:
                 address, prefix = value.split('/')
                 vtype = 'network'
-            except:
+            except Exception:
                 vtype = 'address'
 
         # value hasn't been recognized, maybe it's a numerical CIDR?
-        except:
+        except Exception:
             try:
                 address, prefix = value.split('/')
                 address.isdigit()
@@ -601,7 +601,7 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
                 prefix = int(prefix)
 
             # It's not numerical CIDR, give up
-            except:
+            except Exception:
                 return False
 
             # It is something, so let's try and build a CIDR from the parts
@@ -611,14 +611,14 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
                 v.prefixlen = prefix
 
             # It's not a valid IPv4 CIDR
-            except:
+            except Exception:
                 try:
                     v = netaddr.IPNetwork('::/0')
                     v.value = address
                     v.prefixlen = prefix
 
                 # It's not a valid IPv6 CIDR. Give up.
-                except:
+                except Exception:
                     return False
 
             # We have a valid CIDR, so let's write it in correct format
@@ -630,10 +630,10 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
     # address/network is inside that specific subnet
     try:
         # ?? 6to4 and link-local were True here before.  Should they still?
-        if query and (query not in query_func_map or query == 'cidr_lookup') and ipaddr(query, 'network'):
+        if query and (query not in query_func_map or query == 'cidr_lookup') and not str(query).isdigit() and ipaddr(query, 'network'):
             iplist = netaddr.IPSet([netaddr.IPNetwork(query)])
             query = 'cidr_lookup'
-    except:
+    except Exception:
         pass
 
     # This code checks if value maches the IP version the user wants, ie. if
@@ -659,13 +659,13 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
             elif v.size > 1:
                 try:
                     return str(v[query]) + '/' + str(v.prefixlen)
-                except:
+                except Exception:
                     return False
 
             else:
                 return value
 
-        except:
+        except Exception:
             raise errors.AnsibleFilterError(alias + ': unknown filter type: %s' % query)
 
     return False
@@ -673,8 +673,11 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
 
 def ipmath(value, amount):
     try:
-        ip = netaddr.IPAddress(value)
-    except netaddr.AddrFormatError:
+        if '/' in value:
+            ip = netaddr.IPNetwork(value).ip
+        else:
+            ip = netaddr.IPAddress(value)
+    except (netaddr.AddrFormatError, ValueError):
         msg = 'You must pass a valid IP address; {0} is invalid'.format(value)
         raise errors.AnsibleFilterError(msg)
 
@@ -706,7 +709,7 @@ def ipwrap(value, query=''):
             else:
                 return value
 
-    except:
+    except Exception:
         return value
 
 
@@ -750,7 +753,7 @@ def ipsubnet(value, query='', index='x'):
             v = ipaddr(value, 'subnet')
 
         value = netaddr.IPNetwork(v)
-    except:
+    except Exception:
         return False
     query_string = str(query)
     if not query:
@@ -767,26 +770,26 @@ def ipsubnet(value, query='', index='x'):
             if vsize > 1:
                 try:
                     return str(list(value.subnet(query))[index])
-                except:
+                except Exception:
                     return False
 
             elif vsize == 1:
                 try:
                     return str(value.supernet(query)[index])
-                except:
+                except Exception:
                     return False
 
-        except:
+        except Exception:
             if vsize > 1:
                 try:
                     return str(len(list(value.subnet(query))))
-                except:
+                except Exception:
                     return False
 
             elif vsize == 1:
                 try:
                     return str(value.supernet(query)[0])
-                except:
+                except Exception:
                     return False
 
     elif query_string:
@@ -822,7 +825,7 @@ def nthhost(value, query=''):
             v = ipaddr(value, 'subnet')
 
         value = netaddr.IPNetwork(v)
-    except:
+    except Exception:
         return False
 
     if not query:
@@ -849,7 +852,7 @@ def next_nth_usable(value, offset):
             v = ipaddr(value, 'subnet')
 
         v = netaddr.IPNetwork(v)
-    except:
+    except Exception:
         return False
 
     if type(offset) != int:
@@ -871,7 +874,7 @@ def previous_nth_usable(value, offset):
             v = ipaddr(value, 'subnet')
 
         v = netaddr.IPNetwork(v)
-    except:
+    except Exception:
         return False
 
     if type(offset) != int:
@@ -912,7 +915,7 @@ def _address_normalizer(value):
         vtype = ipaddr(value, 'type')
         if vtype == 'address' or vtype == "network":
             v = ipaddr(value, 'subnet')
-    except:
+    except Exception:
         return False
 
     return v
@@ -1018,7 +1021,7 @@ def slaac(value, query=''):
             return False
 
         value = netaddr.IPNetwork(v)
-    except:
+    except Exception:
         return False
 
     if not query:
@@ -1028,7 +1031,7 @@ def slaac(value, query=''):
         mac = hwaddr(query, alias='slaac')
 
         eui = netaddr.EUI(mac)
-    except:
+    except Exception:
         return False
 
     return eui.ipv6(value.network)
@@ -1059,7 +1062,7 @@ def hwaddr(value, query='', alias='hwaddr'):
 
     try:
         v = netaddr.EUI(value)
-    except:
+    except Exception:
         if query and query != 'bool':
             raise errors.AnsibleFilterError(alias + ': not a hardware address: %s' % value)
 

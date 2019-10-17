@@ -122,7 +122,7 @@ list_vms:
 # for status command
 status:
     description: The status of the VM, among running, crashed, paused and shutdown
-    type: string
+    type: str
     sample: "success"
     returned: success
 '''
@@ -354,7 +354,7 @@ class Virt(object):
                         results.append(x.name())
                 else:
                     results.append(x.name())
-            except:
+            except Exception:
                 pass
         return results
 
@@ -489,22 +489,22 @@ def core(module):
             module.fail_json(msg="state change requires a guest specified")
 
         if state == 'running':
-            if v.status(guest) is 'paused':
+            if v.status(guest) == 'paused':
                 res['changed'] = True
                 res['msg'] = v.unpause(guest)
-            elif v.status(guest) is not 'running':
+            elif v.status(guest) != 'running':
                 res['changed'] = True
                 res['msg'] = v.start(guest)
         elif state == 'shutdown':
-            if v.status(guest) is not 'shutdown':
+            if v.status(guest) != 'shutdown':
                 res['changed'] = True
                 res['msg'] = v.shutdown(guest)
         elif state == 'destroyed':
-            if v.status(guest) is not 'shutdown':
+            if v.status(guest) != 'shutdown':
                 res['changed'] = True
                 res['msg'] = v.destroy(guest)
         elif state == 'paused':
-            if v.status(guest) is 'running':
+            if v.status(guest) == 'running':
                 res['changed'] = True
                 res['msg'] = v.pause(guest)
         else:

@@ -1,0 +1,4 @@
+shippable/posix/group1
+skip/freebsd
+skip/rhel
+skip/docker

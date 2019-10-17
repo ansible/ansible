@@ -151,8 +151,8 @@ RETURN = '''
 msg:
   description: Success or failure message
   returned: always
-  type: string
-  sample: "Config file tranferred to Device"
+  type: str
+  sample: "Config file transferred to Device"
 '''
 
 import sys
@@ -166,13 +166,13 @@ import os
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True
-except:
+except Exception:
     HAS_LIB = False
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
 
 
-# Utility Method to rollback the running config or start up copnfig
+# Utility Method to rollback the running config or start up config
 # This method supports only SCP or SFTP or FTP or TFTP
 def doConfigRollBack(module, prompt, answer):
     host = module.params['host']
@@ -275,7 +275,7 @@ def main():
     # need to add logic to check when changes occur or not
     errorMsg = cnos.checkOutputForError(output)
     if(errorMsg is None):
-        module.exit_json(changed=True, msg="Config file tranferred to Device")
+        module.exit_json(changed=True, msg="Config file transferred to Device")
     else:
         module.fail_json(msg=errorMsg)
 

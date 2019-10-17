@@ -1,0 +1,6 @@
+shippable/windows/group6
+destructive
+skip/windows/2008  # win_feature is required to install the RDS feature and that doesn't support 2008
+win_rds_cap
+win_rds_rap
+win_rds_settings

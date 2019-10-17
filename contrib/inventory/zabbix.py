@@ -38,14 +38,11 @@ from __future__ import print_function
 import os
 import sys
 import argparse
-try:
-    import ConfigParser as configparser
-except ImportError:
-    import configparser
+from ansible.module_utils.six.moves import configparser
 
 try:
     from zabbix_api import ZabbixAPI
-except:
+except Exception:
     print("Error: Zabbix API library must be installed: pip install zabbix-api.",
           file=sys.stderr)
     sys.exit(1)
@@ -173,7 +170,9 @@ class ZabbixInventory(object):
             try:
                 api = ZabbixAPI(server=self.zabbix_server, validate_certs=self.validate_certs)
                 api.login(user=self.zabbix_username, password=self.zabbix_password)
-            except BaseException as e:
+            # zabbix_api tries to exit if it cannot parse what the zabbix server returned
+            # so we have to use SystemExit here
+            except (Exception, SystemExit) as e:
                 print("Error: Could not login to Zabbix server. Check your zabbix.ini.", file=sys.stderr)
                 sys.exit(1)
 

@@ -1,0 +1,23 @@
+---
+# defaults file for ec2_instance
+ec2_instance_name: '{{ resource_prefix }}-node'
+ec2_instance_owner: 'integration-run-{{ resource_prefix }}'
+ec2_ami_image:
+  # Amazon Linux - collected 2019-05-10
+  ap-northeast-1: ami-086063d8c95bfa211
+  ap-northeast-2: ami-04a1d511fd8937540
+  ap-south-1: ami-0d1ca7565b637e9a5
+  ap-southeast-1: ami-07dd66a9764fbb937
+  ap-southeast-2: ami-0ca7144d77a93c7a8
+  ca-central-1: ami-0e5e1c6b373fed93b
+  eu-central-1: ami-05ba799ee5fc165db
+  eu-west-1: ami-055ff4f3e62e8e65e
+  eu-west-2: ami-072edd63fd2b95ca7
+  sa-east-1: ami-0c0698b4027cd5931
+  us-east-1: ami-0771c28c5580e5716
+  us-east-2: ami-063225b63017efd17
+  us-west-1: ami-04abfbe0050a1ef1d
+  us-west-2: ami-027c5e2ccf2970def
+
+# We need to use ENA enabled AMIs to get EBS optimized instances.
+ec2_ebs_optimized_ami_image: "{{ ec2_ami_image }}"

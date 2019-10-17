@@ -31,11 +31,11 @@ import yaml
 from distutils.version import LooseVersion
 from shutil import rmtree
 
+from ansible import context
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
-from ansible.galaxy.api import GalaxyAPI
 from ansible.utils.display import Display
 
 display = Display()
@@ -48,16 +48,16 @@ class GalaxyRole(object):
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
     ROLE_DIRS = ('defaults', 'files', 'handlers', 'meta', 'tasks', 'templates', 'vars', 'tests')
 
-    def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None):
+    def __init__(self, galaxy, api, name, src=None, version=None, scm=None, path=None):
 
         self._metadata = None
         self._install_info = None
-        self._validate_certs = not galaxy.options.ignore_certs
+        self._validate_certs = not context.CLIARGS['ignore_certs']
 
         display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
-        self.options = galaxy.options
         self.galaxy = galaxy
+        self.api = api
 
         self.name = name
         self.version = version
@@ -100,7 +100,7 @@ class GalaxyRole(object):
                     try:
                         f = open(meta_path, 'r')
                         self._metadata = yaml.safe_load(f)
-                    except:
+                    except Exception:
                         display.vvvvv("Unable to load metadata for %s" % self.name)
                         return False
                     finally:
@@ -120,7 +120,7 @@ class GalaxyRole(object):
                 try:
                     f = open(info_path, 'r')
                     self._install_info = yaml.safe_load(f)
-                except:
+                except Exception:
                     display.vvvvv("Unable to load Galaxy install info for %s" % self.name)
                     return False
                 finally:
@@ -144,7 +144,7 @@ class GalaxyRole(object):
         with open(info_path, 'w+') as f:
             try:
                 self._install_info = yaml.safe_dump(info, f)
-            except:
+            except Exception:
                 return False
 
         return True
@@ -159,7 +159,7 @@ class GalaxyRole(object):
             try:
                 rmtree(self.path)
                 return True
-            except:
+            except Exception:
                 pass
 
         return False
@@ -196,7 +196,7 @@ class GalaxyRole(object):
 
         if self.scm:
             # create tar file from scm url
-            tmp_file = RoleRequirement.scm_archive_role(keep_scm_meta=self.options.keep_scm_meta, **self.spec)
+            tmp_file = RoleRequirement.scm_archive_role(keep_scm_meta=context.CLIARGS['keep_scm_meta'], **self.spec)
         elif self.src:
             if os.path.isfile(self.src):
                 tmp_file = self.src
@@ -204,17 +204,16 @@ class GalaxyRole(object):
                 role_data = self.src
                 tmp_file = self.fetch(role_data)
             else:
-                api = GalaxyAPI(self.galaxy)
-                role_data = api.lookup_role_by_name(self.src)
+                role_data = self.api.lookup_role_by_name(self.src)
                 if not role_data:
-                    raise AnsibleError("- sorry, %s was not found on %s." % (self.src, api.api_server))
+                    raise AnsibleError("- sorry, %s was not found on %s." % (self.src, self.api.api_server))
 
                 if role_data.get('role_type') == 'APP':
                     # Container Role
                     display.warning("%s is a Container App role, and should only be installed using Ansible "
                                     "Container" % self.name)
 
-                role_versions = api.fetch_role_related('versions', role_data['id'])
+                role_versions = self.api.fetch_role_related('versions', role_data['id'])
                 if not self.version:
                     # convert the version names to LooseVersion objects
                     # and sort them to get the latest version. If there
@@ -230,13 +229,13 @@ class GalaxyRole(object):
                                 'Please contact the role author to resolve versioning conflicts, or specify an explicit role version to '
                                 'install.' % ', '.join([v.vstring for v in loose_versions])
                             )
-                        self.version = str(loose_versions[-1])
+                        self.version = to_text(loose_versions[-1])
                     elif role_data.get('github_branch', None):
                         self.version = role_data['github_branch']
                     else:
                         self.version = 'master'
                 elif self.version != 'master':
-                    if role_versions and str(self.version) not in [a.get('name', None) for a in role_versions]:
+                    if role_versions and to_text(self.version) not in [a.get('name', None) for a in role_versions]:
                         raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version,
                                                                                                                                          self.name,
                                                                                                                                          role_versions))
@@ -256,12 +255,9 @@ class GalaxyRole(object):
             display.debug("installing from %s" % tmp_file)
 
             if not tarfile.is_tarfile(tmp_file):
-                raise AnsibleError("the file downloaded was not a tar.gz")
+                raise AnsibleError("the downloaded file does not appear to be a valid tar archive.")
             else:
-                if tmp_file.endswith('.gz'):
-                    role_tar_file = tarfile.open(tmp_file, "r:gz")
-                else:
-                    role_tar_file = tarfile.open(tmp_file, "r")
+                role_tar_file = tarfile.open(tmp_file, "r")
                 # verify the role's meta file
                 meta_file = None
                 members = role_tar_file.getmembers()
@@ -285,7 +281,7 @@ class GalaxyRole(object):
                 else:
                     try:
                         self._metadata = yaml.safe_load(role_tar_file.extractfile(meta_file))
-                    except:
+                    except Exception:
                         raise AnsibleError("this role does not appear to have a valid meta/main.yml file.")
 
                 # we strip off any higher-level directories for all of the files contained within
@@ -298,7 +294,7 @@ class GalaxyRole(object):
                         if os.path.exists(self.path):
                             if not os.path.isdir(self.path):
                                 raise AnsibleError("the specified roles path exists and is not a directory.")
-                            elif not getattr(self.options, "force", False):
+                            elif not context.CLIARGS.get("force", False):
                                 raise AnsibleError("the specified role %s appears to already exist. Use --force to replace it." % self.name)
                             else:
                                 # using --force, remove the old path

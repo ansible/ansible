@@ -65,7 +65,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Remove tags for a provider in ManageIQ
   manageiq_tags:
@@ -81,7 +81,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: List current tags for a provider in ManageIQ
   manageiq_tags:
@@ -92,7 +92,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 '''
 
 RETURN = '''
@@ -225,7 +225,7 @@ class ManageIQTags(object):
                 error=e)
             self.module.fail_json(msg=msg)
 
-        # check all entities in result to be successfull
+        # check all entities in result to be successful
         for result in response['results']:
             if not result['success']:
                 msg = "Failed to {action}: {message}".format(

@@ -1,0 +1,46 @@
+[
+  {
+    "asset_relation": {
+      "workflow_nodes": [
+        {
+          "name": "node0", 
+          "unified_job_type": "job", 
+          "success_nodes": [
+            "node1"
+          ], 
+          "failure_nodes": [], 
+          "unified_job_name": "Demo Job Template", 
+          "always_nodes": []
+        }, 
+        {
+          "name": "node1", 
+          "unified_job_type": "job", 
+          "success_nodes": [], 
+          "failure_nodes": [], 
+          "unified_job_name": "Demo Job Template", 
+          "always_nodes": []
+        }
+      ], 
+      "roles": [
+        {
+          "team": [], 
+          "name": "Execute", 
+          "user": []
+        }, 
+        {
+          "team": [], 
+          "name": "Admin", 
+          "user": []
+        }, 
+        {
+          "team": [], 
+          "name": "Read", 
+          "user": []
+        }
+      ], 
+      "survey_spec": {}
+    }, 
+    "asset_type": "workflow", 
+    "name": "Success Workflow"
+  },
+]

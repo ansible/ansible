@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_volume - fix ``force`` and change detection logic. If not both evaluated to ``True``, the volume was not recreated."

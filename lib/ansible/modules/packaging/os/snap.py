@@ -39,7 +39,7 @@ options:
         choices: [ absent, present ]
     classic:
         description:
-            - Confinement policy. The classic confinment allows a snap to have
+            - Confinement policy. The classic confinement allows a snap to have
               the same level of access to the system as "classic" packages,
               like those managed by APT. This option corresponds to the --classic argument.
               This option can only be specified if there is a single snap in the task.
@@ -56,7 +56,7 @@ options:
 
 author:
     - Victor Carceler (@vcarceler) <vcarceler@iespuigcastellar.xeill.net>
-    - Stanislas Lange (@angristan) <<angristan@pm.me>
+    - Stanislas Lange (@angristan) <angristan@pm.me>
 '''
 
 EXAMPLES = '''
@@ -89,15 +89,15 @@ EXAMPLES = '''
 RETURN = '''
 classic:
     description: Whether or not the snaps were installed with the classic confinement
-    type: boolean
+    type: bool
     returned: When snaps are installed
 channel:
     description: The channel the snaps were installed from
-    type: string
+    type: str
     returned: When snaps are installed
 cmd:
     description: The command that was executed on the host
-    type: string
+    type: str
     returned: When changed is true
 snaps_installed:
     description: The list of actually installed snaps

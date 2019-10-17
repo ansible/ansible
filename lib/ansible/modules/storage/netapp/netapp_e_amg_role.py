@@ -78,7 +78,7 @@ RETURN = """
 msg:
     description: Failure message
     returned: failure
-    type: string
+    type: str
     sample: "No Async Mirror Group with the name."
 """
 import json
@@ -114,7 +114,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
             data = json.loads(raw_data)
         else:
             raw_data = None
-    except:
+    except Exception:
         if ignore_errors:
             pass
         else:
@@ -138,7 +138,7 @@ def has_match(module, ssid, api_url, api_pwd, api_usr, body, name):
     try:
         amg_rc, amgs = request(url, url_username=api_usr, url_password=api_pwd,
                                headers=HEADERS)
-    except:
+    except Exception:
         module.fail_json(msg="Failed to find AMGs on storage array. Id [%s]" % (ssid))
 
     for amg in amgs:

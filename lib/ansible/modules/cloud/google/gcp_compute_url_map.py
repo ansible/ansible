@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -35,7 +34,7 @@ description:
 - UrlMaps are used to route requests to a backend service based on rules that you
   define for the host and path of an incoming URL.
 short_description: Creates a GCP UrlMap
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -49,41 +48,48 @@ options:
     - present
     - absent
     default: present
+    type: str
   default_service:
     description:
     - A reference to BackendService resource if none of the hostRules match.
     - 'This field represents a link to a BackendService resource in GCP. It can be
-      specified in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
-      task and then set this default_service field to "{{ name-of-resource }}" Alternatively,
-      you can set this default_service to a dictionary with the selfLink key where
-      the value is the selfLink of your BackendService'
+      specified in two ways. First, you can place a dictionary with key ''selfLink''
+      and value of your resource''s selfLink Alternatively, you can add `register:
+      name-of-resource` to a gcp_compute_backend_service task and then set this default_service
+      field to "{{ name-of-resource }}"'
     required: true
+    type: dict
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   host_rules:
     description:
     - The list of HostRules to use against the URL.
     required: false
+    type: list
     suboptions:
       description:
         description:
         - An optional description of this HostRule. Provide this property when you
           create the resource.
         required: false
+        type: str
       hosts:
         description:
         - The list of host patterns to match. They must be valid hostnames, except
           * will match any string of ([a-z0-9-.]*). In that case, * must be the first
           character and must be followed in the pattern by either - or .
         required: true
+        type: list
       path_matcher:
         description:
         - The name of the PathMatcher to use to match the path portion of the URL
           if the hostRule matches the URL's host portion.
         required: true
+        type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -93,34 +99,39 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   path_matchers:
     description:
     - The list of named PathMatchers to use against the URL.
     required: false
+    type: list
     suboptions:
       default_service:
         description:
         - A reference to a BackendService resource. This will be used if none of the
           pathRules defined by this PathMatcher is matched by the URL's path portion.
         - 'This field represents a link to a BackendService resource in GCP. It can
-          be specified in two ways. You can add `register: name-of-resource` to a
-          gcp_compute_backend_service task and then set this default_service field
-          to "{{ name-of-resource }}" Alternatively, you can set this default_service
-          to a dictionary with the selfLink key where the value is the selfLink of
-          your BackendService'
+          be specified in two ways. First, you can place a dictionary with key ''selfLink''
+          and value of your resource''s selfLink Alternatively, you can add `register:
+          name-of-resource` to a gcp_compute_backend_service task and then set this
+          default_service field to "{{ name-of-resource }}"'
         required: true
+        type: dict
       description:
         description:
         - An optional description of this resource.
         required: false
+        type: str
       name:
         description:
         - The name to which this PathMatcher is referred by the HostRule.
         required: true
+        type: str
       path_rules:
         description:
         - The list of path rules.
         required: false
+        type: list
         suboptions:
           paths:
             description:
@@ -129,93 +140,135 @@ options:
               to the path matcher does not include any text after the first ? or #,
               and those chars are not allowed here.'
             required: true
+            type: list
           service:
             description:
             - A reference to the BackendService resource if this rule is matched.
             - 'This field represents a link to a BackendService resource in GCP. It
-              can be specified in two ways. You can add `register: name-of-resource`
-              to a gcp_compute_backend_service task and then set this service field
-              to "{{ name-of-resource }}" Alternatively, you can set this service
-              to a dictionary with the selfLink key where the value is the selfLink
-              of your BackendService'
+              can be specified in two ways. First, you can place a dictionary with
+              key ''selfLink'' and value of your resource''s selfLink Alternatively,
+              you can add `register: name-of-resource` to a gcp_compute_backend_service
+              task and then set this service field to "{{ name-of-resource }}"'
             required: true
+            type: dict
   tests:
     description:
     - The list of expected URL mappings. Requests to update this UrlMap will succeed
       only if all of the test cases pass.
     required: false
+    type: list
     suboptions:
       description:
         description:
         - Description of this test case.
         required: false
+        type: str
       host:
         description:
         - Host portion of the URL.
         required: true
+        type: str
       path:
         description:
         - Path portion of the URL.
         required: true
+        type: str
       service:
         description:
         - A reference to expected BackendService resource the given URL should be
           mapped to.
         - 'This field represents a link to a BackendService resource in GCP. It can
-          be specified in two ways. You can add `register: name-of-resource` to a
-          gcp_compute_backend_service task and then set this service field to "{{
-          name-of-resource }}" Alternatively, you can set this service to a dictionary
-          with the selfLink key where the value is the selfLink of your BackendService'
+          be specified in two ways. First, you can place a dictionary with key ''selfLink''
+          and value of your resource''s selfLink Alternatively, you can add `register:
+          name-of-resource` to a gcp_compute_backend_service task and then set this
+          service field to "{{ name-of-resource }}"'
         required: true
-extends_documentation_fragment: gcp
+        type: dict
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: "instancegroup-urlmap"
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: instancegroup-urlmap
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instancegroup
 
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
-      name: "httphealthcheck-urlmap"
-      healthy_threshold: 10
-      port: 8080
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: httphealthcheck-urlmap
+    healthy_threshold: 10
+    port: 8080
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: healthcheck
 
 - name: create a backend service
   gcp_compute_backend_service:
-      name: "backendservice-urlmap"
-      backends:
-      - group: "{{ instancegroup }}"
-      health_checks:
-      - "{{ healthcheck.selfLink }}"
-      enable_cdn: true
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: backendservice-urlmap
+    backends:
+    - group: "{{ instancegroup.selfLink }}"
+    health_checks:
+    - "{{ healthcheck.selfLink }}"
+    enable_cdn: 'true'
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: backendservice
 
-- name: create a url map
+- name: create a URL map
   gcp_compute_url_map:
-      name: "test_object"
-      default_service: "{{ backendservice }}"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    default_service: "{{ backendservice }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -373,27 +426,38 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             default_service=dict(required=True, type='dict'),
             description=dict(type='str'),
-            host_rules=dict(type='list', elements='dict', options=dict(
-                description=dict(type='str'),
-                hosts=dict(required=True, type='list', elements='str'),
-                path_matcher=dict(required=True, type='str')
-            )),
+            host_rules=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    description=dict(type='str'), hosts=dict(required=True, type='list', elements='str'), path_matcher=dict(required=True, type='str')
+                ),
+            ),
             name=dict(required=True, type='str'),
-            path_matchers=dict(type='list', elements='dict', options=dict(
-                default_service=dict(required=True, type='dict'),
-                description=dict(type='str'),
-                name=dict(required=True, type='str'),
-                path_rules=dict(type='list', elements='dict', options=dict(
-                    paths=dict(required=True, type='list', elements='str'),
-                    service=dict(required=True, type='dict')
-                ))
-            )),
-            tests=dict(type='list', elements='dict', options=dict(
-                description=dict(type='str'),
-                host=dict(required=True, type='str'),
-                path=dict(required=True, type='str'),
-                service=dict(required=True, type='dict')
-            ))
+            path_matchers=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    default_service=dict(required=True, type='dict'),
+                    description=dict(type='str'),
+                    name=dict(required=True, type='str'),
+                    path_rules=dict(
+                        type='list',
+                        elements='dict',
+                        options=dict(paths=dict(required=True, type='list', elements='str'), service=dict(required=True, type='dict')),
+                    ),
+                ),
+            ),
+            tests=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    description=dict(type='str'),
+                    host=dict(required=True, type='str'),
+                    path=dict(required=True, type='str'),
+                    service=dict(required=True, type='dict'),
+                ),
+            ),
         )
     )
 
@@ -451,11 +515,11 @@ def resource_to_request(module):
         u'hostRules': UrlMapHostrulesArray(module.params.get('host_rules', []), module).to_request(),
         u'name': module.params.get('name'),
         u'pathMatchers': UrlMapPathmatchersArray(module.params.get('path_matchers', []), module).to_request(),
-        u'tests': UrlMapTestsArray(module.params.get('tests', []), module).to_request()
+        u'tests': UrlMapTestsArray(module.params.get('tests', []), module).to_request(),
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
@@ -486,8 +550,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -525,7 +589,7 @@ def response_to_hash(module, response):
         u'fingerprint': response.get(u'fingerprint'),
         u'name': module.params.get('name'),
         u'pathMatchers': UrlMapPathmatchersArray(response.get(u'pathMatchers', []), module).from_response(),
-        u'tests': UrlMapTestsArray(response.get(u'tests', []), module).from_response()
+        u'tests': UrlMapTestsArray(response.get(u'tests', []), module).from_response(),
     }
 
 
@@ -551,9 +615,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -585,18 +649,10 @@ class UrlMapHostrulesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get('description'),
-            u'hosts': item.get('hosts'),
-            u'pathMatcher': item.get('path_matcher')
-        })
+        return remove_nones_from_dict({u'description': item.get('description'), u'hosts': item.get('hosts'), u'pathMatcher': item.get('path_matcher')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get(u'description'),
-            u'hosts': item.get(u'hosts'),
-            u'pathMatcher': item.get(u'pathMatcher')
-        })
+        return remove_nones_from_dict({u'description': item.get(u'description'), u'hosts': item.get(u'hosts'), u'pathMatcher': item.get(u'pathMatcher')})
 
 
 class UrlMapPathmatchersArray(object):
@@ -620,20 +676,24 @@ class UrlMapPathmatchersArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'defaultService': replace_resource_dict(item.get(u'default_service', {}), 'selfLink'),
-            u'description': item.get('description'),
-            u'name': item.get('name'),
-            u'pathRules': UrlMapPathrulesArray(item.get('path_rules', []), self.module).to_request()
-        })
+        return remove_nones_from_dict(
+            {
+                u'defaultService': replace_resource_dict(item.get(u'default_service', {}), 'selfLink'),
+                u'description': item.get('description'),
+                u'name': item.get('name'),
+                u'pathRules': UrlMapPathrulesArray(item.get('path_rules', []), self.module).to_request(),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'defaultService': item.get(u'defaultService'),
-            u'description': item.get(u'description'),
-            u'name': item.get(u'name'),
-            u'pathRules': UrlMapPathrulesArray(item.get(u'pathRules', []), self.module).from_response()
-        })
+        return remove_nones_from_dict(
+            {
+                u'defaultService': item.get(u'defaultService'),
+                u'description': item.get(u'description'),
+                u'name': item.get(u'name'),
+                u'pathRules': UrlMapPathrulesArray(item.get(u'pathRules', []), self.module).from_response(),
+            }
+        )
 
 
 class UrlMapPathrulesArray(object):
@@ -657,16 +717,10 @@ class UrlMapPathrulesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'paths': item.get('paths'),
-            u'service': replace_resource_dict(item.get(u'service', {}), 'selfLink')
-        })
+        return remove_nones_from_dict({u'paths': item.get('paths'), u'service': replace_resource_dict(item.get(u'service', {}), 'selfLink')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'paths': item.get(u'paths'),
-            u'service': item.get(u'service')
-        })
+        return remove_nones_from_dict({u'paths': item.get(u'paths'), u'service': item.get(u'service')})
 
 
 class UrlMapTestsArray(object):
@@ -690,20 +744,19 @@ class UrlMapTestsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get('description'),
-            u'host': item.get('host'),
-            u'path': item.get('path'),
-            u'service': replace_resource_dict(item.get(u'service', {}), 'selfLink')
-        })
+        return remove_nones_from_dict(
+            {
+                u'description': item.get('description'),
+                u'host': item.get('host'),
+                u'path': item.get('path'),
+                u'service': replace_resource_dict(item.get(u'service', {}), 'selfLink'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get(u'description'),
-            u'host': item.get(u'host'),
-            u'path': item.get(u'path'),
-            u'service': item.get(u'service')
-        })
+        return remove_nones_from_dict(
+            {u'description': item.get(u'description'), u'host': item.get(u'host'), u'path': item.get(u'path'), u'service': item.get(u'service')}
+        )
 
 
 if __name__ == '__main__':

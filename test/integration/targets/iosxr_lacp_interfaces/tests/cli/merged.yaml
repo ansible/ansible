@@ -1,0 +1,54 @@
+---
+- debug:
+      msg: "START iosxr_lacp_interfaces merged integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Merge the provided configuration with the exisiting running configuration
+      iosxr_lacp_interfaces: &merged
+        config:
+          - name: Bundle-Ether10
+            churn_logging: actor
+            collector_max_delay: 100
+            switchover_suppress_flaps: 500
+
+          - name: Bundle-Ether11
+            system:
+              mac: 00c2.4c00.bd15
+
+          - name: GigabitEthernet0/0/0/1
+            period: 100
+        state: merged
+      register: result
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that: "{{ merged['before'] | symmetric_difference(result['before']) |length == 0 }}"
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that after dicts was correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+      iosxr_lacp_interfaces: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+          - "result.commands|length == 0"
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['before']) |length == 0 }}"
+  always:
+    - include_tasks: _remove_config.yaml

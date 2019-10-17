@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -35,7 +34,7 @@ description:
 - Represents a TargetSslProxy resource, which is used by one or more global forwarding
   rule to route incoming SSL requests to a backend service.
 short_description: Creates a GCP TargetSslProxy
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -49,10 +48,12 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -62,121 +63,182 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   proxy_header:
     description:
     - Specifies the type of proxy header to append before sending data to the backend,
       either NONE or PROXY_V1. The default is NONE.
+    - 'Some valid choices include: "NONE", "PROXY_V1"'
     required: false
-    choices:
-    - NONE
-    - PROXY_V1
+    type: str
   service:
     description:
     - A reference to the BackendService resource.
     - 'This field represents a link to a BackendService resource in GCP. It can be
-      specified in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
-      task and then set this service field to "{{ name-of-resource }}" Alternatively,
-      you can set this service to a dictionary with the selfLink key where the value
-      is the selfLink of your BackendService'
+      specified in two ways. First, you can place a dictionary with key ''selfLink''
+      and value of your resource''s selfLink Alternatively, you can add `register:
+      name-of-resource` to a gcp_compute_backend_service task and then set this service
+      field to "{{ name-of-resource }}"'
     required: true
+    type: dict
   ssl_certificates:
     description:
     - A list of SslCertificate resources that are used to authenticate connections
       between users and the load balancer. Currently, exactly one SSL certificate
       must be specified.
     required: true
-extends_documentation_fragment: gcp
+    type: list
+  ssl_policy:
+    description:
+    - A reference to the SslPolicy resource that will be associated with the TargetSslProxy
+      resource. If not set, the TargetSslProxy resource will not have any SSL policy
+      configured.
+    - 'This field represents a link to a SslPolicy resource in GCP. It can be specified
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_ssl_policy task and then set this ssl_policy field to "{{ name-of-resource
+      }}"'
+    required: false
+    type: dict
+    version_added: '2.8'
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
-- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/targetSslProxies)'
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/targetSslProxies)'
 - 'Setting Up SSL proxy for Google Cloud Load Balancing: U(https://cloud.google.com/compute/docs/load-balancing/tcp-ssl/)'
+- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: "instancegroup-targetsslproxy"
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: instancegroup-targetsslproxy
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instancegroup
 
 - name: create a health check
   gcp_compute_health_check:
-      name: "healthcheck-targetsslproxy"
-      type: TCP
-      tcp_health_check:
-        port_name: service-health
-        request: ping
-        response: pong
-      healthy_threshold: 10
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: healthcheck-targetsslproxy
+    type: TCP
+    tcp_health_check:
+      port_name: service-health
+      request: ping
+      response: pong
+    healthy_threshold: 10
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: healthcheck
 
 - name: create a backend service
   gcp_compute_backend_service:
-      name: "backendservice-targetsslproxy"
-      backends:
-      - group: "{{ instancegroup }}"
-      health_checks:
-      - "{{ healthcheck.selfLink }}"
-      protocol: SSL
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: backendservice-targetsslproxy
+    backends:
+    - group: "{{ instancegroup.selfLink }}"
+    health_checks:
+    - "{{ healthcheck.selfLink }}"
+    protocol: SSL
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: backendservice
 
-- name: create a ssl certificate
+- name: create a SSL certificate
   gcp_compute_ssl_certificate:
-      name: "sslcert-targetsslproxy"
-      description: A certificate for testing. Do not use this certificate in production
-      certificate: |
-        -----BEGIN CERTIFICATE-----
-        MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
-        EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT
-        BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
-        b3JtMR8wHQYDVQQDDBZ3d3cubXktc2VjdXJlLXNpdGUuY29tMSEwHwYJKoZIhvcN
-        AQkBFhJuZWxzb25hQGdvb2dsZS5jb20wHhcNMTcwNjI4MDQ1NjI2WhcNMjcwNjI2
-        MDQ1NjI2WjCBsDELMAkGA1UEBhMCVVMxEzARBgNVBAgMCldhc2hpbmd0b24xETAP
-        BgNVBAcMCEtpcmtsYW5kMRUwEwYDVQQKDAxHb29nbGUsIEluYy4xHjAcBgNVBAsM
-        FUdvb2dsZSBDbG91ZCBQbGF0Zm9ybTEfMB0GA1UEAwwWd3d3Lm15LXNlY3VyZS1z
-        aXRlLmNvbTEhMB8GCSqGSIb3DQEJARYSbmVsc29uYUBnb29nbGUuY29tMFkwEwYH
-        KoZIzj0CAQYIKoZIzj0DAQcDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ
-        4mzkzTv0dXyB750fOGN02HtkpBOZzzvUARTR10JQoSe2/5PIwaNQME4wHQYDVR0O
-        BBYEFKIQC3A2SDpxcdfn0YLKineDNq/BMB8GA1UdIwQYMBaAFKIQC3A2SDpxcdfn
-        0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
-        M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ
-        zqGNhIPGq2ULqXKK8BY=
-        -----END CERTIFICATE-----
-      private_key: |
-        -----BEGIN EC PRIVATE KEY-----
-        MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
-        AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
-        OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
-        -----END EC PRIVATE KEY-----
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: sslcert-targetsslproxy
+    description: A certificate for testing. Do not use this certificate in production
+    certificate: |-
+      -----BEGIN CERTIFICATE-----
+      MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
+      EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT
+      BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
+      b3JtMR8wHQYDVQQDDBZ3d3cubXktc2VjdXJlLXNpdGUuY29tMSEwHwYJKoZIhvcN
+      AQkBFhJuZWxzb25hQGdvb2dsZS5jb20wHhcNMTcwNjI4MDQ1NjI2WhcNMjcwNjI2
+      MDQ1NjI2WjCBsDELMAkGA1UEBhMCVVMxEzARBgNVBAgMCldhc2hpbmd0b24xETAP
+      BgNVBAcMCEtpcmtsYW5kMRUwEwYDVQQKDAxHb29nbGUsIEluYy4xHjAcBgNVBAsM
+      FUdvb2dsZSBDbG91ZCBQbGF0Zm9ybTEfMB0GA1UEAwwWd3d3Lm15LXNlY3VyZS1z
+      aXRlLmNvbTEhMB8GCSqGSIb3DQEJARYSbmVsc29uYUBnb29nbGUuY29tMFkwEwYH
+      KoZIzj0CAQYIKoZIzj0DAQcDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ
+      4mzkzTv0dXyB750fOGN02HtkpBOZzzvUARTR10JQoSe2/5PIwaNQME4wHQYDVR0O
+      BBYEFKIQC3A2SDpxcdfn0YLKineDNq/BMB8GA1UdIwQYMBaAFKIQC3A2SDpxcdfn
+      0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
+      M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ
+      zqGNhIPGq2ULqXKK8BY=
+      -----END CERTIFICATE-----
+    private_key: |-
+      -----BEGIN EC PRIVATE KEY-----
+      MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
+      AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
+      OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
+      -----END EC PRIVATE KEY-----
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: sslcert
 
-- name: create a target ssl proxy
+- name: create a target SSL proxy
   gcp_compute_target_ssl_proxy:
-      name: "test_object"
-      ssl_certificates:
-      - "{{ sslcert }}"
-      service: "{{ backendservice }}"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    ssl_certificates:
+    - "{{ sslcert }}"
+    service: "{{ backendservice }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -222,6 +284,13 @@ sslCertificates:
     users and the load balancer. Currently, exactly one SSL certificate must be specified.
   returned: success
   type: list
+sslPolicy:
+  description:
+  - A reference to the SslPolicy resource that will be associated with the TargetSslProxy
+    resource. If not set, the TargetSslProxy resource will not have any SSL policy
+    configured.
+  returned: success
+  type: dict
 '''
 
 ################################################################################
@@ -245,9 +314,10 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1']),
+            proxy_header=dict(type='str'),
             service=dict(required=True, type='dict'),
-            ssl_certificates=dict(required=True, type='list', elements='dict')
+            ssl_certificates=dict(required=True, type='list', elements='dict'),
+            ssl_policy=dict(type='dict'),
         )
     )
 
@@ -288,8 +358,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
+    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
     return fetch_resource(module, self_link(module), kind)
 
 
@@ -300,44 +369,39 @@ def update_fields(module, request, response):
         service_update(module, request, response)
     if response.get('sslCertificates') != request.get('sslCertificates'):
         ssl_certificates_update(module, request, response)
+    if response.get('sslPolicy') != request.get('sslPolicy'):
+        ssl_policy_update(module, request, response)
 
 
 def proxy_header_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/global/targetSslProxies/{name}/setProxyHeader"
-        ]).format(**module.params),
-        {
-            u'proxyHeader': module.params.get('proxy_header')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/targetSslProxies/{name}/setProxyHeader"]).format(**module.params),
+        {u'proxyHeader': module.params.get('proxy_header')},
     )
 
 
 def service_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/global/targetSslProxies/{name}/setBackendService"
-        ]).format(**module.params),
-        {
-            u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/targetSslProxies/{name}/setBackendService"]).format(**module.params),
+        {u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink')},
     )
 
 
 def ssl_certificates_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/global/targetSslProxies/{name}/setSslCertificates"
-        ]).format(**module.params),
-        {
-            u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/targetSslProxies/{name}/setSslCertificates"]).format(**module.params),
+        {u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink')},
+    )
+
+
+def ssl_policy_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/targetSslProxies/{name}/setSslPolicy"]).format(**module.params),
+        {u'sslPolicy': replace_resource_dict(module.params.get(u'ssl_policy', {}), 'selfLink')},
     )
 
 
@@ -353,11 +417,12 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'proxyHeader': module.params.get('proxy_header'),
         u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink'),
-        u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink')
+        u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink'),
+        u'sslPolicy': replace_resource_dict(module.params.get(u'ssl_policy', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
@@ -388,8 +453,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -425,7 +490,8 @@ def response_to_hash(module, response):
         u'name': module.params.get('name'),
         u'proxyHeader': response.get(u'proxyHeader'),
         u'service': response.get(u'service'),
-        u'sslCertificates': response.get(u'sslCertificates')
+        u'sslCertificates': response.get(u'sslCertificates'),
+        u'sslPolicy': response.get(u'sslPolicy'),
     }
 
 
@@ -451,9 +517,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

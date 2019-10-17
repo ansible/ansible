@@ -1,0 +1,28 @@
+# This is the configuration template for ansible-test windows-integration tests.
+# It can also be used with the legacy `make` based method of running tests.
+#
+# You do not need this template if you are:
+#
+# 1) Using the `--windows` option to provision temporary Windows instances on EC2.
+#
+# If you do not want to use the automatically provisioned temporary Windows instances,
+# fill in the @VAR placeholders below and save this file without the .template extension.
+#
+# NOTE: Automatic provisioning of Windows instances on EC2 requires an ansible-core-ci API key.
+#
+# REMINDER: Standard ports for winrm are 5985 (HTTP) and 5986 (HTTPS).
+
+[windows]
+@NAME ansible_host=@HOST ansible_user=@USER ansible_password=@PASSWORD ansible_port=@PORT
+
+[windows:vars]
+ansible_connection=winrm
+ansible_winrm_server_cert_validation=ignore
+
+# support winrm connection tests (temporary solution, does not support testing enable/disable of pipelining)
+[winrm:children]
+windows
+
+# support tests that target testhost
+[testhost:children]
+windows

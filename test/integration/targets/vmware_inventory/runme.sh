@@ -4,18 +4,14 @@
 
 set -euo pipefail
 
-# Get Current test directory
-DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-
-contrib_dir=$(pwd)/../../../../contrib/inventory
+contrib_dir=../../../../contrib/inventory
 
 echo "DEBUG: using ${contrib_dir}"
 
 export ANSIBLE_CONFIG=ansible.cfg
-export vcenter_host="${vcenter_host:-0.0.0.0}"
-export VMWARE_SERVER="${vcenter_host}"
-export VMWARE_USERNAME="${VMWARE_USERNAME:-user}"
-export VMWARE_PASSWORD="${VMWARE_PASSWORD:-pass}"
+export VMWARE_SERVER="${VCENTER_HOSTNAME}"
+export VMWARE_USERNAME="${VCENTER_USERNAME}"
+export VMWARE_PASSWORD="${VCENTER_PASSWORD}"
 
 VMWARE_CONFIG=${contrib_dir}/vmware_inventory.ini
 
@@ -45,18 +41,18 @@ function cleanup {
     fi
 }
 
-echo "DEBUG: Using ${vcenter_host} with username ${VMWARE_USERNAME} and password ${VMWARE_PASSWORD}"
+echo "DEBUG: Using ${VCENTER_HOSTNAME} with username ${VCENTER_USERNAME} and password ${VCENTER_PASSWORD}"
 
 echo "Kill all previous instances"
-curl "http://${vcenter_host}:5000/killall" > /dev/null 2>&1
+curl "http://${VCENTER_HOSTNAME}:5000/killall" > /dev/null 2>&1
 
 echo "Start new VCSIM server"
-curl "http://${vcenter_host}:5000/spawn?datacenter=1&cluster=1&folder=0" > /dev/null 2>&1
+curl "http://${VCENTER_HOSTNAME}:5000/spawn?datacenter=1&cluster=1&folder=0" > /dev/null 2>&1
 
 echo "Debugging new instances"
-curl "http://${vcenter_host}:5000/govc_find"
+curl "http://${VCENTER_HOSTNAME}:5000/govc_find"
 
 # Get inventory
-ansible-playbook -i ./vmware_inventory.sh "${DIR}/test_vmware_inventory.yml" --connection=local "$@"
+ansible-playbook -i ./vmware_inventory.sh "./test_vmware_inventory.yml" --connection=local "$@"
 
 echo "DEBUG: Done"

@@ -5,11 +5,17 @@
   # to /etc/init/ureadahead.conf.disabled by cloud-init' clashes with `local diversion of
   # /etc/init/ureadahead.conf to /etc/init/ureadahead.conf.distrib
   # https://bugs.launchpad.net/ubuntu/+source/ureadahead/+bug/997838
-  when: ansible_distribution != "Ubuntu" or ansible_distribution_major_version|int != 14
+  # Will also have to skip on OpenSUSE when running on Python 2 on newer Leap versions
+  # (!= 42 and >= 15) ascloud-init will install the Python 3 package, breaking our build on py2.
+  when:
+  - not (ansible_distribution == "Ubuntu" and ansible_distribution_major_version|int == 14)
+  - not (ansible_os_family == "Suse" and ansible_distribution_major_version|int != 42 and ansible_python.version.major != 3)
   block:
   - name: setup install cloud-init
     package:
-      name: cloud-init
+      name:
+      - cloud-init
+      - udev
 
   - name: setup run cloud-init
     service:

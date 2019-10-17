@@ -1,2 +1,0 @@
-bugfixes:
-  - aws_ec2 - fixed issue where cache did not contain the computed groups

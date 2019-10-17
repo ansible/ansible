@@ -25,7 +25,7 @@ try:
     from passlib.utils.handlers import HasRawSalt
 
     PASSLIB_AVAILABLE = True
-except:
+except Exception:
     pass
 
 display = Display()
@@ -95,7 +95,7 @@ class CryptHash(BaseHash):
 
     def _rounds(self, rounds):
         if rounds == self.algo_data.implicit_rounds:
-            # Passlib does not include the rounds if it is the same as implict_rounds.
+            # Passlib does not include the rounds if it is the same as implicit_rounds.
             # Make crypt lib behave the same, by not explicitly specifying the rounds in that case.
             return None
         else:
@@ -126,7 +126,7 @@ class PasslibHash(BaseHash):
 
         try:
             self.crypt_algo = getattr(passlib.hash, algorithm)
-        except:
+        except Exception:
             raise AnsibleError("passlib does not support '%s' algorithm" % algorithm)
 
     def hash(self, secret, salt=None, salt_size=None, rounds=None):
@@ -155,7 +155,7 @@ class PasslibHash(BaseHash):
             return None
 
     def _hash(self, secret, salt, salt_size, rounds):
-        # Not every hash algorithm supports every paramter.
+        # Not every hash algorithm supports every parameter.
         # Thus create the settings dict only with set parameters.
         settings = {}
         if salt:

@@ -144,7 +144,7 @@ RETURN = '''
 final_system_mode:
     description: describe the last system mode
     returned: verbose mode
-    type: string
+    type: str
     sample: normal
 updates:
     description: commands sent to the device
@@ -154,13 +154,12 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
-import re
-from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -189,7 +188,6 @@ def get_reset_reasons(module):
 
 def get_commands(module, state, mode):
     commands = list()
-    system_mode = ''
     if module.params['system_mode_maintenance'] is True and mode == 'normal':
         commands.append('system mode maintenance')
     elif (module.params['system_mode_maintenance'] is False and

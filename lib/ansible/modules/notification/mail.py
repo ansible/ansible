@@ -203,7 +203,7 @@ import smtplib
 import ssl
 import traceback
 from email import encoders
-from email.utils import parseaddr, formataddr
+from email.utils import parseaddr, formataddr, formatdate
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -275,7 +275,7 @@ def main():
                 if secure == 'always':
                     module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
                                                (host, port, to_native(e)), exception=traceback.format_exc())
-            except:
+            except Exception:
                 pass
 
         if not secure_state:
@@ -291,7 +291,7 @@ def main():
     try:
         smtp.ehlo()
     except smtplib.SMTPException as e:
-            module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
+        module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
 
     if int(code) > 0:
         if not secure_state and secure in ('starttls', 'try'):
@@ -326,6 +326,7 @@ def main():
 
     msg = MIMEMultipart(_charset=charset)
     msg['From'] = formataddr((sender_phrase, sender_addr))
+    msg['Date'] = formatdate(localtime=True)
     msg['Subject'] = Header(subject, charset)
     msg.preamble = "Multipart message"
 

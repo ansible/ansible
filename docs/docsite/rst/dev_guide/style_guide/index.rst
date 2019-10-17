@@ -48,6 +48,30 @@ Header case
 Headers should be written in sentence case. For example, this section's title is
 ``Header case``, not ``Header Case`` or ``HEADER CASE``.
 
+
+Avoid using Latin phrases
+-------------------------
+
+Latin words and phrases like ``e.g.`` or ``etc.``
+are easily understood by English speakers.
+They may be harder to understand for others and are also tricky for automated translation.
+
+Use the following English terms in place of Latin terms or abbreviations: 
++-------------------------------+------------------------------+
+| Latin                         | English                      | 
++===============================+==============================+
+| i.e                           | in other words               | 
++-------------------------------+------------------------------+
+| e.g.                          | for example                  |
++-------------------------------+------------------------------+
+| etc                           | and so on                    |
++-------------------------------+------------------------------+
+| via                           | by/ through                  |
++-------------------------------+------------------------------+
+| vs./versus                    | rather than/against          |
++-------------------------------+------------------------------+
+
+
 reStructuredText guidelines
 ===========================
 
@@ -57,40 +81,52 @@ We follow these technical or mechanical guidelines on all rST pages:
 Header notation
 ---------------
 
-`Section headers in reStructuredText <http://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#sections>`_
+`Section headers in reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#sections>`_
 can use a variety of notations.
 Sphinx will 'learn on the fly' when creating a hierarchy of headers.
 To make our documents easy to read and to edit, we follow a standard set of header notations.
 We use:
 
-* ``###`` with overline, for parts::
+* ``###`` with overline, for parts:
+
+.. code-block:: rst
 
       ###############
       Developer guide
       ###############
 
-* ``***`` with overline, for chapters::
+* ``***`` with overline, for chapters:
+
+.. code-block:: rst
 
       *******************
       Ansible style guide
       *******************
 
-* ``===`` for sections::
+* ``===`` for sections:
+
+.. code-block:: rst
 
       Mechanical guidelines
       =====================
 
-* ``---`` for subsections::
+* ``---`` for subsections:
+
+.. code-block:: rst
 
       Internal navigation
       -------------------
 
-* ``^^^`` for sub-subsections::
+* ``^^^`` for sub-subsections:
+
+.. code-block:: rst
 
       Adding anchors
       ^^^^^^^^^^^^^^
 
-* ``"""`` for paragraphs::
+* ``"""`` for paragraphs:
+
+.. code-block:: rst
 
       Paragraph that needs a title
       """"""""""""""""""""""""""""
@@ -99,7 +135,7 @@ We use:
 Internal navigation
 -------------------
 
-`Anchors (also called labels) and links <http://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#ref-role>`_
+`Anchors (also called labels) and links <https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#ref-role>`_
 work together to help users find related content.
 Local tables of contents also help users navigate quickly to the information they need.
 All internal links should use the ``:ref:`` syntax.
@@ -120,12 +156,25 @@ Adding anchors
 Adding internal links
 ^^^^^^^^^^^^^^^^^^^^^
 
-* All internal links must use ``:ref:`` syntax. These links both point to the anchor defined above::
+* All internal links must use ``:ref:`` syntax. These links both point to the anchor defined above:
+
+.. code-block:: rst
 
    :ref:`unique_page`
    :ref:`this page <unique_page>`
 
 The second example adds custom text for the link.
+
+Adding links to modules and plugins
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Module links use the module name followed by ``_module`` for the anchor.
+* Plugin links use the plugin name followed by the plugin type. For example, :ref:`enable become plugin <enable_become>`).
+
+.. code-block:: rst
+
+   :ref:`this module <this_module>``
+   :ref:`that connection plugin <that_connection>`
 
 Adding local TOCs
 ^^^^^^^^^^^^^^^^^
@@ -137,7 +186,9 @@ If you include a local TOC:
 * use the ``:local:`` directive so the page's main header is not included
 * do not include a title
 
-The syntax is::
+The syntax is:
+
+.. code-block:: rst
 
    .. contents::
       :local:

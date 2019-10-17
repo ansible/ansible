@@ -20,8 +20,8 @@ options:
   dns_domain_name:
     description:
     - The DNS name of the domain which should exist and be reachable or reside on the target Windows host.
-    required: yes
     type: str
+    required: yes
   domain_netbios_name:
     description:
     - The NetBIOS name for the root domain in the new forest.
@@ -32,8 +32,8 @@ options:
   safe_mode_password:
     description:
     - Safe mode password for the domain controller.
-    required: yes
     type: str
+    required: yes
   database_path:
     description:
     - The path to a directory on a fixed disk of the Windows host where the
@@ -71,6 +71,12 @@ options:
     type: str
     choices: [ Win2003, Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold ]
     version_added: '2.8'
+seealso:
+- module: win_domain_controller
+- module: win_domain_computer
+- module: win_domain_group
+- module: win_domain_membership
+- module: win_domain_user
 author:
 - Matt Davis (@nitzmahone)
 '''
@@ -79,7 +85,7 @@ RETURN = r'''
 reboot_required:
     description: True if changes were made that require a reboot.
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

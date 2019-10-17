@@ -73,7 +73,7 @@ options:
     type: bool
   image:
     description:
-      - An image to use for the instance. The ec2_ami_facts module may be used to retrieve images.
+      - An image to use for the instance. The M(ec2_ami_info) module may be used to retrieve images.
         One of I(image) or I(image_id) are required when instance is not already present.
       - Complex object containing I(image.id), I(image.ramdisk), and I(image.kernel).
       - I(image.id) is the AMI ID.
@@ -301,7 +301,7 @@ EXAMPLES = '''
 RETURN = '''
 instances:
     description: a list of ec2 instances
-    returned: always
+    returned: when wait == true
     type: complex
     contains:
         ami_launch_index:
@@ -312,7 +312,7 @@ instances:
         architecture:
             description: The architecture of the image
             returned: always
-            type: string
+            type: str
             sample: x86_64
         block_device_mappings:
             description: Any block device mapping entries for the instance.
@@ -322,7 +322,7 @@ instances:
                 device_name:
                     description: The device name exposed to the instance (for example, /dev/sdh or xvdh).
                     returned: always
-                    type: string
+                    type: str
                     sample: /dev/sdh
                 ebs:
                     description: Parameters used to automatically set up EBS volumes when the instance is launched.
@@ -332,7 +332,7 @@ instances:
                         attach_time:
                             description: The time stamp when the attachment initiated.
                             returned: always
-                            type: string
+                            type: str
                             sample: "2017-03-23T22:51:24+00:00"
                         delete_on_termination:
                             description: Indicates whether the volume is deleted on instance termination.
@@ -342,17 +342,17 @@ instances:
                         status:
                             description: The attachment state.
                             returned: always
-                            type: string
+                            type: str
                             sample: attached
                         volume_id:
                             description: The ID of the EBS volume
                             returned: always
-                            type: string
+                            type: str
                             sample: vol-12345678
         client_token:
             description: The idempotency token you provided when you launched the instance, if applicable.
             returned: always
-            type: string
+            type: str
             sample: mytoken
         ebs_optimized:
             description: Indicates whether the instance is optimized for EBS I/O.
@@ -362,7 +362,7 @@ instances:
         hypervisor:
             description: The hypervisor type of the instance.
             returned: always
-            type: string
+            type: str
             sample: xen
         iam_instance_profile:
             description: The IAM instance profile associated with the instance, if applicable.
@@ -372,37 +372,37 @@ instances:
                 arn:
                     description: The Amazon Resource Name (ARN) of the instance profile.
                     returned: always
-                    type: string
+                    type: str
                     sample: "arn:aws:iam::000012345678:instance-profile/myprofile"
                 id:
                     description: The ID of the instance profile
                     returned: always
-                    type: string
+                    type: str
                     sample: JFJ397FDG400FG9FD1N
         image_id:
             description: The ID of the AMI used to launch the instance.
             returned: always
-            type: string
+            type: str
             sample: ami-0011223344
         instance_id:
             description: The ID of the instance.
             returned: always
-            type: string
+            type: str
             sample: i-012345678
         instance_type:
             description: The instance type size of the running instance.
             returned: always
-            type: string
+            type: str
             sample: t2.micro
         key_name:
             description: The name of the key pair, if this instance was launched with an associated key pair.
             returned: always
-            type: string
+            type: str
             sample: my-key
         launch_time:
             description: The time the instance was launched.
             returned: always
-            type: string
+            type: str
             sample: "2017-03-23T22:51:24+00:00"
         monitoring:
             description: The monitoring for the instance.
@@ -412,7 +412,7 @@ instances:
                 state:
                     description: Indicates whether detailed monitoring is enabled. Otherwise, basic monitoring is enabled.
                     returned: always
-                    type: string
+                    type: str
                     sample: disabled
         network_interfaces:
             description: One or more network interfaces for the instance.
@@ -427,17 +427,17 @@ instances:
                         ip_owner_id:
                             description: The ID of the owner of the Elastic IP address.
                             returned: always
-                            type: string
+                            type: str
                             sample: amazon
                         public_dns_name:
                             description: The public DNS name.
                             returned: always
-                            type: string
+                            type: str
                             sample: ""
                         public_ip:
                             description: The public IP address or Elastic IP address bound to the network interface.
                             returned: always
-                            type: string
+                            type: str
                             sample: 1.2.3.4
                 attachment:
                     description: The network interface attachment.
@@ -447,12 +447,12 @@ instances:
                         attach_time:
                             description: The time stamp when the attachment initiated.
                             returned: always
-                            type: string
+                            type: str
                             sample: "2017-03-23T22:51:24+00:00"
                         attachment_id:
                             description: The ID of the network interface attachment.
                             returned: always
-                            type: string
+                            type: str
                             sample: eni-attach-3aff3f
                         delete_on_termination:
                             description: Indicates whether the network interface is deleted when the instance is terminated.
@@ -467,28 +467,28 @@ instances:
                         status:
                             description: The attachment state.
                             returned: always
-                            type: string
+                            type: str
                             sample: attached
                 description:
                     description: The description.
                     returned: always
-                    type: string
+                    type: str
                     sample: My interface
                 groups:
                     description: One or more security groups.
                     returned: always
-                    type: complex
+                    type: list of complex
                     contains:
-                        - group_id:
-                              description: The ID of the security group.
-                              returned: always
-                              type: string
-                              sample: sg-abcdef12
-                          group_name:
-                              description: The name of the security group.
-                              returned: always
-                              type: string
-                              sample: mygroup
+                        group_id:
+                            description: The ID of the security group.
+                            returned: always
+                            type: str
+                            sample: sg-abcdef12
+                        group_name:
+                            description: The name of the security group.
+                            returned: always
+                            type: str
+                            sample: mygroup
                 ipv6_addresses:
                     description: One or more IPv6 addresses associated with the network interface.
                     returned: always
@@ -497,63 +497,63 @@ instances:
                         - ipv6_address:
                               description: The IPv6 address.
                               returned: always
-                              type: string
+                              type: str
                               sample: "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
                 mac_address:
                     description: The MAC address.
                     returned: always
-                    type: string
+                    type: str
                     sample: "00:11:22:33:44:55"
                 network_interface_id:
                     description: The ID of the network interface.
                     returned: always
-                    type: string
+                    type: str
                     sample: eni-01234567
                 owner_id:
                     description: The AWS account ID of the owner of the network interface.
                     returned: always
-                    type: string
+                    type: str
                     sample: 01234567890
                 private_ip_address:
                     description: The IPv4 address of the network interface within the subnet.
                     returned: always
-                    type: string
+                    type: str
                     sample: 10.0.0.1
                 private_ip_addresses:
                     description: The private IPv4 addresses associated with the network interface.
                     returned: always
-                    type: complex
+                    type: list of complex
                     contains:
-                        - association:
-                              description: The association information for an Elastic IP address (IPv4) associated with the network interface.
-                              returned: always
-                              type: complex
-                              contains:
-                                  ip_owner_id:
-                                      description: The ID of the owner of the Elastic IP address.
-                                      returned: always
-                                      type: string
-                                      sample: amazon
-                                  public_dns_name:
-                                      description: The public DNS name.
-                                      returned: always
-                                      type: string
-                                      sample: ""
-                                  public_ip:
-                                      description: The public IP address or Elastic IP address bound to the network interface.
-                                      returned: always
-                                      type: string
-                                      sample: 1.2.3.4
-                          primary:
-                              description: Indicates whether this IPv4 address is the primary private IP address of the network interface.
-                              returned: always
-                              type: bool
-                              sample: true
-                          private_ip_address:
-                              description: The private IPv4 address of the network interface.
-                              returned: always
-                              type: string
-                              sample: 10.0.0.1
+                        association:
+                            description: The association information for an Elastic IP address (IPv4) associated with the network interface.
+                            returned: always
+                            type: complex
+                            contains:
+                                ip_owner_id:
+                                    description: The ID of the owner of the Elastic IP address.
+                                    returned: always
+                                    type: str
+                                    sample: amazon
+                                public_dns_name:
+                                    description: The public DNS name.
+                                    returned: always
+                                    type: str
+                                    sample: ""
+                                public_ip:
+                                    description: The public IP address or Elastic IP address bound to the network interface.
+                                    returned: always
+                                    type: str
+                                    sample: 1.2.3.4
+                        primary:
+                            description: Indicates whether this IPv4 address is the primary private IP address of the network interface.
+                            returned: always
+                            type: bool
+                            sample: true
+                        private_ip_address:
+                            description: The private IPv4 address of the network interface.
+                            returned: always
+                            type: str
+                            sample: 10.0.0.1
                 source_dest_check:
                     description: Indicates whether source/destination checking is enabled.
                     returned: always
@@ -562,17 +562,17 @@ instances:
                 status:
                     description: The status of the network interface.
                     returned: always
-                    type: string
+                    type: str
                     sample: in-use
                 subnet_id:
                     description: The ID of the subnet for the network interface.
                     returned: always
-                    type: string
+                    type: str
                     sample: subnet-0123456
                 vpc_id:
                     description: The ID of the VPC for the network interface.
                     returned: always
-                    type: string
+                    type: str
                     sample: vpc-0123456
         placement:
             description: The location where the instance launched, if applicable.
@@ -582,78 +582,78 @@ instances:
                 availability_zone:
                     description: The Availability Zone of the instance.
                     returned: always
-                    type: string
+                    type: str
                     sample: ap-southeast-2a
                 group_name:
                     description: The name of the placement group the instance is in (for cluster compute instances).
                     returned: always
-                    type: string
+                    type: str
                     sample: ""
                 tenancy:
                     description: The tenancy of the instance (if the instance is running in a VPC).
                     returned: always
-                    type: string
+                    type: str
                     sample: default
         private_dns_name:
             description: The private DNS name.
             returned: always
-            type: string
+            type: str
             sample: ip-10-0-0-1.ap-southeast-2.compute.internal
         private_ip_address:
             description: The IPv4 address of the network interface within the subnet.
             returned: always
-            type: string
+            type: str
             sample: 10.0.0.1
         product_codes:
             description: One or more product codes.
             returned: always
-            type: complex
+            type: list of complex
             contains:
-                - product_code_id:
-                      description: The product code.
-                      returned: always
-                      type: string
-                      sample: aw0evgkw8ef3n2498gndfgasdfsd5cce
-                  product_code_type:
-                      description: The type of product code.
-                      returned: always
-                      type: string
-                      sample: marketplace
+                product_code_id:
+                    description: The product code.
+                    returned: always
+                    type: str
+                    sample: aw0evgkw8ef3n2498gndfgasdfsd5cce
+                product_code_type:
+                    description: The type of product code.
+                    returned: always
+                    type: str
+                    sample: marketplace
         public_dns_name:
             description: The public DNS name assigned to the instance.
             returned: always
-            type: string
+            type: str
             sample:
         public_ip_address:
             description: The public IPv4 address assigned to the instance
             returned: always
-            type: string
+            type: str
             sample: 52.0.0.1
         root_device_name:
             description: The device name of the root device
             returned: always
-            type: string
+            type: str
             sample: /dev/sda1
         root_device_type:
             description: The type of root device used by the AMI.
             returned: always
-            type: string
+            type: str
             sample: ebs
         security_groups:
             description: One or more security groups for the instance.
             returned: always
-            type: complex
+            type: list of complex
             contains:
-                - group_id:
-                      description: The ID of the security group.
-                      returned: always
-                      type: string
-                      sample: sg-0123456
-                - group_name:
-                      description: The name of the security group.
-                      returned: always
-                      type: string
-                      sample: my-security-group
+                group_id:
+                    description: The ID of the security group.
+                    returned: always
+                    type: str
+                    sample: sg-0123456
+                group_name:
+                    description: The name of the security group.
+                    returned: always
+                    type: str
+                    sample: my-security-group
         network.source_dest_check:
             description: Indicates whether source/destination checking is enabled.
             returned: always
@@ -672,17 +672,17 @@ instances:
                 name:
                     description: The name of the state.
                     returned: always
-                    type: string
+                    type: str
                     sample: running
         state_transition_reason:
             description: The reason for the most recent state transition.
             returned: always
-            type: string
+            type: str
             sample:
         subnet_id:
             description: The ID of the subnet in which the instance is running.
             returned: always
-            type: string
+            type: str
             sample: subnet-00abcdef
         tags:
             description: Any tags assigned to the instance.
@@ -692,7 +692,7 @@ instances:
         virtualization_type:
             description: The type of virtualization of the AMI.
             returned: always
-            type: string
+            type: str
             sample: hvm
         vpc_id:
             description: The ID of the VPC the instance is in.
@@ -818,6 +818,11 @@ def manage_tags(match, new_tags, purge_tags, ec2):
 
 def build_volume_spec(params):
     volumes = params.get('volumes') or []
+    for volume in volumes:
+        if 'ebs' in volume:
+            for int_value in ['volume_size', 'iops']:
+                if int_value in volume['ebs']:
+                    volume['ebs'][int_value] = int(volume['ebs'][int_value])
     return [ec2_utils.snake_dict_to_camel_dict(v, capitalize_first=True) for v in volumes]
 
 
@@ -926,6 +931,8 @@ def build_network_spec(params, ec2=None):
                 ec2=ec2
             )
             spec['Groups'] = [g['GroupId'] for g in groups]
+        if network.get('description') is not None:
+            spec['Description'] = network['description']
         # TODO more special snowflake network things
 
         return [spec]
@@ -1124,9 +1131,6 @@ def build_top_level_options(params):
         spec.setdefault('Placement', {'GroupName': str(params.get('placement_group'))})
     if params.get('ebs_optimized') is not None:
         spec['EbsOptimized'] = params.get('ebs_optimized')
-    elif (params.get('network') or {}).get('ebs_optimized') is not None:
-        # Backward compatibility for workaround described in https://github.com/ansible/ansible/issues/48159
-        spec['EbsOptimized'] = params['network'].get('ebs_optimized')
     if params.get('instance_initiated_shutdown_behavior'):
         spec['InstanceInitiatedShutdownBehavior'] = params.get('instance_initiated_shutdown_behavior')
     if params.get('termination_protection') is not None:
@@ -1239,7 +1243,7 @@ def diff_instance_and_params(instance, params, ec2=None, skip=None):
 
     for mapping in param_mappings:
         if params.get(mapping.param_key) is not None and mapping.instance_key not in skip:
-            value = ec2.describe_instance_attribute(Attribute=mapping.attribute_name, InstanceId=id_)
+            value = AWSRetry.jittered_backoff()(ec2.describe_instance_attribute)(Attribute=mapping.attribute_name, InstanceId=id_)
             if params.get(mapping.param_key) is not None and value[mapping.instance_key]['Value'] != params.get(mapping.param_key):
                 arguments = dict(
                     InstanceId=instance['InstanceId'],
@@ -1333,11 +1337,11 @@ def ensure_instance_state(state, ec2=None):
     if ec2 is None:
         module.client('ec2')
     if state in ('running', 'started'):
-        changed, failed, instances = change_instance_state(filters=module.params.get('filters'), desired_state='RUNNING')
+        changed, failed, instances, failure_reason = change_instance_state(filters=module.params.get('filters'), desired_state='RUNNING')
 
         if failed:
             module.fail_json(
-                msg="Unable to start instances",
+                msg="Unable to start instances: {0}".format(failure_reason),
                 reboot_success=list(changed),
                 reboot_failed=failed)
 
@@ -1349,16 +1353,16 @@ def ensure_instance_state(state, ec2=None):
             instances=[pretty_instance(i) for i in instances],
         )
     elif state in ('restarted', 'rebooted'):
-        changed, failed, instances = change_instance_state(
+        changed, failed, instances, failure_reason = change_instance_state(
             filters=module.params.get('filters'),
             desired_state='STOPPED')
-        changed, failed, instances = change_instance_state(
+        changed, failed, instances, failure_reason = change_instance_state(
             filters=module.params.get('filters'),
             desired_state='RUNNING')
 
         if failed:
             module.fail_json(
-                msg="Unable to restart instances",
+                msg="Unable to restart instances: {0}".format(failure_reason),
                 reboot_success=list(changed),
                 reboot_failed=failed)
 
@@ -1370,13 +1374,13 @@ def ensure_instance_state(state, ec2=None):
             instances=[pretty_instance(i) for i in instances],
         )
     elif state in ('stopped',):
-        changed, failed, instances = change_instance_state(
+        changed, failed, instances, failure_reason = change_instance_state(
             filters=module.params.get('filters'),
             desired_state='STOPPED')
 
         if failed:
             module.fail_json(
-                msg="Unable to stop instances",
+                msg="Unable to stop instances: {0}".format(failure_reason),
                 stop_success=list(changed),
                 stop_failed=failed)
 
@@ -1388,13 +1392,13 @@ def ensure_instance_state(state, ec2=None):
             instances=[pretty_instance(i) for i in instances],
         )
     elif state in ('absent', 'terminated'):
-        terminated, terminate_failed, instances = change_instance_state(
+        terminated, terminate_failed, instances, failure_reason = change_instance_state(
             filters=module.params.get('filters'),
             desired_state='TERMINATED')
 
         if terminate_failed:
             module.fail_json(
-                msg="Unable to terminate instances",
+                msg="Unable to terminate instances: {0}".format(failure_reason),
                 terminate_success=list(terminated),
                 terminate_failed=terminate_failed)
         module.exit_json(
@@ -1416,6 +1420,7 @@ def change_instance_state(filters, desired_state, ec2=None):
     instances = find_instances(ec2, filters=filters)
     to_change = set(i['InstanceId'] for i in instances if i['State']['Name'].upper() != desired_state)
     unchanged = set()
+    failure_reason = ""
 
     for inst in instances:
         try:
@@ -1446,16 +1451,18 @@ def change_instance_state(filters, desired_state, ec2=None):
 
                 resp = ec2.start_instances(InstanceIds=[inst['InstanceId']])
                 [changed.add(i['InstanceId']) for i in resp['StartingInstances']]
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
-            # we don't care about exceptions here, as we'll fail out if any instances failed to terminate
-            pass
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            try:
+                failure_reason = to_native(e.message)
+            except AttributeError:
+                failure_reason = to_native(e)
 
     if changed:
         await_instances(ids=list(changed) + list(unchanged), state=desired_state)
 
     change_failed = list(to_change - changed)
     instances = find_instances(ec2, ids=list(i['InstanceId'] for i in instances))
-    return changed, change_failed, instances
+    return changed, change_failed, instances, failure_reason
 
 
 def pretty_instance(i):
@@ -1479,7 +1486,9 @@ def determine_iam_role(name_or_arn):
 
 def handle_existing(existing_matches, changed, ec2, state):
     if state in ('running', 'started') and [i for i in existing_matches if i['State']['Name'] != 'running']:
-        ins_changed, failed, instances = change_instance_state(filters=module.params.get('filters'), desired_state='RUNNING')
+        ins_changed, failed, instances, failure_reason = change_instance_state(filters=module.params.get('filters'), desired_state='RUNNING')
+        if failed:
+            module.fail_json(msg="Couldn't start instances: {0}. Failure reason: {1}".format(instances, failure_reason))
         module.exit_json(
             changed=bool(len(ins_changed)) or changed,
             instances=[pretty_instance(i) for i in instances],
@@ -1487,7 +1496,7 @@ def handle_existing(existing_matches, changed, ec2, state):
         )
     changes = diff_instance_and_params(existing_matches[0], module.params)
     for c in changes:
-        ec2.modify_instance_attribute(**c)
+        AWSRetry.jittered_backoff()(ec2.modify_instance_attribute)(**c)
     changed |= bool(changes)
     changed |= add_or_update_instance_profile(existing_matches[0], module.params.get('instance_role'))
     changed |= change_network_attachments(existing_matches[0], module.params, ec2)
@@ -1530,6 +1539,12 @@ def ensure_present(existing_matches, changed, ec2, state):
                 except botocore.exceptions.ClientError as e:
                     module.fail_json_aws(e, msg="Could not apply change {0} to new instance.".format(str(c)))
 
+        if not module.params.get('wait'):
+            module.exit_json(
+                changed=True,
+                instance_ids=instance_ids,
+                spec=instance_spec,
+            )
         await_instances(instance_ids)
         instances = ec2.get_paginator('describe_instances').paginate(
             InstanceIds=instance_ids
@@ -1612,9 +1627,6 @@ def main():
     )
 
     if module.params.get('network'):
-        if 'ebs_optimized' in module.params['network']:
-            module.deprecate("network.ebs_optimized is deprecated."
-                             "Use the top level ebs_optimized parameter instead", 2.9)
         if module.params.get('network').get('interfaces'):
             if module.params.get('security_group'):
                 module.fail_json(msg="Parameter network.interfaces can't be used with security_group")
@@ -1673,7 +1685,11 @@ def main():
         for match in existing_matches:
             warn_if_public_ip_assignment_changed(match)
             warn_if_cpu_options_changed(match)
-            changed |= manage_tags(match, (module.params.get('tags') or {}), module.params.get('purge_tags', False), ec2)
+            tags = module.params.get('tags') or {}
+            name = module.params.get('name')
+            if name:
+                tags['Name'] = name
+            changed |= manage_tags(match, tags, module.params.get('purge_tags', False), ec2)
 
     if state in ('present', 'running', 'started'):
         ensure_present(existing_matches=existing_matches, changed=changed, ec2=ec2, state=state)

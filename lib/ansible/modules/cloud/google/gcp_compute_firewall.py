@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -41,7 +40,7 @@ description:
   incoming traffic. For all networks except the default network, you must create any
   firewall rules you need.
 short_description: Creates a GCP Firewall
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -55,11 +54,13 @@ options:
     - present
     - absent
     default: present
+    type: str
   allowed:
     description:
     - The list of ALLOW rules specified by this firewall. Each rule specifies a protocol
       and port-range tuple that describes a permitted connection.
     required: false
+    type: list
     suboptions:
       ip_protocol:
         description:
@@ -68,6 +69,7 @@ options:
           well known protocol strings (tcp, udp, icmp, esp, ah, sctp), or the IP protocol
           number.
         required: true
+        type: str
       ports:
         description:
         - An optional list of ports to which this rule applies. This field is only
@@ -76,12 +78,14 @@ options:
           port.
         - 'Example inputs include: ["22"], ["80","443"], and ["12345-12349"].'
         required: false
+        type: list
   denied:
     description:
     - The list of DENY rules specified by this firewall. Each rule specifies a protocol
       and port-range tuple that describes a denied connection.
     required: false
-    version_added: 2.8
+    type: list
+    version_added: '2.8'
     suboptions:
       ip_protocol:
         description:
@@ -90,6 +94,7 @@ options:
           well known protocol strings (tcp, udp, icmp, esp, ah, sctp), or the IP protocol
           number.
         required: true
+        type: str
       ports:
         description:
         - An optional list of ports to which this rule applies. This field is only
@@ -98,28 +103,30 @@ options:
           port.
         - 'Example inputs include: ["22"], ["80","443"], and ["12345-12349"].'
         required: false
+        type: list
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   destination_ranges:
     description:
     - If destination ranges are specified, the firewall will apply only to traffic
       that has destination IP address in these ranges. These ranges must be expressed
       in CIDR format. Only IPv4 is supported.
     required: false
-    version_added: 2.8
+    type: list
+    version_added: '2.8'
   direction:
     description:
     - 'Direction of traffic to which this firewall applies; default is INGRESS. Note:
       For INGRESS traffic, it is NOT supported to specify destinationRanges; For EGRESS
       traffic, it is NOT supported to specify sourceRanges OR sourceTags.'
+    - 'Some valid choices include: "INGRESS", "EGRESS"'
     required: false
-    version_added: 2.8
-    choices:
-    - INGRESS
-    - EGRESS
+    type: str
+    version_added: '2.8'
   disabled:
     description:
     - Denotes whether the firewall rule is disabled, i.e not applied to the network
@@ -128,7 +135,7 @@ options:
       rule will be enabled.
     required: false
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -138,6 +145,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   network:
     description:
     - 'URL of the network resource for this firewall rule. If not specified when creating
@@ -147,11 +155,14 @@ options:
       networks/my-network projects/myproject/global/networks/my-network global/networks/default
       .'
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}" Alternatively,
-      you can set this network to a dictionary with the selfLink key where the value
-      is the selfLink of your Network'
-    required: true
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_network task and then set this network field to "{{ name-of-resource
+      }}"'
+    required: false
+    default:
+      selfLink: global/networks/default
+    type: dict
   priority:
     description:
     - Priority for this rule. This is an integer between 0 and 65535, both inclusive.
@@ -161,7 +172,8 @@ options:
       1). DENY rules take precedence over ALLOW rules having equal priority.
     required: false
     default: '1000'
-    version_added: 2.8
+    type: int
+    version_added: '2.8'
   source_ranges:
     description:
     - If source ranges are specified, the firewall will apply only to traffic that
@@ -172,6 +184,7 @@ options:
       property. The connection does not need to match both properties for the firewall
       to apply. Only IPv4 is supported.
     required: false
+    type: list
   source_service_accounts:
     description:
     - If source service accounts are specified, the firewall will apply only to traffic
@@ -184,7 +197,8 @@ options:
       The connection does not need to match both properties for the firewall to apply.
       sourceServiceAccounts cannot be used at the same time as sourceTags or targetTags.
     required: false
-    version_added: 2.8
+    type: list
+    version_added: '2.8'
   source_tags:
     description:
     - If source tags are specified, the firewall will apply only to traffic with source
@@ -196,6 +210,7 @@ options:
       tag listed in the sourceTags property. The connection does not need to match
       both properties for the firewall to apply.
     required: false
+    type: list
   target_service_accounts:
     description:
     - A list of service accounts indicating sets of instances located in the network
@@ -204,7 +219,8 @@ options:
       If neither targetServiceAccounts nor targetTags are specified, the firewall
       rule applies to all instances on the specified network.
     required: false
-    version_added: 2.8
+    type: list
+    version_added: '2.8'
   target_tags:
     description:
     - A list of instance tags indicating sets of instances located in the network
@@ -212,29 +228,76 @@ options:
     - If no targetTags are specified, the firewall rule applies to all instances on
       the specified network.
     required: false
-extends_documentation_fragment: gcp
+    type: list
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
-- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/firewalls)'
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/firewalls)'
 - 'Official Documentation: U(https://cloud.google.com/vpc/docs/firewalls)'
+- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
 - name: create a firewall
   gcp_compute_firewall:
-      name: "test_object"
-      allowed:
-      - ip_protocol: tcp
-        ports:
-        - '22'
-      target_tags:
-      - test-ssh-server
-      - staging-ssh-server
-      source_tags:
-      - test-ssh-clients
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    allowed:
+    - ip_protocol: tcp
+      ports:
+      - '22'
+    target_tags:
+    - test-ssh-server
+    - staging-ssh-server
+    source_tags:
+    - test-ssh-clients
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -412,6 +475,7 @@ targetTags:
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
+import re
 import time
 
 ################################################################################
@@ -425,27 +489,30 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            allowed=dict(type='list', elements='dict', options=dict(
-                ip_protocol=dict(required=True, type='str'),
-                ports=dict(type='list', elements='str')
-            )),
-            denied=dict(type='list', elements='dict', options=dict(
-                ip_protocol=dict(required=True, type='str'),
-                ports=dict(type='list', elements='str')
-            )),
+            allowed=dict(type='list', elements='dict', options=dict(ip_protocol=dict(required=True, type='str'), ports=dict(type='list', elements='str'))),
+            denied=dict(type='list', elements='dict', options=dict(ip_protocol=dict(required=True, type='str'), ports=dict(type='list', elements='str'))),
             description=dict(type='str'),
             destination_ranges=dict(type='list', elements='str'),
-            direction=dict(type='str', choices=['INGRESS', 'EGRESS']),
+            direction=dict(type='str'),
             disabled=dict(type='bool'),
             name=dict(required=True, type='str'),
-            network=dict(required=True, type='dict'),
+            network=dict(default=dict(selfLink='global/networks/default'), type='dict'),
             priority=dict(default=1000, type='int'),
             source_ranges=dict(type='list', elements='str'),
             source_service_accounts=dict(type='list', elements='str'),
             source_tags=dict(type='list', elements='str'),
             target_service_accounts=dict(type='list', elements='str'),
-            target_tags=dict(type='list', elements='str')
-        )
+            target_tags=dict(type='list', elements='str'),
+        ),
+        mutually_exclusive=[
+            ['allowed', 'denied'],
+            ['destination_ranges', 'source_ranges', 'source_tags'],
+            ['destination_ranges', 'source_ranges'],
+            ['source_service_accounts', 'source_tags', 'target_tags'],
+            ['destination_ranges', 'source_service_accounts', 'source_tags', 'target_service_accounts'],
+            ['source_tags', 'target_service_accounts', 'target_tags'],
+            ['source_service_accounts', 'target_service_accounts', 'target_tags'],
+        ],
     )
 
     if not module.params['scopes']:
@@ -510,11 +577,12 @@ def resource_to_request(module):
         u'sourceServiceAccounts': module.params.get('source_service_accounts'),
         u'sourceTags': module.params.get('source_tags'),
         u'targetServiceAccounts': module.params.get('target_service_accounts'),
-        u'targetTags': module.params.get('target_tags')
+        u'targetTags': module.params.get('target_tags'),
     }
+    request = encode_request(request, module)
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
@@ -545,8 +613,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -591,7 +659,7 @@ def response_to_hash(module, response):
         u'sourceServiceAccounts': response.get(u'sourceServiceAccounts'),
         u'sourceTags': response.get(u'sourceTags'),
         u'targetServiceAccounts': response.get(u'targetServiceAccounts'),
-        u'targetTags': response.get(u'targetTags')
+        u'targetTags': response.get(u'targetTags'),
     }
 
 
@@ -617,9 +685,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -628,6 +696,16 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
+
+def encode_request(request, module):
+    if 'network' in request and request['network'] is not None:
+        if not re.match(r'https://www.googleapis.com/compute/v1/projects/.*', request['network']):
+            request['network'] = 'https://www.googleapis.com/compute/v1/projects/{project}/{network}'.format(
+                project=module.params['project'], network=request['network']
+            )
+
+    return request
 
 
 class FirewallAllowedArray(object):
@@ -651,16 +729,10 @@ class FirewallAllowedArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'IPProtocol': item.get('ip_protocol'),
-            u'ports': item.get('ports')
-        })
+        return remove_nones_from_dict({u'IPProtocol': item.get('ip_protocol'), u'ports': item.get('ports')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'IPProtocol': item.get(u'ip_protocol'),
-            u'ports': item.get(u'ports')
-        })
+        return remove_nones_from_dict({u'IPProtocol': item.get(u'IPProtocol'), u'ports': item.get(u'ports')})
 
 
 class FirewallDeniedArray(object):
@@ -684,16 +756,10 @@ class FirewallDeniedArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'IPProtocol': item.get('ip_protocol'),
-            u'ports': item.get('ports')
-        })
+        return remove_nones_from_dict({u'IPProtocol': item.get('ip_protocol'), u'ports': item.get('ports')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'IPProtocol': item.get(u'ip_protocol'),
-            u'ports': item.get(u'ports')
-        })
+        return remove_nones_from_dict({u'IPProtocol': item.get(u'IPProtocol'), u'ports': item.get(u'ports')})
 
 
 if __name__ == '__main__':

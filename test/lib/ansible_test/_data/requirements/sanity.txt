@@ -1,0 +1,9 @@
+cryptography
+jinja2
+pycodestyle
+pylint ; python_version >= '3.5' # pylint 2.0.0 and later require python 3+
+pyyaml
+rstcheck ; python_version >= '2.7' # rstcheck requires python 2.7+
+virtualenv
+voluptuous ; python_version >= '2.7' # voluptuous 0.11.0 and later require python 2.7+
+yamllint

@@ -22,7 +22,7 @@ description:
     - Interface to the Network Command Line Utility, developed to make it easier
       to configure operating systems running ifupdown2 and Quagga, such as
       Cumulus Linux. Command documentation is available at
-      U(https://docs.cumulusnetworks.com/display/DOCS/Network+Command+Line+Utility)
+      U(https://docs.cumulusnetworks.com/cumulus-linux/System-Configuration/Network-Command-Line-Utility-NCLU/)
 options:
     commands:
         description:
@@ -151,7 +151,7 @@ changed:
 msg:
     description: human-readable report of success or failure
     returned: always
-    type: string
+    type: str
     sample: "interface bond0 config updated"
 '''
 

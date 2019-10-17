@@ -1,0 +1,21 @@
+---
+- eos_facts:
+    gather_network_resources: vlans
+  become: yes
+
+- name: Ensures that facts are idempotent through replace
+  eos_vlans:
+    config: "{{ ansible_facts.network_resources.vlans }}"
+    state: replaced
+  register: result
+  become: yes
+
+- eos_facts:
+    gather_network_resources: vlans
+  become: yes
+
+- assert:
+    that:
+      - "result.changed == False"
+      - "result.commands == []"
+      - "ansible_facts.network_resources.vlans|symmetric_difference(result.before) == []"

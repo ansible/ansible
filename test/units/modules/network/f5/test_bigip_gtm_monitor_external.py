@@ -17,7 +17,6 @@ if sys.version_info < (2, 7):
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.modules.bigip_gtm_monitor_external import ApiParameters
     from library.modules.bigip_gtm_monitor_external import ModuleParameters
     from library.modules.bigip_gtm_monitor_external import ModuleManager
     from library.modules.bigip_gtm_monitor_external import ArgumentSpec
@@ -29,7 +28,6 @@ try:
 
     from test.units.modules.utils import set_module_args
 except ImportError:
-    from ansible.modules.network.f5.bigip_gtm_monitor_external import ApiParameters
     from ansible.modules.network.f5.bigip_gtm_monitor_external import ModuleParameters
     from ansible.modules.network.f5.bigip_gtm_monitor_external import ModuleManager
     from ansible.modules.network.f5.bigip_gtm_monitor_external import ArgumentSpec
@@ -113,9 +111,11 @@ class TestManager(unittest.TestCase):
             interval=20,
             timeout=30,
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

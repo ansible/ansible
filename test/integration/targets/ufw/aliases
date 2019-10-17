@@ -1,0 +1,10 @@
+shippable/posix/group2
+skip/osx
+skip/freebsd
+skip/rhel8.0
+skip/rhel8.0b
+skip/rhel8.1b
+skip/docker
+needs/root
+destructive
+needs/target/setup_epel

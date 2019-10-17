@@ -161,10 +161,15 @@
   register: git_fetch
   ignore_errors: yes
 
+- name: DEPTH | get "a" file
+  slurp:
+    src: '{{ checkout_dir }}/a'
+  register: a_file
+
 - name: DEPTH | check update arrived
   assert:
     that:
-      - "{{ lookup('file', checkout_dir+'/a' )}} == 3"
+      - "{{ a_file.content | b64decode | trim }} == 3"
       - git_fetch is changed
 
 - name: DEPTH | clear checkout_dir

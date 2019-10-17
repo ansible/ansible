@@ -1,0 +1,93 @@
+- name: Create Windows 10 VM with VBS enabled
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: "{{ f0 }}"
+    name: vbs-Test
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
+    resource_pool: Resources
+    guest_id: windows9_64Guest
+    hardware:
+      memory_mb: 1024
+      num_cpus: 1
+      virt_based_security: True
+      version: 14
+      boot_firmware: efi
+      scsi: paravirtual
+    disk:
+    - size_mb: 128
+      type: thin
+      datastore: '{{ ds2 }}'
+    cdrom:
+      type: client
+  register: vbs_vm
+
+- debug: var=vbs_vm
+
+- name: assert the VM was created
+  assert:
+    that:
+      - "vbs_vm.failed == false"
+      - "vbs_vm.changed == true"
+
+- name: Create Windows Server 2016 VM without VBS enabled
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: "{{ f0 }}"
+    name: vbs-Test2
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
+    resource_pool: Resources
+    guest_id: windows9Server64Guest
+    hardware:
+      memory_mb: 1024
+      num_cpus: 1
+      version: 14
+      boot_firmware: efi
+      scsi: paravirtual
+    disk:
+    - size_mb: 128
+      type: thin
+      datastore: '{{ ds2 }}'
+    cdrom:
+      type: client
+  register: vbs_vm
+
+- debug: var=vbs_vm
+
+- name: assert the VM was created
+  assert:
+    that:
+      - "vbs_vm.failed == false"
+      - "vbs_vm.changed == true"
+
+- name: Enable VBS for Windows Server 2016 VM
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: "{{ f0 }}"
+    name: vbs-Test2
+    datacenter: "{{ f0 }}"
+    disk:
+    - size_mb: 256
+      type: thin
+      datastore: '{{ ds2 }}'
+    hardware:
+      virt_based_security: True
+    state: present
+  register: vbs_vm
+
+- debug: var=vbs_vm
+
+- name: assert the VM was changed
+  assert:
+    that:
+      - vbs_vm is changed

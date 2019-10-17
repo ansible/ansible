@@ -250,7 +250,7 @@
   assert:
     that:
     - roleperm is failed
-    - 'roleperm.msg == "parameters are mutually exclusive: permission, parent"'
+    - 'roleperm.msg == "parameters are mutually exclusive: permission|parent"'
 
 - name: test fail if parent does not exist
   cs_role_permission:

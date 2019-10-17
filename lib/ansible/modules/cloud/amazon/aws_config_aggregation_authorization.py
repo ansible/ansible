@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: aws_config_aggregation_authorization
 short_description: Manage cross-account AWS Config authorizations
@@ -39,9 +39,9 @@ extends_documentation_fragment:
   - ec2
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
 - name: Get current account ID
-  aws_caller_facts:
+  aws_caller_info:
   register: whoami
 - aws_config_aggregation_authorization:
     state: present
@@ -49,7 +49,7 @@ EXAMPLES = r'''
     authorzed_aws_region: us-east-1
 '''
 
-RETURN = r'''#'''
+RETURN = '''#'''
 
 
 try:

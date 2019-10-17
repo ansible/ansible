@@ -86,7 +86,6 @@ def _camel_to_snake(name, reversible=False):
     def prepend_underscore_and_lower(m):
         return '_' + m.group(0).lower()
 
-    import re
     if reversible:
         upper_pattern = r'[A-Z]'
     else:
@@ -117,7 +116,7 @@ def dict_merge(a, b):
     result = deepcopy(a)
     for k, v in b.items():
         if k in result and isinstance(result[k], dict):
-                result[k] = dict_merge(result[k], v)
+            result[k] = dict_merge(result[k], v)
         else:
             result[k] = deepcopy(v)
     return result

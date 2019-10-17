@@ -39,6 +39,10 @@ notes:
     wanted to provide a string value, the correct syntax would be
     C(value="'myvalue'") - with single quotes as part of the Ansible parameter
     value.
+  - When using loops in combination with a value like
+    :code:`"[('xkb', 'us'), ('xkb', 'se')]"`, you need to be aware of possible
+    type conversions. Applying a filter :code:`"{{ item.value | string }}"`
+    to the parameter variable can avoid potential conversion problems.
   - The easiest way to figure out exact syntax/value you need to provide for a
     key is by making the configuration change in application affected by the
     key, and then having a look at value set via commands C(dconf dump
@@ -71,7 +75,7 @@ RETURN = """
 value:
     description: value associated with the requested key
     returned: success, state was "read"
-    type: string
+    type: str
     sample: "'Default'"
 """
 
@@ -119,14 +123,17 @@ EXAMPLES = """
 
 
 import os
+import traceback
 
+PSUTIL_IMP_ERR = None
 try:
     import psutil
     psutil_found = True
 except ImportError:
+    PSUTIL_IMP_ERR = traceback.format_exc()
     psutil_found = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class DBusWrapper(object):
@@ -350,7 +357,7 @@ def main():
     )
 
     if not psutil_found:
-        module.fail_json(msg="Python module psutil is required on managed machine")
+        module.fail_json(msg=missing_required_lib("psutil"), exception=PSUTIL_IMP_ERR)
 
     # If present state was specified, value must be provided.
     if module.params['state'] == 'present' and module.params['value'] is None:

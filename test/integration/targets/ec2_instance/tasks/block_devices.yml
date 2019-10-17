@@ -1,0 +1,79 @@
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- name: New instance with an extra block device
+  ec2_instance:
+    name: "{{ resource_prefix }}-test-ebs-vols"
+    image_id: "{{ ec2_ami_image[aws_region] }}"
+    vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+    volumes:
+    - device_name: /dev/sdb
+      ebs:
+        volume_size: 20
+        delete_on_termination: true
+        volume_type: standard
+    tags:
+      TestId: "{{ resource_prefix }}"
+    instance_type: t2.micro
+    wait: true
+    <<: *aws_connection_info
+  register: in_test_vpc
+
+- name: Gather instance info
+  ec2_instance_info:
+    filters:
+      "tag:Name": "{{ resource_prefix }}-test-ebs-vols"
+    <<: *aws_connection_info
+  register: in_test_vpc_instance
+
+- assert:
+    that:
+    - in_test_vpc is not failed
+    - in_test_vpc is changed
+    - in_test_vpc_instance.instances[0].block_device_mappings[0]
+    - in_test_vpc_instance.instances[0].block_device_mappings[1]
+    - in_test_vpc_instance.instances[0].block_device_mappings[1].device_name == '/dev/sdb'
+
+- name: New instance with an extra block device(check mode)
+  ec2_instance:
+    name: "{{ resource_prefix }}-test-ebs-vols-checkmode"
+    image_id: "{{ ec2_ami_image[aws_region] }}"
+    vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+    volumes:
+    - device_name: /dev/sdb
+      ebs:
+        volume_size: 20
+        delete_on_termination: true
+        volume_type: standard
+    tags:
+      TestId: "{{ resource_prefix }}"
+    instance_type: t2.micro
+    <<: *aws_connection_info
+  check_mode: yes
+
+- name: "fact presented ec2 instance"
+  ec2_instance_info:
+    filters:
+      "tag:Name": "{{ resource_prefix }}-test-ebs-vols"
+      "instance-state-name": "running"
+    <<: *aws_connection_info
+  register: presented_instance_fact
+
+- name: "fact checkmode ec2 instance"
+  ec2_instance_info:
+    filters:
+      "tag:Name": "{{ resource_prefix }}-test-ebs-vols-checkmode"
+    <<: *aws_connection_info
+  register: checkmode_instance_fact
+
+- name: "Confirm whether the check mode is working normally."
+  assert:
+    that:
+      - "{{ presented_instance_fact.instances | length }} > 0"
+      - "{{ checkmode_instance_fact.instances | length }} == 0"

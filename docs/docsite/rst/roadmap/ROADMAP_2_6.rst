@@ -25,7 +25,8 @@ Actual
 
 Release Manager
 ---------------
-Matt Clay (IRC/GitHub: @mattclay)
+* 2.6.0-2.6.12 Matt Clay (IRC/GitHub: @mattclay)
+* 2.6.13+ Toshio Kuratomi (IRC: abadger1999; GitHub: @abadger)
 
 
 Engine improvements

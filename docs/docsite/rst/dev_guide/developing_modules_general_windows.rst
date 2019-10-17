@@ -32,7 +32,7 @@ Vagrant Cloud.
 
 This guide will use the Vagrant boxes created by the `packer-windoze <https://github.com/jborean93/packer-windoze>`_
 repository which have also been uploaded to `Vagrant Cloud <https://app.vagrantup.com/boxes/search?utf8=%E2%9C%93&sort=downloads&provider=&q=jborean93>`_.
-To find out more info on how these images are created, please go to the Github
+To find out more info on how these images are created, please go to the GitHub
 repo and look at the ``README`` file.
 
 Before you can get started, the following programs must be installed (please consult the Vagrant and
@@ -55,7 +55,7 @@ This will download the Vagrant box from Vagrant Cloud and add it to the local
 boxes on your host and then start up that instance in VirtualBox. When starting
 for the first time, the Windows VM will run through the sysprep process and
 then create a HTTP and HTTPS WinRM listener automatically. Vagrant will finish
-its process once the listeners are onlinem, after which the VM can be used by Ansible.
+its process once the listeners are online, after which the VM can be used by Ansible.
 
 Create an Ansible inventory
 ===========================
@@ -178,7 +178,7 @@ When creating a new module there are a few things to keep in mind:
 - C# and PowerShell module utils achieve the same goal but C# allows a developer to implement low level tasks, such as calling the Win32 API, and can be faster in some cases
 - Ensure the code runs under Powershell v3 and higher on Windows Server 2008 and higher; if higher minimum Powershell or OS versions are required, ensure the documentation reflects this clearly
 - Ansible runs modules under strictmode version 2.0. Be sure to test with that enabled by putting ``Set-StrictMode -Version 2.0`` at the top of your dev script
-- Favour native Powershell cmdlets over executable calls if possible
+- Favor native Powershell cmdlets over executable calls if possible
 - Use the full cmdlet name instead of aliases, e.g. ``Remove-Item`` over ``rm``
 - Use named parameters with cmdlets, e.g. ``Remove-Item -Path C:\temp`` over ``Remove-Item C:\temp``
 
@@ -198,6 +198,7 @@ spec. The following options can be set at the root level of the argument spec:
 - ``mutually_exclusive``: A list of lists, where the inner list contains module options that cannot be set together
 - ``no_log``: Stops the module from emitting any logs to the Windows Event log
 - ``options``: A dictionary where the key is the module option and the value is the spec for that option
+- ``required_by``: A dictionary where the option(s) specified by the value must be set if the option specified by the key is also set
 - ``required_if``: A list of lists where the inner list contains 3 or 4 elements;
     * The first element is the module option to check the value against
     * The second element is the value of the option specified by the first element, if matched then the required if check is run
@@ -236,6 +237,7 @@ When ``type=dict``, or ``type=list`` and ``elements=dict``, the following keys c
 - ``mutually_exclusive``: Same as the root level ``mutually_exclusive`` but validated against the values in the sub dict
 - ``options``: Same as the root level ``options`` but contains the valid options for the sub option
 - ``required_if``: Same as the root level ``required_if`` but validated against the values in the sub dict
+- ``required_by``: Same as the root level ``required_by`` but validated against the values in the sub dict
 - ``required_together``: Same as the root level ``required_together`` but validated against the values in the sub dict
 - ``required_one_of``: Same as the root level ``required_one_of`` but validated against the values in the sub dict
 
@@ -253,7 +255,7 @@ When in doubt, look at some of the other core modules and see how things have be
 implemented there.
 
 Sometimes there are multiple ways that Windows offers to complete a task; this
-is the order to favour when writing modules:
+is the order to favor when writing modules:
 
 - Native Powershell cmdlets like ``Remove-Item -Path C:\temp -Recurse``
 - .NET classes like ``[System.IO.Path]::GetRandomFileName()``
@@ -508,6 +510,7 @@ tests for win_stat:
 - Run the command ``source ./hacking/env-setup`` to prepare environment.
 - Create a copy of ``./test/integration/inventory.winrm.template`` and name it ``inventory.winrm``.
 - Fill in entries under ``[windows]`` and set the required variables that are needed to connect to the host.
+- :ref:`Install the required Python modules <windows_winrm>` to support WinRM and a configured authentication method.
 - To execute the integration tests, run ``ansible-test windows-integration win_stat``; you can replace ``win_stat`` with the role you wish to test.
 
 This will execute all the tests currently defined for that role. You can set
