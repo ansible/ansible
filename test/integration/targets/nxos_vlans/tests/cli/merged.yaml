@@ -5,8 +5,7 @@
 - name: setup
   cli_config: &cleanup
     config: |
-      no vlan 5
-      no vlan 6
+      no vlan 2-100
 
 - block:
   - name: Merged
@@ -40,7 +39,7 @@
 
   - assert:
       that:
-        - "ansible_facts.network_resources.vlans|symmetric_difference(result.after)|length == 0"
+        - "result.after|length == (ansible_facts.network_resources.vlans|length - 1)"
 
   - name: Idempotence - Merged
     nxos_vlans: *merged
