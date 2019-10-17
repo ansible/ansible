@@ -6,7 +6,7 @@
       - vlan_id: 20
         state: suspend
       - vlan_id: 50
-        name: 50
+        name: fifty
 
 - eos_facts:
     gather_network_resources: vlans
@@ -32,7 +32,7 @@
       - "ansible_facts.network_resources.vlans|symmetric_difference(result.after) == []"
 
 - set_fact:
-    expected_config: "{{ config }} + {{ other_config }}"
+    expected_config: "{{ config }}"
 
 - assert:
     that:

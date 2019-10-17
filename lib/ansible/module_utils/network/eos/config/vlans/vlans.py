@@ -148,6 +148,15 @@ class Vlans(ConfigBase):
 
             commands.extend(generate_commands(vlan_id, add_config, del_config))
 
+        # Handle vlans not already in config
+        new_vlans = [vlan_id for vlan_id in want if vlan_id not in have]
+        for vlan_id in new_vlans:
+            desired = want[vlan_id]
+            extant = dict(vlan_id=vlan_id)
+            add_config = dict_diff(extant, desired)
+
+            commands.extend(generate_commands(vlan_id, add_config, {}))
+
         return commands
 
     @staticmethod
