@@ -96,6 +96,19 @@ The following modules will be removed in Ansible 2.14. Please update your playbo
 * ``vmware_dns_config`` use :ref:`vmware_host_dns <vmware_host_dns_module>` instead.
 
 
+The following modules have been renamed. The old name is deprecated and will be removed in Ansible 2.14. Please update update your playbooks accordingly.
+
+* The ``openssl_certificate`` module was renamed to :ref:`x509_certificate <x509_certificate_module>`.
+* The ``openssl_certificate_info`` module was renamed to :ref:`x509_certificate_info <x509_certificate_info_module>`.
+* The ``openssl_csr`` module was renamed to :ref:`x509_csr <x509_csr_module>`.
+* The ``openssl_csr_info`` module was renamed to :ref:`x509_csr_info <x509_csr_info_module>`.
+* The ``openssl_dhparam`` module was renamed to :ref:`x509_dhparam <x509_dhparam_module>`.
+* The ``openssl_pkcs12`` module was renamed to :ref:`x509_pkcs12 <x509_pkcs12_module>`.
+* The ``openssl_privatekey`` module was renamed to :ref:`x509_privatekey <x509_privatekey_module>`.
+* The ``openssl_privatekey_info`` module was renamed to :ref:`x509_privatekey_info <x509_privatekey_info_module>`.
+* The ``openssl_publickey`` module was renamed to :ref:`x509_publickey <x509_publickey_module>`.
+
+
 Noteworthy module changes
 -------------------------
 

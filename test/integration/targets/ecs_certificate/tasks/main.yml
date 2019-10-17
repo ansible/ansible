@@ -56,7 +56,7 @@
 
 ## SETUP CSR TO REQUEST
 - name: Generate a 2048 bit RSA private key
-  openssl_privatekey:
+  x509_privatekey:
     path: '{{ privatekey_path }}'
     passphrase: '{{ privatekey_passphrase }}'
     cipher: auto
@@ -64,7 +64,7 @@
     size: 2048
 
 - name: Generate a certificate signing request using the generated key
-  openssl_csr:
+  x509_csr:
     path: '{{ csr_path }}'
     privatekey_path: '{{ privatekey_path }}'
     privatekey_passphrase: '{{ privatekey_passphrase }}'

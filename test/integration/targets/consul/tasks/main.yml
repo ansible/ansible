@@ -27,18 +27,18 @@
     - when: pyopenssl_version.stdout is version('0.15', '>=')
       block:
         - name: Generate privatekey
-          openssl_privatekey:
+          x509_privatekey:
             path: '{{ output_dir }}/privatekey.pem'
 
         - name: Generate CSR
-          openssl_csr:
+          x509_csr:
             path: '{{ output_dir }}/csr.csr'
             privatekey_path: '{{ output_dir }}/privatekey.pem'
             subject:
               commonName: localhost
 
         - name: Generate selfsigned certificate
-          openssl_certificate:
+          x509_certificate:
             path: '{{ output_dir }}/cert.pem'
             csr_path: '{{ output_dir }}/csr.csr'
             privatekey_path: '{{ output_dir }}/privatekey.pem'

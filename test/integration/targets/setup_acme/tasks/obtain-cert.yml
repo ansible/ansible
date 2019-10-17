@@ -14,7 +14,7 @@
   when: "key_type == 'ec521'"
 ## CSR ########################################################################################
 - name: ({{ certgen_title }}) Create cert CSR
-  openssl_csr:
+  x509_csr:
     path: "{{ output_dir }}/{{ certificate_name }}.csr"
     privatekey_path: "{{ output_dir }}/{{ certificate_name }}.key"
     subject_alt_name: "{{ subject_alt_name }}"

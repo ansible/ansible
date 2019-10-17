@@ -66,18 +66,18 @@
       - "nginx.htpasswd"
 
   - name: Create private key for frontend certificate
-    openssl_privatekey:
+    x509_privatekey:
       path: "{{ output_dir }}/cert.key"
       type: ECC
       curve: secp256r1
   - name: Create CSR for frontend certificate
-    openssl_csr:
+    x509_csr:
       path: "{{ output_dir }}/cert.csr"
       privatekey_path: "{{ output_dir }}/cert.key"
       subject_alt_name:
         - "DNS:test-registry.ansible.com"
   - name: Create frontend certificate
-    openssl_certificate:
+    x509_certificate:
       path: "{{ output_dir }}/cert.pem"
       csr_path: "{{ output_dir }}/cert.csr"
       privatekey_path: "{{ output_dir }}/cert.key"

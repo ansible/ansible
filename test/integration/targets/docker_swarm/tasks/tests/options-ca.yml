@@ -6,7 +6,7 @@
         cryptography_version.stdout is version('1.6', '>=')
   block:
   - name: Generate privatekey
-    openssl_privatekey:
+    x509_privatekey:
       path: "{{ output_dir }}/ansible_{{ key }}.key"
       size: 2048
       mode: "0666"
@@ -17,7 +17,7 @@
       loop_var: key
 
   - name: Generate CSR
-    openssl_csr:
+    x509_csr:
       path: "{{ output_dir }}/ansible_{{ key }}.csr"
       privatekey_path: "{{ output_dir }}/ansible_{{ key }}.key"
       basic_constraints:
@@ -31,7 +31,7 @@
       loop_var: key
 
   - name: Generate self-signed certificate
-    openssl_certificate:
+    x509_certificate:
       path: "{{ output_dir }}/ansible_{{ key }}.pem"
       privatekey_path: "{{ output_dir }}/ansible_{{ key }}.key"
       csr_path: "{{ output_dir }}/ansible_{{ key }}.csr"

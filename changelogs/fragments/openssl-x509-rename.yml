@@ -1,0 +1,10 @@
+minor_changes:
+- The ``openssl_certificate`` module has been renamed to ``x509_certificate``.
+- The ``openssl_certificate_info`` module has been renamed to ``x509_certificate_info``.
+- The ``openssl_csr`` module has been renamed to ``x509_csr``.
+- The ``openssl_csr_info`` module has been renamed to ``x509_csr_info``.
+- The ``openssl_dhparam`` module has been renamed to ``x509_dhparam``.
+- The ``openssl_pkcs12`` module has been renamed to ``x509_pkcs12``.
+- The ``openssl_privatekey`` module has been renamed to ``x509_privatekey``.
+- The ``openssl_privatekey_info`` module has been renamed to ``x509_privatekey_info``.
+- The ``openssl_publickey`` module has been renamed to ``x509_publickey``.

@@ -605,11 +605,11 @@ files:
   $modules/commands/script.py: $team_ansible
   $modules/commands/shell.py: $team_ansible
   $modules/crypto/: &crypto
-    keywords: [ acme, letsencrypt, lets encrypt, luks, openssl ]
+    keywords: [ acme, letsencrypt, lets encrypt, luks, openssl, x509 ]
     labels: crypto
     maintainers: $team_crypto
     supershipit: felixfontein
-  $modules/crypto/openssl_certificate.py:
+  $modules/crypto/x509_certificate.py:
     maintainers: ctrufan
   $modules/crypto/entrust/: ctrufan tylert
   $modules/database/influxdb/: kamsz
@@ -3853,7 +3853,7 @@ files:
   test/integration/targets/netapp:
     maintainers: $team_netapp
     support: community
-  test/integration/targets/openssl: *crypto
+  test/integration/targets/x509: *crypto
   test/integration/targets/postgresql: *postgresql
   test/integration/targets/scaleway_: *scaleway
   test/integration/targets/setup_acme: *crypto

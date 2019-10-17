@@ -104,12 +104,12 @@
       register: tg
 
     - name: create privatekey for testing
-      openssl_privatekey:
+      x509_privatekey:
         path: ./ansible_alb_test.pem
         size: 2048
 
     - name: create csr for cert
-      openssl_csr:
+      x509_csr:
         path: ./ansible_alb_test.csr
         privatekey_path: ./ansible_alb_test.pem
         C: US
@@ -120,7 +120,7 @@
         CN: ansible-alb-test.example.com
 
     - name: create certificate
-      openssl_certificate:
+      x509_certificate:
         path: ./ansible_alb_test.crt
         privatekey_path: ./ansible_alb_test.pem
         csr_path: ./ansible_alb_test.csr
