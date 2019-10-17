@@ -39,6 +39,12 @@ options:
      - UUID of the instance to gather info if known, this is VMware's unique identifier.
      - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
      type: str
+   use_instance_uuid:
+     description:
+     - Whether to use the VMware instance UUID rather than the BIOS UUID.
+     default: False
+     type: bool
+     version_added: '2.10'
    moid:
      description:
      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
@@ -149,6 +155,21 @@ EXAMPLES = '''
     datacenter: "{{ datacenter_name }}"
     validate_certs: no
     moid: vm-42
+    gather_network_info: false
+    networks:
+      - state: absent
+        mac: "00:50:56:44:55:77"
+  delegate_to: localhost
+
+- name: Change network adapter settings of virtual machine using instance UUID
+  vmware_guest_network:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    uuid: 5003b4f5-c705-2f37-ccf6-dfc0b40afeb7
+    use_instance_uuid: True
     gather_network_info: false
     networks:
       - state: absent
@@ -453,6 +474,7 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         moid=dict(type='str'),
         folder=dict(type='str'),
         datacenter=dict(type='str', default='ha-datacenter'),
