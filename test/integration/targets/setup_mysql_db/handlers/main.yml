@@ -1,0 +1,11 @@
+- name: remove packages
+  action: '{{ ansible_pkg_mgr }}'
+  args:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ mysql_packages }}"
+
+- name: remove pip packages
+  pip:
+    name: mysql-python
+    state: absent

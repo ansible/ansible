@@ -1,0 +1,10 @@
+- name: remove repo
+  yum:
+    name: mysql80-community-release
+    state: absent
+  listen: cleanup mysql8
+
+- name: remove mysql
+  yum:
+    name: '{{ mysql_package_name }}'
+  listen: cleanup mysql8
