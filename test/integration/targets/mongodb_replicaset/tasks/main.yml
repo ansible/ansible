@@ -147,6 +147,9 @@
 - set_fact:
     mongo_ssl: true
 
+- set_fact:
+    mongod_auth: false
+
 - name: Execute mongod script to restart with SSL enabled
   include_tasks: mongod_replicaset.yml
 
