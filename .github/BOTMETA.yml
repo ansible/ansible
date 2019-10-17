@@ -1243,6 +1243,8 @@ files:
 
 ###############################
 # plugins/lookup
+  $plugins/lookup/:
+    support: community
   $plugins/lookup/__init__.py:
     support: core
   $plugins/lookup/config.py:
