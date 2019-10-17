@@ -159,7 +159,13 @@ class Vlans(ConfigBase):
                 commands.extend(self._clear_config(every, each, state))
                 continue
             commands.extend(self._set_config(every, each))
+            # as the pre-existing VLAN are now configured by
+            # above set_config call, deleting the respective
+            # VLAN entry from the want_local list
             del want_local[count]
+
+        # Iterating through want_local list which now only have new VLANs to be
+        # configured
         for each in want_local:
             commands.extend(self._set_config(each, dict()))
 
