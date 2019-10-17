@@ -146,16 +146,22 @@ class Vlans(ConfigBase):
         """
         commands = []
 
+        want_local = want
         for each in have:
-            for every in want:
+            count = 0
+            for every in want_local:
                 if each['vlan_id'] == every['vlan_id']:
                     break
+                count += 1
             else:
                 # We didn't find a matching desired state, which means we can
                 # pretend we recieved an empty desired state.
                 commands.extend(self._clear_config(every, each, state))
                 continue
             commands.extend(self._set_config(every, each))
+            del want_local[count]
+        for each in want_local:
+            commands.extend(self._set_config(each, dict()))
 
         return commands
 
