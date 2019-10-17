@@ -33,10 +33,6 @@
     assert:
       that:
         - "replaced['requests']|symmetric_difference(result['requests']) == []"
-
-  - name: Assert that before dicts were correctly generated
-    assert:
-      that:
         - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.before) == []"
 
   - exos_facts:
@@ -46,9 +42,6 @@
     assert:
       that:
         - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.after) == []"
-
-  - assert:
-      that:
         - "config|difference(ansible_facts.network_resources.l2_interfaces) == []"
 
   - name: Replace L2 interface configuration with provided configuration (IDEMPOTENT)
@@ -67,7 +60,4 @@
     assert:
       that:
         - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.before) == []"
-
-  - assert:
-      that:
         - "config|difference(ansible_facts.network_resources.l2_interfaces) == []"

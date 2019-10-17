@@ -36,14 +36,10 @@
       state: overridden
     register: result
 
-  - name: Assert that correct set of requests were generated
+  - name: Assert that correct set of results were generated
     assert:
       that:
         - "overridden['requests']|symmetric_difference(result['requests']) == []"
-
-  - name: Assert that before dicts were correctly generated
-    assert:
-      that:
         - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.before) == []"
 
   - exos_facts:
@@ -77,7 +73,4 @@
     assert:
       that:
         - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.before) == []"
-
-  - assert:
-      that:
         - "expected_config|difference(ansible_facts.network_resources.l2_interfaces) == []"
