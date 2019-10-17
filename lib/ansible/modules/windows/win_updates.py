@@ -215,7 +215,7 @@ updates:
         id:
             description: Internal Windows Update GUID.
             returned: always
-            type: str (guid)
+            type: str
             sample: "fb95c1c8-de23-4089-ae29-fd3351d55421"
         installed:
             description: Was the update successfully installed.

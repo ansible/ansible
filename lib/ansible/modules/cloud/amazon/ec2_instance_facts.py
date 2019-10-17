@@ -262,18 +262,18 @@ instances:
                 groups:
                     description: One or more security groups.
                     returned: always
-                    type: complex
+                    type: list of complex
                     contains:
-                        - group_id:
-                              description: The ID of the security group.
-                              returned: always
-                              type: str
-                              sample: sg-abcdef12
-                          group_name:
-                              description: The name of the security group.
-                              returned: always
-                              type: str
-                              sample: mygroup
+                        group_id:
+                            description: The ID of the security group.
+                            returned: always
+                            type: str
+                            sample: sg-abcdef12
+                        group_name:
+                            description: The name of the security group.
+                            returned: always
+                            type: str
+                            sample: mygroup
                 ipv6_addresses:
                     description: One or more IPv6 addresses associated with the network interface.
                     returned: always
@@ -307,38 +307,38 @@ instances:
                 private_ip_addresses:
                     description: The private IPv4 addresses associated with the network interface.
                     returned: always
-                    type: complex
+                    type: list of complex
                     contains:
-                        - association:
-                              description: The association information for an Elastic IP address (IPv4) associated with the network interface.
-                              returned: always
-                              type: complex
-                              contains:
-                                  ip_owner_id:
-                                      description: The ID of the owner of the Elastic IP address.
-                                      returned: always
-                                      type: str
-                                      sample: amazon
-                                  public_dns_name:
-                                      description: The public DNS name.
-                                      returned: always
-                                      type: str
-                                      sample: ""
-                                  public_ip:
-                                      description: The public IP address or Elastic IP address bound to the network interface.
-                                      returned: always
-                                      type: str
-                                      sample: 1.2.3.4
-                          primary:
-                              description: Indicates whether this IPv4 address is the primary private IP address of the network interface.
-                              returned: always
-                              type: bool
-                              sample: true
-                          private_ip_address:
-                              description: The private IPv4 address of the network interface.
-                              returned: always
-                              type: str
-                              sample: 10.0.0.1
+                        association:
+                            description: The association information for an Elastic IP address (IPv4) associated with the network interface.
+                            returned: always
+                            type: complex
+                            contains:
+                                ip_owner_id:
+                                    description: The ID of the owner of the Elastic IP address.
+                                    returned: always
+                                    type: str
+                                    sample: amazon
+                                public_dns_name:
+                                    description: The public DNS name.
+                                    returned: always
+                                    type: str
+                                    sample: ""
+                                public_ip:
+                                    description: The public IP address or Elastic IP address bound to the network interface.
+                                    returned: always
+                                    type: str
+                                    sample: 1.2.3.4
+                        primary:
+                            description: Indicates whether this IPv4 address is the primary private IP address of the network interface.
+                            returned: always
+                            type: bool
+                            sample: true
+                        private_ip_address:
+                            description: The private IPv4 address of the network interface.
+                            returned: always
+                            type: str
+                            sample: 10.0.0.1
                 source_dest_check:
                     description: Indicates whether source/destination checking is enabled.
                     returned: always
@@ -392,18 +392,18 @@ instances:
         product_codes:
             description: One or more product codes.
             returned: always
-            type: complex
+            type: list of complex
             contains:
-                - product_code_id:
-                      description: The product code.
-                      returned: always
-                      type: str
-                      sample: aw0evgkw8ef3n2498gndfgasdfsd5cce
-                  product_code_type:
-                      description: The type of product code.
-                      returned: always
-                      type: str
-                      sample: marketplace
+                product_code_id:
+                    description: The product code.
+                    returned: always
+                    type: str
+                    sample: aw0evgkw8ef3n2498gndfgasdfsd5cce
+                product_code_type:
+                    description: The type of product code.
+                    returned: always
+                    type: str
+                    sample: marketplace
         public_dns_name:
             description: The public DNS name assigned to the instance.
             returned: always
@@ -427,18 +427,18 @@ instances:
         security_groups:
             description: One or more security groups for the instance.
             returned: always
-            type: complex
+            type: list of complex
             contains:
-                - group_id:
-                      description: The ID of the security group.
-                      returned: always
-                      type: str
-                      sample: sg-0123456
-                - group_name:
-                      description: The name of the security group.
-                      returned: always
-                      type: str
-                      sample: my-security-group
+                group_id:
+                    description: The ID of the security group.
+                    returned: always
+                    type: str
+                    sample: sg-0123456
+                group_name:
+                    description: The name of the security group.
+                    returned: always
+                    type: str
+                    sample: my-security-group
         source_dest_check:
             description: Indicates whether source/destination checking is enabled.
             returned: always

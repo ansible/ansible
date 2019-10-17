@@ -153,9 +153,9 @@ stat:
             type: str
             sample: '/path/to/file'
         mode:
-            description: Unix permissions of the file in octal
+            description: Unix permissions of the file in octal representation as a string
             returned: success, path exists and user can read stats
-            type: octal
+            type: str
             sample: 1755
         isdir:
             description: Tells you if the path is a directory
