@@ -119,6 +119,8 @@ options:
            When reconfigure MAC address, VM should be in powered off state.'
      - ' - C(connected) (bool): Indicates that virtual network adapter connects to the associated virtual machine.'
      - ' - C(start_connected) (bool): Indicates that virtual network adapter starts with associated virtual machine powers on.'
+     - ' - C(directpath_io) (bool): If set, Universal Pass-Through (UPT or DirectPath I/O) will be enabled on the network adapter.
+           UPT is only compatible for Vmxnet3 adapter. Clients can set this property enabled or disabled if ethernet virtual device is Vmxnet3.'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -194,6 +196,17 @@ network_data:
             "connected": true,
             "start_connected": true,
         },
+        "1": {
+            "label": "Network Adapter 2",
+            "name": "VM Network",
+            "device_type": "VMXNET3",
+            "directpath_io": true,
+            "mac_addr": "00:50:56:8d:93:8c",
+            "unit_number": 8,
+            "start_connected": true,
+            "wake_on_lan": true,
+            "connected": true,
+        }
     }
 """
 
@@ -300,12 +313,14 @@ class PyVmomiHelper(PyVmomi):
         nic_index = 0
         for nic in vm_obj.config.hardware.device:
             nic_type = None
+            directpath_io = 'N/A'
             if isinstance(nic, vim.vm.device.VirtualPCNet32):
                 nic_type = 'PCNet32'
             elif isinstance(nic, vim.vm.device.VirtualVmxnet2):
                 nic_type = 'VMXNET2'
             elif isinstance(nic, vim.vm.device.VirtualVmxnet3):
                 nic_type = 'VMXNET3'
+                directpath_io = True
             elif isinstance(nic, vim.vm.device.VirtualE1000):
                 nic_type = 'E1000'
             elif isinstance(nic, vim.vm.device.VirtualE1000e):
@@ -323,6 +338,7 @@ class PyVmomiHelper(PyVmomi):
                     allow_guest_ctl=nic.connectable.allowGuestControl,
                     connected=nic.connectable.connected,
                     start_connected=nic.connectable.startConnected,
+                    directpath_io=directpath_io
                 )
                 nic_index += 1
 
@@ -432,6 +448,14 @@ class PyVmomiHelper(PyVmomi):
                                 nic_device.addressType = 'manual'
                                 nic_device.macAddress = network['manual_mac']
                                 self.change_detected = True
+                            if 'directpath_io' in network:
+                                if isinstance(nic_device, vim.vm.device.VirtualVmxnet3):
+                                    if nic_device.uptCompatibilityEnabled != network['directpath_io']:
+                                        nic_device.uptCompatibilityEnabled = network['directpath_io']
+                                        self.change_detected = True
+                                else:
+                                    self.module.fail_json(msg='UPT is only compatible for Vmxnet3 adapter.'
+                                                          + ' Clients can set this property enabled or disabled if ethernet virtual device is Vmxnet3.')
                             if self.change_detected:
                                 self.config_spec.deviceChange.append(nic_spec)
                         elif network['state'].lower() == 'absent':
