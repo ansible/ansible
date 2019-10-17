@@ -5,6 +5,30 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.14
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2019-10-17
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test defaults to redacting sensitive values (disable with the ``--no-redact`` option)
+
+Bugfixes
+--------
+
+- **SECURITY** - CVE-2019-14846 - Several Ansible plugins could disclose aws credentials in log files.  inventory/aws_ec2.py, inventory/aws_rds.py, lookup/aws_account_attribute.py, and lookup/aws_secret.py, lookup/aws_ssm.py use the boto3 library from the Ansible process. The boto3 library logs credentials at log level DEBUG.  If Ansible's logging was enabled (by setting LOG_PATH to a value) Ansible would set the global log level to DEBUG.  This was inherited by boto and would then log boto credentials to the file specified by LOG_PATH.  This did not affect aws ansible modules as those are executed in a separate process.  This has been fixed by switching to log level INFO
+- **security issue** - Convert CLI provided passwords to text initially, to prevent unsafe context being lost when converting from bytes->text during post processing of PlayContext. This prevents CLI provided passwords from being incorrectly templated (CVE-2019-14856)
+
+- **security issue** - properly hide parameters marked with ``no_log`` in suboptions when invalid parameters are passed to the module (CVE-2019-14858)
+- ACI modules - Fix a whitespace issue in filters for ACI 4.2 strict validation
+
 v2.7.13
 =======
 

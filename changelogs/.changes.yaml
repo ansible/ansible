@@ -656,6 +656,16 @@ releases:
     - dont_template_passwords_from_prompt.yml
     - v2.7.13_summary.yaml
     release_date: '2019-08-15'
+  2.7.14:
+    codename: In the Light
+    fragments:
+    - aci-42-filter-whitespace.yaml
+    - ansible-test-redact.yml
+    - boto-logging-credentials.yml
+    - dont-template-cli-passwords.yml
+    - no-log-sub-options-invalid-parameter.yaml
+    - v2.7.14_summary.yaml
+    release_date: '2019-10-17'
   2.7.2:
     codename: In the Light
     fragments:
