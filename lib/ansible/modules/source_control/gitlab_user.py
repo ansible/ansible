@@ -233,13 +233,15 @@ class GitLabUser(object):
 
         # Assign ssh keys
         if options['sshkey_name'] and options['sshkey_file']:
-            changed = changed or self.addSshKeyToUser(user, {
-                'name': options['sshkey_name'],
-                'file': options['sshkey_file']})
+            key_changed = self.addSshKeyToUser(user, {
+              'name': options['sshkey_name'],
+              'file': options['sshkey_file']})
+            changed = changed or key_changed
 
         # Assign group
         if options['group_path']:
-            changed = changed or self.assignUserToGroup(user, options['group_path'], options['access_level'])
+            group_changed = self.assignUserToGroup(user, options['group_path'], options['access_level'])
+            changed = changed or group_changed
 
         self.userObject = user
         if changed:
