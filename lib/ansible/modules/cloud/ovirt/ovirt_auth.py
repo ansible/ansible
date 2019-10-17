@@ -169,7 +169,7 @@ ovirt_auth:
         ca_file:
             description: CA file, which is used to verify SSL/TLS connection.
             returned: success
-            type: path
+            type: str
             sample: "ca.pem"
         insecure:
             description: Flag indicating if insecure connection is used.

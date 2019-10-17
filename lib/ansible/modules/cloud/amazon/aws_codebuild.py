@@ -257,11 +257,11 @@ project:
     cache:
       description: Cache settings for the build project.
       returned: when configured
-      type: complex
+      type: dict
     environment:
       description: Environment settings for the build
       returned: always
-      type: complex
+      type: dict
     service_role:
       description: IAM role to be used during build to access other AWS services.
       returned: always

@@ -105,7 +105,7 @@ cluster:
       created_at:
           description:
             - The time in UTC at which the cluster is created
-          type: datetime
+          type: str
           sample: "2018-08-16T10:29:45+00:00"
       create_timeout:
           description:
