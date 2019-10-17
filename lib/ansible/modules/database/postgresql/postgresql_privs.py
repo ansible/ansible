@@ -389,6 +389,7 @@ EXAMPLES = r'''
     role: reader
     target_roles: librarian
 
+# Available since version 2.10
 - name: Grant type privileges for pg_catalog.numeric type to alice
   postgresql_privs:
     type: type
