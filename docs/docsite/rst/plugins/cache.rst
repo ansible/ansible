@@ -50,8 +50,9 @@ A custom cache plugin is enabled by dropping it into a ``cache_plugins`` directo
 Enabling Inventory Cache Plugins
 --------------------------------
 
-Inventory may be cached using a file-based cache plugin (like jsonfile). Check the specific inventory plugin to see if it supports caching. Cache plugins inside a collection are not supported for caching inventory.
-If an inventory-specific cache plugin is not specified Ansible will fall back to caching inventory with the fact cache plugin options.
+Prior to Ansible 2.8, inventory plugins that support caching could use file-based cache plugins, such as jsonfile, pickle, and yaml. For Ansible 2.8 and later all cache plugins shipped with Ansible are supported. Check the specific inventory plugin to see if it supports caching. To cache inventory with a custom plugin in your plugin path, take a look at the developer's guide for cache plugins. Cache plugins inside a collection are not supported for caching inventory.
+
+Also since Ansible 2.8, if inventory-specific cache plugin settings are not specified Ansible will fall back to caching inventory with the fact cache plugin options.
 
 The inventory cache is disabled by default. You may enable it via environment variable:
 
