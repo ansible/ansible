@@ -120,7 +120,7 @@ options:
      - ' - C(connected) (bool): Indicates that virtual network adapter connects to the associated virtual machine.'
      - ' - C(start_connected) (bool): Indicates that virtual network adapter starts with associated virtual machine powers on.'
      - ' - C(directpath_io) (bool): If set, Universal Pass-Through (UPT or DirectPath I/O) will be enabled on the network adapter.
-           UPT is only compatible for Vmxnet3 adapter. Clients can set this property enabled or disabled if ethernet virtual device is Vmxnet3.'
+           UPT is only compatible for Vmxnet3 adapter.'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -189,6 +189,7 @@ network_data:
             "label": "Network Adapter 1",
             "name": "VM Network",
             "device_type": "E1000E",
+            "directpath_io": "N/A",
             "mac_addr": "00:50:56:89:dc:05",
             "unit_number": 7,
             "wake_onlan": false,
