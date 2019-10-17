@@ -38,7 +38,7 @@
     - ca
     - mongo
     - mongo-client
-  when: mongo_ssl = True
+  when: mongo_ssl == True
 
 - name: Generate CSRs
   openssl_csr:
@@ -52,7 +52,7 @@
     - ca
     - mongo
     - mongo-client
-  when: mongo_ssl = True
+  when: mongo_ssl == True
 
 - name: Generate a Self Signed OpenSSL CA certificate
   openssl_certificate:
@@ -60,7 +60,7 @@
     privatekey_path: "{{ remote_tmp_dir }}/ca_key.pem"
     csr_path: "{{ remote_tmp_dir }}/ca.csr"
     provider: selfsigned
-  when: mongo_ssl = True
+  when: mongo_ssl == True
 
 - name: Generate an OpenSSL certificate signed with your own CA certificate
   openssl_certificate:
@@ -72,7 +72,7 @@
   with_items:
     - mongo
     - mongo-client
-  when: mongo_ssl = True
+  when: mongo_ssl == True
 
 - name: create cert chains
   shell: "cat {{ item }}.pem {{ item }}_key.pem > {{ item }}-chain.pem"
@@ -81,7 +81,7 @@
   with_items:
     - mongo
     - mongo-client
-  when: mongo_ssl = True
+  when: mongo_ssl == True
 
 - name: Spawn mongod process without auth
   command: mongod --shardsvr --smallfiles {{ mongod_storage_engine_opts }} --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork
@@ -102,14 +102,14 @@
   args:
     chdir: "{{ remote_tmp_dir }}"
   with_items: "{{ mongodb_nodes | sort }}"
-  when: mongod_auth == False AND mongo_ssl = True
+  when: mongod_auth == False AND mongo_ssl == True
 
 - name: Spawn mongod process with auth and with SSL
   command: mongod --sslMode requireSSL --sslAllowConnectionsWithoutCertificates --sslCAFile {{ remote_tmp_dir }}/ca.pem --sslPEMKeyFile  {{ remote_tmp_dir }}/mongo-chain.pem --sslAllowInvalidHostnames --shardsvr --smallfiles {{ mongod_storage_engine_opts }} --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork --auth --keyFile my.key
   args:
     chdir: "{{ remote_tmp_dir }}"
   with_items: "{{ mongodb_nodes | sort }}"
-  when: mongod_auth == True AND mongo_ssl = True
+  when: mongod_auth == True AND mongo_ssl == True
 
 - name: Wait for mongod to start responding
   wait_for:
