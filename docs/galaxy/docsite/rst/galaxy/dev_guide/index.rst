@@ -4,7 +4,7 @@
 Developer Guide
 ***************
 
-You can host collections and roles on Galaxy to share with the Ansible community. Galaxy content is formated in pre-packaged units of work such as `roles <playbooks_reuse_roles>`_, and new in Galaxy 3.2, `collections <collections>`_.
+Use Galaxy to jump-start your automation project with great content from the Ansible community. Galaxy provides pre-packaged units of work such as :ref:`roles <ansible:playbooks_reuse_roles>`, and new in Galaxy 3.2, :ref:`collections <ansible:collections>`.
 You can create roles for provisioning infrastructure, deploying applications, and all of the tasks you do everyday. Taking this a step further, you can create collections which provide a comprehensive package of automation that may include multiple playbooks, roles, modules, and plugins.
 
 .. toctree::
@@ -14,7 +14,7 @@ You can create roles for provisioning infrastructure, deploying applications, an
    creating_roles
 
 .. seealso::
-  `collections <collections>`_
-    Sharable collections of modules, playbooks and roles
-  `roles <playbooks_reuse_roles>`_
-    Reusable tasks, handlers, and other files in a known directory structure
+  :ref:`collections <ansible:collections>`
+     Sharable collections of modules, playbooks and roles
+  :ref:`roles <ansible:playbooks_reuse_roles>`
+     Reusable tasks, handlers, and other files in a known directory structure

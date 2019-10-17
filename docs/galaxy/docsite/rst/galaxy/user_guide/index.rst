@@ -7,7 +7,7 @@ User Guide
 
 :dfn:`Ansible Galaxy` refers to the `Galaxy <https://galaxy.ansible.com>`_  website, a free site for finding, downloading, and sharing community developed roles.
 
-Use Galaxy to jump-start your automation project with great content from the Ansible community. Galaxy provides pre-packaged units of work such as `roles <ansible:playbooks_reuse_roles>`_, and new in Galaxy 3.2, `collections <ansible:collections>`_.
+Use Galaxy to jump-start your automation project with great content from the Ansible community. Galaxy provides pre-packaged units of work such as :ref:`roles <ansible:playbooks_reuse_roles>`, and new in Galaxy 3.2, :ref:`collections <ansible:collections>`.
 You can find roles for provisioning infrastructure, deploying applications, and all of the tasks you do everyday. The collection format provides a comprehensive package of automation that may include multiple playbooks, roles, modules, and plugins.
 
 .. toctree::
@@ -20,7 +20,7 @@ You can find roles for provisioning infrastructure, deploying applications, and 
 
 
 .. seealso::
-  `collections <ansible:collections>`_
+  :ref:`collections <ansible:collections>`
     Sharable collections of modules, playbooks and roles
-  `roles <ansible:playbooks_reuse_roles>`_
+  :ref:`roles <ansible:playbooks_reuse_roles>`
     Reusable tasks, handlers, and other files in a known directory structure
