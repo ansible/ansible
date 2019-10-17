@@ -1,0 +1,49 @@
+---
+merged:
+  requests:
+    - data: '{"openconfig-lldp:config": {"enabled": false, "name": "1"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=1/config
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "2"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=2/config
+
+replaced:
+  requests:
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "3"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=3/config
+
+overridden:
+  requests:
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "5"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=5/config
+    - data: '{"openconfig-lldp:config": {"enabled": false, "name": "6"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=6/config
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "2"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=2/config
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "3"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=3/config
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "4"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=4/config
+
+deleted:
+  requests_1:
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "2"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=2/config
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "3"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=3/config
+  requests_2:
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "4"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=4/config
+    - data: '{"openconfig-lldp:config": {"enabled": true, "name": "5"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=5/config
