@@ -161,6 +161,7 @@ hcloud_floating_ip:
             type: bool
             returned: always
             sample: false
+            version_added: "2.10"
         labels:
             description: User-defined labels (key-value pairs)
             type: dict
