@@ -45,7 +45,7 @@
     state: latest
   loop: "{{ mysql_packages }}"
   when: ansible_pkg_mgr == 'yum'
-  notify: remove packages
+  notify: cleanup mysql
 
 - name: install mysqldb_test rpm dependencies
   dnf:
@@ -54,7 +54,7 @@
     install_weak_deps: False  # mariadb-server has a weak dep on python2 which break Python 3 test environments
   loop: "{{ mysql_packages }}"
   when: ansible_pkg_mgr == 'dnf'
-  notify: remove packages
+  notify: cleanup mysql
 
 - name: install mysqldb_test debian dependencies
   apt:
@@ -62,7 +62,7 @@
     state: latest
   loop: "{{ mysql_packages }}"
   when: ansible_pkg_mgr == 'apt'
-  notify: remove packages
+  notify: cleanup mysql
 
 - name: install mysqldb_test FreeBSD dependencies
   pkgng:
@@ -70,14 +70,16 @@
     state: present
   loop: "{{ mysql_packages }}"
   when: ansible_os_family == "FreeBSD"
-  notify: remove packages
+  notify: cleanup mysql
 
 - name: install mysql-python package via pip (FreeBSD)
   pip:
     name: mysql-python
     state: present
   when: ansible_os_family == "FreeBSD"
-  notify: remove pip packages
+  notify:
+    - cleanup mysql
+    - remove pip packages
 
 - name: enable mysql-server service (FreeBSD)
   lineinfile:
