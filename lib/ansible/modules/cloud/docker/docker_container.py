@@ -723,6 +723,7 @@ options:
   trust_image_content:
     description:
       - If C(yes), skip image verification.
+      - The option has never been used by the module. It will be removed in Ansible 2.14.
     type: bool
     default: no
   tmpfs:
@@ -3264,7 +3265,7 @@ def main():
         stop_timeout=dict(type='int'),
         sysctls=dict(type='dict'),
         tmpfs=dict(type='list', elements='str'),
-        trust_image_content=dict(type='bool', default=False),
+        trust_image_content=dict(type='bool', default=False, removed_in_version='2.14'),
         tty=dict(type='bool', default=False),
         ulimits=dict(type='list', elements='str'),
         user=dict(type='str'),

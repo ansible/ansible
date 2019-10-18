@@ -1,0 +1,2 @@
+deprecated_features:
+- "docker_container - the ``trust_image_content`` option is now deprecated and will be removed in Ansible 2.14. It has never been used by the module."
