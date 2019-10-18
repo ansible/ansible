@@ -98,7 +98,7 @@ EXAMPLES = '''
   gitlab_group:
     api_url: https://gitlab.example.com/
     validate_certs: True
-    api_usersername: dj-wasabi
+    api_username: dj-wasabi
     api_password: "MySecretPassword"
     name: my_first_group
     path: my_first_group
@@ -109,7 +109,7 @@ EXAMPLES = '''
   gitlab_group:
     api_url: https://gitlab.example.com/
     validate_certs: True
-    api_usersername: dj-wasabi
+    api_username: dj-wasabi
     api_password: "MySecretPassword"
     name: my_first_group
     path: my_first_group
