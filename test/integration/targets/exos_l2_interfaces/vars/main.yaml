@@ -1,0 +1,44 @@
+---
+merged:
+  requests:
+    - data: '{"openconfig-vlan:config": {"interface-mode": "ACCESS", "access-vlan": 20}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=1/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config
+    - data: '{"openconfig-vlan:config": {"trunk-vlans": [20, 30], "interface-mode": "TRUNK", "native-vlan": 10}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=2/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config
+
+replaced:
+  requests:
+    - data: '{"openconfig-vlan:config": {"trunk-vlans": [40], "interface-mode": "TRUNK", "native-vlan": 30}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=2/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config
+    - data: '{"openconfig-vlan:config": {"interface-mode": "ACCESS", "access-vlan": 10}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=3/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config
+
+overridden:
+  requests:
+    - data: '{"openconfig-vlan:config": {"trunk-vlans": [20, 30], "interface-mode": "TRUNK", "native-vlan": 10}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=1/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config
+    - data: '{"openconfig-vlan:config": {"interface-mode": "ACCESS", "access-vlan": 1}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=2/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config
+    - data: '{"openconfig-vlan:config": {"interface-mode": "ACCESS", "access-vlan": 1}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=3/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config
+
+deleted:
+  requests_1:
+    - data: '{"openconfig-vlan:config": {"interface-mode": "ACCESS", "access-vlan": 1}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=2/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config
+    - data: '{"openconfig-vlan:config": {"interface-mode": "ACCESS", "access-vlan": 1}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=3/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config
+
+  requests_2:
+    - data: '{"openconfig-vlan:config": {"interface-mode": "ACCESS", "access-vlan": 1}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=1/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config
