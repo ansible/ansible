@@ -419,7 +419,7 @@ def main():
                            supports_check_mode=True)
 
     try:
-        result = module.edit_config(config_filter='| section bgp')
+        result = module.edit_config(config_filter='| section ^router bgp')
     except Exception as exc:
         module.fail_json(msg=to_text(exc))
 
