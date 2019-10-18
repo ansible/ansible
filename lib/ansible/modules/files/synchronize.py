@@ -154,6 +154,7 @@ options:
       - Specify additional rsync options by passing in an array.
       - Note that an empty string in C(rsync_opts) will end up transfer the current working directory.
     type: list
+    elements: str
     default:
     version_added: "1.6"
   partial:
@@ -177,6 +178,7 @@ options:
     description:
       - Add a destination to hard link against during the rsync.
     type: list
+    elements: path
     default:
     version_added: "2.5"
 notes:

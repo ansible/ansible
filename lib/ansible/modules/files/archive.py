@@ -30,6 +30,7 @@ options:
     description:
       - Remote absolute path, glob, or list of paths or globs for the file or files to compress or archive.
     type: list
+    elements: path
     required: true
   format:
     description:
@@ -47,6 +48,7 @@ options:
     description:
       - Remote absolute path, glob, or list of paths or globs for the file or files to exclude from the archive.
     type: list
+    elements: path
     version_added: '2.4'
   force_archive:
     version_added: '2.8'

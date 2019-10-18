@@ -62,6 +62,7 @@ options:
     description:
       - List the directory and file entries that you would like to exclude from the unarchive action.
     type: list
+    elements: path
     version_added: "2.1"
   keep_newer:
     description:
@@ -75,6 +76,7 @@ options:
       - Each space-separated command-line option should be a new element of the array. See examples.
       - Command-line options with multiple elements must use multiple lines in the array, one for each element.
     type: list
+    elements: str
     default: ""
     version_added: "2.1"
   remote_src:

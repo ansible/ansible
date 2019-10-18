@@ -45,6 +45,7 @@ options:
               patterns contain a comma, make sure to put them in a list to avoid splitting the patterns
               in undesirable ways.
         type: list
+        elements: str
         aliases: [ pattern ]
     excludes:
         description:
@@ -52,6 +53,7 @@ options:
             - Items whose basenames match an C(excludes) pattern are culled from C(patterns) matches.
               Multiple patterns can be specified using a list.
         type: list
+        elements: str
         aliases: [ exclude ]
         version_added: "2.5"
     contains:
@@ -62,6 +64,7 @@ options:
         description:
             - List of paths of directories to search. All paths must be fully qualified.
         type: list
+        elements: path
         required: true
         aliases: [ name, path ]
     file_type:

@@ -44,6 +44,7 @@ options:
     - A list of field names for every column.
     - This is needed if the CSV does not have a header.
     type: list
+    elements: str
   unique:
     description:
     - Whether the C(key) used is expected to be unique.

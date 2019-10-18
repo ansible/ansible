@@ -51,6 +51,7 @@ options:
     - A list of files to extract from the image.
     - Extracting directories does not work.
     type: list
+    elements: path
     required: yes
   force:
     description:
