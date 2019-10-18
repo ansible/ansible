@@ -88,7 +88,7 @@ options:
 EXAMPLES = '''
 - name: "Delete GitLab Group"
   gitlab_group:
-    api_url: https://gitlab.example.com/
+    server_url: https://gitlab.example.com/
     api_token: "{{ access_token }}"
     validate_certs: False
     name: my_first_group
@@ -96,7 +96,7 @@ EXAMPLES = '''
 
 - name: "Create GitLab Group"
   gitlab_group:
-    api_url: https://gitlab.example.com/
+    server_url: https://gitlab.example.com/
     validate_certs: True
     api_username: dj-wasabi
     api_password: "MySecretPassword"
@@ -107,7 +107,7 @@ EXAMPLES = '''
 # The group will by created at https://gitlab.dj-wasabi.local/super_parent/parent/my_first_group
 - name: "Create GitLab SubGroup"
   gitlab_group:
-    api_url: https://gitlab.example.com/
+    server_url: https://gitlab.example.com/
     validate_certs: True
     api_username: dj-wasabi
     api_password: "MySecretPassword"
