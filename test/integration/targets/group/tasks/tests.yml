@@ -193,6 +193,15 @@
     that:
     - not delete_group_again is changed
 
+- name: Ensure lgroupadd is present
+  action: "{{ ansible_facts.pkg_mgr }}"
+  args:
+    name: libuser
+    state: present
+  when: ansible_facts.system in ['Linux']
+  tags:
+    - user_test_local_mode
+
 # https://github.com/ansible/ansible/issues/56481
 - block:
   - name: Test duplicate GID with local=yes
@@ -252,7 +261,7 @@
         - not create_local_group_gid_again is changed
         - create_local_group_gid_again.gid | int == 1337 | int
   always:
-    - name: Cleanup create local group with a gid 
+    - name: Cleanup create local group with a gid
       group:
         name: group1_local_test
         state: absent
