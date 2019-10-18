@@ -14,7 +14,7 @@ import pytest
 
 from units.compat.mock import MagicMock
 from ansible.module_utils import basic
-from ansible.module_utils.common import notice
+from ansible.module_utils.common import warnings
 from ansible.module_utils.six import integer_types
 from ansible.module_utils.six.moves import builtins
 
@@ -239,7 +239,7 @@ class TestComplexArgSpecs:
         """Test that the complex argspec issues a warning if we specify an option both with its canonical name and its alias"""
         am = basic.AnsibleModule(**complex_argspec)
         assert isinstance(am.params['foo'], str)
-        assert 'Both option foo and its alias dup are set.' in notice.global_warnings
+        assert 'Both option foo and its alias dup are set.' in warnings.global_warnings
         assert am.params['foo'] == 'hello2'
 
     @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bam': 'test'}], indirect=['stdin'])
@@ -339,8 +339,8 @@ class TestComplexArgSpecs:
         """Test a deprecated alias"""
         am = basic.AnsibleModule(**complex_argspec)
 
-        assert "Alias 'zodraz' is deprecated." in notice.global_deprecations[0]['msg']
-        assert notice.global_deprecations[0]['version'] == '9.99'
+        assert "Alias 'zodraz' is deprecated." in warnings.global_deprecations[0]['msg']
+        assert warnings.global_deprecations[0]['version'] == '9.99'
 
 
 class TestComplexOptions:
