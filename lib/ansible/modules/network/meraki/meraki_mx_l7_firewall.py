@@ -250,12 +250,12 @@ data:
                 id:
                     description: URI of application category.
                     returned: success
-                    type: string
+                    type: str
                     sample: Email
                 name:
                     description: Descriptive name of application category.
                     returned: success
-                    type: string
+                    type: str
                     sample: layer7/category/1
 '''
 

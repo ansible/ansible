@@ -477,7 +477,8 @@ instances:
                 groups:
                     description: One or more security groups.
                     returned: always
-                    type: list of complex
+                    type: list
+                    elements: dict
                     contains:
                         group_id:
                             description: The ID of the security group.
@@ -522,7 +523,8 @@ instances:
                 private_ip_addresses:
                     description: The private IPv4 addresses associated with the network interface.
                     returned: always
-                    type: list of complex
+                    type: list
+                    elements: dict
                     contains:
                         association:
                             description: The association information for an Elastic IP address (IPv4) associated with the network interface.
@@ -607,7 +609,8 @@ instances:
         product_codes:
             description: One or more product codes.
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
             contains:
                 product_code_id:
                     description: The product code.
@@ -642,7 +645,8 @@ instances:
         security_groups:
             description: One or more security groups for the instance.
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
             contains:
                 group_id:
                     description: The ID of the security group.
