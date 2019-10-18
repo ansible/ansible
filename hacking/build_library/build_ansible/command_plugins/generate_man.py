@@ -282,7 +282,7 @@ class GenerateMan(Command):
         cli_list = allvars.keys()
 
         doc_name_formats = {'man': '%s.1.rst.in',
-                            'rst': '%s.rst'}
+                            'rst': '%s-cli.rst'}
 
         for cli_name in cli_list:
 

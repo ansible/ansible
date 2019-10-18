@@ -1,4 +1,3 @@
-
 {# Support for Sphinx 1.3+ page_source_suffix, but don't break old builds. #}
 
 {% if page_source_suffix %}
@@ -38,17 +37,20 @@
     {% block breadcrumbs_aside %}
       <li class="wy-breadcrumbs-aside">
         {% if hasdoc(pagename) %}
-            {% if display_github %}
+          {% if display_github %}
             {% if check_meta and 'github_url' in meta %}
               <!-- User defined GitHub URL -->
               <a href="{{ meta['github_url'] }}" class="fa fa-github"> {{ _('Edit on GitHub') }}</a>
+            {% endif %}
+            {% if pagename.endswith('-cli') %}
+              <!-- Ansible CLI -->
+              <!-- Docs are generated via argsparser data. Please visit devel/lib/ansible/cli for more information.-->
+            {% elif pagename.endswith('_module') %}
+              <!-- Ansible Modules -->
+              <a href="https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/{{ theme_vcs_pageview_mode|default("blob") }}/{{ github_module_version }}{{ meta.get('source', '') }}?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="fa fa-github"> {{ _('Edit on GitHub') }}</a>
             {% else %}
-              <!-- Ansible-specific additions for modules etc -->
-                {% if pagename.endswith('_module') %}
-                  <a href="https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/{{ theme_vcs_pageview_mode|default("blob") }}/{{ github_module_version }}{{ meta.get('source', '') }}?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="fa fa-github"> {{ _('Edit on GitHub') }}</a>
-                {% elif (not 'list_of' in pagename) and (not 'category' in pagename) %}
-                  <a href="https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/{{ theme_vcs_pageview_mode|default("blob") }}/{{ github_version }}{{ conf_py_path }}{{ pagename }}{{ suffix }}?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="fa fa-github"> {{ _('Edit on GitHub') }}</a>
-                {% endif %}
+              <!-- Ansible General Documentation -->
+              <a href="https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/{{ theme_vcs_pageview_mode|default("blob") }}/{{ github_version }}{{ conf_py_path }}{{ pagename }}{{ suffix }}?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="fa fa-github"> {{ _('Edit on GitHub') }}</a>
             {% endif %}
           {% elif display_bitbucket %}
             {% if check_meta and 'bitbucket_url' in meta %}
