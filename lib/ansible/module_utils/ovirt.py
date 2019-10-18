@@ -102,7 +102,7 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
             ret = []
             for i in value:
                 if isinstance(i, sdk.Struct):
-                    if fetch_nested and i.href:
+                    if not nested and fetch_nested and i.href:
                         ret.append(resolve_href(i))
                     elif not nested:
                         ret.append(get_dict_of_struct(i))
