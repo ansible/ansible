@@ -6,6 +6,62 @@
   ignore_errors: yes
 
 - block:
+    
+  - name: Add fake config with 'bgp' string
+    ios_config:
+      match: none
+      replace: block
+      lines:
+      - "no ip access-list extended BGP_ACL"
+      - "ip access-list extended BGP_ACL"
+      - "permit tcp any any eq bgp"
+
+  - name: Try delete fake bgp config
+    register: result
+    ios_bgp:
+      operation: delete
+
+  - assert:
+      that:
+      - 'result.changed == false'
+
+  - name: Clean fake config with 'bgp' string
+    ios_config:
+      match: none
+      replace: block
+      lines:
+      - "no ip access-list extended BGP_ACL"
+
+  - name: Add fake bgp-like config
+    ios_config:
+      match: none
+      replace: block
+      lines:
+      - "no ip access-list extended BGP_ACL_2"
+      - "ip access-list extended BGP_ACL_2"
+      - "remark router bgp 64496"
+      - "remark neighbor 192.0.2.10 remote-as 64496"
+      - "remark neighbor 192.0.2.10 shutdown"
+      - "remark address-family ipv4"
+      - "remark neighbor 192.0.2.10 activate"
+      - "remark exit-address-family"
+      - "permit tcp any any eq bgp"
+
+  - name: Try delete fake bgp-like config
+    register: result
+    ios_bgp:
+      operation: delete
+
+  - assert:
+      that:
+      - 'result.changed == false'
+
+  - name: Clean fake bgp-like config
+    ios_config:
+      match: none
+      replace: block
+      lines:
+      - "no ip access-list extended BGP_ACL_2"
 
   - name: Configure BGP with AS 64496 and a router-id
     ios_bgp: &config
