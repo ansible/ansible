@@ -1,7 +1,7 @@
 Ansible documentation
 =====================
 
-This project hosts the source behind [docs.ansible.com](https://docs.ansible.com/)
+This project hosts the source behind [docs.ansible.com](https://docs.ansible.com/).
 
 To create clear, concise, consistent, useful materials on docs.ansible.com, please refer to the following information.
 
@@ -156,8 +156,9 @@ docs.ansible.com
 
 ##### ADDITIONAL INFORMATION
 
-NOTE: If you put 'closes <issuenumber> '  in the summary, ansible will automatically close the issue on merge.
 ```
+NOTE:
+If you put 'closes <issuenumber> '  in the summary, ansible will automatically close the issue on merge.
 7. Click **Create pull request**.
 
 
