@@ -166,7 +166,7 @@ proposed:
                 "state": "present"
             }
 existing:
-    description: k/v pairs of existing global LLDP configration
+    description: k/v pairs of existing global LLDP configuration.
     returned: always
     type: dict
     sample: {
@@ -174,7 +174,7 @@ existing:
                 "mdnstatus": "disabled"
             }
 end_state:
-    description: k/v pairs of global LLDP configration after module execution
+    description: k/v pairs of global LLDP configuration after module execution.
     returned: always
     type: dict
     sample: {
@@ -325,7 +325,7 @@ CE_NC_MERGE_GLOBAL_LLDP_CONFIG_TAIL = """
 
 
 class Lldp(object):
-    """Manage global lldp enable configration"""
+    """Manage global lldp enable configuration"""
 
     def __init__(self, argument_spec):
         self.spec = argument_spec
@@ -420,7 +420,7 @@ class Lldp(object):
         if self.bind_name:
             if (len(self.bind_name) < 1) or (len(self.bind_name) > 63):
                 self.module.fail_json(
-                    msg='Error: Bind_name length is beetween 1 and 63.')
+                    msg='Error: Bind_name length is between 1 and 63.')
 
     def init_module(self):
         """Init module object"""
@@ -753,7 +753,7 @@ class Lldp(object):
                         self.updates_cmd.append("lldp management-address bind interface %s" % self.bind_name)
 
     def work(self):
-        """Excute task"""
+        """Execute task"""
         self.check_params()
         self.get_existing()
         self.get_proposed()
