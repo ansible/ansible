@@ -273,6 +273,65 @@
       - floatingIP is changed
       - floatingIP.hcloud_floating_ip.server == "{{ main_server2.hcloud_server.name }}"
 
+- name: test update Floating IP delete protection
+  hcloud_floating_ip:
+    name: "{{ hcloud_floating_ip_name }}"
+    type: ipv4
+    delete_protection: true
+  register: floatingIP
+- name: verify update Floating IP delete protection
+  assert:
+    that:
+      - floatingIP is changed
+      - floatingIP.hcloud_floating_ip.delete_protection is sameas true
+
+- name: test update Floating IP delete protection idempotency
+  hcloud_floating_ip:
+    name: "{{ hcloud_floating_ip_name }}"
+    type: ipv4
+    delete_protection: true
+  register: floatingIP
+- name: verify update Floating IP delete protection idempotency
+  assert:
+    that:
+      - floatingIP is not changed
+      - floatingIP.hcloud_floating_ip.delete_protection is sameas true
+
+- name: test Floating IP without delete protection set to be idempotent
+  hcloud_floating_ip:
+    name: "{{ hcloud_floating_ip_name }}"
+    type: ipv4
+  register: floatingIP
+- name: verify  Floating IP without delete protection set to be idempotent
+  assert:
+    that:
+      - floatingIP is not changed
+      - floatingIP.hcloud_floating_ip.delete_protection is sameas true
+
+- name: test delete Floating IP fails if it is protected
+  hcloud_floating_ip:
+    name: "{{ hcloud_floating_ip_name }}"
+    state: "absent"
+  register: result
+  ignore_errors: yes
+- name: verify test delete floating ip
+  assert:
+    that:
+      - result is failed
+      - 'result.msg == "Floating IP deletion is protected"'
+
+- name: test update Floating IP delete protection
+  hcloud_floating_ip:
+    name: "{{ hcloud_floating_ip_name }}"
+    type: ipv4
+    delete_protection: false
+  register: floatingIP
+- name: verify update Floating IP delete protection
+  assert:
+    that:
+      - floatingIP is changed
+      - floatingIP.hcloud_floating_ip.delete_protection is sameas false
+
 - name: test delete floating ip
   hcloud_floating_ip:
     name: "{{ hcloud_floating_ip_name }}"

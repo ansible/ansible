@@ -92,6 +92,11 @@ hcloud_floating_ip_info:
             returned: always
             type: str
             sample: fsn1
+        delete_protection:
+            description: True if the Floating IP is protected for deletion
+            returned: always
+            type: bool
+            version_added: "2.10"
         labels:
             description: User-defined labels (key-value pairs)
             returned: always
@@ -130,6 +135,7 @@ class AnsibleHcloudFloatingIPInfo(Hcloud):
                     "server": to_native(server_name),
                     "home_location": to_native(floating_ip.home_location.name),
                     "labels": floating_ip.labels,
+                    "delete_protection": floating_ip.protection["delete"],
                 })
 
         return tmp
