@@ -28,6 +28,7 @@ options:
       - If you specify one or more instance IDs, only instances that have the specified IDs are returned.
     required: false
     version_added: 2.4
+    type: list
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
@@ -35,6 +36,7 @@ options:
         names and values are case sensitive.
     required: false
     default: {}
+    type: dict
 
 extends_documentation_fragment:
     - aws
@@ -279,13 +281,14 @@ instances:
                 ipv6_addresses:
                     description: One or more IPv6 addresses associated with the network interface.
                     returned: always
-                    type: complex
+                    type: list
+                    elements: dict
                     contains:
-                        - ipv6_address:
-                              description: The IPv6 address.
-                              returned: always
-                              type: str
-                              sample: "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+                        ipv6_address:
+                            description: The IPv6 address.
+                            returned: always
+                            type: str
+                            sample: "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
                 mac_address:
                     description: The MAC address.
                     returned: always
