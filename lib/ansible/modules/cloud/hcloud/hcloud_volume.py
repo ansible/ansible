@@ -163,6 +163,7 @@ hcloud_volume:
             type: bool
             returned: always
             sample: false
+            version_added: "2.10"
 """
 
 from ansible.module_utils.basic import AnsibleModule
