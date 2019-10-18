@@ -453,7 +453,7 @@ class GalaxyAPI:
 
         # Construct the appropriate URL per version
         if 'v3' in self.available_api_versions:
-            full_url = _urljoin(self.api_server, 'automation-hub', self.available_api_versions['v3'],
+            full_url = _urljoin(self.api_server, self.available_api_versions['v3'],
                                 'imports/collections', task_id, '/')
         else:
             # TODO: Should we have a trailing slash here?  I'm working with what the unittests ask
