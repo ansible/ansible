@@ -63,14 +63,15 @@ options:
         type: str
     comparison:
         description:
-          - Determines how the threshold value is compared.
+          - Determines how the threshold value is compared
+          - Symbolic comparison operators have been deprecated, and will be removed in 2.14
         required: false
         type: str
         choices:
-          - 'LessThanOrEqualToThreshold'
-          - 'LessThanThreshold'
-          - 'GreaterThanThreshold'
           - 'GreaterThanOrEqualToThreshold'
+          - 'GreaterThanThreshold'
+          - 'LessThanThreshold'
+          - 'LessThanOrEqualToThreshold'
           - '<='
           - '<'
           - '>='
@@ -241,8 +242,8 @@ def create_metric_alarm(connection, module):
                    '>=': 'GreaterThanOrEqualToThreshold',
                    '>': 'GreaterThanThreshold'}
     if comparison in ('<=', '<', '>', '>='):
-        warnings.append('Using the <=, <, > and >= operators for comparison has been deprecated. Please use LessThanOrEqualToThreshold, '
-                        'LessThanThreshold, GreaterThanThreshold or GreaterThanOrEqualToThreshold instead.')
+        module.deprecate('Using the <=, <, > and >= operators for comparison has been deprecated. Please use LessThanOrEqualToThreshold, '
+                        'LessThanThreshold, GreaterThanThreshold or GreaterThanOrEqualToThreshold instead.', version="2.14")
         comparison = comparisons[comparison]
 
     if not isinstance(dimensions, list):
@@ -271,7 +272,7 @@ def create_metric_alarm(connection, module):
             changed = True
             alarms = connection.describe_alarms(AlarmNames=[name])
         except ClientError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json_aws(e)
 
     else:
         changed = False
@@ -327,7 +328,7 @@ def create_metric_alarm(connection, module):
                                             OKActions=alarm['OKActions'],
                                             TreatMissingData=alarm['TreatMissingData'])
         except ClientError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json_aws(e)
 
     result = alarms['MetricAlarms'][0]
     module.exit_json(changed=changed, warnings=warnings,
@@ -362,7 +363,7 @@ def delete_metric_alarm(connection, module):
             connection.delete_alarms(AlarmNames=[name])
             module.exit_json(changed=True)
         except (ClientError) as e:
-            module.fail_json(msg=str(e))
+            module.fail_json_aws(e)
     else:
         module.exit_json(changed=False)
 

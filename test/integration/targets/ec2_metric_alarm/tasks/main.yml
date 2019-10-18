@@ -85,7 +85,6 @@
           - 'ec2_instance_metric_alarm.name  == alarm_info["MetricAlarms"][0].AlarmName'
           - 'ec2_instance_metric_alarm.metric== alarm_info["MetricAlarms"][0].MetricName'
           - 'ec2_instance_metric_alarm.namespace == alarm_info["MetricAlarms"][0].Namespace'
-          - 'ec2_instance_metric_alarm.statistic == alarm_info["MetricAlarms"][0].Statistic'
           - 'ec2_instance_metric_alarm.comparison == alarm_info["MetricAlarms"][0].ComparisonOperator'
           - 'ec2_instance_metric_alarm.threshold == alarm_info["MetricAlarms"][0].Threshold'
           - 'ec2_instance_metric_alarm.period == alarm_info["MetricAlarms"][0].Period'
@@ -93,6 +92,60 @@
           - 'ec2_instance_metric_alarm.evaluation_periods == alarm_info["MetricAlarms"][0].EvaluationPeriods'
           - 'ec2_instance_metric_alarm.description == alarm_info["MetricAlarms"][0].AlarmDescription'
           - 'ec2_instance_metric_alarm.treat_missing_data == alarm_info["MetricAlarms"][0].TreatMissingData'
+
+    - name: create ec2 metric alarm on ec2 instance (idempotent)
+      ec2_metric_alarm:
+        dimensions:
+          InstanceId: "{{ ec2_instance_results.instances[0].instance_id }}"
+        state: present
+        name: "{{ resource_prefix }}-cpu-low"
+        metric: "CPUUtilization"
+        namespace: "AWS/EC2"
+        treat_missing_data: missing
+        statistic: Average
+        comparison: "<="
+        threshold: 5.0
+        period: 300
+        evaluation_periods: 3
+        unit: "Percent"
+        description: "This will alarm when an instance's cpu usage average is lower than 5% for 15 minutes "
+      register: ec2_instance_metric_alarm_idempotent
+
+    - name: get info on alarms
+      command: aws cloudwatch describe-alarms --alarm-names {{ resource_prefix }}-cpu-low
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token | default('') }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+      register: alarm_info_query_idempotent
+
+    - name: convert it to an object
+      set_fact:
+        alarm_info_idempotent: "{{ alarm_info_query_idempotent.stdout |from_json }}"
+
+    - name: "Verify alarm does not register as changed after update"
+      assert:
+        that:
+          - not ec2_instance_metric_alarm_idempotent.changed
+
+    - name: "Verify alarm did not change after updating"
+      assert:
+        that:
+          - "alarm_info['MetricAlarms'][0]['{{item}}'] == alarm_info_idempotent['MetricAlarms'][0]['{{ item }}']"
+      with_items:
+          - AlarmArn
+          - Statistic
+          - AlarmName
+          - MetricName
+          - Namespace
+          - ComparisonOperator
+          - Threshold
+          - Period
+          - Unit
+          - EvaluationPeriods
+          - AlarmDescription
+          - TreatMissingData
 
     - name: update alarm
       ec2_metric_alarm:
@@ -111,7 +164,7 @@
         description: "This will alarm when an instance's cpu usage average is lower than 5% for 3 minutes "
       register: ec2_instance_metric_alarm_update
 
-    - name: "verify that an alarm registers as updated"
+    - name: "verify that alarm registers as updated"
       assert:
         that:
           - 'ec2_instance_metric_alarm.changed'
