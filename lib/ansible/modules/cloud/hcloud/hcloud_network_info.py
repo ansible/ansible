@@ -91,6 +91,7 @@ hcloud_network_info:
             description: True if the network is protected for deletion
             returned: always
             type: bool
+            version_added: "2.10"
         labels:
             description: Labels of the network
             returned: always

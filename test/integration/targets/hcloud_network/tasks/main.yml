@@ -121,6 +121,18 @@
   assert:
     that:
       - network is not changed
+      - network.hcloud_network.delete_protection is sameas true
+
+- name: test Network without delete protection set to be idempotent
+  hcloud_network:
+    name: "{{hcloud_network_name}}"
+    ip_range: "10.0.0.0/8"
+  register: network
+- name: verify test Network without delete protection set to be idempotent
+  assert:
+    that:
+      - network is not changed
+      - network.hcloud_network.delete_protection is sameas true
 
 - name: test delete Network fails if it is protected
   hcloud_network:

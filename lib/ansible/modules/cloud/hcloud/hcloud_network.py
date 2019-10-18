@@ -106,6 +106,7 @@ hcloud_network:
             type: bool
             returned: always
             sample: false
+            version_added: "2.10"
         labels:
             description: User-defined labels (key-value pairs)
             type: dict
@@ -218,7 +219,7 @@ class AnsibleHcloudNetwork(Hcloud):
                 name={"type": "str"},
                 ip_range={"type": "str"},
                 labels={"type": "dict"},
-                delete_protection={"type": "bool", "default": False},
+                delete_protection={"type": "bool"},
                 state={
                     "choices": ["absent", "present"],
                     "default": "present",
