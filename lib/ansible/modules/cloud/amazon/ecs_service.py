@@ -267,7 +267,8 @@ service:
         deployments:
             description: list of service deployments
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
         deploymentConfiguration:
             description: dictionary of deploymentConfiguration
             returned: always
@@ -284,11 +285,13 @@ service:
         events:
             description: list of service events
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
         placementConstraints:
             description: List of placement constraints objects
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
             contains:
                 type:
                     description: The type of constraint. Valid values are distinctInstance and memberOf.
@@ -302,7 +305,8 @@ service:
         placementStrategy:
             description: List of placement strategy objects
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
             contains:
                 type:
                     description: The type of placement strategy. Valid values are random, spread and binpack.

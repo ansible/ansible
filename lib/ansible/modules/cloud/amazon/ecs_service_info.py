@@ -125,11 +125,13 @@ services:
         deployments:
             description: list of service deployments
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
         events:
             description: list of service events
             returned: when events is true
-            type: list of complex
+            type: list
+            elements: dict
 '''  # NOQA
 
 try:

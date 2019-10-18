@@ -94,7 +94,8 @@ attributes:
             type: str
         attributes:
             description: list of attributes
-            type: list of complex
+            type: list
+            elements: dict
             contains:
                 name:
                     description: name of the attribute
