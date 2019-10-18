@@ -243,7 +243,7 @@ def create_metric_alarm(connection, module):
                    '>': 'GreaterThanThreshold'}
     if comparison in ('<=', '<', '>', '>='):
         module.deprecate('Using the <=, <, > and >= operators for comparison has been deprecated. Please use LessThanOrEqualToThreshold, '
-                        'LessThanThreshold, GreaterThanThreshold or GreaterThanOrEqualToThreshold instead.', version="2.14")
+                         'LessThanThreshold, GreaterThanThreshold or GreaterThanOrEqualToThreshold instead.', version="2.14")
         comparison = comparisons[comparison]
 
     if not isinstance(dimensions, list):
