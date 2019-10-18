@@ -9,4 +9,16 @@
     name: "{{ item }}"
     state: absent
   loop: "{{ packages_to_cleanup }}"
-  notify: cleanup mariadb
+  listen: cleanup mariadb
+
+- name: Remove related FS objects
+  file:
+    state: absent
+    path: "{{ item }}"
+  loop:
+  - "{{ master_datadir }}"
+  - "{{ standby_datadir }}"
+  - "{{ standby_logdir }}"
+  - "{{ default_logdir }}"
+  - "{{ mysql_safe_err_log }}"
+  listen: cleanup mariadb

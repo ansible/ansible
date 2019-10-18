@@ -18,7 +18,7 @@
   when: ansible_os_family == 'RedHat'
   notify: cleanup mariadb
 
-- name: Create directories for standby
+- name: Create directories for instances
   file:
     state: directory
     path: "{{ item }}"
@@ -29,6 +29,7 @@
   - "{{ standby_datadir }}"
   - "{{ standby_logdir }}"
   - "{{ default_logdir }}"
+  notify: cleanup mariadb
 
 - name: Copy cnf template
   template:
