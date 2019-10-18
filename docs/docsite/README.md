@@ -159,6 +159,7 @@ docs.ansible.com
 ```
 NOTE:
 If you put 'closes <issuenumber> '  in the summary, ansible will automatically close the issue on merge.
+
 7. Click **Create pull request**.
 
 
