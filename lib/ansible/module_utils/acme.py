@@ -635,6 +635,8 @@ class ACMEAccount(object):
             # Perform unauthenticated GET
             resp, info = fetch_url(self.module, uri, method='GET', headers=headers)
 
+            _assert_fetch_url_success(resp, info)
+
             try:
                 content = resp.read()
             except AttributeError:
@@ -657,6 +659,17 @@ class ACMEAccount(object):
         if fail_on_error and (info['status'] < 200 or info['status'] >= 400):
             raise ModuleFailException("ACME request failed: CODE: {0} RESULT: {1}".format(info['status'], result))
         return result, info
+
+    def _assert_fetch_url_success(response, info, allow_redirect=False, allow_client_error=True, allow_server_error=True):
+        if info['status'] < 0:
+            module.fail_json(msg="Failure downloading %s, %s" % (url, to_native(e)))
+            raise ModuleFailException
+
+        if (info['status'] >= 300 and info['status'] < 400 and not allow_redirect) or \
+		   (info['status'] >= 400 and info['status'] < 500 and not allow_client_error) or \
+		   (info['status'] >= 500 and not allow_server_error):
+            raise ModuleFailException("ACME request failed: CODE: {0} RESULT: {1}".format(info['status'], result))
+
 
     def set_account_uri(self, uri):
         '''
