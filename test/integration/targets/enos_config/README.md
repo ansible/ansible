@@ -1,4 +1,4 @@
-# Ansible Role: enos_config - Exceutes any Configuration command on switch and results are displayed.
+# Ansible Role: enos_config - Executes any Configuration command on switch and results are displayed.
 ---
 <add role description below>
 
@@ -56,7 +56,7 @@ Variable | Description
 `username`  | User Name of switch
 `password`  | Password of switch
 `timeout`  | time out value for CLI
-`authorixe`  | Whether u have to enter enable mode for data collection.
+`authorize`  | Whether u have to enter enable mode for data collection.
 `auth_pass`| Enable Password if required
 
 
@@ -96,7 +96,7 @@ To execute an Ansible playbook, use the following command:
 ansible-playbook enos_config_sample.yml -vvv
 ```
 
-`-vvv` is an optional verbos command that helps identify what is happening during playbook execution. The playbook for each role is located in the main directory of the solution.
+`-vvv` is an optional verbose command that helps identify what is happening during playbook execution. The playbook for each role is located in the main directory of the solution.
 
 ```
  - name: Module to  do some CLI Command configurations

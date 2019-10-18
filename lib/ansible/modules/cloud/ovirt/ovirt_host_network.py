@@ -111,7 +111,7 @@ EXAMPLES = '''
         gateway: 1.2.3.4
         version: v4
 
-# Create bond on eth1 and eth2 interface, specifiyng both mode and miimon:
+# Create bond on eth1 and eth2 interface, specifying both mode and miimon:
 - name: Bonds
   ovirt_host_network:
     name: myhost
