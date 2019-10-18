@@ -16,7 +16,7 @@ Use the ``ansible-galaxy`` command to download roles from the `Galaxy website <h
 
 .. code-block:: bash
 
-  $ ansible-galaxy install username.role_name
+  $ ansible-galaxy install namespace.role_name
 
 roles_path
 ^^^^^^^^^^
