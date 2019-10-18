@@ -13,6 +13,9 @@
           - name: VLAN_10
             vlan_id: 10
             mtu: 1000
+          - name: VLAN_40
+            vlan_id: 40
+            mtu: 850
         state: overridden
       register: result
 
