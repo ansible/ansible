@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# (c) 2019, Pedro Costa <dev@iampfac.com>
 # (c) 2017, Branko Majic <branko@majic.rs>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -16,6 +17,7 @@ DOCUMENTATION = """
 module: dconf
 author:
     - "Branko Majic (@azaghal)"
+    - "Pedro Costa (@pfac)"
 short_description: Modify and read dconf database
 description:
   - This module allows modifications and reading of dconf database. The module
@@ -60,6 +62,14 @@ options:
         GVariant format. Due to complexity of this format, it is best to have a
         look at existing values in the dconf database. Required for
         C(state=present).
+  content:
+    required: false
+    description:
+      - Value to set for the specified dconf key. Value should be specified in
+        GVariant format. Due to complexity of this format, it is best to have a
+        look at existing values in the dconf database. Required for
+        C(state=present) when C(key) ends with `/`.
+    version_added: "2.10"
   state:
     required: false
     default: present
@@ -119,6 +129,13 @@ EXAMPLES = """
     key: "/org/cinnamon/desktop-effects"
     value: "false"
     state: present
+
+- name: Load multiple configs under a specific dconf key
+  dconf:
+    key: "/com/gexperts/Tilix/"
+    content: |
+      [/]
+      quake-specific-monitor=0
 """
 
 
@@ -207,7 +224,7 @@ class DBusWrapper(object):
 
         return None
 
-    def run_command(self, command):
+    def run_command(self, command, data=None):
         """
         Runs the specified command within a functional D-Bus session. Command is
         effectively passed-on to AnsibleModule.run_command() method, with
@@ -222,13 +239,13 @@ class DBusWrapper(object):
         if self.dbus_session_bus_address is None:
             self.module.debug("Using dbus-run-session wrapper for running commands.")
             command = ['dbus-run-session'] + command
-            rc, out, err = self.module.run_command(command)
+            rc, out, err = self.module.run_command(command, data=data)
 
             if self.dbus_session_bus_address is None and rc == 127:
                 self.module.fail_json(msg="Failed to run passed-in command, dbus-run-session faced an internal error: %s" % err)
         else:
             extra_environment = {'DBUS_SESSION_BUS_ADDRESS': self.dbus_session_bus_address}
-            rc, out, err = self.module.run_command(command, environ_update=extra_environment)
+            rc, out, err = self.module.run_command(command, data=data, environ_update=extra_environment)
 
         return rc, out, err
 
@@ -249,28 +266,64 @@ class DconfPreference(object):
         self.module = module
         self.check_mode = check_mode
 
-    def read(self, key):
+    def normalize_value(self, value):
+        if value == '':
+            return None
+
+        return value.rstrip('\n')
+
+    def read(self, key, include_defaults=False):
         """
         Retrieves current value associated with the dconf key.
 
         If an error occurs, a call will be made to AnsibleModule.fail_json.
 
+        :param key: dconf key to read. Must not end with `/`.
+        :type key: str
+
         :returns: string -- Value assigned to the provided key. If the value is not set for specified key, returns None.
         """
 
-        command = ["dconf", "read", key]
+        # Set up command to run
+        command = ["dconf", "read"]
 
+        if include_defaults:
+            command.append("-d")
+
+        command.append(key)
+
+        # Run DConf read command (no need for DBus wrapping)
         rc, out, err = self.module.run_command(command)
 
         if rc != 0:
             self.module.fail_json(msg='dconf failed while reading the value with error: %s' % err)
 
-        if out == '':
-            value = None
-        else:
-            value = out.rstrip('\n')
+        return self.normalize_value(out)
 
-        return value
+    def dump(self, key):
+        """
+        Dumps all the values under the dconf key.
+
+        If an error occurs, a call will be made to AnsibleModule.fail_json.
+
+        :param key: dconf key to dump. Must end with `/`.
+        :type key: str
+
+        :returns: string -- Values under the provided key. If there are no values under the specified key, returns None.
+        """
+
+        # Set up command to run
+        command = ["dconf", "dump", key]
+
+        # Run DConf read command (no need for DBus wrapping)
+        rc, out, err = self.module.run_command(command)
+
+        # Handle command failure
+        if rc != 0:
+            self.module.fail_json(msg='dconf failed while dumping values with error: %s' % err)
+            return None
+
+        return self.normalize_value(out)
 
     def write(self, key, value):
         """
@@ -287,21 +340,22 @@ class DconfPreference(object):
         :returns: bool -- True if a change was made, False if no change was required.
         """
 
-        # If no change is needed (or won't be done due to check_mode), notify
-        # caller straight away.
-        if value == self.read(key):
+        # If no change is needed, exit early
+        if self.read(key) == self.normalize_value(value):
             return False
-        elif self.check_mode:
+
+        # If running in check mode, just notify user
+        if self.check_mode:
             return True
 
-        # Set-up command to run. Since DBus is needed for write operation, wrap
-        # dconf command dbus-launch.
+        # Set up command to run
         command = ["dconf", "write", key, value]
 
-        # Run the command and fetch standard return code, stdout, and stderr.
+        # Run the command wrapped in dbus-launch
         dbus_wrapper = DBusWrapper(self.module)
         rc, out, err = dbus_wrapper.run_command(command)
 
+        # Handle command failure
         if rc != 0:
             self.module.fail_json(msg='dconf failed while write the value with error: %s' % err)
 
@@ -320,28 +374,113 @@ class DconfPreference(object):
         :returns: bool -- True if a change was made, False if no change was required.
         """
 
-        # Read the current value first.
-        current_value = self.read(key)
+        # Check whether key is a directory
+        is_directory = key.endswith('/')
 
-        # No change was needed, key is not set at all, or just notify user if we
-        # are in check mode.
+        # Read the current value first.
+        if is_directory:
+            current_value = self.dump(key)
+        else:
+            current_value = self.read(key)
+
+        # Key is not set, so no change is needed
         if current_value is None:
             return False
-        elif self.check_mode:
+
+        # If we are in check mode, just notify the user
+        if self.check_mode:
             return True
 
-        # Set-up command to run. Since DBus is needed for reset operation, wrap
-        # dconf command dbus-launch.
-        command = ["dconf", "reset", key]
+        # Set up command to run
+        command = ["dconf", "reset"]
 
-        # Run the command and fetch standard return code, stdout, and stderr.
+        if is_directory:
+            command.append("-f")
+
+        command.append(key)
+
+        # Run the command wrapped in dbus-launch
         dbus_wrapper = DBusWrapper(self.module)
         rc, out, err = dbus_wrapper.run_command(command)
 
+        # Handle command failure
         if rc != 0:
             self.module.fail_json(msg='dconf failed while reseting the value with error: %s' % err)
 
         # Value was changed.
+        return True
+
+    def load(self, key, content):
+        """
+        Loads all the values from content under the dconf key.
+
+        Ignores any locked non-writable keys.
+
+        If there are any current values under the provided keys, and those are
+        different, the key is initially reset to assume defaults for unspecified
+        keys.
+
+        If an error occurs, a call will be made to AnsibleModule.fail_json.
+
+        :param key: dconf key to load content under. Must end with `/`.
+        :type key: str
+
+        :param content: values to load under the provided key. Must be in the correct dconf format.
+        :type key: str
+
+        :returns: bool -- True if a change was made, False if no change was required.
+        """
+        # Get current values first
+        current_values = self.dump(key)
+
+        # Exit early if no change is needed
+        if current_values == self.normalize_value(content):
+            return False
+
+        # If in check mode, just notify user a change will be performed
+        if self.check_mode:
+            return True
+
+        # First reset the key to assume defaults for unspecified sub-keys
+        if current_values:
+            self.reset(key)
+
+        # Set up the command to run
+        command = ["dconf", "load", "-f", key]
+
+        # Run the command wrapped in dbus-launch
+        dbus_wrapper = DBusWrapper(self.module)
+        rc, out, err = dbus_wrapper.run_command(command, data=content)
+
+        # Handle command failure
+        if rc != 0:
+            fail_msg_lines = []
+            fail_msg_lines.append('dconf failed to load values under %(key)s with error: %(error)s' % {"key": key, "error": err})
+
+            # Attempt to restore old values
+            rc, _, err = dbus_wrapper.run_command(command, data=current_values)
+
+            # Handle recovery failure
+            if rc != 0:
+                fail_msg_lines.append('dconf failed to restore values under %(key)s with error: %(error)s' % {"key": key, "error": err})
+
+                # Attempt to back up old values into a regular file
+                try:
+                    with open('recovery.dconf') as file:
+                        file.write(current_values)
+
+                    fail_msg_lines.append('saved previous values under %(key)s in file: %(path)s' % {"key": key, "path": os.path.realpath(file.name)})
+                except OSError:
+                    fail_msg_lines.append('dconf failed to restore values under %(key)s with error: %(error)s' % {"key": key, "error": err})
+                    fail_msg_lines.append('previous values under %(key)s:' % {"key": key})
+                    fail_msg_lines.append(current_values)
+
+            # Print error messages
+            fail_msg = os.linesep.join(fail_msg_lines)
+            self.module.fail_json(msg=fail_msg)
+
+            return None
+
         return True
 
 
@@ -352,29 +491,49 @@ def main():
             state=dict(default='present', choices=['present', 'absent', 'read']),
             key=dict(required=True, type='str'),
             value=dict(required=False, default=None, type='str'),
+            content=dict(required=False, default=None, type='str'),
         ),
         supports_check_mode=True
     )
 
+    # Fail quickly if psutil is not available
     if not psutil_found:
         module.fail_json(msg=missing_required_lib("psutil"), exception=PSUTIL_IMP_ERR)
 
-    # If present state was specified, value must be provided.
-    if module.params['state'] == 'present' and module.params['value'] is None:
-        module.fail_json(msg='State "present" requires "value" to be set.')
+    # Extract params
+    state = module.params['state']
+    key = module.params['key']
+    value = module.params['value']
+    content = module.params['content']
+
+    is_directory = key.endswith('/')
+
+    # If present state was specified, and key does not end in `/`, value must be provided.
+    if state == 'present' and not is_directory and value is None:
+        module.fail_json(msg='State "present" with key not ending in "/" requires "value" to be set.')
+
+    # If present state was specified, and key ends in `/`, content must be provided.
+    if state == 'present' and is_directory and content is None:
+        module.fail_json(msg='State "present" with key ending in "/" requires "content" to be set.')
 
     # Create wrapper instance.
     dconf = DconfPreference(module, module.check_mode)
 
     # Process based on different states.
-    if module.params['state'] == 'read':
-        value = dconf.read(module.params['key'])
+    if state == 'read' and not is_directory:
+        value = dconf.read(key)
         module.exit_json(changed=False, value=value)
-    elif module.params['state'] == 'present':
-        changed = dconf.write(module.params['key'], module.params['value'])
+    elif state == 'read' and is_directory:
+        value = dconf.dump(key)
+        module.exit_json(changed=False, value=value)
+    elif state == 'present' and not is_directory:
+        changed = dconf.write(key, value)
         module.exit_json(changed=changed)
-    elif module.params['state'] == 'absent':
-        changed = dconf.reset(module.params['key'])
+    elif state == 'present' and is_directory:
+        changed = dconf.load(key, content)
+        module.exit_json(changed=changed)
+    elif state == 'absent':
+        changed = dconf.reset(key)
         module.exit_json(changed=changed)
 
 
