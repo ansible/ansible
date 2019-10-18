@@ -5,18 +5,18 @@
   yum_repository:
     name: MariaDB
     description: MariaDB official repo
-    baseurl: http://yum.mariadb.org/10.1/centos7-amd64
-    gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+    baseurl: "{{ repo_link }}"
+    gpgkey: "{{ repo_gpgkey }}"
     gpgcheck: yes
+  notify: cleanup mariadb
 
 - name: Install MariaDB packages on RedHat family OS
   yum:
     name: "{{ item }}"
     enablerepo: epel
-  loop:
-  - MariaDB-server
-  - MariaDB-client
+  loop: "{{ mariadb_packages }}"
   when: ansible_os_family == 'RedHat'
+  notify: cleanup mariadb
 
 - name: Create directories for standby
   file:

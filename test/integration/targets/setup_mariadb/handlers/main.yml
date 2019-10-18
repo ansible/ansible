@@ -1,0 +1,12 @@
+- name: Remove MariaDB repo
+  yum_repository:
+    name: MariaDB
+    state: absent
+  listen: cleanup mariadb
+
+- name: Remove MariaDB related packages
+  yum:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ packages_to_cleanup }}"
+  notify: cleanup mariadb
