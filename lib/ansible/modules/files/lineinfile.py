@@ -116,7 +116,7 @@ options:
   firstmatch:
     description:
       - Used with C(insertafter) or C(insertbefore).
-      - If set, C(insertafter) and C(insertbefore) find a first line has regular expression matches.
+      - If set, C(insertafter) and C(insertbefore) will work with the first line that matches the given regular expression.
     type: bool
     default: no
     version_added: "2.5"
