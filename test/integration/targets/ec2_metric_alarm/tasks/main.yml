@@ -6,6 +6,8 @@
       security_token: "{{ security_token | default(omit) }}"
       region: "{{ aws_region }}"
   block:
+    - set_fact:
+        alarm_full_name: "{{ alarm_prefix }}-{{ resource_prefix }}-cpu-low"
 
       # until there's a module to get info about alarms, awscli is needed
     - name: install awscli
@@ -17,7 +19,7 @@
       include_tasks: env_setup.yml
 
     - name: get info on alarms
-      command: aws cloudwatch describe-alarms --alarm-names {{ resource_prefix }}-cpu-low
+      command: aws cloudwatch describe-alarms --alarm-names {{ alarm_full_name }}
       environment:
         AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
@@ -50,7 +52,7 @@
         dimensions:
           InstanceId: "{{ ec2_instance_results.instances[0].instance_id }}"
         state: present
-        name: "{{ resource_prefix }}-cpu-low"
+        name: "{{ alarm_full_name }}"
         metric: "CPUUtilization"
         namespace: "AWS/EC2"
         treat_missing_data: missing
@@ -64,7 +66,7 @@
       register: ec2_instance_metric_alarm
 
     - name: get info on alarms
-      command: aws cloudwatch describe-alarms --alarm-names {{ resource_prefix }}-cpu-low
+      command: aws cloudwatch describe-alarms --alarm-names {{ alarm_full_name }}
       environment:
         AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
@@ -86,6 +88,7 @@
           - 'ec2_instance_metric_alarm.metric== alarm_info["MetricAlarms"][0].MetricName'
           - 'ec2_instance_metric_alarm.namespace == alarm_info["MetricAlarms"][0].Namespace'
           - 'ec2_instance_metric_alarm.comparison == alarm_info["MetricAlarms"][0].ComparisonOperator'
+          - 'ec2_instance_metric_alarm.comparison == alarm_info["MetricAlarms"][0].ComparisonOperator'
           - 'ec2_instance_metric_alarm.threshold == alarm_info["MetricAlarms"][0].Threshold'
           - 'ec2_instance_metric_alarm.period == alarm_info["MetricAlarms"][0].Period'
           - 'ec2_instance_metric_alarm.unit == alarm_info["MetricAlarms"][0].Unit'
@@ -98,7 +101,7 @@
         dimensions:
           InstanceId: "{{ ec2_instance_results.instances[0].instance_id }}"
         state: present
-        name: "{{ resource_prefix }}-cpu-low"
+        name: "{{ alarm_full_name }}"
         metric: "CPUUtilization"
         namespace: "AWS/EC2"
         treat_missing_data: missing
@@ -112,7 +115,7 @@
       register: ec2_instance_metric_alarm_idempotent
 
     - name: get info on alarms
-      command: aws cloudwatch describe-alarms --alarm-names {{ resource_prefix }}-cpu-low
+      command: aws cloudwatch describe-alarms --alarm-names {{ alarm_full_name }}
       environment:
         AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
@@ -152,7 +155,7 @@
         dimensions:
           InstanceId: "{{ ec2_instance_results.instances[0].instance_id }}"
         state: present
-        name: "{{ resource_prefix }}-cpu-low"
+        name: "{{ alarm_full_name }}"
         metric: "CPUUtilization"
         namespace: "AWS/EC2"
         statistic: Average
@@ -189,7 +192,8 @@
     - name: try to remove the alarm
       ec2_metric_alarm:
         state: absent
-        name: "{{ resource_prefix }}-cpu-low"
+        name: "{{ alarm_full_name }}"
+
       register: ec2_instance_metric_alarm_deletion
 
     - name: Verify that the alarm reports deleted/changed
@@ -198,7 +202,7 @@
           - 'ec2_instance_metric_alarm_deletion.changed'
 
     - name: get info on alarms
-      command: aws cloudwatch describe-alarms --alarm-names {{ resource_prefix }}-cpu-low
+      command: aws cloudwatch describe-alarms --alarm-names {{ alarm_full_name }}
       environment:
         AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
