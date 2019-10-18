@@ -209,7 +209,7 @@ def generate_commands(vlan_id, to_set, to_remove):
         return ["no vlan {0}".format(vlan_id)]
 
     for key, value in to_set.items():
-        if value is None:
+        if key == "vlan_id" or value is None:
             continue
 
         commands.append("{0} {1}".format(key, value))
