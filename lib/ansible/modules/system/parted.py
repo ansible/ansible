@@ -201,9 +201,9 @@ parted_units = units_si + units_iec + ['s', '%', 'cyl', 'chs', 'compact']
 
 def parse_unit(size_str, unit=''):
     """
-    Parses a string containing a size of information
+    Parses a string containing a size or boundary information
     """
-    matches = re.search(r'^([\d.]+)([\w%]+)?$', size_str)
+    matches = re.search(r'^(-?[\d.]+)([\w%]+)?$', size_str)
     if matches is None:
         # "<cylinder>,<head>,<sector>" format
         matches = re.search(r'^(\d+),(\d+),(\d+)$', size_str)

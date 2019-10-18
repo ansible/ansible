@@ -1,0 +1,2 @@
+bugfixes:
+ - parted: accept negative numbers in part_start/part_end (issue #43369)
