@@ -63,6 +63,11 @@ options:
         description:
             - Force the assignment or deletion of the Floating IP.
         type: bool
+    delete_protection:
+        description:
+            - Protect the Floating IP for deletion.
+        type: bool
+        version_added: "2.10"
     labels:
         description:
             - User-defined labels (key-value pairs).
@@ -151,6 +156,12 @@ hcloud_floating_ip:
             type: str
             returned: Always
             sample: "my-server"
+        delete_protection:
+            description: True if Floating IP is protected for deletion
+            type: bool
+            returned: always
+            sample: false
+            version_added: "2.10"
         labels:
             description: User-defined labels (key-value pairs)
             type: dict
@@ -189,6 +200,7 @@ class AnsibleHcloudFloatingIP(Hcloud):
             "home_location": to_native(self.hcloud_floating_ip.home_location.name),
             "labels": self.hcloud_floating_ip.labels,
             "server": server,
+            "delete_protection": self.hcloud_floating_ip.protection["delete"],
         }
 
     def _get_floating_ip(self):
@@ -234,37 +246,46 @@ class AnsibleHcloudFloatingIP(Hcloud):
         self._get_floating_ip()
 
     def _update_floating_ip(self):
-        labels = self.module.params.get("labels")
-        if labels is not None and labels != self.hcloud_floating_ip.labels:
-            if not self.module.check_mode:
-                self.hcloud_floating_ip.update(labels=labels)
-            self._mark_as_changed()
-
-        description = self.module.params.get("description")
-        if description is not None and description != self.hcloud_floating_ip.description:
-            if not self.module.check_mode:
-                self.hcloud_floating_ip.update(description=description)
-            self._mark_as_changed()
-
-        server = self.module.params.get("server")
-        if server is not None:
-            if self.module.params.get("force") or self.hcloud_floating_ip.server is None:
+        try:
+            labels = self.module.params.get("labels")
+            if labels is not None and labels != self.hcloud_floating_ip.labels:
                 if not self.module.check_mode:
-                    self.hcloud_floating_ip.assign(
-                        self.client.servers.get_by_name(self.module.params.get("server"))
-                    )
-            else:
-                self.module.warn(
-                    "Floating IP is already assigned to server %s. You need to unassign the Floating IP or use force=yes."
-                    % self.hcloud_floating_ip.server.name
-                )
-            self._mark_as_changed()
-        elif server is None and self.hcloud_floating_ip.server is not None:
-            if not self.module.check_mode:
-                self.hcloud_floating_ip.unassign()
-            self._mark_as_changed()
+                    self.hcloud_floating_ip.update(labels=labels)
+                self._mark_as_changed()
 
-        self._get_floating_ip()
+            description = self.module.params.get("description")
+            if description is not None and description != self.hcloud_floating_ip.description:
+                if not self.module.check_mode:
+                    self.hcloud_floating_ip.update(description=description)
+                self._mark_as_changed()
+
+            server = self.module.params.get("server")
+            if server is not None:
+                if self.module.params.get("force") or self.hcloud_floating_ip.server is None:
+                    if not self.module.check_mode:
+                        self.hcloud_floating_ip.assign(
+                            self.client.servers.get_by_name(self.module.params.get("server"))
+                        )
+                else:
+                    self.module.warn(
+                        "Floating IP is already assigned to server %s. You need to unassign the Floating IP or use force=yes."
+                        % self.hcloud_floating_ip.server.name
+                    )
+                self._mark_as_changed()
+            elif server is None and self.hcloud_floating_ip.server is not None:
+                if not self.module.check_mode:
+                    self.hcloud_floating_ip.unassign()
+                self._mark_as_changed()
+
+            delete_protection = self.module.params.get("delete_protection")
+            if delete_protection is not None and delete_protection != self.hcloud_floating_ip.protection["delete"]:
+                if not self.module.check_mode:
+                    self.hcloud_floating_ip.change_protection(delete=delete_protection).wait_until_finished()
+                self._mark_as_changed()
+
+            self._get_floating_ip()
+        except APIException as e:
+            self.module.fail_json(msg=e.message)
 
     def present_floating_ip(self):
         self._get_floating_ip()
@@ -274,18 +295,21 @@ class AnsibleHcloudFloatingIP(Hcloud):
             self._update_floating_ip()
 
     def delete_floating_ip(self):
-        self._get_floating_ip()
-        if self.hcloud_floating_ip is not None:
-            if self.module.params.get("force") or self.hcloud_floating_ip.server is None:
-                if not self.module.check_mode:
-                    self.client.floating_ips.delete(self.hcloud_floating_ip)
-            else:
-                self.module.warn(
-                    "Floating IP is currently assigned to server %s. You need to unassign the Floating IP or use force=yes."
-                    % self.hcloud_floating_ip.server.name
-                )
-            self._mark_as_changed()
-        self.hcloud_floating_ip = None
+        try:
+            self._get_floating_ip()
+            if self.hcloud_floating_ip is not None:
+                if self.module.params.get("force") or self.hcloud_floating_ip.server is None:
+                    if not self.module.check_mode:
+                        self.client.floating_ips.delete(self.hcloud_floating_ip)
+                else:
+                    self.module.warn(
+                        "Floating IP is currently assigned to server %s. You need to unassign the Floating IP or use force=yes."
+                        % self.hcloud_floating_ip.server.name
+                    )
+                self._mark_as_changed()
+            self.hcloud_floating_ip = None
+        except APIException as e:
+            self.module.fail_json(msg=e.message)
 
     @staticmethod
     def define_module():
@@ -299,6 +323,7 @@ class AnsibleHcloudFloatingIP(Hcloud):
                 force={"type": "bool"},
                 type={"choices": ["ipv4", "ipv6"]},
                 labels={"type": "dict"},
+                delete_protection={"type": "bool"},
                 state={
                     "choices": ["absent", "present"],
                     "default": "present",
