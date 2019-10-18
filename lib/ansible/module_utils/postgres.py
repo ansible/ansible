@@ -35,7 +35,6 @@ except ImportError:
     HAS_PSYCOPG2 = False
 
 from ansible.module_utils.basic import missing_required_lib
-from ansible.module_utils.database import pg_quote_identifier
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 from distutils.version import LooseVersion
@@ -94,8 +93,9 @@ def connect_to_db(module, conn_params, autocommit=False, fail_on_conn=True):
         # Switch role, if specified:
         if module.params.get('session_role'):
             cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
             try:
-                cursor.execute('SET ROLE %s' % module.params['session_role'])
+                cursor.execute('SET ROLE "%s"' % module.params['session_role'])
             except Exception as e:
                 module.fail_json(msg="Could not switch role: %s" % to_native(e))
             finally:
@@ -223,8 +223,7 @@ class PgMembership(object):
                 if self.__check_membership(group, role):
                     continue
 
-                query = "GRANT %s TO %s" % ((pg_quote_identifier(group, 'role'),
-                                            (pg_quote_identifier(role, 'role'))))
+                query = 'GRANT "%s" TO "%s"' % (group, role)
                 self.changed = exec_sql(self, query, ddl=True)
 
                 if self.changed:
@@ -241,8 +240,7 @@ class PgMembership(object):
                 if not self.__check_membership(group, role):
                     continue
 
-                query = "REVOKE %s FROM %s" % ((pg_quote_identifier(group, 'role'),
-                                               (pg_quote_identifier(role, 'role'))))
+                query = 'REVOKE "%s" FROM "%s"' % (group, role)
                 self.changed = exec_sql(self, query, ddl=True)
 
                 if self.changed:
