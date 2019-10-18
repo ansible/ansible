@@ -93,10 +93,14 @@ class ActionModule(ActionNetworkModule):
                 socket_path = self._connection.socket_path
             conn = Connection(socket_path)
             out = conn.get_prompt()
-            while to_text(out, errors='surrogate_then_replace').strip().endswith(']'):
+            prompt = to_text(out, errors='surrogate_then_replace').strip()
+            while prompt.endswith(']'):
                 display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
+                if prompt.startswith('[*'):
+                    conn.exec_command('clear configuration candidate')
                 conn.exec_command('return')
                 out = conn.get_prompt()
+                prompt = to_text(out, errors='surrogate_then_replace').strip()
 
         result = super(ActionModule, self).run(task_vars=task_vars)
         return result
