@@ -67,19 +67,28 @@
   - { datadir: '{{ replica_data_dir }}', port: '{{ replica_port }}' }
   notify: stop postgresql
 
-- name: Check connectivity and git PostgreSQL version
+- name: Check connectivity to the master and get PostgreSQL version
   become: yes
   become_user: '{{ pg_user }}'
   postgresql_ping:
     db: '{{ db_default }}'
     login_user: '{{ pg_user }}'
-    login_port: '{{ item }}'
-  loop:
-  - '{{ master_port }}'
-  - '{{ replica_port }}'
+    login_port: '{{ master_port }}'
   register: result
+
+- name: Check connectivity to the replica and get PostgreSQL version
+  become: yes
+  become_user: '{{ pg_user }}'
+  postgresql_ping:
+    db: '{{ db_default }}'
+    login_user: '{{ pg_user }}'
+    login_port: '{{ replica_port }}'
 
 - name: Define server version
   set_fact:
     pg_major_version: '{{ result.server_version.major }}'
     pg_minor_version: '{{ result.server_version.minor }}'
+
+- name: Print PostgreSQL version
+  debug:
+    msg: 'PostgreSQL version is {{ pg_major_version }}.{{ pg_minor_version }}'
