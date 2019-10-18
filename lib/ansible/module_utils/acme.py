@@ -587,6 +587,7 @@ class ACMEAccount(object):
                 'Content-Type': 'application/jose+json',
             }
             resp, info = fetch_url(self.module, url, data=data, headers=headers, method='POST')
+            _assert_fetch_url_success(resp, info)
             result = {}
             try:
                 content = resp.read()
