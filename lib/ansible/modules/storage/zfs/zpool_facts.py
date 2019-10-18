@@ -63,7 +63,7 @@ ansible_facts:
         ansible_zfs_pools:
             description: ZFS pool facts
             returned: always
-            type: string
+            type: str
             sample:
                 {
                     "allocated": "3.46G",
@@ -109,12 +109,12 @@ ansible_facts:
 name:
     description: ZFS pool name
     returned: always
-    type: string
+    type: str
     sample: rpool
 parsable:
     description: if parsable output should be provided in machine friendly format.
     returned: if 'parsable' is set to True
-    type: boolean
+    type: bool
     sample: True
 '''
 

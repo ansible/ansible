@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages configuration of an OSPF instance on HUAWEI CloudEngine switches.
 description:
     - Manages configuration of an OSPF instance on HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     process_id:
         description:
@@ -132,7 +132,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -442,7 +442,7 @@ class OSPF(object):
 
         # get process base info
         root = ElementTree.fromstring(xml_str)
-        ospfsite = root.find("data/ospfv2/ospfv2comm/ospfSites/ospfSite")
+        ospfsite = root.find("ospfv2/ospfv2comm/ospfSites/ospfSite")
         if ospfsite:
             for site in ospfsite:
                 if site.tag in ["processId", "routerId", "vrfName"]:
@@ -450,7 +450,7 @@ class OSPF(object):
 
         # get Topology info
         topo = root.find(
-            "data/ospfv2/ospfv2comm/ospfSites/ospfSite/ProcessTopologys/ProcessTopology")
+            "ospfv2/ospfv2comm/ospfSites/ospfSite/ProcessTopologys/ProcessTopology")
         if topo:
             for eles in topo:
                 if eles.tag in ["maxLoadBalancing"]:
@@ -459,7 +459,7 @@ class OSPF(object):
         # get nexthop info
         ospf_info["nexthops"] = list()
         nexthops = root.findall(
-            "data/ospfv2/ospfv2comm/ospfSites/ospfSite/ProcessTopologys/ProcessTopology/nexthopMTs/nexthopMT")
+            "ospfv2/ospfv2comm/ospfSites/ospfSite/ProcessTopologys/ProcessTopology/nexthopMTs/nexthopMT")
         if nexthops:
             for nexthop in nexthops:
                 nh_dict = dict()
@@ -471,7 +471,7 @@ class OSPF(object):
         # get areas info
         ospf_info["areas"] = list()
         areas = root.findall(
-            "data/ospfv2/ospfv2comm/ospfSites/ospfSite/areas/area")
+            "ospfv2/ospfv2comm/ospfSites/ospfSite/areas/area")
         if areas:
             for area in areas:
                 area_dict = dict()
@@ -490,15 +490,12 @@ class OSPF(object):
                             area_dict["networks"].append(net_dict)
 
                 ospf_info["areas"].append(area_dict)
-
         return ospf_info
 
     def is_area_exist(self):
         """is ospf area exist"""
-
         if not self.ospf_info:
             return False
-
         for area in self.ospf_info["areas"]:
             if area["areaId"] == self.get_area_ip():
                 return True
@@ -507,7 +504,6 @@ class OSPF(object):
 
     def is_network_exist(self):
         """is ospf area network exist"""
-
         if not self.ospf_info:
             return False
 
@@ -518,9 +514,6 @@ class OSPF(object):
                 for network in area.get("networks"):
                     if network["ipAddress"] == self.addr and network["wildcardMask"] == self.get_wildcard_mask():
                         return True
-            else:
-                break
-
         return False
 
     def is_nexthop_exist(self):
@@ -528,7 +521,6 @@ class OSPF(object):
 
         if not self.ospf_info:
             return False
-
         for nexthop in self.ospf_info["nexthops"]:
             if nexthop["ipAddress"] == self.nexthop_addr:
                 return True
@@ -537,7 +529,6 @@ class OSPF(object):
 
     def is_nexthop_change(self):
         """is ospf nexthop change"""
-
         if not self.ospf_info:
             return True
 
@@ -555,6 +546,8 @@ class OSPF(object):
 
         xml_area = ""
         self.updates_cmd.append("ospf %s" % self.process_id)
+        xml_create = CE_NC_CREATE_PROCESS % self.process_id
+        set_nc_config(self.module, xml_create)
 
         # nexthop weight
         xml_nh = ""
@@ -607,7 +600,7 @@ class OSPF(object):
                         self.updates_cmd.pop()
                         self.updates_cmd.append(
                             "authentication-mode %s %s %s" % (self.auth_mode, self.auth_key_id, self.auth_text_md5))
-            if xml_network or xml_auth:
+            if xml_network or xml_auth or not self.is_area_exist():
                 xml_area += CE_NC_XML_BUILD_MERGE_AREA % (
                     self.get_area_ip(), xml_network + xml_auth)
 
@@ -884,6 +877,7 @@ class OSPF(object):
         """get end state info"""
 
         ospf_info = self.get_ospf_dict(self.process_id)
+
         if not ospf_info:
             return
 
@@ -891,6 +885,10 @@ class OSPF(object):
         self.end_state["areas"] = ospf_info["areas"]
         self.end_state["nexthops"] = ospf_info["nexthops"]
         self.end_state["max_load_balance"] = ospf_info.get("maxLoadBalancing")
+
+        if self.end_state == self.existing:
+            if not self.auth_text_simple and not self.auth_text_md5:
+                self.changed = False
 
     def work(self):
         """worker"""

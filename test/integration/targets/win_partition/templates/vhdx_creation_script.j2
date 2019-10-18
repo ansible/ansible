@@ -1,0 +1,7 @@
+create vdisk file="{{ AnsibleVhdx }}" maximum=2000 type=fixed
+
+select vdisk file="{{ AnsibleVhdx }}"
+
+attach vdisk
+
+convert mbr

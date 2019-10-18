@@ -152,27 +152,31 @@ class ElasticLoadBalancerV2(object):
         :return: bool True if they match otherwise False
         """
 
-        subnet_id_list = []
-        subnets = []
+        subnet_mapping_id_list = []
+        subnet_mappings = []
 
         # Check if we're dealing with subnets or subnet_mappings
         if self.subnets is not None:
-            # We need to first get the subnet ID from the list
-            subnets = self.subnets
+            # Convert subnets to subnet_mappings format for comparison
+            for subnet in self.subnets:
+                subnet_mappings.append({'SubnetId': subnet})
 
         if self.subnet_mappings is not None:
-            # Make a list from the subnet_mappings dict
-            subnets_from_mappings = []
-            for subnet_mapping in self.subnet_mappings:
-                subnets.append(subnet_mapping['SubnetId'])
+            # Use this directly since we're comparing as a mapping
+            subnet_mappings = self.subnet_mappings
 
+        # Build a subnet_mapping style struture of what's currently
+        # on the load balancer
         for subnet in self.elb['AvailabilityZones']:
-            subnet_id_list.append(subnet['SubnetId'])
+            this_mapping = {'SubnetId': subnet['SubnetId']}
+            for address in subnet.get('LoadBalancerAddresses', []):
+                if 'AllocationId' in address:
+                    this_mapping['AllocationId'] = address['AllocationId']
+                    break
 
-        if set(subnet_id_list) != set(subnets):
-            return False
-        else:
-            return True
+            subnet_mapping_id_list.append(this_mapping)
+
+        return set(frozenset(mapping.items()) for mapping in subnet_mapping_id_list) == set(frozenset(mapping.items()) for mapping in subnet_mappings)
 
     def modify_subnets(self):
         """
@@ -247,6 +251,8 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
         # Other parameters
         if self.subnets is not None:
             params['Subnets'] = self.subnets
+        if self.subnet_mappings is not None:
+            params['SubnetMappings'] = self.subnet_mappings
         if self.security_groups is not None:
             params['SecurityGroups'] = self.security_groups
         params['Scheme'] = self.scheme
@@ -359,6 +365,8 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
         # Other parameters
         if self.subnets is not None:
             params['Subnets'] = self.subnets
+        if self.subnet_mappings is not None:
+            params['SubnetMappings'] = self.subnet_mappings
         params['Scheme'] = self.scheme
         if self.tags:
             params['Tags'] = self.tags
@@ -399,6 +407,14 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
                 if self.new_load_balancer:
                     AWSRetry.jittered_backoff()(self.connection.delete_load_balancer)(LoadBalancerArn=self.elb['LoadBalancerArn'])
                 self.module.fail_json_aws(e)
+
+    def modify_subnets(self):
+        """
+        Modify elb subnets to match module parameters (unsupported for NLB)
+        :return:
+        """
+
+        self.module.fail_json(msg='Modifying subnets and elastic IPs is not supported for Network Load Balancer')
 
 
 class ELBListeners(object):
@@ -450,13 +466,20 @@ class ELBListeners(object):
         if not listeners:
             listeners = []
 
+        fixed_listeners = []
         for listener in listeners:
-            if 'TargetGroupName' in listener['DefaultActions'][0]:
-                listener['DefaultActions'][0]['TargetGroupArn'] = convert_tg_name_to_arn(self.connection, self.module,
-                                                                                         listener['DefaultActions'][0]['TargetGroupName'])
-                del listener['DefaultActions'][0]['TargetGroupName']
+            fixed_actions = []
+            for action in listener['DefaultActions']:
+                if 'TargetGroupName' in action:
+                    action['TargetGroupArn'] = convert_tg_name_to_arn(self.connection,
+                                                                      self.module,
+                                                                      action['TargetGroupName'])
+                    del action['TargetGroupName']
+                fixed_actions.append(action)
+            listener['DefaultActions'] = fixed_actions
+            fixed_listeners.append(listener)
 
-        return listeners
+        return fixed_listeners
 
     def compare_listeners(self):
         """
@@ -524,12 +547,47 @@ class ELBListeners(object):
             modified_listener['Certificates'][0]['CertificateArn'] = new_listener['Certificates'][0]['CertificateArn']
 
         # Default action
-        #   We wont worry about the Action Type because it is always 'forward'
-        if current_listener['DefaultActions'][0]['TargetGroupArn'] != new_listener['DefaultActions'][0]['TargetGroupArn']:
-            modified_listener['DefaultActions'] = []
-            modified_listener['DefaultActions'].append({})
-            modified_listener['DefaultActions'][0]['TargetGroupArn'] = new_listener['DefaultActions'][0]['TargetGroupArn']
-            modified_listener['DefaultActions'][0]['Type'] = 'forward'
+
+        # Check proper rule format on current listener
+        if len(current_listener['DefaultActions']) > 1:
+            for action in current_listener['DefaultActions']:
+                if 'Order' not in action:
+                    self.module.fail_json(msg="'Order' key not found in actions. "
+                                              "installed version of botocore does not support "
+                                              "multiple actions, please upgrade botocore to version "
+                                              "1.10.30 or higher")
+
+        # If the lengths of the actions are the same, we'll have to verify that the
+        # contents of those actions are the same
+        if len(current_listener['DefaultActions']) == len(new_listener['DefaultActions']):
+            # if actions have just one element, compare the contents and then update if
+            # they're different
+            if len(current_listener['DefaultActions']) == 1 and len(new_listener['DefaultActions']) == 1:
+                if current_listener['DefaultActions'] != new_listener['DefaultActions']:
+                    modified_listener['DefaultActions'] = new_listener['DefaultActions']
+            # if actions have multiple elements, we'll have to order them first before comparing.
+            # multiple actions will have an 'Order' key for this purpose
+            else:
+                current_actions_sorted = sorted(current_listener['DefaultActions'], key=lambda x: x['Order'])
+                new_actions_sorted = sorted(new_listener['DefaultActions'], key=lambda x: x['Order'])
+
+                # the AWS api won't return the client secret, so we'll have to remove it
+                # or the module will always see the new and current actions as different
+                # and try to apply the same config
+                new_actions_sorted_no_secret = []
+                for action in new_actions_sorted:
+                    # the secret is currently only defined in the oidc config
+                    if action['Type'] == 'authenticate-oidc':
+                        action['AuthenticateOidcConfig'].pop('ClientSecret')
+                        new_actions_sorted_no_secret.append(action)
+                    else:
+                        new_actions_sorted_no_secret.append(action)
+
+                if current_actions_sorted != new_actions_sorted_no_secret:
+                    modified_listener['DefaultActions'] = new_listener['DefaultActions']
+        # If the action lengths are different, then replace with the new actions
+        else:
+            modified_listener['DefaultActions'] = new_listener['DefaultActions']
 
         if modified_listener:
             return modified_listener
@@ -561,7 +619,12 @@ class ELBListener(object):
                 self.listener.pop('Rules')
             AWSRetry.jittered_backoff()(self.connection.create_listener)(LoadBalancerArn=self.elb_arn, **self.listener)
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e)
+            if '"Order", must be one of: Type, TargetGroupArn' in str(e):
+                self.module.fail_json(msg="installed version of botocore does not support "
+                                          "multiple actions, please upgrade botocore to version "
+                                          "1.10.30 or higher")
+            else:
+                self.module.fail_json_aws(e)
 
     def modify(self):
 
@@ -571,7 +634,12 @@ class ELBListener(object):
                 self.listener.pop('Rules')
             AWSRetry.jittered_backoff()(self.connection.modify_listener)(**self.listener)
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e)
+            if '"Order", must be one of: Type, TargetGroupArn' in str(e):
+                self.module.fail_json(msg="installed version of botocore does not support "
+                                          "multiple actions, please upgrade botocore to version "
+                                          "1.10.30 or higher")
+            else:
+                self.module.fail_json_aws(e)
 
     def delete(self):
 
@@ -613,12 +681,18 @@ class ELBListenerRules(object):
         :return: the same list of dicts ensuring that each rule Actions dict has TargetGroupArn key. If a TargetGroupName key exists, it is removed.
         """
 
+        fixed_rules = []
         for rule in rules:
-            if 'TargetGroupName' in rule['Actions'][0]:
-                rule['Actions'][0]['TargetGroupArn'] = convert_tg_name_to_arn(self.connection, self.module, rule['Actions'][0]['TargetGroupName'])
-                del rule['Actions'][0]['TargetGroupName']
+            fixed_actions = []
+            for action in rule['Actions']:
+                if 'TargetGroupName' in action:
+                    action['TargetGroupArn'] = convert_tg_name_to_arn(self.connection, self.module, action['TargetGroupName'])
+                    del action['TargetGroupName']
+                fixed_actions.append(action)
+            rule['Actions'] = fixed_actions
+            fixed_rules.append(rule)
 
-        return rules
+        return fixed_rules
 
     def _get_elb_listener_rules(self):
 
@@ -638,7 +712,12 @@ class ELBListenerRules(object):
         condition_found = False
 
         for current_condition in current_conditions:
-            if current_condition['Field'] == condition['Field'] and current_condition['Values'][0] == condition['Values'][0]:
+            if current_condition.get('SourceIpConfig'):
+                if (current_condition['Field'] == condition['Field'] and
+                        current_condition['SourceIpConfig']['Values'][0] == condition['SourceIpConfig']['Values'][0]):
+                    condition_found = True
+                    break
+            elif current_condition['Field'] == condition['Field'] and current_condition['Values'][0] == condition['Values'][0]:
                 condition_found = True
                 break
 
@@ -653,16 +732,57 @@ class ELBListenerRules(object):
         modified_rule = {}
 
         # Priority
-        if current_rule['Priority'] != new_rule['Priority']:
+        if int(current_rule['Priority']) != new_rule['Priority']:
             modified_rule['Priority'] = new_rule['Priority']
 
         # Actions
-        #   We wont worry about the Action Type because it is always 'forward'
-        if current_rule['Actions'][0]['TargetGroupArn'] != new_rule['Actions'][0]['TargetGroupArn']:
-            modified_rule['Actions'] = []
-            modified_rule['Actions'].append({})
-            modified_rule['Actions'][0]['TargetGroupArn'] = new_rule['Actions'][0]['TargetGroupArn']
-            modified_rule['Actions'][0]['Type'] = 'forward'
+
+        # Check proper rule format on current listener
+        if len(current_rule['Actions']) > 1:
+            for action in current_rule['Actions']:
+                if 'Order' not in action:
+                    self.module.fail_json(msg="'Order' key not found in actions. "
+                                              "installed version of botocore does not support "
+                                              "multiple actions, please upgrade botocore to version "
+                                              "1.10.30 or higher")
+
+        # If the lengths of the actions are the same, we'll have to verify that the
+        # contents of those actions are the same
+        if len(current_rule['Actions']) == len(new_rule['Actions']):
+            # if actions have just one element, compare the contents and then update if
+            # they're different
+            if len(current_rule['Actions']) == 1 and len(new_rule['Actions']) == 1:
+                if current_rule['Actions'] != new_rule['Actions']:
+                    modified_rule['Actions'] = new_rule['Actions']
+                    print("modified_rule:")
+                    print(new_rule['Actions'])
+            # if actions have multiple elements, we'll have to order them first before comparing.
+            # multiple actions will have an 'Order' key for this purpose
+            else:
+                current_actions_sorted = sorted(current_rule['Actions'], key=lambda x: x['Order'])
+                new_actions_sorted = sorted(new_rule['Actions'], key=lambda x: x['Order'])
+
+                # the AWS api won't return the client secret, so we'll have to remove it
+                # or the module will always see the new and current actions as different
+                # and try to apply the same config
+                new_actions_sorted_no_secret = []
+                for action in new_actions_sorted:
+                    # the secret is currently only defined in the oidc config
+                    if action['Type'] == 'authenticate-oidc':
+                        action['AuthenticateOidcConfig'].pop('ClientSecret')
+                        new_actions_sorted_no_secret.append(action)
+                    else:
+                        new_actions_sorted_no_secret.append(action)
+
+                if current_actions_sorted != new_actions_sorted_no_secret:
+                    modified_rule['Actions'] = new_rule['Actions']
+                    print("modified_rule:")
+                    print(new_rule['Actions'])
+        # If the action lengths are different, then replace with the new actions
+        else:
+            modified_rule['Actions'] = new_rule['Actions']
+            print("modified_rule:")
+            print(new_rule['Actions'])
 
         # Conditions
         modified_conditions = []
@@ -730,7 +850,12 @@ class ELBListenerRule(object):
             self.rule['Priority'] = int(self.rule['Priority'])
             AWSRetry.jittered_backoff()(self.connection.create_rule)(**self.rule)
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e)
+            if '"Order", must be one of: Type, TargetGroupArn' in str(e):
+                self.module.fail_json(msg="installed version of botocore does not support "
+                                          "multiple actions, please upgrade botocore to version "
+                                          "1.10.30 or higher")
+            else:
+                self.module.fail_json_aws(e)
 
         self.changed = True
 
@@ -745,7 +870,12 @@ class ELBListenerRule(object):
             del self.rule['Priority']
             AWSRetry.jittered_backoff()(self.connection.modify_rule)(**self.rule)
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e)
+            if '"Order", must be one of: Type, TargetGroupArn' in str(e):
+                self.module.fail_json(msg="installed version of botocore does not support "
+                                          "multiple actions, please upgrade botocore to version "
+                                          "1.10.30 or higher")
+            else:
+                self.module.fail_json_aws(e)
 
         self.changed = True
 

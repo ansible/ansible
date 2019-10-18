@@ -205,47 +205,49 @@ interface:
   contains:
     description:
       description: interface description
-      type: string
+      type: str
       sample: Firewall network interface
     groups:
       description: list of security groups
-      type: list of dictionaries
+      type: list
+      elements: dict
       sample: [ { "sg-f8a8a9da": "default" } ]
     id:
       description: network interface id
-      type: string
+      type: str
       sample: "eni-1d889198"
     mac_address:
       description: interface's physical address
-      type: string
+      type: str
       sample: "00:00:5E:00:53:23"
     owner_id:
       description: aws account id
-      type: string
+      type: str
       sample: 812381371
     private_ip_address:
       description: primary ip address of this interface
-      type: string
+      type: str
       sample: 10.20.30.40
     private_ip_addresses:
       description: list of all private ip addresses associated to this interface
-      type: list of dictionaries
+      type: list
+      elements: dict
       sample: [ { "primary_address": true, "private_ip_address": "10.20.30.40" } ]
     source_dest_check:
       description: value of source/dest check flag
-      type: boolean
+      type: bool
       sample: True
     status:
       description: network interface status
-      type: string
+      type: str
       sample: "pending"
     subnet_id:
       description: which vpc subnet the interface is bound
-      type: string
+      type: str
       sample: subnet-b0a0393c
     vpc_id:
       description: which vpc this network interface is bound
-      type: string
+      type: str
       sample: vpc-9a9a9da
 
 '''

@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -94,7 +94,7 @@ tasks:
     state: present
     password: "{{ temp_pass }}"
     access_key_state: create
-  with_items:
+  loop:
     - jcleese
     - mpython
 
@@ -106,7 +106,7 @@ task:
     iam_type: group
     name: "{{ item }}"
     state: present
-  with_items:
+  loop:
      - Mario
      - Luigi
   register: new_groups
@@ -117,7 +117,7 @@ task:
     name: jdavila
     state: update
     groups: "{{ item.created_group.group_name }}"
-  with_items: "{{ new_groups.results }}"
+  loop: "{{ new_groups.results }}"
 
 # Example of role with custom trust policy for Lambda service
 - name: Create IAM role with custom trust relationship
@@ -137,7 +137,7 @@ task:
 RETURN = '''
 role_result:
     description: the IAM.role dict returned by Boto
-    type: string
+    type: str
     returned: if iam_type=role and state=present
     sample: {
                 "arn": "arn:aws:iam::A1B2C3D4E5F6:role/my-new-role",
@@ -265,9 +265,9 @@ def delete_dependencies_first(module, iam, name):
     except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
         if 'must detach all policies first' in error_msg:
-            module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+            module.fail_json(changed=changed, msg="All inline policies have been removed. Though it appears"
                                                   "that %s has Managed Polices. This is not "
-                                                  "currently supported by boto. Please detach the polices "
+                                                  "currently supported by boto. Please detach the policies "
                                                   "through the console and try again." % name)
         module.fail_json(changed=changed, msg="Failed to delete policies: %s" % err, exception=traceback.format_exc())
 
@@ -494,9 +494,9 @@ def delete_group(module=None, iam=None, name=None):
             except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(err)
                 if ('must delete policies first') in error_msg:
-                    module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+                    module.fail_json(changed=changed, msg="All inline policies have been removed. Though it appears"
                                                           "that %s has Managed Polices. This is not "
-                                                          "currently supported by boto. Please detach the polices "
+                                                          "currently supported by boto. Please detach the policies "
                                                           "through the console and try again." % name)
                 else:
                     module.fail_json(changed=changed, msg=str(error_msg))
@@ -578,9 +578,9 @@ def delete_role(module, iam, name, role_list, prof_list):
                 except boto.exception.BotoServerError as err:
                     error_msg = boto_exception(err)
                     if ('must detach all policies first') in error_msg:
-                        module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+                        module.fail_json(changed=changed, msg="All inline policies have been removed. Though it appears"
                                                               "that %s has Managed Polices. This is not "
-                                                              "currently supported by boto. Please detach the polices "
+                                                              "currently supported by boto. Please detach the policies "
                                                               "through the console and try again." % name)
                     else:
                         module.fail_json(changed=changed, msg=str(err))

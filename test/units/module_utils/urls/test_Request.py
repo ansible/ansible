@@ -8,7 +8,8 @@ __metaclass__ = type
 import datetime
 import os
 
-from ansible.module_utils.urls import Request, open_url, urllib_request, HAS_SSLCONTEXT, cookiejar, ConnectionError, RequestWithMethod
+from ansible.module_utils.urls import (Request, open_url, urllib_request, HAS_SSLCONTEXT, cookiejar, RequestWithMethod,
+                                       UnixHTTPHandler, UnixHTTPSConnection, httplib)
 from ansible.module_utils.urls import SSLValidationHandler, HTTPSClientAuthHandler, RedirectHandlerFactory
 
 import pytest
@@ -45,6 +46,8 @@ def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
         client_cert='/tmp/client.pem',
         client_key='/tmp/client.key',
         cookies=cookies,
+        unix_socket='/foo/bar/baz.sock',
+        ca_path='/foo/bar/baz.pem',
     )
     fallback_mock = mocker.spy(request, '_fallback')
 
@@ -63,10 +66,12 @@ def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
         call(None, '/tmp/client.pem'),  # client_cert
         call(None, '/tmp/client.key'),  # client_key
         call(None, cookies),  # cookies
+        call(None, '/foo/bar/baz.sock'),  # unix_socket
+        call(None, '/foo/bar/baz.pem'),  # ca_path
     ]
     fallback_mock.assert_has_calls(calls)
 
-    assert fallback_mock.call_count == 12  # All but headers use fallback
+    assert fallback_mock.call_count == 14  # All but headers use fallback
 
     args = urlopen_mock.call_args[0]
     assert args[1] is None  # data, this is handled in the Request not urlopen
@@ -97,17 +102,22 @@ def test_Request_open(urlopen_mock, install_opener_mock):
     opener = install_opener_mock.call_args[0][0]
     handlers = opener.handlers
 
-    expected_handlers = (
-        SSLValidationHandler,
-        RedirectHandlerFactory(),  # factory, get handler
-    )
+    if not HAS_SSLCONTEXT:
+        expected_handlers = (
+            SSLValidationHandler,
+            RedirectHandlerFactory(),  # factory, get handler
+        )
+    else:
+        expected_handlers = (
+            RedirectHandlerFactory(),  # factory, get handler
+        )
 
     found_handlers = []
     for handler in handlers:
         if isinstance(handler, SSLValidationHandler) or handler.__class__.__name__ == 'RedirectHandler':
             found_handlers.append(handler)
 
-    assert len(found_handlers) == 2
+    assert len(found_handlers) == len(expected_handlers)
 
 
 def test_Request_open_http(urlopen_mock, install_opener_mock):
@@ -123,6 +133,39 @@ def test_Request_open_http(urlopen_mock, install_opener_mock):
             found_handlers.append(handler)
 
     assert len(found_handlers) == 0
+
+
+def test_Request_open_unix_socket(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'http://ansible.com/', unix_socket='/foo/bar/baz.sock')
+    args = urlopen_mock.call_args[0]
+
+    opener = install_opener_mock.call_args[0][0]
+    handlers = opener.handlers
+
+    found_handlers = []
+    for handler in handlers:
+        if isinstance(handler, UnixHTTPHandler):
+            found_handlers.append(handler)
+
+    assert len(found_handlers) == 1
+
+
+def test_Request_open_https_unix_socket(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'https://ansible.com/', unix_socket='/foo/bar/baz.sock')
+    args = urlopen_mock.call_args[0]
+
+    opener = install_opener_mock.call_args[0][0]
+    handlers = opener.handlers
+
+    found_handlers = []
+    for handler in handlers:
+        if isinstance(handler, HTTPSClientAuthHandler):
+            found_handlers.append(handler)
+
+    assert len(found_handlers) == 1
+
+    inst = found_handlers[0]._build_https_connection('foo')
+    assert isinstance(inst, UnixHTTPSConnection)
 
 
 def test_Request_open_ftp(urlopen_mock, install_opener_mock, mocker):
@@ -270,6 +313,10 @@ def test_Request_open_no_validate_certs(urlopen_mock, install_opener_mock):
             break
 
     assert ssl_handler is not None
+
+    inst = ssl_handler._build_https_connection('foo')
+    assert isinstance(inst, httplib.HTTPSConnection)
+
     context = ssl_handler._context
     assert context.protocol == ssl.PROTOCOL_SSLv23
     if ssl.OP_NO_SSLv2:
@@ -323,8 +370,14 @@ def test_Request_open_cookies(urlopen_mock, install_opener_mock):
 
 
 def test_Request_open_invalid_method(urlopen_mock, install_opener_mock):
-    with pytest.raises(ConnectionError):
-        r = Request().open('BOGUS', 'https://ansible.com/')
+    r = Request().open('UNKNOWN', 'https://ansible.com/')
+
+    args = urlopen_mock.call_args[0]
+    req = args[0]
+
+    assert req.data is None
+    assert req.get_method() == 'UNKNOWN'
+    # assert r.status == 504
 
 
 def test_Request_open_custom_method(urlopen_mock, install_opener_mock):
@@ -399,4 +452,5 @@ def test_open_url(urlopen_mock, install_opener_mock, mocker):
                                      force=False, last_mod_time=None, timeout=10, validate_certs=True,
                                      url_username=None, url_password=None, http_agent=None,
                                      force_basic_auth=False, follow_redirects='urllib2',
-                                     client_cert=None, client_key=None, cookies=None)
+                                     client_cert=None, client_key=None, cookies=None, use_gssapi=False,
+                                     unix_socket=None, ca_path=None, unredirected_headers=None)

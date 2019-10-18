@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: memset_zone
-author: "Simon Weald (@analbeard)"
+author: "Simon Weald (@glitchcrab)"
 version_added: "2.6"
 short_description: Creates and deletes Memset DNS zones.
 notes:
@@ -89,12 +89,12 @@ memset_api:
     id:
       description: Zone id
       returned: always
-      type: string
+      type: str
       sample: "b0bb1ce851aeea6feeb2dc32fe83bf9c"
     nickname:
       description: Zone name
       returned: always
-      type: string
+      type: str
       sample: "example.com"
     records:
       description: List of DNS records for domains in this zone
@@ -187,8 +187,6 @@ def create_zone(args=None, zone_exists=None, payload=None):
         api_method = 'dns.zone_info'
         _has_failed, _msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
         memset_api = response.json()
-    else:
-        msg = msg
 
     return(has_failed, has_changed, memset_api, msg)
 

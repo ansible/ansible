@@ -1,1 +1,3 @@
-shippable/posix/group2
+setup/always/setup_passlib
+setup/always/setup_pexpect
+shippable/posix/group4

@@ -25,8 +25,8 @@ import tempfile
 
 import pytest
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 
 from ansible import errors
 from ansible.parsing import vault
@@ -492,7 +492,7 @@ class TestVaultEditor(unittest.TestCase):
         self.assertEqual(res, '/dev/null')
 
     def test_real_path_symlink(self):
-        self._test_dir = self._create_test_dir()
+        self._test_dir = os.path.realpath(self._create_test_dir())
         file_path = self._create_file(self._test_dir, 'test_file', content=b'this is a test file')
         file_link_path = os.path.join(self._test_dir, 'a_link_to_test_file')
 

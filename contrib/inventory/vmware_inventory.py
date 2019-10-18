@@ -39,8 +39,9 @@ import uuid
 from time import time
 
 from jinja2 import Environment
-from six import integer_types, PY3
-from six.moves import configparser
+
+from ansible.module_utils.six import integer_types, PY3
+from ansible.module_utils.six.moves import configparser
 
 try:
     import argparse
@@ -152,7 +153,7 @@ class VMWareInventory(object):
             try:
                 text = str(text)
             except UnicodeEncodeError:
-                text = text.encode('ascii', 'ignore')
+                text = text.encode('utf-8')
             print('%s %s' % (datetime.datetime.now(), text))
 
     def show(self):
@@ -186,14 +187,14 @@ class VMWareInventory(object):
 
     def write_to_cache(self, data):
         ''' Dump inventory to json file '''
-        with open(self.cache_path_cache, 'wb') as f:
-            f.write(json.dumps(data))
+        with open(self.cache_path_cache, 'w') as f:
+            f.write(json.dumps(data, indent=2))
 
     def get_inventory_from_cache(self):
         ''' Read in jsonified inventory '''
 
         jdata = None
-        with open(self.cache_path_cache, 'rb') as f:
+        with open(self.cache_path_cache, 'r') as f:
             jdata = f.read()
         return json.loads(jdata)
 
@@ -343,10 +344,22 @@ class VMWareInventory(object):
                   'pwd': self.password,
                   'port': int(self.port)}
 
-        if hasattr(ssl, 'SSLContext') and not self.validate_certs:
+        if self.validate_certs and hasattr(ssl, 'SSLContext'):
+            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            context.verify_mode = ssl.CERT_REQUIRED
+            context.check_hostname = True
+            kwargs['sslContext'] = context
+        elif self.validate_certs and not hasattr(ssl, 'SSLContext'):
+            sys.exit('pyVim does not support changing verification mode with python < 2.7.9. Either update '
+                     'python or use validate_certs=false.')
+        elif not self.validate_certs and hasattr(ssl, 'SSLContext'):
             context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
             context.verify_mode = ssl.CERT_NONE
+            context.check_hostname = False
             kwargs['sslContext'] = context
+        elif not self.validate_certs and not hasattr(ssl, 'SSLContext'):
+            # Python 2.7.9 < or RHEL/CentOS 7.4 <
+            pass
 
         return self._get_instances(kwargs)
 
@@ -390,7 +403,7 @@ class VMWareInventory(object):
             instances = [x for x in instances if x.name == self.args.host]
 
         instance_tuples = []
-        for instance in sorted(instances):
+        for instance in instances:
             if self.guest_props:
                 ifacts = self.facts_from_proplist(instance)
             else:
@@ -614,7 +627,14 @@ class VMWareInventory(object):
                         lastref = lastref[x]
                     else:
                         lastref[x] = val
-
+        if self.args.debug:
+            self.debugl("For %s" % vm.name)
+            for key in list(rdata.keys()):
+                if isinstance(rdata[key], dict):
+                    for ikey in list(rdata[key].keys()):
+                        self.debugl("Property '%s.%s' has value '%s'" % (key, ikey, rdata[key][ikey]))
+                else:
+                    self.debugl("Property '%s' has value '%s'" % (key, rdata[key]))
         return rdata
 
     def facts_from_vobj(self, vobj, level=0):
@@ -685,7 +705,7 @@ class VMWareInventory(object):
             if vobj.isalnum():
                 rdata = vobj
             else:
-                rdata = vobj.decode('ascii', 'ignore')
+                rdata = vobj.encode('utf-8').decode('utf-8')
         elif issubclass(type(vobj), bool) or isinstance(vobj, bool):
             rdata = vobj
         elif issubclass(type(vobj), integer_types) or isinstance(vobj, integer_types):

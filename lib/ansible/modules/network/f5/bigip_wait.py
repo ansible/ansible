@@ -1,15 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+#
 # Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -28,18 +29,22 @@ options:
       - When used without other conditions it is equivalent of just sleeping.
       - The default timeout is deliberately set to 2 hours because no individual
         REST API.
+    type: int
     default: 7200
   delay:
     description:
       - Number of seconds to wait before starting to poll.
+    type: int
     default: 0
   sleep:
-    default: 1
     description:
       - Number of seconds to sleep between checks, before 2.3 this was hardcoded to 1 second.
+    type: int
+    default: 1
   msg:
     description:
       - This overrides the normal error message from a failure to meet the required conditions.
+    type: str
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -48,25 +53,28 @@ author:
 EXAMPLES = r'''
 - name: Wait for BIG-IP to be ready to take configuration
   bigip_wait:
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Wait a maximum of 300 seconds for BIG-IP to be ready to take configuration
   bigip_wait:
     timeout: 300
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Wait for BIG-IP to be ready, don't start checking for 10 seconds
   bigip_wait:
     delay: 10
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -85,15 +93,11 @@ try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
 
 
 def hard_timeout(module, want, start):
@@ -144,7 +148,7 @@ class Changes(Parameters):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
         self.want = Parameters(params=self.module.params)
         self.changes = Parameters()
@@ -202,6 +206,9 @@ class ModuleManager(object):
                     self._wait_for_module_provisioning()
                 break
             except Exception as ex:
+                if 'Failed to validate the SSL' in str(ex):
+                    raise F5ModuleError(str(ex))
+
                 # The types of exception's we're handling here are "REST API is not
                 # ready" exceptions.
                 #
@@ -328,12 +335,11 @@ def main():
     )
 
     try:
-        client = F5RestClient(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

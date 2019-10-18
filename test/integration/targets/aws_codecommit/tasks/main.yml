@@ -1,0 +1,105 @@
+---
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  block:
+  # ============================================================
+  - name: Create a repository (CHECK MODE)
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      description: original comment
+      state: present
+    register: output
+    check_mode: yes
+  - assert:
+      that:
+        - output is changed
+
+  - name: Create a repository
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      description: original comment
+      state: present
+    register: output
+  - assert:
+      that:
+        - output is changed
+        - output.repository_metadata.repository_name == '{{ resource_prefix }}_repo'
+        - output.repository_metadata.repository_description == 'original comment'
+
+  - name: No-op update to repository
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      description: original comment
+      state: present
+    register: output
+  - assert:
+      that:
+        - output is not changed
+        - output.repository_metadata.repository_name == '{{ resource_prefix }}_repo'
+        - output.repository_metadata.repository_description == 'original comment'
+
+  - name: Update repository description (CHECK MODE)
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      description: new comment
+      state: present
+    register: output
+    check_mode: yes
+  - assert:
+      that:
+        - output is changed
+        - output.repository_metadata.repository_name == '{{ resource_prefix }}_repo'
+        - output.repository_metadata.repository_description == 'original comment'
+
+  - name: Update repository description
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      description: new comment
+      state: present
+    register: output
+  - assert:
+      that:
+        - output is changed
+        - output.repository_metadata.repository_name == '{{ resource_prefix }}_repo'
+        - output.repository_metadata.repository_description == 'new comment'
+
+  # ============================================================
+  - name: Delete  a repository (CHECK MODE)
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      state: absent
+    register: output
+    check_mode: yes
+  - assert:
+      that:
+        - output is changed
+
+  - name: Delete  a repository
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      state: absent
+    register: output
+  - assert:
+      that:
+        - output is changed
+
+  - name: Delete a non-existent repository
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      state: absent
+    register: output
+  - assert:
+      that:
+        - output is not changed
+
+  always:
+     ###### TEARDOWN STARTS HERE ######
+    - name: Delete  a repository
+      aws_codecommit:
+        name: "{{ resource_prefix }}_repo"
+        state: absent
+      ignore_errors: yes

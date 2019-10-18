@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -22,7 +22,8 @@ description:
   - This module provides declarative management of VLANs
     on VyOS network devices.
 notes:
-  - Tested against VYOS 1.1.7
+  - Tested against VyOS 1.1.8 (helium).
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 options:
   name:
     description:
@@ -54,6 +55,7 @@ options:
     description:
       - Purge VLANs not defined in the I(aggregate) parameter.
     default: no
+    type: bool
   state:
     description:
       - State of the VLAN configuration.
@@ -143,7 +145,6 @@ def map_obj_to_commands(updates, module):
         name = w['name']
         address = w['address']
         state = w['state']
-        interfaces = w['interfaces']
 
         obj_in_have = search_obj_in_list(vlan_id, have)
 
@@ -159,9 +160,9 @@ def map_obj_to_commands(updates, module):
                     for i in w['interfaces']:
                         cmd = 'set interfaces ethernet {0} vif {1}'.format(i, vlan_id)
                         if w['name']:
-                            commands.append(cmd + ' description {}'.format(name))
+                            commands.append(cmd + ' description {0}'.format(name))
                         elif w['address']:
-                            commands.append(cmd + ' address {}'.format(address))
+                            commands.append(cmd + ' address {0}'.format(address))
                         else:
                             commands.append(cmd)
 
@@ -208,7 +209,6 @@ def map_params_to_obj(module):
 
 def map_config_to_obj(module):
     objs = []
-    interfaces = list()
 
     output = run_commands(module, 'show interfaces')
     lines = output[0].strip().splitlines()[3:]

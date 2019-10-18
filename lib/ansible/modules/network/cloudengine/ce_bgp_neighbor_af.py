@@ -28,7 +28,7 @@ short_description: Manages BGP neighbor Address-family configuration on HUAWEI C
 description:
     - Manages BGP neighbor Address-family configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     vrf_name:
         description:
@@ -171,11 +171,12 @@ options:
             - Redirect ip.
         default: no_use
         choices: ['no_use','true','false']
-    redirect_ip_vaildation:
+    redirect_ip_validation:
         description:
-            - Redirect ip vaildation.
+            - Redirect ip validation.
         default: no_use
         choices: ['no_use','true','false']
+        aliases: ['redirect_ip_vaildation']
     reflect_client:
         description:
             - If the value is true, the local device functions as the route reflector and a peer functions
@@ -353,7 +354,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -402,7 +403,7 @@ CE_GET_BGP_PEER_AF_HEADER = """
                   <afType>%s</afType>
                   <peerAFs>
                     <peerAF>
-                      <remoteAddress></remoteAddress>
+                      <remoteAddress>%s</remoteAddress>
 """
 CE_GET_BGP_PEER_AF_TAIL = """
                     </peerAF>
@@ -539,7 +540,7 @@ class BgpNeighborAf(object):
                 msg='Error: The remote_address %s is invalid.' % remote_address)
 
         conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-            vrf_name, af_type) + CE_GET_BGP_PEER_AF_TAIL
+            vrf_name, af_type, remote_address) + CE_GET_BGP_PEER_AF_TAIL
         recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
         if state == "present":
@@ -548,12 +549,11 @@ class BgpNeighborAf(object):
             else:
                 re_find = re.findall(
                     r'.*<remoteAddress>(.*)</remoteAddress>.*', recv_xml)
-
                 if re_find:
                     result["remote_address"] = re_find
                     result["vrf_name"] = vrf_name
                     result["af_type"] = af_type
-                    if re_find[0] != remote_address:
+                    if remote_address not in re_find:
                         need_cfg = True
                 else:
                     need_cfg = True
@@ -584,6 +584,7 @@ class BgpNeighborAf(object):
         state = module.params['state']
         vrf_name = module.params['vrf_name']
         af_type = module.params['af_type']
+        remote_address = module.params['remote_address']
 
         if state == "absent":
             result["need_cfg"] = need_cfg
@@ -593,15 +594,14 @@ class BgpNeighborAf(object):
         if advertise_irb != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<advertiseIrb></advertiseIrb>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<advertiseIrb></advertiseIrb>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
                 need_cfg = True
             else:
-                re_find = re.findall(
-                    r'.*<advertiseIrb>(.*)</advertiseIrb>.*', recv_xml)
-
+                re_find = re.findall(r'.*<remoteAddress>%s</remoteAddress>\s*'
+                                     r'<advertiseIrb>(.*)</advertiseIrb>.*' % remote_address, recv_xml)
                 if re_find:
                     result["advertise_irb"] = re_find
                     result["vrf_name"] = vrf_name
@@ -615,14 +615,14 @@ class BgpNeighborAf(object):
         if advertise_arp != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<advertiseArp></advertiseArp>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<advertiseArp></advertiseArp>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
                 need_cfg = True
             else:
-                re_find = re.findall(
-                    r'.*<advertiseArp>(.*)</advertiseArp>.*', recv_xml)
+                re_find = re.findall(r'.*<remoteAddress>%s</remoteAddress>\s*'
+                                     r'.*<advertiseArp>(.*)</advertiseArp>.*' % remote_address, recv_xml)
 
                 if re_find:
                     result["advertise_arp"] = re_find
@@ -637,7 +637,7 @@ class BgpNeighborAf(object):
         if advertise_remote_nexthop != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<advertiseRemoteNexthop></advertiseRemoteNexthop>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<advertiseRemoteNexthop></advertiseRemoteNexthop>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -659,7 +659,7 @@ class BgpNeighborAf(object):
         if advertise_community != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<advertiseCommunity></advertiseCommunity>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<advertiseCommunity></advertiseCommunity>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -681,9 +681,8 @@ class BgpNeighborAf(object):
         if advertise_ext_community != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<advertiseExtCommunity></advertiseExtCommunity>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<advertiseExtCommunity></advertiseExtCommunity>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
-
             if "<data/>" in recv_xml:
                 need_cfg = True
             else:
@@ -703,7 +702,7 @@ class BgpNeighborAf(object):
         if discard_ext_community != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<discardExtCommunity></discardExtCommunity>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<discardExtCommunity></discardExtCommunity>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -725,7 +724,7 @@ class BgpNeighborAf(object):
         if allow_as_loop_enable != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<allowAsLoopEnable></allowAsLoopEnable>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<allowAsLoopEnable></allowAsLoopEnable>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -750,7 +749,7 @@ class BgpNeighborAf(object):
                     msg='the value of allow_as_loop_limit %s is out of [1 - 10].' % allow_as_loop_limit)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<allowAsLoopLimit></allowAsLoopLimit>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<allowAsLoopLimit></allowAsLoopLimit>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -772,7 +771,7 @@ class BgpNeighborAf(object):
         if keep_all_routes != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<keepAllRoutes></keepAllRoutes>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<keepAllRoutes></keepAllRoutes>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -794,9 +793,9 @@ class BgpNeighborAf(object):
         if nexthop_configure:
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<nextHopConfigure></nextHopConfigure>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<nextHopConfigure></nextHopConfigure>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
-
+            self.exist_nexthop_configure = "null"
             if "<data/>" in recv_xml:
                 need_cfg = True
             else:
@@ -804,6 +803,7 @@ class BgpNeighborAf(object):
                     r'.*<nextHopConfigure>(.*)</nextHopConfigure>.*', recv_xml)
 
                 if re_find:
+                    self.exist_nexthop_configure = re_find[0]
                     result["nexthop_configure"] = re_find
                     result["vrf_name"] = vrf_name
                     result["af_type"] = af_type
@@ -819,7 +819,7 @@ class BgpNeighborAf(object):
                     msg='the value of preferred_value %s is out of [0 - 65535].' % preferred_value)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<preferredValue></preferredValue>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<preferredValue></preferredValue>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -841,7 +841,7 @@ class BgpNeighborAf(object):
         if public_as_only != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<publicAsOnly></publicAsOnly>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<publicAsOnly></publicAsOnly>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -863,7 +863,7 @@ class BgpNeighborAf(object):
         if public_as_only_force != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<publicAsOnlyForce></publicAsOnlyForce>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<publicAsOnlyForce></publicAsOnlyForce>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -885,7 +885,7 @@ class BgpNeighborAf(object):
         if public_as_only_limited != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<publicAsOnlyLimited></publicAsOnlyLimited>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<publicAsOnlyLimited></publicAsOnlyLimited>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -907,7 +907,7 @@ class BgpNeighborAf(object):
         if public_as_only_replace != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<publicAsOnlyReplace></publicAsOnlyReplace>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<publicAsOnlyReplace></publicAsOnlyReplace>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -930,7 +930,7 @@ class BgpNeighborAf(object):
         if public_as_only_skip_peer_as != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<publicAsOnlySkipPeerAs></publicAsOnlySkipPeerAs>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<publicAsOnlySkipPeerAs></publicAsOnlySkipPeerAs>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -956,7 +956,7 @@ class BgpNeighborAf(object):
                     msg='the value of route_limit %s is out of [1 - 4294967295].' % route_limit)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<routeLimit></routeLimit>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<routeLimit></routeLimit>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -982,7 +982,7 @@ class BgpNeighborAf(object):
                     msg='Error: The value of route_limit_percent %s is out of [1 - 100].' % route_limit_percent)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<routeLimitPercent></routeLimitPercent>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<routeLimitPercent></routeLimitPercent>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1004,7 +1004,7 @@ class BgpNeighborAf(object):
         if route_limit_type:
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<routeLimitType></routeLimitType>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<routeLimitType></routeLimitType>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1031,7 +1031,7 @@ class BgpNeighborAf(object):
                         '[1 - 1200].' % route_limit_idle_timeout)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<routeLimitIdleTimeout></routeLimitPercent>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<routeLimitIdleTimeout></routeLimitIdleTimeout>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1057,7 +1057,7 @@ class BgpNeighborAf(object):
                     msg='Error: The value of rt_updt_interval %s is out of [0 - 600].' % rt_updt_interval)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<rtUpdtInterval></rtUpdtInterval>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<rtUpdtInterval></rtUpdtInterval>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1079,7 +1079,7 @@ class BgpNeighborAf(object):
         if redirect_ip != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<redirectIP></redirectIP>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<redirectIP></redirectIP>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1097,11 +1097,11 @@ class BgpNeighborAf(object):
                 else:
                     need_cfg = True
 
-        redirect_ip_vaildation = module.params['redirect_ip_vaildation']
-        if redirect_ip_vaildation != 'no_use':
+        redirect_ip_validation = module.params['redirect_ip_validation']
+        if redirect_ip_validation != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<redirectIPVaildation></redirectIPVaildation>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<redirectIPVaildation></redirectIPVaildation>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1111,10 +1111,10 @@ class BgpNeighborAf(object):
                     r'.*<redirectIPVaildation>(.*)</redirectIPVaildation>.*', recv_xml)
 
                 if re_find:
-                    result["redirect_ip_vaildation"] = re_find
+                    result["redirect_ip_validation"] = re_find
                     result["vrf_name"] = vrf_name
                     result["af_type"] = af_type
-                    if re_find[0] != redirect_ip_vaildation:
+                    if re_find[0] != redirect_ip_validation:
                         need_cfg = True
                 else:
                     need_cfg = True
@@ -1123,7 +1123,7 @@ class BgpNeighborAf(object):
         if reflect_client != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<reflectClient></reflectClient>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<reflectClient></reflectClient>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1145,7 +1145,7 @@ class BgpNeighborAf(object):
         if substitute_as_enable != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<substituteAsEnable></substituteAsEnable>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<substituteAsEnable></substituteAsEnable>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1171,7 +1171,7 @@ class BgpNeighborAf(object):
                     msg='Error: The len of import_rt_policy_name %s is out of [1 - 40].' % import_rt_policy_name)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<importRtPolicyName></importRtPolicyName>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<importRtPolicyName></importRtPolicyName>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1197,7 +1197,7 @@ class BgpNeighborAf(object):
                     msg='Error: The len of export_rt_policy_name %s is out of [1 - 40].' % export_rt_policy_name)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<exportRtPolicyName></exportRtPolicyName>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<exportRtPolicyName></exportRtPolicyName>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1223,7 +1223,7 @@ class BgpNeighborAf(object):
                     msg='Error: The len of import_pref_filt_name %s is out of [1 - 169].' % import_pref_filt_name)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<importPrefFiltName></importPrefFiltName>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<importPrefFiltName></importPrefFiltName>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1249,7 +1249,7 @@ class BgpNeighborAf(object):
                     msg='Error: The len of export_pref_filt_name %s is out of [1 - 169].' % export_pref_filt_name)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<exportPrefFiltName></exportPrefFiltName>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<exportPrefFiltName></exportPrefFiltName>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1275,7 +1275,7 @@ class BgpNeighborAf(object):
                     msg='Error: The value of import_as_path_filter %s is out of [1 - 256].' % import_as_path_filter)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<importAsPathFilter></importAsPathFilter>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<importAsPathFilter></importAsPathFilter>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1301,7 +1301,7 @@ class BgpNeighborAf(object):
                     msg='Error: The value of export_as_path_filter %s is out of [1 - 256].' % export_as_path_filter)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<exportAsPathFilter></exportAsPathFilter>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<exportAsPathFilter></exportAsPathFilter>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1329,7 +1329,7 @@ class BgpNeighborAf(object):
                         'of [1 - 51].' % import_as_path_name_or_num)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<importAsPathNameOrNum></importAsPathNameOrNum>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<importAsPathNameOrNum></importAsPathNameOrNum>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1357,7 +1357,7 @@ class BgpNeighborAf(object):
                         'of [1 - 51].' % export_as_path_name_or_num)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<exportAsPathNameOrNum></exportAsPathNameOrNum>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<exportAsPathNameOrNum></exportAsPathNameOrNum>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1383,7 +1383,7 @@ class BgpNeighborAf(object):
                     msg='Error: The len of import_acl_name_or_num %s is out of [1 - 32].' % import_acl_name_or_num)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<importAclNameOrNum></importAclNameOrNum>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<importAclNameOrNum></importAclNameOrNum>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1409,7 +1409,7 @@ class BgpNeighborAf(object):
                     msg='Error: The len of export_acl_name_or_num %s is out of [1 - 32].' % export_acl_name_or_num)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<exportAclNameOrNum></exportAclNameOrNum>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<exportAclNameOrNum></exportAclNameOrNum>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1430,7 +1430,7 @@ class BgpNeighborAf(object):
         ipprefix_orf_enable = module.params['ipprefix_orf_enable']
         if ipprefix_orf_enable != 'no_use':
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<ipprefixOrfEnable></ipprefixOrfEnable>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<ipprefixOrfEnable></ipprefixOrfEnable>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1452,7 +1452,7 @@ class BgpNeighborAf(object):
         if is_nonstd_ipprefix_mod != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<isNonstdIpprefixMod></isNonstdIpprefixMod>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<isNonstdIpprefixMod></isNonstdIpprefixMod>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1478,7 +1478,7 @@ class BgpNeighborAf(object):
                     msg='Error: The value of orftype %s is out of [0 - 65535].' % orftype)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<orftype></orftype>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<orftype></orftype>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1500,7 +1500,7 @@ class BgpNeighborAf(object):
         if orf_mode:
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<orfMode></orfMode>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<orfMode></orfMode>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1526,7 +1526,7 @@ class BgpNeighborAf(object):
                     msg='Error: The len of soostring %s is out of [3 - 21].' % soostring)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<soostring></soostring>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<soostring></soostring>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1548,7 +1548,7 @@ class BgpNeighborAf(object):
         if default_rt_adv_enable != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<defaultRtAdvEnable></defaultRtAdvEnable>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<defaultRtAdvEnable></defaultRtAdvEnable>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1574,7 +1574,7 @@ class BgpNeighborAf(object):
                     msg='Error: The len of default_rt_adv_policy %s is out of [1 - 40].' % default_rt_adv_policy)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<defaultRtAdvPolicy></defaultRtAdvPolicy>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<defaultRtAdvPolicy></defaultRtAdvPolicy>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1596,7 +1596,7 @@ class BgpNeighborAf(object):
         if default_rt_match_mode:
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<defaultRtMatchMode></defaultRtMatchMode>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<defaultRtMatchMode></defaultRtMatchMode>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1618,7 +1618,7 @@ class BgpNeighborAf(object):
         if add_path_mode:
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<addPathMode></addPathMode>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<addPathMode></addPathMode>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1639,12 +1639,12 @@ class BgpNeighborAf(object):
         adv_add_path_num = module.params['adv_add_path_num']
         if adv_add_path_num:
 
-            if int(orftype) < 2 or int(orftype) > 64:
+            if int(adv_add_path_num) < 2 or int(adv_add_path_num) > 64:
                 module.fail_json(
                     msg='Error: The value of adv_add_path_num %s is out of [2 - 64].' % adv_add_path_num)
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<advAddPathNum></advAddPathNum>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<advAddPathNum></advAddPathNum>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1666,7 +1666,7 @@ class BgpNeighborAf(object):
         if origin_as_valid != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<originAsValid></originAsValid>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<originAsValid></originAsValid>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1688,7 +1688,7 @@ class BgpNeighborAf(object):
         if vpls_enable != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<vplsEnable></vplsEnable>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<vplsEnable></vplsEnable>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1710,7 +1710,7 @@ class BgpNeighborAf(object):
         if vpls_ad_disable != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<vplsAdDisable></vplsAdDisable>" + CE_GET_BGP_PEER_AF_TAIL
+                vrf_name, af_type, remote_address) + "<vplsAdDisable></vplsAdDisable>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
             if "<data/>" in recv_xml:
@@ -1733,7 +1733,7 @@ class BgpNeighborAf(object):
         if update_pkt_standard_compatible != 'no_use':
 
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
-                vrf_name, af_type) + "<updatePktStandardCompatible></updatePktStandardCompatible>" + \
+                vrf_name, af_type, remote_address) + "<updatePktStandardCompatible></updatePktStandardCompatible>" + \
                 CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1773,14 +1773,30 @@ class BgpNeighborAf(object):
             module.fail_json(msg='Error: Merge bgp peer address family failed.')
 
         cmds = []
+        cmd = af_type
         if af_type == "ipv4uni":
-            cmd = "ipv4-family unicast"
+            if vrf_name == "_public_":
+                cmd = "ipv4-family unicast"
+            else:
+                cmd = "ipv4-family vpn-instance %s" % vrf_name
         elif af_type == "ipv4multi":
             cmd = "ipv4-family multicast"
         elif af_type == "ipv6uni":
-            cmd = "ipv6-family unicast"
+            if vrf_name == "_public_":
+                cmd = "ipv6-family unicast"
+            else:
+                cmd = "ipv6-family vpn-instance %s" % vrf_name
+        elif af_type == "evpn":
+            cmd = "l2vpn-family evpn"
+        elif af_type == "ipv4vpn":
+            cmd = "ipv4-family vpnv4"
+        elif af_type == "ipv6vpn":
+            cmd = "ipv6-family vpnv6"
         cmds.append(cmd)
-        cmd = "peer %s" % remote_address
+        if vrf_name == "_public_":
+            cmd = "peer %s enable" % remote_address
+        else:
+            cmd = "peer %s" % remote_address
         cmds.append(cmd)
 
         return cmds
@@ -1802,14 +1818,30 @@ class BgpNeighborAf(object):
             module.fail_json(msg='Error: Create bgp peer address family failed.')
 
         cmds = []
+        cmd = af_type
         if af_type == "ipv4uni":
-            cmd = "ipv4-family unicast"
+            if vrf_name == "_public_":
+                cmd = "ipv4-family unicast"
+            else:
+                cmd = "ipv4-family vpn-instance %s" % vrf_name
         elif af_type == "ipv4multi":
             cmd = "ipv4-family multicast"
         elif af_type == "ipv6uni":
-            cmd = "ipv6-family unicast"
+            if vrf_name == "_public_":
+                cmd = "ipv6-family unicast"
+            else:
+                cmd = "ipv6-family vpn-instance %s" % vrf_name
+        elif af_type == "evpn":
+            cmd = "l2vpn-family evpn"
+        elif af_type == "ipv4vpn":
+            cmd = "ipv4-family vpnv4"
+        elif af_type == "ipv6vpn":
+            cmd = "ipv6-family vpnv6"
         cmds.append(cmd)
-        cmd = "peer %s" % remote_address
+        if vrf_name == "_public_":
+            cmd = "peer %s enable" % remote_address
+        else:
+            cmd = "peer %s" % remote_address
         cmds.append(cmd)
 
         return cmds
@@ -1831,14 +1863,30 @@ class BgpNeighborAf(object):
             module.fail_json(msg='Error: Delete bgp peer address family failed.')
 
         cmds = []
+        cmd = af_type
         if af_type == "ipv4uni":
-            cmd = "ipv4-family unicast"
+            if vrf_name == "_public_":
+                cmd = "ipv4-family unicast"
+            else:
+                cmd = "ipv4-family vpn-instance %s" % vrf_name
         elif af_type == "ipv4multi":
             cmd = "ipv4-family multicast"
         elif af_type == "ipv6uni":
-            cmd = "ipv6-family unicast"
+            if vrf_name == "_public_":
+                cmd = "ipv6-family unicast"
+            else:
+                cmd = "ipv6-family vpn-instance %s" % vrf_name
+        elif af_type == "evpn":
+            cmd = "l2vpn-family evpn"
+        elif af_type == "ipv4vpn":
+            cmd = "ipv4-family vpnv4"
+        elif af_type == "ipv6vpn":
+            cmd = "ipv6-family vpnv6"
         cmds.append(cmd)
-        cmd = "undo peer %s" % remote_address
+        if vrf_name == "_public_":
+            cmd = "undo peer %s enable" % remote_address
+        else:
+            cmd = "undo peer %s" % remote_address
         cmds.append(cmd)
 
         return cmds
@@ -1861,7 +1909,7 @@ class BgpNeighborAf(object):
         if advertise_irb != 'no_use':
             conf_str += "<advertiseIrb>%s</advertiseIrb>" % advertise_irb
 
-            if advertise_irb == "ture":
+            if advertise_irb == "true":
                 cmd = "peer %s advertise irb" % remote_address
             else:
                 cmd = "undo peer %s advertise irb" % remote_address
@@ -1871,7 +1919,7 @@ class BgpNeighborAf(object):
         if advertise_arp != 'no_use':
             conf_str += "<advertiseArp>%s</advertiseArp>" % advertise_arp
 
-            if advertise_arp == "ture":
+            if advertise_arp == "true":
                 cmd = "peer %s advertise arp" % remote_address
             else:
                 cmd = "undo peer %s advertise arp" % remote_address
@@ -1957,7 +2005,14 @@ class BgpNeighborAf(object):
             elif nexthop_configure == "invariable":
                 cmd = "peer %s next-hop-invariable" % remote_address
                 cmds.append(cmd)
-
+            else:
+                if self.exist_nexthop_configure != "null":
+                    if self.exist_nexthop_configure == "local":
+                        cmd = "undo peer %s next-hop-local" % remote_address
+                        cmds.append(cmd)
+                    elif self.exist_nexthop_configure == "invariable":
+                        cmd = "undo peer %s next-hop-invariable" % remote_address
+                        cmds.append(cmd)
         preferred_value = module.params['preferred_value']
         if preferred_value:
             conf_str += "<preferredValue>%s</preferredValue>" % preferred_value
@@ -2000,9 +2055,15 @@ class BgpNeighborAf(object):
             conf_str += "<publicAsOnlyReplace>%s</publicAsOnlyReplace>" % public_as_only_replace
 
             if public_as_only_replace == "true":
-                cmd = "peer %s public-as-only force replace" % remote_address
+                if public_as_only_force != "no_use":
+                    cmd = "peer %s public-as-only force replace" % remote_address
+                if public_as_only_limited != "no_use":
+                    cmd = "peer %s public-as-only limited replace" % remote_address
             else:
-                cmd = "undo peer %s public-as-only force replace" % remote_address
+                if public_as_only_force != "no_use":
+                    cmd = "undo peer %s public-as-only force replace" % remote_address
+                if public_as_only_limited != "no_use":
+                    cmd = "undo peer %s public-as-only limited replace" % remote_address
             cmds.append(cmd)
 
         public_as_only_skip_peer_as = module.params[
@@ -2011,23 +2072,32 @@ class BgpNeighborAf(object):
             conf_str += "<publicAsOnlySkipPeerAs>%s</publicAsOnlySkipPeerAs>" % public_as_only_skip_peer_as
 
             if public_as_only_skip_peer_as == "true":
-                cmd = "peer %s public-as-only force include-peer-as" % remote_address
+                if public_as_only_force != "no_use":
+                    cmd = "peer %s public-as-only force include-peer-as" % remote_address
+                if public_as_only_limited != "no_use":
+                    cmd = "peer %s public-as-only limited include-peer-as" % remote_address
             else:
-                cmd = "undo peer %s public-as-only force include-peer-as" % remote_address
+                if public_as_only_force != "no_use":
+                    cmd = "undo peer %s public-as-only force include-peer-as" % remote_address
+                if public_as_only_limited != "no_use":
+                    cmd = "undo peer %s public-as-only limited include-peer-as" % remote_address
             cmds.append(cmd)
 
+        route_limit_sign = "route-limit"
+        if af_type == "evpn":
+            route_limit_sign = "mac-limit"
         route_limit = module.params['route_limit']
         if route_limit:
             conf_str += "<routeLimit>%s</routeLimit>" % route_limit
 
-            cmd = "peer %s route-limit %s" % (remote_address, route_limit)
+            cmd = "peer %s %s %s" % (remote_address, route_limit_sign, route_limit)
             cmds.append(cmd)
 
         route_limit_percent = module.params['route_limit_percent']
         if route_limit_percent:
             conf_str += "<routeLimitPercent>%s</routeLimitPercent>" % route_limit_percent
 
-            cmd = "peer %s route-limit %s %s" % (remote_address, route_limit, route_limit_percent)
+            cmd = "peer %s %s %s %s" % (remote_address, route_limit_sign, route_limit, route_limit_percent)
             cmds.append(cmd)
 
         route_limit_type = module.params['route_limit_type']
@@ -2035,21 +2105,20 @@ class BgpNeighborAf(object):
             conf_str += "<routeLimitType>%s</routeLimitType>" % route_limit_type
 
             if route_limit_type == "alertOnly":
-                cmd = "peer %s route-limit %s %s alert-only" % (remote_address, route_limit, route_limit_percent)
+                cmd = "peer %s %s %s %s alert-only" % (remote_address, route_limit_sign, route_limit, route_limit_percent)
                 cmds.append(cmd)
             elif route_limit_type == "idleForever":
-                cmd = "peer %s route-limit %s %s idle-forever" % (remote_address, route_limit, route_limit_percent)
+                cmd = "peer %s %s %s %s idle-forever" % (remote_address, route_limit_sign, route_limit, route_limit_percent)
                 cmds.append(cmd)
             elif route_limit_type == "idleTimeout":
-                cmd = "peer %s route-limit %s %s idle-timeout" % (remote_address, route_limit, route_limit_percent)
+                cmd = "peer %s %s %s %s idle-timeout" % (remote_address, route_limit_sign, route_limit, route_limit_percent)
                 cmds.append(cmd)
 
         route_limit_idle_timeout = module.params['route_limit_idle_timeout']
         if route_limit_idle_timeout:
             conf_str += "<routeLimitIdleTimeout>%s</routeLimitIdleTimeout>" % route_limit_idle_timeout
 
-            cmd = "peer %s route-limit %s %s idle-timeout %s" % (remote_address, route_limit,
-                                                                 route_limit_percent, route_limit_idle_timeout)
+            cmd = "peer %s %s %s %s idle-timeout %s" % (remote_address, route_limit_sign, route_limit, route_limit_percent, route_limit_idle_timeout)
             cmds.append(cmd)
 
         rt_updt_interval = module.params['rt_updt_interval']
@@ -2063,9 +2132,9 @@ class BgpNeighborAf(object):
         if redirect_ip != 'no_use':
             conf_str += "<redirectIP>%s</redirectIP>" % redirect_ip
 
-        redirect_ip_vaildation = module.params['redirect_ip_vaildation']
-        if redirect_ip_vaildation != 'no_use':
-            conf_str += "<redirectIPVaildation>%s</redirectIPVaildation>" % redirect_ip_vaildation
+        redirect_ip_validation = module.params['redirect_ip_validation']
+        if redirect_ip_validation != 'no_use':
+            conf_str += "<redirectIPVaildation>%s</redirectIPVaildation>" % redirect_ip_validation
 
         reflect_client = module.params['reflect_client']
         if reflect_client != 'no_use':
@@ -2080,6 +2149,12 @@ class BgpNeighborAf(object):
         substitute_as_enable = module.params['substitute_as_enable']
         if substitute_as_enable != 'no_use':
             conf_str += "<substituteAsEnable>%s</substituteAsEnable>" % substitute_as_enable
+
+            if substitute_as_enable == "true":
+                cmd = "peer %s substitute-as" % remote_address
+            else:
+                cmd = "undo peer %s substitute-as" % remote_address
+            cmds.append(cmd)
 
         import_rt_policy_name = module.params['import_rt_policy_name']
         if import_rt_policy_name:
@@ -2099,14 +2174,14 @@ class BgpNeighborAf(object):
         if import_pref_filt_name:
             conf_str += "<importPrefFiltName>%s</importPrefFiltName>" % import_pref_filt_name
 
-            cmd = "peer %s filter-policy %s import" % (remote_address, import_pref_filt_name)
+            cmd = "peer %s ip-prefix %s import" % (remote_address, import_pref_filt_name)
             cmds.append(cmd)
 
         export_pref_filt_name = module.params['export_pref_filt_name']
         if export_pref_filt_name:
             conf_str += "<exportPrefFiltName>%s</exportPrefFiltName>" % export_pref_filt_name
 
-            cmd = "peer %s filter-policy %s export" % (remote_address, export_pref_filt_name)
+            cmd = "peer %s ip-prefix %s export" % (remote_address, export_pref_filt_name)
             cmds.append(cmd)
 
         import_as_path_filter = module.params['import_as_path_filter']
@@ -2142,15 +2217,19 @@ class BgpNeighborAf(object):
         import_acl_name_or_num = module.params['import_acl_name_or_num']
         if import_acl_name_or_num:
             conf_str += "<importAclNameOrNum>%s</importAclNameOrNum>" % import_acl_name_or_num
-
-            cmd = "peer %s filter-policy %s import" % (remote_address, import_acl_name_or_num)
+            if import_acl_name_or_num.isdigit():
+                cmd = "peer %s filter-policy %s import" % (remote_address, import_acl_name_or_num)
+            else:
+                cmd = "peer %s filter-policy acl-name %s import" % (remote_address, import_acl_name_or_num)
             cmds.append(cmd)
 
         export_acl_name_or_num = module.params['export_acl_name_or_num']
         if export_acl_name_or_num:
             conf_str += "<exportAclNameOrNum>%s</exportAclNameOrNum>" % export_acl_name_or_num
-
-            cmd = "peer %s filter-policy %s export" % (remote_address, export_acl_name_or_num)
+            if export_acl_name_or_num.isdigit():
+                cmd = "peer %s filter-policy %s export" % (remote_address, export_acl_name_or_num)
+            else:
+                cmd = "peer %s filter-policy acl-name %s export" % (remote_address, export_acl_name_or_num)
             cmds.append(cmd)
 
         ipprefix_orf_enable = module.params['ipprefix_orf_enable']
@@ -2214,7 +2293,6 @@ class BgpNeighborAf(object):
         default_rt_adv_policy = module.params['default_rt_adv_policy']
         if default_rt_adv_policy:
             conf_str += "<defaultRtAdvPolicy>%s</defaultRtAdvPolicy>" % default_rt_adv_policy
-
             cmd += " route-policy %s" % default_rt_adv_policy
 
         default_rt_match_mode = module.params['default_rt_match_mode']
@@ -2232,11 +2310,19 @@ class BgpNeighborAf(object):
         add_path_mode = module.params['add_path_mode']
         if add_path_mode:
             conf_str += "<addPathMode>%s</addPathMode>" % add_path_mode
+            if add_path_mode == "receive":
+                cmd = "peer %s capability-advertise add-path receive" % remote_address
+            elif add_path_mode == "send":
+                cmd = "peer %s capability-advertise add-path send" % remote_address
+            elif add_path_mode == "both":
+                cmd = "peer %s capability-advertise add-path both" % remote_address
+            cmds.append(cmd)
 
         adv_add_path_num = module.params['adv_add_path_num']
         if adv_add_path_num:
             conf_str += "<advAddPathNum>%s</advAddPathNum>" % adv_add_path_num
-
+            cmd = "peer %s advertise add-path path-number %s" % (remote_address, adv_add_path_num)
+            cmds.append(cmd)
         origin_as_valid = module.params['origin_as_valid']
         if origin_as_valid != 'no_use':
             conf_str += "<originAsValid>%s</originAsValid>" % origin_as_valid
@@ -2296,7 +2382,9 @@ def main():
         route_limit_idle_timeout=dict(type='str'),
         rt_updt_interval=dict(type='str'),
         redirect_ip=dict(type='str', default='no_use', choices=['no_use', 'true', 'false']),
-        redirect_ip_vaildation=dict(type='str', default='no_use', choices=['no_use', 'true', 'false']),
+        redirect_ip_validation=dict(
+            type='str', default='no_use',
+            choices=['no_use', 'true', 'false'], aliases=['redirect_ip_vaildation']),
         reflect_client=dict(type='str', default='no_use', choices=['no_use', 'true', 'false']),
         substitute_as_enable=dict(type='str', default='no_use', choices=['no_use', 'true', 'false']),
         import_rt_policy_name=dict(type='str'),
@@ -2359,7 +2447,7 @@ def main():
     route_limit_idle_timeout = module.params['route_limit_idle_timeout']
     rt_updt_interval = module.params['rt_updt_interval']
     redirect_ip = module.params['redirect_ip']
-    redirect_ip_vaildation = module.params['redirect_ip_vaildation']
+    redirect_ip_validation = module.params['redirect_ip_validation']
     reflect_client = module.params['reflect_client']
     substitute_as_enable = module.params['substitute_as_enable']
     import_rt_policy_name = module.params['import_rt_policy_name']
@@ -2442,8 +2530,8 @@ def main():
         proposed["rt_updt_interval"] = rt_updt_interval
     if redirect_ip != 'no_use':
         proposed["redirect_ip"] = redirect_ip
-    if redirect_ip_vaildation != 'no_use':
-        proposed["redirect_ip_vaildation"] = redirect_ip_vaildation
+    if redirect_ip_validation != 'no_use':
+        proposed["redirect_ip_validation"] = redirect_ip_validation
     if reflect_client != 'no_use':
         proposed["reflect_client"] = reflect_client
     if substitute_as_enable != 'no_use':
@@ -2567,6 +2655,9 @@ def main():
             end_tmp[item] = bgp_peer_af_other_rst[item]
     if end_tmp:
         end_state["bgp neighbor af other"] = end_tmp
+    if end_state == existing:
+        changed = False
+        updates = list()
 
     results = dict()
     results['proposed'] = proposed

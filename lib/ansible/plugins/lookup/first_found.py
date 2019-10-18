@@ -15,22 +15,41 @@ DOCUMENTATION = """
         to the containing role/play/include/etc's location.
       - The list of files has precedence over the paths searched.
         i.e, A task in a  role has a 'file1' in the play's relative path, this will be used, 'file2' in role's relative path will not.
+      - Either a list of files C(_terms) or a key `files` with a list of files is required for this plugin to operate.
+    notes:
+      - This lookup can be used in 'dual mode', either passing a list of file names or a dictionary that has C(files) and C(paths).
     options:
       _terms:
         description: list of file names
-        required: True
+      files:
+        description: list of file names
       paths:
         description: list of paths in which to look for the files
+      skip:
+        type: boolean
+        default: False
+        description: Return an empty list if no file is found, instead of an error.
 """
 
 EXAMPLES = """
-- name: show first existing file
-  debug: msg={{lookup('first_found', findme)}}
+- name: show first existing file or ignore if none do
+  debug: msg={{lookup('first_found', findme, errors='ignore')}}
   vars:
     findme:
       - "/path/to/foo.txt"
       - "bar.txt"  # will be looked in files/ dir relative to role and/or play
       - "/path/to/biz.txt"
+
+- name: |
+        include tasks only if files exist.  Note the use of query() to return
+        a blank list for the loop if no files are found.
+  import_tasks: '{{ item }}'
+  vars:
+    params:
+      files:
+        - path/tasks.yaml
+        - path/other_tasks.yaml
+  loop: "{{ q('first_found', params, errors='ignore') }}"
 
 - name: |
         copy first existing file found to /some/file,
@@ -106,6 +125,7 @@ class LookupModule(LookupBase):
         if anydict:
             for term in terms:
                 if isinstance(term, dict):
+
                     files = term.get('files', [])
                     paths = term.get('paths', [])
                     skip = boolean(term.get('skip', False), strict=False)
@@ -150,5 +170,5 @@ class LookupModule(LookupBase):
                 return [path]
         if skip:
             return []
-        raise AnsibleLookupError("No file was found when using first_found. Use the 'skip: true' option to allow this task to be skipped if no "
+        raise AnsibleLookupError("No file was found when using first_found. Use errors='ignore' to allow this task to be skipped if no "
                                  "files are found")

@@ -1,0 +1,7 @@
+- name: check the foreman inventory script result size and attributes
+  hosts: localhost
+  gather_facts: False
+  tasks:
+    - assert:
+        that:
+            - "{{ groups['all']|length > 900 }}"

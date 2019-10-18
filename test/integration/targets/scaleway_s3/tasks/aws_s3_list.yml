@@ -1,0 +1,22 @@
+- name: List bucket
+  aws_s3:
+    mode: list
+    bucket: '{{ bucket_name }}'
+    s3_url: '{{ s3_url }}'
+    region: '{{ scaleway_region }}'
+    encrypt: false
+  register: list_task
+
+- name: Show list_task
+  debug:
+    var: list_task
+
+- name: list_task is success
+  assert:
+    that:
+      - list_task is success
+
+- name: list_task is not changed
+  assert:
+    that:
+      - list_task is not changed

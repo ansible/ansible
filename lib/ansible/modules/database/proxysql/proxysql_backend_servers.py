@@ -59,7 +59,7 @@ options:
         is 1000.
   max_replication_lag:
     description:
-      - If greater than 0, ProxySQL will reguarly monitor replication lag. If
+      - If greater than 0, ProxySQL will regularly monitor replication lag. If
         replication lag goes above I(max_replication_lag), proxysql will
         temporarily shun the server until replication catches up. If omitted
         the proxysql database default for I(max_replication_lag) is 0.
@@ -68,6 +68,7 @@ options:
       - If I(use_ssl) is set to C(True), connections to this server will be
         made using SSL connections. If omitted the proxysql database default
         for I(use_ssl) is C(False).
+    type: bool
   max_latency_ms:
     description:
       - Ping time is monitored regularly. If a host has a ping time greater

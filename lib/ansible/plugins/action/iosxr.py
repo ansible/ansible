@@ -26,23 +26,22 @@ from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.iosxr.iosxr import iosxr_provider_spec
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.common.utils import load_provider
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
+        module_name = self._task.action.split('.')[-1]
+        self._config_module = True if module_name == 'iosxr_config' else False
         socket_path = None
-        force_cli = self._task.action in ('iosxr_netconf', 'iosxr_config', 'iosxr_command', 'iosxr_facts')
+        force_cli = module_name in ('iosxr_netconf', 'iosxr_config', 'iosxr_command', 'iosxr_facts')
 
         if self._play_context.connection == 'local':
             provider = load_provider(iosxr_provider_spec, self._task.args)
@@ -79,7 +78,7 @@ class ActionModule(_ActionModule):
         elif self._play_context.connection in ('netconf', 'network_cli'):
             if force_cli and self._play_context.connection != 'network_cli':
                 return {'failed': True, 'msg': 'Connection type %s is not valid for module %s' %
-                        (self._play_context.connection, self._task.action)}
+                        (self._play_context.connection, module_name)}
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using {0} and will be ignored'.format(self._play_context.connection))

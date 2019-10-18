@@ -17,16 +17,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat.mock import patch, MagicMock
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 
 BASE_PARAMS = {'vdirect_ip': None, 'vdirect_user': None, 'vdirect_password': None,
                'vdirect_wait': None, 'vdirect_secondary_ip': None,
                'vdirect_https_port': None, 'vdirect_http_port': None,
-               'vdirect_timeout': None, 'vdirect_use_ssl': None, 'vdirect_validate_certs': None}
+               'vdirect_timeout': None, 'vdirect_use_ssl': None, 'validate_certs': None}
 
 COMMIT_PARAMS = {'devices': ['adc', 'defensepro', 'vx', 'appwall'], 'apply': True, 'save': True, 'sync': True}
 
@@ -48,7 +47,7 @@ MODULE_RESULT = {"msg": "Requested actions were successfully performed on all de
 
 
 @patch('vdirect_client.rest_client.RestClient')
-class RestClient ():
+class RestClient:
     def __init__(self, vdirect_ip=None, vdirect_user=None, vdirect_password=None, wait=None,
                  secondary_vdirect_ip=None, https_port=None, http_port=None,
                  timeout=None, https=None, strict_http_results=None,
@@ -56,7 +55,7 @@ class RestClient ():
         pass
 
 
-class DeviceMock ():
+class DeviceMock:
 
     def __init__(self, name, client):
         self.name = name

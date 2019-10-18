@@ -1,23 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -38,11 +24,11 @@ options:
   dest:
     description:
       - Destination of the logs.
-    choices: ['on', 'host', console', 'monitor', 'buffered']
+    choices: ['on', 'host', 'console', 'monitor', 'buffered']
   name:
     description:
-      - If value of C(dest) is I(host) C(name) should be specified,
-        which indicates hostname or IP address.
+      - The hostname or IP address of the destination.
+      - Required when I(dest=host).
   size:
     description:
       - Size of buffer. The acceptable value is in range from 10 to
@@ -119,7 +105,7 @@ from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.eos.eos import get_config, load_config
-from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import eos_argument_spec
 
 
 DEST_GROUP = ['on', 'host', 'console', 'monitor', 'buffered']
@@ -152,16 +138,16 @@ def map_obj_to_commands(updates, module):
         if state == 'absent' and w in have:
             if dest:
                 if dest == 'host':
-                    commands.append('no logging host {}'.format(name))
+                    commands.append('no logging host {0}'.format(name))
 
                 elif dest in DEST_GROUP:
-                    commands.append('no logging {}'.format(dest))
+                    commands.append('no logging {0}'.format(dest))
 
                 else:
                     module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
 
             if facility:
-                commands.append('no logging facility {}'.format(facility))
+                commands.append('no logging facility {0}'.format(facility))
 
         if state == 'present' and w not in have:
             if facility:
@@ -175,10 +161,10 @@ def map_obj_to_commands(updates, module):
                         present = True
 
                 if not present:
-                    commands.append('logging facility {}'.format(facility))
+                    commands.append('logging facility {0}'.format(facility))
 
             if dest == 'host':
-                commands.append('logging host {}'.format(name))
+                commands.append('logging host {0}'.format(name))
 
             elif dest == 'on':
                 commands.append('logging on')
@@ -203,17 +189,17 @@ def map_obj_to_commands(updates, module):
 
                 if not present:
                     if size and level:
-                        commands.append('logging buffered {} {}'.format(size, level))
+                        commands.append('logging buffered {0} {1}'.format(size, level))
                     else:
-                        commands.append('logging buffered {}'.format(size))
+                        commands.append('logging buffered {0}'.format(size))
 
             else:
-                dest_cmd = 'logging {}'.format(dest)
-                if level:
-                    dest_cmd += ' {}'.format(level)
+                if dest:
+                    dest_cmd = 'logging {0}'.format(dest)
+                    if level:
+                        dest_cmd += ' {0}'.format(level)
 
-                commands.append(dest_cmd)
-
+                    commands.append(dest_cmd)
     return commands
 
 
@@ -259,7 +245,7 @@ def parse_name(line, dest):
 def parse_level(line, dest):
     level = None
 
-    if dest is not 'host':
+    if dest != 'host':
 
         # Line for buffer logging entry in running-config is of the form:
         # logging buffered <size> <level>
@@ -268,7 +254,7 @@ def parse_level(line, dest):
             match = re.search(r'logging buffered (?:\d+) (\S+)', line, re.M)
 
         else:
-            match = re.search(r'logging {} (\S+)'.format(dest), line, re.M)
+            match = re.search(r'logging {0} (\S+)'.format(dest), line, re.M)
 
         if match:
             if match.group(1) in LEVEL_GROUP:
@@ -400,7 +386,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:

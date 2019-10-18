@@ -73,12 +73,11 @@ EXAMPLES = '''
 
 import os
 
+from itertools import product
+
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
-from ansible.plugins.cache import FactCache
 from ansible.plugins.inventory import BaseInventoryPlugin
-
-from itertools import product
 
 
 class InventoryModule(BaseInventoryPlugin):
@@ -89,8 +88,6 @@ class InventoryModule(BaseInventoryPlugin):
     def __init__(self):
 
         super(InventoryModule, self).__init__()
-
-        self._cache = FactCache()
 
     def verify_file(self, path):
 
@@ -104,9 +101,8 @@ class InventoryModule(BaseInventoryPlugin):
         return valid
 
     def template(self, pattern, variables):
-        t = self.templar
-        t.set_available_variables(variables)
-        return t.do_template(pattern)
+        self.templar.available_variables = variables
+        return self.templar.do_template(pattern)
 
     def add_parents(self, inventory, child, parents, template_vars):
         for parent in parents:

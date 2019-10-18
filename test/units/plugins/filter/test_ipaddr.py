@@ -20,9 +20,9 @@ __metaclass__ = type
 import sys
 import pytest
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.errors import AnsibleFilterError
-from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable, ipsubnet,
+from ansible.plugins.filter.ipaddr import (ipaddr, next_nth_usable, ipsubnet,
                                            previous_nth_usable, network_in_usable, network_in_network,
                                            cidr_merge, ipmath)
 netaddr = pytest.importorskip('netaddr')
@@ -38,15 +38,14 @@ class TestIpFilter(unittest.TestCase):
         self.assertEqual(ipaddr(address, 'netmask'), '255.255.255.255')
 
     def test_network(self):
-        # Unfixable in current state
-        # address = '1.12.1.34/32'
-        # self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
-        # address = '1.12.1.34/255.255.255.255'
-        # self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
-        # address = '1.12.1.34'
-        # self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
-        # address = '1.12.1.35/31'
-        # self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+        address = '1.12.1.34/32'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+        address = '1.12.1.34/255.255.255.255'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+        address = '1.12.1.34'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+        address = '1.12.1.35/31'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
         address = '1.12.1.34/24'
         self.assertEqual(ipaddr(address, 'network'), '1.12.1.0')
 
@@ -481,6 +480,10 @@ class TestIpFilter(unittest.TestCase):
         self.assertEqual(ipmath('192.168.1.5', 5), '192.168.1.10')
         self.assertEqual(ipmath('192.168.1.5', -5), '192.168.1.0')
         self.assertEqual(ipmath('192.168.0.5', -10), '192.167.255.251')
+
+        self.assertEqual(ipmath('192.168.1.1/24', 5), '192.168.1.6')
+        self.assertEqual(ipmath('192.168.1.6/24', -5), '192.168.1.1')
+        self.assertEqual(ipmath('192.168.2.6/24', -10), '192.168.1.252')
 
         self.assertEqual(ipmath('2001::1', 8), '2001::9')
         self.assertEqual(ipmath('2001::1', 9), '2001::a')

@@ -1,0 +1,11 @@
+# https://github.com/ansible/ansible/issues/49969
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - include_role:
+        name: test
+        public: true
+
+    - assert:
+        that:
+          - included_other is defined

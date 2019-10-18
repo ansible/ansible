@@ -20,58 +20,65 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: cronvar
 short_description: Manage variables in crontabs
 description:
-  - Use this module to manage crontab variables. This module allows
-    you to create, update, or delete cron variable definitions.
+  - Use this module to manage crontab variables.
+  - This module allows you to create, update, or delete cron variable definitions.
 version_added: "2.0"
 options:
   name:
     description:
       - Name of the crontab variable.
+    type: str
     required: yes
   value:
     description:
       - The value to set this variable to.
       - Required if C(state=present).
+    type: str
   insertafter:
     description:
       - If specified, the variable will be inserted after the variable specified.
       - Used with C(state=present).
+    type: str
   insertbefore:
     description:
       - Used with C(state=present). If specified, the variable will be inserted
         just before the variable specified.
+    type: str
   state:
     description:
       - Whether to ensure that the variable is present or absent.
+    type: str
     choices: [ absent, present ]
     default: present
   user:
     description:
       - The specific user whose crontab should be modified.
-    default: root
+      - This parameter defaults to C(root) when unset.
+    type: str
   cron_file:
     description:
       - If specified, uses this file instead of an individual user's crontab.
-        Without a leading /, this is assumed to be in /etc/cron.d.  With a leading
-        /, this is taken as absolute.
+      - Without a leading C(/), this is assumed to be in I(/etc/cron.d).
+      - With a leading C(/), this is taken as absolute.
+    type: str
   backup:
     description:
       - If set, create a backup of the crontab before it is modified.
         The location of the backup is returned in the C(backup) variable by this module.
     type: bool
-    default: 'no'
+    default: no
 requirements:
   - cron
 author:
 - Doug Luce (@dougluce)
-"""
+'''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Ensure entry like "EMAIL=doug@ansibmod.con.com" exists
   cronvar:
     name: EMAIL
@@ -91,7 +98,6 @@ EXAMPLES = '''
 '''
 
 import os
-import pipes
 import platform
 import pwd
 import re
@@ -100,8 +106,7 @@ import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-
-CRONCMD = "/usr/bin/crontab"
+from ansible.module_utils.six.moves import shlex_quote
 
 
 class CronVarError(Exception):
@@ -121,6 +126,7 @@ class CronVar(object):
         self.user = user
         self.lines = None
         self.wordchars = ''.join(chr(x) for x in range(128) if chr(x) not in ('=', "'", '"',))
+        self.cron_cmd = self.module.get_bin_path('crontab', required=True)
 
         if cron_file:
             self.cron_file = ""
@@ -145,7 +151,7 @@ class CronVar(object):
             except IOError:
                 # cron file does not exist
                 return
-            except:
+            except Exception:
                 raise CronVarError("Unexpected error:", sys.exc_info()[0])
         else:
             # using safely quoted shell for now, but this really should be two non-shell calls instead.  FIXME
@@ -200,7 +206,7 @@ class CronVar(object):
         except OSError:
             # cron file does not exist
             return False
-        except:
+        except Exception:
             raise CronVarError("Unexpected error:", sys.exc_info()[0])
 
     def parse_for_var(self, line):
@@ -289,14 +295,14 @@ class CronVar(object):
 
         if self.user:
             if platform.system() == 'SunOS':
-                return "su %s -c '%s -l'" % (pipes.quote(self.user), pipes.quote(CRONCMD))
+                return "su %s -c '%s -l'" % (shlex_quote(self.user), shlex_quote(self.cron_cmd))
             elif platform.system() == 'AIX':
-                return "%s -l %s" % (pipes.quote(CRONCMD), pipes.quote(self.user))
+                return "%s -l %s" % (shlex_quote(self.cron_cmd), shlex_quote(self.user))
             elif platform.system() == 'HP-UX':
-                return "%s %s %s" % (CRONCMD, '-l', pipes.quote(self.user))
+                return "%s %s %s" % (self.cron_cmd, '-l', shlex_quote(self.user))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
-                user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD, user, '-l')
+                user = '-u %s' % shlex_quote(self.user)
+        return "%s %s %s" % (self.cron_cmd, user, '-l')
 
     def _write_execute(self, path):
         """
@@ -305,10 +311,11 @@ class CronVar(object):
         user = ''
         if self.user:
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
-                return "chown %s %s ; su '%s' -c '%s %s'" % (pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), CRONCMD, pipes.quote(path))
+                return "chown %s %s ; su '%s' -c '%s %s'" % (
+                    shlex_quote(self.user), shlex_quote(path), shlex_quote(self.user), self.cron_cmd, shlex_quote(path))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
-                user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD, user, pipes.quote(path))
+                user = '-u %s' % shlex_quote(self.user)
+        return "%s %s %s" % (self.cron_cmd, user, shlex_quote(path))
 
 
 # ==================================================
@@ -365,7 +372,7 @@ def main():
     # --- user input validation ---
 
     if name is None and ensure_present:
-        module.fail_json(msg="You must specify 'name' to insert a new cron variabale")
+        module.fail_json(msg="You must specify 'name' to insert a new cron variable")
 
     if value is None and ensure_present:
         module.fail_json(msg="You must specify 'value' to insert a new cron variable")

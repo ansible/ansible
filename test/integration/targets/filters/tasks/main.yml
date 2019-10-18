@@ -1,20 +1,10 @@
-# test code
-# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+# test code for filters
+# Copyright: (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2019, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
 
 - name: a dummy task to test the changed and success filters
   shell: echo hi
@@ -169,6 +159,19 @@
       - _bad_urlsplit_filter is failed
       - "'unknown URL component' in _bad_urlsplit_filter.msg"
 
+- name: Test urldecode filter
+  set_fact:
+    urldecoded_string: key="@{}é&%£ foo bar '(;\<>""°)
+
+- name: Test urlencode filter
+  set_fact:
+    urlencoded_string: '{{ urldecoded_string|urlencode }}'
+
+- name: Verify urlencode en urldecode
+  assert:
+    that:
+    - urldecoded_string == urlencoded_string|urldecode
+
 - name: Flatten tests
   block:
     - name: use flatten
@@ -235,5 +238,96 @@
 - name:  Verify random_mac filter
   assert:
     that:
+            - "'00' | random_mac is match('^00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
+            - "'00:00' | random_mac is match('^00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"  
             - "'00:00:00' | random_mac is match('^00:00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
+            - "'00:00:00:00' | random_mac is match('^00:00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
+            - "'00:00:00:00:00' | random_mac is match('^00:00:00:00:00:[a-f0-9][a-f0-9]$')"  
             - "'00:00:00' | random_mac != '00:00:00' | random_mac"
+
+- name: Verify random_mac filter with seed
+  assert:
+    that:
+      - "'00:00:00' | random_mac(seed='test') == '00:00:00' | random_mac(seed='test')"
+      - "'00:00:00' | random_mac(seed='test') != '00:00:00' | random_mac(seed='another_test')"
+
+- name: Verify that union can be chained
+  vars:
+    unions: '{{ [1,2,3]|union([4,5])|union([6,7]) }}'
+  assert:
+    that:
+      - "unions|type_debug == 'list'"
+      - "unions|length == 7"
+
+- name: Test union with unhashable item
+  vars:
+    unions: '{{ [1,2,3]|union([{}]) }}'
+  assert:
+    that:
+      - "unions|type_debug == 'list'"
+      - "unions|length == 4"
+
+- name: Test ipaddr filter
+  assert:
+    that:
+      - "'192.168.0.1/32' | ipaddr('netmask') == '255.255.255.255'"
+      - "'192.168.0.1/24' | ipaddr('netmask') == '255.255.255.0'"
+      - "not '192.168.0.1/31' | ipaddr('broadcast')"
+      - "'192.168.0.1/24' | ipaddr('broadcast') == '192.168.0.255'"
+      - "'192.168.0.1/24' | ipaddr('prefix') == 24"
+      - "'192.168.0.1/24' | ipaddr('address') == '192.168.0.1'"
+      - "'192.168.0.1/24' | ipaddr('network') == '192.168.0.0'"
+      - "'fe80::dead:beef/64' | ipaddr('broadcast') == 'fe80::ffff:ffff:ffff:ffff'"
+      - "'::1/120' | ipaddr('netmask') == 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00'"
+      - "{{ subnets | ipaddr(1) }} == ['10.1.1.1/24', '10.1.2.1/24']"
+      - "{{ subnets | ipaddr('1') }}  == ['10.1.1.1/24', '10.1.2.1/24']"
+      - "{{ subnets | ipaddr(-1) }} == ['10.1.1.255/24', '10.1.2.255/24']"
+      - "{{ subnets | ipaddr('-1') }} == ['10.1.1.255/24', '10.1.2.255/24']"
+      - "'{{ prefix | ipaddr(1) }}'  == '10.1.1.1/24'"
+      - "'{{ prefix | ipaddr('1') }}' == '10.1.1.1/24'"
+      - "'{{ prefix | ipaddr('network') }}' == '10.1.1.0'"
+      - "'{{ prefix | ipaddr('-1') }}' == '10.1.1.255/24'"
+  vars:
+    subnets: ['10.1.1.0/24', '10.1.2.0/24']
+    prefix: '10.1.1.0/24'
+
+- name: Ensure dict2items works with hostvars
+  debug:
+    msg: "{{ item.key }}"
+  loop: "{{ hostvars|dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: Ensure combining two dictionaries containing undefined variables provides a helpful error
+  block:
+    - set_fact:
+        foo:
+          key1: value1
+
+    - set_fact:
+        combined: "{{ foo | combine({'key2': undef_variable}) }}"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - "result.msg.startswith('The task includes an option with an undefined variable')"
+
+    - set_fact:
+        combined: "{{ foo | combine({'key2': {'nested': [undef_variable]}})}}"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - "result.msg.startswith('The task includes an option with an undefined variable')"
+
+    - set_fact:
+        key2: is_defined
+
+    - set_fact:
+        combined: "{{ foo | combine({'key2': key2}) }}"
+
+    - assert:
+        that:
+          - "combined.key2 == 'is_defined'"

@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: aws_config_aggregator
 short_description: Manage AWS Config aggregations across multiple accounts
@@ -44,26 +44,26 @@ options:
         - A list of source regions being aggregated.
       all_aws_regions:
         description:
-        - If true, aggreagate existing AWS Config regions and future regions.
+        - If true, aggregate existing AWS Config regions and future regions.
   organization_source:
     description:
     - The region authorized to collect aggregated data.
     suboptions:
       role_arn:
         description:
-        - ARN of the IAM role used to retreive AWS Organization details associated with the aggregator account.
+        - ARN of the IAM role used to retrieve AWS Organization details associated with the aggregator account.
       aws_regions:
         description:
         - The source regions being aggregated.
       all_aws_regions:
         description:
-        - If true, aggreagate existing AWS Config regions and future regions.
+        - If true, aggregate existing AWS Config regions and future regions.
 extends_documentation_fragment:
   - aws
   - ec2
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
 - name: Create cross-account aggregator
   aws_config_aggregator:
     name: test_config_rule
@@ -76,7 +76,7 @@ EXAMPLES = r'''
       all_aws_regions: yes
 '''
 
-RETURN = r'''#'''
+RETURN = '''#'''
 
 
 try:

@@ -48,7 +48,7 @@ Function Exit-Json($obj)
     }
 
     if (-not $obj.ContainsKey('changed')) {
-        Set-Attr $obj "changed" $false
+        Set-Attr -obj $obj -name "changed" -value $false
     }
 
     Write-Output $obj | ConvertTo-Json -Compress -Depth 99
@@ -79,11 +79,11 @@ Function Fail-Json($obj, $message = $null)
     }
 
     # Still using Set-Attr for PSObject compatibility
-    Set-Attr $obj "msg" $message
-    Set-Attr $obj "failed" $true
+    Set-Attr -obj $obj -name "msg" -value $message
+    Set-Attr -obj $obj -name "failed" -value $true
 
     if (-not $obj.ContainsKey('changed')) {
-        Set-Attr $obj "changed" $false
+        Set-Attr -obj $obj -name "changed" -value $false
     }
 
     Write-Output $obj | ConvertTo-Json -Compress -Depth 99
@@ -201,54 +201,54 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
         }
     }
 
-    # If $value -eq $null, the parameter was unspecified by the user (deliberately or not)
+    # If $null -eq $value, the parameter was unspecified by the user (deliberately or not)
     # Please leave $null-values intact, modules need to know if a parameter was specified
-    # When $value is already an array, we cannot rely on the null check, as an empty list
-    # is seen as null in the check below
-    if ($null -ne $value -or $value -is [array]) {
-        if ($type -eq "path") {
-            # Expand environment variables on path-type
-            $value = Expand-Environment($value)
-            # Test if a valid path is provided
-            if (-not (Test-Path -IsValid $value)) {
-                $path_invalid = $true
-                # could still be a valid-shaped path with a nonexistent drive letter
-                if ($value -match "^\w:") {
-                    # rewrite path with a valid drive letter and recheck the shape- this might still fail, eg, a nonexistent non-filesystem PS path
-                    if (Test-Path -IsValid $(@(Get-PSDrive -PSProvider Filesystem)[0].Name + $value.Substring(1))) {
-                        $path_invalid = $false
-                    }
-                }
-                if ($path_invalid) {
-                    Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' has an invalid path '$value' specified."
+    if ($null -eq $value) {
+        return $null
+    }
+
+    if ($type -eq "path") {
+        # Expand environment variables on path-type
+        $value = Expand-Environment($value)
+        # Test if a valid path is provided
+        if (-not (Test-Path -IsValid $value)) {
+            $path_invalid = $true
+            # could still be a valid-shaped path with a nonexistent drive letter
+            if ($value -match "^\w:") {
+                # rewrite path with a valid drive letter and recheck the shape- this might still fail, eg, a nonexistent non-filesystem PS path
+                if (Test-Path -IsValid $(@(Get-PSDrive -PSProvider Filesystem)[0].Name + $value.Substring(1))) {
+                    $path_invalid = $false
                 }
             }
-        } elseif ($type -eq "str") {
-            # Convert str types to real Powershell strings
-            $value = $value.ToString()
-        } elseif ($type -eq "bool") {
-            # Convert boolean types to real Powershell booleans
-            $value = $value | ConvertTo-Bool
-        } elseif ($type -eq "int") {
-            # Convert int types to real Powershell integers
-            $value = $value -as [int]
-        } elseif ($type -eq "float") {
-            # Convert float types to real Powershell floats
-            $value = $value -as [float]
-        } elseif ($type -eq "list") {
-            if ($value -is [array]) {
-                # Nothing to do
-            } elseif ($value -is [string]) {
-                # Convert string type to real Powershell array
-                $value = $value.Split(",").Trim()
-            } elseif ($value -is [int]) {
-                $value = @($value)
-            } else {
-                Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' is not a YAML list."
+            if ($path_invalid) {
+                Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' has an invalid path '$value' specified."
             }
-            # , is not a typo, forces it to return as a list when it is empty or only has 1 entry
-            return ,$value
         }
+    } elseif ($type -eq "str") {
+        # Convert str types to real Powershell strings
+        $value = $value.ToString()
+    } elseif ($type -eq "bool") {
+        # Convert boolean types to real Powershell booleans
+        $value = $value | ConvertTo-Bool
+    } elseif ($type -eq "int") {
+        # Convert int types to real Powershell integers
+        $value = $value -as [int]
+    } elseif ($type -eq "float") {
+        # Convert float types to real Powershell floats
+        $value = $value -as [float]
+    } elseif ($type -eq "list") {
+        if ($value -is [array]) {
+            # Nothing to do
+        } elseif ($value -is [string]) {
+            # Convert string type to real Powershell array
+            $value = $value.Split(",").Trim()
+        } elseif ($value -is [int]) {
+            $value = @($value)
+        } else {
+            Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' is not a YAML list."
+        }
+        # , is not a typo, forces it to return as a list when it is empty or only has 1 entry
+        return ,$value
     }
 
     return $value
@@ -321,7 +321,7 @@ Function Get-FileChecksum($path, $algorithm = 'sha1')
     Helper function to calculate a hash of a file in a way which PowerShell 3
     and above can handle
 #>
-    If (Test-Path -Path $path -PathType Leaf)
+    If (Test-Path -LiteralPath $path -PathType Leaf)
     {
         switch ($algorithm)
         {
@@ -334,7 +334,7 @@ Function Get-FileChecksum($path, $algorithm = 'sha1')
         }
 
         If ($PSVersionTable.PSVersion.Major -ge 4) {
-            $raw_hash = Get-FileHash $path -Algorithm $algorithm
+            $raw_hash = Get-FileHash -LiteralPath $path -Algorithm $algorithm
             $hash = $raw_hash.Hash.ToLower()
         } Else {
             $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite);
@@ -342,7 +342,7 @@ Function Get-FileChecksum($path, $algorithm = 'sha1')
             $fp.Dispose();
         }
     }
-    ElseIf (Test-Path -Path $path -PathType Container)
+    ElseIf (Test-Path -LiteralPath $path -PathType Container)
     {
         $hash = "3";
     }
@@ -360,7 +360,7 @@ Function Get-PendingRebootStatus
     Check if reboot is required, if so notify CA.
     Function returns true if computer has a pending reboot
 #>
-    $featureData = Invoke-WmiMethod -EA Ignore -Name GetServerFeature -Namespace root\microsoft\windows\servermanager -Class MSFT_ServerManagerTasks
+    $featureData = Invoke-CimMethod -EA Ignore -Name GetServerFeature -Namespace root\microsoft\windows\servermanager -Class MSFT_ServerManagerTasks
     $regData = Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" "PendingFileRenameOperations" -EA Ignore
     $CBSRebootStatus = Get-ChildItem "HKLM:\\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing"  -ErrorAction SilentlyContinue| Where-Object {$_.PSChildName -eq "RebootPending"}
     if(($featureData -and $featureData.RequiresReboot) -or $regData -or $CBSRebootStatus)
@@ -375,4 +375,3 @@ Function Get-PendingRebootStatus
 
 # this line must stay at the bottom to ensure all defined module parts are exported
 Export-ModuleMember -Alias * -Function * -Cmdlet *
-

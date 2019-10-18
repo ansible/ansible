@@ -1,7 +1,7 @@
-import collections
 from io import BytesIO
 
 from ansible.modules.web_infrastructure.jenkins_plugin import JenkinsPlugin
+from ansible.module_utils.common._collections_compat import Mapping
 
 
 def pass_function(*args, **kwargs):
@@ -145,4 +145,4 @@ def test__get_json_data(mocker):
         "{url}".format(url=GITHUB_DATA['url']),
         'CSRF')
 
-    assert isinstance(json_data, collections.Mapping)
+    assert isinstance(json_data, Mapping)

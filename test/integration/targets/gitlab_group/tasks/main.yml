@@ -1,0 +1,44 @@
+- name: Install required libs
+  pip:
+    name: python-gitlab
+    state: present
+
+- name: Cleanup GitLab Group
+  gitlab_group:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: false
+    login_token: "{{ gitlab_login_token }}"
+    name: ansible_test_group
+    path: ansible_test_group
+    state: absent
+
+- name: Create GitLab Group
+  gitlab_group:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: false
+    login_token: "{{ gitlab_login_token }}"
+    name: ansible_test_group
+    path: ansible_test_group
+    state: present
+  register: gitlab_group_state
+
+- name: Test group created
+  assert:
+    that:
+      - gitlab_group_state is changed
+
+
+- name: Create GitLab Group ( Idempotency test )
+  gitlab_group:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: false
+    login_token: "{{ gitlab_login_token }}"
+    name: ansible_test_group
+    path: ansible_test_group
+    state: present
+  register: gitlab_group_state_again
+
+- name: Test module is idempotent
+  assert:
+    that:
+      - gitlab_group_state_again is not changed

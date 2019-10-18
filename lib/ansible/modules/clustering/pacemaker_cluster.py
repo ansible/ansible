@@ -60,7 +60,7 @@ changed:
 out:
     description: The output of the current state of the cluster. It return a
                  list of the nodes state.
-    type: string
+    type: str
     sample: 'out: [["  overcloud-controller-0", " Online"]]}'
     returned: always
 rc:
@@ -92,7 +92,7 @@ def get_node_status(module, node='all'):
     else:
         cmd = "pcs cluster pcsd-status"
     rc, out, err = module.run_command(cmd)
-    if rc is 1:
+    if rc == 1:
         module.fail_json(msg="Command execution failed.\nCommand: `%s`\nError: %s" % (cmd, err))
     status = []
     for o in out.splitlines():
@@ -103,7 +103,7 @@ def get_node_status(module, node='all'):
 def clean_cluster(module, timeout):
     cmd = "pcs resource cleanup"
     rc, out, err = module.run_command(cmd)
-    if rc is 1:
+    if rc == 1:
         module.fail_json(msg="Command execution failed.\nCommand: `%s`\nError: %s" % (cmd, err))
 
 
@@ -115,7 +115,7 @@ def set_cluster(module, state, timeout, force):
         if force:
             cmd = "%s --force" % cmd
     rc, out, err = module.run_command(cmd)
-    if rc is 1:
+    if rc == 1:
         module.fail_json(msg="Command execution failed.\nCommand: `%s`\nError: %s" % (cmd, err))
 
     t = time.time()
@@ -143,7 +143,7 @@ def set_node(module, state, timeout, force, node='all'):
         if node[1].strip().lower() != state:
             cmd = "%s %s" % (cmd, node[0].strip())
             rc, out, err = module.run_command(cmd)
-            if rc is 1:
+            if rc == 1:
                 module.fail_json(msg="Command execution failed.\nCommand: `%s`\nError: %s" % (cmd, err))
 
     t = time.time()

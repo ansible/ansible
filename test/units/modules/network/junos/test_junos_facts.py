@@ -24,7 +24,7 @@ try:
 except ImportError:
     from xml.etree.ElementTree import fromstring
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.junos import junos_facts
 from units.modules.utils import set_module_args
 from .junos_module import TestJunosModule, load_fixture
@@ -46,32 +46,41 @@ class TestJunosCommandModule(TestJunosModule):
     def setUp(self):
         super(TestJunosCommandModule, self).setUp()
 
-        self.mock_get_config = patch('ansible.modules.network.junos.junos_facts.get_configuration')
+        self.mock_get_config = patch('ansible.module_utils.network.junos.facts.legacy.base.get_configuration')
         self.get_config = self.mock_get_config.start()
-
-        self.mock_conn = patch('ansible.module_utils.connection.Connection')
-        self.conn = self.mock_conn.start()
 
         self.mock_netconf = patch('ansible.module_utils.network.junos.junos.NetconfConnection')
         self.netconf_conn = self.mock_netconf.start()
 
-        self.mock_exec_rpc = patch('ansible.modules.network.junos.junos_facts.exec_rpc')
+        self.mock_exec_rpc = patch('ansible.module_utils.network.junos.facts.legacy.base.exec_rpc')
         self.exec_rpc = self.mock_exec_rpc.start()
 
         self.mock_netconf_rpc = patch('ansible.module_utils.network.common.netconf.NetconfConnection')
         self.netconf_rpc = self.mock_netconf_rpc.start()
 
-        self.mock_get_capabilities = patch('ansible.module_utils.network.junos.junos.get_capabilities')
+        self.mock_get_resource_connection = patch('ansible.module_utils.network.common.facts.facts.get_resource_connection')
+        self.get_resource_connection = self.mock_get_resource_connection.start()
+
+        self.mock_get_capabilities = patch('ansible.module_utils.network.junos.facts.legacy.base.get_capabilities')
         self.get_capabilities = self.mock_get_capabilities.start()
-        self.get_capabilities.return_value = {'network_api': 'netconf'}
+
+        self.get_capabilities.return_value = {
+            'device_info': {
+                'network_os': 'junos',
+                'network_os_hostname': 'vsrx01',
+                'network_os_model': 'vsrx',
+                'network_os_version': '17.3R1.10'
+            },
+            'network_api': 'netconf'
+        }
 
     def tearDown(self):
         super(TestJunosCommandModule, self).tearDown()
-        self.mock_conn.stop()
         self.mock_netconf.stop()
         self.mock_exec_rpc.stop()
         self.mock_netconf_rpc.stop()
         self.mock_get_capabilities.stop()
+        self.mock_get_resource_connection.stop()
 
     def load_fixtures(self, commands=None, format='text', changed=False):
         def load_from_file(*args, **kwargs):

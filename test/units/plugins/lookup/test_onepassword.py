@@ -15,8 +15,8 @@ except ImportError:
 from argparse import ArgumentParser
 
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup.onepassword import OnePass, LookupModule
 from ansible.plugins.lookup.onepassword_raw import LookupModule as OnePasswordRawLookup
@@ -95,7 +95,8 @@ MOCK_ENTRIES = [
                     {
                         'name': 'password',
                         'value': 'vauxhall'
-                    }
+                    },
+                    {},
                 ]
             }
         }
@@ -105,8 +106,8 @@ MOCK_ENTRIES = [
 
 def get_mock_query_generator(require_field=None):
     def _process_field(field, section_title=None):
-        field_name = field.get('name', field.get('t'))
-        field_value = field.get('value', field.get('v'))
+        field_name = field.get('name', field.get('t', ''))
+        field_value = field.get('value', field.get('v', ''))
 
         if require_field is None or field_name == require_field:
             return entry, query, section_title, field_name, field_value
@@ -218,7 +219,7 @@ class TestOnePass(unittest.TestCase):
         op = MockOnePass()
         try:
             op.assert_logged_in()
-        except:
+        except Exception:
             self.fail()
 
     def test_onepassword_logged_out(self):

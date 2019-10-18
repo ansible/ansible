@@ -37,6 +37,7 @@ description:
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
+    Please use M(voss_config) to configure VOSS devices.
 notes:
   - Tested against VOSS 7.0.0
 options:
@@ -139,7 +140,6 @@ import re
 import time
 
 from ansible.module_utils.network.voss.voss import run_commands
-from ansible.module_utils.network.voss.voss import check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
@@ -196,7 +196,6 @@ def main():
     result = {'changed': False}
 
     warnings = list()
-    check_args(module, warnings)
     commands = parse_commands(module, warnings)
     result['warnings'] = warnings
 

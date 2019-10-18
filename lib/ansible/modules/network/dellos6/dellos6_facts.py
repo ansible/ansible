@@ -17,7 +17,7 @@ DOCUMENTATION = """
 ---
 module: dellos6_facts
 version_added: "2.2"
-author: "Abirami N(@abirami-n)"
+author: "Abirami N (@abirami-n)"
 short_description: Collect facts from remote devices running Dell EMC Networking OS6
 description:
   - Collects a base set of device facts from a remote device that
@@ -76,11 +76,11 @@ ansible_net_version:
 ansible_net_hostname:
   description: The configured hostname of the device.
   returned: always.
-  type: string
+  type: str
 ansible_net_image:
   description: The image file that the device is running.
   returned: always
-  type: string
+  type: str
 
 # hardware
 ansible_net_memfree_mb:
@@ -151,9 +151,20 @@ class Default(FactsBase):
         self.facts['hostname'] = self.parse_hostname(hdata)
 
     def parse_version(self, data):
+        facts = dict()
         match = re.search(r'HW Version(.+)\s(\d+)', data)
-        if match:
-            return match.group(2)
+        temp, temp_next = data.split('---- ----------- ----------- -------------- --------------')
+        for en in temp_next.splitlines():
+            if en == '':
+                continue
+            match_image = re.search(r'^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)', en)
+            version = match_image.group(4)
+            facts["Version"] = list()
+            fact = dict()
+            fact['HW Version'] = match.group(2)
+            fact['SW Version'] = match_image.group(4)
+            facts["Version"].append(fact)
+        return facts
 
     def parse_hostname(self, data):
         match = re.search(r'\S+\s(\S+)', data, re.M)
@@ -207,7 +218,8 @@ class Interfaces(FactsBase):
         'show interfaces transceiver properties',
         'show ip int',
         'show lldp',
-        'show lldp remote-device all'
+        'show lldp remote-device all',
+        'show version'
     ]
 
     def populate(self):
@@ -218,28 +230,41 @@ class Interfaces(FactsBase):
         desc = self.responses[1]
         properties = self.responses[2]
         vlan = self.responses[3]
-        vlan_info = self.parse_vlan(vlan)
+        version_info = self.responses[6]
+        vlan_info = self.parse_vlan(vlan, version_info)
         self.facts['interfaces'] = self.populate_interfaces(interfaces, desc, properties)
         self.facts['interfaces'].update(vlan_info)
         if 'LLDP is not enabled' not in self.responses[4]:
             neighbors = self.responses[5]
             self.facts['neighbors'] = self.parse_neighbors(neighbors)
 
-    def parse_vlan(self, vlan):
+    def parse_vlan(self, vlan, version_info):
         facts = dict()
-        vlan_info, vlan_info_next = vlan.split('----------   -----   --------------- --------------- -------')
-        for en in vlan_info_next.splitlines():
-            if en == '':
-                continue
-            match = re.search(r'^(\S+)\s+(\S+)\s+(\S+)', en)
-            intf = match.group(1)
-            if intf not in facts:
-                facts[intf] = list()
+        if "N11" in version_info:
+            match = re.search(r'IP Address(.+)\s([0-9.]*)\n', vlan)
+            mask = re.search(r'Subnet Mask(.+)\s([0-9.]*)\n', vlan)
+            vlan_id_match = re.search(r'Management VLAN ID(.+)\s(\d+)', vlan)
+            vlan_id = "Vl" + vlan_id_match.group(2)
+            if vlan_id not in facts:
+                facts[vlan_id] = list()
             fact = dict()
-            matc = re.search(r'^([\w+\s\d]*)\s+(\S+)\s+(\S+)', en)
-            fact['address'] = matc.group(2)
-            fact['masklen'] = matc.group(3)
-            facts[intf].append(fact)
+            fact['address'] = match.group(2)
+            fact['masklen'] = mask.group(2)
+            facts[vlan_id].append(fact)
+        else:
+            vlan_info, vlan_info_next = vlan.split('----------   -----   --------------- --------------- -------')
+            for en in vlan_info_next.splitlines():
+                if en == '':
+                    continue
+                match = re.search(r'^(\S+)\s+(\S+)\s+(\S+)', en)
+                intf = match.group(1)
+                if intf not in facts:
+                    facts[intf] = list()
+                fact = dict()
+                matc = re.search(r'^([\w+\s\d]*)\s+(\S+)\s+(\S+)', en)
+                fact['address'] = matc.group(2)
+                fact['masklen'] = matc.group(3)
+                facts[intf].append(fact)
         return facts
 
     def populate_interfaces(self, interfaces, desc, properties):
@@ -306,7 +331,7 @@ class Interfaces(FactsBase):
                     return match.group(2)
 
     def parse_macaddress(self, data):
-        match = re.search(r'Burned MAC Address(.+)\s([A-Z0-9.]*)\n', data)
+        match = re.search(r'Burned In MAC Address(.+)\s([A-Z0-9.]*)\n', data)
         if match:
             return match.group(2)
 

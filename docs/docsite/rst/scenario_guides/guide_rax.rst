@@ -17,7 +17,7 @@ Prerequisites for using the rax modules are minimal.  In addition to ansible its
 all of the modules require and are tested against pyrax 1.5 or higher. 
 You'll need this Python module installed on the execution host.  
 
-pyrax is not currently available in many operating system 
+``pyrax`` is not currently available in many operating system
 package repositories, so you will likely need to install it via pip:
 
 .. code-block:: bash
@@ -30,7 +30,7 @@ If for any reason you need or want to have it in your inventory you should do so
 .. code-block:: ini
 
     [localhost]
-    localhost ansible_connection=local ansilbe_python_interpreter=/usr/local/bin/python2
+    localhost ansible_connection=local ansible_python_interpreter=/usr/local/bin/python2
 
 For more information see :ref:`Implicit Localhost <implicit_localhost>`
 
@@ -55,7 +55,7 @@ The `rax.py` inventory script and all `rax` modules support a standard `pyrax` c
     username = myraxusername
     api_key = d41d8cd98f00b204e9800998ecf8427e
 
-Setting the environment parameter RAX_CREDS_FILE to the path of this file will help Ansible find how to load
+Setting the environment parameter ``RAX_CREDS_FILE`` to the path of this file will help Ansible find how to load
 this information.
 
 More information about this credentials file can be found at 
@@ -130,7 +130,7 @@ The rax module returns data about the nodes it creates, like IP addresses, hostn
       add_host:
           hostname: "{{ item.name }}"
           ansible_host: "{{ item.rax_accessipv4 }}"
-          ansible_ssh_pass: "{{ item.rax_adminpass }}"
+          ansible_password: "{{ item.rax_adminpass }}"
           groups: raxhosts
       loop: "{{ rax.success }}"
       when: rax.action == 'create'
@@ -163,7 +163,7 @@ In Ansible it is quite possible to use multiple dynamic inventory plugins along 
 rax.py
 ++++++
 
-To use the rackspace dynamic inventory script, copy ``rax.py`` into your inventory directory and make it executable. You can specify a credentials file for ``rax.py`` utilizing the ``RAX_CREDS_FILE`` environment variable.
+To use the Rackspace dynamic inventory script, copy ``rax.py`` into your inventory directory and make it executable. You can specify a credentials file for ``rax.py`` utilizing the ``RAX_CREDS_FILE`` environment variable.
 
 .. note:: Dynamic inventory scripts (like ``rax.py``) are saved in ``/usr/share/ansible/inventory`` if Ansible has been installed globally.  If installed to a virtualenv, the inventory scripts are installed to ``$VIRTUALENV/share/inventory``.
 
@@ -511,7 +511,7 @@ Build a complete webserver environment with servers, custom networks and load ba
           add_host:
             hostname: "{{ item.name }}"
             ansible_host: "{{ item.rax_accessipv4 }}"
-            ansible_ssh_pass: "{{ item.rax_adminpass }}"
+            ansible_password: "{{ item.rax_adminpass }}"
             ansible_user: root
             groups: web
           loop: "{{ rax.success }}"
@@ -592,7 +592,7 @@ Using a Control Machine
           add_host:
             hostname: "{{ item.name }}"
             ansible_host: "{{ item.rax_accessipv4 }}"
-            ansible_ssh_pass: "{{ item.rax_adminpass }}"
+            ansible_password: "{{ item.rax_adminpass }}"
             ansible_user: root
             rax_id: "{{ item.rax_id }}"
             groups: web,new_web

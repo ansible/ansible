@@ -66,7 +66,7 @@ RETURN = '''
 msg:
     description: The command standard output
     returned: always
-    type: string
+    type: str
     sample: [u'Using default tag: latest ...']
 '''
 import traceback
@@ -116,6 +116,7 @@ def core(module):
                 module.exit_json(msg=(out + out_run), changed=changed)
         elif state == 'absent':
             args = ['atomic', 'images', 'delete', "--storage=%s" % backend, image]
+            rc, out, err = module.run_command(args, check_rc=False)
             if rc < 0:
                 module.fail_json(rc=rc, msg=err)
             else:

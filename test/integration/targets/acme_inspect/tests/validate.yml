@@ -1,0 +1,131 @@
+---
+- name: Check directory output
+  assert:
+    that:
+    - directory is not changed
+    - "'directory' in directory"
+    - "'newAccount' in directory.directory"
+    - "'newOrder' in directory.directory"
+    - "'newNonce' in directory.directory"
+    - "'headers' not in directory"
+    - "'output_text' not in directory"
+    - "'output_json' not in directory"
+
+- name: Check account creation output
+  assert:
+    that:
+    - account_creation is changed
+    - "'directory' in account_creation"
+    - "'headers' in account_creation"
+    - "'output_text' in account_creation"
+    - "'output_json' in account_creation"
+    - account_creation.headers.status == 201
+    - "'location' in account_creation.headers"
+    - account_creation.output_json.status == 'valid'
+    - not (account_creation.output_json.contact | default([]))
+    - account_creation.output_text | from_json == account_creation.output_json
+
+- name: Check account get output
+  assert:
+    that:
+    - account_get is not changed
+    - "'directory' in account_get"
+    - "'headers' in account_get"
+    - "'output_text' in account_get"
+    - "'output_json' in account_get"
+    - account_get.headers.status == 200
+    - account_get.output_json == account_creation.output_json
+
+- name: Check account update output
+  assert:
+    that:
+    - account_update is changed
+    - "'directory' in account_update"
+    - "'headers' in account_update"
+    - "'output_text' in account_update"
+    - "'output_json' in account_update"
+    - account_update.output_json.status == 'valid'
+    - account_update.output_json.contact | length == 1
+    - account_update.output_json.contact[0] == 'mailto:me@example.com'
+
+- name: Check certificate request output
+  assert:
+    that:
+    - new_order is changed
+    - "'directory' in new_order"
+    - "'headers' in new_order"
+    - "'output_text' in new_order"
+    - "'output_json' in new_order"
+    - new_order.output_json.authorizations | length == 2
+    - new_order.output_json.identifiers | length == 2
+    - new_order.output_json.status == 'pending'
+    - "'finalize' in new_order.output_json"
+
+- name: Check get order output
+  assert:
+    that:
+    - order is not changed
+    - "'directory' in order"
+    - "'headers' in order"
+    - "'output_text' in order"
+    - "'output_json' in order"
+    # The order of identifiers and authorizations is randomized!
+    # - new_order.output_json == order.output_json
+
+- name: Check get authz output
+  assert:
+    that:
+    - item is not changed
+    - "'directory' in item"
+    - "'headers' in item"
+    - "'output_text' in item"
+    - "'output_json' in item"
+    - item.output_json.challenges | length >= 3
+    - item.output_json.identifier.type == 'dns'
+    - item.output_json.status == 'pending'
+  loop: "{{ authz.results }}"
+
+- name: Check get challenge output
+  assert:
+    that:
+    - item is not changed
+    - "'directory' in item"
+    - "'headers' in item"
+    - "'output_text' in item"
+    - "'output_json' in item"
+    - item.output_json.status == 'pending'
+    - item.output_json.type == 'http-01'
+    - item.output_json.url == item.invocation.module_args.url
+    - "'token' in item.output_json"
+  loop: "{{ http01challenge.results }}"
+
+- name: Check challenge activation output
+  assert:
+    that:
+    - item is changed
+    - "'directory' in item"
+    - "'headers' in item"
+    - "'output_text' in item"
+    - "'output_json' in item"
+    - item.output_json.status == 'pending'
+    - item.output_json.type == 'http-01'
+    - item.output_json.url == item.invocation.module_args.url
+    - "'token' in item.output_json"
+  loop: "{{ activation.results }}"
+
+- name: Check validation result
+  assert:
+    that:
+    - item is not changed
+    - "'directory' in item"
+    - "'headers' in item"
+    - "'output_text' in item"
+    - "'output_json' in item"
+    - item.output_json.status == 'invalid'
+    - item.output_json.type == 'http-01'
+    - item.output_json.url == item.invocation.module_args.url
+    - "'token' in item.output_json"
+    - "'validated' in item.output_json"
+    - "'error' in item.output_json"
+    - item.output_json.error.type == 'urn:ietf:params:acme:error:unauthorized'
+  loop: "{{ validation_result.results }}"

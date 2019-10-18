@@ -67,7 +67,7 @@ options:
     default: present
   allow_expand:
     description:
-      - Permit expansion of the target VLAN's network if the module parameters specify a larger network than the VLAN currently posesses?
+      - Permit expansion of the target VLAN's network if the module parameters specify a larger network than the VLAN currently possesses.
       - If C(False), the module will fail under these conditions.
       - This is intended to prevent accidental expansion of a VLAN's network (since this operation is not reversible).
     type: bool
@@ -112,23 +112,23 @@ vlan:
     contains:
         id:
             description: VLAN ID.
-            type: string
+            type: str
             sample: "aaaaa000-a000-4050-a215-2808934ccccc"
         name:
             description: VLAN name.
-            type: string
+            type: str
             sample: "My VLAN"
         description:
             description: VLAN description.
-            type: string
+            type: str
             sample: "My VLAN description"
         location:
             description: Datacenter location.
-            type: string
+            type: str
             sample: NA3
         private_ipv4_base_address:
             description: The base address for the VLAN's private IPV4 network.
-            type: string
+            type: str
             sample: 192.168.23.0
         private_ipv4_prefix_size:
             description: The prefix size for the VLAN's private IPV4 network.
@@ -136,11 +136,11 @@ vlan:
             sample: 24
         private_ipv4_gateway_address:
             description: The gateway address for the VLAN's private IPV4 network.
-            type: string
+            type: str
             sample: 192.168.23.1
         private_ipv6_base_address:
             description: The base address for the VLAN's IPV6 network.
-            type: string
+            type: str
             sample: 2402:9900:111:1195:0:0:0:0
         private_ipv6_prefix_size:
             description: The prefix size for the VLAN's IPV6 network.
@@ -148,11 +148,11 @@ vlan:
             sample: 64
         private_ipv6_gateway_address:
             description: The gateway address for the VLAN's IPV6 network.
-            type: string
+            type: str
             sample: 2402:9900:111:1195:0:0:0:1
         status:
             description: VLAN status.
-            type: string
+            type: str
             sample: NORMAL
 '''
 

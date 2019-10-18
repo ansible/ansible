@@ -13,10 +13,10 @@ __metaclass__ = type
 
 import os
 import sys
-from collections import MutableMapping
 
 from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common._collections_compat import MutableMapping
 
 __all__ = ('environ',)
 
@@ -27,14 +27,19 @@ class _TextEnviron(MutableMapping):
 
     Mimics the behaviour of os.environ on Python3
     """
-    def __init__(self, env=None):
+    def __init__(self, env=None, encoding=None):
         if env is None:
             env = os.environ
         self._raw_environ = env
         self._value_cache = {}
         # Since we're trying to mimic Python3's os.environ, use sys.getfilesystemencoding()
         # instead of utf-8
-        self.encoding = sys.getfilesystemencoding()
+        if encoding is None:
+            # Since we're trying to mimic Python3's os.environ, use sys.getfilesystemencoding()
+            # instead of utf-8
+            self.encoding = sys.getfilesystemencoding()
+        else:
+            self.encoding = encoding
 
     def __delitem__(self, key):
         del self._raw_environ[key]
@@ -61,4 +66,4 @@ class _TextEnviron(MutableMapping):
         return len(self._raw_environ)
 
 
-environ = _TextEnviron()
+environ = _TextEnviron(encoding='utf-8')

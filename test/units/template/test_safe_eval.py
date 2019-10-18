@@ -22,8 +22,7 @@ __metaclass__ = type
 import sys
 from collections import defaultdict
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat import unittest
 from ansible.template.safe_eval import safe_eval
 
 

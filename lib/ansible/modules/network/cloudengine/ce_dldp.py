@@ -29,15 +29,15 @@ short_description: Manages global DLDP configuration on HUAWEI CloudEngine switc
 description:
     - Manages global DLDP configuration on HUAWEI CloudEngine switches.
 author:
-    - Zhijin Zhou (@CloudEngine-Ansible)
+    - Zhijin Zhou (@QijunPan)
 notes:
     - The relevant configurations will be deleted if DLDP is disabled using enable=disable.
     - When using auth_mode=none, it will restore the default DLDP authentication mode. By default,
       DLDP packets are not authenticated.
-    - By default, the working mode of DLDP is enhance, so you are advised to use work_mode=enhance to restore defualt
+    - By default, the working mode of DLDP is enhance, so you are advised to use work_mode=enhance to restore default
       DLDP working mode.
     - The default interval for sending Advertisement packets is 5 seconds, so you are advised to use time_interval=5 to
-      restore defualt DLDP interval.
+      restore default DLDP interval.
 options:
     enable:
         description:
@@ -125,7 +125,7 @@ proposed:
                 "work_mode": "normal"
             }
 existing:
-    description: k/v pairs of existing global DLDP configration
+    description: k/v pairs of existing global DLDP configuration
     returned: always
     type: dict
     sample: {
@@ -135,7 +135,7 @@ existing:
                 "work_mode": "enhance"
             }
 end_state:
-    description: k/v pairs of global DLDP configration after module execution
+    description: k/v pairs of global DLDP configuration after module execution
     returned: always
     type: dict
     sample: {
@@ -157,7 +157,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -204,14 +204,14 @@ CE_NC_MERGE_DLDP_GLOBAL_CONFIG_TAIL = """
 
 
 class Dldp(object):
-    """Manage global dldp configration"""
+    """Manage global dldp configuration"""
 
     def __init__(self, argument_spec):
         self.spec = argument_spec
         self.module = None
         self.init_module()
 
-        # DLDP global configration info
+        # DLDP global configuration info
         self.enable = self.module.params['enable'] or None
         self.work_mode = self.module.params['work_mode'] or None
         self.internal = self.module.params['time_interval'] or None
@@ -321,10 +321,10 @@ class Dldp(object):
 
         # get global DLDP info
         root = ElementTree.fromstring(xml_str)
-        topo = root.find("data/dldp/dldpSys")
+        topo = root.find("dldp/dldpSys")
         if not topo:
             self.module.fail_json(
-                msg="Error: Get current DLDP configration failed.")
+                msg="Error: Get current DLDP configuration failed.")
 
         for eles in topo:
             if eles.tag in ["dldpEnable", "dldpInterval", "dldpWorkMode", "dldpAuthMode"]:

@@ -8,14 +8,12 @@ import json
 import traceback
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.six import binary_type
+from ansible.module_utils.connection import ConnectionError
+from ansible.module_utils.six import binary_type, text_type
+from ansible.module_utils.six.moves import cPickle
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class JsonRpcServer(object):
@@ -31,16 +29,8 @@ class JsonRpcServer(object):
             error = self.invalid_request()
             return json.dumps(error)
 
-        params = request.get('params')
+        args, kwargs = request.get('params')
         setattr(self, '_identifier', request.get('id'))
-
-        args = []
-        kwargs = {}
-
-        if all((params, isinstance(params, list))):
-            args = params
-        elif all((params, isinstance(params, dict))):
-            kwargs = params
 
         rpc_method = None
         for obj in self._objects:
@@ -54,6 +44,13 @@ class JsonRpcServer(object):
         else:
             try:
                 result = rpc_method(*args, **kwargs)
+            except ConnectionError as exc:
+                display.vvv(traceback.format_exc())
+                try:
+                    error = self.error(code=exc.code, message=to_text(exc))
+                except AttributeError:
+                    error = self.internal_error(data=to_text(exc))
+                response = json.dumps(error)
             except Exception as exc:
                 display.vvv(traceback.format_exc())
                 error = self.internal_error(data=to_text(exc, errors='surrogate_then_replace'))
@@ -64,7 +61,12 @@ class JsonRpcServer(object):
                 else:
                     response = self.response(result)
 
-                response = json.dumps(response)
+                try:
+                    response = json.dumps(response)
+                except Exception as exc:
+                    display.vvv(traceback.format_exc())
+                    error = self.internal_error(data=to_text(exc, errors='surrogate_then_replace'))
+                    response = json.dumps(error)
 
         delattr(self, '_identifier')
 
@@ -80,6 +82,9 @@ class JsonRpcServer(object):
         response = self.header()
         if isinstance(result, binary_type):
             result = to_text(result)
+        if not isinstance(result, text_type):
+            response["result_type"] = "pickle"
+            result = to_text(cPickle.dumps(result, protocol=0))
         response['result'] = result
         return response
 

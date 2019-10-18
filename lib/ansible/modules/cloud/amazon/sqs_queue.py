@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -87,12 +87,12 @@ message_retention_period:
     sample: 345600
 name:
     description: Name of the SQS Queue
-    type: string
+    type: str
     returned: always
     sample: "queuename-987d2de0"
 queue_arn:
     description: The queue's Amazon resource name (ARN).
-    type: string
+    type: str
     returned: on successful creation or update of the queue
     sample: 'arn:aws:sqs:us-east-1:199999999999:queuename-987d2de0'
 receive_message_wait_time:
@@ -102,7 +102,7 @@ receive_message_wait_time:
     sample: 0
 region:
     description: Region that the queue was created within
-    type: string
+    type: str
     returned: always
     sample: 'us-east-1'
 '''
@@ -224,7 +224,7 @@ def set_queue_attribute(queue, attribute, value, check_mode=False):
 
     try:
         existing_value = queue.get_attributes(attributes=attribute)[attribute]
-    except:
+    except Exception:
         existing_value = ''
 
     # convert dict attributes to JSON strings (sort keys for comparing)

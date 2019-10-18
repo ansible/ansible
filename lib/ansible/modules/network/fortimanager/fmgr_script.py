@@ -28,7 +28,9 @@ DOCUMENTATION = '''
 ---
 module: fmgr_script
 version_added: "2.5"
-author: Andrew Welsh
+notes:
+    - Full Documentation at U(https://ftnt-ansible-docs.readthedocs.io/en/latest/).
+author: Andrew Welsh (@Ghilli3)
 short_description: Add/Edit/Delete and execute scripts
 description: Create/edit/delete scripts and execute the scripts on the FortiManager using jsonrpc API
 
@@ -37,54 +39,49 @@ options:
     description:
       - The administrative domain (admon) the configuration belongs to
     required: true
+
   vdom:
     description:
       - The virtual domain (vdom) the configuration belongs to
-  host:
+
+  mode:
     description:
-      - The FortiManager's Address.
-    required: true
-  username:
-    description:
-      - The username to log into the FortiManager
-    required: true
-  password:
-    description:
-      - The password associated with the username account.
+      - The desired mode of the specified object. Execute will run the script.
     required: false
-  state:
-    description:
-      - The desired state of the specified object.
-      - present - will create a script.
-      - execute - execute the scipt.
-      - delete - delete the script.
-    required: false
-    default: present
-    choices: ["present", "execute", "delete"]
+    default: "add"
+    choices: ["add", "delete", "execute", "set"]
+    version_added: "2.8"
+
   script_name:
     description:
       - The name of the script.
     required: True
+
   script_type:
     description:
       - The type of script (CLI or TCL).
     required: false
+
   script_target:
     description:
       - The target of the script to be run.
     required: false
+
   script_description:
     description:
       - The description of the script.
     required: false
+
   script_content:
     description:
       - The script content that will be executed.
     required: false
+
   script_scope:
     description:
       - (datasource) The devices that the script will run on, can have both device member and device group member.
     required: false
+
   script_package:
     description:
       - (datasource) Policy package object to run the script against
@@ -94,9 +91,6 @@ options:
 EXAMPLES = '''
 - name: CREATE SCRIPT
   fmgr_script:
-    host: "{{inventory_hostname}}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     adom: "root"
     script_name: "TestScript"
     script_type: "cli"
@@ -106,106 +100,110 @@ EXAMPLES = '''
 
 - name: EXECUTE SCRIPT
   fmgr_script:
-    host: "{{inventory_hostname}}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     adom: "root"
     script_name: "TestScript"
-    state: "execute"
+    mode: "execute"
     script_scope: "FGT1,FGT2"
 
 - name: DELETE SCRIPT
   fmgr_script:
-    host: "{{inventory_hostname}}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     adom: "root"
     script_name: "TestScript"
-    state: "delete"
+    mode: "delete"
 '''
 
 RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
-  type: string
+  type: str
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
-from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiManager
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortimanager.fortimanager import FortiManagerHandler
+from ansible.module_utils.network.fortimanager.common import FMGBaseException
+from ansible.module_utils.network.fortimanager.common import FMGRCommon
+from ansible.module_utils.network.fortimanager.common import FMGRMethods
+from ansible.module_utils.network.fortimanager.common import DEFAULT_RESULT_OBJ
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-# check for pyFMG lib
-try:
-    from pyFMG.fortimgr import FortiManager
-    HAS_PYFMGR = True
-except ImportError:
-    HAS_PYFMGR = False
 
-
-def set_script(fmg, script_name, script_type, script_content, script_desc, script_target, adom):
+def set_script(fmgr, paramgram):
     """
-    This method sets a script.
-    """
-
-    datagram = {
-        'content': script_content,
-        'desc': script_desc,
-        'name': script_name,
-        'target': script_target,
-        'type': script_type,
-    }
-
-    url = '/dvmdb/adom/{adom}/script/'.format(adom=adom)
-    response = fmg.set(url, datagram)
-    return response
-
-
-def delete_script(fmg, script_name, adom):
-    """
-    This method deletes a script.
+    :param fmgr: The fmgr object instance from fortimanager.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+    :return: The response from the FortiManager
+    :rtype: dict
     """
 
     datagram = {
-        'name': script_name,
+        'content': paramgram["script_content"],
+        'desc': paramgram["script_description"],
+        'name': paramgram["script_name"],
+        'target': paramgram["script_target"],
+        'type': paramgram["script_type"],
     }
 
-    url = '/dvmdb/adom/{adom}/script/{script_name}'.format(adom=adom, script_name=script_name)
-    response = fmg.delete(url, datagram)
+    url = '/dvmdb/adom/{adom}/script/'.format(adom=paramgram["adom"])
+    response = fmgr.process_request(url, datagram, FMGRMethods.SET)
     return response
 
 
-def execute_script(fmg, script_name, scope, package, adom, vdom):
+def delete_script(fmgr, paramgram):
     """
-    This method will execute a specific script.
+    :param fmgr: The fmgr object instance from fortimanager.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+    :return: The response from the FortiManager
+    :rtype: dict
+    """
+
+    datagram = {
+        'name': paramgram["script_name"],
+    }
+
+    url = '/dvmdb/adom/{adom}/script/{script_name}'.format(adom=paramgram["adom"], script_name=paramgram["script_name"])
+    response = fmgr.process_request(url, datagram, FMGRMethods.DELETE)
+    return response
+
+
+def execute_script(fmgr, paramgram):
+    """
+    :param fmgr: The fmgr object instance from fortimanager.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+    :return: The response from the FortiManager
+    :rtype: dict
     """
 
     scope_list = list()
-    scope = scope.replace(' ', '')
+    scope = paramgram["script_scope"].replace(' ', '')
     scope = scope.split(',')
     for dev_name in scope:
-        scope_list.append({'name': dev_name, 'vdom': vdom})
+        scope_list.append({'name': dev_name, 'vdom': paramgram["vdom"]})
 
     datagram = {
-        'adom': adom,
-        'script': script_name,
-        'package': package,
+        'adom': paramgram["adom"],
+        'script': paramgram["script_name"],
+        'package': paramgram["script_package"],
         'scope': scope_list,
     }
 
-    url = '/dvmdb/adom/{adom}/script/execute'.format(adom=adom)
-    response = fmg.execute(url, datagram)
+    url = '/dvmdb/adom/{adom}/script/execute'.format(adom=paramgram["adom"])
+    response = fmgr.process_request(url, datagram, FMGRMethods.EXEC)
     return response
 
 
 def main():
     argument_spec = dict(
-        adom=dict(required=False, type="str"),
-        vdom=dict(required=False, type="str"),
-        host=dict(required=True, type="str"),
-        password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
-        username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"])),
-        state=dict(choices=["execute", "delete", "present"], type="str"),
-
+        adom=dict(required=False, type="str", default="root"),
+        vdom=dict(required=False, type="str", default="root"),
+        mode=dict(choices=["add", "execute", "set", "delete"], type="str", default="add"),
         script_name=dict(required=True, type="str"),
         script_type=dict(required=False, type="str"),
         script_target=dict(required=False, type="str"),
@@ -215,58 +213,55 @@ def main():
         script_package=dict(required=False, type="str"),
     )
 
-    module = AnsibleModule(argument_spec, supports_check_mode=True,)
-
-    # check if params are set
-    if module.params["host"] is None or module.params["username"] is None:
-        module.fail_json(msg="Host and username are required for connection")
-
-    # check if login failed
-    fmg = AnsibleFortiManager(module, module.params["host"], module.params["username"], module.params["password"])
-    response = fmg.login()
-
-    if "FortiManager instance connnected" not in str(response):
-        module.fail_json(msg="Connection to FortiManager Failed")
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, )
+    paramgram = {
+        "script_name": module.params["script_name"],
+        "script_type": module.params["script_type"],
+        "script_target": module.params["script_target"],
+        "script_description": module.params["script_description"],
+        "script_content": module.params["script_content"],
+        "script_scope": module.params["script_scope"],
+        "script_package": module.params["script_package"],
+        "adom": module.params["adom"],
+        "vdom": module.params["vdom"],
+        "mode": module.params["mode"],
+    }
+    module.paramgram = paramgram
+    fmgr = None
+    if module._socket_path:
+        connection = Connection(module._socket_path)
+        fmgr = FortiManagerHandler(connection, module)
+        fmgr.tools = FMGRCommon()
     else:
-        adom = module.params["adom"]
-        if adom is None:
-            adom = "root"
-        vdom = module.params["vdom"]
-        if vdom is None:
-            vdom = "root"
-        state = module.params["state"]
-        if state is None:
-            state = "present"
+        module.fail_json(**FAIL_SOCKET_MSG)
 
-        script_name = module.params["script_name"]
-        script_type = module.params["script_type"]
-        script_target = module.params["script_target"]
-        script_description = module.params["script_description"]
-        script_content = module.params["script_content"]
-        script_scope = module.params["script_scope"]
-        script_package = module.params["script_package"]
+    results = DEFAULT_RESULT_OBJ
 
-        # if state is present (default), then add the script
-        if state == "present":
-            results = set_script(fmg, script_name, script_type, script_content, script_description, script_target, adom)
-            if not results[0] == 0:
-                if isinstance(results[1], list):
-                    module.fail_json(msg="Adding Script Failed", **results)
-                else:
-                    module.fail_json(msg="Adding Script Failed")
-        elif state == "execute":
-            results = execute_script(fmg, script_name, script_scope, script_package, adom, vdom)
-            if not results[0] == 0:
-                module.fail_json(msg="Script Execution Failed", **results)
-        elif state == "delete":
-            results = delete_script(fmg, script_name, adom)
-            if not results[0] == 0:
-                module.fail_json(msg="Script Deletion Failed", **results)
+    try:
+        if paramgram["mode"] in ['add', 'set']:
+            results = set_script(fmgr, paramgram)
+            fmgr.govern_response(module=module, results=results, msg="Operation Finished",
+                                 ansible_facts=fmgr.construct_ansible_facts(results, module.params, module.params))
+    except Exception as err:
+        raise FMGBaseException(err)
 
-        fmg.logout()
+    try:
+        if paramgram["mode"] == "execute":
+            results = execute_script(fmgr, paramgram)
+            fmgr.govern_response(module=module, results=results, msg="Operation Finished",
+                                 ansible_facts=fmgr.construct_ansible_facts(results, module.params, module.params))
+    except Exception as err:
+        raise FMGBaseException(err)
 
-        # results is returned as a tuple
-        return module.exit_json(**results[1])
+    try:
+        if paramgram["mode"] == "delete":
+            results = delete_script(fmgr, paramgram)
+            fmgr.govern_response(module=module, results=results, msg="Operation Finished",
+                                 ansible_facts=fmgr.construct_ansible_facts(results, module.params, module.params))
+    except Exception as err:
+        raise FMGBaseException(err)
+
+    return module.exit_json(**results[1])
 
 
 if __name__ == "__main__":

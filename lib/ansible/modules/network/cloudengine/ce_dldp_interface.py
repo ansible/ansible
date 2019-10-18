@@ -29,10 +29,10 @@ short_description: Manages interface DLDP configuration on HUAWEI CloudEngine sw
 description:
     - Manages interface DLDP configuration on HUAWEI CloudEngine switches.
 author:
-    - Zhou Zhijin (@CloudEngine-Ansible)
+    - Zhou Zhijin (@QijunPan)
 notes:
     - If C(state=present, enable=disable), interface DLDP enable will be turned off and
-      related interface DLDP confuration will be cleared.
+      related interface DLDP configuration will be cleared.
     - If C(state=absent), only local_mac is supported to configure.
 options:
     interface:
@@ -106,7 +106,7 @@ EXAMPLES = '''
       reset: enable
       provider: "{{ cli }}"
 
-  - name: "Unconfigure interface DLDP local mac addreess when C(state=absent)"
+  - name: "Unconfigure interface DLDP local mac address when C(state=absent)"
     ce_dldp_interface:
       interface: 40GE2/0/1
       state: absent
@@ -127,7 +127,7 @@ proposed:
                 "reset": "enable"
             }
 existing:
-    description: k/v pairs of existing interface DLDP configration
+    description: k/v pairs of existing interface DLDP configuration
     returned: always
     type: dict
     sample: {
@@ -138,7 +138,7 @@ existing:
                 "reset": "disable"
             }
 end_state:
-    description: k/v pairs of interface DLDP configration after module execution
+    description: k/v pairs of interface DLDP configuration after module execution
     returned: always
     type: dict
     sample: {
@@ -161,7 +161,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -309,14 +309,14 @@ def get_interface_type(interface):
 
 
 class DldpInterface(object):
-    """Manage interface dldp configration"""
+    """Manage interface dldp configuration"""
 
     def __init__(self, argument_spec):
         self.spec = argument_spec
         self.module = None
         self.init_module()
 
-        # DLDP interface configration info
+        # DLDP interface configuration info
         self.interface = self.module.params['interface']
         self.enable = self.module.params['enable'] or None
         self.reset = self.module.params['reset'] or None
@@ -454,10 +454,10 @@ class DldpInterface(object):
 
         # get global DLDP info
         root = ElementTree.fromstring(xml_str)
-        topo = root.find("data/dldp/dldpInterfaces/dldpInterface")
+        topo = root.find("dldp/dldpInterfaces/dldpInterface")
         if topo is None:
             self.module.fail_json(
-                msg="Error: Get current DLDP configration failed.")
+                msg="Error: Get current DLDP configuration failed.")
         for eles in topo:
             if eles.tag in ["dldpEnable", "dldpCompatibleEnable", "dldpLocalMac"]:
                 if not eles.text:
@@ -561,7 +561,7 @@ class DldpInterface(object):
                              reset=self.reset, state=self.state)
 
     def get_update_cmd(self):
-        """Get updatede commands"""
+        """Get updated commands"""
 
         if self.same_conf:
             return
@@ -624,7 +624,7 @@ class DldpInterface(object):
         self.module.exit_json(**self.results)
 
     def work(self):
-        """Excute task"""
+        """Execute task"""
 
         self.dldp_intf_conf = self.get_dldp_intf_exist_config()
         self.check_params()

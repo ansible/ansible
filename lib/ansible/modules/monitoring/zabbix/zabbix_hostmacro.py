@@ -16,16 +16,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_hostmacro
-short_description: Zabbix host macro creates/updates/deletes
+short_description: Create/update/delete Zabbix host macros
 description:
    - manages Zabbix host macros, it can create, update or delete them.
 version_added: "2.0"
 author:
-    - "(@cave)"
-    - Dean Hailin Song
+    - "Cove (@cove)"
+    - Dean Hailin Song (!UNKNOWN)
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.3"
 options:
     host_name:
         description:
@@ -33,7 +33,7 @@ options:
         required: true
     macro_name:
         description:
-            - Name of the host macro.
+            - Name of the host macro without the enclosing curly braces and the leading dollar sign.
         required: true
     macro_value:
         description:
@@ -66,25 +66,23 @@ EXAMPLES = '''
     login_user: username
     login_password: password
     host_name: ExampleHost
-    macro_name: Example macro
+    macro_name: EXAMPLE.MACRO
     macro_value: Example value
     state: present
 '''
 
+
+import atexit
+import traceback
+
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
-
-    # Extend the ZabbixAPI
-    # Since the zabbix-api python module too old (version 1.0, no higher version so far).
-    class ZabbixAPIExtends(ZabbixAPI):
-        def __init__(self, server, timeout, user, passwd, **kwargs):
-            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
-
+    from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class HostMacro(object):
@@ -121,7 +119,7 @@ class HostMacro(object):
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
             self._zapi.usermacro.create({'hostid': host_id, 'macro': '{$' + macro_name + '}', 'value': macro_value})
-            self._module.exit_json(changed=True, result="Successfully added host macro %s " % macro_name)
+            self._module.exit_json(changed=True, result="Successfully added host macro %s" % macro_name)
         except Exception as e:
             self._module.fail_json(msg="Failed to create host macro %s: %s" % (macro_name, e))
 
@@ -134,9 +132,9 @@ class HostMacro(object):
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
             self._zapi.usermacro.update({'hostmacroid': host_macro_id, 'value': macro_value})
-            self._module.exit_json(changed=True, result="Successfully updated host macro %s " % macro_name)
+            self._module.exit_json(changed=True, result="Successfully updated host macro %s" % macro_name)
         except Exception as e:
-            self._module.fail_json(msg="Failed to updated host macro %s: %s" % (macro_name, e))
+            self._module.fail_json(msg="Failed to update host macro %s: %s" % (macro_name, e))
 
     # delete host macro
     def delete_host_macro(self, host_macro_obj, macro_name):
@@ -145,7 +143,7 @@ class HostMacro(object):
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
             self._zapi.usermacro.delete([host_macro_id])
-            self._module.exit_json(changed=True, result="Successfully deleted host macro %s " % macro_name)
+            self._module.exit_json(changed=True, result="Successfully deleted host macro %s" % macro_name)
         except Exception as e:
             self._module.fail_json(msg="Failed to delete host macro %s: %s" % (macro_name, e))
 
@@ -170,7 +168,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -179,18 +177,24 @@ def main():
     http_login_password = module.params['http_login_password']
     validate_certs = module.params['validate_certs']
     host_name = module.params['host_name']
-    macro_name = (module.params['macro_name']).upper()
+    macro_name = (module.params['macro_name'])
     macro_value = module.params['macro_value']
     state = module.params['state']
     timeout = module.params['timeout']
     force = module.params['force']
 
+    if ':' in macro_name:
+        macro_name = ':'.join([macro_name.split(':')[0].upper(), ':'.join(macro_name.split(':')[1:])])
+    else:
+        macro_name = macro_name.upper()
+
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
-                               validate_certs=validate_certs)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                        validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

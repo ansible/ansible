@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['deprecated'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -35,14 +35,14 @@ options:
         Python's C(re) module.
 deprecated:
   removed_in: '2.11'
-  alternative: bigip_device_facts
+  alternative: bigip_device_info
   why: >
     The bigip_gtm_facts module is an outlier as all facts are being collected
-    in the bigip_device_facts module. Additionally, the M(bigip_device_facts)
+    in the bigip_device_info module. Additionally, the M(bigip_device_info)
     module is easier to maintain and use.
 extends_documentation_fragment: f5
 notes:
-  - This module is deprecated. Use the C(bigip_device_facts) module instead.
+  - This module is deprecated. Use the C(bigip_device_info) module instead.
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -183,29 +183,54 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from distutils.version import LooseVersion
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from f5.bigip import ManagementRoot
+    from icontrol.exceptions import iControlUnexpectedHTTPError
+    from f5.utils.responses.handlers import Stats
+    HAS_F5SDK = True
+except ImportError:
+    HAS_F5SDK = False
+
+try:
+    from library.module_utils.network.f5.common import F5BaseClient
+except ImportError:
+    from ansible.module_utils.network.f5.common import F5BaseClient
+
+try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from f5.utils.responses.handlers import Stats
-    except ImportError:
-        HAS_F5SDK = False
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from f5.utils.responses.handlers import Stats
-    except ImportError:
-        HAS_F5SDK = False
+
+
+class F5Client(F5BaseClient):
+    def __init__(self, *args, **kwargs):
+        super(F5Client, self).__init__(*args, **kwargs)
+        self.provider = self.merge_provider_params()
+
+    @property
+    def api(self):
+        if self._client:
+            return self._client
+
+        try:
+            result = ManagementRoot(
+                self.provider['server'],
+                self.provider['user'],
+                self.provider['password'],
+                port=self.provider['server_port'],
+                verify=self.provider['validate_certs'],
+                token='tmos'
+            )
+            self._client = result
+            return self._client
+        except Exception as ex:
+            error = 'Unable to connect to {0} on port {1}. The reported error was "{2}".'.format(
+                self.provider['server'], self.provider['server_port'], str(ex)
+            )
+            raise F5ModuleError(error)
 
 
 class BaseManager(object):
@@ -946,14 +971,13 @@ def main():
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
 
+    client = F5Client(**module.params)
+
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

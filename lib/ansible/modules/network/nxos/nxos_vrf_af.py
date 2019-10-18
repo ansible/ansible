@@ -42,12 +42,6 @@ options:
       - Address-Family Identifier (AFI).
     required: true
     choices: ['ipv4', 'ipv6']
-  safi:
-    description:
-      - Sub Address-Family Identifier (SAFI).
-      - Deprecated in 2.4
-    required: true
-    choices: ['unicast', 'multicast']
   route_target_both_auto_evpn:
     description:
       - Enable/Disable the EVPN route-target 'auto' setting for both
@@ -77,7 +71,7 @@ commands:
     sample: ["vrf context ntc", "address-family ipv4 unicast"]
 '''
 from ansible.module_utils.network.nxos.nxos import get_config, load_config
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig
 
@@ -88,7 +82,6 @@ def main():
         afi=dict(required=True, choices=['ipv4', 'ipv6']),
         route_target_both_auto_evpn=dict(required=False, type='bool'),
         state=dict(choices=['present', 'absent'], default='present'),
-        safi=dict(choices=['unicast', 'multicast'], removed_in_version="2.4"),
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -96,7 +89,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False, 'warnings': warnings}
 

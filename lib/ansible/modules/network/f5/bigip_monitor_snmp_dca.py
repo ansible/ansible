@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -25,21 +25,25 @@ options:
   name:
     description:
       - Monitor name.
+    type: str
     required: True
   description:
     description:
       - Specifies descriptive text that identifies the monitor.
+    type: str
   parent:
     description:
       - The parent template of this monitor template. Once this value has
         been set, it cannot be changed. By default, this value is the C(snmp_dca)
         parent on the C(Common) partition.
+    type: str
     default: "/Common/snmp_dca"
   interval:
     description:
       - Specifies, in seconds, the frequency at which the system issues the
         monitor check when either the resource is down or the status of the
         resource is unknown. When creating a new monitor, the default is C(10).
+    type: int
   timeout:
     description:
       - Specifies the number of seconds the target has in which to respond to
@@ -50,6 +54,7 @@ options:
         the system uses the interval from the parent monitor. Note that
         C(timeout) and C(time_until_up) combine to control when a resource is
         set to up.
+    type: int
   time_until_up:
     description:
       - Specifies the number of seconds to wait after a resource first responds
@@ -58,17 +63,20 @@ options:
         interval expires, the resource is marked 'up'. A value of 0, means
         that the resource is marked up immediately upon receipt of the first
         correct response. When creating a new monitor, the default is C(0).
+    type: int
   community:
     description:
       - Specifies the community name that the system must use to authenticate
         with the host server through SNMP. When creating a new monitor, the
         default value is C(public). Note that this value is case sensitive.
+    type: str
   version:
     description:
       - Specifies the version of SNMP that the host server uses. When creating
         a new monitor, the default is C(v1). When C(v1), specifies that the
         host server uses SNMP version 1. When C(v2c), specifies that the host
         server uses SNMP version 2c.
+    type: str
     choices:
       - v1
       - v2c
@@ -76,6 +84,7 @@ options:
     description:
       - Specifies the SNMP agent running on the monitored server. When creating
         a new monitor, the default is C(UCD) (UC-Davis).
+    type: str
     choices:
       - UCD
       - WIN2000
@@ -85,40 +94,48 @@ options:
       - Specifies the coefficient that the system uses to calculate the weight
         of the CPU threshold in the dynamic ratio load balancing algorithm.
         When creating a new monitor, the default is C(1.5).
+    type: str
   cpu_threshold:
     description:
       - Specifies the maximum acceptable CPU usage on the target server. When
         creating a new monitor, the default is C(80) percent.
+    type: int
   memory_coefficient:
     description:
       - Specifies the coefficient that the system uses to calculate the weight
         of the memory threshold in the dynamic ratio load balancing algorithm.
         When creating a new monitor, the default is C(1.0).
+    type: str
   memory_threshold:
     description:
       - Specifies the maximum acceptable memory usage on the target server.
         When creating a new monitor, the default is C(70) percent.
+    type: int
   disk_coefficient:
     description:
       - Specifies the coefficient that the system uses to calculate the weight
         of the disk threshold in the dynamic ratio load balancing algorithm.
         When creating a new monitor, the default is C(2.0).
+    type: str
   disk_threshold:
     description:
       - Specifies the maximum acceptable disk usage on the target server. When
         creating a new monitor, the default is C(90) percent.
+    type: int
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the monitor exists.
       - When C(absent), ensures the monitor is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
     version_added: 2.5
 notes:
   - Requires BIG-IP software version >= 12
@@ -135,20 +152,22 @@ author:
 EXAMPLES = r'''
 - name: Create SNMP DCS monitor
   bigip_monitor_snmp_dca:
-    state: present
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_monitor
+    state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove TCP Echo Monitor
   bigip_monitor_snmp_dca:
-    state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_monitor
+    state: absent
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -156,7 +175,7 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: snmp_dca
 description:
   description: The description of the monitor.
@@ -181,17 +200,17 @@ time_until_up:
 community:
   description: The new community for the monitor.
   returned: changed
-  type: string
+  type: str
   sample: foobar
 version:
   description: The new new SNMP version to be used by the monitor.
   returned: changed
-  type: string
+  type: str
   sample: v2c
 agent_type:
   description: The new agent type to be used by the monitor.
   returned: changed
-  type: string
+  type: str
   sample: UCD
 cpu_coefficient:
   description: The new CPU coefficient.
@@ -232,23 +251,18 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
-
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -265,21 +279,56 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'destination', 'community',
-        'version', 'agentType', 'cpuCoefficient', 'cpuThreshold', 'memoryCoefficient',
-        'memoryThreshold', 'diskCoefficient', 'diskThreshold', 'description',
+        'timeUntilUp',
+        'defaultsFrom',
+        'interval',
+        'timeout',
+        'destination',
+        'community',
+        'version',
+        'agentType',
+        'cpuCoefficient',
+        'cpuThreshold',
+        'memoryCoefficient',
+        'memoryThreshold',
+        'diskCoefficient',
+        'diskThreshold',
+        'description',
     ]
 
     returnables = [
-        'parent', 'ip', 'interval', 'timeout', 'time_until_up', 'description', 'community',
-        'version', 'agent_type', 'cpu_coefficient', 'cpu_threshold', 'memory_coefficient',
-        'memory_threshold', 'disk_coefficient', 'disk_threshold',
+        'parent',
+        'ip',
+        'interval',
+        'timeout',
+        'time_until_up',
+        'description',
+        'community',
+        'version',
+        'agent_type',
+        'cpu_coefficient',
+        'cpu_threshold',
+        'memory_coefficient',
+        'memory_threshold',
+        'disk_coefficient',
+        'disk_threshold',
     ]
 
     updatables = [
-        'ip', 'interval', 'timeout', 'time_until_up', 'description', 'community',
-        'version', 'agent_type', 'cpu_coefficient', 'cpu_threshold', 'memory_coefficient',
-        'memory_threshold', 'disk_coefficient', 'disk_threshold',
+        'ip',
+        'interval',
+        'timeout',
+        'time_until_up',
+        'description',
+        'community',
+        'version',
+        'agent_type',
+        'cpu_coefficient',
+        'cpu_threshold',
+        'memory_coefficient',
+        'memory_threshold',
+        'disk_coefficient',
+        'disk_threshold',
     ]
 
     @property
@@ -358,11 +407,21 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
 
 
 class ModuleParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
 
 
 class Changes(Parameters):
@@ -434,11 +493,15 @@ class Difference(object):
         except AttributeError:
             return attr1
 
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
+
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -689,16 +752,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

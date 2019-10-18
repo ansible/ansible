@@ -20,7 +20,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.dellos6 import dellos6_config
 from units.modules.utils import set_module_args
 from .dellos6_module import TestDellos6Module, load_fixture

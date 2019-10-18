@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -25,6 +25,7 @@ options:
   name:
     description:
       - The name of the iApp service that you want to deploy.
+    type: str
     required: True
   template:
     description:
@@ -32,6 +33,7 @@ options:
         template must exist on your BIG-IP before you can successfully
         create a service.
       - When creating a new service, this parameter is required.
+    type: str
   parameters:
     description:
       - A hash of all the required template variables for the iApp template.
@@ -40,6 +42,7 @@ options:
         to supply the expected parameters.
       - These parameters typically consist of the C(lists), C(tables), and
         C(variables) fields.
+    type: dict
   force:
     description:
       - Forces the updating of an iApp service even if the parameters to the
@@ -47,19 +50,21 @@ options:
         the iApp template that underlies the service has been updated in-place.
         This option is equivalent to re-configuring the iApp if that template
         has changed.
-    default: no
     type: bool
+    default: no
   state:
     description:
       - When C(present), ensures that the iApp service is created and running.
         When C(absent), ensures that the iApp service has been removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
   strict_updates:
@@ -74,8 +79,8 @@ options:
       - If this option is specified in the Ansible task, it will take precedence
         over any similar setting in the iApp Service payload that you provide in
         the C(parameters) field.
-    default: yes
     type: bool
+    default: yes
     version_added: 2.5
   traffic_group:
     description:
@@ -85,6 +90,7 @@ options:
       - If this option is specified in the Ansible task, it will take precedence
         over any similar setting in the iApp Service payload that you provide in
         the C(parameters) field.
+    type: str
     version_added: 2.5
   metadata:
     description:
@@ -92,6 +98,7 @@ options:
       - If this option is specified in the Ansible task, it will take precedence
         over any similar setting in the iApp Service payload that you provide in
         the C(parameters) field.
+    type: list
     version_added: 2.7
   description:
     description:
@@ -99,6 +106,7 @@ options:
       - If this option is specified in the Ansible task, it will take precedence
         over any similar setting in the iApp Service payload that you provide in
         the C(parameters) field.
+    type: str
     version_added: 2.7
   device_group:
     description:
@@ -106,10 +114,12 @@ options:
       - If this option is specified in the Ansible task, it will take precedence
         over any similar setting in the iApp Service payload that you provide in
         the C(parameters) field.
+    type: str
     version_added: 2.7
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -118,32 +128,29 @@ EXAMPLES = r'''
     name: foo-service
     template: f5.http
     parameters: "{{ lookup('file', 'f5.http.parameters.json') }}"
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Upgrade foo-service to v1.2.0rc4 of the f5.http template
   bigip_iapp_service:
     name: foo-service
     template: f5.http.v1.2.0rc4
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Configure a service using parameters in YAML
   bigip_iapp_service:
     name: tests
     template: web_frontends
-    password: admin
-    server: "{{ inventory_hostname }}"
-    server_port: "{{ bigip_port }}"
-    validate_certs: "{{ validate_certs }}"
     state: present
-    user: admin
     parameters:
       variables:
         - name: var__vs_address
@@ -152,19 +159,18 @@ EXAMPLES = r'''
           value: 2.2.2.1:80
         - name: pm__apache_servers_for_https
           value: 2.2.2.2:80
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Re-configure a service whose underlying iApp was updated in place
   bigip_iapp_service:
     name: tests
     template: web_frontends
-    password: admin
     force: yes
-    server: "{{ inventory_hostname }}"
-    server_port: "{{ bigip_port }}"
-    validate_certs: "{{ validate_certs }}"
     state: present
-    user: admin
     parameters:
       variables:
         - name: var__vs_address
@@ -173,12 +179,20 @@ EXAMPLES = r'''
           value: 2.2.2.1:80
         - name: pm__apache_servers_for_https
           value: 2.2.2.2:80
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Try to remove the iApp template before the associated Service is removed
   bigip_iapp_template:
     name: web_frontends
     state: absent
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   register: result
   failed_when:
     - result is not success
@@ -188,12 +202,11 @@ EXAMPLES = r'''
   bigip_iapp_service:
     name: tests
     template: web_frontends
-    password: admin
-    server: "{{ inventory_hostname }}"
-    server_port: "{{ bigip_port }}"
-    validate_certs: "{{ validate_certs }}"
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
     parameters:
       variables:
         - name: var__vs_address
@@ -240,10 +253,11 @@ EXAMPLES = r'''
         name: data 1
       - persist: yes
         name: data 2
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -256,31 +270,23 @@ from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import iteritems
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import flatten_boolean
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.urls import build_service_uri
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import flatten_boolean
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.urls import build_service_uri
 
 
 class Parameters(AnsibleF5Parameters):
@@ -607,7 +613,7 @@ class ModuleParameters(Parameters):
         if self._values['strict_updates'] is not None:
             result = flatten_boolean(self._values['strict_updates'])
         elif self.param_strict_updates is not None:
-            result = self.param_strict_updates
+            result = flatten_boolean(self.param_strict_updates)
         else:
             return None
         if result == 'yes':
@@ -673,7 +679,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
@@ -709,24 +715,14 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         changes = self.changes.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
-        return result
-
-    def exists(self):
-        result = self.client.api.tm.sys.application.services.service.exists(
-            name=self.want.name,
-            partition=self.want.partition
-        )
         return result
 
     def present(self):
@@ -734,6 +730,11 @@ class ModuleManager(object):
             return self.update()
         else:
             return self.create()
+
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
 
     def create(self):
         self._set_changed_options()
@@ -746,6 +747,14 @@ class ModuleManager(object):
         if self.module.check_mode:
             return True
         self.create_on_device()
+        return True
+
+    def remove(self):
+        if self.module.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the iApp service")
         return True
 
     def update(self):
@@ -763,76 +772,171 @@ class ModuleManager(object):
             return True
         return False
 
+    def exists(self):
+        base_uri = "https://{0}:{1}/mgmt/tm/sys/application/service/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        uri = build_service_uri(base_uri, self.want.partition, self.want.name)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
     def update_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.sys.application.services.service.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
         if params:
             params['execute-action'] = 'definition'
-            resource.update(**params)
-        if self.changes.metadata:
-            params = {'execute-action': 'definition'}
-            resource.update(
-                metadata=self.changes.metadata,
-                **params
+            base_uri = "https://{0}:{1}/mgmt/tm/sys/application/service/".format(
+                self.client.provider['server'],
+                self.client.provider['server_port']
             )
+            uri = build_service_uri(base_uri, self.want.partition, self.want.name)
+            resp = self.client.api.patch(uri, json=params)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+
+        if self.changes.metadata:
+            params = dict(metadata=self.changes.metadata)
+            params.update({'execute-action': 'definition'})
+            base_uri = "https://{0}:{1}/mgmt/tm/sys/application/service/".format(
+                self.client.provider['server'],
+                self.client.provider['server_port']
+            )
+            uri = build_service_uri(base_uri, self.want.partition, self.want.name)
+            resp = self.client.api.patch(uri, json=params)
+
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
 
     def read_current_from_device(self):
-        result = self.client.api.tm.sys.application.services.service.load(
-            name=self.want.name,
-            partition=self.want.partition
-        ).to_dict()
-        result.pop('_meta_data', None)
-        return ApiParameters(params=result)
+        base_uri = "https://{0}:{1}/mgmt/tm/sys/application/service/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        uri = build_service_uri(base_uri, self.want.partition, self.want.name)
+        resp = self.client.api.get(uri)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
     def template_exists(self):
         name = fq_name(self.want.partition, self.want.template)
         parts = name.split('/')
-        result = self.client.api.tm.sys.application.templates.template.exists(
-            name=parts[2],
-            partition=parts[1]
+        uri = "https://{0}:{1}/mgmt/tm/sys/application/template/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(parts[1], parts[2])
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def create_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.sys.application.services.service.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/application/service/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
+        resp = self.client.api.post(uri, json=params)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
         if self.changes.metadata:
-            resource.update(metadata=self.changes.metadata)
+            payload = dict(metadata=self.changes.metadata)
+            base_uri = "https://{0}:{1}/mgmt/tm/sys/application/service/".format(
+                self.client.provider['server'],
+                self.client.provider['server_port']
+            )
+            uri = build_service_uri(base_uri, self.want.partition, self.want.name)
+            resp = self.client.api.patch(uri, json=payload)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
 
-    def absent(self):
-        if self.exists():
-            return self.remove()
-        return False
-
-    def remove(self):
-        if self.module.check_mode:
-            return True
-        self.remove_from_device()
-        if self.exists():
-            raise F5ModuleError("Failed to delete the iApp service")
-        return True
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        resource = self.client.api.tm.sys.application.services.service.load(
-            name=self.want.name,
-            partition=self.want.partition
+        base_uri = "https://{0}:{1}/mgmt/tm/sys/application/service/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
-        if resource:
-            # Metadata needs to be zero'd before the service is removed because
-            # otherwise, the API will error out saying that "configuration items"
-            # currently exist.
-            #
-            # In other words, the REST API is not able to delete a service while
-            # there is existing metadata
-            resource.update(metadata=[])
-            resource.delete()
+        uri = build_service_uri(base_uri, self.want.partition, self.want.name)
+
+        # Metadata needs to be zero'd before the service is removed because
+        # otherwise, the API will error out saying that "configuration items"
+        # currently exist.
+        #
+        # In other words, the REST API is not able to delete a service while
+        # there is existing metadata
+        payload = dict(metadata=[])
+        resp = self.client.api.patch(uri, json=payload)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        resp = self.client.api.delete(uri)
+
+        if resp.status == 200:
+            return True
+        raise F5ModuleError(resp.content)
 
 
 class ArgumentSpec(object):
@@ -877,18 +981,13 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
-    except F5ModuleError as e:
-        cleanup_tokens(client)
-        module.fail_json(msg=str(e))
+    except F5ModuleError as ex:
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

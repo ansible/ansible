@@ -22,9 +22,18 @@ echo "ensure playbook output shows assert/fail works (True)"
 echo "$PB_OUT" | grep -F "fail works (True)" || exit 1
 echo "$PB_OUT" | grep -F "assert works (True)" || exit 1
 
-# ensure test-module script works well
-PING_MODULE_PATH="$(pwd)/../../../../lib/ansible/modules/system/ping.py"
-../../../../hacking/test-module -m "$PING_MODULE_PATH" -I ansible_python_interpreter="$(which python)"
+set -e
+
+PING_MODULE_PATH="../../../../lib/ansible/modules/system/ping.py"
+
+# ensure test-module.py script works without passing Python interpreter path
+../../../../hacking/test-module.py -m "$PING_MODULE_PATH"
+
+# ensure test-module.py script works well
+../../../../hacking/test-module.py -m "$PING_MODULE_PATH" -I ansible_python_interpreter="$(which python)"
+
+# ensure module.ansible_version is defined when using test-module.py
+../../../../hacking/test-module.py -m library/test.py -I ansible_python_interpreter="$(which python)" <<< '{"ANSIBLE_MODULE_ARGS": {}}'
 
 # ensure exercising module code locally works
 python -m ansible.modules.files.file  <<< '{"ANSIBLE_MODULE_ARGS": {"path": "/path/to/file", "state": "absent"}}'

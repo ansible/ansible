@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -18,7 +18,7 @@ description:
  - Can create or delete AWS metric alarms.
  - Metrics you wish to alarm on must already exist.
 version_added: "1.6"
-author: "Zacharie Eakin (@zeekin)"
+author: "Zacharie Eakin (@Zeekin)"
 options:
     state:
         description:
@@ -103,7 +103,7 @@ options:
         required: false
     alarm_actions:
         description:
-          - A list of the names action(s) taken when the alarm is in the 'alarm' status
+          - A list of the names action(s) taken when the alarm is in the 'alarm' status, denoted as Amazon Resource Name(s)
         required: false
     insufficient_data_actions:
         description:
@@ -111,7 +111,7 @@ options:
         required: false
     ok_actions:
         description:
-          - A list of the names of action(s) to take when the alarm is in the 'ok' status
+          - A list of the names of action(s) to take when the alarm is in the 'ok' status, denoted as Amazon Resource Name(s)
         required: false
 extends_documentation_fragment:
     - aws
@@ -136,6 +136,22 @@ EXAMPLES = '''
       dimensions: {'InstanceId':'i-XXX'}
       alarm_actions: ["action1","action2"]
 
+  - name: Create an alarm to recover a failed instance
+    ec2_metric_alarm:
+      state: present
+      region: us-west-1
+      name: "recover-instance"
+      metric: "StatusCheckFailed_System"
+      namespace: "AWS/EC2"
+      statistic: "Minimum"
+      comparison: ">="
+      threshold: 1.0
+      period: 60
+      evaluation_periods: 2
+      unit: "Count"
+      description: "This will recover an instance when it fails"
+      dimensions: {"InstanceId":'i-XXX'}
+      alarm_actions: ["arn:aws:automate:us-west-1:ec2:recover"]
 
 '''
 
@@ -146,6 +162,7 @@ try:
 except ImportError:
     pass  # Taken care of by ec2.HAS_BOTO
 
+import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (AnsibleAWSError, HAS_BOTO, connect_to_aws, ec2_argument_spec,
                                       get_aws_connection_info)
@@ -168,7 +185,11 @@ def create_metric_alarm(connection, module):
     insufficient_data_actions = module.params.get('insufficient_data_actions')
     ok_actions = module.params.get('ok_actions')
 
-    alarms = connection.describe_alarms(alarm_names=[name])
+    alarms = None
+    try:
+        alarms = connection.describe_alarms(alarm_names=[name])
+    except BotoServerError as e:
+        module.fail_json(msg="Failed to describe alarm %s: %s" % (name, str(e)), exception=traceback.format_exc())
 
     if not alarms:
 
@@ -193,7 +214,7 @@ def create_metric_alarm(connection, module):
             changed = True
             alarms = connection.describe_alarms(alarm_names=[name])
         except BotoServerError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg="Failed to create alarm %s: %s" % (name, str(e)), exception=traceback.format_exc())
 
     else:
         alarm = alarms[0]
@@ -256,7 +277,11 @@ def create_metric_alarm(connection, module):
 def delete_metric_alarm(connection, module):
     name = module.params.get('name')
 
-    alarms = connection.describe_alarms(alarm_names=[name])
+    alarms = None
+    try:
+        alarms = connection.describe_alarms(alarm_names=[name])
+    except BotoServerError as e:
+        module.fail_json(msg="Failed to describe alarm %s: %s" % (name, str(e)), exception=traceback.format_exc())
 
     if alarms:
         try:

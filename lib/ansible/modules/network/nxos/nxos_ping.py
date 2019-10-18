@@ -18,7 +18,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -103,11 +103,11 @@ packets_tx:
 packet_loss:
     description: Percentage of packets lost
     returned: always
-    type: string
+    type: str
     sample: "0.00%"
 '''
 from ansible.module_utils.network.nxos.nxos import run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -178,7 +178,7 @@ def get_ping_results(command, module):
 def main():
     argument_spec = dict(
         dest=dict(required=True),
-        count=dict(required=False, default=5),
+        count=dict(required=False, default=5, type='int'),
         vrf=dict(required=False),
         source=dict(required=False),
         state=dict(required=False, choices=['present', 'absent'], default='present'),
@@ -188,11 +188,7 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    warnings = list()
-    check_args(module, warnings)
-
     destination = module.params['dest']
-    count = module.params['count']
     state = module.params['state']
 
     ping_command = 'ping {0}'.format(destination)

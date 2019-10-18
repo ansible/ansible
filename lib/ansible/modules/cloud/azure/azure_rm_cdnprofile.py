@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_cdnprofile
 version_added: "2.8"
-short_description: Manage a Azure CDN profile.
+short_description: Manage a Azure CDN profile
 description:
     - Create, update and delete a Azure CDN profile.
 
@@ -30,17 +30,18 @@ options:
         required: true
     location:
         description:
-            - Valid azure location. Defaults to location of the resource group.
+            - Valid Azure location. Defaults to location of the resource group.
     sku:
         description:
             - The pricing tier, defines a CDN provider, feature list and rate of the CDN profile.
-            - Detailed pricing can be find at U(https://azure.microsoft.com/en-us/pricing/details/cdn/)
+            - Detailed pricing can be find at U(https://azure.microsoft.com/en-us/pricing/details/cdn/).
         choices:
             - standard_verizon
             - premium_verizon
             - custom_verizon
             - standard_akamai
             - standard_chinacdn
+            - standard_microsoft
     state:
         description:
             - Assert the state of the CDN profile. Use C(present) to create or update a CDN profile and C(absent) to delete it.
@@ -54,32 +55,32 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Hai Cao <t-haicao@microsoft.com>"
-    - "Yunge Zhu <yungez@microsoft.com>"
+    - Hai Cao (@caohai)
+    - Yunge Zhu (@yungezz)
 '''
 
 EXAMPLES = '''
     - name: Create a CDN profile
       azure_rm_cdnprofile:
-          resource_group: Testing
-          name: cdntest
-          sku: Standard_Akamai
+          resource_group: myResourceGroup
+          name: myCDN
+          sku: standard_akamai
           tags:
               testing: testing
 
     - name: Delete the CDN profile
       azure_rm_cdnprofile:
-        resource_group: Testing
-        name: cdntest
+        resource_group: myResourceGroup
+        name: myCDN
         state: absent
 '''
 RETURN = '''
 id:
-    description: Current state of the CDN profile
+    description: Current state of the CDN profile.
     returned: always
     type: dict
     example:
-            id: /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/cdntest/providers/Microsoft.Cdn/profiles/cdntest
+            id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Cdn/profiles/myCDN
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
@@ -126,7 +127,7 @@ class AzureRMCdnprofile(AzureRMModuleBase):
             ),
             sku=dict(
                 type='str',
-                choices=['standard_verizon', 'premium_verizon', 'custom_verizon', 'standard_akamai', 'standard_chinacdn']
+                choices=['standard_verizon', 'premium_verizon', 'custom_verizon', 'standard_akamai', 'standard_chinacdn', 'standard_microsoft']
             )
         )
 

@@ -1,5 +1,7 @@
 :orphan:
 
+.. _playbooks_filters_ipaddr:
+
 ipaddr filter
 `````````````
 
@@ -324,6 +326,21 @@ This result can be converted to canonical form with ``ipaddr()`` to produce a su
     # {{ net_mask | ipaddr('net') }}
     '192.168.0.0/24'
 
+Getting information about the network in CIDR notation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Given an IP address, the ``ipaddr()`` filter can produce the network address in CIDR notation.
+This can be useful when you want to obtain the network address from the IP address in CIDR format.
+
+Here's an example of IP address::
+
+    ip_address = "{{ ansible_default_ipv4.address }}/{{ ansible_default_ipv4.netmask }}"
+    '192.168.0.11/255.255.255.0'
+
+This can be used to obtain the network address in CIDR notation format::
+
+    # {{ ip_address | ipaddr('network/prefix') }}
+    '192.168.0.0/24'
 
 IP address conversion
 ^^^^^^^^^^^^^^^^^^^^^
@@ -354,6 +371,13 @@ integers into IP addresses::
     # {{ test_list | ipaddr('address') | ipaddr('int') }}
     [3222798849, 1, '3232243712/24', '338288524927261089654018896841347694848/10', '42540766412265424405338506004571095040/64']
 
+You can convert IPv4 address to `Hexadecimal notation <https://en.wikipedia.org/wiki/Hexadecimal>`_ with optional delimiter::
+
+    # {{ '192.168.1.5' | ip4_hex }}
+    c0a80105
+    # {{ '192.168.1.5' | ip4_hex(':') }}
+    c0:a8:01:05
+
 You can convert IP addresses to PTR records::
 
     # {% for address in test_list | ipaddr %}
@@ -383,6 +407,34 @@ be automatically converted to a router address (with a ``::1/48`` host address):
 
 .. _6to4: https://en.wikipedia.org/wiki/6to4
 
+Finding IP addresses within a range
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To find usable IP addresses within an IP range, try these ``ipaddr`` filters:
+
+To find the next usable IP address in a range, use ``next_usable`` ::
+
+    # {{ '192.168.122.1/24' | ipaddr('next_usable') }}
+    192.168.122.2
+
+To find the last usable IP address from a range, use ``last_usable``::
+
+    # {{ '192.168.122.1/24' | ipaddr('last_usable') }}
+    192.168.122.254
+
+To find the available range of IP addresses from the given network address, use ``range_usable``::
+
+    # {{ '192.168.122.1/24' | ipaddr('range_usable') }}
+    192.168.122.1-192.168.122.254
+
+To find the next nth usable IP address within a range, use ``next_nth_usable``::
+
+    # {{ '192.168.122.1/24' | next_nth_usable(2) }}
+    192.168.122.3
+
+In this example, ``next_nth_usable`` returns the second usable IP address for the given IP range.
+
+
 IP Math
 ^^^^^^^
 
@@ -397,6 +449,15 @@ Here are a few simple examples::
 
     # {{ '192.168.0.5' | ipmath(-10) }}
     192.167.255.251
+
+    # {{ '192.168.1.1/24' | ipmath(5) }}
+    192.168.1.6
+
+    # {{ '192.168.1.6/24' | ipmath(-5) }}
+    192.168.1.1
+
+    # {{ '192.168.2.6/24' | ipmath(-10) }}
+    192.168.1.252
 
     # {{ '2001::1' | ipmath(10) }}
     2001::b
@@ -457,7 +518,7 @@ the first argument, the ``ipsubnet()`` filter will instead return the biggest su
 contains that given IP address::
 
     # {{ address | ipsubnet(20) }}
-    192.168.128.0/20
+    192.168.144.0/20
 
 By specifying an index number as a second argument, you can select smaller and
 smaller subnets::
@@ -555,21 +616,31 @@ convert it between various formats. Examples::
     # {{ macaddress | hwaddr('cisco') }}
     1a2b.3c4d.5e6f
 
+The supported formats result in the following conversions for the ``1a:2b:3c:4d:5e:6f`` MAC address::
+
+    bare: 1A2B3C4D5E6F
+    bool: True
+    int: 28772997619311
+    cisco: 1a2b.3c4d.5e6f
+    eui48 or win: 1A-2B-3C-4D-5E-6F
+    linux or unix: 1a:2b:3c:4d:5e:6f:
+    pgsql, postgresql, or psql: 1a2b3c:4d5e6f
+
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_filters`
+   :ref:`playbooks_filters`
        Introduction to Jinja2 filters and their uses
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

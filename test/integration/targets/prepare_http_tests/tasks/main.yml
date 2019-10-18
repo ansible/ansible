@@ -3,10 +3,26 @@
 - set_fact:
     has_httptester: "{{ lookup('env', 'HTTPTESTER') != '' }}"
 
+- name: make sure we have the ansible_os_family and ansible_distribution_version facts
+  setup:
+    gather_subset: distribution
+  when: ansible_facts == {}
+
 # If we are running with access to a httptester container, grab it's cacert and install it
 - block:
     # Override hostname defaults with httptester linked names
     - include_vars: httptester.yml
+
+    # Server 2008 R2 uses a 3rd party program to foward the ports and it may
+    # not be ready straight away, we give it at least 5 minutes before
+    # conceding defeat
+    - name: make sure the port forwarder is active - Windows
+      win_wait_for:
+        host: ansible.http.tests
+        port: 80
+        state: started
+        timeout: 300
+      when: ansible_os_family == 'Windows'
 
     - name: RedHat - Enable the dynamic CA configuration feature
       command: update-ca-trust force-enable
@@ -21,7 +37,21 @@
     - name: Get client cert/key
       get_url:
         url: "http://ansible.http.tests/{{ item }}"
-        dest: "{{ output_dir }}/{{ item }}"
+        dest: "{{ remote_tmp_dir }}/{{ item }}"
+      when: ansible_os_family != 'Windows'
+      with_items:
+        - client.pem
+        - client.key
+
+    - name: Windows - Get client cert/key
+      win_get_url:
+        url: http://ansible.http.tests/{{ item }}
+        dest: '{{ remote_tmp_dir }}\{{ item }}'
+      register: win_download
+      # Server 2008 R2 is slightly slower, we attempt 5 retries
+      retries: 5
+      until: win_download is successful
+      when: ansible_os_family == 'Windows'
       with_items:
         - client.pem
         - client.key
@@ -38,6 +68,12 @@
         dest: "/usr/local/share/ca-certificates/ansible.crt"
       when: ansible_os_family == 'Debian'
 
+    - name: Windows - Retrieve test cacert
+      win_get_url:
+        url: http://ansible.http.tests/cacert.pem
+        dest: '{{ remote_tmp_dir }}\cacert.pem'
+      when: ansible_os_family == 'Windows'
+
     - name: Redhat - Update ca trust
       command: update-ca-trust extract
       when: ansible_os_family == 'RedHat'
@@ -45,6 +81,14 @@
     - name: Debian/Suse - Update ca certificates
       command: update-ca-certificates
       when: ansible_os_family == 'Debian' or ansible_os_family == 'Suse'
+
+    - name: Windows - Update ca trust
+      win_certificate_store:
+        path: '{{ remote_tmp_dir }}\cacert.pem'
+        state: present
+        store_location: LocalMachine
+        store_name: Root
+      when: ansible_os_family == 'Windows'
 
     - name: FreeBSD - Retrieve test cacert
       get_url:
@@ -68,4 +112,7 @@
       command: /usr/local/opt/openssl/bin/c_rehash
       when: ansible_os_family == 'Darwin'
 
-  when: has_httptester|bool
+  when:
+  - has_httptester|bool
+  # skip the setup if running on Windows Server 2008 as httptester is not available
+  - ansible_os_family != 'Windows' or (ansible_os_family == 'Windows' and not ansible_distribution_version.startswith("6.0."))

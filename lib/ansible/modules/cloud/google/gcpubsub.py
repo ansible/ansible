@@ -34,7 +34,7 @@ options:
     required: yes
   subscription:
     description:
-       - Dictionary containing a subscripton name associated with a topic (required), along with optional ack_deadline, push_endpoint and pull.
+       - Dictionary containing a subscription name associated with a topic (required), along with optional ack_deadline, push_endpoint and pull.
          For pulling from a subscription, message_ack (bool), max_messages (int) and return_immediate are available as subfields.
          See subfields name, push_endpoint and ack_deadline for more information.
   name:
@@ -279,7 +279,7 @@ def main():
                            push_endpoint=mod_params['subscription'].get('push_endpoint', None))
 
     if mod_params['state'] == 'absent':
-        # Remove the most granular resource.  If subcription is specified
+        # Remove the most granular resource.  If subscription is specified
         # we remove it.  If only topic is specified, that is what is removed.
         # Note that a topic can be removed without first removing the subscription.
         # TODO(supertom): Enhancement: Provide an option to only delete a topic

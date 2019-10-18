@@ -21,15 +21,13 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import sys
-import re
-import json
+import pytest
 
-from io import StringIO
-
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock, PropertyMock
-from ansible.errors import AnsibleConnectionFailure
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock, PropertyMock
 from ansible.playbook.play_context import PlayContext
+
+pytest.importorskip("ncclient")
 
 PY3 = sys.version_info[0] == 3
 
@@ -60,7 +58,7 @@ class TestNetconfConnectionClass(unittest.TestCase):
         pc = PlayContext()
         conn = connection_loader.get('netconf', pc, '/dev/null')
 
-        self.assertEqual('default', conn._network_os)
+        self.assertEqual('auto', conn._network_os)
         self.assertIsNone(conn._manager)
         self.assertFalse(conn._connected)
 

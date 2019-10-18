@@ -1,0 +1,4 @@
+vultr_resource_prefix: "vultr_test_prefix"
+startup_script_name: "{{ vultr_resource_prefix }}_script"
+startup_script_type: boot
+startup_script_content: "#!/bin/bash\necho Hello World > /root/hello"

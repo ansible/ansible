@@ -1,0 +1,162 @@
+{
+    "fmgr_wanopt_profile_modify": [
+        {
+            "paramgram_used": {
+                "ftp": {
+                    "status": null,
+                    "log-traffic": null,
+                    "byte-caching": null,
+                    "prefer-chunking": null,
+                    "secure-tunnel": null,
+                    "port": null,
+                    "tunnel-sharing": null
+                },
+                "http": {
+                    "status": null,
+                    "ssl": null,
+                    "tunnel-non-http": null,
+                    "log-traffic": null,
+                    "byte-caching": null,
+                    "unknown-http-version": null,
+                    "prefer-chunking": null,
+                    "tunnel-sharing": null,
+                    "port": null,
+                    "ssl-port": null,
+                    "secure-tunnel": null
+                },
+                "cifs": {
+                    "status": null,
+                    "log-traffic": null,
+                    "byte-caching": null,
+                    "prefer-chunking": null,
+                    "secure-tunnel": null,
+                    "port": null,
+                    "tunnel-sharing": null
+                },
+                "adom": "root",
+                "auth-group": null,
+                "mapi": {
+                    "status": null,
+                    "log-traffic": null,
+                    "byte-caching": null,
+                    "secure-tunnel": null,
+                    "port": null,
+                    "tunnel-sharing": null
+                },
+                "tcp": {
+                    "status": null,
+                    "byte-caching-opt": null,
+                    "ssl": null,
+                    "log-traffic": null,
+                    "byte-caching": null,
+                    "secure-tunnel": null,
+                    "port": null,
+                    "ssl-port": null,
+                    "tunnel-sharing": null
+                },
+                "mode": "delete",
+                "comments": null,
+                "transparent": null,
+                "name": "Ansible_WanOpt_Profile"
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/root/obj/wanopt/profile/Ansible_WanOpt_Profile"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/root/obj/wanopt/profile"
+            },
+            "datagram_sent": {
+                "ftp": {
+                    "status": "enable",
+                    "log-traffic": "enable",
+                    "byte-caching": "enable",
+                    "prefer-chunking": "dynamic",
+                    "tunnel-sharing": "private",
+                    "port": 80,
+                    "secure-tunnel": "disable"
+                },
+                "name": "Ansible_WanOpt_Profile",
+                "cifs": {
+                    "status": "enable",
+                    "log-traffic": "enable",
+                    "byte-caching": "enable",
+                    "prefer-chunking": "dynamic",
+                    "port": 80,
+                    "tunnel-sharing": "private"
+                },
+                "comments": "Created by Ansible",
+                "transparent": "enable"
+            },
+            "paramgram_used": {
+                "http": {
+                    "status": null,
+                    "log-traffic": null,
+                    "prefer-chunking": null,
+                    "port": null,
+                    "ssl": null,
+                    "tunnel-non-http": null,
+                    "byte-caching": null,
+                    "unknown-http-version": null,
+                    "secure-tunnel": null,
+                    "ssl-port": null,
+                    "tunnel-sharing": null
+                },
+                "cifs": {
+                    "status": "enable",
+                    "log-traffic": "enable",
+                    "byte-caching": "enable",
+                    "prefer-chunking": "dynamic",
+                    "port": 80,
+                    "tunnel-sharing": "private"
+                },
+                "adom": "root",
+                "auth-group": null,
+                "tcp": {
+                    "status": null,
+                    "log-traffic": null,
+                    "byte-caching-opt": null,
+                    "byte-caching": null,
+                    "ssl": null,
+                    "tunnel-sharing": null,
+                    "port": null,
+                    "ssl-port": null,
+                    "secure-tunnel": null
+                },
+                "transparent": "enable",
+                "ftp": {
+                    "status": "enable",
+                    "log-traffic": "enable",
+                    "byte-caching": "enable",
+                    "prefer-chunking": "dynamic",
+                    "tunnel-sharing": "private",
+                    "port": 80,
+                    "secure-tunnel": "disable"
+                },
+                "name": "Ansible_WanOpt_Profile",
+                "mapi": {
+                    "status": null,
+                    "log-traffic": null,
+                    "byte-caching": null,
+                    "secure-tunnel": null,
+                    "port": null,
+                    "tunnel-sharing": null
+                },
+                "comments": "Created by Ansible",
+                "mode": "set"
+            },
+            "post_method": "set"
+        }
+    ]
+}

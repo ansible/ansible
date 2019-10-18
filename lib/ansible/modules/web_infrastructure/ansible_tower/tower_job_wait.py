@@ -49,7 +49,7 @@ EXAMPLES = '''
 
 - name: Wait for job max 120s
   tower_job_wait:
-    job_id: job.id
+    job_id: "{{ job.id }}"
     timeout: 120
 '''
 
@@ -67,17 +67,17 @@ elapsed:
 started:
     description: timestamp of when the job started running
     returned: success
-    type: string
+    type: str
     sample: "2017-03-01T17:03:53.200234Z"
 finished:
     description: timestamp of when the job finished running
     returned: success
-    type: string
+    type: str
     sample: "2017-03-01T17:04:04.078782Z"
 status:
     description: current status of job
     returned: success
-    type: string
+    type: str
     sample: successful
 '''
 
@@ -88,7 +88,7 @@ from ansible.module_utils.six.moves import cStringIO as StringIO
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -132,7 +132,7 @@ def main():
             json_output['timeout'] = True
         except exc.NotFound as excinfo:
             fail_json = dict(msg='Unable to wait, no job_id {0} found: {1}'.format(job_id, excinfo), changed=False)
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             fail_json = dict(msg='Unable to wait for job: {0}'.format(excinfo), changed=False)
 
     if fail_json is not None:

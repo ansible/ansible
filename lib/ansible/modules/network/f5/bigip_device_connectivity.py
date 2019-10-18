@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -26,14 +26,17 @@ options:
   config_sync_ip:
     description:
       - Local IP address that the system uses for ConfigSync operations.
+    type: str
   mirror_primary_address:
     description:
       - Specifies the primary IP address for the system to use to mirror
         connections.
+    type: str
   mirror_secondary_address:
     description:
       - Specifies the secondary IP address for the system to use to mirror
         connections.
+    type: str
   unicast_failover:
     description:
       - Desired addresses to use for failover operations. Options C(address)
@@ -43,6 +46,7 @@ options:
         is not specified, the default value C(1026) will be used.  If you are
         specifying the (recommended) management IP address, use 'management-ip' in
         the address field.
+    type: list
   failover_multicast:
     description:
       - When C(yes), ensures that the Failover Multicast configuration is enabled
@@ -56,23 +60,27 @@ options:
       - Interface over which the system sends multicast messages associated
         with failover. When C(failover_multicast) is C(yes) and this option is
         not provided, a default of C(eth0) will be used.
+    type: str
   multicast_address:
     description:
       - IP address for the system to send multicast messages associated with
         failover. When C(failover_multicast) is C(yes) and this option is not
         provided, a default of C(224.0.0.245) will be used.
+    type: str
   multicast_port:
     description:
       - Port for the system to send multicast messages associated with
         failover. When C(failover_multicast) is C(yes) and this option is not
         provided, a default of C(62960) will be used. This value must be between
         0 and 65535.
+    type: int
   cluster_mirroring:
     description:
       - Specifies whether mirroring occurs within the same cluster or between
         different clusters on a multi-bladed system.
       - This parameter is only supported on platforms that have multiple blades,
         such as Viprion hardware. It is not supported on VE.
+    type: str
     choices:
       - between-clusters
       - within-cluster
@@ -84,6 +92,7 @@ notes:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -94,9 +103,10 @@ EXAMPLES = r'''
     unicast_failover:
       - address: management-ip
       - address: 10.1.30.1
-    server: lb.mydomain.com
-    user: admin
-    password: secret
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -108,17 +118,17 @@ changed:
 config_sync_ip:
   description: The new value of the C(config_sync_ip) setting.
   returned: changed
-  type: string
+  type: str
   sample: 10.1.1.1
 mirror_primary_address:
   description: The new value of the C(mirror_primary_address) setting.
   returned: changed
-  type: string
+  type: str
   sample: 10.1.1.2
 mirror_secondary_address:
   description: The new value of the C(mirror_secondary_address) setting.
   returned: changed
-  type: string
+  type: str
   sample: 10.1.1.3
 unicast_failover:
   description: The new value of the C(unicast_failover) setting.
@@ -132,22 +142,22 @@ failover_multicast:
 multicast_interface:
   description: The new value of the C(multicast_interface) setting.
   returned: changed
-  type: string
+  type: str
   sample: eth0
 multicast_address:
   description: The new value of the C(multicast_address) setting.
   returned: changed
-  type: string
+  type: str
   sample: 224.0.0.245
 multicast_port:
   description: The new value of the C(multicast_port) setting.
   returned: changed
-  type: string
+  type: int
   sample: 1026
 cluster_mirroring:
   description: The current cluster-mirroring setting.
   returned: changed
-  type: string
+  type: str
   sample: between-clusters
 '''
 
@@ -155,29 +165,19 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.ipaddress import is_valid_ip
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -189,7 +189,7 @@ class Parameters(AnsibleF5Parameters):
         'multicastPort': 'multicast_port',
         'mirrorIp': 'mirror_primary_address',
         'mirrorSecondaryIp': 'mirror_secondary_address',
-        'managementIp': 'management_ip'
+        'managementIp': 'management_ip',
     }
     api_attributes = [
         'configsyncIp',
@@ -344,10 +344,14 @@ class Changes(Parameters):
         result = {}
         try:
             for returnable in self.returnables:
-                result[returnable] = getattr(self, returnable)
+                change = getattr(self, returnable)
+                if isinstance(change, dict):
+                    result.update(change)
+                else:
+                    result[returnable] = change
+            result = self._filter_params(result)
         except Exception:
             pass
-        result = self._filter_params(result)
         return result
 
 
@@ -487,8 +491,9 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
+        self.have = ApiParameters()
         self.changes = UsableChanges()
 
     def _update_changed_options(self):
@@ -518,10 +523,7 @@ class ModuleManager(object):
     def exec_module(self):
         result = dict()
 
-        try:
-            changed = self.update()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        changed = self.update()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -544,33 +546,125 @@ class ModuleManager(object):
         params = self.changes.api_params()
         if not params:
             return
-        collection = self.client.api.tm.cm.devices.get_collection()
-        for resource in collection:
-            if resource.selfDevice == 'true':
-                resource.modify(**params)
+        uri = "https://{0}:{1}/mgmt/tm/cm/device/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        for item in response['items']:
+            if item['selfDevice'] == 'true':
+                uri = "https://{0}:{1}/mgmt/tm/cm/device/{2}".format(
+                    self.client.provider['server'],
+                    self.client.provider['server_port'],
+                    transform_name(item['partition'], item['name'])
+                )
+                resp = self.client.api.patch(uri, json=params)
+                try:
+                    response = resp.json()
+                except ValueError as ex:
+                    raise F5ModuleError(str(ex))
+
+                if 'code' in response and response['code'] == 400:
+                    if 'message' in response:
+                        raise F5ModuleError(response['message'])
+                    else:
+                        raise F5ModuleError(resp.content)
                 return
         raise F5ModuleError(
             "The host device was not found."
         )
 
     def update_cluster_mirroring_on_device(self):
-        resource = self.client.api.tm.sys.dbs.db.load(name='statemirror.clustermirroring')
-        resource.update(value=self.changes.cluster_mirroring)
+        uri = "https://{0}:{1}/mgmt/tm/sys/db/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            'statemirror.clustermirroring'
+        )
+        payload = {"value": self.changes.cluster_mirroring}
+        resp = self.client.api.patch(uri, json=payload)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def read_current_from_device(self):
-        collection = self.client.api.tm.cm.devices.get_collection()
-        for resource in collection:
-            if resource.selfDevice == 'true':
-                result = resource.attrs
-                result['cluster_mirroring'] = self.read_cluster_mirroring_from_device()
-                return ApiParameters(params=result)
+        db = self.read_cluster_mirroring_from_device()
+        uri = "https://{0}:{1}/mgmt/tm/cm/device/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        for item in response['items']:
+            if item['selfDevice'] == 'true':
+                uri = "https://{0}:{1}/mgmt/tm/cm/device/{2}".format(
+                    self.client.provider['server'],
+                    self.client.provider['server_port'],
+                    transform_name(item['partition'], item['name'])
+                )
+                resp = self.client.api.get(uri)
+                try:
+                    response = resp.json()
+                except ValueError as ex:
+                    raise F5ModuleError(str(ex))
+
+                if 'code' in response and response['code'] == 400:
+                    if 'message' in response:
+                        raise F5ModuleError(response['message'])
+                    else:
+                        raise F5ModuleError(resp.content)
+                if db:
+                    response['cluster_mirroring'] = db['value']
+                return ApiParameters(params=response)
         raise F5ModuleError(
             "The host device was not found."
         )
 
     def read_cluster_mirroring_from_device(self):
-        resource = self.client.api.tm.sys.dbs.db.load(name='statemirror.clustermirroring')
-        return resource.value
+        uri = "https://{0}:{1}/mgmt/tm/sys/db/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            'statemirror.clustermirroring'
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response
 
 
 class ArgumentSpec(object):
@@ -611,17 +705,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
         required_together=spec.required_together
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

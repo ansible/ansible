@@ -28,7 +28,7 @@ short_description: Manages NetStream template configuration on HUAWEI CloudEngin
 description:
     - Manages NetStream template configuration on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:
@@ -109,7 +109,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -138,8 +138,41 @@ updates:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import load_config
+from ansible.module_utils.network.cloudengine.ce import get_connection, rm_config_prefix
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
+
+
+def get_config(module, flags):
+
+    """Retrieves the current config from the device or cache
+    """
+    flags = [] if flags is None else flags
+    if isinstance(flags, str):
+        flags = [flags]
+    elif not isinstance(flags, list):
+        flags = []
+
+    cmd = 'display current-configuration '
+    cmd += ' '.join(flags)
+    cmd = cmd.strip()
+    conn = get_connection(module)
+    rc, out, err = conn.exec_command(cmd)
+    if rc != 0:
+        module.fail_json(msg=err)
+    cfg = str(out).strip()
+    # remove default configuration prefix '~'
+    for flag in flags:
+        if "include-default" in flag:
+            cfg = rm_config_prefix(cfg)
+            break
+    if cfg.startswith('display'):
+        lines = cfg.split('\n')
+        if len(lines) > 1:
+            return '\n'.join(lines[1:])
+        else:
+            return ''
+    return cfg
 
 
 class NetstreamTemplate(object):
@@ -231,13 +264,13 @@ class NetstreamTemplate(object):
 
         self.cli_get_netstream_config()
 
-        if self.netstream_cfg:
+        if self.netstream_cfg is not None and "netstream record" in self.netstream_cfg:
             self.existing["type"] = self.type
             self.existing["record_name"] = self.record_name
 
             if self.description:
                 tmp_value = re.findall(r'description (.*)', self.netstream_cfg)
-                if tmp_value:
+                if tmp_value is not None and len(tmp_value) > 0:
                     self.existing["description"] = tmp_value[0]
 
             if self.match:
@@ -264,13 +297,13 @@ class NetstreamTemplate(object):
 
         self.cli_get_netstream_config()
 
-        if self.netstream_cfg:
+        if self.netstream_cfg is not None and "netstream record" in self.netstream_cfg:
             self.end_state["type"] = self.type
             self.end_state["record_name"] = self.record_name
 
             if self.description:
                 tmp_value = re.findall(r'description (.*)', self.netstream_cfg)
-                if tmp_value:
+                if tmp_value is not None and len(tmp_value) > 0:
                     self.end_state["description"] = tmp_value[0]
 
             if self.match:
@@ -291,6 +324,9 @@ class NetstreamTemplate(object):
                 tmp_value = re.findall(r'collect interface (.*)', self.netstream_cfg)
                 if tmp_value:
                     self.end_state["collect_interface"] = tmp_value
+        if self.end_state == self.existing:
+            self.changed = False
+            self.updates_cmd = list()
 
     def present_netstream(self):
         """ Present netstream configuration """
@@ -304,13 +340,13 @@ class NetstreamTemplate(object):
             cmd = "netstream record %s vxlan inner-ip" % self.record_name
         cmds.append(cmd)
 
-        if not self.netstream_cfg:
+        if self.existing.get('record_name') != self.record_name:
             self.updates_cmd.append(cmd)
             need_create_record = True
 
         if self.description:
-            cmd = "description %s" % self.description
-            if not self.netstream_cfg or cmd not in self.netstream_cfg:
+            cmd = "description %s" % self.description.strip()
+            if need_create_record or not self.netstream_cfg or cmd not in self.netstream_cfg:
                 cmds.append(cmd)
                 self.updates_cmd.append(cmd)
 
@@ -322,28 +358,21 @@ class NetstreamTemplate(object):
                 cmd = "match inner-ip %s" % self.match
                 cfg = "match inner-ip"
 
-            if not self.netstream_cfg or cfg not in self.netstream_cfg or self.match != self.existing["match"][0]:
+            if need_create_record or cfg not in self.netstream_cfg or self.match != self.existing["match"][0]:
                 cmds.append(cmd)
                 self.updates_cmd.append(cmd)
 
         if self.collect_counter:
             cmd = "collect counter %s" % self.collect_counter
-            if not self.netstream_cfg or cmd not in self.netstream_cfg:
+            if need_create_record or cmd not in self.netstream_cfg:
                 cmds.append(cmd)
                 self.updates_cmd.append(cmd)
 
         if self.collect_interface:
             cmd = "collect interface %s" % self.collect_interface
-            if not self.netstream_cfg or cmd not in self.netstream_cfg:
+            if need_create_record or cmd not in self.netstream_cfg:
                 cmds.append(cmd)
                 self.updates_cmd.append(cmd)
-
-        if not need_create_record and len(cmds) == 1:
-            if self.type == "ip":
-                cmd = "netstream record %s ip" % self.record_name
-            else:
-                cmd = "netstream record %s vxlan inner-ip" % self.record_name
-            cmds.remove(cmd)
 
         if cmds:
             self.cli_load_config(cmds)

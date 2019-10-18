@@ -20,32 +20,32 @@ short_description: Manage MR access point layer 3 firewalls in the Meraki cloud
 version_added: "2.7"
 description:
 - Allows for creation, management, and visibility into layer 3 firewalls implemented on Meraki MR access points.
+- Module is not idempotent as of current release.
 options:
     state:
         description:
         - Create or modify an organization.
+        type: str
+        choices: [ present, query ]
         default: present
-        choices: [present, query]
-    org_name:
-        description:
-        - Name of organization.
-    org_id:
-        description:
-        - ID of organization.
     net_name:
         description:
         - Name of network containing access points.
+        type: str
     net_id:
         description:
         - ID of network containing access points.
+        type: str
     number:
         description:
         - Number of SSID to apply firewall rule to.
-        aliases: [ssid_number]
+        type: int
+        aliases: [ ssid_number ]
     ssid_name:
         description:
         - Name of SSID to apply firewall rule to.
-        aliases: [ssid]
+        type: str
+        aliases: [ ssid ]
     allow_lan_access:
         description:
         - Sets whether devices can talk to other devices on the same LAN.
@@ -54,24 +54,30 @@ options:
     rules:
         description:
         - List of firewall rules.
+        type: list
         suboptions:
             policy:
                 description:
                 - Specifies the action that should be taken when rule is hit.
-                choices: [allow, deny]
+                type: str
+                choices: [ allow, deny ]
             protocol:
                 description:
                 - Specifies protocol to match against.
-                choices: [any, icmp, tcp, udp]
+                type: str
+                choices: [ any, icmp, tcp, udp ]
             dest_port:
                 description:
-                - Comma separated list of destination ports to match.
+                - Comma-seperated list of destination ports to match.
+                type: str
             dest_cidr:
                 description:
-                - Comma separated list of CIDR notation networks to match.
+                - Comma-separated list of CIDR notation networks to match.
+                type: str
             comment:
                 description:
                 - Optional comment describing the firewall rule.
+                type: str
 author:
 - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -144,11 +150,10 @@ def assemble_payload(meraki):
 
 
 def get_rules(meraki, net_id, number):
-        path = meraki.construct_path('get_all', net_id=net_id)
-        path = path + number + '/l3FirewallRules'
-        response = meraki.request(path, method='GET')
-        if meraki.status == 200:
-            return response
+    path = meraki.construct_path('get_all', net_id=net_id, custom={'number': number})
+    response = meraki.request(path, method='GET')
+    if meraki.status == 200:
+        return response
 
 
 def get_ssid_number(name, data):
@@ -203,8 +208,8 @@ def main():
 
     meraki.params['follow_redirects'] = 'all'
 
-    query_urls = {'mr_l3_firewall': '/networks/{net_id}/ssids/'}
-    update_urls = {'mr_l3_firewall': '/networks/{net_id}/ssids/'}
+    query_urls = {'mr_l3_firewall': '/networks/{net_id}/ssids/{number}/l3FirewallRules'}
+    update_urls = {'mr_l3_firewall': '/networks/{net_id}/ssids/{number}/l3FirewallRules'}
 
     meraki.url_catalog['get_all'].update(query_urls)
     meraki.url_catalog['update'] = update_urls
@@ -243,8 +248,7 @@ def main():
         meraki.result['data'] = get_rules(meraki, net_id, number)
     elif meraki.params['state'] == 'present':
         rules = get_rules(meraki, net_id, number)
-        path = meraki.construct_path('get_all', net_id=net_id)
-        path = path + number + '/l3FirewallRules'
+        path = meraki.construct_path('get_all', net_id=net_id, custom={'number': number})
         if meraki.params['rules']:
             payload = assemble_payload(meraki)
         else:
@@ -267,6 +271,8 @@ def main():
             if meraki.status == 200:
                 meraki.result['data'] = response
                 meraki.result['changed'] = True
+        else:
+            meraki.result['data'] = rules
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

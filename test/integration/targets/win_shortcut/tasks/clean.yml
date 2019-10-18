@@ -25,3 +25,13 @@
   win_file:
     path: '%Public%\Desktop\Registry Editor.lnk'
     state: absent
+
+- name: Clean up Shell path shortcut
+  win_file:
+    path: '%Public%\bin.lnk'
+    state: absent
+
+- name: Clean up Executable shortcut
+  win_file:
+    path: '%Public%\Desktop\cmd.lnk'
+    state: absent

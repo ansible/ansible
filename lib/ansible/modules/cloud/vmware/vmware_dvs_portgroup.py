@@ -35,19 +35,24 @@ options:
         description:
             - The name of the portgroup that is to be created or deleted.
         required: True
+        type: str
     switch_name:
         description:
             - The name of the distributed vSwitch the port group should be created on.
         required: True
+        type: str
     vlan_id:
         description:
             - The VLAN ID that should be configured with the portgroup, use 0 for no VLAN.
-            - 'If C(vlan_trunk) is configured to be I(true), this can be a range, example: 1-4094.'
+            - 'If C(vlan_trunk) is configured to be I(true), this can be a combination of multiple ranges and numbers, example: 1-200, 205, 400-4094.'
+            - The valid C(vlan_id) range is from 0 to 4094. Overlapping ranges are allowed.
         required: True
+        type: str
     num_ports:
         description:
             - The number of ports the portgroup should contain.
         required: True
+        type: int
     portgroup_type:
         description:
             - See VMware KB 1022312 regarding portgroup types.
@@ -56,11 +61,12 @@ options:
             - 'earlyBinding'
             - 'lateBinding'
             - 'ephemeral'
+        type: str
     state:
         description:
             - Determines if the portgroup should be present or not.
         required: True
-        type: bool
+        type: str
         choices:
             - 'present'
             - 'absent'
@@ -86,6 +92,7 @@ options:
             forged_transmits: False,
             mac_changes: False,
         }
+        type: dict
     teaming_policy:
         description:
             - Dictionary which configures the different teaming values for portgroup.
@@ -104,6 +111,7 @@ options:
             'inbound_policy': False,
             'rolling_order': False
         }
+        type: dict
     port_policy:
         description:
             - Dictionary which configures the advanced policy settings for the portgroup.
@@ -134,6 +142,7 @@ options:
             'vlan_override': False,
             'ipfix_override': False
         }
+        type: dict
 
 extends_documentation_fragment: vmware.documentation
 '''
@@ -159,7 +168,7 @@ EXAMPLES = '''
     password: '{{ vcenter_password }}'
     portgroup_name: vlan-trunk-portrgoup
     switch_name: dvSwitch
-    vlan_id: 1-1000
+    vlan_id: 1-1000, 1005, 1100-1200
     vlan_trunk: True
     num_ports: 120
     portgroup_type: earlyBinding
@@ -257,8 +266,16 @@ class VMwareDvsPortgroup(PyVmomi):
         config.defaultPortConfig = vim.dvs.VmwareDistributedVirtualSwitch.VmwarePortConfigPolicy()
         if self.module.params['vlan_trunk']:
             config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.TrunkVlanSpec()
-            vlan_id_start, vlan_id_end = self.module.params['vlan_id'].split('-')
-            config.defaultPortConfig.vlan.vlanId = [vim.NumericRange(start=int(vlan_id_start.strip()), end=int(vlan_id_end.strip()))]
+            vlan_id_list = []
+            for vlan_id_splitted in self.module.params['vlan_id'].split(','):
+                try:
+                    vlan_id_start, vlan_id_end = map(int, vlan_id_splitted.split('-'))
+                    if vlan_id_start not in range(0, 4095) or vlan_id_end not in range(0, 4095):
+                        self.module.fail_json(msg="vlan_id range %s specified is incorrect. The valid vlan_id range is from 0 to 4094." % vlan_id_splitted)
+                    vlan_id_list.append(vim.NumericRange(start=vlan_id_start, end=vlan_id_end))
+                except ValueError:
+                    vlan_id_list.append(vim.NumericRange(start=int(vlan_id_splitted.strip()), end=int(vlan_id_splitted.strip())))
+            config.defaultPortConfig.vlan.vlanId = vlan_id_list
         else:
             config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec()
             config.defaultPortConfig.vlan.vlanId = int(self.module.params['vlan_id'])

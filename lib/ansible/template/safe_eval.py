@@ -42,10 +42,15 @@ def safe_eval(expr, locals=None, include_exceptions=False):
 
     # define certain JSON types
     # eg. JSON booleans are unknown to python eval()
-    JSON_TYPES = {
+    OUR_GLOBALS = {
+        '__builtins__': {},  # avoid global builtins as per eval docs
         'false': False,
         'null': None,
         'true': True,
+        # also add back some builtins we do need
+        'True': True,
+        'False': False,
+        'None': None
     }
 
     # this is the whitelist of AST nodes we are going to
@@ -90,6 +95,14 @@ def safe_eval(expr, locals=None, include_exceptions=False):
             )
         )
 
+    # And in Python 3.6 too, although not encountered until Python 3.8, see https://bugs.python.org/issue32892
+    if sys.version_info[:2] >= (3, 6):
+        SAFE_NODES.update(
+            set(
+                (ast.Constant,)
+            )
+        )
+
     filter_list = []
     for filter_ in filter_loader.all():
         filter_list.extend(filter_.filters().keys())
@@ -130,7 +143,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
         # Note: passing our own globals and locals here constrains what
         # callables (and other identifiers) are recognized.  this is in
         # addition to the filtering of builtins done in CleansingNodeVisitor
-        result = eval(compiled, JSON_TYPES, dict(locals))
+        result = eval(compiled, OUR_GLOBALS, dict(locals))
 
         if include_exceptions:
             return (result, None)

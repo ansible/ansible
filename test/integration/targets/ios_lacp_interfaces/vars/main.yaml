@@ -1,0 +1,126 @@
+---
+merged:
+  before:
+    - name: Port-channel10
+    - name: Port-channel40
+    - name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "lacp port-priority 30"
+    - "interface GigabitEthernet0/2"
+    - "lacp port-priority 20"
+    - "interface Port-channel10"
+    - "lacp max-bundle 2"
+    - "lacp fast-switchover"
+
+  after:
+    - fast_switchover: True
+      max_bundle: 2
+      name: Port-channel10
+    - name: Port-channel40
+    - name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+      port_priority: 30
+    - name: GigabitEthernet0/2
+      port_priority: 20
+
+replaced:
+  before:
+    - fast_switchover: True
+      max_bundle: 2
+      name: Port-channel10
+    - max_bundle: 5
+      name: Port-channel40
+    - name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+      port_priority: 30
+    - name: GigabitEthernet0/2
+      port_priority: 20
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "lacp port-priority 10"
+    - "interface Port-channel40"
+    - "no lacp max-bundle"
+    - "lacp fast-switchover"
+
+  after:
+    - fast_switchover: True
+      max_bundle: 2
+      name: Port-channel10
+    - fast_switchover: True
+      name: Port-channel40
+    - name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+      port_priority: 10
+    - name: GigabitEthernet0/2
+      port_priority: 20
+
+overridden:
+  before:
+    - fast_switchover: True
+      max_bundle: 2
+      name: Port-channel10
+    - max_bundle: 5
+      name: Port-channel40
+    - name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+      port_priority: 30
+    - name: GigabitEthernet0/2
+      port_priority: 20
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "no lacp port-priority"
+    - "interface GigabitEthernet0/2"
+    - "lacp port-priority 40"
+    - "interface Port-channel10"
+    - "no lacp fast-switchover"
+    - "no lacp max-bundle"
+    - "interface Port-channel40"
+    - "lacp fast-switchover"
+    - "lacp max-bundle 2"
+
+  after:
+    - name: Port-channel10
+    - fast_switchover: True
+      max_bundle: 2
+      name: Port-channel40
+    - name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2
+      port_priority: 40
+
+deleted:
+  before:
+    - fast_switchover: True
+      max_bundle: 2
+      name: Port-channel10
+    - max_bundle: 5
+      name: Port-channel40
+    - name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+      port_priority: 30
+    - name: GigabitEthernet0/2
+      port_priority: 20
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "no lacp port-priority"
+    - "interface GigabitEthernet0/2"
+    - "no lacp port-priority"
+    - "interface Port-channel10"
+    - "no lacp fast-switchover"
+    - "no lacp max-bundle"
+    - "interface Port-channel40"
+    - "no lacp max-bundle"
+
+  after:
+    - name: Port-channel10
+    - name: Port-channel40
+    - name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2

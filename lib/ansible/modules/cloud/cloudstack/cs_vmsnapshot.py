@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -30,76 +16,86 @@ short_description: Manages VM snapshots on Apache CloudStack based clouds.
 description:
     - Create, remove and revert VM from snapshots.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Unique Name of the snapshot. In CloudStack terms display name.
+    type: str
     required: true
-    aliases: ['display_name']
+    aliases: [ display_name ]
   vm:
     description:
       - Name of the virtual machine.
+    type: str
     required: true
   description:
     description:
       - Description of the snapshot.
+    type: str
   snapshot_memory:
     description:
       - Snapshot memory if set to true.
-    default: false
+    default: no
+    type: bool
   zone:
     description:
       - Name of the zone in which the VM is in. If not set, default zone is used.
+    type: str
   project:
     description:
       - Name of the project the VM is assigned to.
+    type: str
   state:
     description:
       - State of the snapshot.
-    default: 'present'
-    choices: [ 'present', 'absent', 'revert' ]
+    type: str
+    default: present
+    choices: [ present, absent, revert ]
   domain:
     description:
       - Domain the VM snapshot is related to.
+    type: str
   account:
     description:
       - Account the VM snapshot is related to.
+    type: str
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    default: yes
+    type: bool
   tags:
     description:
-      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
-      - "To delete all tags, set a empty list e.g. C(tags: [])."
-    aliases: [ 'tag' ]
-    version_added: "2.4"
+      - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
+      - "To delete all tags, set a empty list e.g. I(tags: [])."
+    type: list
+    aliases: [ tag ]
+    version_added: '2.4'
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: Create a VM snapshot of disk and memory before an upgrade
-  local_action:
-    module: cs_vmsnapshot
+  cs_vmsnapshot:
     name: Snapshot before upgrade
     vm: web-01
     snapshot_memory: yes
+  delegate_to: localhost
 
 - name: Revert a VM to a snapshot after a failed upgrade
-  local_action:
-    module: cs_vmsnapshot
+  cs_vmsnapshot:
     name: Snapshot before upgrade
     vm: web-01
     state: revert
+  delegate_to: localhost
 
 - name: Remove a VM snapshot after successful upgrade
-  local_action:
-    module: cs_vmsnapshot
+  cs_vmsnapshot:
     name: Snapshot before upgrade
     vm: web-01
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -107,57 +103,57 @@ RETURN = '''
 id:
   description: UUID of the snapshot.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: Name of the snapshot.
   returned: success
-  type: string
+  type: str
   sample: snapshot before update
 display_name:
   description: Display name of the snapshot.
   returned: success
-  type: string
+  type: str
   sample: snapshot before update
 created:
   description: date of the snapshot.
   returned: success
-  type: string
+  type: str
   sample: 2015-03-29T14:57:06+0200
 current:
   description: true if the snapshot is current
   returned: success
-  type: boolean
+  type: bool
   sample: True
 state:
   description: state of the vm snapshot
   returned: success
-  type: string
+  type: str
   sample: Allocated
 type:
   description: type of vm snapshot
   returned: success
-  type: string
+  type: str
   sample: DiskAndMemory
 description:
   description: description of vm snapshot
   returned: success
-  type: string
+  type: str
   sample: snapshot brought to you by Ansible
 domain:
   description: Domain the vm snapshot is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the vm snapshot is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project the vm snapshot is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 '''
 

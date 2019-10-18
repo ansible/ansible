@@ -1,0 +1,133 @@
+# Test code for the vmware_vcenter_statistics module.
+# Copyright: (c) 2018, Christian Kotte <christian.kotte@gmx.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+- name: Disable all the statistics
+  vmware_vcenter_statistics:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    interval_past_day:
+      enabled: false
+    interval_past_week:
+      enabled: false
+    interval_past_month:
+      enabled: false
+    interval_past_year:
+      enabled: false
+    validate_certs: no
+  register: statistics_results_check_mode
+
+- name: Configure statistics in check mode
+  vmware_vcenter_statistics: &stats
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    interval_past_day:
+      enabled: true
+      interval_minutes: 5
+      save_for_days: 3
+      level: 2
+    interval_past_week:
+      enabled: true
+      interval_minutes: 30
+      save_for_weeks: 1
+      level: 2
+    interval_past_month:
+      enabled: true
+      interval_hours: 2
+      save_for_months: 1
+      level: 1
+    interval_past_year:
+      enabled: true
+      interval_days: 1
+      save_for_years: 1
+      level: 1
+    validate_certs: no
+  register: statistics_results_check_mode
+  check_mode: yes
+
+- debug: var=statistics_results_check_mode
+
+- name: ensure statistics were configured
+  assert:
+    that:
+      # Doesn't really work with vcsim. No matter which settings are used; they are always shown as already configured!?
+      - statistics_results_check_mode is changed
+  when: vcsim is not defined
+
+- name: Configure statistics
+  vmware_vcenter_statistics:
+    <<: *stats
+  register: statistics_results
+
+- debug: var=statistics_results
+
+- name: ensure statistics were configured
+  assert:
+    that:
+      - statistics_results is changed
+  when: vcsim is not defined
+
+- name: Configure statistics (again)
+  vmware_vcenter_statistics:
+    <<: *stats
+  register: statistics_results
+
+- debug: var=statistics_results
+
+- name: ensure statistics were configured
+  assert:
+    that:
+      - not (statistics_results is changed)
+  when: vcsim is not defined
+
+- name: Configure statistics intervall to level 2 for later check
+  vmware_vcenter_statistics:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    interval_past_day:
+      enabled: true
+      level: 2
+    interval_past_week:
+      enabled: true
+      level: 2
+    interval_past_month:
+      enabled: true
+      level: 2
+    interval_past_year:
+      enabled: true
+      level: 2
+    validate_certs: no
+  when: vcsim is not defined
+
+- name: Increase daily and weekly while decrease monthly and yearly
+  vmware_vcenter_statistics:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    interval_past_day:
+      enabled: true
+      level: 3
+    interval_past_week:
+      enabled: true
+      level: 3
+    interval_past_month:
+      enabled: true
+      level: 1
+    interval_past_year:
+      enabled: true
+      level: 1
+    validate_certs: no
+  register: statistics_results_mixed_increase_decrease
+  when: vcsim is not defined
+
+- name: Ensure statistics were configured
+  assert:
+    that:
+      - statistics_results_mixed_increase_decrease is changed
+  when: vcsim is not defined

@@ -8,6 +8,16 @@
     python_apt: python3-apt
   when: ansible_python_version is version('3', '>=')
 
+- name: use Debian mirror
+  set_fact:
+    distro_mirror: http://ftp.debian.org/debian
+  when: ansible_distribution == 'Debian'
+
+- name: use Ubuntu mirror
+  set_fact:
+    distro_mirror: http://archive.ubuntu.com/ubuntu
+  when: ansible_distribution == 'Ubuntu'
+
 # UNINSTALL 'python-apt'
 #  The `apt` module has the smarts to auto-install `python-apt`.  To test, we
 #  will first uninstall `python-apt`.
@@ -20,6 +30,57 @@
   apt: pkg={{ python_apt }} state=absent purge=yes
   register: apt_result
   when: dpkg_result is successful
+
+# In check mode, auto-install of `python-apt` must fail
+- name: test fail uninstall hello without required apt deps in check mode
+  apt:
+    pkg: hello
+    state: absent
+    purge: yes
+  register: apt_result
+  check_mode: yes
+  ignore_errors: yes
+
+- name: verify fail uninstall hello without required apt deps in check mode
+  assert:
+    that:
+    - apt_result is failed
+    - '"If run normally this module can auto-install it." in apt_result.msg'
+
+- name: check {{ python_apt }} with dpkg
+  shell: dpkg -s {{ python_apt }}
+  register: dpkg_result
+  ignore_errors: true
+
+# UNINSTALL 'hello'
+#   With 'python-apt' uninstalled, the first call to 'apt' should install
+#   python-apt without updating the cache.
+- name: uninstall hello with apt and prevent updating the cache
+  apt:
+    pkg: hello
+    state: absent
+    purge: yes
+    update_cache: no
+  register: apt_result
+
+- name: check hello with dpkg
+  shell: dpkg-query -l hello
+  failed_when: False
+  register: dpkg_result
+
+- name: verify uninstall hello with apt and prevent updating the cache
+  assert:
+    that:
+    - "'changed' in apt_result"
+    - apt_result is not changed
+    - "dpkg_result.rc == 1"
+    - "'Auto-installing missing dependency without updating cache: {{ python_apt }}' in apt_result.warnings"
+
+- name: uninstall {{ python_apt }} with apt again
+  apt:
+    pkg: "{{ python_apt }}"
+    state: absent
+    purge: yes
 
 # UNINSTALL 'hello'
 #   With 'python-apt' uninstalled, the first call to 'apt' should install
@@ -36,8 +97,10 @@
 - name: verify uninstallation of hello
   assert:
     that:
-        - "'changed' in apt_result"
-        - "dpkg_result.rc == 1"
+    - "'changed' in apt_result"
+    - apt_result is not changed
+    - "dpkg_result.rc == 1"
+    - "'Updating cache and auto-installing missing dependency: {{ python_apt }}' in apt_result.warnings"
 
 # UNINSTALL AGAIN
 - name: uninstall hello with apt
@@ -128,6 +191,18 @@
     that:
         - "apt_initial.changed"
         - "not apt_secondary.changed"
+
+- name: uninstall hello with apt
+  apt: pkg=hello state=absent purge=yes
+
+- name: install deb file from URL
+  apt: deb="{{ distro_mirror }}/pool/main/h/hello/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+  register: apt_url
+
+- name: verify installation of hello
+  assert:
+    that:
+        - "apt_url.changed"
 
 - name: uninstall hello with apt
   apt: pkg=hello state=absent purge=yes
@@ -236,3 +311,62 @@
   assert:
     that:
       - apt_result is not changed
+
+# check policy_rc_d parameter
+
+- name: Install unscd but forbid service start
+  apt:
+    name: unscd
+    policy_rc_d: 101
+
+- name: Stop unscd service
+  service:
+    name: unscd
+    state: stopped
+  register: service_unscd_stop
+
+- name: unscd service shouldn't have been stopped by previous task
+  assert:
+    that: service_unscd_stop is not changed
+
+- name: Uninstall unscd
+  apt:
+    name: unscd
+    policy_rc_d: 101
+
+- name: Create incorrect /usr/sbin/policy-rc.d
+  copy:
+    dest: /usr/sbin/policy-rc.d
+    content: apt integration test
+    mode: 0755
+
+- name: Install unscd but forbid service start
+  apt:
+    name: unscd
+    policy_rc_d: 101
+
+- name: Stop unscd service
+  service:
+    name: unscd
+    state: stopped
+  register: service_unscd_stop
+
+- name: unscd service shouldn't have been stopped by previous task
+  assert:
+    that: service_unscd_stop is not changed
+
+- name: Create incorrect /usr/sbin/policy-rc.d
+  copy:
+    dest: /usr/sbin/policy-rc.d
+    content: apt integration test
+    mode: 0755
+  register: policy_rc_d
+
+- name: Check if /usr/sbin/policy-rc.d was correctly backed-up during unscd install
+  assert:
+    that: policy_rc_d is not changed
+
+- name: Delete /usr/sbin/policy-rc.d
+  file:
+    path: /usr/sbin/policy-rc.d
+    state: absent

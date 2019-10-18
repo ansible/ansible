@@ -49,9 +49,7 @@ description:
     Usually, commands are executed across a group of network devices. When
     there is a requirement to skip the execution of the command on one or
     more devices, it is recommended to use this module. This module uses SSH to
-    manage network device configuration. For more information about this module
-    from Lenovo and customizing it usage for your use cases, please visit
-    U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_conditional_command.html)
+    manage network device configuration.
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options:
@@ -84,11 +82,7 @@ Tasks : The following are examples of using the module
 ---
 - name: Applying CLI template on VLAG Tier1 Leaf Switch1
   cnos_conditional_command:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_conditional_command_
                   {{ inventory_hostname }}_output.txt"
       condition: "{{ hostvars[inventory_hostname]['condition']}}"
@@ -100,7 +94,7 @@ RETURN = '''
 msg:
   description: Success or failure message
   returned: always
-  type: string
+  type: str
   sample: "Command Applied"
 '''
 
@@ -115,7 +109,7 @@ import os
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True
-except:
+except Exception:
     HAS_LIB = False
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
@@ -128,10 +122,10 @@ def main():
             outputfile=dict(required=True),
             condition=dict(required=True),
             flag=dict(required=True),
-            host=dict(required=True),
+            host=dict(required=False),
             deviceType=dict(required=True),
-            username=dict(required=True),
-            password=dict(required=True, no_log=True),
+            username=dict(required=False),
+            password=dict(required=False, no_log=True),
             enablePassword=dict(required=False,
                                 no_log=True), ), supports_check_mode=False)
 

@@ -12,6 +12,7 @@
 #
 """
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -20,7 +21,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_api_version
-author: Vilian Atmadzhov (vilian.atmadzhov@paddypowerbetfair.com)
+author: Vilian Atmadzhov (@vivobg) <vilian.atmadzhov@paddypowerbetfair.com>
 
 short_description: Avi API Version Module
 description:
@@ -54,17 +55,20 @@ from ansible.module_utils.basic import AnsibleModule
 
 try:
     from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, AviCredentials)
-    from avi.sdk.avi_api import ApiSession
+        avi_common_argument_spec, ansible_return, HAS_AVI)
+    from ansible.module_utils.network.avi.avi_api import (
+        ApiSession, AviCredentials)
 except ImportError:
     HAS_AVI = False
 
 
 def main():
-    module = AnsibleModule(argument_spec=avi_common_argument_spec())
+    argument_specs = dict()
+    argument_specs.update(avi_common_argument_spec())
+    module = AnsibleModule(argument_spec=argument_specs)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) or requests is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     try:
         api_creds = AviCredentials()
@@ -83,7 +87,7 @@ def main():
         api.close()
         module.exit_json(changed=False, obj=remote)
     except Exception as e:
-        module.fail_json(msg="Unable to get an AVI session. {}".format(e))
+        module.fail_json(msg=("Unable to get an AVI session. %s" % e))
 
 
 if __name__ == '__main__':

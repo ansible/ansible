@@ -19,20 +19,23 @@ short_description: Manage filesystem snapshots on Pure Storage FlashBlades
 description:
 - Create or delete volumes and filesystem snapshots on Pure Storage FlashBlades.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   name:
     description:
     - The name of the source filesystem.
     required: true
+    type: str
   suffix:
     description:
     - Suffix of snapshot name.
+    type: str
   state:
     description:
     - Define whether the filesystem snapshot should exist or not.
     choices: [ absent, present ]
     default: present
+    type: str
   eradicate:
     description:
     - Define whether to eradicate the snapshot on delete or leave in trash.
@@ -99,7 +102,7 @@ def get_fs(module, blade):
     try:
         res = blade.file_systems.list_file_systems(names=fs)
         return res.items[0]
-    except:
+    except Exception:
         return None
 
 
@@ -109,7 +112,7 @@ def get_fssnapshot(module, blade):
         filt = 'source=\'' + module.params['name'] + '\' and suffix=\'' + module.params['suffix'] + '\''
         res = blade.file_system_snapshots.list_file_system_snapshots(filter=filt)
         return res.items[0]
-    except:
+    except Exception:
         return None
 
 
@@ -121,7 +124,7 @@ def create_snapshot(module, blade):
         try:
             blade.file_system_snapshots.create_file_system_snapshots(sources=source, suffix=SnapshotSuffix(module.params['suffix']))
             changed = True
-        except:
+        except Exception:
             changed = False
     module.exit_json(changed=changed)
 
@@ -134,7 +137,7 @@ def recover_snapshot(module, blade):
         try:
             blade.file_system_snapshots.update_file_system_snapshots(name=snapname, attributes=new_attr)
             changed = True
-        except:
+        except Exception:
             changed = False
     module.exit_json(changed=changed)
 
@@ -157,9 +160,9 @@ def delete_snapshot(module, blade):
                 try:
                     blade.file_system_snapshots.delete_file_system_snapshots(name=snapname)
                     changed = True
-                except:
+                except Exception:
                     changed = False
-        except:
+        except Exception:
             changed = False
     module.exit_json(changed=changed)
 
@@ -171,7 +174,7 @@ def eradicate_snapshot(module, blade):
         try:
             blade.file_system_snapshots.delete_file_system_snapshots(name=snapname)
             changed = True
-        except:
+        except Exception:
             changed = False
     module.exit_json(changed=changed)
 

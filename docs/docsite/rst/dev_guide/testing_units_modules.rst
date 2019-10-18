@@ -16,16 +16,16 @@ Introduction
 This document explains why, how and when you should use unit tests for Ansible modules.
 The document doesn't apply to other parts of Ansible for which the recommendations are
 normally closer to the Python standard.  There is basic documentation for Ansible unit
-tests in the developer guide :doc:`testing_units`.  This document should
+tests in the developer guide :ref:`testing_units`.  This document should
 be readable for a new Ansible module author. If you find it incomplete or confusing,
 please open a bug or ask for help on Ansible IRC.
 
 What Are Unit Tests?
 ====================
 
-Ansible includes a set of unit tests in the :file:`test/unit` directory. These tests primarily cover the
+Ansible includes a set of unit tests in the :file:`test/units` directory. These tests primarily cover the
 internals but can also can cover Ansible modules.  The structure of the unit tests matches
-the structure of the code base, so the tests that reside in the :file:`test/unit/modules/` directory
+the structure of the code base, so the tests that reside in the :file:`test/units/modules/` directory
 are organized by module groups.
 
 Integration tests can be used for most modules, but there are situations where
@@ -76,7 +76,7 @@ with integration tests, such as:
   failures and exceptions
 * Extensive testing of slow configuration APIs
 * Situations where the integration tests cannot be run as part of the main Ansible
-  continuous integraiton running in Shippable.
+  continuous integration running in Shippable.
 
 
 
@@ -110,7 +110,7 @@ Example:
 
 Another related use is in the situation where an API has versions which behave
 differently. A programmer working on a new version may change the module to work with the
-new API version and unintentially break the old version.  A test case
+new API version and unintentionally break the old version.  A test case
 which checks that the call happens properly for the old version can help avoid the
 problem.  In this situation it is very important to include version numbering in the test case
 name (see `Naming unit tests`_ below).
@@ -190,8 +190,9 @@ above, either by throwing an exception or ensuring that they haven't been called
     class AnsibleExitJson(Exception):
         """Exception class to be raised by module.exit_json and caught by the test case"""
         pass
-    #you may also do the same to fail json
-    module=MagicMock()
+
+    # you may also do the same to fail json
+    module = MagicMock()
     module.exit_json.side_effect = AnsibleExitJson(Exception)
     with self.assertRaises(AnsibleExitJson) as result:
         return = my_module.test_this_function(module, argument)
@@ -287,27 +288,22 @@ Passing Arguments
 .. This section should be updated once https://github.com/ansible/ansible/pull/31456 is
    closed since the function below will be provided in a library file.
 
-To pass arguments to a module correctly, use a function that stores the
-parameters in a special string variable.  Module creation and argument processing is
+To pass arguments to a module correctly, use the ``set_module_args`` method which accepts a dictionary
+as its parameter. Module creation and argument processing is
 handled through the :class:`AnsibleModule` object in the basic section of the utilities. Normally
 this accepts input on ``STDIN``, which is not convenient for unit testing. When the special
-variable is set it will be treated as if the input came on ``STDIN`` to the module.::
+variable is set it will be treated as if the input came on ``STDIN`` to the module. Simply call that function before setting up your module::
 
     import json
+    from units.modules.utils import set_module_args
     from ansible.module_utils._text import to_bytes
 
-    def set_module_args(args):
-        args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-        basic._ANSIBLE_ARGS = to_bytes(args)
-
-    simply call that function before setting up your module
-
-        def test_already_registered(self):
-            set_module_args({
-                'activationkey': 'key',
-                'username': 'user',
-                'password': 'pass',
-            })
+    def test_already_registered(self):
+        set_module_args({
+            'activationkey': 'key',
+            'username': 'user',
+            'password': 'pass',
+        })
 
 Handling exit correctly
 -----------------------
@@ -334,8 +330,9 @@ testing for the correct exception::
             'username': 'user',
             'password': 'pass',
         })
-       with self.assertRaises(AnsibleExitJson) as result:
-           my_module.main()
+
+        with self.assertRaises(AnsibleExitJson) as result:
+            my_module.main()
 
 The same technique can be used to replace :meth:`module.fail_json` (which is used for failure
 returns from modules) and for the ``aws_module.fail_json_aws()`` (used in modules for Amazon
@@ -349,7 +346,7 @@ the arguments as above, set up the appropriate exit exception and then run the m
 
     # This test is based around pytest's features for individual test functions
     import pytest
-    import ansible.modules.module.group.my_modulle as my_module
+    import ansible.modules.module.group.my_module as my_module
 
     def test_main_function(monkeypatch):
         monkeypatch.setattr(my_module.AnsibleModule, "exit_json", fake_exit_json)
@@ -511,7 +508,7 @@ This now makes it possible to run tests against the module initiation function::
          })
 
         with self.assertRaises(AnsibleFailJson) as result:
-             self.module.setup_json
+            self.module.setup_json
 
 See also ``test/units/module_utils/aws/test_rds.py``
 
@@ -541,12 +538,12 @@ the code in Ansible to trigger that failure.
 
 .. seealso::
 
-   :doc:`testing_units`
+   :ref:`testing_units`
        Ansible unit tests documentation
-   :doc:`testing_running_locally`
+   :ref:`testing_running_locally`
        Running tests locally including gathering and reporting coverage data
-   :doc:`developing_modules`
-       How to develop modules
+   :ref:`developing_modules_general`
+       Get started developing a module
    `Python 3 documentation - 26.4. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_
        The documentation of the unittest framework in python 3
    `Python 2 documentation - 25.3. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_
@@ -559,8 +556,8 @@ the code in Ansible to trigger that failure.
        General advice on testing Python code
    `Uncle Bob's many videos on YouTube <https://www.youtube.com/watch?v=QedpQjxBPMA&list=PLlu0CT-JnSasQzGrGzddSczJQQU7295D2>`_
        Unit testing is a part of the of various philosophies of software development, including
-       Extreme Programming (XP), Clean Coding.  Uncle Bob talks through how to benfit from this
-   `"Why Most Unit Testing is Waste" https://rbcs-us.com/documents/Why-Most-Unit-Testing-is-Waste.pdf`
+       Extreme Programming (XP), Clean Coding.  Uncle Bob talks through how to benefit from this
+   `"Why Most Unit Testing is Waste" <https://rbcs-us.com/documents/Why-Most-Unit-Testing-is-Waste.pdf>`_
        An article warning against the costs of unit testing
-   `'A Response to "Why Most Unit Testing is Waste"' https://henrikwarne.com/2014/09/04/a-response-to-why-most-unit-testing-is-waste/`
+   `'A Response to "Why Most Unit Testing is Waste"' <https://henrikwarne.com/2014/09/04/a-response-to-why-most-unit-testing-is-waste/>`_
        An response pointing to how to maintain the value of unit tests

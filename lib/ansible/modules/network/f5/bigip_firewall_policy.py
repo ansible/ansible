@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -23,16 +23,19 @@ options:
   name:
     description:
       - The name of the policy to create.
+    type: str
     required: True
   description:
     description:
       - The description to attach to the policy.
       - This parameter is only supported on versions of BIG-IP >= 12.1.0. On earlier
         versions it will simply be ignored.
+    type: str
   state:
     description:
       - When C(state) is C(present), ensures that the policy exists.
       - When C(state) is C(absent), ensures that the policy is removed.
+    type: str
     choices:
       - present
       - absent
@@ -48,9 +51,11 @@ options:
         configuration for these rules.
       - The C(bigip_firewall_rule) module can be used to also create, as well as
         edit, existing and new rules.
+    type: list
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
 extends_documentation_fragment: f5
 author:
@@ -76,7 +81,7 @@ RETURN = r'''
 description:
   description: The new description of the policy.
   returned: changed
-  type: string
+  type: str
   sample: My firewall policy
 rules:
   description: The list of rules, in the order that they are evaluated, on the device.
@@ -92,19 +97,13 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import fail_json
-    from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import transform_name
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import fail_json
-    from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import transform_name
 
 
@@ -206,7 +205,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -522,14 +521,11 @@ def main():
     )
 
     try:
-        client = F5RestClient(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

@@ -52,6 +52,35 @@
       - cloudflare_dns is failed
       - "cloudflare_dns.msg.find('but all of the following are missing: ') != -1"
 
+- name: "Test: partial credentials"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    zone: "{{ cloudflare_zone }}"
+    type: A
+    value: 127.0.0.1
+  ignore_errors: true
+  register: cloudflare_dns
+
+- name: "Validate: partial credentials"
+  assert:
+    that:
+      - cloudflare_dns is failed
+      - "cloudflare_dns.msg.find('Either api_token or account_api_token and account_email params are required.') != -1"
+
+- name: "Test: api token, zone and type"
+  cloudflare_dns:
+    api_token: dummyapitoken
+    zone: "{{ cloudflare_zone }}"
+    type: TXT
+  ignore_errors: true
+  register: cloudflare_dns
+
+- name: "Validate: api token, zone and type"
+  assert:
+    that:
+      - cloudflare_dns is failed
+      - "cloudflare_dns.msg.find('but all of the following are missing: ') != -1"
+
 ######## record tests #################
 
 - include: a_record.yml

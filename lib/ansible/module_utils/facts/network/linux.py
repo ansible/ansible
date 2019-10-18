@@ -220,7 +220,7 @@ class LinuxNetwork(Network):
                             default_ipv4['broadcast'] = broadcast
                             default_ipv4['netmask'] = netmask
                             default_ipv4['network'] = network
-                            # NOTE: macadress is ref from outside scope
+                            # NOTE: macaddress is ref from outside scope
                             default_ipv4['macaddress'] = macaddress
                             default_ipv4['mtu'] = interfaces[device]['mtu']
                             default_ipv4['type'] = interfaces[device].get("type", "unknown")
@@ -237,11 +237,11 @@ class LinuxNetwork(Network):
                             scope = words[3]
                         if 'ipv6' not in interfaces[device]:
                             interfaces[device]['ipv6'] = []
-                            interfaces[device]['ipv6'].append({
-                                'address': address,
-                                'prefix': prefix,
-                                'scope': scope
-                            })
+                        interfaces[device]['ipv6'].append({
+                            'address': address,
+                            'prefix': prefix,
+                            'scope': scope
+                        })
                         # If this is the default address, update default_ipv6
                         if 'address' in default_ipv6 and default_ipv6['address'] == address:
                             default_ipv6['prefix'] = prefix
@@ -256,12 +256,20 @@ class LinuxNetwork(Network):
 
             args = [ip_path, 'addr', 'show', 'primary', device]
             rc, primary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
+            if rc == 0:
+                parse_ip_output(primary_data)
+            else:
+                # possibly busybox, fallback to running without the "primary" arg
+                # https://github.com/ansible/ansible/issues/50871
+                args = [ip_path, 'addr', 'show', device]
+                rc, data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
+                if rc == 0:
+                    parse_ip_output(data)
 
             args = [ip_path, 'addr', 'show', 'secondary', device]
             rc, secondary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
-
-            parse_ip_output(primary_data)
-            parse_ip_output(secondary_data, secondary=True)
+            if rc == 0:
+                parse_ip_output(secondary_data, secondary=True)
 
             interfaces[device].update(self.get_ethtool_data(device))
 

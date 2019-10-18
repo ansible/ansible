@@ -29,6 +29,8 @@ notes:
       To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
     - If you specify both the key id and the URL with C(state=present), the task can verify or add the key as needed.
     - Adding a new key requires an apt cache update (e.g. using the apt module's update_cache option)
+requirements:
+    - gpg
 options:
     id:
         description:
@@ -216,9 +218,9 @@ def download_key(module, url):
 
 def import_key(module, keyring, keyserver, key_id):
     if keyring:
-        cmd = "%s --keyring %s adv --keyserver %s --recv %s" % (apt_key_bin, keyring, keyserver, key_id)
+        cmd = "%s --keyring %s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyring, keyserver, key_id)
     else:
-        cmd = "%s adv --keyserver %s --recv %s" % (apt_key_bin, keyserver, key_id)
+        cmd = "%s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyserver, key_id)
     for retry in range(5):
         lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
         (rc, out, err) = module.run_command(cmd, environ_update=lang_env)

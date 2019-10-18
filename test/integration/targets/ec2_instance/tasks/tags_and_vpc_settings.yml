@@ -1,0 +1,173 @@
+- block:
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: true
+    - name: Make instance in the testing subnet created in the test VPC
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-basic-vpc-create"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        user_data: |
+          #cloud-config
+          package_upgrade: true
+          package_update: true
+        tags:
+          TestId: "{{ resource_prefix }}"
+          Something: else
+        security_groups: "{{ sg.group_id }}"
+        network:
+          source_dest_check: false
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+        instance_type: t2.micro
+        wait: false
+        <<: *aws_connection_info
+      register: in_test_vpc
+
+    - name: Make instance in the testing subnet created in the test VPC(check mode)
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-basic-vpc-create-checkmode"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        user_data: |
+          #cloud-config
+          package_upgrade: true
+          package_update: true
+        tags:
+          TestId: "{{ resource_prefix }}"
+          Something: else
+        security_groups: "{{ sg.group_id }}"
+        network:
+          source_dest_check: false
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+        instance_type: t2.micro
+        <<: *aws_connection_info
+      check_mode: yes
+
+    - name: Try to re-make the instance, hopefully this shows changed=False
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-basic-vpc-create"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        user_data: |
+          #cloud-config
+          package_upgrade: true
+          package_update: true
+        tags:
+          TestId: "{{ resource_prefix }}"
+          Something: else
+        security_groups: "{{ sg.group_id }}"
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+        instance_type: t2.micro
+        <<: *aws_connection_info
+      register: remake_in_test_vpc
+    - name: "Remaking the same instance resulted in no changes"
+      assert:
+        that: not remake_in_test_vpc.changed
+    - name: check that instance IDs match anyway
+      assert:
+        that: 'remake_in_test_vpc.instance_ids[0] == in_test_vpc.instance_ids[0]'
+    - name: check that source_dest_check was set to false
+      assert:
+        that: 'not remake_in_test_vpc.instances[0].source_dest_check'
+
+    - name: "fact presented ec2 instance"
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-test-basic-vpc-create"
+        <<: *aws_connection_info
+      register: presented_instance_fact
+
+    - name: "fact checkmode ec2 instance"
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-test-basic-vpc-create-checkmode"
+        <<: *aws_connection_info
+      register: checkmode_instance_fact
+
+    - name: "Confirm whether the check mode is working normally."
+      assert:
+        that:
+          - "{{ presented_instance_fact.instances | length }} > 0"
+          - "{{ checkmode_instance_fact.instances | length }} == 0"
+
+    - name: Alter it by adding tags
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-basic-vpc-create"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        tags:
+          TestId: "{{ resource_prefix }}"
+          Another: thing
+        security_groups: "{{ sg.group_id }}"
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+        instance_type: t2.micro
+        <<: *aws_connection_info
+      register: add_another_tag
+
+    - ec2_instance_info:
+        instance_ids: "{{ add_another_tag.instance_ids }}"
+        <<: *aws_connection_info
+      register: check_tags
+    - name: "Remaking the same instance resulted in no changes"
+      assert:
+        that:
+          - check_tags.instances[0].tags.Another == 'thing'
+          - check_tags.instances[0].tags.Something == 'else'
+
+    - name: Purge a tag
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-basic-vpc-create"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        purge_tags: true
+        tags:
+          TestId: "{{ resource_prefix }}"
+          Another: thing
+        security_groups: "{{ sg.group_id }}"
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+        instance_type: t2.micro
+        <<: *aws_connection_info
+
+    - ec2_instance_info:
+        instance_ids: "{{ add_another_tag.instance_ids }}"
+        <<: *aws_connection_info
+      register: check_tags
+
+    - name: "Remaking the same instance resulted in no changes"
+      assert:
+        that:
+          - "'Something' not in check_tags.instances[0].tags"
+
+    - name: check that subnet-default public IP rule was followed
+      assert:
+        that:
+          - check_tags.instances[0].public_dns_name == ""
+          - check_tags.instances[0].private_ip_address.startswith("10.22.33")
+          - check_tags.instances[0].subnet_id == testing_subnet_b.subnet.id
+    - name: check that tags were applied
+      assert:
+        that:
+          - check_tags.instances[0].tags.Name.startswith(resource_prefix)
+          - "'{{ check_tags.instances[0].state.name }}' in  ['pending', 'running']"
+
+    - name: Terminate instance
+      ec2_instance:
+        filters:
+          tag:TestId: "{{ resource_prefix }}"
+        state: absent
+        wait: false
+        <<: *aws_connection_info
+      register: result
+    - assert:
+        that: result.changed
+
+  always:
+    - name: Terminate instance
+      ec2_instance:
+        filters:
+          tag:TestId: "{{ resource_prefix }}"
+        state: absent
+        wait: false
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: yes

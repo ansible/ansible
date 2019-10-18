@@ -18,7 +18,7 @@ module: manageiq_alerts
 short_description: Configuration of alerts in ManageIQ
 extends_documentation_fragment: manageiq
 version_added: '2.5'
-author: Elad Alfassa (ealfassa@redhat.com)
+author: Elad Alfassa (@elad661) <ealfassa@redhat.com
 description:
   - The manageiq_alerts module supports adding, updating and deleting alerts in ManageIQ.
 
@@ -80,7 +80,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Add an alert with a "miq expression" to ManageIQ
   manageiq_alerts:
@@ -107,7 +107,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Delete an alert from ManageIQ
   manageiq_alerts:
@@ -117,7 +117,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 '''
 
 RETURN = '''
@@ -129,7 +129,7 @@ from ansible.module_utils.manageiq import ManageIQ, manageiq_argument_spec
 
 class ManageIQAlert(object):
     """ Represent a ManageIQ alert. Can be initialized with both the format
-    we recieve from the server and the format we get from the user.
+    we receive from the server and the format we get from the user.
     """
     def __init__(self, alert):
         self.description = alert['description']
@@ -257,7 +257,7 @@ class ManageIQAlerts(object):
                 # the result to the expected result.
                 if new_alert_obj == ManageIQAlert(result):
                     # success!
-                    msg = "Alert {description} upated successfully: {details}"
+                    msg = "Alert {description} updated successfully: {details}"
                     msg = msg.format(description=existing_alert['description'], details=result)
 
                     return dict(changed=True, msg=msg)

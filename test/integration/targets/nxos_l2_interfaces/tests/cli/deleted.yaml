@@ -1,0 +1,61 @@
+---
+- debug:
+    msg: "Start nxos_l2_interfaces deleted integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact: test_int2="{{ nxos_int2 }}"
+
+- name: setup1
+  cli_config: &cleanup
+    config: |
+      default interface {{ test_int1 }}
+      default interface {{ test_int2 }}
+  ignore_errors: yes
+
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        interface {{ test_int1 }}
+          switchport
+          switchport trunk native vlan 10
+        interface {{ test_int2 }}
+          switchport
+          switchport trunk allowed vlan 20
+
+  - name: Gather l2_interfaces facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: l2_interfaces
+
+  - name: deleted
+    nxos_l2_interfaces: &deleted
+      state: deleted
+    register: result
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.before)|length == 0"
+        - "result.after|length == 0"
+        - "result.changed == true"
+        - "'interface {{ test_int1 }}' in result.commands"
+        - "'no switchport trunk native vlan' in result.commands"
+        - "'interface {{ test_int2 }}' in result.commands"
+        - "'no switchport trunk allowed vlan' in result.commands"
+        - "result.commands|length == 4"
+
+  - name: Idempotence - deleted
+    nxos_l2_interfaces: *deleted
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *cleanup
+    ignore_errors: yes

@@ -23,17 +23,18 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-import collections
 import itertools
 import math
 
 from jinja2.filters import environmentfilter
 
 from ansible.errors import AnsibleFilterError
-from ansible.module_utils import basic
+from ansible.module_utils.common.text import formatters
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import zip, zip_longest
+from ansible.module_utils.common._collections_compat import Hashable, Mapping, Iterable
 from ansible.module_utils._text import to_native, to_text
+from ansible.utils.display import Display
 
 try:
     from jinja2.filters import do_unique
@@ -41,27 +42,32 @@ try:
 except ImportError:
     HAS_UNIQUE = False
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 @environmentfilter
 def unique(environment, a, case_sensitive=False, attribute=None):
 
-    error = None
-    try:
-        if HAS_UNIQUE:
-            c = set(do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute))
-    except Exception as e:
+    def _do_fail(e):
         if case_sensitive or attribute:
             raise AnsibleFilterError("Jinja2's unique filter failed and we cannot fall back to Ansible's version "
                                      "as it does not support the parameters supplied", orig_exc=e)
-        else:
-            display.warning('Falling back to Ansible unique filter as Jinja2 one failed: %s' % to_text(e))
-            error = e
+
+    error = e = None
+    try:
+        if HAS_UNIQUE:
+            c = do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute)
+            if isinstance(a, Hashable):
+                c = set(c)
+            else:
+                c = list(c)
+    except TypeError as e:
+        error = e
+        _do_fail(e)
+    except Exception as e:
+        error = e
+        _do_fail(e)
+        display.warning('Falling back to Ansible unique filter as Jinja2 one failed: %s' % to_text(e))
 
     if not HAS_UNIQUE or error:
 
@@ -70,7 +76,7 @@ def unique(environment, a, case_sensitive=False, attribute=None):
             raise AnsibleFilterError("Ansible's unique filter does not support case_sensitive nor attribute parameters, "
                                      "you need a newer version of Jinja2 that provides their version of the filter.")
 
-        if isinstance(a, collections.Hashable):
+        if isinstance(a, Hashable):
             c = set(a)
         else:
             c = []
@@ -82,7 +88,7 @@ def unique(environment, a, case_sensitive=False, attribute=None):
 
 @environmentfilter
 def intersect(environment, a, b):
-    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
+    if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) & set(b)
     else:
         c = unique(environment, [x for x in a if x in b])
@@ -91,7 +97,7 @@ def intersect(environment, a, b):
 
 @environmentfilter
 def difference(environment, a, b):
-    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
+    if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) - set(b)
     else:
         c = unique(environment, [x for x in a if x not in b])
@@ -100,7 +106,7 @@ def difference(environment, a, b):
 
 @environmentfilter
 def symmetric_difference(environment, a, b):
-    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
+    if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) ^ set(b)
     else:
         isect = intersect(environment, a, b)
@@ -110,7 +116,7 @@ def symmetric_difference(environment, a, b):
 
 @environmentfilter
 def union(environment, a, b):
-    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
+    if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) | set(b)
     else:
         c = unique(environment, a + b)
@@ -134,14 +140,14 @@ def logarithm(x, base=math.e):
         else:
             return math.log(x, base)
     except TypeError as e:
-        raise AnsibleFilterError('log() can only be used on numbers: %s' % str(e))
+        raise AnsibleFilterError('log() can only be used on numbers: %s' % to_native(e))
 
 
 def power(x, y):
     try:
         return math.pow(x, y)
     except TypeError as e:
-        raise AnsibleFilterError('pow() can only be used on numbers: %s' % str(e))
+        raise AnsibleFilterError('pow() can only be used on numbers: %s' % to_native(e))
 
 
 def inversepower(x, base=2):
@@ -151,13 +157,13 @@ def inversepower(x, base=2):
         else:
             return math.pow(x, 1.0 / float(base))
     except (ValueError, TypeError) as e:
-        raise AnsibleFilterError('root() can only be used on numbers: %s' % str(e))
+        raise AnsibleFilterError('root() can only be used on numbers: %s' % to_native(e))
 
 
 def human_readable(size, isbits=False, unit=None):
     ''' Return a human readable string '''
     try:
-        return basic.bytes_to_human(size, isbits, unit)
+        return formatters.bytes_to_human(size, isbits, unit)
     except Exception:
         raise AnsibleFilterError("human_readable() can't interpret following string: %s" % size)
 
@@ -165,7 +171,7 @@ def human_readable(size, isbits=False, unit=None):
 def human_to_bytes(size, default_unit=None, isbits=False):
     ''' Return bytes count from a human readable string '''
     try:
-        return basic.human_to_bytes(size, default_unit, isbits)
+        return formatters.human_to_bytes(size, default_unit, isbits)
     except Exception:
         raise AnsibleFilterError("human_to_bytes() can't interpret following string: %s" % size)
 
@@ -184,15 +190,15 @@ def rekey_on_member(data, key, duplicates='error'):
 
     new_obj = {}
 
-    if isinstance(data, collections.Mapping):
+    if isinstance(data, Mapping):
         iterate_over = data.values()
-    elif isinstance(data, collections.Iterable) and not isinstance(data, (text_type, binary_type)):
+    elif isinstance(data, Iterable) and not isinstance(data, (text_type, binary_type)):
         iterate_over = data
     else:
         raise AnsibleFilterError("Type is not a valid list, set, or dict")
 
     for item in iterate_over:
-        if not isinstance(item, collections.Mapping):
+        if not isinstance(item, Mapping):
             raise AnsibleFilterError("List item is not a valid dict")
 
         try:

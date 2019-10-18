@@ -1,0 +1,7 @@
+master_port: 3306
+standby_port: 3307
+master_datadir: /var/lib/mysql_master
+standby_datadir: /var/lib/mysql_standby
+standby_logdir: /var/log/mysql_standby
+default_logdir: /var/log/mariadb
+mysql_safe_err_log: /var/log/mariadb/mysql_safe-err.log

@@ -1,0 +1,1046 @@
+---
+# Test code for the netapp_e_storagepool module
+# (c) 2018, NetApp, Inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# Raid levels tested: raid0, raid1, raid5, raid6, disk pool
+# Actions covered: create w/capacity, create w/drive count, repeat create (no changes), extend w/capacity,
+#                     extend w/drive count, delete, migrate raid levels (raid0->raid6, 1->5, 5->1, 6->0),
+#                     secure pool for raid0, erasing drives on creation, erasing drives on deletion,
+#                     setting reserve drive count for ddp,
+
+- name: Test data for the NetApp E-Series storage pool module.
+  fail:
+    msg: 'Please define netapp_e_api_username, netapp_e_api_password, netapp_e_api_host, and netapp_e_ssid.'
+  when: netapp_e_api_username is undefined or netapp_e_api_password is undefined or
+        netapp_e_api_host is undefined or netapp_e_ssid is undefined
+  vars:
+    credentials: &creds
+      api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
+      api_username: "{{ netapp_e_api_username }}"
+      api_password: "{{ netapp_e_api_password }}"
+      ssid: "{{ netapp_e_ssid }}"
+      validate_certs: no
+
+- set_fact:
+    credentials: *creds
+
+# Ensure that test starts without storage pools
+- name: Remove simple storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    erase_secured_drives: yes
+    name: "{{ item }}"
+  loop:
+    - raid0_storage
+    - raid1_storage
+    - raid5_storage
+    - raid6_storage
+    - raidDiskPool_storage
+
+# Raid0
+# Create, rerun, extend, and modify raid level.
+- name: Create simple storage pool using raid0.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid0_storage
+    criteria_min_usable_capacity: 1400
+    raid_level: raid0
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ item.raidLevel == 'raid0' and (item.totalRaidedSpace | int) >= 1503238553600 }}"
+    msg: "raid0 storage pool failed to be created."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raid0_storage`]') }}"
+
+- name: (Repeat) Create simple storage pool using raid0.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid0_storage
+    criteria_min_usable_capacity: 1400
+    criteria_size_unit: gb
+    raid_level: raid0
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ not results.changed and item.raidLevel == 'raid0' and (item.totalRaidedSpace | int) >= 1503238553600 }}"
+    msg: "raid0 storage pool failed not to be modified."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raid0_storage`]') }}"
+
+- name: Extend storage pool to 2400gb minimum usable capacity.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid0_storage
+    criteria_min_usable_capacity: 2400
+    criteria_size_unit: gb
+    raid_level: raid0
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ item.raidLevel == 'raid0' and (item.totalRaidedSpace | int) >= 2576980377600 }}"
+    msg: "raid0 storage pool using raid0 failed to be extended to a minimum of 2400gb."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raid0_storage`]') }}"
+
+- name: Expand simple storage pool using raid0.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid0_storage
+    criteria_drive_count: 6
+    raid_level: raid0
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/drives"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_drives
+- assert:
+    that: "{{ results.raidLevel == 'raid0' and
+              (current_drives.json | json_query(count_query) | length) == 6 }}"
+    msg: "raid0 storage pool failed to be extended to 6 drives."
+  vars:
+    count_query: "[?currentVolumeGroupRef=='{{ results.volumeGroupRef }}'].currentVolumeGroupRef"
+
+- name: Migrate raid0 storage pool to raid6.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid0_storage
+    criteria_drive_count: 6
+    raid_level: raid6
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/drives"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_drives
+- assert:
+    that: "{{ results.raidLevel == 'raid6' and
+              (current_drives.json | json_query(count_query) | length) == 6 }}"
+    msg: "raid0 storage pool failed to migrate to raid6"
+  vars:
+    count_query: "[?currentVolumeGroupRef=='{{ results.volumeGroupRef }}'].currentVolumeGroupRef"
+
+- name: Remove simple storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: "{{ item }}"
+  loop:
+    - raid0_storage
+
+
+# Raid1
+# Create, rerun, extend, and modify raid level.
+- name: Create simple storage pool using raid1.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid1_storage
+    criteria_min_usable_capacity: 1400
+    criteria_size_unit: gb
+    raid_level: raid1
+  register: results
+- pause: seconds=5
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ item.raidLevel == 'raid1' and (item.totalRaidedSpace | int) >= 1503238553600 }}"
+    msg: "raid1 storage pool failed to be created."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raid1_storage`]') }}"
+
+- name: (Repeat) Create simple storage pool using raid1.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid1_storage
+    criteria_min_usable_capacity: 1400
+    criteria_size_unit: gb
+    raid_level: raid1
+  register: results
+- pause: seconds=5
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ not results.changed and item.raidLevel == 'raid1' and (item.totalRaidedSpace | int) >= 1503238553600 }}"
+    msg: "raid1 storage pool failed not to be modified."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raid1_storage`]') }}"
+
+- name: Expand simple storage pool using raid1.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid1_storage
+    criteria_drive_count: 6
+    raid_level: raid1
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/drives"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_drives
+- assert:
+    that: "{{ results.raidLevel == 'raid1' and
+              (current_drives.json | json_query(count_query) | length) == 6 }}"
+    msg: "raid1 storage pool failed to be extended."
+  vars:
+    count_query: "[?currentVolumeGroupRef=='{{ results.volumeGroupRef }}'].currentVolumeGroupRef"
+
+- name: Migrate raid1 storage pool to raid5
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid1_storage
+    criteria_drive_count: 6
+    raid_level: raid5
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/drives"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_drives
+- assert:
+    that: "{{ results.raidLevel == 'raid5' and
+              (current_drives.json | json_query(count_query) | length) == 6 }}"
+    msg: "raid1 storage pool failed to migrate to raid5."
+  vars:
+    count_query: "[?currentVolumeGroupRef=='{{ results.volumeGroupRef }}'].currentVolumeGroupRef"
+
+- name: Remove simple storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: "{{ item }}"
+  loop:
+    - raid1_storage
+
+
+# Raid5
+# Create, rerun, extend, and modify raid level.
+- name: Create simple storage pool using raid5.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid5_storage
+    criteria_drive_count: 6
+    raid_level: raid5
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/drives"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_drives
+- assert:
+    that: "{{ results.raidLevel == 'raid5' and
+              (current_drives.json | json_query(count_query) | length) == 6 }}"
+    msg: "raid5 storage pool failed to be created."
+  vars:
+    count_query: "[?currentVolumeGroupRef=='{{ results.volumeGroupRef }}'].currentVolumeGroupRef"
+
+- name: (Rerun) Create simple storage pool using raid5.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid5_storage
+    criteria_drive_count: 6
+    raid_level: raid5
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/drives"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_drives
+- assert:
+    that: "{{ not results.changed and results.raidLevel == 'raid5' and
+              (current_drives.json | json_query(count_query) | length) == 6 }}"
+    msg: "raid5 storage pool failed not to be modified."
+  vars:
+    count_query: "[?currentVolumeGroupRef=='{{ results.volumeGroupRef }}'].currentVolumeGroupRef"
+
+- name: Expand simple storage pool using raid5.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid5_storage
+    criteria_drive_count: 8
+    raid_level: raid5
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/drives"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_drives
+- assert:
+    that: "{{ results.raidLevel == 'raid5' and
+              (current_drives.json | json_query(count_query) | length) == 8}}"
+    msg: "raid5 storage pool failed to be modified to 8 drives."
+  vars:
+    count_query: "[?currentVolumeGroupRef=='{{ results.volumeGroupRef }}'].currentVolumeGroupRef"
+
+- name: Migrate raid5 storage pool to raid1
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid5_storage
+    criteria_drive_count: 8
+    raid_level: raid1
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/drives"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_drives
+- assert:
+    that: "{{ results.raidLevel == 'raid1' and
+              (current_drives.json | json_query(count_query) | length) == 8}}"
+    msg: "raid5 storage pool failed to migrate to raid1."
+  vars:
+    count_query: "[?currentVolumeGroupRef=='{{ results.volumeGroupRef }}'].currentVolumeGroupRef"
+
+- name: Remove simple storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: "{{ item }}"
+  loop:
+    - raid5_storage
+
+
+# raid6
+# Create, rerun, extend, and modify raid level.
+- name: Create simple storage pool using raid6.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid6_storage
+    criteria_drive_count: 5
+    raid_level: raid6
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/drives"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_drives
+- assert:
+    that: "{{ results.raidLevel == 'raid6' and
+              (current_drives.json | json_query(count_query) | length) == 5}}"
+    msg: "raid6 storage pool failed to be created with 5 drives."
+  vars:
+    count_query: "[?currentVolumeGroupRef=='{{ results.volumeGroupRef }}'].currentVolumeGroupRef"
+
+- name: Extend simple storage pool using raid6.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid6_storage
+    criteria_min_usable_capacity: 3.4
+    criteria_size_unit: tb
+    raid_level: raid6
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ item.raidLevel == 'raid6' and (item.totalRaidedSpace | int) >= 3738339534438 }}"
+    msg: "raid6 storage pool failed to be extended to a minimum of 3.4tb."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raid6_storage`]') }}"
+
+- name: Migrate rai6 storage pool to raid0
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid6_storage
+    criteria_min_usable_capacity: 3.4
+    criteria_size_unit: tb
+    raid_level: raid0
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ item.raidLevel == 'raid0' and (item.totalRaidedSpace | int) >= 3738339534438 }}"
+    msg: "raid6 storage pool failed to migrate to raid0."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raid6_storage`]') }}"
+
+- name: Remove simple storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: "{{ item }}"
+  loop:
+    - raid6_storage
+
+# raidDiskPool
+# Create, rerun, extend, and modify raid level.
+- name: Create simple storage pool using raidDiskPool.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raidDiskPool_storage
+    criteria_min_usable_capacity: 2300
+    criteria_size_unit: gb
+    raid_level: raidDiskPool
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ item.raidLevel == 'raidDiskPool' and (item.totalRaidedSpace | int) >= 2469606195200 }}"
+    msg: "Simple storage pool failed to be created."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raidDiskPool_storage`]') }}"
+
+- name: Rerun simple storage pool creation.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raidDiskPool_storage
+    criteria_min_usable_capacity: 2300
+    criteria_size_unit: gb
+    raid_level: raidDiskPool
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was not modified
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ not results.changed and item.raidLevel == 'raidDiskPool' and (item.totalRaidedSpace | int) >= 2469606195200 }}"
+    msg: "Simple storage pool failed not to be modified."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raidDiskPool_storage`]') }}"
+
+- name: Extend simple storage pool to a minimum usable capacity of 3000gb
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raidDiskPool_storage
+    criteria_min_usable_capacity: 3000
+    criteria_size_unit: gb
+    raid_level: raidDiskPool
+  register: results
+- name: Verify storage pool was extended
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ item.raidLevel == 'raidDiskPool' and (item.totalRaidedSpace | int) >= 3221225472000 }}"
+    msg: "Simple storage pool failed to be extended."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raidDiskPool_storage`]') }}"
+
+- name: Extend simple storage pool.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raidDiskPool_storage
+    criteria_drive_count: 12
+    raid_level: raidDiskPool
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/drives"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_drives
+- assert:
+    that: "{{ results.raidLevel == 'raidDiskPool' and
+              (current_drives.json | json_query(count_query) | length) == 12}}"
+    msg: "raidDiskPool storage pool failed to be extended with 12 drives."
+  vars:
+    count_query: "[?currentVolumeGroupRef=='{{ results.volumeGroupRef }}'].currentVolumeGroupRef"
+
+- name: Remove simple storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: raidDiskPool_storage
+  register: results
+
+
+# raid0 secured
+- name: Create simple storage pool using raid0.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid0_storage
+    criteria_min_usable_capacity: 1400
+    secure_pool: yes
+    erase_secured_drives: yes
+    raid_level: raid0
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ item.raidLevel == 'raid0' and (item.totalRaidedSpace | int) >= 1503238553600 and
+              item.securityType == 'enabled' }}"
+    msg: "raid0 storage pool failed to be created."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raid0_storage`]') }}"
+
+- name: (Repeat) Create simple storage pool using raid0.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid0_storage
+    criteria_min_usable_capacity: 1400
+    criteria_size_unit: gb
+    secure_pool: yes
+    erase_secured_drives: yes
+    raid_level: raid0
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ not results.changed and item.raidLevel == 'raid0' and (item.totalRaidedSpace | int) >= 1503238553600 and
+              item.securityType == 'enabled' }}"
+    msg: "raid0 storage pool failed not to be modified."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raid0_storage`]') }}"
+
+- name: Extend storage pool to 2400gb minimum usable capacity.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid0_storage
+    criteria_min_usable_capacity: 2400
+    criteria_size_unit: gb
+    secure_pool: yes
+    erase_secured_drives: yes
+    raid_level: raid0
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ item.raidLevel == 'raid0' and (item.totalRaidedSpace | int) >= 2576980377600 and
+              item.securityType == 'enabled' }}"
+    msg: "raid0 storage pool using raid0 failed to be extended to a minimum of 2400gb."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raid0_storage`]') }}"
+
+- name: Expand simple storage pool using raid0.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid0_storage
+    criteria_drive_count: 6
+    secure_pool: yes
+    erase_secured_drives: yes
+    raid_level: raid0
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/drives"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_drives
+- assert:
+    that: "{{ results.raidLevel == 'raid0' and results.securityType == 'enabled' and
+              (current_drives.json | json_query(count_query) | length) == 6 }}"
+    msg: "raid0 storage pool failed to be extended to 6 drives."
+  vars:
+    count_query: "[?currentVolumeGroupRef=='{{ results.volumeGroupRef }}'].currentVolumeGroupRef"
+
+- name: Migrate raid0 storage pool to raid6.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raid0_storage
+    criteria_drive_count: 6
+    secure_pool: yes
+    erase_secured_drives: yes
+    raid_level: raid6
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/drives"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_drives
+- assert:
+    that: "{{ results.raidLevel == 'raid6' and results.securityType == 'enabled' and
+              (current_drives.json | json_query(count_query) | length) == 6 }}"
+    msg: "raid0 storage pool failed to migrate to raid6"
+  vars:
+    count_query: "[?currentVolumeGroupRef=='{{ results.volumeGroupRef }}'].currentVolumeGroupRef"
+
+- name: Remove simple storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: "{{ item }}"
+    erase_secured_drives: yes
+  loop:
+    - raid0_storage
+
+
+# raidDiskPool secured
+- name: Create simple storage pool using raidDiskPool.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raidDiskPool_storage
+    criteria_min_usable_capacity: 2300
+    criteria_size_unit: gb
+    secure_pool: yes
+    erase_secured_drives: yes
+    raid_level: raidDiskPool
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ item.raidLevel == 'raidDiskPool' and (item.totalRaidedSpace | int) >= 2469606195200 and
+              item.securityType == 'enabled' }}"
+    msg: "Simple storage pool failed to be created."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raidDiskPool_storage`]') }}"
+
+- name: Rerun simple storage pool creation.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raidDiskPool_storage
+    criteria_min_usable_capacity: 2300
+    criteria_size_unit: gb
+    secure_pool: yes
+    erase_secured_drives: yes
+    raid_level: raidDiskPool
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was not modified
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ not results.changed and item.raidLevel == 'raidDiskPool' and (item.totalRaidedSpace | int) >= 2469606195200 and
+              item.securityType == 'enabled' }}"
+    msg: "Simple storage pool failed not to be modified."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raidDiskPool_storage`]') }}"
+
+- name: Extend simple storage pool to a minimum usable capacity of 3000gb
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raidDiskPool_storage
+    criteria_min_usable_capacity: 3000
+    criteria_size_unit: gb
+    secure_pool: yes
+    erase_secured_drives: yes
+    raid_level: raidDiskPool
+  register: results
+- name: Verify storage pool was extended
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ item.raidLevel == 'raidDiskPool' and (item.totalRaidedSpace | int) >= 3221225472000 and
+              item.securityType == 'enabled' }}"
+    msg: "Simple storage pool failed to be extended."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raidDiskPool_storage`]') }}"
+
+- name: Extend simple storage pool.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raidDiskPool_storage
+    criteria_drive_count: 12
+    secure_pool: yes
+    erase_secured_drives: yes
+    raid_level: raidDiskPool
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/drives"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_drives
+- assert:
+    that: "{{ results.raidLevel == 'raidDiskPool' and results.securityType == 'enabled' and
+              (current_drives.json | json_query(count_query) | length) == 12 }}"
+    msg: "raidDiskPool storage pool failed to be extended with 12 drives."
+  vars:
+    count_query: "[?currentVolumeGroupRef=='{{ results.volumeGroupRef }}'].currentVolumeGroupRef"
+
+- name: Remove simple storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: raidDiskPool_storage
+  register: results
+
+
+# raidDiskPool set reserve drive count
+- name: Create simple storage pool using raidDiskPool.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raidDiskPool_storage
+    criteria_drive_count: 11
+    reserve_drive_count: 1
+    secure_pool: yes
+    erase_secured_drives: yes
+    raid_level: raidDiskPool
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ item.raidLevel == 'raidDiskPool' and
+              item.volumeGroupData.diskPoolData.reconstructionReservedDriveCount == 1 and
+              item.securityType == 'enabled' }}"
+    msg: "Simple storage pool failed to be created."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raidDiskPool_storage`]') }}"
+
+- name: Change disk pool reserve drive count.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raidDiskPool_storage
+    criteria_drive_count: 12
+    reserve_drive_count: 2
+    secure_pool: yes
+    erase_secured_drives: yes
+    raid_level: raidDiskPool
+  register: results
+- pause: seconds=30
+- name: Verify storage pool was not modified
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ item.raidLevel == 'raidDiskPool' and
+              item.volumeGroupData.diskPoolData.reconstructionReservedDriveCount == 2 and
+              item.securityType == 'enabled' }}"
+    msg: "Simple storage pool failed not to be modified."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raidDiskPool_storage`]') }}"
+
+# erase drives on storage pool deletion
+- name: Remove simple storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: raidDiskPool_storage
+    erase_secured_drives: yes
+  register: results
+
+- name: Create simple storage pool using raidDiskPool with capacity and reserve count specified.
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: raidDiskPool_storage
+    criteria_min_usable_capacity: 8000
+    criteria_size_unit: gb
+    reserve_drive_count: 2
+    secure_pool: yes
+    erase_secured_drives: yes
+    raid_level: raidDiskPool
+  register: results
+- pause: seconds=5
+- name: Verify storage pool was created
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/storage-pools"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current_storage_pools
+- assert:
+    that: "{{ item.raidLevel == 'raidDiskPool' and
+              (item.totalRaidedSpace | int) >= 3221225472000 and
+              item.volumeGroupData.diskPoolData.reconstructionReservedDriveCount == 2 and
+              item.securityType == 'enabled' }}"
+    msg: "Simple storage pool failed to be created."
+  loop: "{{ lookup('list', storage_pools, wantList=True) }}"
+  vars:
+    storage_pools: "{{ current_storage_pools | json_query('json[?name==`raidDiskPool_storage`]') }}"
+
+- name: Integration cleanup
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: raidDiskPool_storage
+    erase_secured_drives: yes
+  register: results
+- netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: raidDiskPool_storage
+  register: results

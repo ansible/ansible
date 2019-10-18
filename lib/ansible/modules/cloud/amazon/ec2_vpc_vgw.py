@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -56,6 +56,7 @@ options:
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:
   - ec2
+  - aws
 '''
 
 EXAMPLES = '''
@@ -103,7 +104,7 @@ RETURN = '''
 result:
   description: The result of the create, or delete action.
   returned: success
-  type: dictionary
+  type: dict
 '''
 
 import time
@@ -170,7 +171,13 @@ def attach_vgw(client, module, vpn_gateway_id):
     params['VpcId'] = module.params.get('vpc_id')
 
     try:
-        response = AWSRetry.jittered_backoff()(client.attach_vpn_gateway)(VpnGatewayId=vpn_gateway_id, VpcId=params['VpcId'])
+        # Immediately after a detachment, the EC2 API sometimes will report the VpnGateways[0].State
+        # as available several seconds before actually permitting a new attachment.
+        # So we catch and retry that error.  See https://github.com/ansible/ansible/issues/53185
+        response = AWSRetry.jittered_backoff(retries=5,
+                                             catch_extra_error_codes=['InvalidParameterValue']
+                                             )(client.attach_vpn_gateway)(VpnGatewayId=vpn_gateway_id,
+                                                                          VpcId=params['VpcId'])
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -399,7 +406,7 @@ def ensure_vgw_present(client, module):
                     # detach the existing vpc from the virtual gateway
                     vpc_to_detach = current_vpc_attachments[0]['VpcId']
                     detach_vgw(client, module, vpn_gateway_id, vpc_to_detach)
-                    time.sleep(5)
+                    get_waiter(client, 'vpn_gateway_detached').wait(VpnGatewayIds=[vpn_gateway_id])
                     attached_vgw = attach_vgw(client, module, vpn_gateway_id)
                     changed = True
             else:
@@ -487,7 +494,7 @@ def ensure_vgw_absent(client, module):
     else:
         # Check that a name and type argument has been supplied if no vgw-id
         if not module.params.get('name') or not module.params.get('type'):
-            module.fail_json(msg='A name and type is required when no vgw-id and a status of \'absent\' is suppled')
+            module.fail_json(msg='A name and type is required when no vgw-id and a status of \'absent\' is supplied')
 
         existing_vgw = find_vgw(client, module)
         if existing_vgw != [] and existing_vgw[0]['State'] != 'deleted':

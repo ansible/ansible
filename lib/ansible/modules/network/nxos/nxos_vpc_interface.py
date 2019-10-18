@@ -50,6 +50,7 @@ options:
   peer_link:
     description:
       - Set to true/false for peer link config on associated portchannel.
+    type: bool
   state:
     description:
       - Manages desired state of the resource.
@@ -73,7 +74,7 @@ commands:
 '''
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -250,7 +251,6 @@ def main():
 
     warnings = list()
     commands = []
-    check_args(module, warnings)
     results = {'changed': False, 'warnings': warnings}
 
     portchannel = module.params['portchannel']

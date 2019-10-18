@@ -118,7 +118,7 @@ notes:
     it is much more efficient to pass the list directly to the `name` option.
 # informational: requirements for nodes
 requirements:
-    - "zypper >= 1.0  # included in openSuSE >= 11.1 or SuSE Linux Enterprise Server/Desktop >= 11.0"
+    - "zypper >= 1.0  # included in openSUSE >= 11.1 or SUSE Linux Enterprise Server/Desktop >= 11.0"
     - python-xml
     - rpm
 '''
@@ -240,7 +240,7 @@ def split_name_version(name):
         if version is None:
             version = ''
         return prefix, name, version
-    except:
+    except Exception:
         return prefix, name, ''
 
 

@@ -1,0 +1,42 @@
+---
+- block:
+
+  - name: Get servers certificate with backend auto-detection
+    get_certificate:
+      host: "{{ httpbin_host }}"
+      port: 443
+
+  when: |
+    pyopenssl_version.stdout is version('0.15', '>=') or
+    (cryptography_version.stdout is version('1.6', '>=') and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6))
+
+- block:
+
+  - include_tasks: ../tests/validate.yml
+    vars:
+      select_crypto_backend: pyopenssl
+
+  when: pyopenssl_version.stdout is version('0.15', '>=')
+
+- name: Remove output directory
+  file:
+    path: "{{ output_dir }}"
+    state: absent
+
+- name: Re-create output directory
+  file:
+    path: "{{ output_dir }}"
+    state: directory
+
+- block:
+
+  - include_tasks: ../tests/validate.yml
+    vars:
+      select_crypto_backend: cryptography
+
+  # The module doesn't work with CentOS 6. Since the pyOpenSSL installed there is too old,
+  # we never noticed before. This becomes a problem with the new cryptography backend,
+  # since there is a new enough cryptography version...
+  when: |
+    cryptography_version.stdout is version('1.6', '>=') and
+    (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

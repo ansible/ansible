@@ -139,13 +139,25 @@ def get_interfaces_config(module, interface_type, flags=None, json_fmt=True):
     return show_cmd(module, cmd, json_fmt)
 
 
-def show_version(module):
-    return show_cmd(module, "show version")
-
-
 def get_bgp_summary(module):
     cmd = "show running-config protocol bgp"
     return show_cmd(module, cmd, json_fmt=False, fail_on_error=False)
+
+
+def get_capabilities(module):
+    """Returns platform info of the remove device
+    """
+    if hasattr(module, '_capabilities'):
+        return module._capabilities
+
+    connection = get_connection(module)
+    try:
+        capabilities = connection.get_capabilities()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
+    module._capabilities = json.loads(capabilities)
+    return module._capabilities
 
 
 class BaseOnyxModule(object):
@@ -168,9 +180,9 @@ class BaseOnyxModule(object):
         pass
 
     def _get_os_version(self):
-        version_data = show_version(self._module)
-        return self.get_config_attr(
-            version_data, "Product release")
+        capabilities = get_capabilities(self._module)
+        device_info = capabilities['device_info']
+        return device_info['network_os_version']
 
     # pylint: disable=unused-argument
     def check_declarative_intent_params(self, result):

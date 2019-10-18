@@ -19,12 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from os import path
-import json
-
 from mock import MagicMock
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.plugins.terminal import slxos
 from ansible.errors import AnsibleConnectionFailure
 

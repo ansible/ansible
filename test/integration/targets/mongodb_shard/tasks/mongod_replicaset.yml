@@ -1,0 +1,51 @@
+- name: Set mongodb_user user for redhat
+  set_fact:
+    mongodb_user: "mongod"
+  when: ansible_os_family == "RedHat"
+
+- name: Create directories for mongod processes
+  file:
+    path: "{{ remote_tmp_dir }}/mongod{{ item }}"
+    state: directory
+    owner: "{{ mongodb_user }}"
+    group: "{{ mongodb_user }}"
+    mode: 0755
+    recurse: yes
+  with_items: "{{ mongodb_nodes }}"
+
+- name: Ensure {{ remote_tmp_dir }}/config dir exists
+  file:
+    path: "{{ remote_tmp_dir }}/config"
+    state: directory
+    owner: "{{ mongodb_user }}"
+    group: "{{ mongodb_user }}"
+    mode: 0755
+
+- name: Create keyfile
+  copy:
+    dest: "{{ remote_tmp_dir }}/my.key"
+    content: |
+      fd2CUrbXBJpB4rt74A6F
+    owner: "{{ mongodb_user }}"
+    group: "{{ mongodb_user }}"
+    mode: 0600
+  when: mongod_auth == True
+
+- name: Spawn mongod process without auth
+  command: mongod --shardsvr --smallfiles {{ mongod_storage_engine_opts }} --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork
+  args:
+    chdir: "{{ remote_tmp_dir }}"
+  with_items: "{{ mongodb_nodes | sort }}"
+  when: mongod_auth == False
+
+- name: Spawn mongod process with auth
+  command: mongod --shardsvr --smallfiles {{ mongod_storage_engine_opts }} --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork --auth --keyFile my.key
+  args:
+    chdir: "{{ remote_tmp_dir }}"
+  with_items: "{{ mongodb_nodes | sort }}"
+  when: mongod_auth == True
+
+- name: Wait for mongod to start responding
+  wait_for:
+    port: "{{ item }}"
+  with_items: "{{ mongodb_nodes }}"

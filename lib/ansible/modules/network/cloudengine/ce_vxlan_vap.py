@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages VXLAN virtual access point on HUAWEI CloudEngine Devices.
 description:
     - Manages VXLAN Virtual access point on HUAWEI CloudEngine Devices.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     bridge_domain_id:
         description:
@@ -79,7 +79,7 @@ EXAMPLES = '''
 
   tasks:
 
-  - name: Create a papping between a VLAN and a BD
+  - name: Create a mapping between a VLAN and a BD
     ce_vxlan_vap:
       bridge_domain_id: 100
       bind_vlan_id: 99
@@ -125,7 +125,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -291,7 +291,7 @@ def vlan_vid_to_bitmap(vid):
 
     vlan_bit = ['0'] * 1024
     int_vid = int(vid)
-    j = int_vid / 4
+    j = int_vid // 4
     bit_int = 0x8 >> (int_vid % 4)
     vlan_bit[j] = str(hex(bit_int))[2]
 
@@ -341,7 +341,7 @@ def is_vlan_in_bitmap(vid, bitmap):
     if is_vlan_bitmap_empty(bitmap):
         return False
 
-    i = int(vid) / 4
+    i = int(vid) // 4
     if i > len(bitmap):
         return False
 
@@ -451,9 +451,6 @@ class VxlanVap(object):
         conf_str = CE_NC_GET_BD_VAP % self.bridge_domain_id
         xml_str = get_nc_config(self.module, conf_str)
 
-        if "<data/>" in xml_str:
-            return vap_info
-
         xml_str = xml_str.replace('\r', '').replace('\n', '').\
             replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
             replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
@@ -462,8 +459,7 @@ class VxlanVap(object):
         vap_info["bdId"] = self.bridge_domain_id
         root = ElementTree.fromstring(xml_str)
         vap_info["vlanList"] = ""
-        vap_vlan = root.find("data/evc/bds/bd/bdBindVlan")
-        vap_info["vlanList"] = ""
+        vap_vlan = root.find("evc/bds/bd/bdBindVlan")
         if vap_vlan:
             for ele in vap_vlan:
                 if ele.tag == "vlanList":
@@ -471,7 +467,7 @@ class VxlanVap(object):
 
         # get vap: l2 su-interface
         vap_ifs = root.findall(
-            "data/evc/bds/bd/servicePoints/servicePoint/ifName")
+            "evc/bds/bd/servicePoints/servicePoint/ifName")
         if_list = list()
         if vap_ifs:
             for vap_if in vap_ifs:
@@ -500,7 +496,7 @@ class VxlanVap(object):
 
         # get l2 sub interface encapsulation info
         root = ElementTree.fromstring(xml_str)
-        bds = root.find("data/ethernet/servicePoints/servicePoint")
+        bds = root.find("ethernet/servicePoints/servicePoint")
         if not bds:
             return intf_info
 
@@ -510,7 +506,7 @@ class VxlanVap(object):
 
         if intf_info.get("flowType") == "dot1q":
             ce_vid = root.find(
-                "data/ethernet/servicePoints/servicePoint/flowDot1qs")
+                "ethernet/servicePoints/servicePoint/flowDot1qs")
             intf_info["dot1qVids"] = ""
             if ce_vid:
                 for ele in ce_vid:
@@ -518,7 +514,7 @@ class VxlanVap(object):
                         intf_info["dot1qVids"] = ele.text
         elif intf_info.get("flowType") == "qinq":
             vids = root.find(
-                "data/ethernet/servicePoints/servicePoint/flowQinqs/flowQinq")
+                "ethernet/servicePoints/servicePoint/flowQinqs/flowQinq")
             if vids:
                 for ele in vids:
                     if ele.tag in ["peVlanId", "ceVids"]:
@@ -707,9 +703,6 @@ class VxlanVap(object):
 
     def config_vap_vlan(self):
         """configure a VLAN as a service access point"""
-
-        if not self.vap_info:
-            self.module.fail_json(msg="Error: Bridge domain %s does not exist." % self.bridge_domain_id)
 
         xml_str = ""
         if self.state == "present":

@@ -17,7 +17,7 @@ module: pkg5
 author:
 - Peter Oliver (@mavit)
 short_description: Manages packages with the Solaris 11 Image Packaging System
-version_added: 1.9
+version_added: '1.9'
 description:
   - IPS packages are the native packages in Solaris 11 and higher.
 notes:
@@ -37,13 +37,29 @@ options:
     description:
       - Accept any licences.
     type: bool
-    default: 'no'
+    default: no
     aliases: [ accept, accept_licences ]
+  be_name:
+    description:
+      - Creates a new boot environment with the given name.
+    version_added: "2.8"
+    type: str
+  refresh:
+    description:
+      - Refresh publishers before execution.
+    version_added: "2.8"
+    type: bool
+    default: yes
 '''
 EXAMPLES = '''
 - name: Install Vim
   pkg5:
     name: editor/vim
+
+- name: Install Vim without refreshing publishers
+  pkg5:
+    name: editor/vim
+    refresh: no
 
 - name: Remove finger daemon
   pkg5:
@@ -68,6 +84,8 @@ def main():
             name=dict(type='list', required=True),
             state=dict(type='str', default='present', choices=['absent', 'installed', 'latest', 'present', 'removed', 'uninstalled']),
             accept_licenses=dict(type='bool', default=False, aliases=['accept', 'accept_licences']),
+            be_name=dict(type='str'),
+            refresh=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
     )
@@ -124,9 +142,19 @@ def ensure(module, state, packages, params):
     else:
         accept_licenses = []
 
+    if params['be_name']:
+        beadm = ['--be-name=' + module.params['be_name']]
+    else:
+        beadm = []
+
+    if params['refresh']:
+        no_refresh = []
+    else:
+        no_refresh = ['--no-refresh']
+
     to_modify = filter(behaviour[state]['filter'], packages)
     if to_modify:
-        rc, out, err = module.run_command(['pkg', behaviour[state]['subcommand']] + dry_run + accept_licenses + ['-q', '--'] + to_modify)
+        rc, out, err = module.run_command(['pkg', behaviour[state]['subcommand']] + dry_run + accept_licenses + beadm + no_refresh + ['-q', '--'] + to_modify)
         response['rc'] = rc
         response['results'].append(out)
         response['msg'] += err

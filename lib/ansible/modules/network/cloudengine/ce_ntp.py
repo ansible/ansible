@@ -28,7 +28,7 @@ short_description: Manages core NTP configuration on HUAWEI CloudEngine switches
 description:
     - Manages core NTP configuration on HUAWEI CloudEngine switches.
 author:
-    - Zhijin Zhou (@CloudEngine-Ansible)
+    - Zhijin Zhou (@QijunPan)
 options:
     server:
         description:
@@ -125,7 +125,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -250,7 +250,7 @@ class Ntp(object):
         self.mutually_exclusive = [('server', 'peer')]
         self.init_module()
 
-        # ntp configration info
+        # ntp configuration info
         self.server = self.module.params['server'] or None
         self.peer = self.module.params['peer'] or None
         self.key_id = self.module.params['key_id']
@@ -362,7 +362,7 @@ class Ntp(object):
         if self.vpn_name:
             if (len(self.vpn_name) < 1) or (len(self.vpn_name) > 31):
                 self.module.fail_json(
-                    msg='Error: VPN name length is beetween 1 and 31.')
+                    msg='Error: VPN name length is between 1 and 31.')
 
         if self.address:
             self.check_ipaddr_validate()
@@ -442,7 +442,7 @@ class Ntp(object):
 
         # get all ntp config info
         root = ElementTree.fromstring(xml_str)
-        ntpsite = root.findall("data/ntp/ntpUCastCfgs/ntpUCastCfg")
+        ntpsite = root.findall("ntp/ntpUCastCfgs/ntpUCastCfg")
         for nexthop in ntpsite:
             ntp_dict = dict()
             for ele in nexthop:
@@ -574,12 +574,13 @@ class Ntp(object):
                         cli_str = "%s %s" % (
                             "undo ntp unicast-peer ipv6", self.address)
                 if (self.vpn_name) and (self.vpn_name != '_public_'):
-                    cli_str = "%s %s" % (cli_str, self.vpn_name)
+                    cli_str = "%s %s %s" % (
+                        cli_str, "vpn-instance", self.vpn_name)
 
         self.updates_cmd.append(cli_str)
 
     def work(self):
-        """Excute task"""
+        """Execute task"""
 
         self.get_existing()
         self.get_proposed()

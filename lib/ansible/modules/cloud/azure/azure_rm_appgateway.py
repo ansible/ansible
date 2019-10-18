@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_appgateway
 version_added: "2.7"
-short_description: Manage Application Gateway instance.
+short_description: Manage Application Gateway instance
 description:
     - Create, update and delete instance of Application Gateway.
 
@@ -134,10 +134,35 @@ options:
         suboptions:
             data:
                 description:
-                    - Certificate public data - base64 encoded pfx
+                    - Certificate public data - base64 encoded pfx.
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
+    redirect_configurations:
+        version_added: "2.8"
+        description:
+            - Redirect configurations of the application gateway resource.
+        suboptions:
+            redirect_type:
+                description:
+                    - Redirection type.
+                choices:
+                    - 'permanent'
+                    - 'found'
+                    - 'see_other'
+                    - 'temporary'
+            target_listener:
+                description:
+                    - Reference to a listener to redirect the request to.
+            include_path:
+                description:
+                    - Include path in the redirected url.
+            include_query_string:
+                description:
+                    - Include query string in the redirected url.
+            name:
+                description:
+                    - Name of the resource that is unique within a resource group.
     ssl_certificates:
         description:
             - SSL certificates of the application gateway resource.
@@ -145,9 +170,11 @@ options:
             data:
                 description:
                     - Base-64 encoded pfx certificate.
+                    - Only applicable in PUT Request.
             password:
                 description:
                     - Password for the pfx file specified in I(data).
+                    - Only applicable in PUT request.
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -179,7 +206,7 @@ options:
         suboptions:
             port:
                 description:
-                    - Frontend port
+                    - Frontend port.
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -189,27 +216,67 @@ options:
         suboptions:
             backend_addresses:
                 description:
-                    - List of backend addresses
+                    - List of backend addresses.
                 suboptions:
                     fqdn:
                         description:
                             - Fully qualified domain name (FQDN).
                     ip_address:
                         description:
-                            - IP address
+                            - IP address.
             name:
                 description:
                     - Resource that is unique within a resource group. This name can be used to access the resource.
+    probes:
+        version_added: "2.8"
+        description:
+            - Probes available to the application gateway resource.
+        suboptions:
+            name:
+                description:
+                    - Name of the I(probe) that is unique within an Application Gateway.
+            protocol:
+                description:
+                    - The protocol used for the I(probe).
+                choices:
+                    - 'http'
+                    - 'https'
+            host:
+                description:
+                    - Host name to send the I(probe) to.
+            path:
+                description:
+                    - Relative path of I(probe).
+                    - Valid path starts from '/'.
+                    - Probe is sent to <Protocol>://<host>:<port><path>.
+            timeout:
+                description:
+                    - The probe timeout in seconds.
+                    - Probe marked as failed if valid response is not received with this timeout period.
+                    - Acceptable values are from 1 second to 86400 seconds.
+            interval:
+                description:
+                    - The probing interval in seconds.
+                    - This is the time interval between two consecutive probes.
+                    - Acceptable values are from 1 second to 86400 seconds.
+            unhealthy_threshold:
+                description:
+                    - The I(probe) retry count.
+                    - Backend server is marked down after consecutive probe failure count reaches UnhealthyThreshold.
+                    - Acceptable values are from 1 second to 20.
     backend_http_settings_collection:
         description:
             - Backend http settings of the application gateway resource.
         suboptions:
+            probe:
+                description:
+                    - Probe resource of an application gateway.
             port:
                 description:
-                    - Port
+                    - The destination port on the backend.
             protocol:
                 description:
-                    - Protocol.
+                    - The protocol used to communicate with the backend.
                 choices:
                     - 'http'
                     - 'https'
@@ -221,11 +288,13 @@ options:
                     - 'disabled'
             request_timeout:
                 description:
-                    - "Request timeout in seconds. Application Gateway will fail the request if response is not received within RequestTimeout. Acceptable va
-                      lues are from 1 second to 86400 seconds."
+                    - Request timeout in seconds.
+                    - Application Gateway will fail the request if response is not received within RequestTimeout.
+                    - Acceptable values are from 1 second to 86400 seconds.
             authentication_certificates:
                 description:
                     - List of references to application gateway authentication certificates.
+                    - Applicable only when C(cookie_based_affinity) is enabled, otherwise quietly ignored.
                 suboptions:
                     id:
                         description:
@@ -241,7 +310,8 @@ options:
                     - Cookie name to use for the affinity cookie.
             path:
                 description:
-                    - Path which should be used as a prefix for all C(http) requests. Null means no path will be prefixed. Default value is null.
+                    - Path which should be used as a prefix for all C(http) requests.
+                    - Null means no path will be prefixed. Default value is null.
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -257,7 +327,7 @@ options:
                     - Frontend port resource of an application gateway.
             protocol:
                 description:
-                    - Protocol.
+                    - Protocol of the c(http) listener.
                 choices:
                     - 'http'
                     - 'https'
@@ -279,7 +349,7 @@ options:
         suboptions:
             rule_type:
                 description:
-                    - Rule I(type).
+                    - Rule type.
                 choices:
                     - 'basic'
                     - 'path_based_routing'
@@ -288,37 +358,39 @@ options:
                     - Backend address pool resource of the application gateway.
             backend_http_settings:
                 description:
-                    - Frontend port resource of the application gateway.
+                    - Backend C(http) settings resource of the application gateway.
             http_listener:
                 description:
                     - Http listener resource of the application gateway.
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
+            redirect_configuration:
+                description:
+                    - Redirect configuration resource of the application gateway.
     state:
         description:
-            - Assert the state of the Public IP. Use 'present' to create or update a and
-              'absent' to delete.
+            - Assert the state of the Public IP. Use C(present) to create or update a and
+              C(absent) to delete.
         default: present
         choices:
             - absent
             - present
-        required: false
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
 - name: Create instance of Application Gateway
   azure_rm_appgateway:
-    resource_group: myresourcegroup
-    name: myappgateway
+    resource_group: myResourceGroup
+    name: myAppGateway
     sku:
       name: standard_small
       tier: standard
@@ -375,7 +447,7 @@ from ansible.module_utils.common.dict_transformations import (
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.mgmt.network import NetworkManagementClient
     from msrest.serialization import Model
 except ImportError:
@@ -393,6 +465,26 @@ ssl_policy_spec = dict(
     policy_name=dict(type='str', choices=['ssl_policy20150501', 'ssl_policy20170401', 'ssl_policy20170401_s']),
     cipher_suites=dict(type='list'),
     min_protocol_version=dict(type='str', choices=['tls_v1_0', 'tls_v1_1', 'tls_v1_2'])
+)
+
+
+probe_spec = dict(
+    host=dict(type='str'),
+    interval=dict(type='int'),
+    name=dict(type='str'),
+    path=dict(type='str'),
+    protocol=dict(type='str', choices=['http', 'https']),
+    timeout=dict(type='int'),
+    unhealthy_threshold=dict(type='int')
+)
+
+
+redirect_configuration_spec = dict(
+    include_path=dict(type='bool'),
+    include_query_string=dict(type='bool'),
+    name=dict(type='str'),
+    redirect_type=dict(type='str', choices=['permanent', 'found', 'see_other', 'temporary']),
+    target_listener=dict(type='str')
 )
 
 
@@ -428,6 +520,11 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
             ssl_certificates=dict(
                 type='list'
             ),
+            redirect_configurations=dict(
+                type='list',
+                elements='dict',
+                options=redirect_configuration_spec
+            ),
             frontend_ip_configurations=dict(
                 type='list'
             ),
@@ -439,6 +536,11 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
             ),
             backend_http_settings_collection=dict(
                 type='list'
+            ),
+            probes=dict(
+                type='list',
+                elements='dict',
+                options=probe_spec
             ),
             http_listeners=dict(
                 type='list'
@@ -535,6 +637,19 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     self.parameters["authentication_certificates"] = kwargs[key]
                 elif key == "ssl_certificates":
                     self.parameters["ssl_certificates"] = kwargs[key]
+                elif key == "redirect_configurations":
+                    ev = kwargs[key]
+                    for i in range(len(ev)):
+                        item = ev[i]
+                        if 'redirect_type' in item:
+                            item['redirect_type'] = _snake_to_camel(item['redirect_type'], True)
+                        if 'target_listener' in item:
+                            id = http_listener_id(self.subscription_id,
+                                                  kwargs['resource_group'],
+                                                  kwargs['name'],
+                                                  item['target_listener'])
+                            item['target_listener'] = {'id': id}
+                    self.parameters["redirect_configurations"] = ev
                 elif key == "frontend_ip_configurations":
                     ev = kwargs[key]
                     for i in range(len(ev)):
@@ -551,6 +666,13 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     self.parameters["frontend_ports"] = kwargs[key]
                 elif key == "backend_address_pools":
                     self.parameters["backend_address_pools"] = kwargs[key]
+                elif key == "probes":
+                    ev = kwargs[key]
+                    for i in range(len(ev)):
+                        item = ev[i]
+                        if 'protocol' in item:
+                            item['protocol'] = _snake_to_camel(item['protocol'], True)
+                    self.parameters["probes"] = ev
                 elif key == "backend_http_settings_collection":
                     ev = kwargs[key]
                     for i in range(len(ev)):
@@ -559,6 +681,12 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                             item['protocol'] = _snake_to_camel(item['protocol'], True)
                         if 'cookie_based_affinity' in item:
                             item['cookie_based_affinity'] = _snake_to_camel(item['cookie_based_affinity'], True)
+                        if 'probe' in item:
+                            id = probe_id(self.subscription_id,
+                                          kwargs['resource_group'],
+                                          kwargs['name'],
+                                          item['probe'])
+                            item['probe'] = {'id': id}
                     self.parameters["backend_http_settings_collection"] = ev
                 elif key == "http_listeners":
                     ev = kwargs[key]
@@ -613,6 +741,12 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                             item['protocol'] = _snake_to_camel(item['protocol'], True)
                         if 'rule_type' in ev:
                             item['rule_type'] = _snake_to_camel(item['rule_type'], True)
+                        if 'redirect_configuration' in item:
+                            id = redirect_configuration_id(self.subscription_id,
+                                                           kwargs['resource_group'],
+                                                           kwargs['name'],
+                                                           item['redirect_configuration'])
+                            item['redirect_configuration'] = {'id': id}
                         ev[i] = item
                     self.parameters["request_routing_rules"] = ev
                 elif key == "etag":
@@ -652,9 +786,11 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     self.parameters['sku']['capacity'] != old_response['sku']['capacity'] or
                     not compare_arrays(old_response, self.parameters, 'authentication_certificates') or
                     not compare_arrays(old_response, self.parameters, 'gateway_ip_configurations') or
+                    not compare_arrays(old_response, self.parameters, 'redirect_configurations') or
                     not compare_arrays(old_response, self.parameters, 'frontend_ip_configurations') or
                     not compare_arrays(old_response, self.parameters, 'frontend_ports') or
                     not compare_arrays(old_response, self.parameters, 'backend_address_pools') or
+                    not compare_arrays(old_response, self.parameters, 'probes') or
                     not compare_arrays(old_response, self.parameters, 'backend_http_settings_collection') or
                     not compare_arrays(old_response, self.parameters, 'request_routing_rules') or
                     not compare_arrays(old_response, self.parameters, 'http_listeners')):
@@ -712,7 +848,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
             response = self.mgmt_client.application_gateways.create_or_update(resource_group_name=self.resource_group,
                                                                               application_gateway_name=self.name,
                                                                               parameters=self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
@@ -787,6 +923,16 @@ def frontend_port_id(subscription_id, resource_group_name, appgateway_name, name
     )
 
 
+def redirect_configuration_id(subscription_id, resource_group_name, appgateway_name, name):
+    """Generate the id for a redirect configuration"""
+    return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/redirectConfigurations/{3}'.format(
+        subscription_id,
+        resource_group_name,
+        appgateway_name,
+        name
+    )
+
+
 def ssl_certificate_id(subscription_id, resource_group_name, ssl_certificate_name, name):
     """Generate the id for a frontend port"""
     return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/sslCertificates/{3}'.format(
@@ -800,6 +946,16 @@ def ssl_certificate_id(subscription_id, resource_group_name, ssl_certificate_nam
 def backend_address_pool_id(subscription_id, resource_group_name, appgateway_name, name):
     """Generate the id for an address pool"""
     return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/backendAddressPools/{3}'.format(
+        subscription_id,
+        resource_group_name,
+        appgateway_name,
+        name
+    )
+
+
+def probe_id(subscription_id, resource_group_name, appgateway_name, name):
+    """Generate the id for a probe"""
+    return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/probes/{3}'.format(
         subscription_id,
         resource_group_name,
         appgateway_name,

@@ -6,7 +6,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.onyx import onyx_protocol
 from units.modules.utils import set_module_args
 from .onyx_module import TestOnyxModule, load_fixture
@@ -131,4 +131,13 @@ class TestOnyxProtocolModule(TestOnyxModule):
 
     def test_ospf_disable(self):
         set_module_args(dict(ospf='disabled'))
+        self.execute_module(changed=False)
+
+    def test_nve_enable(self):
+        set_module_args(dict(nve='enabled'))
+        commands = ['protocol nve']
+        self.execute_module(changed=True, commands=commands)
+
+    def test_nve_disabled(self):
+        set_module_args(dict(nve='disabled'))
         self.execute_module(changed=False)

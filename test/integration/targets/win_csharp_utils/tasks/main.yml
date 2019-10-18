@@ -1,0 +1,84 @@
+---
+- set_fact:
+    test_username: ansible-test
+    test_password: Password123{{ lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}
+
+- name: create test Admin user
+  win_user:
+    name: '{{ test_username }}'
+    password: '{{ test_password }}'
+    state: present
+    groups:
+    - Administrators
+
+- block:
+  - name: test Ansible.AccessToken.cs
+    ansible_access_token_tests:
+      test_username: '{{ test_username }}'
+      test_password: '{{ test_password }}'
+    register: ansible_access_token_test
+
+  - name: assert test Ansible.AccessToken.cs
+    assert:
+      that:
+      - ansible_access_token_test.data == "success"
+  always:
+  - name: remove test Admin user
+    win_user:
+      name: '{{ test_username }}'
+      state: absent
+
+- name: test Ansible.Basic.cs
+  ansible_basic_tests:
+  register: ansible_basic_test
+
+- name: assert test Ansible.Basic.cs
+  assert:
+    that:
+    - ansible_basic_test.data == "success"
+
+# Users by default don't have this right, temporarily enable it
+- name: ensure the Users group have the SeBatchLogonRight
+  win_user_right:
+    name: SeBatchLogonRight
+    users:
+    - Users
+    action: add
+  register: batch_user_add
+
+- block:
+  - name: test Ansible.Become.cs
+    ansible_become_tests:
+    register: ansible_become_tests
+
+  always:
+  - name: remove SeBatchLogonRight from users if added in test
+    win_user_right:
+      name: SeBatchLogonRight
+      users:
+      - Users
+      action: remove
+    when: batch_user_add is changed
+
+- name: assert test Ansible.Become.cs
+  assert:
+    that:
+    - ansible_become_tests.data == "success"
+
+- name: test Ansible.Process.cs
+  ansible_process_tests:
+  register: ansible_process_tests
+
+- name: assert test Ansible.Process.cs
+  assert:
+    that:
+    - ansible_process_tests.data == "success"
+
+- name: test Ansible.Privilege.cs
+  ansible_privilege_tests:
+  register: ansible_privilege_test
+
+- name: assert test Ansible.Privilege.cs
+  assert:
+    that:
+    - ansible_privilege_test.data == "success"

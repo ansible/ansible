@@ -14,177 +14,193 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'core'}
 
 
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: lineinfile
-author:
-    - Daniel Hokka Zakrissoni (@dhozac)
-    - Ahti Kitsik (@ahtik)
-extends_documentation_fragment:
-    - files
-    - validate
 short_description: Manage lines in text files
 description:
   - This module ensures a particular line is in a file, or replace an
     existing line using a back-referenced regular expression.
-  - This is primarily useful when you want to change a single line in
-    a file only. See the M(replace) module if you want to change
-    multiple, similar lines or check M(blockinfile) if you want to insert/update/remove a block of lines in a file.
+  - This is primarily useful when you want to change a single line in a file only.
+  - See the M(replace) module if you want to change multiple, similar lines
+    or check M(blockinfile) if you want to insert/update/remove a block of lines in a file.
     For other cases, see the M(copy) or M(template) modules.
 version_added: "0.7"
 options:
   path:
     description:
       - The file to modify.
-      - Before 2.3 this option was only usable as I(dest), I(destfile) and I(name).
-    aliases: [ dest, destfile, name ]
+      - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
+    type: path
     required: true
+    aliases: [ dest, destfile, name ]
   regexp:
-    aliases: [ regex ]
     description:
       - The regular expression to look for in every line of the file.
       - For C(state=present), the pattern to replace if found. Only the last line found will be replaced.
       - For C(state=absent), the pattern of the line(s) to remove.
       - If the regular expression is not matched, the line will be
-        added to the file in keeping with`insertbefore` or `insertafter`
+        added to the file in keeping with C(insertbefore) or C(insertafter)
         settings.
+      - When modifying a line the regexp should typically match both the initial state of
+        the line as well as its state after replacement by C(line) to ensure idempotence.
       - Uses Python regular expressions. See U(http://docs.python.org/2/library/re.html).
+    type: str
+    aliases: [ regex ]
     version_added: '1.7'
   state:
     description:
       - Whether the line should be there or not.
+    type: str
     choices: [ absent, present ]
     default: present
   line:
     description:
-      - Required for C(state=present). The line to insert/replace into the
-        file. If C(backrefs) is set, may contain backreferences that will get
+      - The line to insert/replace into the file.
+      - Required for C(state=present).
+      - If C(backrefs) is set, may contain backreferences that will get
         expanded with the C(regexp) capture groups if the regexp matches.
+    type: str
+    aliases: [ value ]
   backrefs:
     description:
-      - Used with C(state=present). If set, C(line) can contain backreferences
-        (both positional and named) that will get populated if the C(regexp)
-        matches. This flag changes the operation of the module slightly;
+      - Used with C(state=present).
+      - If set, C(line) can contain backreferences (both positional and named)
+        that will get populated if the C(regexp) matches.
+      - This parameter changes the operation of the module slightly;
         C(insertbefore) and C(insertafter) will be ignored, and if the C(regexp)
-        doesn't match anywhere in the file, the file will be left unchanged.
-        If the C(regexp) does match, the last matching line will be replaced by
+        does not match anywhere in the file, the file will be left unchanged.
+      - If the C(regexp) does match, the last matching line will be replaced by
         the expanded line parameter.
     type: bool
-    default: 'no'
+    default: no
     version_added: "1.1"
   insertafter:
     description:
-      - Used with C(state=present). If specified, the line will be inserted
-        after the last match of specified regular expression.
-        If the first match is required, use(firstmatch=yes).
-        A special value is available; C(EOF) for inserting the line at the
-        end of the file.
-        If specified regular expression has no matches, EOF will be used instead.
-        If regular expressions are passed to both C(regexp) and C(insertafter), C(insertafter) is only honored if no match for C(regexp) is found.
-        May not be used with C(backrefs).
+      - Used with C(state=present).
+      - If specified, the line will be inserted after the last match of specified regular expression.
+      - If the first match is required, use(firstmatch=yes).
+      - A special value is available; C(EOF) for inserting the line at the end of the file.
+      - If specified regular expression has no matches, EOF will be used instead.
+      - If C(insertbefore) is set, default value C(EOF) will be ignored.
+      - If regular expressions are passed to both C(regexp) and C(insertafter), C(insertafter) is only honored if no match for C(regexp) is found.
+      - May not be used with C(backrefs) or C(insertbefore).
+    type: str
     choices: [ EOF, '*regex*' ]
     default: EOF
   insertbefore:
     description:
-      - Used with C(state=present). If specified, the line will be inserted
-        before the last match of specified regular expression.
-        If the first match is required, use(firstmatch=yes).
-        A value is available; C(BOF) for inserting the line at
-        the beginning of the file.
-        If specified regular expression has no matches, the line will be
-        inserted at the end of the file.
-        If regular expressions are passed to both C(regexp) and C(insertbefore), C(insertbefore) is only honored if no match for C(regexp) is found.
-        May not be used with C(backrefs).
+      - Used with C(state=present).
+      - If specified, the line will be inserted before the last match of specified regular expression.
+      - If the first match is required, use C(firstmatch=yes).
+      - A value is available; C(BOF) for inserting the line at the beginning of the file.
+      - If specified regular expression has no matches, the line will be inserted at the end of the file.
+      - If regular expressions are passed to both C(regexp) and C(insertbefore), C(insertbefore) is only honored if no match for C(regexp) is found.
+      - May not be used with C(backrefs) or C(insertafter).
+    type: str
     choices: [ BOF, '*regex*' ]
     version_added: "1.1"
   create:
     description:
-      - Used with C(state=present). If specified, the file will be created
-        if it does not already exist. By default it will fail if the file
-        is missing.
+      - Used with C(state=present).
+      - If specified, the file will be created if it does not already exist.
+      - By default it will fail if the file is missing.
     type: bool
-    default: 'no'
+    default: no
   backup:
-     description:
-       - Create a backup file including the timestamp information so you can
-         get the original file back if you somehow clobbered it incorrectly.
-     type: bool
-     default: 'no'
+    description:
+      - Create a backup file including the timestamp information so you can
+        get the original file back if you somehow clobbered it incorrectly.
+    type: bool
+    default: no
   firstmatch:
     description:
-      - Used with C(insertafter) or C(insertbefore). If set, C(insertafter) and C(inserbefore) find
-        a first line has regular expression matches.
+      - Used with C(insertafter) or C(insertbefore).
+      - If set, C(insertafter) and C(insertbefore) will work with the first line that matches the given regular expression.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.5"
   others:
-     description:
-       - All arguments accepted by the M(file) module also work here.
+    description:
+      - All arguments accepted by the M(file) module also work here.
+    type: str
+extends_documentation_fragment:
+    - files
+    - validate
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
-"""
+seealso:
+- module: blockinfile
+- module: copy
+- module: file
+- module: replace
+- module: template
+- module: win_lineinfile
+author:
+    - Daniel Hokka Zakrissoni (@dhozac)
+    - Ahti Kitsik (@ahtik)
+'''
 
-EXAMPLES = r"""
-# Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
-- lineinfile:
+EXAMPLES = r'''
+# NOTE: Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
+- name: Ensure SELinux is set to enforcing mode
+  lineinfile:
     path: /etc/selinux/config
     regexp: '^SELINUX='
-    line: 'SELINUX=enforcing'
+    line: SELINUX=enforcing
 
-- lineinfile:
+- name: Make sure group wheel is not in the sudoers configuration
+  lineinfile:
     path: /etc/sudoers
     state: absent
     regexp: '^%wheel'
 
-# Searches for a line that begins with 127.0.0.1 and replaces it with the value of the 'line' parameter
-- lineinfile:
+- name: Replace a localhost entry with our own
+  lineinfile:
     path: /etc/hosts
     regexp: '^127\.0\.0\.1'
-    line: '127.0.0.1 localhost'
+    line: 127.0.0.1 localhost
     owner: root
     group: root
-    mode: 0644
+    mode: '0644'
 
-- lineinfile:
+- name: Ensure the default Apache port is 8080
+  lineinfile:
     path: /etc/httpd/conf/httpd.conf
     regexp: '^Listen '
     insertafter: '^#Listen '
-    line: 'Listen 8080'
+    line: Listen 8080
 
-- lineinfile:
+- name: Ensure we have our own comment added to /etc/services
+  lineinfile:
     path: /etc/services
     regexp: '^# port for http'
     insertbefore: '^www.*80/tcp'
     line: '# port for http by default'
 
-# Add a line to a file if the file does not exist, without passing regexp
-- lineinfile:
+- name: Add a line to a file if the file does not exist, without passing regexp
+  lineinfile:
     path: /tmp/testfile
-    line: '192.168.1.99 foo.lab.net foo'
+    line: 192.168.1.99 foo.lab.net foo
     create: yes
 
-# Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
-- lineinfile:
-    path: /etc/sudoers
-    state: present
-    regexp: '^%wheel\s'
-    line: '%wheel ALL=(ALL) NOPASSWD: ALL'
-
-# Yaml requires escaping backslashes in double quotes but not in single quotes
-- lineinfile:
+# NOTE: Yaml requires escaping backslashes in double quotes but not in single quotes
+- name: Ensure the JBoss memory settings are exactly as needed
+  lineinfile:
     path: /opt/jboss-as/bin/standalone.conf
     regexp: '^(.*)Xms(\\d+)m(.*)$'
     line: '\1Xms${xms}m\3'
     backrefs: yes
 
-# Validate the sudoers file before saving
-- lineinfile:
+# NOTE: Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
+- name: Validate the sudoers file before saving
+  lineinfile:
     path: /etc/sudoers
     state: present
     regexp: '^%ADMIN ALL='
     line: '%ADMIN ALL=(ALL) NOPASSWD: ALL'
-    validate: '/usr/sbin/visudo -cf %s'
-"""
+    validate: /usr/sbin/visudo -cf %s
+'''
 
 import os
 import re
@@ -192,14 +208,13 @@ import tempfile
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import b
 from ansible.module_utils._text import to_bytes, to_native
 
 
 def write_changes(module, b_lines, dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
-    with open(tmpfile, 'wb') as f:
+    with os.fdopen(tmpfd, 'wb') as f:
         f.writelines(b_lines)
 
     validate = module.params.get('validate', None)
@@ -256,7 +271,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             b_lines = f.readlines()
 
     if module._diff:
-        diff['before'] = to_native(b('').join(b_lines))
+        diff['before'] = to_native(b''.join(b_lines))
 
     if regexp is not None:
         bre_m = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
@@ -269,34 +284,55 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         bre_ins = None
 
     # index[0] is the line num where regexp has been found
-    # index[1] is the line num where insertafter/inserbefore has been found
+    # index[1] is the line num where insertafter/insertbefore has been found
     index = [-1, -1]
     m = None
     b_line = to_bytes(line, errors='surrogate_or_strict')
-    for lineno, b_cur_line in enumerate(b_lines):
-        if regexp is not None:
+
+    # The module's doc says
+    # "If regular expressions are passed to both regexp and
+    # insertafter, insertafter is only honored if no match for regexp is found."
+    # Therefore:
+    # 1. regexp was found -> ignore insertafter, replace the founded line
+    # 2. regexp was not found -> insert the line after 'insertafter' or 'insertbefore' line
+
+    # Given the above:
+    # 1. First check that there is no match for regexp:
+    if regexp is not None:
+        for lineno, b_cur_line in enumerate(b_lines):
             match_found = bre_m.search(b_cur_line)
-        else:
-            match_found = b_line == b_cur_line.rstrip(b('\r\n'))
-        if match_found:
-            index[0] = lineno
-            m = match_found
-        elif bre_ins is not None and bre_ins.search(b_cur_line):
-            if insertafter:
-                # + 1 for the next line
-                index[1] = lineno + 1
+            if match_found:
+                index[0] = lineno
+                m = match_found
                 if firstmatch:
                     break
-            if insertbefore:
-                # index[1] for the previous line
-                index[1] = lineno
-                if firstmatch:
-                    break
+
+    # 2. When no match found on the previous step,
+    # parse for searching insertafter/insertbefore:
+    if not m:
+        for lineno, b_cur_line in enumerate(b_lines):
+            match_found = b_line == b_cur_line.rstrip(b'\r\n')
+            if match_found:
+                index[0] = lineno
+                m = match_found
+
+            elif bre_ins is not None and bre_ins.search(b_cur_line):
+                if insertafter:
+                    # + 1 for the next line
+                    index[1] = lineno + 1
+                    if firstmatch:
+                        break
+
+                if insertbefore:
+                    # index[1] for the previous line
+                    index[1] = lineno
+                    if firstmatch:
+                        break
 
     msg = ''
     changed = False
     b_linesep = to_bytes(os.linesep, errors='surrogate_or_strict')
-    # Regexp matched a line in the file
+    # Exact line or Regexp matched a line in the file
     if index[0] != -1:
         if backrefs:
             b_new_line = m.expand(b_line)
@@ -307,25 +343,25 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if not b_new_line.endswith(b_linesep):
             b_new_line += b_linesep
 
-        # If no regexp was given and a line match is found anywhere in the file,
+        # If no regexp was given and no line match is found anywhere in the file,
         # insert the line appropriately if using insertbefore or insertafter
-        if regexp is None and m:
+        if regexp is None and m is None:
 
             # Insert lines
             if insertafter and insertafter != 'EOF':
                 # Ensure there is a line separator after the found string
                 # at the end of the file.
-                if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
+                if b_lines and not b_lines[-1][-1:] in (b'\n', b'\r'):
                     b_lines[-1] = b_lines[-1] + b_linesep
 
                 # If the line to insert after is at the end of the file
                 # use the appropriate index value.
                 if len(b_lines) == index[1]:
-                    if b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                    if b_lines[index[1] - 1].rstrip(b'\r\n') != b_line:
                         b_lines.append(b_line + b_linesep)
                         msg = 'line added'
                         changed = True
-                elif b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+                elif b_lines[index[1]].rstrip(b'\r\n') != b_line:
                     b_lines.insert(index[1], b_line + b_linesep)
                     msg = 'line added'
                     changed = True
@@ -333,15 +369,15 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             elif insertbefore and insertbefore != 'BOF':
                 # If the line to insert before is at the beginning of the file
                 # use the appropriate index value.
-                if index[1] == 0:
-                    if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+                if index[1] <= 0:
+                    if b_lines[index[1]].rstrip(b'\r\n') != b_line:
                         b_lines.insert(index[1], b_line + b_linesep)
-                        msg = 'line replaced'
+                        msg = 'line added'
                         changed = True
 
-                elif b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                elif b_lines[index[1] - 1].rstrip(b'\r\n') != b_line:
                     b_lines.insert(index[1], b_line + b_linesep)
-                    msg = 'line replaced'
+                    msg = 'line added'
                     changed = True
 
         elif b_lines[index[0]] != b_new_line:
@@ -364,12 +400,21 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     elif insertafter == 'EOF' or index[1] == -1:
 
         # If the file is not empty then ensure there's a newline before the added line
-        if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
+        if b_lines and not b_lines[-1][-1:] in (b'\n', b'\r'):
             b_lines.append(b_linesep)
 
         b_lines.append(b_line + b_linesep)
         msg = 'line added'
         changed = True
+
+    elif insertafter and index[1] != -1:
+
+        # Don't insert the line if it already matches at the index
+        if b_line != b_lines[index[1]].rstrip(b'\n\r'):
+            b_lines.insert(index[1], b_line + b_linesep)
+            msg = 'line added'
+            changed = True
+
     # insert matched, but not the regexp
     else:
         b_lines.insert(index[1], b_line + b_linesep)
@@ -377,7 +422,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         changed = True
 
     if module._diff:
-        diff['after'] = to_native(b('').join(b_lines))
+        diff['after'] = to_native(b''.join(b_lines))
 
     backupdest = ""
     if changed and not module.check_mode:
@@ -414,7 +459,7 @@ def absent(module, dest, regexp, line, backup):
         b_lines = f.readlines()
 
     if module._diff:
-        diff['before'] = to_native(b('').join(b_lines))
+        diff['before'] = to_native(b''.join(b_lines))
 
     if regexp is not None:
         bre_c = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
@@ -426,7 +471,7 @@ def absent(module, dest, regexp, line, backup):
         if regexp is not None:
             match_found = bre_c.search(b_cur_line)
         else:
-            match_found = b_line == b_cur_line.rstrip(b('\r\n'))
+            match_found = b_line == b_cur_line.rstrip(b'\r\n')
         if match_found:
             found.append(b_cur_line)
         return not match_found
@@ -435,7 +480,7 @@ def absent(module, dest, regexp, line, backup):
     changed = len(found) > 0
 
     if module._diff:
-        diff['after'] = to_native(b('').join(b_lines))
+        diff['after'] = to_native(b''.join(b_lines))
 
     backupdest = ""
     if changed and not module.check_mode:
@@ -469,7 +514,7 @@ def main():
             backrefs=dict(type='bool', default=False),
             create=dict(type='bool', default=False),
             backup=dict(type='bool', default=False),
-            firstmatch=dict(default=False, type='bool'),
+            firstmatch=dict(type='bool', default=False),
             validate=dict(type='str'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],

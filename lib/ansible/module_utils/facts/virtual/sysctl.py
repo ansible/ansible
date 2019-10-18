@@ -30,7 +30,7 @@ class VirtualSysctlDetectionMixin(object):
         if self.sysctl_path:
             rc, out, err = self.module.run_command("%s -n %s" % (self.sysctl_path, key))
             if rc == 0:
-                if re.match('(KVM|Bochs|SmartDC).*', out):
+                if re.match('(KVM|kvm|Bochs|SmartDC).*', out):
                     virtual_product_facts['virtualization_type'] = 'kvm'
                     virtual_product_facts['virtualization_role'] = 'guest'
                 elif re.match('.*VMware.*', out):
@@ -47,6 +47,9 @@ class VirtualSysctlDetectionMixin(object):
                     virtual_product_facts['virtualization_role'] = 'guest'
                 elif out.rstrip() == 'RHEV Hypervisor':
                     virtual_product_facts['virtualization_type'] = 'RHEV'
+                    virtual_product_facts['virtualization_role'] = 'guest'
+                elif (key == 'security.jail.jailed') and (out.rstrip() == '1'):
+                    virtual_product_facts['virtualization_type'] = 'jails'
                     virtual_product_facts['virtualization_role'] = 'guest'
 
         return virtual_product_facts

@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: mount
 short_description: Control active and configured mount points
@@ -21,39 +21,47 @@ description:
   - This module controls active and configured mount points in C(/etc/fstab).
 author:
   - Ansible Core Team
-  - Seth Vidal
+  - Seth Vidal (@skvidal)
 version_added: "0.6"
 options:
   path:
     description:
       - Path to the mount point (e.g. C(/mnt/files)).
-      - Before 2.3 this option was only usable as I(dest), I(destfile) and
-        I(name).
+      - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
+    type: path
     required: true
     aliases: [ name ]
   src:
     description:
-      - Device to be mounted on I(path). Required when I(state) set to
-        C(present) or C(mounted).
+      - Device to be mounted on I(path).
+      - Required when I(state) set to C(present) or C(mounted).
+    type: path
   fstype:
     description:
-      - Filesystem type. Required when I(state) is C(present) or C(mounted).
+      - Filesystem type.
+      - Required when I(state) is C(present) or C(mounted).
+    type: str
   opts:
     description:
       - Mount options (see fstab(5), or vfstab(4) on Solaris).
+    type: str
   dump:
     description:
-      - Dump (see fstab(5)). Note that if set to C(null) and I(state) set to
-        C(present), it will cease to work and duplicate entries will be made
+      - Dump (see fstab(5)).
+      - Note that if set to C(null) and I(state) set to C(present),
+        it will cease to work and duplicate entries will be made
         with subsequent runs.
       - Has no effect on Solaris systems.
+    type: str
     default: 0
   passno:
     description:
-      - Passno (see fstab(5)). Note that if set to C(null) and I(state) set to
-        C(present), it will cease to work and duplicate entries will be made
+      - Passno (see fstab(5)).
+      - Note that if set to C(null) and I(state) set to C(present),
+        it will cease to work and duplicate entries will be made
         with subsequent runs.
       - Deprecated on Solaris systems.
+    type: str
     default: 0
   state:
     description:
@@ -66,38 +74,41 @@ options:
       - C(absent) specifies that the device mount's entry will be removed from
         I(fstab) and will also unmount the device and remove the mount
         point.
+      - C(remounted) specifies that the device will be remounted for when you
+        want to force a refresh on the mount itself (added in 2.9). This will
+        always return changed=true.
+    type: str
     required: true
-    choices: [ absent, mounted, present, unmounted ]
+    choices: [ absent, mounted, present, unmounted, remounted ]
   fstab:
     description:
-      - File to use instead of C(/etc/fstab). You shouldn't use this option
-        unless you really know what you are doing. This might be useful if
-        you need to configure mountpoints in a chroot environment.  OpenBSD
-        does not allow specifying alternate fstab files with mount so do not
-        use this on OpenBSD with any state that operates on the live
-        filesystem.
-    default: /etc/fstab (/etc/vfstab on Solaris)
+      - File to use instead of C(/etc/fstab).
+      - You should not use this option unless you really know what you are doing.
+      - This might be useful if you need to configure mountpoints in a chroot environment.
+      - OpenBSD does not allow specifying alternate fstab files with mount so do not
+        use this on OpenBSD with any state that operates on the live filesystem.
+      - This parameter defaults to /etc/fstab or /etc/vfstab on Solaris.
+    type: str
   boot:
     description:
       - Determines if the filesystem should be mounted on boot.
       - Only applies to Solaris systems.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: '2.2'
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
-    required: false
     type: bool
-    default: "no"
+    default: no
     version_added: '2.5'
 notes:
   - As of Ansible 2.3, the I(name) option has been changed to I(path) as
     default, but I(name) still works as well.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Before 2.3, option 'name' was used instead of 'path'
 - name: Mount DVD read-only
   mount:
@@ -121,6 +132,19 @@ EXAMPLES = '''
     fstype: xfs
     opts: noatime
     state: present
+
+- name: Unmount a mounted volume
+  mount:
+    path: /tmp/mnt-pnt
+    state: unmounted
+
+- name: Mount and bind a volume
+  mount:
+    path: /system/new_volume/boot
+    src: /boot
+    opts: bind
+    state: mounted
+    fstype: none
 '''
 
 
@@ -187,10 +211,14 @@ def set_mount(module, args):
 
             continue
 
+        fields = line.split()
+
         # Check if we got a valid line for splitting
+        # (on Linux the 5th and the 6th field is optional)
         if (
-                get_platform() == 'SunOS' and len(line.split()) != 7 or
-                get_platform() != 'SunOS' and len(line.split()) != 6):
+                get_platform() == 'SunOS' and len(fields) != 7 or
+                get_platform() == 'Linux' and len(fields) not in [4, 5, 6] or
+                get_platform() not in ['SunOS', 'Linux'] and len(fields) != 6):
             to_write.append(line)
 
             continue
@@ -206,16 +234,17 @@ def set_mount(module, args):
                 ld['passno'],
                 ld['boot'],
                 ld['opts']
-            ) = line.split()
+            ) = fields
         else:
-            (
-                ld['src'],
-                ld['name'],
-                ld['fstype'],
-                ld['opts'],
-                ld['dump'],
-                ld['passno']
-            ) = line.split()
+            fields_labels = ['src', 'name', 'fstype', 'opts', 'dump', 'passno']
+
+            # The last two fields are optional on Linux so we fill in default values
+            ld['dump'] = 0
+            ld['passno'] = 0
+
+            # Fill in the rest of the available fields
+            for i, field in enumerate(fields):
+                ld[fields_labels[i]] = field
 
         # Check if we found the correct line
         if (
@@ -419,7 +448,7 @@ def remount(module, args):
             rc = 1
         else:
             rc, out, err = module.run_command(cmd)
-    except:
+    except Exception:
         rc = 1
 
     msg = ''
@@ -527,7 +556,7 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
             if (
                     len(m['root']) > 1 and
                     mnt['root'].startswith("%s/" % m['root'])):
-                # Ommit the parent's root in the child's root
+                # Omit the parent's root in the child's root
                 # == Example:
                 # 140 136 253:2 /rootfs / rw - ext4 /dev/sdb2 rw
                 # 141 140 253:2 /rootfs/tmp/aaa /tmp/bbb rw - ext4 /dev/sdb2 rw
@@ -570,8 +599,8 @@ def main():
             opts=dict(type='str'),
             passno=dict(type='str'),
             src=dict(type='path'),
-            backup=dict(default=False, type='bool'),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted']),
+            backup=dict(type='bool', default=False),
+            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remounted']),
         ),
         supports_check_mode=True,
         required_if=(
@@ -633,8 +662,12 @@ def main():
     if not os.path.exists(args['fstab']):
         if not os.path.exists(os.path.dirname(args['fstab'])):
             os.makedirs(os.path.dirname(args['fstab']))
-
-        open(args['fstab'], 'a').close()
+        try:
+            open(args['fstab'], 'a').close()
+        except PermissionError as e:
+            module.fail_json(msg="Failed to open %s due to permission issue" % args['fstab'])
+        except Exception as e:
+            module.fail_json(msg="Failed to open %s due to %s" % (args['fstab'], to_native(e)))
 
     # absent:
     #   Remove from fstab and unmounted.
@@ -677,6 +710,9 @@ def main():
 
             changed = True
     elif state == 'mounted':
+        if not os.path.exists(args['src']):
+            module.fail_json(msg="Unable to mount %s as it does not exist" % args['src'])
+
         if not os.path.exists(name) and not module.check_mode:
             try:
                 os.makedirs(name)
@@ -704,6 +740,14 @@ def main():
             module.fail_json(msg="Error mounting %s: %s" % (name, msg))
     elif state == 'present':
         name, changed = set_mount(module, args)
+    elif state == 'remounted':
+        if not module.check_mode:
+            res, msg = remount(module, args)
+
+            if res:
+                module.fail_json(msg="Error remounting %s: %s" % (name, msg))
+
+        changed = True
     else:
         module.fail_json(msg='Unexpected position reached')
 

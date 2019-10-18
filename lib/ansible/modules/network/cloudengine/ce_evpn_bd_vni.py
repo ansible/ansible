@@ -28,7 +28,7 @@ short_description: Manages EVPN VXLAN Network Identifier (VNI) on HUAWEI CloudEn
 description:
     - Manages Ethernet Virtual Private Network (EVPN) VXLAN Network
       Identifier (VNI) configurations on HUAWEI CloudEngine switches.
-author: Zhijin Zhou (@CloudEngine-Ansible)
+author: Zhijin Zhou (@QijunPan)
 notes:
     - Ensure that EVPN has been configured to serve as the VXLAN control plane when state is present.
     - Ensure that a bridge domain (BD) has existed when state is present.
@@ -244,10 +244,11 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
+import re
 import copy
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
@@ -260,7 +261,7 @@ CE_NC_GET_VNI_BD = """
     <nvo3Vni2Bds>
       <nvo3Vni2Bd>
         <vniId></vniId>
-        <bdId>%s</bdId>
+        <bdId></bdId>
       </nvo3Vni2Bd>
     </nvo3Vni2Bds>
   </nvo3>
@@ -423,7 +424,7 @@ def is_valid_value(vrf_targe_value):
 
 
 class EvpnBd(object):
-    """Manange evpn instance in BD view"""
+    """Manage evpn instance in BD view"""
 
     def __init__(self, argument_spec, ):
         self.spec = argument_spec
@@ -552,7 +553,7 @@ class EvpnBd(object):
             replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
         root = ElementTree.fromstring(xml_str)
-        evpn_inst = root.find("data/evpn/evpnInstances/evpnInstance")
+        evpn_inst = root.find("evpn/evpnInstances/evpnInstance")
         if evpn_inst:
             for eles in evpn_inst:
                 if eles.tag in ["evpnAutoRD", "evpnRD", "evpnRTs", "evpnAutoRTs"]:
@@ -952,19 +953,19 @@ class EvpnBd(object):
             for ele in self.vpn_target_import:
                 if ele not in self.evpn_info['vpn_target_import'] and ele not in self.evpn_info['vpn_target_both']:
                     self.module.fail_json(
-                        msg='Error: VPN target import attribute value %s doesnot exist.' % ele)
+                        msg='Error: VPN target import attribute value %s does not exist.' % ele)
 
         if self.vpn_target_export:
             for ele in self.vpn_target_export:
                 if ele not in self.evpn_info['vpn_target_export'] and ele not in self.evpn_info['vpn_target_both']:
                     self.module.fail_json(
-                        msg='Error: VPN target export attribute value %s doesnot exist.' % ele)
+                        msg='Error: VPN target export attribute value %s does not exist.' % ele)
 
         if self.vpn_target_both:
             for ele in self.vpn_target_both:
                 if ele not in self.evpn_info['vpn_target_both']:
                     self.module.fail_json(
-                        msg='Error: VPN target export and import attribute value %s doesnot exist.' % ele)
+                        msg='Error: VPN target export and import attribute value %s does not exist.' % ele)
 
     def check_params(self):
         """Check all input params"""
@@ -989,7 +990,7 @@ class EvpnBd(object):
             if self.route_distinguisher:
                 if not self.evpn_info['route_distinguisher']:
                     self.module.fail_json(
-                        msg='Error: Route distinguisher doesnot have been configured.')
+                        msg='Error: Route distinguisher has not been configured.')
                 else:
                     if self.route_distinguisher != self.evpn_info['route_distinguisher']:
                         self.module.fail_json(
@@ -1006,14 +1007,14 @@ class EvpnBd(object):
     def check_vni_bd(self):
         """Check whether vxlan vni is configured in BD view"""
 
-        xml_str = CE_NC_GET_VNI_BD % self.bridge_domain_id
+        xml_str = CE_NC_GET_VNI_BD
         xml_str = get_nc_config(self.module, xml_str)
-        if "<data/>" in xml_str:
+        if "<data/>" in xml_str or not re.findall(r'<vniId>\S+</vniId>\s+<bdId>%s</bdId>' % self.bridge_domain_id, xml_str):
             self.module.fail_json(
                 msg='Error: The vxlan vni is not configured or the bridge domain id is invalid.')
 
     def work(self):
-        """Excute task"""
+        """Execute task"""
 
         self.get_evpn_instance_info()
         self.process_input_params()

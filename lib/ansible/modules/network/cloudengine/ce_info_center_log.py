@@ -28,7 +28,7 @@ short_description: Manages information center log configuration on HUAWEI CloudE
 description:
     - Setting the Timestamp Format of Logs.
       Configuring the Device to Output Logs to the Log Buffer.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     log_time_stamp:
         description:
@@ -135,7 +135,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -274,7 +274,7 @@ class InfoCenterLog(object):
         root = ElementTree.fromstring(xml_str)
 
         # get global param info
-        glb = root.find("data/syslog/globalParam")
+        glb = root.find("syslog/globalParam")
         if glb:
             for attr in glb:
                 if attr.tag in ["bufferSize", "logTimeStamp", "icLogBuffEn"]:
@@ -282,7 +282,7 @@ class InfoCenterLog(object):
 
         # get info-center source info
         log_dict["source"] = dict()
-        src = root.find("data/syslog/icSources/icSource")
+        src = root.find("syslog/icSources/icSource")
         if src:
             for attr in src:
                 if attr.tag in ["moduleName", "icChannelId", "icChannelName", "logEnFlg", "logEnLevel"]:

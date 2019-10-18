@@ -1,15 +1,16 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*
+
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -39,11 +40,20 @@ options:
               setting another policy in the future.
         required: false
         default: false
+        type: bool
     delete_policy:
         description:
             - if yes, remove the policy from the repository
         required: false
         default: false
+        type: bool
+    image_tag_mutability:
+        description:
+            - configure whether repository should be mutable (ie. an already existing tag can be overwritten) or not
+        required: false
+        choices: [mutable, immutable]
+        default: 'mutable'
+        version_added: '2.10'
     state:
         description:
             - create or destroy the repository
@@ -93,19 +103,25 @@ EXAMPLES = '''
   ecs_ecr:
     name: needs-no-policy
     delete_policy: yes
+
+- name: create immutable ecr-repo
+  ecs_ecr:
+    name: super/cool
+    image_tag_mutability: immutable
+
 '''
 
 RETURN = '''
 state:
-    type: string
+    type: str
     description: The asserted state of the repository (present, absent)
     returned: always
 created:
-    type: boolean
+    type: bool
     description: If true, the repository was created
     returned: always
 name:
-    type: string
+    type: str
     description: The name of the repository
     returned: "when state == 'absent'"
 repository:
@@ -130,7 +146,8 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, boto_exception, ec2_argument_spec,
-                                      get_aws_connection_info, sort_json_policy_dict)
+                                      get_aws_connection_info, compare_policies)
+from ansible.module_utils.six import string_types
 
 
 def build_kwargs(registry_id):
@@ -185,15 +202,17 @@ class EcsEcr:
                 return None
             raise
 
-    def create_repository(self, registry_id, name):
+    def create_repository(self, registry_id, name, image_tag_mutability):
         if registry_id:
             default_registry_id = self.sts.get_caller_identity().get('Account')
             if registry_id != default_registry_id:
-                raise Exception('Cannot create repository in registry {}.'
-                                'Would be created in {} instead.'.format(
-                                    registry_id, default_registry_id))
+                raise Exception('Cannot create repository in registry {0}.'
+                                'Would be created in {1} instead.'.format(registry_id, default_registry_id))
+
         if not self.check_mode:
-            repo = self.ecr.create_repository(repositoryName=name).get('repository')
+            repo = self.ecr.create_repository(
+                repositoryName=name,
+                imageTagMutability=image_tag_mutability).get('repository')
             self.changed = True
             return repo
         else:
@@ -214,9 +233,9 @@ class EcsEcr:
             if self.get_repository(registry_id, name) is None:
                 printable = name
                 if registry_id:
-                    printable = '{}:{}'.format(registry_id, name)
+                    printable = '{0}:{1}'.format(registry_id, name)
                 raise Exception(
-                    'could not find repository {}'.format(printable))
+                    'could not find repository {0}'.format(printable))
             return
 
     def delete_repository(self, registry_id, name):
@@ -245,6 +264,32 @@ class EcsEcr:
                 return policy
             return None
 
+    def put_image_tag_mutability(self, registry_id, name, new_mutability_configuration):
+        repo = self.get_repository(registry_id, name)
+        current_mutability_configuration = repo.get('imageTagMutability')
+
+        if current_mutability_configuration != new_mutability_configuration:
+            if not self.check_mode:
+                self.ecr.put_image_tag_mutability(
+                    repositoryName=name,
+                    imageTagMutability=new_mutability_configuration,
+                    **build_kwargs(registry_id))
+            else:
+                self.skipped = True
+            self.changed = True
+
+        repo['imageTagMutability'] = new_mutability_configuration
+        return repo
+
+
+def sort_lists_of_strings(policy):
+    for statement_index in range(0, len(policy.get('Statement', []))):
+        for key in policy['Statement'][statement_index]:
+            value = policy['Statement'][statement_index][key]
+            if isinstance(value, list) and all(isinstance(item, string_types) for item in value):
+                policy['Statement'][statement_index][key] = sorted(value)
+    return policy
+
 
 def run(ecr, params, verbosity):
     # type: (EcsEcr, dict, int) -> Tuple[bool, dict]
@@ -256,6 +301,7 @@ def run(ecr, params, verbosity):
         delete_policy = params['delete_policy']
         registry_id = params['registry_id']
         force_set_policy = params['force_set_policy']
+        image_tag_mutability = params['image_tag_mutability'].upper()
 
         # If a policy was given, parse it
         policy = policy_text and json.loads(policy_text)
@@ -267,10 +313,13 @@ def run(ecr, params, verbosity):
 
         if state == 'present':
             result['created'] = False
+
             if not repo:
-                repo = ecr.create_repository(registry_id, name)
+                repo = ecr.create_repository(registry_id, name, image_tag_mutability)
                 result['changed'] = True
                 result['created'] = True
+            else:
+                repo = ecr.put_image_tag_mutability(registry_id, name, image_tag_mutability)
             result['repository'] = repo
 
             if delete_policy:
@@ -288,23 +337,25 @@ def run(ecr, params, verbosity):
 
             elif policy_text is not None:
                 try:
-                    policy = sort_json_policy_dict(policy)
+                    # Sort any lists containing only string types
+                    policy = sort_lists_of_strings(policy)
+
                     if verbosity >= 2:
                         result['policy'] = policy
                     original_policy = ecr.get_repository_policy(
                         registry_id, name)
 
                     if original_policy:
-                        original_policy = sort_json_policy_dict(original_policy)
+                        original_policy = sort_lists_of_strings(original_policy)
 
                     if verbosity >= 3:
                         result['original_policy'] = original_policy
 
-                    if original_policy != policy:
+                    if compare_policies(original_policy, policy):
                         ecr.set_repository_policy(
                             registry_id, name, policy_text, force_set_policy)
                         result['changed'] = True
-                except:
+                except Exception:
                     # Some failure w/ the policy. It's helpful to know what the
                     # policy is.
                     result['policy'] = policy_text
@@ -342,7 +393,9 @@ def main():
                    default='present'),
         force_set_policy=dict(required=False, type='bool', default=False),
         policy=dict(required=False, type='json'),
-        delete_policy=dict(required=False, type='bool')))
+        delete_policy=dict(required=False, type='bool'),
+        image_tag_mutability=dict(required=False, choices=['mutable', 'immutable'],
+                                  default='mutable')))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,

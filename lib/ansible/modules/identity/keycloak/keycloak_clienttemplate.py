@@ -69,6 +69,7 @@ options:
         description:
             - Is the "Full Scope Allowed" feature set for this client template or not.
               This is 'fullScopeAllowed' in the Keycloak REST API.
+        type: bool
 
     protocol_mappers:
         description:
@@ -211,7 +212,7 @@ RETURN = '''
 msg:
   description: Message as to what action was taken
   returned: always
-  type: string
+  type: str
   sample: "Client template testclient has been updated"
 
 proposed:
@@ -245,7 +246,8 @@ end_state:
     }
 '''
 
-from ansible.module_utils.keycloak import KeycloakAPI, camel, keycloak_argument_spec
+from ansible.module_utils.identity.keycloak.keycloak import KeycloakAPI, camel, \
+    keycloak_argument_spec, get_token, KeycloakError
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -288,7 +290,19 @@ def main():
     result = dict(changed=False, msg='', diff={}, proposed={}, existing={}, end_state={})
 
     # Obtain access token, initialize API
-    kc = KeycloakAPI(module)
+    try:
+        connection_header = get_token(
+            base_url=module.params.get('auth_keycloak_url'),
+            validate_certs=module.params.get('validate_certs'),
+            auth_realm=module.params.get('auth_realm'),
+            client_id=module.params.get('auth_client_id'),
+            auth_username=module.params.get('auth_username'),
+            auth_password=module.params.get('auth_password'),
+            client_secret=module.params.get('auth_client_secret'),
+        )
+    except KeycloakError as e:
+        module.fail_json(msg=str(e))
+    kc = KeycloakAPI(module, connection_header)
 
     realm = module.params.get('realm')
     state = module.params.get('state')

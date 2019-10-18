@@ -23,10 +23,9 @@ import os
 import json
 import tempfile
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
 
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -44,7 +43,7 @@ def load_fixture(name):
 
     try:
         data = json.loads(data)
-    except:
+    except Exception:
         pass
 
     fixture_data[path] = data
@@ -65,9 +64,13 @@ class TestCnosModule(unittest.TestCase):
 
         self.test_log = tempfile.mkstemp(prefix='ansible-test-cnos-module-', suffix='.log')[1]
 
+        self.mock_sleep = patch('time.sleep')
+        self.mock_sleep.start()
+
     def tearDown(self):
         super(TestCnosModule, self).tearDown()
 
+        self.mock_sleep.stop()
         os.remove(self.test_log)
 
     def execute_module(self, failed=False, changed=False, commands=None,

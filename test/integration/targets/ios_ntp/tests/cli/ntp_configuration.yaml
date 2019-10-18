@@ -1,0 +1,106 @@
+---
+- debug: msg="START connection={{ ansible_connection }} ios_ntp sanity test"
+
+- name: remove NTP (if set)
+  ios_ntp: &remove
+    server: 10.75.32.5
+    source_int: "{{ test_interface }}"
+    acl: NTP_ACL
+    logging: true
+    key_id: 10
+    auth_key: 15435A030726242723273C21181319000A
+    auth: true
+    state: absent
+    provider: "{{ cli }}"
+  ignore_errors: true
+
+- block:
+
+  - name: configure NTP
+    ios_ntp: &config
+      server: 10.75.32.5
+      source_int: "{{ test_interface }}"
+      state: present
+      provider: "{{ cli }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: idempotence check
+    ios_ntp: *config
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: load acl NTP_ACL into device
+    ios_config:
+      lines:
+        - 10 permit ip host 192.0.2.1 any log
+      parents: ip access-list extended NTP_ACL
+      provider: "{{ cli }}"
+    register: result
+
+  - assert: *true
+
+  - name: configure NTP
+    ios_ntp: &config1
+      acl: NTP_ACL
+      logging: true
+      state: present
+      provider: "{{ cli }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    ios_ntp: *config1
+    register: result
+
+  - assert: *false
+
+  - name: configure NTP with diffferen values
+    ios_ntp: &config2
+      key_id: 10
+      auth_key: 15435A030726242723273C21181319000A
+      auth: true
+      state: present
+      provider: "{{ cli }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    ios_ntp: *config2
+    register: result
+
+  - assert: *false
+
+  - name: remove part of config
+    ios_ntp: &config3
+      acl: NTP_ACL
+      logging: true
+      state: absent
+      provider: "{{ cli }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    ios_ntp: *config3
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Remove ntp config
+    ios_ntp: *remove
+
+  - name: remove NTP_ACL from device
+    ios_config:
+      lines:
+        - no ip access-list extended NTP_ACL
+      provider: "{{ cli }}"

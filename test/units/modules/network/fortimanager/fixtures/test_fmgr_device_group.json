@@ -1,0 +1,234 @@
+{
+    "add_group_member": [
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/dvmdb/adom/ansible/group/TestGroup/object member"
+            },
+            "datagram_sent": {
+                "name": "FGT1",
+                "vdom": "root"
+            },
+            "paramgram_used": {
+                "grp_desc": null,
+                "adom": "ansible",
+                "grp_members": "FGT1",
+                "mode": "add",
+                "grp_name": "TestGroup",
+                "vdom": "root"
+            },
+            "post_method": "add"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/dvmdb/adom/ansible/group/testtest/object member"
+            },
+            "datagram_sent": {
+                "name": "FGT3",
+                "vdom": "root"
+            },
+            "paramgram_used": {
+                "grp_desc": null,
+                "adom": "ansible",
+                "grp_members": "FGT3",
+                "mode": "add",
+                "grp_name": "testtest",
+                "vdom": "root"
+            },
+            "post_method": "add"
+        }
+    ],
+    "delete_device_group": [
+        {
+            "paramgram_used": {
+                "grp_desc": "CreatedbyAnsible",
+                "adom": "ansible",
+                "grp_members": null,
+                "mode": "delete",
+                "grp_name": "TestGroup",
+                "vdom": "root"
+            },
+            "datagram_sent": {
+                "name": "TestGroup",
+                "adom": "ansible"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/dvmdb/adom/ansible/group/TestGroup"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/dvmdb/adom/ansible/group/testtest"
+            },
+            "datagram_sent": {
+                "name": "testtest",
+                "adom": "ansible"
+            },
+            "paramgram_used": {
+                "grp_desc": "CreatedbyAnsible",
+                "adom": "ansible",
+                "grp_members": null,
+                "mode": "delete",
+                "grp_name": "testtest",
+                "vdom": "root"
+            },
+            "post_method": "delete"
+        }
+    ],
+    "add_device_group": [
+        {
+            "paramgram_used": {
+                "grp_desc": "CreatedbyAnsible",
+                "adom": "ansible",
+                "grp_members": null,
+                "mode": "add",
+                "grp_name": "TestGroup",
+                "vdom": "root"
+            },
+            "datagram_sent": {
+                "os_type": "fos",
+                "name": "TestGroup",
+                "desc": "CreatedbyAnsible"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "Object already exists",
+                    "code": -2
+                },
+                "url": "/dvmdb/adom/ansible/group"
+            },
+            "post_method": "add"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/dvmdb/adom/ansible/group"
+            },
+            "datagram_sent": {
+                "os_type": "fos",
+                "name": "testtest",
+                "desc": "CreatedbyAnsible"
+            },
+            "paramgram_used": {
+                "grp_desc": "CreatedbyAnsible",
+                "adom": "ansible",
+                "grp_members": null,
+                "mode": "add",
+                "grp_name": "testtest",
+                "vdom": "root"
+            },
+            "post_method": "add"
+        },
+        {
+            "paramgram_used": {
+                "grp_desc": null,
+                "adom": "ansible",
+                "grp_members": "FGT1",
+                "mode": "add",
+                "grp_name": "TestGroup",
+                "vdom": "root"
+            },
+            "datagram_sent": {
+                "os_type": "fos",
+                "name": "TestGroup",
+                "desc": null
+            },
+            "raw_response": {
+                "status": {
+                    "message": "Object already exists",
+                    "code": -2
+                },
+                "url": "/dvmdb/adom/ansible/group"
+            },
+            "post_method": "add"
+        },
+        {
+            "paramgram_used": {
+                "grp_desc": null,
+                "adom": "ansible",
+                "grp_members": "FGT3",
+                "mode": "add",
+                "grp_name": "testtest",
+                "vdom": "root"
+            },
+            "datagram_sent": {
+                "os_type": "fos",
+                "name": "testtest",
+                "desc": null
+            },
+            "raw_response": {
+                "status": {
+                    "message": "Object already exists",
+                    "code": -2
+                },
+                "url": "/dvmdb/adom/ansible/group"
+            },
+            "post_method": "add"
+        }
+    ],
+    "delete_group_member": [
+        {
+            "paramgram_used": {
+                "grp_desc": null,
+                "adom": "ansible",
+                "grp_members": "FGT3",
+                "mode": "delete",
+                "grp_name": "testtest",
+                "vdom": "root"
+            },
+            "datagram_sent": {
+                "name": "FGT3",
+                "vdom": "root"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/dvmdb/adom/ansible/group/testtest/object member"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/dvmdb/adom/ansible/group/TestGroup/object member"
+            },
+            "datagram_sent": {
+                "name": "FGT1",
+                "vdom": "root"
+            },
+            "paramgram_used": {
+                "grp_desc": null,
+                "adom": "ansible",
+                "grp_members": "FGT1",
+                "mode": "delete",
+                "grp_name": "TestGroup",
+                "vdom": "root"
+            },
+            "post_method": "delete"
+        }
+    ]
+}

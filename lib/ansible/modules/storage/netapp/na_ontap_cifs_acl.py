@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -8,11 +8,11 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
   - "Create or destroy or modify cifs-share-access-controls on ONTAP"
 extends_documentation_fragment:
@@ -40,7 +40,7 @@ options:
     description:
       - "The user or group name for which the permissions are listed."
     required: true
-short_description: "NetApp ONTAP manage cifs-share-access-control"
+short_description: NetApp ONTAP manage cifs-share-access-control
 version_added: "2.6"
 
 '''
@@ -52,6 +52,7 @@ EXAMPLES = """
         share_name: cifsShareName
         user_or_group: Everyone
         permission: read
+        vserver: "{{ netapp_vserver }}"
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
@@ -59,7 +60,9 @@ EXAMPLES = """
       na_ontap_cifs_acl:
         state: present
         share_name: cifsShareName
+        user_or_group: Everyone
         permission: change
+        vserver: "{{ netapp_vserver }}"
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
@@ -123,6 +126,7 @@ class NetAppONTAPCifsAcl(object):
         cifs_acl_info = netapp_utils.zapi.NaElement('cifs-share-access-control')
         cifs_acl_info.add_new_child('share', self.share_name)
         cifs_acl_info.add_new_child('user-or-group', self.user_or_group)
+        cifs_acl_info.add_new_child('vserver', self.vserver)
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(cifs_acl_info)
         cifs_acl_iter.add_child_elem(query)

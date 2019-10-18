@@ -8,34 +8,39 @@ __metaclass__ = type
 
 import os
 import json
+import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.modules.bigip_provision import Parameters
+    from library.modules.bigip_provision import ModuleParameters
     from library.modules.bigip_provision import ModuleManager
     from library.modules.bigip_provision import ArgumentSpec
-    from library.module_utils.network.f5.common import F5ModuleError
-    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    from test.unit.modules.utils import set_module_args
+    from library.modules.bigip_provision import ApiParameters
+
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+    from test.units.compat.mock import patch
+
+    from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_provision import Parameters
-        from ansible.modules.network.f5.bigip_provision import ModuleManager
-        from ansible.modules.network.f5.bigip_provision import ArgumentSpec
-        from ansible.module_utils.network.f5.common import F5ModuleError
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from ansible.modules.network.f5.bigip_provision import ModuleParameters
+    from ansible.modules.network.f5.bigip_provision import ModuleManager
+    from ansible.modules.network.f5.bigip_provision import ArgumentSpec
+    from ansible.modules.network.f5.bigip_provision import ApiParameters
+
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
+
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -63,12 +68,176 @@ class TestParameters(unittest.TestCase):
     def test_module_parameters(self):
         args = dict(
             module='gtm',
-            password='password',
-            server='localhost',
-            user='admin'
+            level='nominal',
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.module == 'gtm'
+        assert p.level == 'nominal'
+
+    def test_api_parameters(self):
+        args = load_fixture('load_sys_provision_default.json')
+        p = ApiParameters(params=args)
+        assert p.level == 'dedicated'
+        assert p.memory == 'medium'
+        assert p.module == 'urldb'
+
+    def test_module_parameters_level_minimum(self):
+        args = dict(
+            level='minimum',
+        )
+        p = ModuleParameters(params=args)
+        assert p.level == 'minimum'
+
+    def test_module_parameters_level_nominal(self):
+        args = dict(
+            level='nominal',
+        )
+        p = ModuleParameters(params=args)
+        assert p.level == 'nominal'
+
+    def test_module_parameters_level_dedicated(self):
+        args = dict(
+            level='dedicated',
+        )
+        p = ModuleParameters(params=args)
+        assert p.level == 'dedicated'
+
+    def test_module_parameters_memory_small(self):
+        args = dict(
+            module='mgmt',
+            memory='small',
+        )
+        p = ModuleParameters(params=args)
+        assert p.memory == 0
+
+    def test_module_parameters_memory_medium(self):
+        args = dict(
+            module='mgmt',
+            memory='medium',
+        )
+        p = ModuleParameters(params=args)
+        assert p.memory == 200
+
+    def test_module_parameters_memory_large(self):
+        args = dict(
+            module='mgmt',
+            memory='large',
+        )
+        p = ModuleParameters(params=args)
+        assert p.memory == 500
+
+    def test_module_parameters_memory_700(self):
+        args = dict(
+            module='mgmt',
+            memory=700,
+        )
+        p = ModuleParameters(params=args)
+        assert p.memory == 700
+
+    def test_module_parameters_mod_afm(self):
+        args = dict(
+            module='afm',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'afm'
+
+    def test_module_parameters_mod_am(self):
+        args = dict(
+            module='am',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'am'
+
+    def test_module_parameters_mod_sam(self):
+        args = dict(
+            module='sam',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'sam'
+
+    def test_module_parameters_mod_asm(self):
+        args = dict(
+            module='asm',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'asm'
+
+    def test_module_parameters_mod_avr(self):
+        args = dict(
+            module='avr',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'avr'
+
+    def test_module_parameters_mod_fps(self):
+        args = dict(
+            module='fps',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'fps'
+
+    def test_module_parameters_mod_gtm(self):
+        args = dict(
+            module='gtm',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'gtm'
+
+    def test_module_parameters_mod_lc(self):
+        args = dict(
+            module='lc',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'lc'
+
+    def test_module_parameters_mod_pem(self):
+        args = dict(
+            module='pem',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'pem'
+
+    def test_module_parameters_mod_swg(self):
+        args = dict(
+            module='swg',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'swg'
+
+    def test_module_parameters_mod_ilx(self):
+        args = dict(
+            module='ilx',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'ilx'
+
+    def test_module_parameters_mod_apm(self):
+        args = dict(
+            module='apm',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'apm'
+
+    def test_module_parameters_mod_mgmt(self):
+        args = dict(
+            module='mgmt',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'mgmt'
+
+    def test_module_parameters_mod_sslo(self):
+        args = dict(
+            module='sslo',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'sslo'
+
+    def test_module_parameters_mod_urldb(self):
+        args = dict(
+            module='urldb',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'urldb'
 
 
 class TestManager(unittest.TestCase):
@@ -85,14 +254,16 @@ class TestManager(unittest.TestCase):
         # Configure the arguments that would be sent to the Ansible module
         set_module_args(dict(
             module='gtm',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = Parameters(
+        current = ModuleParameters(
             dict(
                 module='gtm',
                 level='none'
@@ -100,7 +271,8 @@ class TestManager(unittest.TestCase):
         )
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
         mm = ModuleManager(module=module)
 
@@ -123,21 +295,24 @@ class TestManager(unittest.TestCase):
         modules = [
             'afm', 'am', 'sam', 'asm', 'avr', 'fps',
             'gtm', 'lc', 'ltm', 'pem', 'swg', 'ilx',
-            'apm',
+            'apm', 'mgmt', 'sslo', 'urldb',
         ]
 
         for module in modules:
             # Configure the arguments that would be sent to the Ansible module
             set_module_args(dict(
                 module=module,
-                password='password',
-                server='localhost',
-                user='admin'
+                provider=dict(
+                    server='localhost',
+                    password='password',
+                    user='admin'
+                )
             ))
 
             with patch('ansible.module_utils.basic.AnsibleModule.fail_json') as mo:
                 AnsibleModule(
                     argument_spec=self.spec.argument_spec,
                     supports_check_mode=self.spec.supports_check_mode,
+                    mutually_exclusive=self.spec.mutually_exclusive
                 )
                 mo.assert_not_called()

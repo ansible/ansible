@@ -124,6 +124,7 @@ options:
       - If check should be ignored C(False) should be passed to this parameter.
     required: false
     default: true
+    type: bool
 '''
 
 EXAMPLES = '''
@@ -228,7 +229,7 @@ try:
     # Import PubNub BLOCKS client.
     from pubnub_blocks_client import User, Account, Owner, Application, Keyset
     from pubnub_blocks_client import Block, EventHandler
-    import pubnub_blocks_client.exceptions as exceptions
+    from pubnub_blocks_client import exceptions
     HAS_PUBNUB_BLOCKS_CLIENT = True
 except ImportError:
     HAS_PUBNUB_BLOCKS_CLIENT = False

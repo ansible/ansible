@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -26,12 +26,14 @@ options:
   name:
     description:
       - Specifies the name of the DNS profile.
+    type: str
     required: True
   parent:
     description:
       - Specifies the profile from which this profile inherits settings.
       - When creating a new profile, if this parameter is not specified, the default
         is the system-supplied C(dns) profile.
+    type: str
   enable_dns_express:
     description:
       - Specifies whether the DNS Express engine is enabled.
@@ -112,6 +114,7 @@ options:
       - Specifies the user-created cache that the system uses to cache DNS responses.
       - When you select a cache for the system to use, you must also set C(enable_dns_cache)
         to C(yes)
+    type: str
     version_added: 2.7
   unhandled_query_action:
     description:
@@ -125,6 +128,7 @@ options:
       - When C(no-error), the BIG-IP system returns the query with the NOERROR return code.
       - When creating a new profile, if this parameter is not specified, the default
         is provided by the parent profile.
+    type: str
     choices:
       - allow
       - drop
@@ -135,15 +139,17 @@ options:
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the profile exists.
       - When C(absent), ensures the profile is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -159,10 +165,10 @@ EXAMPLES = r'''
     process_recursion_desired: no
     use_local_bind: no
     enable_dns_firewall: yes
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -210,12 +216,12 @@ enable_cache:
 cache_name:
   description: Name of the cache used by DNS.
   returned: changed
-  type: string
+  type: str
   sample: /Common/cache1
 unhandled_query_action:
   description: What to do with unhandled queries
   returned: changed
-  type: string
+  type: str
   sample: allow
 '''
 
@@ -223,29 +229,19 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import transform_name
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import transform_name
 
 
 class Parameters(AnsibleF5Parameters):
@@ -511,7 +507,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -553,13 +549,10 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -583,11 +576,19 @@ class ModuleManager(object):
             return self.create()
 
     def exists(self):
-        result = self.client.api.tm.ltm.profile.dns_s.dns.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/dns/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -625,19 +626,42 @@ class ModuleManager(object):
 
     def create_on_device(self):
         params = self.changes.api_params()
-        self.client.api.tm.ltm.profile.dns_s.dns.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/dns/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403, 404]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def update_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.ltm.profile.dns_s.dns.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/dns/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 404]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def absent(self):
         if self.exists():
@@ -645,20 +669,34 @@ class ModuleManager(object):
         return False
 
     def remove_from_device(self):
-        resource = self.client.api.tm.ltm.profile.dns_s.dns.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/dns/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        if resource:
-            resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.ltm.profile.dns_s.dns.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/dns/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -700,17 +738,12 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

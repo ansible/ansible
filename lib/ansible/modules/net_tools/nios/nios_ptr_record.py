@@ -8,13 +8,13 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = '''
 ---
 module: nios_ptr_record
 version_added: "2.7"
-author: "Trebuchet Clement"
+author: "Trebuchet Clement (@clementtrebuchet)"
 short_description: Configure Infoblox NIOS PTR records
 description:
   - Adds and/or removes instances of PTR record objects from
@@ -115,7 +115,7 @@ def main():
     # Module entry point
     ib_spec = dict(
         name=dict(required=False),
-        view=dict(aliases=['dns_view']),
+        view=dict(aliases=['dns_view'], ib_req=True),
         ipv4addr=dict(aliases=['ipv4'], ib_req=True),
         ipv6addr=dict(aliases=['ipv6'], ib_req=True),
         ptrdname=dict(ib_req=True),

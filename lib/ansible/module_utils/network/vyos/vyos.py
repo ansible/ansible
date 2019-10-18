@@ -28,7 +28,7 @@
 import json
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONFIGS = {}
@@ -90,7 +90,8 @@ def get_capabilities(module):
     return module._vyos_capabilities
 
 
-def get_config(module):
+def get_config(module, flags=None, format=None):
+    flags = [] if flags is None else flags
     global _DEVICE_CONFIGS
 
     if _DEVICE_CONFIGS != {}:
@@ -98,7 +99,7 @@ def get_config(module):
     else:
         connection = get_connection(module)
         try:
-            out = connection.get_config()
+            out = connection.get_config(flags=flags, format=format)
         except ConnectionError as exc:
             module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         cfg = to_text(out, errors='surrogate_then_replace').strip()

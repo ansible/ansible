@@ -1,0 +1,283 @@
+# Test code for the MSO modules
+# Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI MultiSite host, username and password
+  fail:
+    msg: 'Please define the following variables: mso_hostname, mso_username and mso_password.'
+  when: mso_hostname is not defined or mso_username is not defined or mso_password is not defined
+
+
+# CLEAN ENVIRONMENT
+- name: Remove site 2
+  mso_site: &site_absent
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
+    site: '{{ mso_site | default("ansible_test") }}_2'
+    state: absent
+
+- name: Remove site
+  mso_site:
+    <<: *site_absent
+    site: '{{ mso_site | default("ansible_test") }}'
+  register: cm_remove_site
+
+
+# ADD SITE
+- name: Add site (check_mode)
+  mso_site: &site_present
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
+    site: '{{ mso_site | default("ansible_test") }}'
+    apic_username: admin
+    apic_password: '{{ apic_password }}'
+    apic_site_id: 101
+    urls:
+    - https://{{ apic_hostname }}
+    location:
+      latitude: 50.887318
+      longitude: 4.447084
+    labels:
+    - Diegem
+    - EMEA
+    - POD51
+    state: present
+  check_mode: yes
+  register: cm_add_site
+
+- name: Verify cm_add_site
+  assert:
+    that:
+    - cm_add_site is changed
+    - cm_add_site.previous == {}
+    - cm_add_site.current.id is not defined
+    - cm_add_site.current.name == mso_site|default("ansible_test")
+
+- name: Add site (normal mode)
+  mso_site: *site_present
+  register: nm_add_site
+
+- name: nm_Verify add_site
+  assert:
+    that:
+    - nm_add_site is changed
+    - nm_add_site.previous == {}
+    - nm_add_site.current.id is defined
+    - nm_add_site.current.name == mso_site|default("ansible_test")
+
+- name: Add site again (check_mode)
+  mso_site: *site_present
+  check_mode: yes
+  register: cm_add_site_again
+
+- name: Verify cm_add_site_again
+  assert:
+    that:
+    - cm_add_site_again is not changed
+    - cm_add_site_again.previous.name == mso_site|default("ansible_test")
+    - cm_add_site_again.current.id == nm_add_site.current.id
+    - cm_add_site_again.current.name == mso_site|default("ansible_test")
+
+- name: Add site again (normal mode)
+  mso_site: *site_present
+  register: nm_add_site_again
+
+- name: Verify nm_add_site_again
+  assert:
+    that:
+    - nm_add_site_again is not changed
+    - nm_add_site_again.previous.name == mso_site|default("ansible_test")
+    - nm_add_site_again.current.id == nm_add_site.current.id
+    - nm_add_site_again.current.name == mso_site|default("ansible_test")
+
+
+# CHANGE SITE
+- name: Change site (check_mode)
+  mso_site:
+    <<: *site_present
+    site_id: '{{ nm_add_site.current.id }}'
+    site: '{{ mso_site | default("ansible_test") }}_2'
+  check_mode: yes
+  register: cm_change_site
+
+- name: Verify cm_change_site
+  assert:
+    that:
+    - cm_change_site is changed
+    - cm_change_site.current.id == nm_add_site.current.id
+    - cm_change_site.current.name == '{{ mso_site | default("ansible_test") }}_2'
+
+- name: Change site (normal mode)
+  mso_site:
+    <<: *site_present
+    site_id: '{{ nm_add_site.current.id }}'
+    site: '{{ mso_site | default("ansible_test") }}_2'
+    output_level: debug
+  register: nm_change_site
+
+- name: Verify nm_change_site
+  assert:
+    that:
+    - nm_change_site is changed
+    - nm_change_site.current.id == nm_add_site.current.id
+    - nm_change_site.current.name == '{{ mso_site | default("ansible_test") }}_2'
+
+- name: Change site again (check_mode)
+  mso_site:
+    <<: *site_present
+    site_id: '{{ nm_add_site.current.id }}'
+    site: '{{ mso_site | default("ansible_test") }}_2'
+  check_mode: yes
+  register: cm_change_site_again
+
+- name: Verify cm_change_site_again
+  assert:
+    that:
+    - cm_change_site_again is not changed
+    - cm_change_site_again.current.id == nm_add_site.current.id
+    - cm_change_site_again.current.name == '{{ mso_site | default("ansible_test") }}_2'
+
+- name: Change site again (normal mode)
+  mso_site:
+    <<: *site_present
+    site_id: '{{ nm_add_site.current.id }}'
+    site: '{{ mso_site | default("ansible_test") }}_2'
+  register: nm_change_site_again
+
+- name: Verify nm_change_site_again
+  assert:
+    that:
+    - nm_change_site_again is not changed
+    - nm_change_site_again.current.id == nm_add_site.current.id
+    - nm_change_site_again.current.name == '{{ mso_site | default("ansible_test") }}_2'
+
+
+# QUERY ALL SITES
+- name: Query all sites (check_mode)
+  mso_site: &site_query
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
+    state: query
+  check_mode: yes
+  register: cm_query_all_sites
+
+- name: Query all sites (normal mode)
+  mso_site: *site_query
+  register: nm_query_all_sites
+
+- name: Verify query_all_sites
+  assert:
+    that:
+    - cm_query_all_sites is not changed
+    - nm_query_all_sites is not changed
+    # NOTE: Order of sites is not stable between calls
+    #- cm_query_all_sites == nm_query_all_sites
+
+
+# QUERY A SITE
+- name: Query our site
+  mso_site:
+    <<: *site_query
+    site: '{{ mso_site | default("ansible_test") }}_2'
+  check_mode: yes
+  register: cm_query_site
+
+- name: Query our site
+  mso_site:
+    <<: *site_query
+    site: '{{ mso_site | default("ansible_test") }}_2'
+  register: nm_query_site
+
+- name: Verify query_site
+  assert:
+    that:
+    - cm_query_site is not changed
+    - cm_query_site.current.id == nm_add_site.current.id
+    - cm_query_site.current.name == '{{ mso_site | default("ansible_test") }}_2'
+    - nm_query_site is not changed
+    - nm_query_site.current.id == nm_add_site.current.id
+    - nm_query_site.current.name == '{{ mso_site | default("ansible_test") }}_2'
+    - cm_query_site == nm_query_site
+
+
+# REMOVE SITE
+- name: Remove site (check_mode)
+  mso_site: *site_absent
+  check_mode: yes
+  register: cm_remove_site
+
+- name: Verify cm_remove_site
+  assert:
+    that:
+    - cm_remove_site is changed
+    - cm_remove_site.current == {}
+
+- name: Remove site (normal mode)
+  mso_site: *site_absent
+  register: nm_remove_site
+
+- name: Verify nm_remove_site
+  assert:
+    that:
+    - nm_remove_site is changed
+    - nm_remove_site.current == {}
+
+- name: Remove site again (check_mode)
+  mso_site: *site_absent
+  check_mode: yes
+  register: cm_remove_site_again
+
+- name: Verify cm_remove_site_again
+  assert:
+    that:
+    - cm_remove_site_again is not changed
+    - cm_remove_site_again.current == {}
+
+- name: Remove site again (normal mode)
+  mso_site: *site_absent
+  register: nm_remove_site_again
+
+- name: Verify nm_remove_site_again
+  assert:
+    that:
+    - nm_remove_site_again is not changed
+    - nm_remove_site_again.current == {}
+
+
+# QUERY NON-EXISTING SITE
+- name: Query non-existing site (check_mode)
+  mso_site:
+    <<: *site_query
+    site: '{{ mso_site | default("ansible_test") }}'
+  check_mode: yes
+  register: cm_query_non_site
+
+- name: Query non-existing site (normal mode)
+  mso_site:
+    <<: *site_query
+    site: '{{ mso_site | default("ansible_test") }}'
+  register: nm_query_non_site
+
+# TODO: Implement more tests
+- name: Verify query_non_site
+  assert:
+    that:
+    - cm_query_non_site is not changed
+    - nm_query_non_site is not changed
+    - cm_query_non_site == nm_query_non_site

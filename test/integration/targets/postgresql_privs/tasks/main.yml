@@ -1,0 +1,9 @@
+# Initial CI tests of postgresql_privs module:
+- import_tasks: postgresql_privs_initial.yml
+
+# General tests:
+- import_tasks: postgresql_privs_general.yml
+
+# Tests default_privs with target_role:
+- import_tasks: test_target_role.yml
+  when: postgres_version_resp.stdout is version('9.1', '>=')

@@ -1,0 +1,289 @@
+# Test code for the MSO modules
+# Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI MultiSite host, username and password
+  fail:
+    msg: 'Please define the following variables: mso_hostname, mso_username and mso_password.'
+  when: mso_hostname is not defined or mso_username is not defined or mso_password is not defined
+
+
+# CLEAN ENVIRONMENT
+- name: Remove role ansible_test2
+  mso_role: &role_absent
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
+    role: ansible_test2
+    state: absent
+
+- name: Remove role ansible_test
+  mso_role:
+    <<: *role_absent
+    role: ansible_test
+  register: cm_remove_role
+
+
+# ADD ROLE
+- name: Add role (check_mode)
+  mso_role: &role_present
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
+    role: ansible_test
+    description: Ansible test role
+    permissions: view-sites
+    state: present
+  check_mode: yes
+  register: cm_add_role
+
+- name: Verify cm_add_role
+  assert:
+    that:
+    - cm_add_role is changed
+    - cm_add_role.previous == {}
+    - cm_add_role.current.description == 'Ansible test role'
+    - cm_add_role.current.displayName == 'ansible_test'
+    - cm_add_role.current.id is not defined
+
+- name: Add role (normal mode)
+  mso_role: *role_present
+  register: nm_add_role
+
+- name: nm_Verify add_role
+  assert:
+    that:
+    - nm_add_role is changed
+    - nm_add_role.previous == {}
+    - nm_add_role.current.description == 'Ansible test role'
+    - nm_add_role.current.displayName == 'ansible_test'
+    - nm_add_role.current.id is defined
+
+- name: Add role again (check_mode)
+  mso_role: *role_present
+  check_mode: yes
+  register: cm_add_role_again
+
+- name: Verify cm_add_role_again
+  assert:
+    that:
+    - cm_add_role_again is not changed
+    - cm_add_role_again.previous.description == 'Ansible test role'
+    - cm_add_role_again.previous.displayName == 'ansible_test'
+    - cm_add_role_again.current.description == 'Ansible test role'
+    - cm_add_role_again.current.displayName == 'ansible_test'
+    - cm_add_role_again.current.id == nm_add_role.current.id
+
+- name: Add role again (normal mode)
+  mso_role: *role_present
+  register: nm_add_role_again
+
+- name: Verify nm_add_role_again
+  assert:
+    that:
+    - nm_add_role_again is not changed
+    - nm_add_role_again.previous.description == 'Ansible test role'
+    - nm_add_role_again.previous.displayName == 'ansible_test'
+    - nm_add_role_again.current.description == 'Ansible test role'
+    - nm_add_role_again.current.displayName == 'ansible_test'
+    - nm_add_role_again.current.id == nm_add_role.current.id
+
+
+# CHANGE ROLE
+- name: Change role (check_mode)
+  mso_role:
+    <<: *role_present
+    role_id: '{{ nm_add_role.current.id }}'
+    role: ansible_test2
+    description: Ansible test role 2
+  check_mode: yes
+  register: cm_change_role
+
+- name: Verify cm_change_role
+  assert:
+    that:
+    - cm_change_role is changed
+    - cm_change_role.current.description == 'Ansible test role 2'
+    - cm_change_role.current.displayName == 'ansible_test2'
+    - cm_change_role.current.id == nm_add_role.current.id
+
+- name: Change role (normal mode)
+  mso_role:
+    <<: *role_present
+    role_id: '{{ nm_add_role.current.id }}'
+    role: ansible_test2
+    description: Ansible test role 2
+    output_level: debug
+  register: nm_change_role
+
+- name: Verify nm_change_role
+  assert:
+    that:
+    - nm_change_role is changed
+    - nm_change_role.current.description == 'Ansible test role 2'
+    - nm_change_role.current.displayName == 'ansible_test2'
+    - nm_change_role.current.id == nm_add_role.current.id
+
+- name: Change role again (check_mode)
+  mso_role:
+    <<: *role_present
+    role_id: '{{ nm_add_role.current.id }}'
+    role: ansible_test2
+    description: Ansible test role 2
+  check_mode: yes
+  register: cm_change_role_again
+
+- name: Verify cm_change_role_again
+  assert:
+    that:
+    - cm_change_role_again is not changed
+    - cm_change_role_again.current.description == 'Ansible test role 2'
+    - cm_change_role_again.current.displayName == 'ansible_test2'
+    - cm_change_role_again.current.id == nm_add_role.current.id
+
+- name: Change role again (normal mode)
+  mso_role:
+    <<: *role_present
+    role_id: '{{ nm_add_role.current.id }}'
+    role: ansible_test2
+    description: Ansible test role 2
+  register: nm_change_role_again
+
+- name: Verify nm_change_role_again
+  assert:
+    that:
+    - nm_change_role_again is not changed
+    - nm_change_role_again.current.description == 'Ansible test role 2'
+    - nm_change_role_again.current.displayName == 'ansible_test2'
+    - nm_change_role_again.current.id == nm_add_role.current.id
+
+
+# QUERY ALL ROLES
+- name: Query all roles (check_mode)
+  mso_role: &role_query
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
+    state: query
+  check_mode: yes
+  register: cm_query_all_roles
+
+- name: Query all roles (normal mode)
+  mso_role: *role_query
+  register: nm_query_all_roles
+
+- name: Verify query_all_roles
+  assert:
+    that:
+    - cm_query_all_roles is not changed
+    - nm_query_all_roles is not changed
+    # NOTE: Order of roles is not stable between calls
+    #- cm_query_all_roles == nm_query_all_roles
+
+
+# QUERY A ROLE
+- name: Query our role
+  mso_role:
+    <<: *role_query
+    role: ansible_test2
+  check_mode: yes
+  register: cm_query_role
+
+- name: Query our role
+  mso_role:
+    <<: *role_query
+    role: ansible_test2
+  register: nm_query_role
+
+- name: Verify query_role
+  assert:
+    that:
+    - cm_query_role is not changed
+    - cm_query_role.current.description == 'Ansible test role 2'
+    - cm_query_role.current.displayName == 'ansible_test2'
+    - cm_query_role.current.id == nm_add_role.current.id
+    - nm_query_role is not changed
+    - nm_query_role.current.description == 'Ansible test role 2'
+    - nm_query_role.current.displayName == 'ansible_test2'
+    - nm_query_role.current.id == nm_add_role.current.id
+    - cm_query_role == nm_query_role
+
+
+# REMOVE ROLE
+- name: Remove role (check_mode)
+  mso_role: *role_absent
+  check_mode: yes
+  register: cm_remove_role
+
+- name: Verify cm_remove_role
+  assert:
+    that:
+    - cm_remove_role is changed
+    - cm_remove_role.current == {}
+
+- name: Remove role (normal mode)
+  mso_role: *role_absent
+  register: nm_remove_role
+
+- name: Verify nm_remove_role
+  assert:
+    that:
+    - nm_remove_role is changed
+    - nm_remove_role.current == {}
+
+- name: Remove role again (check_mode)
+  mso_role: *role_absent
+  check_mode: yes
+  register: cm_remove_role_again
+
+- name: Verify cm_remove_role_again
+  assert:
+    that:
+    - cm_remove_role_again is not changed
+    - cm_remove_role_again.current == {}
+
+- name: Remove role again (normal mode)
+  mso_role: *role_absent
+  register: nm_remove_role_again
+
+- name: Verify nm_remove_role_again
+  assert:
+    that:
+    - nm_remove_role_again is not changed
+    - nm_remove_role_again.current == {}
+
+
+# QUERY NON-EXISTING ROLE
+- name: Query non-existing role (check_mode)
+  mso_role:
+    <<: *role_query
+    role: ansible_test
+  check_mode: yes
+  register: cm_query_non_role
+
+- name: Query non-existing role (normal mode)
+  mso_role:
+    <<: *role_query
+    role: ansible_test
+  register: nm_query_non_role
+
+# TODO: Implement more tests
+- name: Verify query_non_role
+  assert:
+    that:
+    - cm_query_non_role is not changed
+    - nm_query_non_role is not changed
+    - cm_query_non_role == nm_query_non_role

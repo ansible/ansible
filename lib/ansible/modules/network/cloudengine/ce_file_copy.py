@@ -1,20 +1,7 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -28,7 +15,7 @@ short_description: Copy a file to a remote cloudengine device over SCP on HUAWEI
 description:
     - Copy a file to a remote cloudengine device over SCP on HUAWEI CloudEngine switches.
 author:
-    - Zhou Zhijin (@CloudEngine-Ansible)
+    - Zhou Zhijin (@QijunPan)
 notes:
     - The feature must be enabled with feature scp-server.
     - If the file is already present, no transfer will take place.
@@ -87,31 +74,34 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 transfer_result:
     description: information about transfer result.
     returned: always
-    type: string
+    type: str
     sample: 'The local file has been successfully transferred to the device.'
 local_file:
     description: The path of the local file.
     returned: always
-    type: string
+    type: str
     sample: '/usr/work/vrpcfg.zip'
 remote_file:
     description: The path of the remote file.
     returned: always
-    type: string
+    type: str
     sample: '/vrpcfg.zip'
 '''
 
 import re
 import os
+import sys
 import time
 from xml.etree import ElementTree
-from ansible.module_utils.basic import get_exception, AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, run_commands, get_nc_config
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, get_nc_config
+from ansible.module_utils.connection import ConnectionError
+from ansible.module_utils.network.common.utils import validate_ip_v6_address
 
 try:
     import paramiko
@@ -124,6 +114,21 @@ try:
     HAS_SCP = True
 except ImportError:
     HAS_SCP = False
+
+CE_NC_GET_DISK_INFO = """
+<filter type="subtree">
+  <vfm xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+    <dfs>
+      <df>
+        <fileSys></fileSys>
+        <inputPath></inputPath>
+        <totalSize></totalSize>
+        <freeSize></freeSize>
+      </df>
+    </dfs>
+  </vfm>
+</filter>
+"""
 
 CE_NC_GET_FILE_INFO = """
 <filter type="subtree">
@@ -142,9 +147,6 @@ CE_NC_GET_FILE_INFO = """
 CE_NC_GET_SCP_ENABLE = """
 <filter type="subtree">
   <sshs xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <sshServer>
-      <scpEnable></scpEnable>
-    </sshServer>
   </sshs>
 </filter>
 """
@@ -155,7 +157,7 @@ def get_cli_exception(exc=None):
 
     msg = list()
     if not exc:
-        exc = get_exception()
+        exc = sys.exc_info[1]
     if exc:
         errs = str(exc).split("\r\n")
         for err in errs:
@@ -198,6 +200,7 @@ class FileCopy(object):
         self.local_file = self.module.params['local_file']
         self.remote_file = self.module.params['remote_file']
         self.file_system = self.module.params['file_system']
+        self.host_is_ipv6 = validate_ip_v6_address(self.module.params['provider']['host'])
 
         # state
         self.transfer_result = None
@@ -227,7 +230,7 @@ class FileCopy(object):
 
         # get file info
         root = ElementTree.fromstring(xml_str)
-        topo = root.find("data/vfm/dirs/dir")
+        topo = root.find("vfm/dirs/dir")
         if topo is None:
             return False, 0
 
@@ -245,16 +248,19 @@ class FileCopy(object):
     def enough_space(self):
         """Whether device has enough space"""
 
-        commands = list()
-        cmd = 'dir %s' % self.file_system
-        commands.append(cmd)
-        output = run_commands(self.module, commands)
-        if not output:
-            return True
+        xml_str = CE_NC_GET_DISK_INFO
+        ret_xml = get_nc_config(self.module, xml_str)
+        if "<data/>" in ret_xml:
+            return
 
-        match = re.search(r'\((.*) KB free\)', output[0])
-        kbytes_free = match.group(1)
-        kbytes_free = kbytes_free.replace(',', '')
+        xml_str = ret_xml.replace('\r', '').replace('\n', '').\
+            replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
+            replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
+
+        root = ElementTree.fromstring(xml_str)
+        topo = root.find("vfm/dfs/df/freeSize")
+        kbytes_free = topo.text
+
         file_size = os.path.getsize(self.local_file)
         if int(kbytes_free) * 1024 > file_size:
             return True
@@ -280,11 +286,11 @@ class FileCopy(object):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(hostname=hostname, username=username, password=password, port=port)
-        full_remote_path = '{}{}'.format(self.file_system, dest)
+        full_remote_path = '{0}{1}'.format(self.file_system, dest)
         scp = SCPClient(ssh.get_transport())
         try:
             scp.put(self.local_file, full_remote_path)
-        except:
+        except Exception:
             time.sleep(10)
             file_exists, temp_size = self.remote_file_exists(
                 dest, self.file_system)
@@ -296,15 +302,18 @@ class FileCopy(object):
                 self.module.fail_json(msg='Could not transfer file. There was an error '
                                       'during transfer. Please make sure the format of '
                                       'input parameters is right.')
-
         scp.close()
         return True
 
     def get_scp_enable(self):
         """Get scp enable state"""
 
-        xml_str = CE_NC_GET_SCP_ENABLE
-        ret_xml = get_nc_config(self.module, xml_str)
+        ret_xml = ''
+        try:
+            ret_xml = get_nc_config(self.module, CE_NC_GET_SCP_ENABLE)
+        except ConnectionError:
+            self.module.fail_json(msg='Error: The NETCONF API of scp_enable is not supported.')
+
         if "<data/>" in ret_xml:
             return False
 
@@ -314,18 +323,19 @@ class FileCopy(object):
 
         # get file info
         root = ElementTree.fromstring(xml_str)
-        topo = root.find("data/sshs/sshServer")
-        if topo is None:
-            return False
-
-        for eles in topo:
-            if eles.tag in ["scpEnable"]:
-                return True, eles.text
-
+        topo1 = root.find("sshs/sshServer/scpEnable")
+        topo2 = root.find("sshs/sshServerEnable/scpIpv4Enable")
+        topo3 = root.find("sshs/sshServerEnable/scpIpv6Enable")
+        if topo1 is not None:
+            return str(topo1.text).strip().lower() == 'enable'
+        elif self.host_is_ipv6 and topo3 is not None:
+            return str(topo3.text).strip().lower() == 'enable'
+        elif topo2 is not None:
+            return str(topo2.text).strip().lower() == 'enable'
         return False
 
     def work(self):
-        """Excute task """
+        """Execute task """
 
         if not HAS_SCP:
             self.module.fail_json(
@@ -343,14 +353,18 @@ class FileCopy(object):
             self.module.fail_json(
                 msg="'Error: The maximum length of remote_file is 4096.'")
 
-        retcode, cur_state = self.get_scp_enable()
-        if retcode and cur_state == 'Disable':
-            self.module.fail_json(
-                msg="'Error: Please ensure SCP server is enabled.'")
+        scp_enable = self.get_scp_enable()
+        if not scp_enable:
+            if self.host_is_ipv6:
+                self.module.fail_json(
+                    msg="'Error: Please ensure ipv6 SCP server are enabled.'")
+            else:
+                self.module.fail_json(
+                    msg="'Error: Please ensure ipv4 SCP server are enabled.'")
 
         if not os.path.isfile(self.local_file):
             self.module.fail_json(
-                msg="Local file {} not found".format(self.local_file))
+                msg="Local file {0} not found".format(self.local_file))
 
         dest = self.remote_file or ('/' + os.path.basename(self.local_file))
         remote_exists, file_size = self.remote_file_exists(

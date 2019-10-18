@@ -169,7 +169,7 @@ from ansible.module_utils.network.common.netconf import exec_rpc
 from ansible.module_utils.network.junos.junos import junos_argument_spec, get_configuration, get_connection, get_capabilities, tostring
 from ansible.module_utils.network.common.parsing import Conditional, FailedConditionalError
 from ansible.module_utils.network.common.utils import to_lines
-from ansible.module_utils.six import string_types, iteritems
+from ansible.module_utils.six import iteritems
 
 
 try:
@@ -266,7 +266,7 @@ def parse_rpcs(module):
     items = list()
 
     for rpc in (module.params['rpcs'] or list()):
-        parts = split(rpc)
+        parts = shlex.split(rpc)
 
         name = parts.pop(0)
         args = dict()
@@ -400,7 +400,7 @@ def main():
                     json_resp = jxmlease.parse(resp)
                     transformed.append(json_resp)
                     output.append(json_resp)
-                except:
+                except Exception:
                     raise ValueError(resp)
             else:
                 transformed.append(resp)

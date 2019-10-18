@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import itertools
-
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
@@ -30,10 +28,7 @@ from ansible.template import Templar
 class Taggable:
 
     untagged = frozenset(['untagged'])
-    _tags = FieldAttribute(isa='list', default=[], listof=(string_types, int), extend=True)
-
-    def __init__(self):
-        super(Taggable, self).__init__()
+    _tags = FieldAttribute(isa='list', default=list, listof=(string_types, int), extend=True)
 
     def _load_tags(self, attr, ds):
         if isinstance(ds, list):
@@ -54,13 +49,14 @@ class Taggable:
             templar = Templar(loader=self._loader, variables=all_vars)
             tags = templar.template(self.tags)
 
-            if not isinstance(tags, list):
-                if tags.find(',') != -1:
-                    tags = set(tags.split(','))
+            _temp_tags = set()
+            for tag in tags:
+                if isinstance(tag, list):
+                    _temp_tags.update(tag)
                 else:
-                    tags = set([tags])
-            else:
-                tags = set([i for i, _ in itertools.groupby(tags)])
+                    _temp_tags.add(tag)
+            tags = _temp_tags
+            self.tags = list(tags)
         else:
             # this makes isdisjoint work for untagged
             tags = self.untagged

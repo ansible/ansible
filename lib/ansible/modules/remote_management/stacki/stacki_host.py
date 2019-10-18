@@ -50,8 +50,9 @@ options:
   force_install:
     description:
      - Set value to True to force node into install state if it already exists in stacki.
+    type: bool
 author:
-- Hugh Ma <Hugh.Ma@flextronics.com>
+- Hugh Ma (@bbyhuy) <Hugh.Ma@flextronics.com>
 '''
 
 EXAMPLES = '''
@@ -78,7 +79,7 @@ RETURN = '''
 changed:
   description: response to whether or not the api call completed successfully
   returned: always
-  type: boolean
+  type: bool
   sample: true
 
 stdout:

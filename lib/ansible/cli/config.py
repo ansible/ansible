@@ -7,29 +7,24 @@ __metaclass__ = type
 import os
 import shlex
 import subprocess
-import sys
 import yaml
 
+from ansible import context
 from ansible.cli import CLI
+from ansible.cli.arguments import option_helpers as opt_help
 from ansible.config.manager import ConfigManager, Setting, find_ini_config_file
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
+from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ConfigCLI(CLI):
     """ Config command line class """
-
-    VALID_ACTIONS = ("view", "dump", "list")  # TODO: edit, update, search
 
     def __init__(self, args, callback=None):
 
@@ -37,39 +32,58 @@ class ConfigCLI(CLI):
         self.config = None
         super(ConfigCLI, self).__init__(args, callback)
 
-    def parse(self):
+    def init_parser(self):
 
-        self.parser = CLI.base_parser(
-            usage="usage: %%prog [%s] [--help] [options] [ansible.cfg]" % "|".join(self.VALID_ACTIONS),
-            epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0]),
-            desc="View, edit, and manage ansible configuration.",
+        super(ConfigCLI, self).init_parser(
+            desc="View ansible configuration.",
         )
-        self.parser.add_option('-c', '--config', dest='config_file', help="path to configuration file, defaults to first file found in precedence.")
 
-        self.set_action()
+        common = opt_help.argparse.ArgumentParser(add_help=False)
+        opt_help.add_verbosity_options(common)
+        common.add_argument('-c', '--config', dest='config_file',
+                            help="path to configuration file, defaults to first file found in precedence.")
 
-        # options specific to self.actions
-        if self.action == "list":
-            self.parser.set_usage("usage: %prog list [options] ")
-        if self.action == "dump":
-            self.parser.add_option('--only-changed', dest='only_changed', action='store_true',
-                                   help="Only show configurations that have changed from the default")
-        elif self.action == "update":
-            self.parser.add_option('-s', '--setting', dest='setting', help="config setting, the section defaults to 'defaults'")
-            self.parser.set_usage("usage: %prog update [options] [-c ansible.cfg] -s '[section.]setting=value'")
-        elif self.action == "search":
-            self.parser.set_usage("usage: %prog update [options] [-c ansible.cfg] <search term>")
+        subparsers = self.parser.add_subparsers(dest='action')
+        subparsers.required = True
 
-        self.options, self.args = self.parser.parse_args()
-        display.verbosity = self.options.verbosity
+        list_parser = subparsers.add_parser('list', help='Print all config options', parents=[common])
+        list_parser.set_defaults(func=self.execute_list)
+
+        dump_parser = subparsers.add_parser('dump', help='Dump configuration', parents=[common])
+        dump_parser.set_defaults(func=self.execute_dump)
+        dump_parser.add_argument('--only-changed', dest='only_changed', action='store_true',
+                                 help="Only show configurations that have changed from the default")
+
+        view_parser = subparsers.add_parser('view', help='View configuration file', parents=[common])
+        view_parser.set_defaults(func=self.execute_view)
+
+        # update_parser = subparsers.add_parser('update', help='Update configuration option')
+        # update_parser.set_defaults(func=self.execute_update)
+        # update_parser.add_argument('-s', '--setting', dest='setting',
+        #                            help="config setting, the section defaults to 'defaults'",
+        #                            metavar='[section.]setting=value')
+
+        # search_parser = subparsers.add_parser('search', help='Search configuration')
+        # search_parser.set_defaults(func=self.execute_search)
+        # search_parser.add_argument('args', help='Search term', metavar='<search term>')
+
+    def post_process_args(self, options):
+        options = super(ConfigCLI, self).post_process_args(options)
+        display.verbosity = options.verbosity
+
+        return options
 
     def run(self):
 
         super(ConfigCLI, self).run()
 
-        if self.options.config_file:
-            self.config_file = unfrackpath(self.options.config_file, follow=False)
-            self.config = ConfigManager(self.config_file)
+        if context.CLIARGS['config_file']:
+            self.config_file = unfrackpath(context.CLIARGS['config_file'], follow=False)
+            b_config = to_bytes(self.config_file)
+            if os.path.exists(b_config) and os.access(b_config, os.R_OK):
+                self.config = ConfigManager(self.config_file)
+            else:
+                raise AnsibleOptionsError('The provided configuration file is missing or not accessible: %s' % to_native(self.config_file))
         else:
             self.config = ConfigManager()
             self.config_file = find_ini_config_file()
@@ -82,16 +96,16 @@ class ConfigCLI(CLI):
                     raise AnsibleOptionsError("%s is not a valid file" % (self.config_file))
 
                 os.environ['ANSIBLE_CONFIG'] = to_native(self.config_file)
-            except:
-                if self.action in ['view']:
+            except Exception:
+                if context.CLIARGS['action'] in ['view']:
                     raise
-                elif self.action in ['edit', 'update']:
+                elif context.CLIARGS['action'] in ['edit', 'update']:
                     display.warning("File does not exist, used empty file: %s" % self.config_file)
 
-        elif self.action == 'view':
+        elif context.CLIARGS['action'] == 'view':
             raise AnsibleError('Invalid or no config file was supplied')
 
-        self.execute()
+        context.CLIARGS['func']()
 
     def execute_update(self):
         '''
@@ -100,10 +114,10 @@ class ConfigCLI(CLI):
         raise AnsibleError("Option not implemented yet")
 
         # pylint: disable=unreachable
-        if self.options.setting is None:
-            raise AnsibleOptionsError("update option requries a setting to update")
+        if context.CLIARGS['setting'] is None:
+            raise AnsibleOptionsError("update option requires a setting to update")
 
-        (entry, value) = self.options.setting.split('=')
+        (entry, value) = context.CLIARGS['setting'].split('=')
         if '.' in entry:
             (section, option) = entry.split('.')
         else:
@@ -168,7 +182,7 @@ class ConfigCLI(CLI):
             else:
                 color = 'green'
                 msg = "%s(%s) = %s" % (setting, 'default', defaults[setting].get('default'))
-            if not self.options.only_changed or color == 'yellow':
+            if not context.CLIARGS['only_changed'] or color == 'yellow':
                 text.append(stringc(msg, color))
 
         self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))

@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages configuration of an OSPF VPN instance on HUAWEI CloudEngine switches.
 description:
     - Manages configuration of an OSPF VPN instance on HUAWEI CloudEngine switches.
-author: Yang yang (@CloudEngine Ansible)
+author: Yang yang (@QijunPan)
 options:
     ospf:
         description:
@@ -249,7 +249,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: False
 '''
 
@@ -1047,7 +1047,7 @@ class OspfVrf(object):
 
         # get the vpn address family and RD text
         ospf_sites = root.findall(
-            "data/ospfv2/ospfv2comm/ospfSites/ospfSite")
+            "ospfv2/ospfv2comm/ospfSites/ospfSite")
         if ospf_sites:
             for ospf_site in ospf_sites:
                 ospf_ele_info = dict()
@@ -1063,7 +1063,8 @@ class OspfVrf(object):
                                              "spfScheduleIntervalType"]:
                         ospf_ele_info[
                             ospf_site_ele.tag] = ospf_site_ele.text
-                self.ospf_info["ospfsite"].append(ospf_ele_info)
+                if ospf_ele_info["processId"] == self.ospf:
+                    self.ospf_info["ospfsite"].append(ospf_ele_info)
 
     def get_proposed(self):
         """get proposed info"""

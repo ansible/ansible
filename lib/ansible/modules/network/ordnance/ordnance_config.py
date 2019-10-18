@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: ordnance_config
 version_added: "2.3"
-author: "Alexander Turner (alex.turner@ordnance.io)"
+author: "Alexander Turner (@alexanderturner) <alex.turner@ordnance.io>"
 short_description: Manage Ordnance configuration sections
 description:
   - Ordnance router configurations use a simple block indent file syntax
@@ -163,7 +163,7 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/ordnance_config.2016-07-16@22:28:34
 """
 import re

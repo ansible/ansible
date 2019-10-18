@@ -42,8 +42,6 @@ description:
      This module uses SSH to manage network device configuration.
      The results of the operation will be placed in a directory named 'results'
      that must be created by the user in their local directory to where the playbook is run.
-     For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_template.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options:
@@ -73,11 +71,7 @@ Tasks : The following are examples of using the module cnos_template. These are 
 
 - name: Applying CLI commands on Switches
   cnos_template:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       commandfile: "./commands/demo_template_{{ inventory_hostname }}_commands.txt"
       outputfile: "./results/demo_template_command_{{ inventory_hostname }}_output.txt"
 
@@ -86,7 +80,7 @@ RETURN = '''
 msg:
   description: Success or failure message
   returned: always
-  type: string
+  type: str
   sample: "Template Applied."
 '''
 
@@ -101,7 +95,7 @@ import os
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True
-except:
+except Exception:
     HAS_LIB = False
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
@@ -112,10 +106,10 @@ def main():
         argument_spec=dict(
             commandfile=dict(required=True),
             outputfile=dict(required=True),
-            host=dict(required=True),
+            host=dict(required=False),
             deviceType=dict(required=True),
-            username=dict(required=True),
-            password=dict(required=True, no_log=True),
+            username=dict(required=False),
+            password=dict(required=False, no_log=True),
             enablePassword=dict(required=False, no_log=True),),
         supports_check_mode=False)
     commandfile = module.params['commandfile']

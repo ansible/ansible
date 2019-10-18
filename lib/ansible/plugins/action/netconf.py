@@ -22,28 +22,28 @@ __metaclass__ = type
 import copy
 import sys
 
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        if self._play_context.connection not in ['netconf', 'local'] and self._task.action == 'netconf_config':
+        module_name = self._task.action.split('.')[-1]
+        self._config_module = True if module_name == 'netconf_config' else False
+
+        if self._play_context.connection not in ['netconf', 'local'] and module_name == 'netconf_config':
             return {'failed': True, 'msg': 'Connection type %s is not valid for netconf_config module. '
                                            'Valid connection type is netconf or local (deprecated)' % self._play_context.connection}
-        elif self._play_context.connection not in ['netconf'] and self._task.action != 'netconf_config':
+        elif self._play_context.connection not in ['netconf'] and module_name != 'netconf_config':
             return {'failed': True, 'msg': 'Connection type %s is not valid for %s module. '
-                                           'Valid connection type is netconf.' % (self._play_context.connection, self._task.action)}
+                                           'Valid connection type is netconf.' % (self._play_context.connection, module_name)}
 
-        if self._play_context.connection == 'local' and self._task.action == 'netconf_config':
+        if self._play_context.connection == 'local' and module_name == 'netconf_config':
             args = self._task.args
             pc = copy.deepcopy(self._play_context)
             pc.connection = 'netconf'

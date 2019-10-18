@@ -1,6 +1,11 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_logging purge test"
 
+- name: Purge logging configuration first
+  nxos_logging:
+    purge: true
+    provider: "{{ connection }}"
+
 - block:
 
     - name: Set up console logging

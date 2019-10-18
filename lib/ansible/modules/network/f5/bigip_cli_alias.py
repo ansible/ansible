@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -23,11 +23,13 @@ options:
   name:
     description:
       - Specifies the name of the alias.
+    type: str
     required: True
   scope:
     description:
       - The scope of the alias; whether it is shared on the system, or usable only
         for the user who created it.
+    type: str
     default: shared
     choices:
       - private
@@ -35,18 +37,22 @@ options:
   command:
     description:
       - The command to alias.
+    type: str
   description:
     description:
       - Description of the alias.
+    type: str
   partition:
     description:
       - Device partition to manage resources on.
       - This parameter is disregarded when the C(scope) is C(private).
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the resource exists.
       - When C(absent), ensures the resource is removed.
+    type: str
     default: present
     choices:
       - present
@@ -54,6 +60,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -73,12 +80,12 @@ RETURN = r'''
 command:
   description: The new command that is aliased.
   returned: changed
-  type: string
+  type: str
   sample: run /util bash
 description:
   description: The new description of the alias.
   returned: changed
-  type: string
+  type: str
   sample: Run the bash shell
 '''
 
@@ -89,19 +96,13 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
 
 
@@ -186,7 +187,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -406,14 +407,11 @@ def main():
     )
 
     try:
-        client = F5RestClient(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

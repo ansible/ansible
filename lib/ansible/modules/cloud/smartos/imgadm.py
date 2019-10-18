@@ -99,17 +99,17 @@ RETURN = '''
 source:
     description: Source that is managed.
     returned: When not managing an image.
-    type: string
+    type: str
     sample: https://datasets.project-fifo.net
 uuid:
     description: UUID for an image operated on.
     returned: When not managing an image source.
-    type: string
+    type: str
     sample: 70e3ae72-96b6-11e6-9056-9737fd4d0764
 state:
     description: State of the target, after execution.
     returned: success
-    type: string
+    type: str
     sample: 'present'
 '''
 

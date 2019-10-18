@@ -1,7 +1,7 @@
 .. _release_managers:
 
 **************************
-Release manager guidelines
+Release Manager Guidelines
 **************************
 
 .. contents:: Topics

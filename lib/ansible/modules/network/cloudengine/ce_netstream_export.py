@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages netstream export on HUAWEI CloudEngine switches.
 description:
     - Configure NetStream flow statistics exporting and versions for exported packets on HUAWEI CloudEngine switches.
-author: Zhijin Zhou (@CloudEngine-Ansible)
+author: Zhijin Zhou (@QijunPan)
 notes:
 options:
     type:
@@ -184,13 +184,13 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import exec_command, load_config
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
@@ -216,7 +216,7 @@ def is_config_exist(cmp_cfg, test_cfg):
 
 
 class NetstreamExport(object):
-    """Manange NetStream export"""
+    """Manage NetStream export"""
 
     def __init__(self, argument_spec):
         self.spec = argument_spec
@@ -261,10 +261,12 @@ class NetstreamExport(object):
     def get_netstream_config(self):
         """get current netstream configuration"""
 
-        flags = list()
-        exp = " | inc ^netstream export"
-        flags.append(exp)
-        return get_config(self.module, flags)
+        cmd = "display current-configuration | include ^netstream export"
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        config = str(out).strip()
+        return config
 
     def get_existing(self):
         """get existing config"""
@@ -433,7 +435,7 @@ class NetstreamExport(object):
 
         if cmd == 'netstream export ip version 5':
             cmd_tmp = "netstream export ip version"
-            if is_config_exist(self.config, cmd_tmp):
+            if cmd_tmp in self.config:
                 if self.state == 'present':
                     self.cli_add_command(cmd, False)
             else:
@@ -519,7 +521,7 @@ class NetstreamExport(object):
             self.config_nets_export_ip_ver()
 
     def work(self):
-        """excute task"""
+        """execute task"""
 
         self.check_params()
         self.get_proposed()

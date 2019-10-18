@@ -25,6 +25,7 @@ from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.template import Templar
+from ansible.utils.sentinel import Sentinel
 
 
 # For filtering out modules correctly below
@@ -107,12 +108,22 @@ class ModuleArgsParser:
     Args may also be munged for certain shell command parameters.
     """
 
-    def __init__(self, task_ds=None):
+    def __init__(self, task_ds=None, collection_list=None):
         task_ds = {} if task_ds is None else task_ds
 
         if not isinstance(task_ds, dict):
             raise AnsibleAssertionError("the type of 'task_ds' should be a dict, but is a %s" % type(task_ds))
         self._task_ds = task_ds
+        self._collection_list = collection_list
+        # delayed local imports to prevent circular import
+        from ansible.playbook.task import Task
+        from ansible.playbook.handler import Handler
+        # store the valid Task/Handler attrs for quick access
+        self._task_attrs = set(Task._valid_attrs.keys())
+        self._task_attrs.update(set(Handler._valid_attrs.keys()))
+        # HACK: why are these not FieldAttributes on task with a post-validate to check usage?
+        self._task_attrs.update(['local_action', 'static'])
+        self._task_attrs = frozenset(self._task_attrs)
 
     def _split_module_string(self, module_string):
         '''
@@ -142,11 +153,11 @@ class ModuleArgsParser:
         if additional_args:
             if isinstance(additional_args, string_types):
                 templar = Templar(loader=None)
-                if templar._contains_vars(additional_args):
+                if templar.is_template(additional_args):
                     final_args['_variable_params'] = additional_args
                 else:
-                    raise AnsibleParserError("Complex args containing variables cannot use bare variables, and must use the full variable style "
-                                             "('{{var_name}}')")
+                    raise AnsibleParserError("Complex args containing variables cannot use bare variables (without Jinja2 delimiters), "
+                                             "and must use the full variable style ('{{var_name}}')")
             elif isinstance(additional_args, dict):
                 final_args.update(additional_args)
             else:
@@ -248,7 +259,7 @@ class ModuleArgsParser:
 
         return (action, args)
 
-    def parse(self):
+    def parse(self, skip_action_validation=False):
         '''
         Given a task in one of the supported forms, parses and returns
         returns the action, arguments, and delegate_to values for the
@@ -258,7 +269,7 @@ class ModuleArgsParser:
         thing = None
 
         action = None
-        delegate_to = self._task_ds.get('delegate_to', None)
+        delegate_to = self._task_ds.get('delegate_to', Sentinel)
         args = dict()
 
         # This is the standard YAML form for command-type modules. We grab
@@ -284,9 +295,13 @@ class ModuleArgsParser:
 
         # module: <stuff> is the more new-style invocation
 
-        # walk the input dictionary to see we recognize a module name
-        for (item, value) in iteritems(self._task_ds):
-            if item in BUILTIN_TASKS or item in action_loader or item in module_loader:
+        # filter out task attributes so we're only querying unrecognized keys as actions/modules
+        non_task_ds = dict((k, v) for k, v in iteritems(self._task_ds) if (k not in self._task_attrs) and (not k.startswith('with_')))
+
+        # walk the filtered input dictionary to see if we recognize a module name
+        for item, value in iteritems(non_task_ds):
+            if item in BUILTIN_TASKS or skip_action_validation or action_loader.has_plugin(item, collection_list=self._collection_list) or \
+                    module_loader.has_plugin(item, collection_list=self._collection_list):
                 # finding more than one module name is a problem
                 if action is not None:
                     raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)
@@ -296,19 +311,18 @@ class ModuleArgsParser:
 
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
-            if 'ping' not in module_loader:
-                raise AnsibleParserError("The requested action was not found in configured module paths. "
-                                         "Additionally, core modules are missing. If this is a checkout, "
-                                         "run 'git pull --rebase' to correct this problem.",
+            if non_task_ds:  # there was one non-task action, but we couldn't find it
+                bad_action = list(non_task_ds.keys())[0]
+                raise AnsibleParserError("couldn't resolve module/action '{0}'. This often indicates a "
+                                         "misspelling, missing collection, or incorrect module path.".format(bad_action),
                                          obj=self._task_ds)
-
             else:
-                raise AnsibleParserError("no action detected in task. This often indicates a misspelled module name, or incorrect module path.",
+                raise AnsibleParserError("no module/action detected in task.",
                                          obj=self._task_ds)
         elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
             templar = Templar(loader=None)
             raw_params = args.pop('_raw_params')
-            if templar._contains_vars(raw_params):
+            if templar.is_template(raw_params):
                 args['_variable_params'] = raw_params
             else:
                 raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action,

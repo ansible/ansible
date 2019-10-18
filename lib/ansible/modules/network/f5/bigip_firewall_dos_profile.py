@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -24,10 +24,12 @@ options:
   name:
     description:
       - Specifies the name of the profile.
+    type: str
     required: True
   description:
     description:
       - The description of the DoS profile.
+    type: str
   default_whitelist:
     description:
       - The default whitelist address list for the system to use to determine which
@@ -35,6 +37,7 @@ options:
       - The system does not examine traffic from the IP addresses in the list when
         performing DoS prevention.
       - To define a new whitelist, use the C(bigip_firewall_address_list) module.
+    type: str
   threshold_sensitivity:
     description:
       - Specifies the threshold sensitivity for the DoS profile.
@@ -42,6 +45,7 @@ options:
         lower when sensitivity is C(high).
       - When creating a new profile, if this parameter is not specified, the default
         is C(medium).
+    type: str
     choices:
       - low
       - medium
@@ -49,15 +53,17 @@ options:
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the resource exists.
       - When C(absent), ensures the resource is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -79,17 +85,17 @@ RETURN = r'''
 threshold_sensitivity:
   description: The new threshold sensitivity of the profile.
   returned: changed
-  type: string
+  type: str
   sample: low
 default_whitelist:
   description: The new whitelist attached to the profile.
   returned: changed
-  type: string
+  type: str
   sample: /Common/whitelist1
 description:
   description: The description of the profile.
   returned: changed
-  type: string
+  type: str
   sample: New description
 '''
 
@@ -100,23 +106,15 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
-    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import transform_name
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
-    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import transform_name
 
 
@@ -202,7 +200,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -417,14 +415,11 @@ def main():
     )
 
     try:
-        client = F5RestClient(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

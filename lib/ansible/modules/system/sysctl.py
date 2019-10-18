@@ -65,7 +65,7 @@ EXAMPLES = '''
 # Set vm.swappiness to 5 in /etc/sysctl.conf
 - sysctl:
     name: vm.swappiness
-    value: 5
+    value: '5'
     state: present
 
 # Remove kernel.panic entry from /etc/sysctl.conf
@@ -77,20 +77,20 @@ EXAMPLES = '''
 # Set kernel.panic to 3 in /tmp/test_sysctl.conf
 - sysctl:
     name: kernel.panic
-    value: 3
+    value: '3'
     sysctl_file: /tmp/test_sysctl.conf
     reload: no
 
-# Set ip forwarding on in /proc and do not reload the sysctl file
+# Set ip forwarding on in /proc and verify token value with the sysctl command
 - sysctl:
     name: net.ipv4.ip_forward
-    value: 1
+    value: '1'
     sysctl_set: yes
 
 # Set ip forwarding on in /proc and in the sysctl file and reload if necessary
 - sysctl:
     name: net.ipv4.ip_forward
-    value: 1
+    value: '1'
     sysctl_set: yes
     state: present
     reload: yes
@@ -99,6 +99,7 @@ EXAMPLES = '''
 # ==============================================================
 
 import os
+import re
 import tempfile
 
 from ansible.module_utils.basic import get_platform, AnsibleModule
@@ -108,6 +109,10 @@ from ansible.module_utils._text import to_native
 
 
 class SysctlModule(object):
+
+    # We have to use LANG=C because we are capturing STDERR of sysctl to detect
+    # success or failure.
+    LANG_ENV = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C'}
 
     def __init__(self, module):
         self.module = module
@@ -144,7 +149,7 @@ class SysctlModule(object):
         # get the current proc fs value
         self.proc_value = self.get_token_curr_value(thisname)
 
-        # get the currect sysctl file value
+        # get the current sysctl file value
         self.read_sysctl_file()
         if thisname not in self.file_values:
             self.file_values[thisname] = None
@@ -164,9 +169,16 @@ class SysctlModule(object):
         elif self.file_values[thisname] != self.args['value']:
             self.changed = True
             self.write_file = True
+        # with reload=yes we should check if the current system values are
+        # correct, so that we know if we should reload
+        elif self.args['reload']:
+            if self.proc_value is None:
+                self.changed = True
+            elif not self._values_is_equal(self.proc_value, self.args['value']):
+                self.changed = True
 
         # use the sysctl command or not?
-        if self.args['sysctl_set']:
+        if self.args['sysctl_set'] and self.args['state'] == "present":
             if self.proc_value is None:
                 self.changed = True
             elif not self._values_is_equal(self.proc_value, self.args['value']):
@@ -177,7 +189,7 @@ class SysctlModule(object):
         if not self.module.check_mode:
             if self.write_file:
                 self.write_sysctl()
-            if self.write_file and self.args['reload']:
+            if self.changed and self.args['reload']:
                 self.reload_sysctl()
             if self.set_proc:
                 self.set_token_value(self.args['name'], self.args['value'])
@@ -215,6 +227,14 @@ class SysctlModule(object):
         else:
             return value
 
+    def _stderr_failed(self, err):
+        # sysctl can fail to set a value even if it returns an exit status 0
+        # (https://bugzilla.redhat.com/show_bug.cgi?id=1264080). That's why we
+        # also have to check stderr for errors. For now we will only fail on
+        # specific errors defined by the regex below.
+        errors_regex = r'^sysctl: setting key "[^"]+": (Invalid argument|Read-only file system)$'
+        return re.search(errors_regex, err, re.MULTILINE) is not None
+
     # ==============================================================
     #   SYSCTL COMMAND MANAGEMENT
     # ==============================================================
@@ -226,7 +246,7 @@ class SysctlModule(object):
             thiscmd = "%s -n %s" % (self.sysctl_cmd, token)
         else:
             thiscmd = "%s -e -n %s" % (self.sysctl_cmd, token)
-        rc, out, err = self.module.run_command(thiscmd)
+        rc, out, err = self.module.run_command(thiscmd, environ_update=self.LANG_ENV)
         if rc != 0:
             return None
         else:
@@ -250,18 +270,17 @@ class SysctlModule(object):
             if self.args['ignoreerrors']:
                 ignore_missing = '-e'
             thiscmd = "%s %s -w %s=%s" % (self.sysctl_cmd, ignore_missing, token, value)
-        rc, out, err = self.module.run_command(thiscmd)
-        if rc != 0:
+        rc, out, err = self.module.run_command(thiscmd, environ_update=self.LANG_ENV)
+        if rc != 0 or self._stderr_failed(err):
             self.module.fail_json(msg='setting %s failed: %s' % (token, out + err))
         else:
             return rc
 
     # Run sysctl -p
     def reload_sysctl(self):
-        # do it
         if self.platform == 'freebsd':
             # freebsd doesn't support -p, so reload the sysctl service
-            rc, out, err = self.module.run_command('/etc/rc.d/sysctl reload')
+            rc, out, err = self.module.run_command('/etc/rc.d/sysctl reload', environ_update=self.LANG_ENV)
         elif self.platform == 'openbsd':
             # openbsd doesn't support -p and doesn't have a sysctl service,
             # so we have to set every value with its own sysctl call
@@ -269,20 +288,26 @@ class SysctlModule(object):
                 rc = 0
                 if k != self.args['name']:
                     rc = self.set_token_value(k, v)
+                    # FIXME this check is probably not needed as set_token_value would fail_json if rc != 0
                     if rc != 0:
                         break
             if rc == 0 and self.args['state'] == "present":
                 rc = self.set_token_value(self.args['name'], self.args['value'])
+
+            # set_token_value would have called fail_json in case of failure
+            # so return here and do not continue to the error processing below
+            # https://github.com/ansible/ansible/issues/58158
+            return
         else:
             # system supports reloading via the -p flag to sysctl, so we'll use that
             sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]
             if self.args['ignoreerrors']:
                 sysctl_args.insert(1, '-e')
 
-            rc, out, err = self.module.run_command(sysctl_args)
+            rc, out, err = self.module.run_command(sysctl_args, environ_update=self.LANG_ENV)
 
-        if rc != 0:
-            self.module.fail_json(msg="Failed to reload sysctl: %s" % str(out) + str(err))
+        if rc != 0 or self._stderr_failed(err):
+            self.module.fail_json(msg="Failed to reload sysctl: %s" % to_native(out) + to_native(err))
 
     # ==============================================================
     #   SYSCTL FILE MANAGEMENT
@@ -297,7 +322,7 @@ class SysctlModule(object):
                 with open(self.sysctl_file, "r") as read_file:
                     lines = read_file.readlines()
             except IOError as e:
-                self.module.fail_json(msg="Failed to open %s: %s" % (self.sysctl_file, to_native(e)))
+                self.module.fail_json(msg="Failed to open %s: %s" % (to_native(self.sysctl_file), to_native(e)))
 
         for line in lines:
             line = line.strip()

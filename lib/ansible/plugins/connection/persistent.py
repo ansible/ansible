@@ -29,24 +29,12 @@ options:
     vars:
       - name: ansible_command_timeout
 """
-import os
-import pty
-import json
-import subprocess
-import sys
-import termios
-
-from ansible import constants as C
+from ansible.executor.task_executor import start_connection
 from ansible.plugins.connection import ConnectionBase
-from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection as SocketConnection, write_to_file_descriptor
-from ansible.errors import AnsibleError
+from ansible.module_utils.connection import Connection as SocketConnection
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):
@@ -82,70 +70,8 @@ class Connection(ConnectionBase):
         returns the socket path.
         """
         display.vvvv('starting connection from persistent connection plugin', host=self._play_context.remote_addr)
-        socket_path = self._start_connection()
+        variables = {'ansible_command_timeout': self.get_option('persistent_command_timeout')}
+        socket_path = start_connection(self._play_context, variables)
         display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
         setattr(self, '_socket_path', socket_path)
         return socket_path
-
-    def _start_connection(self):
-        '''
-        Starts the persistent connection
-        '''
-        master, slave = pty.openpty()
-
-        python = sys.executable
-
-        def find_file_in_path(filename):
-            # Check $PATH first, followed by same directory as sys.argv[0]
-            paths = os.environ['PATH'].split(os.pathsep) + [os.path.dirname(sys.argv[0])]
-            for dirname in paths:
-                fullpath = os.path.join(dirname, filename)
-                if os.path.isfile(fullpath):
-                    return fullpath
-
-            raise AnsibleError("Unable to find location of '%s'" % filename)
-
-        p = subprocess.Popen(
-            [python, find_file_in_path('ansible-connection'), to_text(os.getppid())],
-            stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        os.close(slave)
-
-        # We need to set the pty into noncanonical mode. This ensures that we
-        # can receive lines longer than 4095 characters (plus newline) without
-        # truncating.
-        old = termios.tcgetattr(master)
-        new = termios.tcgetattr(master)
-        new[3] = new[3] & ~termios.ICANON
-
-        try:
-            termios.tcsetattr(master, termios.TCSANOW, new)
-            write_to_file_descriptor(master, {'ansible_command_timeout': self.get_option('persistent_command_timeout')})
-            write_to_file_descriptor(master, self._play_context.serialize())
-
-            (stdout, stderr) = p.communicate()
-        finally:
-            termios.tcsetattr(master, termios.TCSANOW, old)
-        os.close(master)
-
-        if p.returncode == 0:
-            result = json.loads(to_text(stdout, errors='surrogate_then_replace'))
-        else:
-            try:
-                result = json.loads(to_text(stderr, errors='surrogate_then_replace'))
-            except getattr(json.decoder, 'JSONDecodeError', ValueError):
-                # JSONDecodeError only available on Python 3.5+
-                result = {'error': to_text(stderr, errors='surrogate_then_replace')}
-
-        if 'messages' in result:
-            for msg in result.get('messages'):
-                display.vvvv('%s' % msg, host=self._play_context.remote_addr)
-
-        if 'error' in result:
-            if self._play_context.verbosity > 2:
-                if result.get('exception'):
-                    msg = "The full traceback is:\n" + result['exception']
-                    display.display(msg, color=C.COLOR_ERROR)
-            raise AnsibleError(result['error'])
-
-        return result['socket_path']

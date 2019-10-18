@@ -1,0 +1,106 @@
+---
+- name: Get servers certificate
+  get_certificate:
+    host: "{{ httpbin_host }}"
+    port: 443
+    select_crypto_backend: "{{ select_crypto_backend }}"
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      # This module should never change anything
+      - result is not changed
+      - result is not failed
+      # We got the correct ST from the cert
+      - "'North Carolina' == result.subject.ST"
+
+- name: Connect to http port (will fail because there is no SSL cert to get)
+  get_certificate:
+    host: "{{ httpbin_host }}"
+    port: 80
+    select_crypto_backend: "{{ select_crypto_backend }}"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result is not changed
+      - result is failed
+      # We got the expected error message
+      - "'The handshake operation timed out' in result.msg or 'unknown protocol' in result.msg or 'wrong version number' in result.msg"
+ 
+- name: Test timeout option
+  get_certificate:
+    host: "{{ httpbin_host }}"
+    port: 1234
+    timeout: 1
+    select_crypto_backend: "{{ select_crypto_backend }}"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result is not changed
+      - result is failed
+      # We got the expected error message
+      - "'Failed to get cert from port with error: timed out' == result.msg or 'Connection refused' in result.msg"
+
+- name: Test failure if ca_cert is not a valid file
+  get_certificate:
+    host: "{{ httpbin_host }}"
+    port: 443
+    ca_cert: dn.e
+    select_crypto_backend: "{{ select_crypto_backend }}"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result is not changed
+      - result is failed
+      # We got the correct response from the module
+      - "'ca_cert file does not exist' == result.msg"
+
+- name: Download CA Cert as pem from server
+  get_url:
+    url: "http://ansible.http.tests/cacert.pem"
+    dest: "{{ output_dir }}/temp.pem"
+
+- name: Get servers certificate comparing it to its own ca_cert file
+  get_certificate:
+    ca_cert: '{{ output_dir }}/temp.pem'
+    host: "{{ httpbin_host }}"
+    port: 443
+    select_crypto_backend: "{{ select_crypto_backend }}"
+  register: result
+
+- assert:
+    that:
+      - result is not changed
+      - result is not failed
+
+- name: Get a temp directory
+  tempfile:
+    state: directory
+  register: my_temp_dir
+
+- name: Deploy the bogus_ca.pem file
+  copy:
+    src: "bogus_ca.pem"
+    dest: "{{ my_temp_dir.path }}/bogus_ca.pem"
+
+- name: Get servers certificate comparing it to an invalid ca_cert file
+  get_certificate:
+    ca_cert: '{{ my_temp_dir.path }}/bogus_ca.pem'
+    host: "{{ httpbin_host }}"
+    port: 443
+    select_crypto_backend: "{{ select_crypto_backend }}"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result is not changed
+      - result.failed

@@ -1,0 +1,4 @@
+repo_link: https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm
+repo_name: mysql-community
+mysql_package_name: mysql-community-server
+my_cnf: /etc/my.cnf

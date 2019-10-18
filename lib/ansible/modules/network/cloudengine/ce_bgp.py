@@ -28,7 +28,7 @@ short_description: Manages BGP configuration on HUAWEI CloudEngine switches.
 description:
     - Manages BGP configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:
@@ -187,7 +187,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -892,7 +892,7 @@ class Bgp(object):
                 "<vrfName></vrfName>" + CE_GET_BGP_INSTANCE_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
-            check_vrf_name = (vrf_name)
+            check_vrf_name = vrf_name
 
             if state == "present":
                 if "<data/>" in recv_xml:
@@ -940,7 +940,7 @@ class Bgp(object):
                 module.fail_json(
                     msg='Error: The router_id %s is invalid.' % router_id)
 
-            conf_str = CE_GET_BGP_INSTANCE_HEADER + \
+            conf_str = CE_GET_BGP_INSTANCE_HEADER + "<vrfName>%s</vrfName>" % vrf_name + \
                 "<routerId></routerId>" + CE_GET_BGP_INSTANCE_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -976,7 +976,7 @@ class Bgp(object):
                 module.fail_json(
                     msg='Error: Please input vrf_name.')
 
-            conf_str = CE_GET_BGP_INSTANCE_HEADER + \
+            conf_str = CE_GET_BGP_INSTANCE_HEADER + "<vrfName>%s</vrfName>" % vrf_name + \
                 "<vrfRidAutoSel></vrfRidAutoSel>" + CE_GET_BGP_INSTANCE_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1006,7 +1006,7 @@ class Bgp(object):
                 module.fail_json(
                     msg='keepalive_time %s is out of [0 - 21845].' % keepalive_time)
             else:
-                conf_str = CE_GET_BGP_INSTANCE_HEADER + \
+                conf_str = CE_GET_BGP_INSTANCE_HEADER + "<vrfName>%s</vrfName>" % vrf_name + \
                     "<keepaliveTime></keepaliveTime>" + CE_GET_BGP_INSTANCE_TAIL
                 recv_xml = self.netconf_get_config(
                     module=module, conf_str=conf_str)
@@ -1047,7 +1047,7 @@ class Bgp(object):
                 module.fail_json(
                     msg='hold_time %s is out of [3 - 65535].' % hold_time)
             else:
-                conf_str = CE_GET_BGP_INSTANCE_HEADER + \
+                conf_str = CE_GET_BGP_INSTANCE_HEADER + "<vrfName>%s</vrfName>" % vrf_name + \
                     "<holdTime></holdTime>" + CE_GET_BGP_INSTANCE_TAIL
                 recv_xml = self.netconf_get_config(
                     module=module, conf_str=conf_str)
@@ -1088,7 +1088,7 @@ class Bgp(object):
                 module.fail_json(
                     msg='min_hold_time %s is out of [0, or 20 - 65535].' % min_hold_time)
             else:
-                conf_str = CE_GET_BGP_INSTANCE_HEADER + \
+                conf_str = CE_GET_BGP_INSTANCE_HEADER + "<vrfName>%s</vrfName>" % vrf_name + \
                     "<minHoldTime></minHoldTime>" + CE_GET_BGP_INSTANCE_TAIL
                 recv_xml = self.netconf_get_config(
                     module=module, conf_str=conf_str)
@@ -1129,7 +1129,7 @@ class Bgp(object):
                 module.fail_json(
                     msg='conn_retry_time %s is out of [1 - 65535].' % conn_retry_time)
             else:
-                conf_str = CE_GET_BGP_INSTANCE_HEADER + \
+                conf_str = CE_GET_BGP_INSTANCE_HEADER + "<vrfName>%s</vrfName>" % vrf_name + \
                     "<connRetryTime></connRetryTime>" + CE_GET_BGP_INSTANCE_TAIL
                 recv_xml = self.netconf_get_config(
                     module=module, conf_str=conf_str)
@@ -1168,7 +1168,7 @@ class Bgp(object):
                 module.fail_json(
                     msg='Error: Please input vrf_name.')
 
-            conf_str = CE_GET_BGP_INSTANCE_HEADER + \
+            conf_str = CE_GET_BGP_INSTANCE_HEADER + "<vrfName>%s</vrfName>" % vrf_name + \
                 "<ebgpIfSensitive></ebgpIfSensitive>" + CE_GET_BGP_INSTANCE_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1206,7 +1206,7 @@ class Bgp(object):
                 module.fail_json(
                     msg='Error: Please input vrf_name.')
 
-            conf_str = CE_GET_BGP_INSTANCE_HEADER + \
+            conf_str = CE_GET_BGP_INSTANCE_HEADER + "<vrfName>%s</vrfName>" % vrf_name + \
                 "<defaultAfType></defaultAfType>" + CE_GET_BGP_INSTANCE_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1254,7 +1254,7 @@ class Bgp(object):
             return result
         else:
             re_find = re.findall(
-                r'.*<asNumber>(.*)</asNumber>.*\s*<bgpEnable>(.*)</bgpEnable>.*', xml_str)
+                r'.*<bgpEnable>(.*)</bgpEnable>.*\s*<asNumber>(.*)</asNumber>.*', xml_str)
 
             if re_find:
                 return re_find
@@ -1471,7 +1471,8 @@ class Bgp(object):
             cmds.append(cmd)
 
         confed_id_number = module.params['confed_id_number']
-        if confed_id_number:
+        confed_peer_as_num = module.params['confed_peer_as_num']
+        if confed_id_number and not confed_peer_as_num:
             conf_str += "<confedIdNumber></confedIdNumber>"
 
             cmd = "undo confederation id"
@@ -1543,8 +1544,7 @@ class Bgp(object):
         if suppress_interval:
             conf_str += "<suppressInterval>60</suppressInterval>"
 
-            cmd = "nexthop recursive-lookup restrain suppress-interval %s hold-interval %s " \
-                  "clear-interval %s" % (suppress_interval, hold_interval, clear_interval)
+            cmd = "undo nexthop recursive-lookup restrain suppress-interval hold-interval clear-interval"
             cmds.append(cmd)
 
         if hold_interval:
@@ -1675,14 +1675,26 @@ class Bgp(object):
         if "<ok/>" not in recv_xml:
             module.fail_json(msg='Error: Merge bgp instance failed.')
 
+        cmds = []
+
+        if vrf_name != "_public_":
+            cmd = "ipv4-family vpn-instance %s" % vrf_name
+            cmds.append(cmd)
+
+        return cmds
+
     def create_bgp_instance(self, **kwargs):
         """ create_bgp_instance """
 
         module = kwargs["module"]
         conf_str = CE_CREATE_BGP_INSTANCE_HEADER
 
+        cmds = []
+
         vrf_name = module.params['vrf_name']
         if vrf_name:
+            if vrf_name == "_public_":
+                return cmds
             conf_str += "<vrfName>%s</vrfName>" % vrf_name
 
         conf_str += CE_CREATE_BGP_INSTANCE_TAIL
@@ -1691,8 +1703,6 @@ class Bgp(object):
 
         if "<ok/>" not in recv_xml:
             module.fail_json(msg='Error: Create bgp instance failed.')
-
-        cmds = []
 
         if vrf_name != "_public_":
             cmd = "ipv4-family vpn-instance %s" % vrf_name
@@ -1735,14 +1745,23 @@ class Bgp(object):
 
         cmds = []
 
+        default_af_type = module.params['default_af_type']
+        if default_af_type:
+            conf_str += "<defaultAfType>%s</defaultAfType>" % default_af_type
+
+            if vrf_name != "_public_":
+                if default_af_type == "ipv6uni":
+                    cmd = "ipv6-family vpn-instance %s" % vrf_name
+                    cmds.append(cmd)
+
         vrf_rid_auto_sel = module.params['vrf_rid_auto_sel']
         if vrf_rid_auto_sel != 'no_use':
             conf_str += "<vrfRidAutoSel>%s</vrfRidAutoSel>" % vrf_rid_auto_sel
 
             if vrf_rid_auto_sel == "true":
-                cmd = "router-id vpn-instance auto-select"
+                cmd = "router-id auto-select"
             else:
-                cmd = "undo router-id vpn-instance auto-select"
+                cmd = "undo router-id auto-select"
             cmds.append(cmd)
 
         router_id = module.params['router_id']
@@ -1789,22 +1808,6 @@ class Bgp(object):
             else:
                 cmd = "undo ebgp-interface-sensitive"
             cmds.append(cmd)
-
-        default_af_type = module.params['default_af_type']
-        if default_af_type:
-            conf_str += "<defaultAfType>%s</defaultAfType>" % default_af_type
-
-            if vrf_name != "_public_":
-                if default_af_type == "ipv6uni":
-                    cmd = "ipv6-family vpn-instance %s" % vrf_name
-                    cmds.append(cmd)
-                else:
-                    cmd = "ipv4-family vpn-instance %s" % vrf_name
-                    cmds.append(cmd)
-        else:
-            if vrf_name != "_public_":
-                cmd = "ipv4-family vpn-instance %s" % vrf_name
-                cmds.append(cmd)
 
         conf_str += CE_MERGE_BGP_INSTANCE_TAIL
 
@@ -1921,7 +1924,7 @@ class Bgp(object):
 
         vrf_rid_auto_sel = module.params['vrf_rid_auto_sel']
         if vrf_rid_auto_sel != 'no_use':
-            conf_str += "<vrfRidAutoSel>%s</vrfRidAutoSel>" % vrf_rid_auto_sel
+            conf_str += "<vrfRidAutoSel>%s</vrfRidAutoSel>" % "false"
 
             cmd = "undo router-id vpn-instance auto-select"
             cmds.append(cmd)
@@ -1958,7 +1961,7 @@ class Bgp(object):
         if ebgp_if_sensitive != 'no_use':
             conf_str += "<ebgpIfSensitive>%s</ebgpIfSensitive>" % "true"
 
-            cmd = "undo ebgp-interface-sensitive"
+            cmd = "ebgp-interface-sensitive"
             cmds.append(cmd)
 
         default_af_type = module.params['default_af_type']
@@ -2122,17 +2125,23 @@ def main():
     need_bgp_instance_other_rst = ce_bgp_obj.check_bgp_instance_other_args(
         module=module)
 
+    router_id_exist = ce_bgp_obj.get_bgp_instance(module=module)
+    existing["bgp instance"] = router_id_exist
+
     # bgp enable/disable
     if need_bgp_enable:
 
         bgp_enable_exist = ce_bgp_obj.get_bgp_enable(module=module)
         existing["bgp enable"] = bgp_enable_exist
-
-        asnumber_exist = bgp_enable_exist[0][0]
-        bgpenable_exist = bgp_enable_exist[0][1]
+        if bgp_enable_exist:
+            asnumber_exist = bgp_enable_exist[0][1]
+            bgpenable_exist = bgp_enable_exist[0][0]
+        else:
+            asnumber_exist = None
+            bgpenable_exist = None
 
         if state == "present":
-            bgp_enable_new = (as_number, "true")
+            bgp_enable_new = ("true", as_number)
 
             if bgp_enable_new in bgp_enable_exist:
                 pass
@@ -2146,7 +2155,8 @@ def main():
                     updates.append(item)
 
         else:
-            if need_bgp_enable_other_rst["need_cfg"] or need_bgp_confed or need_bgp_instance_other_rst["need_cfg"]:
+            if need_bgp_enable_other_rst["need_cfg"] or need_bgp_confed or \
+                    need_bgp_instance_other_rst["need_cfg"] or need_bgp_instance:
                 pass
             elif bgpenable_exist == "false":
                 pass
@@ -2231,20 +2241,18 @@ def main():
         end_state["confederation peer as"] = confed_end
 
     # bgp instance
-    router_id_exist = ce_bgp_obj.get_bgp_instance(module=module)
-    existing["bgp instance"] = router_id_exist
-    if need_bgp_instance:
-        router_id_new = (vrf_name)
+    if need_bgp_instance and default_af_type != "ipv6uni":
+        router_id_new = vrf_name
 
         if state == "present":
             if len(router_id_exist) == 0:
                 cmd = ce_bgp_obj.create_bgp_instance(module=module)
                 changed = True
-                updates.append(cmd)
+                updates.extend(cmd)
             elif router_id_new not in router_id_exist:
-                ce_bgp_obj.merge_bgp_instance(module=module)
+                cmd = ce_bgp_obj.merge_bgp_instance(module=module)
                 changed = True
-
+                updates.extend(cmd)
         else:
             if not need_bgp_instance_other_rst["need_cfg"]:
                 if vrf_name != "_public_":
@@ -2257,9 +2265,6 @@ def main():
                         changed = True
                         for item in cmd:
                             updates.append(item)
-
-    router_id_end = ce_bgp_obj.get_bgp_instance(module=module)
-    end_state["bgp instance"] = router_id_end
 
     # bgp instance other
     exist_tmp = dict()
@@ -2293,6 +2298,9 @@ def main():
     need_bgp_instance_other_rst = ce_bgp_obj.check_bgp_instance_other_args(
         module=module)
 
+    router_id_end = ce_bgp_obj.get_bgp_instance(module=module)
+    end_state["bgp instance"] = router_id_end
+
     end_tmp = dict()
     for item in need_bgp_instance_other_rst:
         if item != "need_cfg":
@@ -2300,7 +2308,9 @@ def main():
 
     if end_tmp:
         end_state["bgp instance other"] = end_tmp
-
+    if end_state == existing:
+        changed = False
+        updates = list()
     results = dict()
     results['proposed'] = proposed
     results['existing'] = existing

@@ -9,7 +9,7 @@ from ansible.modules.storage.netapp.netapp_e_ldap import Ldap
 from units.modules.utils import ModuleTestCase, set_module_args, AnsibleFailJson, AnsibleExitJson
 
 __metaclass__ = type
-from ansible.compat.tests import mock
+from units.compat import mock
 
 
 class LdapTest(ModuleTestCase):

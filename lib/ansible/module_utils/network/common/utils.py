@@ -25,19 +25,29 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
+# Networking tools for network modules only
+
 import re
 import ast
 import operator
 import socket
+import json
 
 from itertools import chain
-from struct import pack
-from socket import inet_aton, inet_ntoa
+from socket import inet_aton
+from json import dumps
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import iteritems, string_types
-from ansible.module_utils.six.moves import zip
-from ansible.module_utils.basic import AnsibleFallbackNotFound
+from ansible.module_utils import basic
+from ansible.module_utils.parsing.convert_bool import boolean
+
+# Backwards compatibility for 3rd party modules
+from ansible.module_utils.common.network import (
+    to_bits, is_netmask, is_masklen, to_netmask, to_masklen, to_subnet, to_ipv6_network, VALID_MASKS
+)
 
 try:
     from jinja2 import Environment, StrictUndefined
@@ -49,7 +59,6 @@ except ImportError:
 
 OPERATORS = frozenset(['ge', 'gt', 'eq', 'neq', 'lt', 'le'])
 ALIASES = frozenset([('min', 'ge'), ('max', 'le'), ('exactly', 'eq'), ('neq', 'ne')])
-VALID_MASKS = [2**8 - 2**i for i in range(0, 9)]
 
 
 def to_list(val):
@@ -74,6 +83,7 @@ def transform_commands(module):
         output=dict(),
         prompt=dict(type='list'),
         answer=dict(type='list'),
+        newline=dict(type='bool', default=True),
         sendonly=dict(type='bool', default=False),
         check_all=dict(type='bool', default=False),
     ), module)
@@ -187,7 +197,7 @@ class Entity(object):
                             fallback_args = item
                     try:
                         value[name] = fallback_strategy(*fallback_args, **fallback_kwargs)
-                    except AnsibleFallbackNotFound:
+                    except basic.AnsibleFallbackNotFound:
                         continue
 
             if attr.get('required') and value.get(name) is None:
@@ -258,7 +268,9 @@ def dict_diff(base, comparable):
         if isinstance(value, dict):
             item = comparable.get(key)
             if item is not None:
-                updates[key] = dict_diff(value, comparable[key])
+                sub_diff = dict_diff(value, comparable[key])
+                if sub_diff:
+                    updates[key] = sub_diff
         else:
             comparable_value = comparable.get(key)
             if comparable_value is not None:
@@ -296,7 +308,10 @@ def dict_merge(base, other):
             if key in other:
                 item = other.get(key)
                 if item is not None:
-                    combined[key] = dict_merge(value, other[key])
+                    if isinstance(other[key], Mapping):
+                        combined[key] = dict_merge(value, other[key])
+                    else:
+                        combined[key] = other[key]
                 else:
                     combined[key] = item
             else:
@@ -331,6 +346,26 @@ def dict_merge(base, other):
         combined[key] = other.get(key)
 
     return combined
+
+
+def param_list_to_dict(param_list, unique_key="name", remove_key=True):
+    """Rotates a list of dictionaries to be a dictionary of dictionaries.
+
+    :param param_list: The aforementioned list of dictionaries
+    :param unique_key: The name of a key which is present and unique in all of param_list's dictionaries. The value
+    behind this key will be the key each dictionary can be found at in the new root dictionary
+    :param remove_key: If True, remove unique_key from the individual dictionaries before returning.
+    """
+    param_dict = {}
+    for params in param_list:
+        params = params.copy()
+        if remove_key:
+            name = params.pop(unique_key)
+        else:
+            name = params.get(unique_key)
+        param_dict[name] = params
+
+    return param_dict
 
 
 def conditional(expr, val, cast=None):
@@ -406,6 +441,9 @@ def load_provider(spec, args):
                 provider[key] = value['default']
             else:
                 provider[key] = None
+    if 'authorize' in provider:
+        # Coerce authorize to provider if a string has somehow snuck in.
+        provider['authorize'] = boolean(provider['authorize'] or False)
     args['provider'] = provider
     return provider
 
@@ -422,8 +460,145 @@ def _fallback(fallback):
             args = item
     try:
         return strategy(*args, **kwargs)
-    except AnsibleFallbackNotFound:
+    except basic.AnsibleFallbackNotFound:
         pass
+
+
+def generate_dict(spec):
+    """
+    Generate dictionary which is in sync with argspec
+
+    :param spec: A dictionary that is the argspec of the module
+    :rtype: A dictionary
+    :returns: A dictionary in sync with argspec with default value
+    """
+    obj = {}
+    if not spec:
+        return obj
+
+    for key, val in iteritems(spec):
+        if 'default' in val:
+            dct = {key: val['default']}
+        elif 'type' in val and val['type'] == 'dict':
+            dct = {key: generate_dict(val['options'])}
+        else:
+            dct = {key: None}
+        obj.update(dct)
+    return obj
+
+
+def parse_conf_arg(cfg, arg):
+    """
+    Parse config based on argument
+
+    :param cfg: A text string which is a line of configuration.
+    :param arg: A text string which is to be matched.
+    :rtype: A text string
+    :returns: A text string if match is found
+    """
+    match = re.search(r'%s (.+)(\n|$)' % arg, cfg, re.M)
+    if match:
+        result = match.group(1).strip()
+    else:
+        result = None
+    return result
+
+
+def parse_conf_cmd_arg(cfg, cmd, res1, res2=None, delete_str='no'):
+    """
+    Parse config based on command
+
+    :param cfg: A text string which is a line of configuration.
+    :param cmd: A text string which is the command to be matched
+    :param res1: A text string to be returned if the command is present
+    :param res2: A text string to be returned if the negate command
+                 is present
+    :param delete_str: A text string to identify the start of the
+                 negate command
+    :rtype: A text string
+    :returns: A text string if match is found
+    """
+    match = re.search(r'\n\s+%s(\n|$)' % cmd, cfg)
+    if match:
+        return res1
+    if res2 is not None:
+        match = re.search(r'\n\s+%s %s(\n|$)' % (delete_str, cmd), cfg)
+        if match:
+            return res2
+    return None
+
+
+def get_xml_conf_arg(cfg, path, data='text'):
+    """
+    :param cfg: The top level configuration lxml Element tree object
+    :param path: The relative xpath w.r.t to top level element (cfg)
+           to be searched in the xml hierarchy
+    :param data: The type of data to be returned for the matched xml node.
+        Valid values are text, tag, attrib, with default as text.
+    :return: Returns the required type for the matched xml node or else None
+    """
+    match = cfg.xpath(path)
+    if len(match):
+        if data == 'tag':
+            result = getattr(match[0], 'tag')
+        elif data == 'attrib':
+            result = getattr(match[0], 'attrib')
+        else:
+            result = getattr(match[0], 'text')
+    else:
+        result = None
+    return result
+
+
+def remove_empties(cfg_dict):
+    """
+    Generate final config dictionary
+
+    :param cfg_dict: A dictionary parsed in the facts system
+    :rtype: A dictionary
+    :returns: A dictionary by eliminating keys that have null values
+    """
+    final_cfg = {}
+    if not cfg_dict:
+        return final_cfg
+
+    for key, val in iteritems(cfg_dict):
+        dct = None
+        if isinstance(val, dict):
+            child_val = remove_empties(val)
+            if child_val:
+                dct = {key: child_val}
+        elif (isinstance(val, list) and val
+              and all([isinstance(x, dict) for x in val])):
+            child_val = [remove_empties(x) for x in val]
+            if child_val:
+                dct = {key: child_val}
+        elif val not in [None, [], {}, (), '']:
+            dct = {key: val}
+        if dct:
+            final_cfg.update(dct)
+    return final_cfg
+
+
+def validate_config(spec, data):
+    """
+    Validate if the input data against the AnsibleModule spec format
+    :param spec: Ansible argument spec
+    :param data: Data to be validated
+    :return:
+    """
+    params = basic._ANSIBLE_ARGS
+    basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': data}))
+    validated_data = basic.AnsibleModule(spec).params
+    basic._ANSIBLE_ARGS = params
+    return validated_data
+
+
+def search_obj_in_list(name, lst, key='name'):
+    for item in lst:
+        if item[key] == name:
+            return item
+    return None
 
 
 class Template:
@@ -452,7 +627,7 @@ class Template:
         if value:
             try:
                 return ast.literal_eval(value)
-            except:
+            except Exception:
                 return str(value)
         else:
             return None
@@ -463,106 +638,3 @@ class Template:
                 if marker in data:
                     return True
         return False
-
-
-def is_netmask(val):
-    parts = str(val).split('.')
-    if not len(parts) == 4:
-        return False
-    for part in parts:
-        try:
-            if int(part) not in VALID_MASKS:
-                raise ValueError
-        except ValueError:
-            return False
-    return True
-
-
-def is_masklen(val):
-    try:
-        return 0 <= int(val) <= 32
-    except ValueError:
-        return False
-
-
-def to_bits(val):
-    """ converts a netmask to bits """
-    bits = ''
-    for octet in val.split('.'):
-        bits += bin(int(octet))[2:].zfill(8)
-    return str
-
-
-def to_netmask(val):
-    """ converts a masklen to a netmask """
-    if not is_masklen(val):
-        raise ValueError('invalid value for masklen')
-
-    bits = 0
-    for i in range(32 - int(val), 32):
-        bits |= (1 << i)
-
-    return inet_ntoa(pack('>I', bits))
-
-
-def to_masklen(val):
-    """ converts a netmask to a masklen """
-    if not is_netmask(val):
-        raise ValueError('invalid value for netmask: %s' % val)
-
-    bits = list()
-    for x in val.split('.'):
-        octet = bin(int(x)).count('1')
-        bits.append(octet)
-
-    return sum(bits)
-
-
-def to_subnet(addr, mask, dotted_notation=False):
-    """ coverts an addr / mask pair to a subnet in cidr notation """
-    try:
-        if not is_masklen(mask):
-            raise ValueError
-        cidr = int(mask)
-        mask = to_netmask(mask)
-    except ValueError:
-        cidr = to_masklen(mask)
-
-    addr = addr.split('.')
-    mask = mask.split('.')
-
-    network = list()
-    for s_addr, s_mask in zip(addr, mask):
-        network.append(str(int(s_addr) & int(s_mask)))
-
-    if dotted_notation:
-        return '%s %s' % ('.'.join(network), to_netmask(cidr))
-    return '%s/%s' % ('.'.join(network), cidr)
-
-
-def to_ipv6_network(addr):
-    """ IPv6 addresses are eight groupings. The first three groupings (48 bits) comprise the network address. """
-
-    # Split by :: to identify omitted zeros
-    ipv6_prefix = addr.split('::')[0]
-
-    # Get the first three groups, or as many as are found + ::
-    found_groups = []
-    for group in ipv6_prefix.split(':'):
-        found_groups.append(group)
-        if len(found_groups) == 3:
-            break
-    if len(found_groups) < 3:
-        found_groups.append('::')
-
-    # Concatenate network address parts
-    network_addr = ''
-    for group in found_groups:
-        if group != '::':
-            network_addr += str(group)
-        network_addr += str(':')
-
-    # Ensure network address ends with ::
-    if not network_addr.endswith('::'):
-        network_addr += str(':')
-    return network_addr

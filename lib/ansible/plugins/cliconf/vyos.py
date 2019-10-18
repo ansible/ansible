@@ -19,7 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+cliconf: vyos
+short_description: Use vyos cliconf to run command on VyOS platform
+description:
+  - This vyos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from VyOS network devices.
+version_added: "2.4"
+"""
+
 import re
 import json
 
@@ -27,6 +37,7 @@ from itertools import chain
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
@@ -41,7 +52,7 @@ class Cliconf(CliconfBase):
         reply = self.get('show version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
-        match = re.search(r'Version:\s*(\S+)', data)
+        match = re.search(r'Version:\s*(.*)', data)
         if match:
             device_info['network_os_version'] = match.group(1)
 
@@ -60,10 +71,18 @@ class Cliconf(CliconfBase):
             if format not in option_values['format']:
                 raise ValueError("'format' value %s is invalid. Valid values of format are %s" % (format, ', '.join(option_values['format'])))
 
+        if not flags:
+            flags = []
+
         if format == 'text':
-            out = self.send_command('show configuration')
+            command = 'show configuration'
         else:
-            out = self.send_command('show configuration commands')
+            command = 'show configuration commands'
+
+        command += ' '.join(to_list(flags))
+        command = command.strip()
+
+        out = self.send_command(command)
         return out
 
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
@@ -75,7 +94,7 @@ class Cliconf(CliconfBase):
         requests = []
         self.send_command('configure')
         for cmd in to_list(candidate):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             results.append(self.send_command(**cmd))
@@ -98,6 +117,8 @@ class Cliconf(CliconfBase):
                 self.discard_changes()
         else:
             self.send_command('exit')
+            if to_text(self._connection.get_prompt(), errors='surrogate_or_strict').strip().endswith('#'):
+                self.discard_changes()
 
         if diff_config:
             resp['diff'] = diff_config
@@ -105,14 +126,13 @@ class Cliconf(CliconfBase):
         resp['request'] = requests
         return resp
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, newline=True, check_all=False):
         if not command:
             raise ValueError('must provide value of command to execute')
-
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
 
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def commit(self, comment=None):
         if comment:
@@ -199,7 +219,7 @@ class Cliconf(CliconfBase):
 
         responses = list()
         for cmd in to_list(commands):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             output = cmd.pop('output', None)
@@ -241,10 +261,8 @@ class Cliconf(CliconfBase):
         }
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'get_diff', 'run_commands']
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
+        result['rpc'] += ['commit', 'discard_changes', 'get_diff', 'run_commands']
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
         return json.dumps(result)

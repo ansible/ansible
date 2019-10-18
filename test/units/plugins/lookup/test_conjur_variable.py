@@ -22,7 +22,7 @@ __metaclass__ = type
 
 
 import pytest
-from ansible.compat.tests.mock import MagicMock
+from units.compat.mock import MagicMock
 from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import http_client
 from ansible.plugins.lookup import conjur_variable
@@ -68,7 +68,7 @@ class TestLookupModule:
         mock_response = MagicMock(spec_set=http_client.HTTPResponse)
         try:
             mock_response.getcode.return_value = 200
-        except:
+        except Exception:
             # HTTPResponse is a Python 3 only feature. This uses a generic mock for python 2.6
             mock_response = MagicMock()
             mock_response.getcode.return_value = 200
@@ -83,7 +83,7 @@ class TestLookupModule:
         mock_response = MagicMock(spec_set=http_client.HTTPResponse)
         try:
             mock_response.getcode.return_value = 200
-        except:
+        except Exception:
             # HTTPResponse is a Python 3 only feature. This uses a generic mock for python 2.6
             mock_response = MagicMock()
             mock_response.getcode.return_value = 200
@@ -99,7 +99,7 @@ class TestLookupModule:
             mock_response = MagicMock(spec_set=http_client.HTTPResponse)
             try:
                 mock_response.getcode.return_value = code
-            except:
+            except Exception:
                 # HTTPResponse is a Python 3 only feature. This uses a generic mock for python 2.6
                 mock_response = MagicMock()
                 mock_response.getcode.return_value = code

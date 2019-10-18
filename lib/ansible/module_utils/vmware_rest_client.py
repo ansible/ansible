@@ -6,37 +6,43 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import traceback
+
+REQUESTS_IMP_ERR = None
 try:
     import requests
     HAS_REQUESTS = True
 except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
     HAS_REQUESTS = False
 
+PYVMOMI_IMP_ERR = None
 try:
     from pyVim import connect
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
 except ImportError:
+    PYVMOMI_IMP_ERR = traceback.format_exc()
     HAS_PYVMOMI = False
 
+VSPHERE_IMP_ERR = None
 try:
-    from vmware.vapi.lib.connect import get_requests_connector
-    from vmware.vapi.security.session import create_session_security_context
-    from vmware.vapi.security.user_password import create_user_password_security_context
-    from com.vmware.cis_client import Session
     from com.vmware.vapi.std_client import DynamicID
-    HAS_VCLOUD = True
-except ImportError:
-    HAS_VCLOUD = False
-
-try:
-    from vmware.vapi.stdlib.client.factories import StubConfigurationFactory
+    from vmware.vapi.vsphere.client import create_vsphere_client
+    from com.vmware.vapi.std.errors_client import Unauthorized
+    from com.vmware.content.library_client import Item
+    from com.vmware.vcenter_client import (Folder,
+                                           Datacenter,
+                                           ResourcePool,
+                                           Datastore,
+                                           Cluster,
+                                           Host)
     HAS_VSPHERE = True
 except ImportError:
+    VSPHERE_IMP_ERR = traceback.format_exc()
     HAS_VSPHERE = False
 
-from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, missing_required_lib
 
 
 class VmwareRestClient(object):
@@ -48,72 +54,40 @@ class VmwareRestClient(object):
         self.module = module
         self.params = module.params
         self.check_required_library()
-        self.connect = self.connect_to_rest()
+        self.api_client = self.connect_to_vsphere_client()
+
+    # Helper function
+    def get_error_message(self, error):
+        """
+        Helper function to show human readable error messages.
+        """
+        err_msg = []
+        if not error.messages:
+            if isinstance(error, Unauthorized):
+                return "Authorization required."
+            return "Generic error occurred."
+
+        for err in error.messages:
+            err_msg.append(err.default_message % err.args)
+
+        return " ,".join(err_msg)
 
     def check_required_library(self):
         """
-        Function to check required libraries
+        Check required libraries
 
         """
         if not HAS_REQUESTS:
-            self.module.fail_json(msg="Unable to find 'requests' Python library which is required."
-                                      " Please install using 'pip install requests'")
+            self.module.fail_json(msg=missing_required_lib('requests'),
+                                  exception=REQUESTS_IMP_ERR)
         if not HAS_PYVMOMI:
-            self.module.fail_json(msg="PyVmomi Python module required. Install using 'pip install PyVmomi'")
+            self.module.fail_json(msg=missing_required_lib('PyVmomi'),
+                                  exception=PYVMOMI_IMP_ERR)
         if not HAS_VSPHERE:
-            self.module.fail_json(msg="Unable to find 'vSphere Automation SDK' Python library which is required."
-                                      " Please refer this URL for installation steps"
-                                      " - https://code.vmware.com/web/sdk/65/vsphere-automation-python")
-        if not HAS_VCLOUD:
-            self.module.fail_json(msg="Unable to find 'vCloud Suite SDK' Python library which is required."
-                                      " Please refer this URL for installation steps"
-                                      " - https://code.vmware.com/web/sdk/60/vcloudsuite-python")
-
-    def connect_to_rest(self):
-        """
-        Function to connect to server using username and password
-
-        """
-        session = requests.Session()
-        session.verify = self.params.get('validate_certs')
-
-        username = self.params.get('username', None)
-        password = self.params.get('password', None)
-
-        if not all([self.params.get('hostname', None), username, password]):
-            self.module.fail_json(msg="Missing one of the following : hostname, username, password."
-                                      " Please read the documentation for more information.")
-
-        vcenter_url = "%(protocol)s://%(hostname)s/api" % self.params
-
-        # Get request connector
-        connector = get_requests_connector(session=session, url=vcenter_url)
-        # Create standard Configuration
-        stub_config = StubConfigurationFactory.new_std_configuration(connector)
-        # Use username and password in the security context to authenticate
-        security_context = create_user_password_security_context(username, password)
-        # Login
-        stub_config.connector.set_security_context(security_context)
-        # Create the stub for the session service and login by creating a session.
-        session_svc = Session(stub_config)
-        session_id = None
-        try:
-            session_id = session_svc.create()
-        except OSError as os_err:
-            self.module.fail_json(msg="Failed to login to %s: %s" % (self.params['hostname'],
-                                                                     to_native(os_err)))
-
-        if session_id is None:
-            self.module.fail_json(msg="Failed to create session using provided credentials."
-                                      " Please check hostname, username and password.")
-        # After successful authentication, store the session identifier in the security
-        # context of the stub and use that for all subsequent remote requests
-        session_security_context = create_session_security_context(session_id)
-        stub_config.connector.set_security_context(session_security_context)
-
-        if stub_config is None:
-            self.module.fail_json(msg="Failed to login to %(hostname)s" % self.params)
-        return stub_config
+            self.module.fail_json(
+                msg=missing_required_lib('vSphere Automation SDK',
+                                         url='https://code.vmware.com/web/sdk/65/vsphere-automation-python'),
+                exception=VSPHERE_IMP_ERR)
 
     @staticmethod
     def vmware_client_argument_spec():
@@ -134,3 +108,264 @@ class VmwareRestClient(object):
                                 fallback=(env_fallback, ['VMWARE_VALIDATE_CERTS']),
                                 default=True),
         )
+
+    def connect_to_vsphere_client(self):
+        """
+        Connect to vSphere API Client with Username and Password
+
+        """
+        username = self.params.get('username')
+        password = self.params.get('password')
+        hostname = self.params.get('hostname')
+        session = requests.Session()
+        session.verify = self.params.get('validate_certs')
+
+        if not all([hostname, username, password]):
+            self.module.fail_json(msg="Missing one of the following : hostname, username, password."
+                                      " Please read the documentation for more information.")
+
+        client = create_vsphere_client(
+            server=hostname,
+            username=username,
+            password=password,
+            session=session)
+        if client is None:
+            self.module.fail_json(msg="Failed to login to %s" % hostname)
+
+        return client
+
+    def get_tags_for_object(self, tag_service=None, tag_assoc_svc=None, dobj=None):
+        """
+        Return list of tag objects associated with an object
+        Args:
+            dobj: Dynamic object
+            tag_service: Tag service object
+            tag_assoc_svc: Tag Association object
+        Returns: List of tag objects associated with the given object
+        """
+        # This method returns list of tag objects only,
+        # Please use get_tags_for_dynamic_obj for more object details
+        tags = []
+        if not dobj:
+            return tags
+
+        if not tag_service:
+            tag_service = self.api_client.tagging.Tag
+
+        if not tag_assoc_svc:
+            tag_assoc_svc = self.api_client.tagging.TagAssociation
+
+        tag_ids = tag_assoc_svc.list_attached_tags(dobj)
+
+        for tag_id in tag_ids:
+            tags.append(tag_service.get(tag_id))
+
+        return tags
+
+    def get_tags_for_dynamic_obj(self, mid=None, type=None):
+        """
+        Return list of tag object details associated with object
+        Args:
+            mid: Dynamic object for specified object
+            type: Type of DynamicID to lookup
+
+        Returns: List of tag object details associated with the given object
+
+        """
+        tags = []
+        if mid is None:
+            return tags
+        dynamic_managed_object = DynamicID(type=type, id=mid)
+
+        temp_tags_model = self.get_tags_for_object(dynamic_managed_object)
+
+        category_service = self.api_client.tagging.Category
+
+        for tag_obj in temp_tags_model:
+            tags.append({
+                'id': tag_obj.id,
+                'category_name': category_service.get(tag_obj.category_id).name,
+                'name': tag_obj.name,
+                'description': tag_obj.description,
+                'category_id': tag_obj.category_id,
+            })
+
+        return tags
+
+    def get_tags_for_cluster(self, cluster_mid=None):
+        """
+        Return list of tag object associated with cluster
+        Args:
+            cluster_mid: Dynamic object for cluster
+
+        Returns: List of tag object associated with the given cluster
+
+        """
+        return self.get_tags_for_dynamic_obj(mid=cluster_mid, type='ClusterComputeResource')
+
+    def get_tags_for_hostsystem(self, hostsystem_mid=None):
+        """
+        Return list of tag object associated with host system
+        Args:
+            hostsystem_mid: Dynamic object for host system
+
+        Returns: List of tag object associated with the given host system
+
+        """
+        return self.get_tags_for_dynamic_obj(mid=hostsystem_mid, type='HostSystem')
+
+    def get_tags_for_vm(self, vm_mid=None):
+        """
+        Return list of tag object associated with virtual machine
+        Args:
+            vm_mid: Dynamic object for virtual machine
+
+        Returns: List of tag object associated with the given virtual machine
+
+        """
+        return self.get_tags_for_dynamic_obj(mid=vm_mid, type='VirtualMachine')
+
+    def get_vm_tags(self, tag_service=None, tag_association_svc=None, vm_mid=None):
+        """
+        Return list of tag name associated with virtual machine
+        Args:
+            tag_service:  Tag service object
+            tag_association_svc: Tag association object
+            vm_mid: Dynamic object for virtual machine
+
+        Returns: List of tag names associated with the given virtual machine
+
+        """
+        # This API returns just names of tags
+        # Please use get_tags_for_vm for more tag object details
+        tags = []
+        if vm_mid is None:
+            return tags
+        dynamic_managed_object = DynamicID(type='VirtualMachine', id=vm_mid)
+
+        temp_tags_model = self.get_tags_for_object(tag_service, tag_association_svc, dynamic_managed_object)
+
+        for tag_obj in temp_tags_model:
+            tags.append(tag_obj.name)
+
+        return tags
+
+    def get_library_item_by_name(self, name):
+        """
+        Returns the identifier of the library item with the given name.
+
+        Args:
+            name (str): The name of item to look for
+
+        Returns:
+            str: The item ID or None if the item is not found
+        """
+        find_spec = Item.FindSpec(name=name)
+        item_ids = self.api_client.content.library.Item.find(find_spec)
+        item_id = item_ids[0] if item_ids else None
+        return item_id
+
+    def get_datacenter_by_name(self, datacenter_name):
+        """
+        Returns the identifier of a datacenter
+        Note: The method assumes only one datacenter with the mentioned name.
+        """
+        filter_spec = Datacenter.FilterSpec(names=set([datacenter_name]))
+        datacenter_summaries = self.api_client.vcenter.Datacenter.list(filter_spec)
+        datacenter = datacenter_summaries[0].datacenter if len(datacenter_summaries) > 0 else None
+        return datacenter
+
+    def get_folder_by_name(self, datacenter_name, folder_name):
+        """
+        Returns the identifier of a folder
+        with the mentioned names.
+        """
+        datacenter = self.get_datacenter_by_name(datacenter_name)
+        if not datacenter:
+            return None
+        filter_spec = Folder.FilterSpec(type=Folder.Type.VIRTUAL_MACHINE,
+                                        names=set([folder_name]),
+                                        datacenters=set([datacenter]))
+        folder_summaries = self.api_client.vcenter.Folder.list(filter_spec)
+        folder = folder_summaries[0].folder if len(folder_summaries) > 0 else None
+        return folder
+
+    def get_resource_pool_by_name(self, datacenter_name, resourcepool_name):
+        """
+        Returns the identifier of a resource pool
+        with the mentioned names.
+        """
+        datacenter = self.get_datacenter_by_name(datacenter_name)
+        if not datacenter:
+            return None
+        names = set([resourcepool_name]) if resourcepool_name else None
+        filter_spec = ResourcePool.FilterSpec(datacenters=set([datacenter]),
+                                              names=names)
+        resource_pool_summaries = self.api_client.vcenter.ResourcePool.list(filter_spec)
+        resource_pool = resource_pool_summaries[0].resource_pool if len(resource_pool_summaries) > 0 else None
+        return resource_pool
+
+    def get_datastore_by_name(self, datacenter_name, datastore_name):
+        """
+        Returns the identifier of a datastore
+        with the mentioned names.
+        """
+        datacenter = self.get_datacenter_by_name(datacenter_name)
+        if not datacenter:
+            return None
+        names = set([datastore_name]) if datastore_name else None
+        filter_spec = Datastore.FilterSpec(datacenters=set([datacenter]),
+                                           names=names)
+        datastore_summaries = self.api_client.vcenter.Datastore.list(filter_spec)
+        datastore = datastore_summaries[0].datastore if len(datastore_summaries) > 0 else None
+        return datastore
+
+    def get_cluster_by_name(self, datacenter_name, cluster_name):
+        """
+        Returns the identifier of a cluster
+        with the mentioned names.
+        """
+        datacenter = self.get_datacenter_by_name(datacenter_name)
+        if not datacenter:
+            return None
+        names = set([cluster_name]) if cluster_name else None
+        filter_spec = Cluster.FilterSpec(datacenters=set([datacenter]),
+                                         names=names)
+        cluster_summaries = self.api_client.vcenter.Cluster.list(filter_spec)
+        cluster = cluster_summaries[0].cluster if len(cluster_summaries) > 0 else None
+        return cluster
+
+    def get_host_by_name(self, datacenter_name, host_name):
+        """
+        Returns the identifier of a Host
+        with the mentioned names.
+        """
+        datacenter = self.get_datacenter_by_name(datacenter_name)
+        if not datacenter:
+            return None
+        names = set([host_name]) if host_name else None
+        filter_spec = Host.FilterSpec(datacenters=set([datacenter]),
+                                      names=names)
+        host_summaries = self.api_client.vcenter.Host.list(filter_spec)
+        host = host_summaries[0].host if len(host_summaries) > 0 else None
+        return host
+
+    @staticmethod
+    def search_svc_object_by_name(service, svc_obj_name=None):
+        """
+        Return service object by name
+        Args:
+            service: Service object
+            svc_obj_name: Name of service object to find
+
+        Returns: Service object if found else None
+
+        """
+        if not svc_obj_name:
+            return None
+
+        for svc_object in service.list():
+            svc_obj = service.get(svc_object)
+            if svc_obj.name == svc_obj_name:
+                return svc_obj
+        return None

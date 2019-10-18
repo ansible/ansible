@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -44,17 +44,60 @@ options:
     description:
     - List of vNICs used by the LAN Connectivity Policy.
     - vNICs used by the LAN Connectivity Policy must be created from a vNIC template.
-    - "Each list element has the following suboptions:"
-    - "= name"
-    - "  The name of the vNIC (required)."
-    - "= vnic_template"
-    - "  The name of the vNIC template (required)."
-    - "- adapter_policy"
-    - "  The name of the Ethernet adapter policy."
-    - "  A user defined policy can be used, or one of the system defined policies."
-    - "- order"
-    - "  String specifying the vNIC assignment order (e.g., '1', '2')."
-    - "  [Default: unspecified]"
+    suboptions:
+      name:
+        description:
+        - The name of the vNIC.
+        required: yes
+      vnic_template:
+        description:
+        - The name of the vNIC template.
+        required: yes
+      adapter_policy:
+        description:
+        - The name of the Ethernet adapter policy.
+        - A user defined policy can be used, or one of the system defined policies.
+      order:
+        description:
+        - String specifying the vNIC assignment order (e.g., '1', '2').
+        default: 'unspecified'
+      state:
+        description:
+        - If C(present), will verify vnic is configured within policy.
+          If C(absent), will verify vnic is absent from policy.
+        choices: [ present, absent ]
+        default: present
+    version_added: '2.8'
+  iscsi_vnic_list:
+    description:
+    - List of iSCSI vNICs used by the LAN Connectivity Policy.
+    suboptions:
+      name:
+        description:
+        - The name of the iSCSI vNIC.
+        required: yes
+      overlay_vnic:
+        description:
+        - The LAN vNIC associated with this iSCSI vNIC.
+      iscsi_adapter_policy:
+        description:
+        - The iSCSI adapter policy associated with this iSCSI vNIC.
+      mac_address:
+        description:
+        - The MAC address associated with this iSCSI vNIC.
+        - If the MAC address is not set, Cisco UCS Manager uses a derived MAC address.
+        default: derived
+      vlan_name:
+        description:
+        - The VLAN used for the iSCSI vNIC.
+        default: default
+      state:
+        description:
+        - If C(present), will verify iscsi vnic is configured within policy.
+          If C(absent), will verify iscsi vnic is absent from policy.
+        choices: [ present, absent ]
+        default: present
+    version_added: '2.8'
   org_dn:
     description:
     - Org dn (distinguished name)
@@ -73,21 +116,33 @@ EXAMPLES = r'''
     hostname: 172.16.143.150
     username: admin
     password: password
-    name: Cntr-LAN-Boot
+    name: Cntr-FC-Boot
     vnic_list:
-    - name: Fabric-A
-      vnic_template: vNIC-Template-A
+    - name: eno1
+      vnic_template: Cntr-Template
       adapter_policy: Linux
-    - name: Fabric-B
-      vnic_template: vNIC-Template-B
+    - name: eno2
+      vnic_template: Container-NFS-A
       adapter_policy: Linux
+    - name: eno3
+      vnic_template: Container-NFS-B
+      adapter_policy: Linux
+    iscsi_vnic_list:
+    - name: iSCSIa
+      overlay_vnic: eno1
+      iscsi_adapter_policy: default
+      vlan_name: Container-MGMT-VLAN
+    - name: iSCSIb
+      overlay_vnic: eno3
+      iscsi_adapter_policy: default
+      vlan_name: Container-TNT-A-NFS
 
 - name: Remove LAN Connectivity Policy
   ucs_lan_connectivity:
     hostname: 172.16.143.150
     username: admin
     password: password
-    name: Cntr-LAN-Boot
+    name: Cntr-FC-Boot
     state: absent
 '''
 
@@ -99,13 +154,170 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.remote_management.ucs import UCSModule, ucs_argument_spec
 
 
+def configure_lan_connectivity(ucs, module, dn):
+    from ucsmsdk.mometa.vnic.VnicLanConnPolicy import VnicLanConnPolicy
+    from ucsmsdk.mometa.vnic.VnicEther import VnicEther
+    from ucsmsdk.mometa.vnic.VnicIScsiLCP import VnicIScsiLCP
+    from ucsmsdk.mometa.vnic.VnicVlan import VnicVlan
+
+    if not module.check_mode:
+        try:
+            # create if mo does not already exist
+            mo = VnicLanConnPolicy(
+                parent_mo_or_dn=module.params['org_dn'],
+                name=module.params['name'],
+                descr=module.params['description'],
+            )
+
+            if module.params.get('vnic_list'):
+                for vnic in module.params['vnic_list']:
+                    if vnic['state'] == 'absent':
+                        child_dn = dn + '/ether-' + vnic['name']
+                        mo_1 = ucs.login_handle.query_dn(child_dn)
+                        if mo_1:
+                            ucs.login_handle.remove_mo(mo_1)
+                    else:  # state == 'present'
+                        mo_1 = VnicEther(
+                            addr='derived',
+                            parent_mo_or_dn=mo,
+                            name=vnic['name'],
+                            adaptor_profile_name=vnic['adapter_policy'],
+                            nw_templ_name=vnic['vnic_template'],
+                            order=vnic['order'],
+                        )
+
+            if module.params.get('iscsi_vnic_list'):
+                for iscsi_vnic in module.params['iscsi_vnic_list']:
+                    if iscsi_vnic['state'] == 'absent':
+                        child_dn = dn + '/iscsi-' + iscsi_vnic['name']
+                        mo_1 = ucs.login_handle.query_dn(child_dn)
+                        if mo_1:
+                            ucs.login_handle.remove_mo(mo_1)
+                    else:  # state == 'present'
+                        mo_1 = VnicIScsiLCP(
+                            parent_mo_or_dn=mo,
+                            name=iscsi_vnic['name'],
+                            adaptor_profile_name=iscsi_vnic['iscsi_adapter_policy'],
+                            vnic_name=iscsi_vnic['overlay_vnic'],
+                            addr=iscsi_vnic['mac_address'],
+                        )
+                        VnicVlan(
+                            parent_mo_or_dn=mo_1,
+                            vlan_name=iscsi_vnic['vlan_name'],
+                        )
+
+            ucs.login_handle.add_mo(mo, True)
+            ucs.login_handle.commit()
+        except Exception as e:  # generic Exception handling because SDK can throw a variety of exceptions
+            ucs.result['msg'] = "setup error: %s " % str(e)
+            module.fail_json(**ucs.result)
+
+    ucs.result['changed'] = True
+
+
+def check_vnic_props(ucs, module, dn):
+    props_match = True
+
+    if module.params.get('vnic_list'):
+        # check vnicEther props
+        for vnic in module.params['vnic_list']:
+            child_dn = dn + '/ether-' + vnic['name']
+            mo_1 = ucs.login_handle.query_dn(child_dn)
+            if mo_1:
+                if vnic['state'] == 'absent':
+                    props_match = False
+                    break
+                else:   # state == 'present'
+                    kwargs = dict(adaptor_profile_name=vnic['adapter_policy'])
+                    kwargs['order'] = vnic['order']
+                    kwargs['nw_templ_name'] = vnic['vnic_template']
+                    if not (mo_1.check_prop_match(**kwargs)):
+                        props_match = False
+                        break
+            else:   # mo_1 did not exist
+                if vnic['state'] == 'present':
+                    props_match = False
+                    break
+
+    return props_match
+
+
+def check_iscsi_vnic_props(ucs, module, dn):
+    props_match = True
+
+    if module.params.get('iscsi_vnic_list'):
+        # check vnicIScsiLCP props
+        for iscsi_vnic in module.params['iscsi_vnic_list']:
+            child_dn = dn + '/iscsi-' + iscsi_vnic['name']
+            mo_1 = ucs.login_handle.query_dn(child_dn)
+            if mo_1:
+                if iscsi_vnic['state'] == 'absent':
+                    props_match = False
+                    break
+                else:   # state == 'present'
+                    kwargs = dict(vnic_name=iscsi_vnic['overlay_vnic'])
+                    kwargs['adaptor_profile_name'] = iscsi_vnic['iscsi_adapter_policy']
+                    kwargs['addr'] = iscsi_vnic['mac_address']
+                    if (mo_1.check_prop_match(**kwargs)):
+                        # check vlan
+                        child_dn = child_dn + '/vlan'
+                        mo_2 = ucs.login_handle.query_dn(child_dn)
+                        if mo_2:
+                            kwargs = dict(vlan_name=iscsi_vnic['vlan_name'])
+                            if not (mo_2.check_prop_match(**kwargs)):
+                                props_match = False
+                                break
+                    else:   # mo_1 props did not match
+                        props_match = False
+                        break
+            else:   # mo_1 did not exist
+                if iscsi_vnic['state'] == 'present':
+                    props_match = False
+                    break
+
+    return props_match
+
+
+def check_lan_connecivity_props(ucs, module, mo, dn):
+    props_match = False
+
+    # check top-level mo props
+    kwargs = dict(descr=module.params['description'])
+    if (mo.check_prop_match(**kwargs)):
+        # top-level props match, check next level mo/props
+        # check vnic 1st
+        props_match = check_vnic_props(ucs, module, dn)
+
+        if props_match:
+            props_match = check_iscsi_vnic_props(ucs, module, dn)
+
+    return props_match
+
+
 def main():
+    vnic = dict(
+        name=dict(type='str', required=True),
+        vnic_template=dict(type='str', required=True),
+        adapter_policy=dict(type='str', default=''),
+        order=dict(type='str', default='unspecified'),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+    )
+    iscsi_vnic = dict(
+        name=dict(type='str', required=True),
+        overlay_vnic=dict(type='str', default=''),
+        iscsi_adapter_policy=dict(type='str', default=''),
+        mac_address=dict(type='str', default='derived'),
+        vlan_name=dict(type='str', default='default'),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+    )
+
     argument_spec = ucs_argument_spec
     argument_spec.update(
         org_dn=dict(type='str', default='org-root'),
         name=dict(type='str', required=True),
         description=dict(type='str', aliases=['descr'], default=''),
-        vnic_list=dict(type='list'),
+        vnic_list=dict(type='list', elements='dict', options=vnic),
+        iscsi_vnic_list=dict(type='list', elements='dict', options=iscsi_vnic),
         state=dict(type='str', default='present', choices=['present', 'absent']),
     )
 
@@ -114,90 +326,28 @@ def main():
         supports_check_mode=True,
     )
     ucs = UCSModule(module)
+    # UCSModule creation above verifies ucsmsdk is present and exits on failure.
+    # Additional imports are done below or in called functions.
 
-    err = False
+    ucs.result['changed'] = False
+    props_match = False
+    # dn is <org_dn>/lan-conn-pol-<name>
+    dn = module.params['org_dn'] + '/lan-conn-pol-' + module.params['name']
 
-    # UCSModule creation above verifies ucsmsdk is present and exits on failure.  Additional imports are done below.
-    from ucsmsdk.mometa.vnic.VnicLanConnPolicy import VnicLanConnPolicy
-    from ucsmsdk.mometa.vnic.VnicEther import VnicEther
-    from ucsmsdk.mometa.vnic.VnicEtherIf import VnicEtherIf
-
-    changed = False
-    try:
-        mo_exists = False
-        props_match = False
-        # dn is <org_dn>/lan-conn-pol-<name>
-        dn = module.params['org_dn'] + '/lan-conn-pol-' + module.params['name']
-
-        mo = ucs.login_handle.query_dn(dn)
-        if mo:
-            mo_exists = True
-
+    mo = ucs.login_handle.query_dn(dn)
+    if mo:
         if module.params['state'] == 'absent':
             # mo must exist but all properties do not have to match
-            if mo_exists:
-                if not module.check_mode:
-                    ucs.login_handle.remove_mo(mo)
-                    ucs.login_handle.commit()
-                changed = True
-        else:
-            # set default params.  Done here to set values for lists which can't be done in the argument_spec
-            if module.params.get('vnic_list'):
-                for vnic in module.params['vnic_list']:
-                    if not vnic.get('adapter_policy'):
-                        vnic['adapter_policy'] = ''
-                    if not vnic.get('order'):
-                        vnic['order'] = 'unspecified'
-            if mo_exists:
-                # check top-level mo props
-                kwargs = dict(descr=module.params['description'])
-                if (mo.check_prop_match(**kwargs)):
-                    # top-level props match, check next level mo/props
-                    if not module.params.get('vnic_list'):
-                        props_match = True
-                    else:
-                        # check vnicEther props
-                        for vnic in module.params['vnic_list']:
-                            child_dn = dn + '/ether-' + vnic['name']
-                            mo_1 = ucs.login_handle.query_dn(child_dn)
-                            if mo_1:
-                                kwargs = dict(adaptor_profile_name=vnic['adapter_policy'])
-                                kwargs['order'] = vnic['order']
-                                kwargs['nw_templ_name'] = vnic['vnic_template']
-                                if (mo_1.check_prop_match(**kwargs)):
-                                    props_match = True
+            if not module.check_mode:
+                ucs.login_handle.remove_mo(mo)
+                ucs.login_handle.commit()
+            ucs.result['changed'] = True
+        else:  # state == 'present'
+            props_match = check_lan_connecivity_props(ucs, module, mo, dn)
 
-            if not props_match:
-                if not module.check_mode:
-                    # create if mo does not already exist
-                    mo = VnicLanConnPolicy(
-                        parent_mo_or_dn=module.params['org_dn'],
-                        name=module.params['name'],
-                        descr=module.params['description'],
-                    )
+    if module.params['state'] == 'present' and not props_match:
+        configure_lan_connectivity(ucs, module, dn)
 
-                    if module.params.get('vnic_list'):
-                        for vnic in module.params['vnic_list']:
-                            mo_1 = VnicEther(
-                                addr='derived',
-                                parent_mo_or_dn=mo,
-                                name=vnic['name'],
-                                adaptor_profile_name=vnic['adapter_policy'],
-                                nw_templ_name=vnic['vnic_template'],
-                                order=vnic['order'],
-                            )
-
-                    ucs.login_handle.add_mo(mo, True)
-                    ucs.login_handle.commit()
-                changed = True
-
-    except Exception as e:
-        err = True
-        ucs.result['msg'] = "setup error: %s " % str(e)
-
-    ucs.result['changed'] = changed
-    if err:
-        module.fail_json(**ucs.result)
     module.exit_json(**ucs.result)
 
 

@@ -32,6 +32,7 @@ options:
               interfaces do not persist across reboots.
         required: false
         default: false
+        type: bool
     type:
         description:
             - Specifies the type of tunnel to be created.
@@ -41,7 +42,7 @@ options:
         aliases: ['tunnel_type']
     local_address:
         description:
-            - Literat IP address or hostname corresponding to the tunnel source.
+            - Literal IP address or hostname corresponding to the tunnel source.
         required: false
         aliases: [ "local" ]
     remote_address:
@@ -75,32 +76,32 @@ RETURN = '''
 name:
     description: tunnel interface name
     returned: always
-    type: string
+    type: str
     sample: iptun0
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: present
 temporary:
     description: specifies if operation will persist across reboots
     returned: always
-    type: boolean
+    type: bool
     sample: True
 local_address:
     description: local IP address
     returned: always
-    type: string
+    type: str
     sample: 1.1.1.1/32
 remote_address:
     description: remote IP address
     returned: always
-    type: string
+    type: str
     sample: 2.2.2.2/32
 type:
     description: tunnel type
     returned: always
-    type: string
+    type: str
     sample: ipv4
 '''
 

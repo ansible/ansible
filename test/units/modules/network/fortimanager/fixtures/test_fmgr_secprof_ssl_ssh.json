@@ -1,0 +1,214 @@
+{
+    "fmgr_firewall_ssl_ssh_profile_modify": [
+        {
+            "paramgram_used": {
+                "comment": null,
+                "untrusted-caname": null,
+                "mapi-over-https": null,
+                "whitelist": null,
+                "caname": null,
+                "ftps": {
+                    "status": null,
+                    "allow-invalid-server-cert": null,
+                    "unsupported-ssl": null,
+                    "client-cert-request": null,
+                    "ports": null,
+                    "untrusted-cert": null
+                },
+                "ssl-exemptions-log": null,
+                "https": {
+                    "status": null,
+                    "allow-invalid-server-cert": null,
+                    "unsupported-ssl": null,
+                    "client-cert-request": null,
+                    "ports": null,
+                    "untrusted-cert": null
+                },
+                "imaps": {
+                    "status": null,
+                    "allow-invalid-server-cert": null,
+                    "unsupported-ssl": null,
+                    "client-cert-request": null,
+                    "ports": null,
+                    "untrusted-cert": null
+                },
+                "server-cert-mode": null,
+                "adom": "root",
+                "ssl-exempt": {
+                    "regex": null,
+                    "wildcard-fqdn": null,
+                    "fortiguard-category": null,
+                    "address6": null,
+                    "address": null,
+                    "type": null
+                },
+                "ssl": {
+                    "inspect-all": null,
+                    "allow-invalid-server-cert": null,
+                    "client-cert-request": null,
+                    "untrusted-cert": null,
+                    "unsupported-ssl": null
+                },
+                "ssh": {
+                    "status": null,
+                    "inspect-all": null,
+                    "ssh-tun-policy-check": null,
+                    "ssh-policy-check": null,
+                    "ssh-algorithm": null,
+                    "unsupported-version": null,
+                    "ports": null
+                },
+                "use-ssl-server": null,
+                "server-cert": null,
+                "name": "Ansible_SSL_SSH_Profile",
+                "ssl-anomalies-log": null,
+                "ssl-server": {
+                    "pop3s-client-cert-request": null,
+                    "imaps-client-cert-request": null,
+                    "smtps-client-cert-request": null,
+                    "ip": null,
+                    "ssl-other-client-cert-request": null,
+                    "https-client-cert-request": null,
+                    "ftps-client-cert-request": null
+                },
+                "smtps": {
+                    "status": null,
+                    "allow-invalid-server-cert": null,
+                    "unsupported-ssl": null,
+                    "client-cert-request": null,
+                    "ports": null,
+                    "untrusted-cert": null
+                },
+                "rpc-over-https": null,
+                "mode": "delete",
+                "pop3s": {
+                    "status": null,
+                    "allow-invalid-server-cert": null,
+                    "unsupported-ssl": null,
+                    "client-cert-request": null,
+                    "ports": null,
+                    "untrusted-cert": null
+                }
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/root/obj/firewall/ssl-ssh-profile/Ansible_SSL_SSH_Profile"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/root/obj/firewall/ssl-ssh-profile"
+            },
+            "datagram_sent": {
+                "comment": "Created by Ansible Module TEST",
+                "server-cert-mode": "replace",
+                "name": "Ansible_SSL_SSH_Profile",
+                "ssl-anomalies-log": "enable",
+                "mapi-over-https": "enable",
+                "whitelist": "enable",
+                "ssl-exemptions-log": "enable",
+                "rpc-over-https": "enable",
+                "use-ssl-server": "enable"
+            },
+            "paramgram_used": {
+                "comment": "Created by Ansible Module TEST",
+                "untrusted-caname": null,
+                "mapi-over-https": "enable",
+                "whitelist": "enable",
+                "caname": null,
+                "ftps": {
+                    "status": null,
+                    "allow-invalid-server-cert": null,
+                    "unsupported-ssl": null,
+                    "untrusted-cert": null,
+                    "client-cert-request": null,
+                    "ports": null
+                },
+                "ssl-exemptions-log": "enable",
+                "https": {
+                    "status": null,
+                    "allow-invalid-server-cert": null,
+                    "unsupported-ssl": null,
+                    "untrusted-cert": null,
+                    "client-cert-request": null,
+                    "ports": null
+                },
+                "pop3s": {
+                    "status": null,
+                    "allow-invalid-server-cert": null,
+                    "unsupported-ssl": null,
+                    "untrusted-cert": null,
+                    "client-cert-request": null,
+                    "ports": null
+                },
+                "server-cert-mode": "replace",
+                "adom": "root",
+                "ssl-exempt": {
+                    "regex": null,
+                    "wildcard-fqdn": null,
+                    "fortiguard-category": null,
+                    "address6": null,
+                    "address": null,
+                    "type": null
+                },
+                "ssl": {
+                    "unsupported-ssl": null,
+                    "inspect-all": null,
+                    "allow-invalid-server-cert": null,
+                    "untrusted-cert": null,
+                    "client-cert-request": null
+                },
+                "ssh": {
+                    "status": null,
+                    "inspect-all": null,
+                    "ssh-tun-policy-check": null,
+                    "ssh-policy-check": null,
+                    "ssh-algorithm": null,
+                    "unsupported-version": null,
+                    "ports": null
+                },
+                "server-cert": null,
+                "name": "Ansible_SSL_SSH_Profile",
+                "ssl-anomalies-log": "enable",
+                "ssl-server": {
+                    "pop3s-client-cert-request": null,
+                    "imaps-client-cert-request": null,
+                    "smtps-client-cert-request": null,
+                    "ip": null,
+                    "ssl-other-client-cert-request": null,
+                    "https-client-cert-request": null,
+                    "ftps-client-cert-request": null
+                },
+                "smtps": {
+                    "status": null,
+                    "allow-invalid-server-cert": null,
+                    "unsupported-ssl": null,
+                    "untrusted-cert": null,
+                    "client-cert-request": null,
+                    "ports": null
+                },
+                "imaps": {
+                    "status": null,
+                    "allow-invalid-server-cert": null,
+                    "unsupported-ssl": null,
+                    "untrusted-cert": null,
+                    "client-cert-request": null,
+                    "ports": null
+                },
+                "rpc-over-https": "enable",
+                "mode": "set",
+                "use-ssl-server": "enable"
+            },
+            "post_method": "set"
+        }
+    ]
+}

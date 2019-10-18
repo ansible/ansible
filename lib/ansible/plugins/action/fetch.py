@@ -25,14 +25,11 @@ from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
 from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
 from ansible.utils.path import makedirs_safe
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ActionModule(ActionBase):

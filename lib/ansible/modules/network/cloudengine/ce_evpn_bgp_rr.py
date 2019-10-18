@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages RR for the VXLAN Network on HUAWEI CloudEngine switches.
 description:
     - Configure an RR in BGP-EVPN address family view on HUAWEI CloudEngine switches.
-author: Zhijin Zhou (@CloudEngine-Ansible)
+author: Zhijin Zhou (@QijunPan)
 notes:
     - Ensure that BGP view is existed.
     - The peer, peer_type, and reflect_client arguments must all exist or not exist.
@@ -163,13 +163,13 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import exec_command, load_config, ce_argument_spec
 
 
 def is_config_exist(cmp_cfg, test_cfg):
@@ -182,7 +182,7 @@ def is_config_exist(cmp_cfg, test_cfg):
 
 
 class EvpnBgpRr(object):
-    """Manange RR in BGP-EVPN address family view"""
+    """Manage RR in BGP-EVPN address family view"""
 
     def __init__(self, argument_spec):
         self.spec = argument_spec
@@ -259,17 +259,19 @@ class EvpnBgpRr(object):
     def get_config_in_bgp_view(self):
         """Get configuration in BGP view"""
 
-        flags = list()
-        exp = " | section include"
+        cmd = "display current-configuration | section include"
         if self.as_number:
             if self.bgp_instance:
-                exp += " bgp %s instance %s" % (self.as_number,
+                cmd += " bgp %s instance %s" % (self.as_number,
                                                 self.bgp_instance)
             else:
-                exp += " bgp %s" % self.as_number
-
-        flags.append(exp)
-        config = get_config(self.module, flags)
+                cmd += " bgp %s" % self.as_number
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        config = out.strip() if out else ""
+        if cmd == config:
+            return ''
 
         return config
 
@@ -354,6 +356,8 @@ class EvpnBgpRr(object):
                                   'bgp_evpn_enable'],
                               reflect_client=self.cur_config['reflect_client'],
                               policy_vpn_target=self.cur_config['policy_vpn_target'])
+        if self.end_state == self.existing:
+            self.changed = False
 
     def show_result(self):
         """Show result"""
@@ -417,27 +421,27 @@ class EvpnBgpRr(object):
         self.cli_add_command(view_cmd)
 
         if self.bgp_evpn_enable == 'disable':
-            self.cli_add_command("  undo l2vpn-family evpn")
+            self.cli_add_command("undo l2vpn-family evpn")
         else:
-            self.cli_add_command("  l2vpn-family evpn")
+            self.cli_add_command("l2vpn-family evpn")
             if self.reflect_client and self.reflect_client != self.cur_config['reflect_client']:
                 if self.reflect_client == 'enable':
-                    self.cli_add_command("    peer %s enable" % self.peer)
+                    self.cli_add_command("peer %s enable" % self.peer)
                     self.cli_add_command(
-                        "    peer %s reflect-client" % self.peer)
+                        "peer %s reflect-client" % self.peer)
                 else:
                     self.cli_add_command(
-                        "    undo peer %s reflect-client" % self.peer)
-                    self.cli_add_command("    undo peer %s enable" % self.peer)
+                        "undo peer %s reflect-client" % self.peer)
+                    self.cli_add_command("undo peer %s enable" % self.peer)
             if self.cur_config['bgp_evpn_enable'] == 'enable':
                 if self.policy_vpn_target and self.policy_vpn_target != self.cur_config['policy_vpn_target']:
                     if self.policy_vpn_target == 'enable':
-                        self.cli_add_command("    policy vpn-target")
+                        self.cli_add_command("policy vpn-target")
                     else:
-                        self.cli_add_command("    undo policy vpn-target")
+                        self.cli_add_command("undo policy vpn-target")
             else:
                 if self.policy_vpn_target and self.policy_vpn_target == 'disable':
-                    self.cli_add_command("    undo policy vpn-target")
+                    self.cli_add_command("undo policy vpn-target")
 
         if self.commands:
             self.cli_load_config(self.commands)
@@ -456,7 +460,7 @@ class EvpnBgpRr(object):
         """Check all input params"""
 
         if self.cur_config['bgp_exist'] == 'false':
-            self.module.fail_json(msg="Error: BGP view doesnot exist.")
+            self.module.fail_json(msg="Error: BGP view does not exist.")
 
         if self.bgp_instance:
             if len(self.bgp_instance) < 1 or len(self.bgp_instance) > 31:
@@ -485,7 +489,7 @@ class EvpnBgpRr(object):
                     msg='Error: Ip address cannot be configured as group-name.')
 
     def work(self):
-        """Excute task"""
+        """Execute task"""
 
         self.get_current_config()
         self.check_params()

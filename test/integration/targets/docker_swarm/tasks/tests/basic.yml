@@ -1,0 +1,158 @@
+- debug:
+    msg: Running tests/basic.yml
+
+####################################################################
+## Errors ##########################################################
+####################################################################
+- name: Test parameters with state=join
+  docker_swarm:
+    state: join
+  ignore_errors: yes
+  register: output
+
+- name: assert failure when called with state=join and no advertise_addr,remote_addrs,join_token
+  assert:
+    that:
+       - 'output.failed'
+       - 'output.msg == "state is join but all of the following are missing: advertise_addr, remote_addrs, join_token"'
+
+- name: Test parameters with state=remove
+  docker_swarm:
+    state: remove
+  ignore_errors: yes
+  register: output
+
+- name: assert failure when called with state=remove and no node_id
+  assert:
+    that:
+       - 'output.failed'
+       - 'output.msg == "state is remove but all of the following are missing: node_id"'
+
+####################################################################
+## Creation ########################################################
+####################################################################
+
+- name: Create a Swarm cluster (check mode)
+  docker_swarm:
+    state: present
+    advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
+  check_mode: yes
+  diff: yes
+  register: output_1
+
+- name: Create a Swarm cluster
+  docker_swarm:
+    state: present
+    advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
+  diff: yes
+  register: output_2
+
+- name: Create a Swarm cluster (idempotent)
+  docker_swarm:
+    state: present
+    advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
+  diff: yes
+  register: output_3
+
+- name: Create a Swarm cluster (idempotent, check mode)
+  docker_swarm:
+    state: present
+    advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
+  check_mode: yes
+  diff: yes
+  register: output_4
+
+- name: Create a Swarm cluster (force re-create)
+  docker_swarm:
+    state: present
+    advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
+    force: yes
+  diff: yes
+  register: output_5
+
+- name: Create a Swarm cluster (force re-create, check mode)
+  docker_swarm:
+    state: present
+    advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
+    force: yes
+  check_mode: yes
+  diff: yes
+  register: output_6
+
+- name: assert changed when create a new swarm cluster
+  assert:
+    that:
+       - 'output_1 is changed'
+       - 'output_1.diff.before is defined'
+       - 'output_1.diff.after is defined'
+       - 'output_2 is changed'
+       - 'output_2.actions[0] | regex_search("New Swarm cluster created: ")'
+       - 'output_2.swarm_facts.JoinTokens.Manager'
+       - 'output_2.swarm_facts.JoinTokens.Worker'
+       - 'output_2.diff.before is defined'
+       - 'output_2.diff.after is defined'
+       - 'output_3 is not changed'
+       - 'output_3.diff.before is defined'
+       - 'output_3.diff.after is defined'
+       - 'output_4 is not changed'
+       - 'output_4.diff.before is defined'
+       - 'output_4.diff.after is defined'
+       - 'output_5 is changed'
+       - 'output_5.diff.before is defined'
+       - 'output_5.diff.after is defined'
+       - 'output_6 is changed'
+       - 'output_6.diff.before is defined'
+       - 'output_6.diff.after is defined'
+
+####################################################################
+## Removal #########################################################
+####################################################################
+
+- name: Remove a Swarm cluster (check mode)
+  docker_swarm:
+    state: absent
+    force: true
+  check_mode: yes
+  diff: yes
+  register: output_1
+
+- name: Remove a Swarm cluster
+  docker_swarm:
+    state: absent
+    force: true
+  diff: yes
+  register: output_2
+
+- name: Remove a Swarm cluster (idempotent)
+  docker_swarm:
+    state: absent
+    force: true
+  diff: yes
+  register: output_3
+
+- name: Remove a Swarm cluster (idempotent, check mode)
+  docker_swarm:
+    state: absent
+    force: true
+  check_mode: yes
+  diff: yes
+  register: output_4
+
+- name: assert changed when remove a swarm cluster
+  assert:
+    that:
+        - 'output_1 is changed'
+        - 'output_1.diff.before is defined'
+        - 'output_1.diff.after is defined'
+        - 'output_2 is changed'
+        - 'output_2.actions[0] == "Node has left the swarm cluster"'
+        - 'output_2.diff.before is defined'
+        - 'output_2.diff.after is defined'
+        - 'output_3 is not changed'
+        - 'output_3.diff.before is defined'
+        - 'output_3.diff.after is defined'
+        - 'output_4 is not changed'
+        - 'output_4.diff.before is defined'
+        - 'output_4.diff.after is defined'
+
+- include_tasks: cleanup.yml

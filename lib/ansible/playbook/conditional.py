@@ -25,17 +25,14 @@ import re
 from jinja2.compiler import generate
 from jinja2.exceptions import UndefinedError
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
+display = Display()
 
 DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+(defined|undefined)')
 LOOKUP_REGEX = re.compile(r'lookup\s*\(')
@@ -49,7 +46,7 @@ class Conditional:
     to be run conditionally when a condition is met or skipped.
     '''
 
-    _when = FieldAttribute(isa='list', default=[], extend=True, prepend=True)
+    _when = FieldAttribute(isa='list', default=list, extend=True, prepend=True)
 
     def __init__(self, loader=None):
         # when used directly, this class needs a loader, but we want to
@@ -92,10 +89,6 @@ class Conditional:
             ds = getattr(self, '_ds')
 
         try:
-            # this allows for direct boolean assignments to conditionals "when: False"
-            if isinstance(self.when, bool):
-                return self.when
-
             for conditional in self.when:
                 if not self._check_conditional(conditional, templar, all_vars):
                     return False
@@ -117,28 +110,31 @@ class Conditional:
         if conditional is None or conditional == '':
             return True
 
+        # this allows for direct boolean assignments to conditionals "when: False"
+        if isinstance(conditional, bool):
+            return conditional
+
         if templar.is_template(conditional):
-            display.warning('when statements should not include jinja2 '
+            display.warning('conditional statements should not include jinja2 '
                             'templating delimiters such as {{ }} or {%% %%}. '
                             'Found: %s' % conditional)
 
-        # pull the "bare" var out, which allows for nested conditionals
-        # and things like:
-        # - assert:
-        #     that:
-        #     - item
-        #   with_items:
-        #   - 1 == 1
-        if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
-            conditional = all_vars[conditional]
+        bare_vars_warning = False
+        if C.CONDITIONAL_BARE_VARS:
+            if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
+                conditional = all_vars[conditional]
+                bare_vars_warning = True
 
         # make sure the templar is using the variables specified with this method
-        templar.set_available_variables(variables=all_vars)
+        templar.available_variables = all_vars
 
         try:
             # if the conditional is "unsafe", disable lookups
             disable_lookups = hasattr(conditional, '__UNSAFE__')
             conditional = templar.template(conditional, disable_lookups=disable_lookups)
+            if bare_vars_warning and not isinstance(conditional, bool):
+                display.deprecated('evaluating %s as a bare variable, this behaviour will go away and you might need to add |bool'
+                                   ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle.' % conditional, "2.12")
             if not isinstance(conditional, text_type) or conditional == "":
                 return conditional
 
@@ -176,7 +172,7 @@ class Conditional:
                         )
             try:
                 e = templar.environment.overlay()
-                e.filters.update(templar._get_filters(e.filters))
+                e.filters.update(templar._get_filters())
                 e.tests.update(templar._get_tests())
 
                 res = e._parse(conditional, None, None)
@@ -223,5 +219,5 @@ class Conditional:
                 # as nothing above matched the failed var name, re-raise here to
                 # trigger the AnsibleUndefinedVariable exception again below
                 raise
-            except Exception as new_e:
+            except Exception:
                 raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))

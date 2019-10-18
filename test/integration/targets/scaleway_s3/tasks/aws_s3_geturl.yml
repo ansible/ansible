@@ -1,0 +1,23 @@
+- name: Get url from bucket
+  aws_s3:
+    mode: geturl
+    bucket: '{{ bucket_name }}'
+    s3_url: '{{ s3_url }}'
+    region: '{{ scaleway_region }}'
+    object: test.txt
+    encrypt: false
+  register: geturl_task
+
+- name: Show geturl_task
+  debug:
+    var: geturl_task
+
+- name: geturl_task is success
+  assert:
+    that:
+      - geturl_task is success
+
+- name: geturl_task is changed
+  assert:
+    that:
+      - geturl_task is changed

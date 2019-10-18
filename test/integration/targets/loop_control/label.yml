@@ -1,0 +1,23 @@
+- name: loop_control/label https://github.com/ansible/ansible/pull/36430
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - set_fact:
+        loopthis:
+            - name: foo
+              label: foo_label
+            - name: bar
+              label: bar_label
+
+    - name: check that item label is updated each iteration
+      debug:
+        msg: "{{ looped_var.name }}"
+      with_items: "{{ loopthis }}"
+      loop_control:
+        loop_var: looped_var
+        label: "looped_var {{ looped_var.label }}"
+#
+#    - assert:
+#        that:
+#          - "output.results[0]['_ansible_item_label'] == 'looped_var foo_label'"
+#          - "output.results[1]['_ansible_item_label'] == 'looped_var bar_label'"

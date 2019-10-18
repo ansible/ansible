@@ -20,7 +20,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.onyx import onyx_config
 from units.modules.utils import set_module_args
 from .onyx_module import TestOnyxModule, load_fixture
@@ -71,12 +71,12 @@ class TestOnyxConfigModule(TestOnyxModule):
         self.assertIn('__backup__', result)
 
     def test_onyx_config_save(self):
-        set_module_args(dict(save='yes'))
+        set_module_args(dict(lines=['hostname foo'], save='yes'))
         self.execute_module(changed=True)
-        self.assertEqual(self.run_commands.call_count, 1)
+        self.assertEqual(self.run_commands.call_count, 0)
         self.assertEqual(self.get_config.call_count, 1)
-        self.assertEqual(self.load_config.call_count, 0)
-        args = self.run_commands.call_args[0][1]
+        self.assertEqual(self.load_config.call_count, 1)
+        args = self.load_config.call_args[0][1]
         self.assertIn('configuration write', args)
 
     def test_onyx_config_lines_wo_parents(self):

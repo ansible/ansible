@@ -21,10 +21,10 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
-from .ironware_module import TestIronwareModule, load_fixture
-from ansible.modules.network.ironware import ironware_facts
+from units.compat.mock import patch
 from units.modules.utils import set_module_args
+from ansible.modules.network.ironware import ironware_facts
+from .ironware_module import TestIronwareModule, load_fixture
 
 
 class TestIronwareFacts(TestIronwareModule):

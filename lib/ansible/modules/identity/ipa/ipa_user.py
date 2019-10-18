@@ -21,6 +21,13 @@ description:
 options:
   displayname:
     description: Display name
+  update_password:
+    description:
+    - Set password for a user.
+    type: str
+    default: 'always'
+    choices: [ always, on_create ]
+    version_added: 2.8
   givenname:
     description: First name
   krbpasswordexpiration:
@@ -38,7 +45,7 @@ options:
     - If None is passed email addresses will not be checked or changed.
   password:
     description:
-    - Password for new user
+    - Password for a user. Will not be set for an existing user unless C(update_password) is set to C(always), which is the default.
   sn:
     description: Surname
   sshpubkey:
@@ -77,7 +84,7 @@ requirements:
 '''
 
 EXAMPLES = '''
-# Ensure pinky is present
+# Ensure pinky is present and always reset password
 - ipa_user:
     name: pinky
     state: present
@@ -104,6 +111,19 @@ EXAMPLES = '''
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
+
+# Ensure pinky is present but don't reset password if already exists
+- ipa_user:
+    name: pinky
+    state: present
+    givenname: Pinky
+    sn: Acme
+    password: zounds
+    ipa_host: ipa.example.com
+    ipa_user: admin
+    ipa_pass: topsecret
+    update_password: on_create
+
 '''
 
 RETURN = '''
@@ -194,7 +214,10 @@ def get_user_diff(client, ipa_user, module_user):
     # These are used for comparison.
     sshpubkey = None
     if 'ipasshpubkey' in module_user:
-        module_user['sshpubkeyfp'] = [get_ssh_key_fingerprint(pubkey) for pubkey in module_user['ipasshpubkey']]
+        hash_algo = 'md5'
+        if 'sshpubkeyfp' in ipa_user and ipa_user['sshpubkeyfp'][0][:7].upper() == 'SHA256:':
+            hash_algo = 'sha256'
+        module_user['sshpubkeyfp'] = [get_ssh_key_fingerprint(pubkey, hash_algo) for pubkey in module_user['ipasshpubkey']]
         # Remove the ipasshpubkey element as it is not returned from IPA but save it's value to be used later on
         sshpubkey = module_user['ipasshpubkey']
         del module_user['ipasshpubkey']
@@ -208,11 +231,16 @@ def get_user_diff(client, ipa_user, module_user):
     return result
 
 
-def get_ssh_key_fingerprint(ssh_key):
+def get_ssh_key_fingerprint(ssh_key, hash_algo='sha256'):
     """
     Return the public key fingerprint of a given public SSH key
-    in format "FB:0C:AC:0A:07:94:5B:CE:75:6E:63:32:13:AD:AD:D7 [user@host] (ssh-rsa)"
+    in format "[fp] [user@host] (ssh-rsa)" where fp is of the format:
+    FB:0C:AC:0A:07:94:5B:CE:75:6E:63:32:13:AD:AD:D7
+    for md5 or
+    SHA256:[base64]
+    for sha256
     :param ssh_key:
+    :param hash_algo:
     :return:
     """
     parts = ssh_key.strip().split()
@@ -221,8 +249,12 @@ def get_ssh_key_fingerprint(ssh_key):
     key_type = parts[0]
     key = base64.b64decode(parts[1].encode('ascii'))
 
-    fp_plain = hashlib.md5(key).hexdigest()
-    key_fp = ':'.join(a + b for a, b in zip(fp_plain[::2], fp_plain[1::2])).upper()
+    if hash_algo == 'md5':
+        fp_plain = hashlib.md5(key).hexdigest()
+        key_fp = ':'.join(a + b for a, b in zip(fp_plain[::2], fp_plain[1::2])).upper()
+    elif hash_algo == 'sha256':
+        fp_plain = base64.b64encode(hashlib.sha256(key).digest()).decode('ascii').rstrip('=')
+        key_fp = 'SHA256:{fp}'.format(fp=fp_plain)
     if len(parts) < 3:
         return "%s (%s)" % (key_fp, key_type)
     else:
@@ -245,6 +277,7 @@ def ensure(module, client):
                                 userpassword=module.params['password'],
                                 gidnumber=module.params.get('gidnumber'), uidnumber=module.params.get('uidnumber'))
 
+    update_password = module.params.get('update_password')
     ipa_user = client.user_find(name=name)
 
     changed = False
@@ -254,6 +287,8 @@ def ensure(module, client):
             if not module.check_mode:
                 ipa_user = client.user_add(name=name, item=module_user)
         else:
+            if update_password == 'on_create':
+                module_user.pop('userpassword', None)
             diff = get_user_diff(client, ipa_user, module_user)
             if len(diff) > 0:
                 changed = True
@@ -272,6 +307,8 @@ def main():
     argument_spec = ipa_argument_spec()
     argument_spec.update(displayname=dict(type='str'),
                          givenname=dict(type='str'),
+                         update_password=dict(type='str', default="always",
+                                              choices=['always', 'on_create']),
                          krbpasswordexpiration=dict(type='str'),
                          loginshell=dict(type='str'),
                          mail=dict(type='list'),
@@ -298,7 +335,7 @@ def main():
     # Therefore a small check here to replace list(None) by None. Otherwise get_user_diff() would return sshpubkey
     # as different which should be avoided.
     if module.params['sshpubkey'] is not None:
-        if len(module.params['sshpubkey']) == 1 and module.params['sshpubkey'][0] is "":
+        if len(module.params['sshpubkey']) == 1 and module.params['sshpubkey'][0] == "":
             module.params['sshpubkey'] = None
 
     try:

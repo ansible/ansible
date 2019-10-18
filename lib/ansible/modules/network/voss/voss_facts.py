@@ -78,19 +78,19 @@ ansible_net_gather_subset:
 ansible_net_model:
   description: The model name returned from the device
   returned: always
-  type: string
+  type: str
 ansible_net_serialnum:
   description: The serial number of the remote device
   returned: always
-  type: string
+  type: str
 ansible_net_version:
   description: The operating system version running on the remote device
   returned: always
-  type: string
+  type: str
 ansible_net_hostname:
   description: The configured hostname of the device
   returned: always
-  type: string
+  type: str
 
 # hardware
 ansible_net_memfree_mb:
@@ -106,7 +106,7 @@ ansible_net_memtotal_mb:
 ansible_net_config:
   description: The current active config from the device
   returned: when config is configured
-  type: string
+  type: str
 
 # interfaces
 ansible_net_all_ipv4_addresses:
@@ -129,7 +129,6 @@ ansible_net_neighbors:
 import re
 
 from ansible.module_utils.network.voss.voss import run_commands
-from ansible.module_utils.network.voss.voss import check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
@@ -312,7 +311,7 @@ class Interfaces(FactsBase):
     def populate_ipv6_interfaces(self, data):
         addresses = re.split(r'-{3,}', data)[1].lstrip()
         for line in addresses.split('\n'):
-            if len(line) == 0:
+            if not line:
                 break
 
             match = re.match(r'^([\da-f:]+)/(\d+)\s+([CV])-(\d+)\s+.+$', line)
@@ -351,7 +350,7 @@ class Interfaces(FactsBase):
     def parse_neighbors(self, neighbors):
         facts = dict()
         lines = neighbors.split('Port: ')
-        if len(lines) == 0:
+        if not lines:
             return facts
         for line in lines:
             match = re.search(r'^(\w.*?)\s+Index.*IfName\s+(\w.*)$\s+SysName\s+:\s(\S+)', line, (re.M | re.S))
@@ -369,7 +368,7 @@ class Interfaces(FactsBase):
         parsed = dict()
         interfaces = re.split(r'-{3,}', data)[1].lstrip()
         for line in interfaces.split('\n'):
-            if len(line) == 0:
+            if not line or re.match('^All', line):
                 break
             else:
                 match = re.split(r'^(\S+)\s+', line)
@@ -502,7 +501,6 @@ def main():
         ansible_facts[key] = value
 
     warnings = list()
-    check_args(module, warnings)
 
     module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 

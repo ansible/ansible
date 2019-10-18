@@ -26,18 +26,11 @@ from ansible.plugins import AnsiblePlugin
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
 
-
 try:
     from scp import SCPClient
     HAS_SCP = True
 except ImportError:
     HAS_SCP = False
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 def enable_mode(func):
@@ -92,7 +85,7 @@ class CliconfBase(AnsiblePlugin):
 
     def _alarm_handler(self, signum, frame):
         """Alarm handler raised in case of command timeout """
-        display.display('closing shell due to command timeout (%s seconds).' % self._connection._play_context.timeout, log_only=True)
+        self._connection.queue_message('log', 'closing shell due to command timeout (%s seconds).' % self._connection._play_context.timeout)
         self.close()
 
     def send_command(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False, check_all=False):
@@ -285,6 +278,22 @@ class CliconfBase(AnsiblePlugin):
             }
         :return: capability as json string
         """
+        result = {}
+        result['rpc'] = self.get_base_rpc()
+        result['device_info'] = self.get_device_info()
+        result['network_api'] = 'cliconf'
+        return result
+
+    @abstractmethod
+    def get_device_info(self):
+        """Returns basic information about the network device.
+
+        This method will provide basic information about the device such as OS version and model
+        name. This data is expected to be used to fill the 'device_info' key in get_capabilities()
+        above.
+
+        :return: dictionary of device information
+        """
         pass
 
     def commit(self, comment=None):
@@ -356,8 +365,12 @@ class CliconfBase(AnsiblePlugin):
         if proto == 'scp':
             if not HAS_SCP:
                 raise AnsibleError("Required library scp is not installed.  Please install it using `pip install scp`")
-            with SCPClient(ssh.get_transport(), socket_timeout=timeout) as scp:
-                scp.get(source, destination)
+            try:
+                with SCPClient(ssh.get_transport(), socket_timeout=timeout) as scp:
+                    scp.get(source, destination)
+            except EOFError:
+                # This appears to be benign.
+                pass
         elif proto == 'sftp':
             with ssh.open_sftp() as sftp:
                 sftp.get(source, destination)

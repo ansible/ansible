@@ -1,9 +1,12 @@
+
 Ansible documentation
 =====================
+
 
 This project hosts the source behind [docs.ansible.com](https://docs.ansible.com/).
 
 To create clear, concise, consistent, useful materials on docs.ansible.com, please refer to the following information.
+
 
 
 About Ansible
@@ -64,10 +67,14 @@ The following sections describe the workflows required to start developing or su
 
 ## Setting up Git
 
+To install sphinx and the required theme, install ``pip`` and then ``pip install sphinx sphinx_rtd_theme``
+
 
 GitHub provides a set of [Git cheatsheets](https://github.github.com/training-kit/) in multiple languages.
 
+
 1. First [Install Git](https://help.github.com/en/articles/set-up-git)
+
 
 2. Perform the initial Git setup tasks, as described in [First Time Git Setup](link:https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup).
 

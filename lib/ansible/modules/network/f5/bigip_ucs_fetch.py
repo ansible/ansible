@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -28,53 +28,62 @@ options:
     description:
       - Create a backup file including the timestamp information so you can
         get the original file back if you somehow clobbered it incorrectly.
-    default: no
     type: bool
+    default: no
   create_on_missing:
     description:
       - Creates the UCS based on the value of C(src) if the file does not already
         exist on the remote system.
-    default: yes
     type: bool
+    default: yes
   dest:
     description:
       - A directory to save the UCS file into.
-    required: yes
+    type: path
+    required: True
   encryption_password:
     description:
-      - Password to use to encrypt the UCS file if desired
+      - Password to use to encrypt the UCS file if desired.
+    type: str
   fail_on_missing:
     description:
       - Make the module fail if the UCS file on the remote system is missing.
-    default: no
     type: bool
+    default: no
   force:
     description:
       - If C(no), the file will only be transferred if the destination does not
         exist.
-    default: yes
     type: bool
+    default: yes
   src:
     description:
       - The name of the UCS file to create on the remote server for downloading
+    type: str
 notes:
   - BIG-IP provides no way to get a checksum of the UCS files on the system
     via any interface except, perhaps, logging in directly to the box (which
     would not support appliance mode). Therefore, the best this module can
     do is check for the existence of the file on disk; no check-summing.
+  - If you are using this module with either Ansible Tower or Ansible AWX, you
+    should be aware of how these Ansible products execute jobs in restricted
+    environments. More information can be found here
+    https://clouddocs.f5.com/products/orchestration/ansible/devel/usage/module-usage-with-tower.html
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
 - name: Download a new UCS
   bigip_ucs_fetch:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     src: cs_backup.ucs
     dest: /tmp/cs_backup.ucs
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -82,24 +91,24 @@ RETURN = r'''
 checksum:
   description: The SHA1 checksum of the downloaded file
   returned: success or changed
-  type: string
+  type: str
   sample: 7b46bbe4f8ebfee64761b5313855618f64c64109
 dest:
   description: Location on the ansible host that the UCS was saved to
   returned: success
-  type: string
+  type: str
   sample: /path/to/file.txt
 src:
   description:
     - Name of the UCS file on the remote BIG-IP to download. If not
       specified, then this will be a randomly generated filename
   returned: changed
-  type: string
+  type: str
   sample: cs_backup.ucs
 backup_file:
   description: Name of backup file created
   returned: changed and if backup=yes
-  type: string
+  type: str
   sample: /path/to/file.txt.2015-02-12@22:09~
 gid:
   description: Group id of the UCS file, after execution
@@ -109,12 +118,12 @@ gid:
 group:
   description: Group of the UCS file, after execution
   returned: success
-  type: string
+  type: str
   sample: httpd
 owner:
   description: Owner of the UCS file, after execution
   returned: success
-  type: string
+  type: str
   sample: httpd
 uid:
   description: Owner id of the UCS file, after execution
@@ -124,12 +133,12 @@ uid:
 md5sum:
   description: The MD5 checksum of the downloaded file
   returned: changed or success
-  type: string
+  type: str
   sample: 96cacab4c259c4598727d7cf2ceb3b45
 mode:
   description: Permissions of the target UCS, after execution
   returned: success
-  type: string
+  type: str
   sample: 0644
 size:
   description: Size of the target UCS, after execution
@@ -146,32 +155,31 @@ from ansible.module_utils.basic import AnsibleModule
 from distutils.version import LooseVersion
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.icontrol import download_file
+    from library.module_utils.network.f5.icontrol import tmos_version
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.icontrol import download_file
+    from ansible.module_utils.network.f5.icontrol import tmos_version
 
 
 class Parameters(AnsibleF5Parameters):
     updatables = []
-    returnables = ['dest', 'src', 'md5sum', 'checksum', 'backup_file']
+    returnables = [
+        'dest',
+        'src',
+        'md5sum',
+        'checksum',
+        'backup_file']
     api_attributes = []
     api_map = {}
 
@@ -245,8 +253,9 @@ class ReportableChanges(Changes):
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
-        self.client = kwargs.get('client', None)
         self.kwargs = kwargs
+        self.module = kwargs.get('module', None)
+        self.client = F5RestClient(**self.module.params)
 
     def exec_module(self):
         if self.is_version_v1():
@@ -271,7 +280,7 @@ class ModuleManager(object):
 
         :return: bool
         """
-        version = self.client.api.tmos_version
+        version = tmos_version(self.client)
         if LooseVersion(version) < LooseVersion('12.1.0'):
             return True
         else:
@@ -281,17 +290,14 @@ class ModuleManager(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = Parameters(params=self.module.params)
         self.changes = UsableChanges()
 
     def exec_module(self):
         result = dict()
 
-        try:
-            self.present()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        self.present()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -366,19 +372,34 @@ class BaseManager(object):
 
     def create_on_device(self):
         if self.want.passphrase:
-            self.client.api.tm.sys.ucs.exec_cmd(
-                'save',
+            params = dict(
+                command='save',
                 name=self.want.src,
                 options=[{'passphrase': self.want.encryption_password}]
             )
         else:
-            self.client.api.tm.sys.ucs.exec_cmd(
-                'save',
-                name=self.want.src
+            params = dict(
+                command='save',
+                name=self.want.src,
             )
 
+        uri = "https://{0}:{1}/mgmt/tm/sys/ucs".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
     def download(self):
-        self.download_from_device()
+        self.download_from_device(self.want.dest)
         if os.path.exists(self.want.dest):
             return True
         raise F5ModuleError(
@@ -394,16 +415,33 @@ class V1Manager(BaseManager):
     def read_current(self):
         result = None
         output = self.read_current_from_device()
-        if hasattr(output, 'commandResult'):
-            result = self._read_ucs_files_from_output(output.commandResult)
+        if 'commandResult' in output:
+            result = self._read_ucs_files_from_output(output['commandResult'])
         return result
 
     def read_current_from_device(self):
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
+        params = dict(
+            command='run',
             utilCmdArgs='-c "tmsh list sys ucs"'
         )
-        return output
+
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+
+        resp = self.client.api.post(uri, json=params)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response
 
     def _read_ucs_files_from_output(self, output):
         search = re.compile(r'filename\s+(.*)').search
@@ -418,39 +456,83 @@ class V1Manager(BaseManager):
             return True
         return False
 
-    def download_from_device(self):
-        madm = self.client.api.shared.file_transfer.madm
-        madm.download_file(self.want.filename, self.want.dest)
+    def download_from_device(self, dest):
+        url = 'https://{0}:{1}/mgmt/shared/file-transfer/madm/{2}'.format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.filename
+        )
+        try:
+            download_file(self.client, url, dest)
+        except F5ModuleError:
+            raise F5ModuleError(
+                "Failed to download the file."
+            )
         if os.path.exists(self.want.dest):
             return True
         return False
 
     def _move_to_download(self):
+        move_path = '/var/local/ucs/{0} {1}/{0}'.format(
+            self.want.filename, self.remote_dir
+        )
+        params = dict(
+            command='run',
+            utilCmdArgs=move_path
+        )
+
+        uri = "https://{0}:{1}/mgmt/tm/util/unix-mv/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+
+        resp = self.client.api.post(uri, json=params)
+
         try:
-            move_path = '/var/local/ucs/{0} {1}/{0}'.format(
-                self.want.filename, self.remote_dir
-            )
-            self.client.api.tm.util.unix_mv.exec_cmd(
-                'run',
-                utilCmdArgs=move_path
-            )
-            return True
-        except Exception:
-            return False
+            response = resp.json()
+            if 'commandResult' in response:
+                if 'cannot stat' in response['commandResult']:
+                    raise F5ModuleError(response['commandResult'])
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        return True
 
 
 class V2Manager(BaseManager):
+    def read_current_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/ucs".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        return response
+
     def read_current(self):
         collection = self.read_current_from_device()
-        if 'items' not in collection.attrs:
+        if 'items' not in collection:
             return []
-        resources = collection.attrs['items']
+        resources = collection['items']
         result = [x['apiRawValues']['filename'] for x in resources]
         return result
-
-    def read_current_from_device(self):
-        collection = self.client.api.tm.sys.ucs.load()
-        return collection
 
     def exists(self):
         collection = self.read_current()
@@ -459,9 +541,18 @@ class V2Manager(BaseManager):
             return True
         return False
 
-    def download_from_device(self):
-        ucs = self.client.api.shared.file_transfer.ucs_downloads
-        ucs.download_file(self.want.src, self.want.dest)
+    def download_from_device(self, dest):
+        url = 'https://{0}:{1}/mgmt/shared/file-transfer/ucs-downloads/{2}'.format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.src
+        )
+        try:
+            download_file(self.client, url, dest)
+        except F5ModuleError:
+            raise F5ModuleError(
+                "Failed to download the file."
+            )
         if os.path.exists(self.want.dest):
             return True
         return False
@@ -508,17 +599,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
         add_file_common_args=spec.add_file_common_args
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

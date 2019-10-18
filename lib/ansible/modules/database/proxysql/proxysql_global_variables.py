@@ -53,7 +53,7 @@ EXAMPLES = '''
 
 RETURN = '''
 stdout:
-    description: Returns the mysql variable supplied with it's associted value.
+    description: Returns the mysql variable supplied with it's associated value.
     returned: Returns the current variable and value, or the newly set value
               for the variable supplied..
     type: dict

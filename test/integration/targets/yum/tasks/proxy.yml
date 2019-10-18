@@ -1,0 +1,186 @@
+- name: test yum proxy settings
+  block:
+    - name: install tinyproxy
+      yum:
+        name: 'https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/tinyproxy-1.10.0-3.el7.x86_64.rpm'
+        state: installed
+
+    # systemd doesn't play nice with this in a container for some reason
+    - name: start tinyproxy (systemd with tiny proxy does not work in container)
+      shell: tinyproxy
+      changed_when: false
+
+    # test proxy without auth
+    - name: set unauthenticated proxy in yum.conf
+      lineinfile:
+        path: /etc/yum.conf
+        line: "proxy=http://127.0.0.1:8888"
+        state: present
+
+    - name: clear proxy logs
+      shell: ': > /var/log/tinyproxy/tinyproxy.log'
+      changed_when: false
+      args:
+        executable: /usr/bin/bash
+
+    - name: install ninvaders with unauthenticated proxy
+      yum:
+        name: 'https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/ninvaders-0.1.1-18.el7.x86_64.rpm'
+        state: installed
+      register: yum_proxy_result
+
+    - assert:
+        that:
+          - "yum_proxy_result.changed"
+          - "'msg' in yum_proxy_result"
+          - "'rc' in yum_proxy_result"
+
+    - name: check that it install via unauthenticated proxy
+      command: grep -q Request /var/log/tinyproxy/tinyproxy.log
+
+    - name: uninstall ninvaders with unauthenticated proxy
+      yum:
+        name: ninvaders
+        state: absent
+      register: yum_proxy_result
+
+    - assert:
+        that:
+          - "yum_proxy_result.changed"
+          - "'msg' in yum_proxy_result"
+          - "'rc' in yum_proxy_result"
+
+    - name: unset unauthenticated proxy in yum.conf
+      lineinfile:
+        path: /etc/yum.conf
+        line: "proxy=http://127.0.0.1:8888"
+        state: absent
+
+    # test proxy with auth
+    - name: set authenticated proxy config in tinyproxy.conf
+      lineinfile:
+        path: /etc/tinyproxy/tinyproxy.conf
+        line: "BasicAuth 1testuser 1testpassword"
+        state: present
+
+    # systemd doesn't play nice with this in a container for some reason
+    - name: SIGHUP tinyproxy to reload config (workaround because of systemd+tinyproxy in container)
+      shell: kill -HUP $(ps -ef | grep tinyproxy | grep -v grep | awk '{print $2}')
+      changed_when: false
+      args:
+        executable: /usr/bin/bash
+
+    - name: set authenticated proxy config in yum.conf
+      lineinfile:
+        path: /etc/yum.conf
+        line: "proxy=http://1testuser:1testpassword@127.0.0.1:8888"
+        state: present
+
+    - name: clear proxy logs
+      shell: ': > /var/log/tinyproxy/tinyproxy.log'
+      changed_when: false
+      args:
+        executable: /usr/bin/bash
+
+    - name: install ninvaders with authenticated proxy
+      yum:
+        name: 'https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/ninvaders-0.1.1-18.el7.x86_64.rpm'
+        state: installed
+      register: yum_proxy_result
+
+    - assert:
+        that:
+          - "yum_proxy_result.changed"
+          - "'msg' in yum_proxy_result"
+          - "'rc' in yum_proxy_result"
+
+    - name: check that it install via authenticated proxy
+      command: grep -q Request /var/log/tinyproxy/tinyproxy.log
+
+    - name: uninstall ninvaders with authenticated proxy
+      yum:
+        name: ninvaders
+        state: absent
+
+    - name: unset authenticated proxy config in yum.conf
+      lineinfile:
+        path: /etc/yum.conf
+        line: "proxy=http://1testuser:1testpassword@127.0.0.1:8888"
+        state: absent
+
+    - name: set proxy config in yum.conf
+      lineinfile:
+        path: /etc/yum.conf
+        line: "proxy=http://127.0.0.1:8888"
+        state: present
+
+    - name: set proxy_username config in yum.conf
+      lineinfile:
+        path: /etc/yum.conf
+        line: "proxy_username=1testuser"
+        state: present
+
+    - name: set proxy_password config in yum.conf
+      lineinfile:
+        path: /etc/yum.conf
+        line: "proxy_password=1testpassword"
+        state: present
+
+    - name: clear proxy logs
+      shell: ': > /var/log/tinyproxy/tinyproxy.log'
+      changed_when: false
+      args:
+        executable: /usr/bin/bash
+
+    - name: install ninvaders with proxy, proxy_username, and proxy_password config in yum.conf
+      yum:
+        name: 'https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/ninvaders-0.1.1-18.el7.x86_64.rpm'
+        state: installed
+      register: yum_proxy_result
+
+    - assert:
+        that:
+          - "yum_proxy_result.changed"
+          - "'msg' in yum_proxy_result"
+          - "'rc' in yum_proxy_result"
+
+    - name: check that it install via proxy with proxy_username, proxy_password config in yum.conf
+      command: grep -q Request /var/log/tinyproxy/tinyproxy.log
+
+  always:
+    #cleanup
+    - name: uninstall tinyproxy
+      yum:
+        name: tinyproxy
+        state: absent
+
+    - name: uninstall ninvaders
+      yum:
+        name: ninvaders
+        state: absent
+
+    - name: ensure unset authenticated proxy
+      lineinfile:
+        path: /etc/yum.conf
+        line: "proxy=http://1testuser:1testpassword@127.0.0.1:8888"
+        state: absent
+
+    - name: ensure unset proxy
+      lineinfile:
+        path: /etc/yum.conf
+        line: "proxy=http://127.0.0.1:8888"
+        state: absent
+
+    - name: ensure unset proxy_username
+      lineinfile:
+        path: /etc/yum.conf
+        line: "proxy_username=1testuser"
+        state: absent
+
+    - name: ensure unset proxy_password
+      lineinfile:
+        path: /etc/yum.conf
+        line: "proxy_password=1testpassword"
+        state: absent
+  when:
+    - (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int == 7)

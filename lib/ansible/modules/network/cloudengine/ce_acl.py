@@ -28,7 +28,7 @@ short_description: Manages base ACL configuration on HUAWEI CloudEngine switches
 description:
     - Manages base ACL configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:
@@ -160,7 +160,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -427,7 +427,7 @@ class BaseAcl(object):
 
             if self.acl_type:
                 conf_str += "<aclType></aclType>"
-            if self.acl_num:
+            if self.acl_num or self.acl_name.isdigit():
                 conf_str += "<aclNumber></aclNumber>"
             if self.acl_step:
                 conf_str += "<aclStep></aclStep>"
@@ -444,12 +444,11 @@ class BaseAcl(object):
                 xml_str = recv_xml.replace('\r', '').replace('\n', '').\
                     replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
                     replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
-
                 root = ElementTree.fromstring(xml_str)
 
                 # parse acl
                 acl_info = root.findall(
-                    "data/acl/aclGroups/aclGroup")
+                    "acl/aclGroups/aclGroup")
                 if acl_info:
                     for tmp in acl_info:
                         tmp_dict = dict()
@@ -460,22 +459,43 @@ class BaseAcl(object):
                         self.cur_acl_cfg["acl_info"].append(tmp_dict)
 
                 if self.cur_acl_cfg["acl_info"]:
+                    find_list = list()
                     for tmp in self.cur_acl_cfg["acl_info"]:
-                        find_flag = True
+                        cur_cfg_dict = dict()
+                        exist_cfg_dict = dict()
+                        if self.acl_name:
+                            if self.acl_name.isdigit() and tmp.get("aclNumber"):
+                                cur_cfg_dict["aclNumber"] = self.acl_name
+                                exist_cfg_dict["aclNumber"] = tmp.get("aclNumber")
+                            else:
+                                cur_cfg_dict["aclNumOrName"] = self.acl_name
+                                exist_cfg_dict["aclNumOrName"] = tmp.get("aclNumOrName")
+                        if self.acl_type:
+                            cur_cfg_dict["aclType"] = self.acl_type
+                            exist_cfg_dict["aclType"] = tmp.get("aclType")
+                        if self.acl_num:
+                            cur_cfg_dict["aclNumber"] = self.acl_num
+                            exist_cfg_dict["aclNumber"] = tmp.get("aclNumber")
+                        if self.acl_step:
+                            cur_cfg_dict["aclStep"] = self.acl_step
+                            exist_cfg_dict["aclStep"] = tmp.get("aclStep")
+                        if self.acl_description:
+                            cur_cfg_dict["aclDescription"] = self.acl_description
+                            exist_cfg_dict["aclDescription"] = tmp.get("aclDescription")
 
-                        if self.acl_name and tmp.get("aclNumOrName") != self.acl_name:
-                            find_flag = False
-                        if self.acl_type and tmp.get("aclType") != self.acl_type:
-                            find_flag = False
-                        if self.acl_num and tmp.get("aclNumber") != self.acl_num:
-                            find_flag = False
-                        if self.acl_step and tmp.get("aclStep") != self.acl_step:
-                            find_flag = False
-                        if self.acl_description and tmp.get("aclDescription") != self.acl_description:
-                            find_flag = False
+                        if cur_cfg_dict == exist_cfg_dict:
+                            find_bool = True
+                        else:
+                            find_bool = False
+                        find_list.append(find_bool)
 
-                        if find_flag:
+                    for mem in find_list:
+                        if mem:
+                            find_flag = True
                             break
+                        else:
+                            find_flag = False
+
                 else:
                     find_flag = False
 
@@ -593,7 +613,7 @@ class BaseAcl(object):
 
                     # parse base rule
                     base_rule_info = root.findall(
-                        "data/acl/aclGroups/aclGroup/aclRuleBas4s/aclRuleBas4")
+                        "acl/aclGroups/aclGroup/aclRuleBas4s/aclRuleBas4")
                     if base_rule_info:
                         for tmp in base_rule_info:
                             tmp_dict = dict()
@@ -630,7 +650,8 @@ class BaseAcl(object):
                                     find_flag = False
                             if self.src_wild and tmp.get("aclSrcWild") != self.src_wild:
                                 find_flag = False
-                            if self.frag_type and tmp.get("aclFragType") != self.frag_type:
+                            frag_type = "clear_fragment" if tmp.get("aclFragType") is None else tmp.get("aclFragType")
+                            if self.frag_type and frag_type != self.frag_type:
                                 find_flag = False
                             if self.vrf_name and tmp.get("vrfName") != self.vrf_name:
                                 find_flag = False

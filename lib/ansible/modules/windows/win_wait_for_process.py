@@ -22,8 +22,8 @@ description:
 options:
   process_name_exact:
     description:
-    - The name of the process(es) for which to wait.
-    type: str
+    - The name of the process(es) for which to wait.  The name of the process(es) should not include the file extension suffix.
+    type: list
   process_name_pattern:
     description:
     - RegEx pattern matching desired process(es).
@@ -65,7 +65,7 @@ options:
     description:
     - When checking for a running process C(present) will block execution
       until the process exists, or until the timeout has been reached.
-      C(absent) will block execution untile the processs no longer exists,
+      C(absent) will block execution until the process no longer exists,
       or until the timeout has been reached.
     - When waiting for C(present), the module will return changed only if
       the process was not present on the initial check but became present on
@@ -82,6 +82,9 @@ options:
       before erroring out.
     type: int
     default: 300
+seealso:
+- module: wait_for
+- module: win_wait_for
 author:
 - Charles Crossan (@crossan007)
 '''
@@ -89,7 +92,7 @@ author:
 EXAMPLES = r'''
 - name: Wait 300 seconds for all Oracle VirtualBox processes to stop. (VBoxHeadless, VirtualBox, VBoxSVC)
   win_wait_for_process:
-    process_name: 'v(irtual)?box(headless|svc)?'
+    process_name_pattern: 'v(irtual)?box(headless|svc)?'
     state: absent
     timeout: 500
 
@@ -109,22 +112,22 @@ elapsed:
   type: float
   sample: 3.14159265
 matched_processes:
-  description: List of matched processes (either stopped or started)
+  description: List of matched processes (either stopped or started).
   returned: always
   type: complex
   contains:
     name:
-      description: The name of the matched process
+      description: The name of the matched process.
       returned: always
       type: str
       sample: svchost
     owner:
-      description: The owner of the matched process
+      description: The owner of the matched process.
       returned: when supported by PowerShell
       type: str
       sample: NT AUTHORITY\SYSTEM
     pid:
-      description: The PID of the matched process
+      description: The PID of the matched process.
       returned: always
       type: int
       sample: 7908

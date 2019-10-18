@@ -154,7 +154,7 @@ def signed_request(
         if session_in_query:
             query["X-Amz-Security-Token"] = session_token
 
-    if method is "GET":
+    if method == "GET":
         body = ""
 
     # Derived data
@@ -194,7 +194,7 @@ def signed_request(
 
     url = "https://" + host + uri
 
-    if query_string is not "":
+    if query_string != "":
         url = url + "?" + query_string
 
     final_headers = {

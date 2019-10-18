@@ -1,0 +1,36 @@
+- hosts: localhost
+  connection: local
+  environment: "{{ ansible_test.environment }}"
+  vars:
+     resource_prefix: 'ansible-testing'
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  tasks:
+    - block:
+        - name: Include vars file in roles/ec2_instance/defaults/main.yml
+          include_vars:
+            file: 'roles/ec2_launch_template/defaults/main.yml'
+
+        - name: create c4.large template (failure expected)
+          ec2_launch_template:
+            state: present
+            name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-tpl"
+            instance_type: c4.large
+          register: ec2_lt
+          ignore_errors: yes
+
+        - name: check that graceful error message is returned when creation with cpu_options and old botocore
+          assert:
+            that:
+              - ec2_lt is failed
+              - 'ec2_lt.msg == "ec2_launch_template requires boto3 >= 1.6.0"'
+      always:
+        - name: delete the c4.large template just in case it was created
+          ec2_launch_template:
+            state: absent
+            name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-tpl"
+          ignore_errors: yes

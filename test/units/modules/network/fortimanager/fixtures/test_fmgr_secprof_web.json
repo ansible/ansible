@@ -1,0 +1,146 @@
+{
+    "fmgr_webfilter_profile_modify": [
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/root/obj/webfilter/profile"
+            },
+            "datagram_sent": {
+                "comment": "Created by Ansible Module TEST",
+                "web-extended-all-action-log": "enable",
+                "web-filter-cookie-removal-log": "enable",
+                "extended-log": "enable",
+                "log-all-url": "enable",
+                "wisp": "enable",
+                "web-filter-vbs-log": "enable",
+                "ovrd-perm": [
+                    "bannedword-override"
+                ],
+                "web-filter-command-block-log": "enable",
+                "web-invalid-domain-log": "enable",
+                "web-filter-referer-log": "enable",
+                "inspection-mode": "proxy",
+                "post-action": "block",
+                "web-content-log": "enable",
+                "web-filter-applet-log": "enable",
+                "web-ftgd-err-log": "enable",
+                "name": "Ansible_Web_Proxy_Profile",
+                "web-filter-jscript-log": "enable",
+                "web-filter-activex-log": "enable",
+                "web-filter-js-log": "enable",
+                "web-ftgd-quota-usage": "enable",
+                "web-filter-unknown-log": "enable",
+                "web-filter-cookie-log": "enable",
+                "youtube-channel-status": "blacklist",
+                "web-url-log": "enable",
+                "options": [
+                    "js"
+                ],
+                "wisp-algorithm": "auto-learning"
+            },
+            "paramgram_used": {
+                "comment": "Created by Ansible Module TEST",
+                "web-filter-command-block-log": "enable",
+                "web-invalid-domain-log": "enable",
+                "web-extended-all-action-log": "enable",
+                "adom": "root",
+                "ftgd-wf": {
+                    "rate-javascript-urls": null,
+                    "quota": {
+                        "category": null,
+                        "value": null,
+                        "override-replacemsg": null,
+                        "duration": null,
+                        "type": null,
+                        "unit": null
+                    },
+                    "rate-image-urls": null,
+                    "filters": {
+                        "category": null,
+                        "auth-usr-grp": null,
+                        "log": null,
+                        "warning-prompt": null,
+                        "override-replacemsg": null,
+                        "action": null,
+                        "warn-duration": null,
+                        "warning-duration-type": null
+                    },
+                    "rate-css-urls": null,
+                    "ovrd": null,
+                    "exempt-quota": null,
+                    "max-quota-timeout": null,
+                    "rate-crl-urls": null,
+                    "options": null
+                },
+                "web-content-log": "enable",
+                "web-filter-referer-log": "enable",
+                "log-all-url": "enable",
+                "extended-log": "enable",
+                "inspection-mode": "proxy",
+                "web-filter-cookie-removal-log": "enable",
+                "post-action": "block",
+                "web-filter-activex-log": "enable",
+                "web-filter-cookie-log": "enable",
+                "web": {
+                    "blacklist": null,
+                    "log-search": null,
+                    "keyword-match": null,
+                    "urlfilter-table": null,
+                    "bword-table": null,
+                    "safe-search": null,
+                    "whitelist": null,
+                    "content-header-list": null,
+                    "youtube-restrict": null,
+                    "bword-threshold": null
+                },
+                "web-filter-applet-log": "enable",
+                "web-ftgd-err-log": "enable",
+                "replacemsg-group": null,
+                "web-filter-jscript-log": "enable",
+                "web-ftgd-quota-usage": "enable",
+                "url-extraction": {
+                    "status": null,
+                    "server-fqdn": null,
+                    "redirect-url": null,
+                    "redirect-header": null,
+                    "redirect-no-content": null
+                },
+                "web-filter-js-log": "enable",
+                "youtube-channel-filter": {
+                    "comment": null,
+                    "channel-id": null
+                },
+                "name": "Ansible_Web_Proxy_Profile",
+                "wisp": "enable",
+                "web-filter-vbs-log": "enable",
+                "web-filter-unknown-log": "enable",
+                "mode": "set",
+                "youtube-channel-status": "blacklist",
+                "override": {
+                    "profile": null,
+                    "ovrd-user-group": null,
+                    "ovrd-scope": null,
+                    "ovrd-cookie": null,
+                    "ovrd-dur-mode": null,
+                    "profile-attribute": null,
+                    "ovrd-dur": null,
+                    "profile-type": null
+                },
+                "web-url-log": "enable",
+                "ovrd-perm": [
+                    "bannedword-override"
+                ],
+                "https-replacemsg": null,
+                "options": [
+                    "js"
+                ],
+                "wisp-servers": null,
+                "wisp-algorithm": "auto-learning"
+            },
+            "post_method": "set"
+        }
+    ]
+}

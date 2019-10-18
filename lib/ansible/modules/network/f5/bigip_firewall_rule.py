@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -26,15 +26,18 @@ options:
   name:
     description:
       - Specifies the name of the rule.
+    type: str
     required: True
   parent_policy:
     description:
       - The policy which contains the rule to be managed.
       - One of either C(parent_policy) or C(parent_rule_list) is required.
+    type: str
   parent_rule_list:
     description:
       - The rule list which contains the rule to be managed.
       - One of either C(parent_policy) or C(parent_rule_list) is required.
+    type: str
   action:
     description:
       - Specifies the action for the firewall rule.
@@ -56,6 +59,7 @@ options:
         or self IP firewall rule, then Accept Decisively is equivalent to Accept.
       - When creating a new rule, if this parameter is not provided, the default is
         C(reject).
+    type: str
     choices:
       - accept
       - drop
@@ -71,6 +75,7 @@ options:
         according to the specified schedule.
       - When creating a new rule, if this parameter is not provided, the default
         is C(enabled).
+    type: str
     choices:
       - enabled
       - disabled
@@ -80,19 +85,23 @@ options:
       - Specifies a schedule for the firewall rule.
       - You configure schedules to define days and times when the firewall rule is
         made active.
+    type: str
   description:
     description:
       - The rule description.
+    type: str
   irule:
     description:
-      - Specifies an iRule that is applied to the rule.
+      - Specifies an iRule that is applied to the firewall rule.
       - An iRule can be started when the firewall rule matches traffic.
+    type: str
   protocol:
     description:
       - Specifies the protocol to which the rule applies.
       - Protocols may be specified by either their name or numeric value.
       - A special protocol value C(any) can be specified to match any protocol. The
         numeric equivalent of this protocol is C(255).
+    type: str
   source:
     description:
       - Specifies packet sources to which the rule applies.
@@ -105,29 +114,42 @@ options:
       address:
         description:
           - Specifies a specific IP address.
+        type: str
       address_list:
         description:
           - Specifies an existing address list.
+        type: str
       address_range:
         description:
           - Specifies an address range.
+        type: str
       country:
         description:
           - Specifies a country code.
+        type: str
       port:
         description:
           - Specifies a single numeric port.
           - This option is only valid when C(protocol) is C(tcp)(6) or C(udp)(17).
+        type: int
       port_list:
         description:
           - Specifes an existing port list.
           - This option is only valid when C(protocol) is C(tcp)(6) or C(udp)(17).
+        type: str
       port_range:
         description:
           - Specifies a range of ports, which is two port values separated by
             a hyphen. The port to the left of the hyphen should be less than the
             port to the right.
           - This option is only valid when C(protocol) is C(tcp)(6) or C(udp)(17).
+        type: str
+      vlan:
+        description:
+          - Specifies VLANs to which the rule applies.
+          - The VLAN source refers to the packet's source.
+        type: str
+    type: list
   destination:
     description:
       - Specifies packet destinations to which the rule applies.
@@ -140,29 +162,37 @@ options:
       address:
         description:
           - Specifies a specific IP address.
+        type: str
       address_list:
         description:
           - Specifies an existing address list.
+        type: str
       address_range:
         description:
           - Specifies an address range.
+        type: str
       country:
         description:
           - Specifies a country code.
+        type: str
       port:
         description:
           - Specifies a single numeric port.
           - This option is only valid when C(protocol) is C(tcp)(6) or C(udp)(17).
+        type: int
       port_list:
         description:
           - Specifes an existing port list.
           - This option is only valid when C(protocol) is C(tcp)(6) or C(udp)(17).
+        type: str
       port_range:
         description:
           - Specifies a range of ports, which is two port values separated by
             a hyphen. The port to the left of the hyphen should be less than the
             port to the right.
           - This option is only valid when C(protocol) is C(tcp)(6) or C(udp)(17).
+        type: str
+    type: list
   logging:
     description:
       - Specifies whether logging is enabled or disabled for the firewall rule.
@@ -175,6 +205,8 @@ options:
       - This parameter is mutually exclusive with many of the other individual-rule
         specific settings. This includes C(logging), C(action), C(source),
         C(destination), C(irule'), C(protocol) and C(logging).
+      - This parameter is only used when C(parent_policy) is specified, otherwise it is ignored.
+    type: str
   icmp_message:
     description:
       - Specifies the Internet Control Message Protocol (ICMP) or ICMPv6 message
@@ -191,6 +223,7 @@ options:
           - You can also specify an arbitrary ICMP message.
           - The ICMP protocol contains definitions for the existing message type and
             number pairs.
+        type: str
       code:
         description:
           - Specifies the code returned in response to the specified ICMP message type.
@@ -202,14 +235,18 @@ options:
           - You can also specify an arbitrary code.
           - The ICMP protocol contains definitions for the existing message code and
             number pairs.
+        type: str
+    type: list
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(state) is C(present), ensures that the rule exists.
       - When C(state) is C(absent), ensures that the rule is removed.
+    type: str
     choices:
       - present
       - absent
@@ -217,6 +254,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -269,9 +307,10 @@ EXAMPLES = r'''
       user: admin
   delegate_to: localhost
 
-- name: Add a new rule that is uses an existing rule list
+- name: Add a new policy rule that uses an existing rule list
   bigip_firewall_rule:
     name: foo
+    parent_policy: foo_policy
     rule_list: rule-list1
     provider:
       password: secret
@@ -281,16 +320,164 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-param1:
-  description: The new param1 value of the resource.
+name:
+  description: Name of the rule.
+  returned: changed
+  type: str
+  sample: FooRule
+parent_policy:
+  description: The policy which contains the rule to be managed.
+  returned: changed
+  type: str
+  sample: FooPolicy
+parent_rule_list:
+  description: The rule list which contains the rule to be managed.
+  returned: changed
+  type: str
+  sample: FooRuleList
+action:
+  description: The action for the firewall rule.
+  returned: changed
+  type: str
+  sample: drop
+status:
+  description: The activity state of the rule or rule list.
+  returned: changed
+  type: str
+  sample: scheduled
+schedule:
+  description: The schedule for the firewall rule.
+  returned: changed
+  type: str
+  sample: Foo_schedule
+description:
+  description: The rule description.
+  returned: changed
+  type: str
+  sample: MyRule
+irule:
+  description: The iRule that is applied to the firewall rule.
+  returned: changed
+  type: str
+  sample: _sys_auth_radius
+protocol:
+  description: The protocol to which the rule applies.
+  returned: changed
+  type: str
+  sample: any
+source:
+  description: The packet sources to which the rule applies
+  returned: changed
+  type: complex
+  contains:
+    address:
+      description: A specific IP address.
+      returned: changed
+      type: str
+      sample: 192.168.1.1
+    address_list:
+      description: An existing address list.
+      returned: changed
+      type: str
+      sample: foo-list1
+    address_range:
+      description: The address range.
+      returned: changed
+      type: str
+      sample: 1.1.1.1-2.2.2.2
+    country:
+      description: A country code.
+      returned: changed
+      type: str
+      sample: US
+    port:
+      description: Single numeric port.
+      returned: changed
+      type: int
+      sample: 8080
+    port_list:
+      description: An existing port list.
+      returned: changed
+      type: str
+      sample: port-list1
+    port_range:
+      description: The port range.
+      returned: changed
+      type: str
+      sample: 80-443
+    vlan:
+      description: Source VLANs for the packets.
+      returned: changed
+      type: str
+      sample: vlan1
+  sample: hash/dictionary of values
+destination:
+  description: The packet destinations to which the rule applies.
+  returned: changed
+  type: complex
+  contains:
+    address:
+      description: A specific IP address.
+      returned: changed
+      type: str
+      sample: 192.168.1.1
+    address_list:
+      description: An existing address list.
+      returned: changed
+      type: str
+      sample: foo-list1
+    address_range:
+      description: The address range.
+      returned: changed
+      type: str
+      sample: 1.1.1.1-2.2.2.2
+    country:
+      description: A country code.
+      returned: changed
+      type: str
+      sample: US
+    port:
+      description: Single numeric port.
+      returned: changed
+      type: int
+      sample: 8080
+    port_list:
+      description: An existing port list.
+      returned: changed
+      type: str
+      sample: port-list1
+    port_range:
+      description: The port range.
+      returned: changed
+      type: str
+      sample: 80-443
+  sample: hash/dictionary of values
+logging:
+  description: Enable or Disable logging for the firewall rule.
   returned: changed
   type: bool
-  sample: true
-param2:
-  description: The new param2 value of the resource.
+  sample: yes
+rule_list:
+  description: An existing rule list to use in the parent policy.
   returned: changed
-  type: string
-  sample: Foo is bar
+  type: str
+  sample: rule-list-1
+icmp_message:
+  description: The (ICMP) or ICMPv6 message C(type) and C(code) that the rule uses.
+  returned: changed
+  type: complex
+  contains:
+    type:
+      description: The type of ICMP message.
+      returned: changed
+      type: str
+      sample: 0
+    code:
+      description: The code returned in response to the specified ICMP message type.
+      returned: changed
+      type: str
+      sample: 1
+  sample: hash/dictionary of values
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -300,24 +487,16 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import fq_name
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import fq_name
 
 
 class Parameters(AnsibleF5Parameters):
@@ -325,6 +504,7 @@ class Parameters(AnsibleF5Parameters):
         'ipProtocol': 'protocol',
         'log': 'logging',
         'icmp': 'icmp_message',
+        'ruleList': 'rule_list'
     }
 
     api_attributes = [
@@ -338,6 +518,7 @@ class Parameters(AnsibleF5Parameters):
         'icmp',
         'action',
         'description',
+        'ruleList',
     ]
 
     returnables = [
@@ -351,6 +532,7 @@ class Parameters(AnsibleF5Parameters):
         'schedule',
         'description',
         'icmp_message',
+        'rule_list',
     ]
 
     updatables = [
@@ -364,6 +546,7 @@ class Parameters(AnsibleF5Parameters):
         'schedule',
         'description',
         'icmp_message',
+        'rule_list',
     ]
 
     protocol_map = {
@@ -485,6 +668,8 @@ class ModuleParameters(Parameters):
                 result += [('vlan', fq_name(self.partition, x['vlan']))]
             elif 'port' in x and x['port'] is not None:
                 result += [('port', str(x['port']))]
+            elif 'port_range' in x and x['port_range'] is not None:
+                result += [('port', x['port_range'])]
             elif 'port_list' in x and x['port_list'] is not None:
                 result += [('port_list', fq_name(self.partition, x['port_list']))]
         if result:
@@ -507,6 +692,8 @@ class ModuleParameters(Parameters):
                 result += [('geo', x['country'])]
             elif 'port' in x and x['port'] is not None:
                 result += [('port', str(x['port']))]
+            elif 'port_range' in x and x['port_range'] is not None:
+                result += [('port', x['port_range'])]
             elif 'port_list' in x and x['port_list'] is not None:
                 result += [('port_list', fq_name(self.partition, x['port_list']))]
         if result:
@@ -539,6 +726,14 @@ class ModuleParameters(Parameters):
                 result.append('{0}:{1}'.format(type, code))
         result = list(set(result))
         return result
+
+    @property
+    def rule_list(self):
+        if self._values['rule_list'] is None:
+            return None
+        if self._values['parent_policy'] is not None:
+            return fq_name(self.partition, self._values['rule_list'])
+        return None
 
 
 class Changes(Parameters):
@@ -748,7 +943,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -817,19 +1012,20 @@ class ModuleManager(object):
             return self.create()
 
     def exists(self):
+        name = self.want.name
         if self.want.parent_policy:
             uri = "https://{0}:{1}/mgmt/tm/security/firewall/policy/{2}/rules/{3}".format(
                 self.client.provider['server'],
                 self.client.provider['server_port'],
                 transform_name(self.want.partition, self.want.parent_policy),
-                self.want.name
+                name.replace('/', '_')
             )
         else:
             uri = "https://{0}:{1}/mgmt/tm/security/firewall/rule-list/{2}/rules/{3}".format(
                 self.client.provider['server'],
                 self.client.provider['server_port'],
                 transform_name(self.want.partition, self.want.parent_rule_list),
-                self.want.name
+                name.replace('/', '_')
             )
         resp = self.client.api.get(uri)
         if resp.ok:
@@ -855,13 +1051,7 @@ class ModuleManager(object):
 
     def create(self):
         self._set_changed_options()
-        if self.want.rule_list is None and self.want.parent_rule_list is None:
-            if self.want.action is None:
-                self.changes.update({'action': 'reject'})
-            if self.want.logging is None:
-                self.changes.update({'logging': False})
-        if self.want.status is None:
-            self.changes.update({'status': 'enabled'})
+        self.set_reasonable_creation_defaults()
         if self.want.status == 'scheduled' and self.want.schedule is None:
             raise F5ModuleError(
                 "A 'schedule' must be specified when 'status' is 'scheduled'."
@@ -871,9 +1061,18 @@ class ModuleManager(object):
         self.create_on_device()
         return True
 
+    def set_reasonable_creation_defaults(self):
+        if self.want.action is None:
+            self.changes.update({'action': 'reject'})
+        if self.want.logging is None:
+            self.changes.update({'logging': False})
+        if self.want.status is None:
+            self.changes.update({'status': 'enabled'})
+
     def create_on_device(self):
         params = self.changes.api_params()
-        params['name'] = self.want.name
+        name = self.want.name
+        params['name'] = name.replace('/', '_')
         params['partition'] = self.want.partition
         params['placeAfter'] = 'last'
 
@@ -901,26 +1100,35 @@ class ModuleManager(object):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] in [400, 403]:
+        if 'code' in response and response['code'] in [400, 403, 404]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
 
     def update_on_device(self):
-        if self.want.parent_policy:
+        name = self.want.name
+        if self.want.parent_policy and self.want.rule_list:
             uri = "https://{0}:{1}/mgmt/tm/security/firewall/policy/{2}/rules/{3}".format(
                 self.client.provider['server'],
                 self.client.provider['server_port'],
                 transform_name(self.want.partition, self.want.parent_policy),
-                self.want.name
+                name.replace('/', '_')
+            )
+
+        elif self.want.parent_policy:
+            uri = "https://{0}:{1}/mgmt/tm/security/firewall/policy/{2}/rules/{3}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.parent_policy),
+                name.replace('/', '_')
             )
         else:
             uri = "https://{0}:{1}/mgmt/tm/security/firewall/rule-list/{2}/rules/{3}".format(
                 self.client.provider['server'],
                 self.client.provider['server_port'],
                 transform_name(self.want.partition, self.want.parent_rule_list),
-                self.want.name
+                name.replace('/', '_')
             )
 
         if self.have.protocol not in ['icmp', 'icmpv6'] and self.changes.protocol not in ['icmp', 'icmpv6']:
@@ -939,7 +1147,7 @@ class ModuleManager(object):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] == 400:
+        if 'code' in response and response['code'] in [400, 403, 404]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
@@ -951,19 +1159,20 @@ class ModuleManager(object):
         return False
 
     def remove_from_device(self):
+        name = self.want.name
         if self.want.parent_policy:
             uri = "https://{0}:{1}/mgmt/tm/security/firewall/policy/{2}/rules/{3}".format(
                 self.client.provider['server'],
                 self.client.provider['server_port'],
                 transform_name(self.want.partition, self.want.parent_policy),
-                self.want.name
+                name.replace('/', '_')
             )
         else:
             uri = "https://{0}:{1}/mgmt/tm/security/firewall/rule-list/{2}/rules/{3}".format(
                 self.client.provider['server'],
                 self.client.provider['server_port'],
                 transform_name(self.want.partition, self.want.parent_rule_list),
-                self.want.name
+                name.replace('/', '_')
             )
 
         resp = self.client.api.delete(uri)
@@ -1099,12 +1308,11 @@ def main():
     )
 
     try:
-        client = F5RestClient(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

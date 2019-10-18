@@ -1,0 +1,135 @@
+---
+- name: setup ensure running instance to get host infos
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    state: started
+  register: running_instance
+
+- name: setup ensure stopped instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: stopped
+
+- name: setup zone facts
+  cs_zone_info:
+    name: "{{ cs_common_zone_basic }}"
+  register: zone_info
+
+- name: setup find the host name
+  shell: cs listHosts type=routing zoneid="{{ zone_info.zones[0].id }}"
+  args:
+    chdir: "{{ playbook_dir }}"
+  register: host
+
+- name: host convert from json
+  set_fact:
+    host_json: "{{ host.stdout | from_json }}"
+
+- name: select a host on which the instance was not running on
+  set_fact:
+    host: "{{ host_json | json_query('host[?name!=`' + running_instance.host + '`] | [0]') }}"
+
+- debug:
+    msg: "from current host {{ running_instance.host }} to new host {{ host.name }}"
+
+- name: test starting instance on new host in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    host: "{{ host.name }}"
+    state: started
+  register: instance
+  check_mode: true
+- name: verify test starting instance on new host in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.host is not defined
+    - instance.state == "Stopped"
+
+- name: test starting instance on new host
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    host: "{{ host.name }}"
+    state: started
+  register: instance
+- name: verify test starting instance on new host
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.host == "{{ host.name }}"
+    - instance.state == "Running"
+
+- name: test starting instance on new host idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    host: "{{ host.name }}"
+    state: started
+  register: instance
+- name: verify test starting instance on new host idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.host == "{{ host.name }}"
+    - instance.state == "Running"
+
+- name: select a host on which the instance is not running on
+  set_fact:
+    host: "{{ host_json | json_query('host[?name!=`' + instance.host + '`] | [0]') }}"
+
+- debug:
+    msg: "from current host {{ instance.host }} to new host {{ host.name }}"
+
+- name: test force update running instance in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    host: "{{ host.name }}"
+    force: true
+  register: instance
+  check_mode: true
+- name: verify force update running instance in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.host != "{{ host.name }}"
+    - instance.state == "Running"
+
+- name: test force update running instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    host: "{{ host.name }}"
+    force: true
+  register: instance
+- name: verify force update running instance
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.host == "{{ host.name }}"
+    - instance.state == "Running"
+
+- name: test force update running instance idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    host: "{{ host.name }}"
+    force: true
+  register: instance
+- name: verify force update running instance idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.host == "{{ host.name }}"
+    - instance.state == "Running"

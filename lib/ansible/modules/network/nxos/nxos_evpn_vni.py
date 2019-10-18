@@ -95,8 +95,8 @@ commands:
 '''
 
 import re
-from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 
@@ -245,7 +245,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
     results = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
@@ -272,12 +271,13 @@ def main():
         commands, parents = state_absent(module, existing, proposed)
 
     if commands:
-            candidate = CustomNetworkConfig(indent=3)
-            candidate.add(commands, parents=parents)
-            candidate = candidate.items_text()
+        candidate = CustomNetworkConfig(indent=3)
+        candidate.add(commands, parents=parents)
+        candidate = candidate.items_text()
+        if not module.check_mode:
             load_config(module, candidate)
             results['changed'] = True
-            results['commands'] = candidate
+        results['commands'] = candidate
     else:
         results['commands'] = []
     module.exit_json(**results)

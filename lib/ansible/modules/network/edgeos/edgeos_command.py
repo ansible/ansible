@@ -14,7 +14,7 @@ DOCUMENTATION = """
 module: edgeos_command
 version_added: "2.5"
 author:
-  - Chad Norgan (@BeardyMcBeards)
+  - Chad Norgan (@beardymcbeards)
   - Sam Doran (@samdoran)
 short_description: Run one or more commands on EdgeOS devices
 description:

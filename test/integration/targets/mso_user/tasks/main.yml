@@ -1,0 +1,292 @@
+# Test code for the MSO modules
+# Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI MultiSite host, username and password
+  fail:
+    msg: 'Please define the following variables: mso_hostname, mso_username and mso_password.'
+  when: mso_hostname is not defined or mso_username is not defined or mso_password is not defined
+
+
+# CLEAN ENVIRONMENT
+- name: Remove user ansible_test2
+  mso_user: &user_absent
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
+    user_name: ansible_test2
+    state: absent
+
+- name: Remove user ansible_test
+  mso_user:
+    <<: *user_absent
+    user_name: ansible_test
+  register: cm_remove_user
+
+
+# ADD USER
+- name: Add user (check_mode)
+  mso_user: &user_present
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
+    user_name: ansible_test
+    user_password: 'S0m3!1n1t14l!p455w0rd'
+    # NOTE: First name, last name, phone and email are mandatory on creation
+    first_name: Ansible
+    last_name: Test
+    email: msc@cisco.com
+    phone: +32 478 436 299
+    account_status: active
+    roles:
+    - powerUser
+    domain: Local
+
+    state: present
+  check_mode: yes
+  register: cm_add_user
+
+- name: Verify cm_add_user
+  assert:
+    that:
+    - cm_add_user is changed
+    - cm_add_user.previous == {}
+    - cm_add_user.current.id is not defined
+    - cm_add_user.current.username == 'ansible_test'
+
+- name: Add user (normal mode)
+  mso_user: *user_present
+  register: nm_add_user
+
+- name: nm_Verify add_user
+  assert:
+    that:
+    - nm_add_user is changed
+    - nm_add_user.previous == {}
+    - nm_add_user.current.id is defined
+    - nm_add_user.current.username == 'ansible_test'
+
+- name: Add user again (check_mode)
+  mso_user:
+    <<: *user_present
+    # NOTE: We need to modify the password for a new user
+    user_password: 'S0m3!n3w!p455w0rd'
+  check_mode: yes
+  register: cm_add_user_again
+
+- name: Verify cm_add_user_again
+  assert:
+    that:
+    - cm_add_user_again is changed
+    - cm_add_user_again.previous.username == 'ansible_test'
+    - cm_add_user_again.current.id == nm_add_user.current.id
+    - cm_add_user_again.current.username == 'ansible_test'
+
+- name: Add user again (normal mode)
+  mso_user:
+    <<: *user_present
+    # NOTE: We need to modify the password for a new user
+    user_password: 'S0m3!n3w!p455w0rd'
+  register: nm_add_user_again
+
+- name: Verify nm_add_user_again
+  assert:
+    that:
+    - nm_add_user_again is changed
+    - nm_add_user_again.previous.username == 'ansible_test'
+    - nm_add_user_again.current.id == nm_add_user.current.id
+    - nm_add_user_again.current.username == 'ansible_test'
+
+
+# CHANGE USER
+- name: Change user (check_mode)
+  mso_user:
+    <<: *user_present
+    user_id: '{{ nm_add_user.current.id }}'
+    user_name: ansible_test2
+    user_password: null
+  check_mode: yes
+  register: cm_change_user
+
+- name: Verify cm_change_user
+  assert:
+    that:
+    - cm_change_user is changed
+    - cm_change_user.current.id == nm_add_user.current.id
+    - cm_change_user.current.username == 'ansible_test2'
+
+- name: Change user (normal mode)
+  mso_user:
+    <<: *user_present
+    user_id: '{{ nm_add_user.current.id }}'
+    user_name: ansible_test2
+    user_password: null
+    output_level: debug
+  register: nm_change_user
+
+- name: Verify nm_change_user
+  assert:
+    that:
+    - nm_change_user is changed
+    - nm_change_user.current.id == nm_add_user.current.id
+    - nm_change_user.current.username == 'ansible_test2'
+
+- name: Change user again (check_mode)
+  mso_user:
+    <<: *user_present
+    user_id: '{{ nm_add_user.current.id }}'
+    user_name: ansible_test2
+    user_password: null
+  check_mode: yes
+  register: cm_change_user_again
+
+- name: Verify cm_change_user_again
+  assert:
+    that:
+    - cm_change_user_again is not changed
+    - cm_change_user_again.current.id == nm_add_user.current.id
+    - cm_change_user_again.current.username == 'ansible_test2'
+
+- name: Change user again (normal mode)
+  mso_user:
+    <<: *user_present
+    user_id: '{{ nm_add_user.current.id }}'
+    user_name: ansible_test2
+    user_password: null
+  register: nm_change_user_again
+
+- name: Verify nm_change_user_again
+  assert:
+    that:
+    - nm_change_user_again is not changed
+    - nm_change_user_again.current.id == nm_add_user.current.id
+    - nm_change_user_again.current.username == 'ansible_test2'
+
+
+# QUERY ALL USERS
+- name: Query all users (check_mode)
+  mso_user: &user_query
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
+    state: query
+  check_mode: yes
+  register: cm_query_all_users
+
+- name: Query all users (normal mode)
+  mso_user: *user_query
+  register: nm_query_all_users
+
+- name: Verify query_all_users
+  assert:
+    that:
+    - cm_query_all_users is not changed
+    - nm_query_all_users is not changed
+    # NOTE: Order of users is not stable between calls
+    #- cm_query_all_users == nm_query_all_users
+
+
+# QUERY A USER
+- name: Query our user
+  mso_user:
+    <<: *user_query
+    user_name: ansible_test2
+  check_mode: yes
+  register: cm_query_user
+
+- name: Query our user
+  mso_user:
+    <<: *user_query
+    user_name: ansible_test2
+  register: nm_query_user
+
+- name: Verify query_user
+  assert:
+    that:
+    - cm_query_user is not changed
+    - cm_query_user.current.id == nm_add_user.current.id
+    - cm_query_user.current.username == 'ansible_test2'
+    - nm_query_user is not changed
+    - nm_query_user.current.id == nm_add_user.current.id
+    - nm_query_user.current.username == 'ansible_test2'
+    - cm_query_user == nm_query_user
+
+
+# REMOVE USER
+- name: Remove user (check_mode)
+  mso_user: *user_absent
+  check_mode: yes
+  register: cm_remove_user
+
+- name: Verify cm_remove_user
+  assert:
+    that:
+    - cm_remove_user is changed
+    - cm_remove_user.current == {}
+
+- name: Remove user (normal mode)
+  mso_user: *user_absent
+  register: nm_remove_user
+
+- name: Verify nm_remove_user
+  assert:
+    that:
+    - nm_remove_user is changed
+    - nm_remove_user.current == {}
+
+- name: Remove user again (check_mode)
+  mso_user: *user_absent
+  check_mode: yes
+  register: cm_remove_user_again
+
+- name: Verify cm_remove_user_again
+  assert:
+    that:
+    - cm_remove_user_again is not changed
+    - cm_remove_user_again.current == {}
+
+- name: Remove user again (normal mode)
+  mso_user: *user_absent
+  register: nm_remove_user_again
+
+- name: Verify nm_remove_user_again
+  assert:
+    that:
+    - nm_remove_user_again is not changed
+    - nm_remove_user_again.current == {}
+
+
+# QUERY NON-EXISTING USER
+- name: Query non-existing user (check_mode)
+  mso_user:
+    <<: *user_query
+    user_name: ansible_test
+  check_mode: yes
+  register: cm_query_non_user
+
+- name: Query non-existing user (normal mode)
+  mso_user:
+    <<: *user_query
+    user_name: ansible_test
+  register: nm_query_non_user
+
+# TODO: Implement more tests
+- name: Verify query_non_user
+  assert:
+    that:
+    - cm_query_non_user is not changed
+    - nm_query_non_user is not changed
+    - cm_query_non_user == nm_query_non_user

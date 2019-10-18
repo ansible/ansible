@@ -15,10 +15,11 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_keyvaultsecret
 version_added: 2.5
-short_description: Use Azure KeyVault Secrets.
+short_description: Use Azure KeyVault Secrets
 description:
-    - Create or delete a secret within a given keyvault. By using Key Vault, you can encrypt
-      keys and secrets (such as authentication keys, storage account keys, data encryption keys, .PFX files, and passwords).
+    - Create or delete a secret within a given keyvault.
+    - By using Key Vault, you can encrypt keys and secrets.
+    - Such as authentication keys, storage account keys, data encryption keys, .PFX files, and passwords.
 options:
     keyvault_uri:
             description:
@@ -31,12 +32,9 @@ options:
     secret_value:
         description:
             - Secret to be secured by keyvault.
-        required: false
     state:
         description:
-            - Assert the state of the subnet. Use 'present' to create or update a secret and
-              'absent' to delete a secret .
-        required: false
+            - Assert the state of the subnet. Use C(present) to create or update a secret and C(absent) to delete a secret .
         default: present
         choices:
             - absent
@@ -47,7 +45,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Ian Philpot (@tripdubroot)"
+    - Ian Philpot (@iphilpot)
 
 '''
 
@@ -70,12 +68,14 @@ EXAMPLES = '''
 
 RETURN = '''
 state:
-    description: Current state of the secret.
+    description:
+        - Current state of the secret.
     returned: success
     type: complex
     contains:
         secret_id:
-          description: Secret resource path.
+          description:
+              - Secret resource path.
           type: str
           example: https://contoso.vault.azure.net/secrets/hello/e924f053839f4431b35bc54393f98423
 '''
@@ -86,6 +86,7 @@ try:
     from azure.keyvault import KeyVaultClient, KeyVaultAuthentication, KeyVaultId
     from azure.common.credentials import ServicePrincipalCredentials
     from azure.keyvault.models.key_vault_error import KeyVaultErrorException
+    from msrestazure.azure_active_directory import MSIAuthentication
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -130,34 +131,19 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
-        # Create KeyVault Client using KeyVault auth class and auth_callback
-        def auth_callback(server, resource, scope):
-            if self.credentials['client_id'] is None or self.credentials['secret'] is None:
-                self.fail('Please specify client_id, secret and tenant to access azure Key Vault.')
-
-            tenant = self.credentials.get('tenant')
-            if not self.credentials['tenant']:
-                tenant = "common"
-
-            authcredential = ServicePrincipalCredentials(
-                client_id=self.credentials['client_id'],
-                secret=self.credentials['secret'],
-                tenant=tenant,
-                resource="https://vault.azure.net")
-
-            token = authcredential.token
-            return token['token_type'], token['access_token']
-
-        self.client = KeyVaultClient(KeyVaultAuthentication(auth_callback))
+        # Create KeyVault Client
+        self.client = self.get_keyvault_client()
 
         results = dict()
         changed = False
 
         try:
-            results['secret_id'] = self.get_secret(self.secret_name)
+            results = self.get_secret(self.secret_name)
 
             # Secret exists and will be deleted
             if self.state == 'absent':
+                changed = True
+            elif self.secret_value and results['secret_value'] != self.secret_value:
                 changed = True
 
         except KeyVaultErrorException:
@@ -171,7 +157,7 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
         if not self.check_mode:
             # Create secret
             if self.state == 'present' and changed:
-                results['secret_id'] = self.create_secret(self.secret_name, self.secret_value, self.tags)
+                results['secret_id'] = self.create_update_secret(self.secret_name, self.secret_value, self.tags)
                 self.results['state'] = results
                 self.results['state']['status'] = 'Created'
             # Delete secret
@@ -187,15 +173,45 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
 
         return self.results
 
+    def get_keyvault_client(self):
+        try:
+            self.log("Get KeyVaultClient from MSI")
+            credentials = MSIAuthentication(resource='https://vault.azure.net')
+            return KeyVaultClient(credentials)
+        except Exception:
+            self.log("Get KeyVaultClient from service principal")
+
+        # Create KeyVault Client using KeyVault auth class and auth_callback
+        def auth_callback(server, resource, scope):
+            if self.credentials['client_id'] is None or self.credentials['secret'] is None:
+                self.fail('Please specify client_id, secret and tenant to access azure Key Vault.')
+
+            tenant = self.credentials.get('tenant')
+            if not self.credentials['tenant']:
+                tenant = "common"
+
+            authcredential = ServicePrincipalCredentials(
+                client_id=self.credentials['client_id'],
+                secret=self.credentials['secret'],
+                tenant=tenant,
+                cloud_environment=self._cloud_environment,
+                resource="https://vault.azure.net")
+
+            token = authcredential.token
+            return token['token_type'], token['access_token']
+
+        return KeyVaultClient(KeyVaultAuthentication(auth_callback))
+
     def get_secret(self, name, version=''):
         ''' Gets an existing secret '''
         secret_bundle = self.client.get_secret(self.keyvault_uri, name, version)
         if secret_bundle:
             secret_id = KeyVaultId.parse_secret_id(secret_bundle.id)
-        return secret_id.id
+            return dict(secret_id=secret_id.id, secret_value=secret_bundle.value)
+        return None
 
-    def create_secret(self, name, secret, tags):
-        ''' Creates a secret '''
+    def create_update_secret(self, name, secret, tags):
+        ''' Creates/Updates a secret '''
         secret_bundle = self.client.set_secret(self.keyvault_uri, name, secret, tags)
         secret_id = KeyVaultId.parse_secret_id(secret_bundle.id)
         return secret_id.id

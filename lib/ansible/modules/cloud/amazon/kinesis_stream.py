@@ -46,6 +46,7 @@ options:
     description:
       - Wait for operation to complete before returning.
     default: true
+    type: bool
   wait_timeout:
     description:
       - How many seconds to wait for an operation to complete before timing out.
@@ -146,17 +147,17 @@ RETURN = '''
 stream_name:
   description: The name of the Kinesis Stream.
   returned: when state == present.
-  type: string
+  type: str
   sample: "test-stream"
 stream_arn:
   description: The amazon resource identifier
   returned: when state == present.
-  type: string
+  type: str
   sample: "arn:aws:kinesis:east-side:123456789:stream/test-stream"
 stream_status:
   description: The current state of the Kinesis Stream.
   returned: when state == present.
-  type: string
+  type: str
   sample: "ACTIVE"
 retention_period_hours:
   description: Number of hours messages will be kept for a Kinesis Stream.
@@ -476,7 +477,7 @@ def tags_action(client, stream_name, tags, action='create', check_mode=False):
                 client.add_tags_to_stream(**params)
                 success = True
             elif action == 'delete':
-                params['TagKeys'] = tags.keys()
+                params['TagKeys'] = list(tags)
                 client.remove_tags_from_stream(**params)
                 success = True
             else:
@@ -515,7 +516,6 @@ def recreate_tags_from_list(list_of_tags):
     """
     tags = list()
     i = 0
-    list_of_tags = list_of_tags
     for i in range(len(list_of_tags)):
         key_name = list_of_tags[i][0]
         key_val = list_of_tags[i][1]
@@ -1029,11 +1029,6 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
                 check_mode=check_mode
             )
         )
-
-    if stream_found and not check_mode:
-        if current_stream['ShardsCount'] != number_of_shards:
-            err_msg = 'Can not change the number of shards in a Kinesis Stream'
-            return success, changed, err_msg, results
 
     if stream_found and current_stream.get('StreamStatus') != 'DELETING':
         success, changed, err_msg = update(

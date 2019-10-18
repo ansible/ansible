@@ -22,7 +22,7 @@ DOCUMENTATION = '''
       - It also lists the top/bottom time consuming tasks in the summary (configurable)
       - Before 2.4 only the environment variables were available for configuration.
     requirements:
-      - whitelisting in configuration
+      - whitelisting in configuration - see examples section below for details.
     options:
       output_limit:
         description: Number of tasks to display in the summary
@@ -44,6 +44,11 @@ DOCUMENTATION = '''
 '''
 
 EXAMPLES = '''
+example: >
+  To enable, add this to your ansible.cfg file in the defaults block
+    [defaults]
+    callback_whitelist = profile_tasks
+sample output: >
 #
 #    TASK: [ensure messaging security group exists] ********************************
 #    Thursday 11 June 2017  22:50:53 +0100 (0:00:00.721)       0:00:05.322 *********
@@ -52,7 +57,7 @@ EXAMPLES = '''
 #    TASK: [ensure db security group exists] ***************************************
 #    Thursday 11 June 2017  22:50:54 +0100 (0:00:00.558)       0:00:05.880 *********
 #    changed: [localhost]
-#  '
+#
 '''
 
 import collections
@@ -166,6 +171,7 @@ class CallbackModule(CallbackBase):
         self._display.display(filled("", fchar="="))
 
         timestamp(self)
+        self.current = None
 
         results = self.stats.items()
 

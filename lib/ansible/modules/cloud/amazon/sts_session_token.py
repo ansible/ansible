@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -23,7 +23,7 @@ options:
   duration_seconds:
     description:
       - The duration, in seconds, of the session token.
-        See http://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html#API_GetSessionToken_RequestParameters
+        See U(https://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html#API_GetSessionToken_RequestParameters)
         for acceptable and default values.
   mfa_serial_number:
     description:
@@ -62,7 +62,7 @@ changed:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Get a session token (more details: http://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html)
+# Get a session token (more details: https://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html)
 sts_session_token:
   duration_seconds: 3600
 register: session_credentials

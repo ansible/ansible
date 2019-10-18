@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_sqlfirewallrule
 version_added: "2.7"
-short_description: Manage Firewall Rule instance.
+short_description: Manage Firewall Rule instance
 description:
     - Create, update and delete instance of Firewall Rule.
 
@@ -36,31 +36,32 @@ options:
         required: True
     start_ip_address:
         description:
-            - The start IP address of the firewall rule. Must be IPv4 format. Use value C(0.0.0.0) to represent all Azure-internal IP addresses.
+            - The start IP address of the firewall rule.
+            - Must be IPv4 format. Use value C(0.0.0.0) to represent all Azure-internal IP addresses.
     end_ip_address:
         description:
-            - "The end IP address of the firewall rule. Must be IPv4 format. Must be greater than or equal to startIpAddress. Use value C(0.0.0.0) to represe
-               nt all Azure-internal IP addresses."
+            - The end IP address of the firewall rule.
+            - Must be IPv4 format. Must be greater than or equal to I(start_ip_address). Use value C(0.0.0.0) to represent all Azure-internal IP addresses.
     state:
-      description:
-        - Assert the state of the SQL Database. Use 'present' to create or update an SQL Database and 'absent' to delete it.
-      default: present
-      choices:
-        - absent
-        - present
+        description:
+            - State of the SQL Database. Use C(present) to create or update an SQL Database and C(absent) to delete it.
+        default: present
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
   - name: Create (or update) Firewall Rule
     azure_rm_sqlfirewallrule:
-      resource_group: firewallrulecrudtest-12
+      resource_group: myResourceGroup
       server_name: firewallrulecrudtest-6285
       name: firewallrulecrudtest-5370
       start_ip_address: 172.28.10.136
@@ -73,7 +74,7 @@ id:
         - Resource ID.
     returned: always
     type: str
-    sample: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/firewallrulecrudtest-12/providers/Microsoft.Sql/servers/firewallrulecrudtest-628
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/firewallrulecrudtest-628
              5/firewallRules/firewallrulecrudtest-5370"
 '''
 
@@ -82,7 +83,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.mgmt.sql import SqlManagementClient
     from msrest.serialization import Model
 except ImportError:
@@ -94,7 +95,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMFirewallRules(AzureRMModuleBase):
+class AzureRMSqlFirewallRule(AzureRMModuleBase):
     """Configuration class for an Azure RM Firewall Rule resource"""
 
     def __init__(self):
@@ -134,9 +135,9 @@ class AzureRMFirewallRules(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMFirewallRules, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                   supports_check_mode=True,
-                                                   supports_tags=False)
+        super(AzureRMSqlFirewallRule, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                     supports_check_mode=True,
+                                                     supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -215,7 +216,7 @@ class AzureRMFirewallRules(AzureRMModuleBase):
                                                                        firewall_rule_name=self.name,
                                                                        start_ip_address=self.start_ip_address,
                                                                        end_ip_address=self.end_ip_address)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
@@ -265,7 +266,7 @@ class AzureRMFirewallRules(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMFirewallRules()
+    AzureRMSqlFirewallRule()
 
 
 if __name__ == '__main__':

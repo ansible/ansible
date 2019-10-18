@@ -17,13 +17,21 @@
         - 'default{{ python_suffix }}.yml'
       paths: '../vars'
 
+- name: make sure the dbus service is started under systemd
+  systemd:
+    name: dbus
+    state: started
+  when: ansible_service_mgr == 'systemd' and ansible_distribution == 'Fedora'
+
 # Make sure we start fresh
 - name: stop postgresql service
   service: name={{ postgresql_service }} state=stopped
   ignore_errors: True
 
 - name: remove old db (RedHat or Suse)
-  command: rm -rf "{{ pg_dir }}"
+  file:
+    path: "{{ pg_dir }}"
+    state: absent
   ignore_errors: True
   when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
 
@@ -31,18 +39,21 @@
   file:
     path: "{{ pg_dir }}"
     state: absent
+  ignore_errors: True
   when: ansible_os_family == "FreeBSD"
 
-# Theoretically, pg_dropcluster should work but it doesn't so rm files
-- name: remove old db config (debian)
-  command: rm -rf /etc/postgresql
+# Theoretically, pg_dropcluster should work but it doesn't so remove files
+- name: remove old db config and files (debian)
+  file:
+    path: '{{ loop_item }}'
+    state: absent
   ignore_errors: True
   when: ansible_os_family == "Debian"
-
-- name: remove old db files (debian)
-  command: rm -rf /var/lib/postgresql
-  ignore_errors: True
-  when: ansible_os_family == "Debian"
+  loop:
+  - /etc/postgresql
+  - /var/lib/postgresql
+  loop_control:
+    loop_var: loop_item
 
 - name: install dependencies for postgresql test
   package: name={{ postgresql_package_item }} state=present
@@ -96,6 +107,12 @@
 # instLangs parameter).
 
 - block:
+  - name: Install langpacks (rhel8 beta)
+    yum:
+      name: glibc-all-langpacks
+      state: present
+    when: ansible_distribution_major_version|int >= 8
+
   - name: Check if locales need to be generated (RedHat)
     shell: "localedef --list-archive | grep -a -q '^{{ locale }}$'"
     register: locale_present
@@ -133,3 +150,52 @@
 
 - name: restart postgresql service
   service: name={{ postgresql_service }} state=restarted
+
+########################
+# Setup dummy extension:
+- name: copy control file for dummy ext
+  copy:
+    src: dummy.control
+    dest: "/usr/share/postgresql/{{ pg_ver }}/extension/dummy.control"
+    mode: 0444
+  when: ansible_os_family == 'Debian'
+
+- name: copy version files for dummy ext
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/share/postgresql/{{ pg_ver }}/extension/{{ item }}"
+    mode: 0444
+  with_items:
+  - dummy--1.0.sql
+  - dummy--2.0.sql
+  - dummy--3.0.sql
+  when: ansible_os_family == 'Debian'
+
+- name: add update paths
+  file:
+    path: "/usr/share/postgresql/{{ pg_ver }}/extension/{{ item }}"
+    mode: 0444
+    state: touch
+  with_items:
+  - dummy--1.0--2.0.sql
+  - dummy--2.0--3.0.sql
+  when: ansible_os_family == 'Debian'
+
+- name: Get PostgreSQL version
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: "echo 'SHOW SERVER_VERSION' | psql --tuples-only --no-align --dbname postgres"
+  register: postgres_version_resp
+
+- name: Print PostgreSQL server version
+  debug:
+    msg: "{{ postgres_version_resp.stdout }}"
+
+# SSL configuration.
+# Restricted using Debian family because of there are errors on other distributions
+# that not related with PostgreSQL or psycopg2 SSL support.
+# The tests key point is to be sure that ssl options work in general
+- import_tasks: ssl.yml
+  when:
+  - ansible_os_family == 'Debian'
+  - postgres_version_resp.stdout is version('9.4', '>=')
