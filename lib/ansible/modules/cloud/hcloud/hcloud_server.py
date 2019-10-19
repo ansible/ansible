@@ -100,6 +100,18 @@ options:
         description:
             - User-defined labels (key-value pairs).
         type: dict
+    delete_protection:
+        description:
+            - Protect the Server for deletion.
+            - Needs to be the same as I(rebuild_protection).
+        type: bool
+        version_added: "2.10"
+    rebuild_protection:
+        description:
+            - Protect the Server for rebuild.
+            - Needs to be the same as I(delete_protection).
+        type: bool
+        version_added: "2.10"
     state:
         description:
             - State of the server.
@@ -227,6 +239,18 @@ hcloud_server:
             description: User-defined labels (key-value pairs)
             returned: always
             type: dict
+        delete_protection:
+            description: True if server is protected for deletion
+            type: bool
+            returned: always
+            sample: false
+            version_added: "2.10"
+        rebuild_protection:
+            description: True if server is protected for rebuild
+            type: bool
+            returned: always
+            sample: false
+            version_added: "2.10"
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -260,6 +284,8 @@ class AnsibleHcloudServer(Hcloud):
             "rescue_enabled": self.hcloud_server.rescue_enabled,
             "backup_window": to_native(self.hcloud_server.backup_window),
             "labels": self.hcloud_server.labels,
+            "delete_protection": self.hcloud_server.protection["delete"],
+            "rebuild_protection": self.hcloud_server.protection["rebuild"],
             "status": to_native(self.hcloud_server.status),
         }
 
@@ -334,59 +360,72 @@ class AnsibleHcloudServer(Hcloud):
         self._get_server()
 
     def _update_server(self):
-        rescue_mode = self.module.params.get("rescue_mode")
-        if rescue_mode and self.hcloud_server.rescue_enabled is False:
-            if not self.module.check_mode:
-                self._set_rescue_mode(rescue_mode)
-            self._mark_as_changed()
-        elif not rescue_mode and self.hcloud_server.rescue_enabled is True:
-            if not self.module.check_mode:
-                self.hcloud_server.disable_rescue().wait_until_finished()
-            self._mark_as_changed()
-
-        if self.module.params.get("backups") and self.hcloud_server.backup_window is None:
-            if not self.module.check_mode:
-                self.hcloud_server.enable_backup().wait_until_finished()
-            self._mark_as_changed()
-        elif not self.module.params.get("backups") and self.hcloud_server.backup_window is not None:
-            if not self.module.check_mode:
-                self.hcloud_server.disable_backup().wait_until_finished()
-            self._mark_as_changed()
-
-        labels = self.module.params.get("labels")
-        if labels is not None and labels != self.hcloud_server.labels:
-            if not self.module.check_mode:
-                self.hcloud_server.update(labels=labels)
-            self._mark_as_changed()
-
-        server_type = self.module.params.get("server_type")
-        if server_type is not None and self.hcloud_server.server_type.name != server_type:
-            previous_server_status = self.hcloud_server.status
-            state = self.module.params.get("state")
-            if previous_server_status == Server.STATUS_RUNNING:
+        try:
+            rescue_mode = self.module.params.get("rescue_mode")
+            if rescue_mode and self.hcloud_server.rescue_enabled is False:
                 if not self.module.check_mode:
-                    if self.module.params.get("force_upgrade") or state == "stopped":
-                        self.stop_server()  # Only stopped server can be upgraded
-                    else:
-                        self.module.warn(
-                            "You can not upgrade a running instance %s. You need to stop the instance or use force_upgrade=yes."
-                            % self.hcloud_server.name
-                        )
-            timeout = 100
-            if self.module.params.get("upgrade_disk"):
-                timeout = (
-                    1000
-                )  # When we upgrade the disk too the resize progress takes some more time.
-            if not self.module.check_mode:
-                self.hcloud_server.change_type(
-                    server_type=self.client.server_types.get_by_name(server_type),
-                    upgrade_disk=self.module.params.get("upgrade_disk"),
-                ).wait_until_finished(timeout)
-                if state == "present" and previous_server_status == Server.STATUS_RUNNING or state == "started":
-                    self.start_server()
+                    self._set_rescue_mode(rescue_mode)
+                self._mark_as_changed()
+            elif not rescue_mode and self.hcloud_server.rescue_enabled is True:
+                if not self.module.check_mode:
+                    self.hcloud_server.disable_rescue().wait_until_finished()
+                self._mark_as_changed()
 
-            self._mark_as_changed()
-        self._get_server()
+            if self.module.params.get("backups") and self.hcloud_server.backup_window is None:
+                if not self.module.check_mode:
+                    self.hcloud_server.enable_backup().wait_until_finished()
+                self._mark_as_changed()
+            elif not self.module.params.get("backups") and self.hcloud_server.backup_window is not None:
+                if not self.module.check_mode:
+                    self.hcloud_server.disable_backup().wait_until_finished()
+                self._mark_as_changed()
+
+            labels = self.module.params.get("labels")
+            if labels is not None and labels != self.hcloud_server.labels:
+                if not self.module.check_mode:
+                    self.hcloud_server.update(labels=labels)
+                self._mark_as_changed()
+
+            server_type = self.module.params.get("server_type")
+            if server_type is not None and self.hcloud_server.server_type.name != server_type:
+                previous_server_status = self.hcloud_server.status
+                state = self.module.params.get("state")
+                if previous_server_status == Server.STATUS_RUNNING:
+                    if not self.module.check_mode:
+                        if self.module.params.get("force_upgrade") or state == "stopped":
+                            self.stop_server()  # Only stopped server can be upgraded
+                        else:
+                            self.module.warn(
+                                "You can not upgrade a running instance %s. You need to stop the instance or use force_upgrade=yes."
+                                % self.hcloud_server.name
+                            )
+                timeout = 100
+                if self.module.params.get("upgrade_disk"):
+                    timeout = (
+                        1000
+                    )  # When we upgrade the disk too the resize progress takes some more time.
+                if not self.module.check_mode:
+                    self.hcloud_server.change_type(
+                        server_type=self.client.server_types.get_by_name(server_type),
+                        upgrade_disk=self.module.params.get("upgrade_disk"),
+                    ).wait_until_finished(timeout)
+                    if state == "present" and previous_server_status == Server.STATUS_RUNNING or state == "started":
+                        self.start_server()
+
+                self._mark_as_changed()
+
+            delete_protection = self.module.params.get("delete_protection")
+            rebuild_protection = self.module.params.get("rebuild_protection")
+            if (delete_protection is not None and rebuild_protection is not None) and (
+                    delete_protection != self.hcloud_server.protection["delete"] or rebuild_protection !=
+                    self.hcloud_server.protection["rebuild"]):
+                if not self.module.check_mode:
+                    self.hcloud_server.change_protection(delete=delete_protection,
+                                                         rebuild=rebuild_protection).wait_until_finished()
+                self._mark_as_changed()
+            self._get_server()
+        except APIException as e:
+            self.module.fail_json(msg=e.message)
 
     def _set_rescue_mode(self, rescue_mode):
         if self.module.params.get("ssh_keys"):
@@ -401,29 +440,38 @@ class AnsibleHcloudServer(Hcloud):
         self.result["root_password"] = resp.root_password
 
     def start_server(self):
-        if self.hcloud_server.status != Server.STATUS_RUNNING:
-            if not self.module.check_mode:
-                self.client.servers.power_on(self.hcloud_server).wait_until_finished()
-            self._mark_as_changed()
-        self._get_server()
+        try:
+            if self.hcloud_server.status != Server.STATUS_RUNNING:
+                if not self.module.check_mode:
+                    self.client.servers.power_on(self.hcloud_server).wait_until_finished()
+                self._mark_as_changed()
+            self._get_server()
+        except APIException as e:
+            self.module.fail_json(msg=e.message)
 
     def stop_server(self):
-        if self.hcloud_server.status != Server.STATUS_OFF:
-            if not self.module.check_mode:
-                self.client.servers.power_off(self.hcloud_server).wait_until_finished()
-            self._mark_as_changed()
-        self._get_server()
+        try:
+            if self.hcloud_server.status != Server.STATUS_OFF:
+                if not self.module.check_mode:
+                    self.client.servers.power_off(self.hcloud_server).wait_until_finished()
+                self._mark_as_changed()
+            self._get_server()
+        except APIException as e:
+            self.module.fail_json(msg=e.message)
 
     def rebuild_server(self):
         self.module.fail_on_missing_params(
             required_params=["image"]
         )
-        if not self.module.check_mode:
-            self.client.servers.rebuild(self.hcloud_server, self.client.images.get_by_name(
-                self.module.params.get("image"))).wait_until_finished()
-        self._mark_as_changed()
+        try:
+            if not self.module.check_mode:
+                self.client.servers.rebuild(self.hcloud_server, self.client.images.get_by_name(
+                    self.module.params.get("image"))).wait_until_finished()
+            self._mark_as_changed()
 
-        self._get_server()
+            self._get_server()
+        except APIException as e:
+            self.module.fail_json(msg=e.message)
 
     def present_server(self):
         self._get_server()
@@ -433,12 +481,15 @@ class AnsibleHcloudServer(Hcloud):
             self._update_server()
 
     def delete_server(self):
-        self._get_server()
-        if self.hcloud_server is not None:
-            if not self.module.check_mode:
-                self.client.servers.delete(self.hcloud_server).wait_until_finished()
-            self._mark_as_changed()
-        self.hcloud_server = None
+        try:
+            self._get_server()
+            if self.hcloud_server is not None:
+                if not self.module.check_mode:
+                    self.client.servers.delete(self.hcloud_server).wait_until_finished()
+                self._mark_as_changed()
+            self.hcloud_server = None
+        except APIException as e:
+            self.module.fail_json(msg=e.message)
 
     @staticmethod
     def define_module():
@@ -458,6 +509,8 @@ class AnsibleHcloudServer(Hcloud):
                 upgrade_disk={"type": "bool", "default": False},
                 force_upgrade={"type": "bool", "default": False},
                 rescue_mode={"type": "str"},
+                delete_protection={"type": "bool"},
+                rebuild_protection={"type": "bool"},
                 state={
                     "choices": ["absent", "present", "restarted", "started", "stopped", "rebuild"],
                     "default": "present",
@@ -466,6 +519,7 @@ class AnsibleHcloudServer(Hcloud):
             ),
             required_one_of=[['id', 'name']],
             mutually_exclusive=[["location", "datacenter"]],
+            required_together=[["delete_protection", "rebuild_protection"]],
             supports_check_mode=True,
         )
 
