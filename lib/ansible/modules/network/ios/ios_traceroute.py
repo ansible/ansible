@@ -19,6 +19,7 @@ description:
 author:
 - Tachashi (@tech_kitara)
 version_added: '2.10'
+extends_documentation_fragment: ios
 options:
   probe:
     description:
@@ -103,6 +104,8 @@ def main():
         ttl_max=dict(type="int"),
         vrf=dict(type="str")
     )
+
+    argument_spec.update(ios_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec)
 
