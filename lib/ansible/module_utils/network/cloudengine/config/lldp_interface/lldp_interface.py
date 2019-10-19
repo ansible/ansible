@@ -89,7 +89,7 @@ class LldpInterface(ConfigBase):
 
         changed_lldp_facts = self.get_lldp_facts()
         result['before'] = existing_lldp_facts
-        
+
         if result['changed']:
             result['after'] = changed_lldp_facts
         result['warnings'] = warnings
