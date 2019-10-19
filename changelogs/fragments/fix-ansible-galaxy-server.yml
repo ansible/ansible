@@ -1,0 +1,5 @@
+---
+bugfixes:
+- The ansible-galaxy publish command was using an incorrect URL for v3 servers.
+  The configuration for v3 servers includes part of the path fragment that was
+  added in the new test.
