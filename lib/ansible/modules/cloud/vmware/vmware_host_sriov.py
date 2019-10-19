@@ -45,7 +45,7 @@ options:
     required: True
   sriovOn:
     description:
-    - desired SR-IOV state on interface
+    - Desired SR-IOV state on interface.
     type: bool
     required: True
   numVirtFunc:
