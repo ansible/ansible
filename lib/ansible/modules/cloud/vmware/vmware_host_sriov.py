@@ -48,7 +48,7 @@ options:
     - Desired SR-IOV state on interface.
     type: bool
     required: True
-  numVirtFunc:
+  num_virt_func:
     description:
     - number of functions to activate on interface.
     - if sriovOn false should be equal 0
