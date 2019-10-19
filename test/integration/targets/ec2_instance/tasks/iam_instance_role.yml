@@ -80,6 +80,7 @@
       ec2:
         instance_ids: "{{ instance_with_role.instance_ids }}"
         state: absent
+        wait: no
       register: removed
       until: removed is not failed
       ignore_errors: yes

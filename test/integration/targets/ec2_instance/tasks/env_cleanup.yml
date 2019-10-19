@@ -1,3 +1,12 @@
+- name: remove Instances
+  ec2_instance:
+    state: absent
+    filters:
+      vpc-id: "{{ testing_vpc.vpc.id }}"
+    wait: yes
+  ignore_errors: yes
+  retries: 10
+
 - name: remove ENIs
   ec2_eni_info:
     filters:

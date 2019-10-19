@@ -99,24 +99,32 @@
           - "{{ presented_instance_fact.instances | length }} > 0"
           - "{{ checkmode_instance_fact.instances | length }} == 0"
 
-    - name: Terminate instance
-      ec2_instance:
-        filters:
-          tag:TestId: "{{ resource_prefix }}"
-        state: absent
-        wait: false
-      register: result
-
   always:
     - name: Terminate instance
       ec2_instance:
         instance_ids: "{{ in_test_vpc.instance_ids }}"
         state: absent
-        wait: false
+        # We can't delete the ENIs until we've deleted all the instances
+        wait: yes
       register: result
       ignore_errors: yes
 
     - ec2_key:
         name: "{{ resource_prefix }}_test_key"
+        state: absent
+      ignore_errors: yes
+
+    - ec2_eni:
+        eni_id: '{{ eni_a.interface.id }}'
+        state: absent
+      ignore_errors: yes
+
+    - ec2_eni:
+        eni_id: '{{ eni_b.interface.id }}'
+        state: absent
+      ignore_errors: yes
+
+    - ec2_eni:
+        eni_id: '{{ eni_c.interface.id }}'
         state: absent
       ignore_errors: yes

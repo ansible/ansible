@@ -22,4 +22,5 @@
       ec2_instance:
         state: absent
         name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-ec2"
+        wait: no
       ignore_errors: yes

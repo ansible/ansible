@@ -38,15 +38,16 @@
           - "{{ presented_instance_fact.instances | length }} > 0"
           - "{{ checkmode_instance_fact.instances | length }} == 0"
 
-    - name: Terminate instance
-      ec2:
+    - name: Terminate instances
+      ec2_instance:
         instance_ids: "{{ in_default_vpc.instance_ids }}"
         state: absent
 
   always:
     - name: Terminate test-default-vpc instance
-      ec2:
+      ec2_instance:
         filters:
           "tag:Name": "{{ resource_prefix }}-test-default-vpc"
         state: absent
+        wait: false
       ignore_errors: yes

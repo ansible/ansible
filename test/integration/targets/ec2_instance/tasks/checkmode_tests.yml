@@ -149,6 +149,7 @@
       ec2:
         instance_ids: "{{ basic_instance.instance_ids }}"
         state: absent
+        wait: false
       register: removed
       until: removed is not failed
       ignore_errors: yes
