@@ -277,7 +277,7 @@ def deprecation_warning(module):
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        server_url=dict(type='str', required=True, removed_in_version="2.10"),
+        server_url=dict(type='str', removed_in_version="2.10"),
         login_user=dict(type='str', no_log=True, removed_in_version="2.10"),
         login_password=dict(type='str', no_log=True, removed_in_version="2.10"),
         api_token=dict(type='str', no_log=True, aliases=["login_token"]),
