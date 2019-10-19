@@ -14,14 +14,11 @@ __metaclass__ = type
 
 from ansible.module_utils.network.cloudengine.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
-from ansible.module_utils.network.cloudengine.facts.lldp.lldp import LldpFacts
 from ansible.module_utils.network.cloudengine.facts.lldp_interface.lldp_interface import LldpInterfaceFacts
 
 
 FACT_LEGACY_SUBSETS = {}
 FACT_RESOURCE_SUBSETS = dict(
-    default=FactsArgs,
-    lldp=LldpFacts,
     lldp_interface=LldpInterfaceFacts,
 )
 

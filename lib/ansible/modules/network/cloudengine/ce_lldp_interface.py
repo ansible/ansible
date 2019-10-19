@@ -23,7 +23,7 @@
 #############################################
 
 """
-The module file for ce_lldp
+The module file for ce_lldp_interface
 """
 
 from __future__ import absolute_import, division, print_function
@@ -108,7 +108,7 @@ options:
           vlan_name_enable:
             description:
               - Lldp tlv-disable dot1-tlv vlan-name enable.
-            type: int
+            type: bool
           vlan_name:
             description:
               - Set lldp tlv-disable dot1-tlv vlan-name.
@@ -144,17 +144,20 @@ options:
     default: present
 """
 EXAMPLES = """
-  - name: "Configure global MDN enable state"
+  - name: "Configure interface state"
     ce_lldp_interface:
       config:
         ifname: 10GE 1/1/1
         mdnstatus: rxonly
 
-  - name: "Configure LLDP transmit interval and ensure global LLDP state is already enabled"
+  - name: "Configure LLDP interface and ensure global LLDP state is already enabled"
     ce_lldp_interface:
       config:
         ifname: 10GE 1/1/1
-        interval: 32
+        dot3_tlv:
+          link_aggregation: true
+          max_frame_size: true
+          eee: true
 
 
 """

@@ -197,7 +197,6 @@ class LldpInterface(ConfigBase):
 
         return commands
 
-
     def set_config(self, existing_lldp_facts):
         """ Collect the configuration from the args passed to the module,
             collect the current configuration (as a dict from facts)
@@ -226,7 +225,7 @@ class LldpInterface(ConfigBase):
                 value = str(want.get(key)).lower()
                 if state == 'absent':
                     if key not in ('prot_vlan_id', 'vlan_name'):
-                        #set default value
+                        # set default value
                         value = 'true'
                     else:
                         # some has no default.
@@ -254,7 +253,7 @@ class LldpInterface(ConfigBase):
         if want.get('msg_interval') is not None and want.get('msg_interval') != have.get('msg_interval'):
             want_config = True
             msg_interval = build_child_xml_node(interface, 'msgInterval', None)
-            msg_interval.set('operation','merge')
+            msg_interval.set('operation', 'merge')
             if state == 'present':
                 build_child_xml_node(msg_interval, 'txInterval', want['msg_interval'])
             # state absent: set up default value, default value will depend on global set.
@@ -262,9 +261,8 @@ class LldpInterface(ConfigBase):
             self._bulid_node(tlv, want, have)
             if len(tlv) > 0:
                 want_config = True
-                tlv.set('operation','merge')
+                tlv.set('operation', 'merge')
                 interface.append(tlv)
         if want_config is True:
             return interface
         return None
-
