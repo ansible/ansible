@@ -229,6 +229,12 @@ options:
     - "vmware-tools needs to be installed on the given virtual machine in order to work with this parameter."
     default: 'no'
     type: bool
+  wait_for_ip_address_timeout:
+    description:
+    - Define a timeout (in seconds) for the wait_for_ip_address parameter.
+    default: '300'
+    type: int
+    version_added: '2.10'
   wait_for_customization:
     description:
     - Wait until vCenter detects all guest customizations as successfully completed.
@@ -419,6 +425,7 @@ EXAMPLES = r'''
       netmask: 255.255.255.0
       device_type: vmxnet3
     wait_for_ip_address: yes
+    wait_for_ip_address_timeout: 600
   delegate_to: localhost
   register: deploy_vm
 
@@ -2514,7 +2521,7 @@ class PyVmomiHelper(PyVmomi):
                 set_vm_power_state(self.content, vm, 'poweredon', force=False)
 
                 if self.params['wait_for_ip_address']:
-                    self.wait_for_vm_ip(vm)
+                    wait_for_vm_ip(self.content, vm, self.params['wait_for_ip_address_timeout'])
 
                 if self.params['wait_for_customization']:
                     is_customization_ok = self.wait_for_customization(vm)
@@ -2695,21 +2702,6 @@ class PyVmomiHelper(PyVmomi):
             time.sleep(poll_interval)
         self.change_applied = self.change_applied or task.info.state == 'success'
 
-    def wait_for_vm_ip(self, vm, poll=100, sleep=5):
-        ips = None
-        facts = {}
-        thispoll = 0
-        while not ips and thispoll <= poll:
-            newvm = self.get_vm()
-            facts = self.gather_facts(newvm)
-            if facts['ipv4'] or facts['ipv6']:
-                ips = True
-            else:
-                time.sleep(sleep)
-                thispoll += 1
-
-        return facts
-
     def get_vm_events(self, vm, eventTypeIdList):
         byEntity = vim.event.EventFilterSpec.ByEntity(entity=vm, recursion="self")
         filterSpec = vim.event.EventFilterSpec(entity=byEntity, eventTypeId=eventTypeIdList)
@@ -2764,6 +2756,7 @@ def main():
         esxi_hostname=dict(type='str'),
         cluster=dict(type='str'),
         wait_for_ip_address=dict(type='bool', default=False),
+        wait_for_ip_address_timeout=dict(type='int', default=300),
         state_change_timeout=dict(type='int', default=0),
         snapshot_src=dict(type='str'),
         linked_clone=dict(type='bool', default=False),
@@ -2834,7 +2827,7 @@ def main():
             if tmp_result['changed']:
                 result["changed"] = True
                 if module.params['state'] in ['poweredon', 'restarted', 'rebootguest'] and module.params['wait_for_ip_address']:
-                    wait_result = wait_for_vm_ip(pyv.content, vm)
+                    wait_result = wait_for_vm_ip(pyv.content, vm, module.params['wait_for_ip_address_timeout'])
                     if not wait_result:
                         module.fail_json(msg='Waiting for IP address timed out')
                     tmp_result['instance'] = wait_result
