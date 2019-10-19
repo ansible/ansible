@@ -1,3 +1,11 @@
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+# do not execute test if mock is not available
+import sys
+if sys.version_info[0] == 2 and sys.version.info[1] < 7:
+    exit()
+
 import unittest
 from unittest import mock
 
@@ -165,7 +173,7 @@ class TestAdapterMethods(unittest.TestCase):
         vmware_host_sriov.VmwareAdapterConfigManager,
         "_check_sriov",
         # there is 2 call _check_sriov in test, need duplicate
-        side_effect=[i["pnic_info"] for i in tests for _ in range(2)],
+        side_effect=[i["pnic_info"] for i in tests for ii in range(2)],
     )
     @mock.patch.object(
         vmware_host_sriov.VmwareAdapterConfigManager, "__init__", return_value=None

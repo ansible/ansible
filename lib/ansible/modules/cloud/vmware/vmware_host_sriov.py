@@ -19,7 +19,7 @@ description:
 - This module can be used to configure, enable/disable SR-IOV functions an ESXi host.
 - module didn't reboot host after changes, but put in output "rebootRequired" key.
 - User can specify an ESXi hostname or Cluster name. In case of cluster name, all ESXi hosts are updated.
-
+version_added: 2.9
 author:
 - Viktor Tsymbalyuk (@victron)
 notes:
@@ -28,14 +28,6 @@ requirements:
 - python >= 2.6
 - PyVmomi
 options:
-  hostname:
-    version_added: "2.9"
-    aliases: ['host']
-  port:
-    version_added: "2.9"
-  username:
-    version_added: "2.9"
-    aliases: ['login']
   esxi_hostname:
     description:
     - Name of the host system to work with.
@@ -45,19 +37,7 @@ options:
     description:
     - Name of the cluster from which all host systems will be used.
     - This parameter is required if C(esxi_hostname) is not specified.
-    type: str                                       
-  password:                                                 
-    description:                                            
-    - The password to authenticate on the vCenter server.  
-    aliases: ['pass', 'pwd'] 
-    type: str                                               
-    required: true  
-  validate_certs:
-    description:
-    - If C(no), SSL certificates will not be validated. This should only be
-      set to C(no) when no other option exists.
-    type: bool
-    default: yes                                        
+    type: str
   vmnic:
     description:
     - interface name, like vmnic0
@@ -73,9 +53,9 @@ options:
     - number of functions to activate on interface
     - if sriovOn false should be equal 0
     - if sriovOn true should be more then 0
-    type: bool
+    type: int
     required: True
-
+extends_documentation_fragment: vmware.documentation
 """
 
 EXAMPLES = r"""
@@ -128,9 +108,9 @@ EXAMPLES = r"""
 RETURN = r"""
 host_sriov_diff:
     description:
-    - contains info about SR-IOV staus on vmnic before, after and requested changes 
+    - contains info about SR-IOV staus on vmnic before, after and requested changes
     - sometimes vCenter slowly update info, as result "after" contains same info as "before"
-      need to run again in check_mode or reboot host, as ESXi requested 
+      need to run again in check_mode or reboot host, as ESXi requested
     returned: always
     type: dict
     "sample": {
@@ -166,6 +146,7 @@ host_sriov_diff:
                 }
             }
         }
+    }
 """
 
 
