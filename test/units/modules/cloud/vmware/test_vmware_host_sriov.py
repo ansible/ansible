@@ -3,8 +3,8 @@ __metaclass__ = type
 
 # do not execute test if mock is not available
 import sys
-if sys.version_info[0] == 2 and sys.version_info[1] < 7:
-    exit()
+if sys.version_info[0] < 3 and sys.version_info[1] < 7:
+    exit(0)
 
 import unittest
 from unittest import mock
