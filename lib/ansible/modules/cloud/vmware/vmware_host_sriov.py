@@ -43,7 +43,7 @@ options:
     - interface name, like vmnic0
     type: str
     required: True
-  sriovOn:
+  sriov_on:
     description:
     - Desired SR-IOV state on interface.
     type: bool
