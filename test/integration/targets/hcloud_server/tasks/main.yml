@@ -260,6 +260,98 @@
     that:
       - result_after_test is changed
 
+- name: test update server protection booth protection arguments are required
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    delete_protection: true
+    state: present
+  register: result_after_test
+  ignore_errors: true
+- name: verify update server protection booth protection arguments are required
+  assert:
+    that:
+      - result_after_test is failed
+      - 'result_after_test.msg == "parameters are required together: delete_protection, rebuild_protection"'
+
+- name: test update server protection fails if they are not the same
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    delete_protection: true
+    rebuild_protection: false
+    state: present
+  register: result_after_test
+  ignore_errors: true
+- name: verify update server protection fails if they are not the same
+  assert:
+    that:
+      - result_after_test is failed
+
+- name: test update server protection
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    delete_protection: true
+    rebuild_protection: true
+    state: present
+  register: result_after_test
+  ignore_errors: true
+- name: verify update server protection
+  assert:
+    that:
+      - result_after_test is changed
+      - result_after_test.hcloud_server.delete_protection is sameas true
+      - result_after_test.hcloud_server.rebuild_protection is sameas true
+
+- name: test server without protection set to be idempotent
+  hcloud_server:
+    name: "{{hcloud_server_name}}"
+  register: result_after_test
+- name: verify test server without protection set to be idempotent
+  assert:
+    that:
+      - result_after_test is not changed
+      - result_after_test.hcloud_server.delete_protection is sameas true
+      - result_after_test.hcloud_server.rebuild_protection is sameas true
+
+- name: test delete server fails if it is protected
+  hcloud_server:
+    name: "{{hcloud_server_name}}"
+    state: absent
+  ignore_errors: yes
+  register: result
+- name: verify delete server fails if it is protected
+  assert:
+    that:
+      - result is failed
+      - 'result.msg == "server deletion is protected"'
+
+- name: test rebuild server fails if it is protected
+  hcloud_server:
+    name: "{{hcloud_server_name}}"
+    image: ubuntu-18.04
+    state: rebuild
+  ignore_errors: yes
+  register: result
+- name: verify rebuild server fails if it is protected
+  assert:
+    that:
+      - result is failed
+      - 'result.msg == "server rebuild is protected"'
+
+- name: test remove server protection
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    delete_protection: false
+    rebuild_protection: false
+    state: present
+  register: result_after_test
+  ignore_errors: true
+- name: verify remove server protection
+  assert:
+    that:
+      - result_after_test is changed
+      - result_after_test.hcloud_server.delete_protection is sameas false
+      - result_after_test.hcloud_server.rebuild_protection is sameas false
+
 - name: absent server
   hcloud_server:
     name: "{{ hcloud_server_name }}"
