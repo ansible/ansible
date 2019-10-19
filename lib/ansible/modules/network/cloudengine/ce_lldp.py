@@ -14,6 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
+
 ---
 module: ce_lldp
 version_added: "2.10"
@@ -95,33 +96,41 @@ EXAMPLES = '''
   - name: "Configure global LLDP enable state"
     ce_lldp:
       lldpenable: enabled
+
   - name: "Configure global MDN enable state"
     ce_lldp:
       mdnstatus: rxOnly
+
   - name: "Configure LLDP transmit interval and ensure global LLDP state is already enabled"
     ce_lldp:
       enable: enable
       interval: 32
+
   - name: "Configure LLDP transmit multiplier hold and ensure global LLDP state is already enabled"
     ce_lldp:
       enable: enable
       hold_multiplier: 5
+
   - name: "Configure the delay time of the interface LLDP module from disabled state to re enable"
     ce_lldp:
       enable: enable
       restart_delay: 3
+
   - name: "Reset the delay time for sending LLDP messages"
     ce_lldp:
       enable: enable
       transmit_delay: 4
+
   - name: "Configure device to send neighbor device information change alarm delay time"
     ce_lldp:
       lldpenable: enabled
       notification_interval: 6
+
   - name: "Configure the number of LLDP messages sent to the neighbor nodes by the specified device"
     ce_lldp:
       enable: enable
       fast_count: 5
+
   - name: "Configure the delay time for sending MDN neighbor information change alarm"
     ce_lldp:
       enable: enable
@@ -130,6 +139,7 @@ EXAMPLES = '''
     ce_lldp:
       enable: enable
       management_address: 10.1.0.1
+
   - name: "Configuring LLDP to manage the binding relationship between IP addresses and interfaces"
     ce_lldp:
       enable: enable
