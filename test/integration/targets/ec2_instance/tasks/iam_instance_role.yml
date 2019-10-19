@@ -19,6 +19,10 @@
         - AmazonEC2ContainerServiceRole
       register: iam_role_2
 
+    - name: wait 10 seconds for roles to become available
+      pause:
+        seconds: 10
+
     - name: Make instance with an instance_role
       ec2_instance:
         name: "{{ resource_prefix }}-test-instance-role"
