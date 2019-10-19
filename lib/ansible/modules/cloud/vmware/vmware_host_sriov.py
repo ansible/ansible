@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -27,6 +28,14 @@ requirements:
 - python >= 2.6
 - PyVmomi
 options:
+  hostname:
+    version_added: "2.9"
+    aliases: ['host']
+  port:
+    version_added: "2.9"
+  username:
+    version_added: "2.9"
+    aliases: ['login']
   esxi_hostname:
     description:
     - Name of the host system to work with.
@@ -36,7 +45,19 @@ options:
     description:
     - Name of the cluster from which all host systems will be used.
     - This parameter is required if C(esxi_hostname) is not specified.
-    type: str
+    type: str                                       
+  password:                                                 
+    description:                                            
+    - The password to authenticate on the vCenter server.  
+    aliases: ['pass', 'pwd'] 
+    type: str                                               
+    required: true  
+  validate_certs:
+    description:
+    - If C(no), SSL certificates will not be validated. This should only be
+      set to C(no) when no other option exists.
+    type: bool
+    default: yes                                        
   vmnic:
     description:
     - interface name, like vmnic0
@@ -105,6 +126,7 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
+host_sriov_diff:
     description:
     - contains info about SR-IOV staus on vmnic before, after and requested changes 
     - sometimes vCenter slowly update info, as result "after" contains same info as "before"
@@ -159,7 +181,7 @@ from time import sleep
 
 
 class VmwareAdapterConfigManager(PyVmomi):
-    """Class to manage configured NTP servers"""
+    """Class to configure SR-IOV settings"""
 
     def __init__(self, module):
         super(VmwareAdapterConfigManager, self).__init__(module)
