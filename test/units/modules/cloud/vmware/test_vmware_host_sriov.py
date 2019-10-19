@@ -1,13 +1,8 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-# do not execute test if mock is not available
-import sys
-if sys.version_info[0] < 3 and sys.version_info[1] < 7:
-    exit(0)
-
-import unittest
-from unittest import mock
+from units.compat import mock
+from units.compat import unittest
 
 from ansible.modules.cloud.vmware import vmware_host_sriov
 from ansible.module_utils.basic import AnsibleModule
