@@ -32,7 +32,7 @@
           interfaces:
             - id: "{{ eni_a.interface.id }}"
         image_id: "{{ ec2_ami_image }}"
-        availability_zone: '{{ aws_region }}b'
+        availability_zone: '{{ subnet_b_az }}'
         tags:
           TestId: "{{ resource_prefix }}"
         instance_type: t2.micro
@@ -75,7 +75,7 @@
           interfaces:
             - id: "{{ eni_c.interface.id }}"
         image_id: "{{ ec2_ami_image }}"
-        availability_zone: '{{ aws_region }}b'
+        availability_zone: '{{ subnet_b_az }}'
         tags:
           TestId: "{{ resource_prefix }}"
         instance_type: t2.micro

@@ -1,3 +1,15 @@
+- name: fetch AZ availability
+  aws_az_info:
+  register: az_info
+- name: Assert that we have multiple AZs available to us
+  assert:
+    that: az_info.availability_zones | length >= 2
+
+- name: pick AZs
+  set_fact:
+    subnet_a_az: '{{ az_info.availability_zones[0].zone_name }}'
+    subnet_b_az: '{{ az_info.availability_zones[1].zone_name }}'
+
 - name: Create VPC for use in testing
   ec2_vpc_net:
     name: "{{ resource_prefix }}-vpc"
@@ -18,7 +30,7 @@
     state: present
     vpc_id: "{{ testing_vpc.vpc.id }}"
     cidr: "{{ subnet_a_cidr }}"
-    az: "{{ aws_region }}a"
+    az: "{{ subnet_a_az }}"
     resource_tags:
       Name: "{{ resource_prefix }}-subnet-a"
   register: testing_subnet_a
@@ -28,7 +40,7 @@
     state: present
     vpc_id: "{{ testing_vpc.vpc.id }}"
     cidr: "{{ subnet_b_cidr }}"
-    az: "{{ aws_region }}b"
+    az: "{{ subnet_b_az }}"
     resource_tags:
       Name: "{{ resource_prefix }}-subnet-b"
   register: testing_subnet_b
