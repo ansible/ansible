@@ -23,8 +23,11 @@
 #############################################
 
 """
-The arg spec for the ce_lldp module
+The arg spec for the ce_lldp_interface module
 """
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 class LldpInterfaceArgs(object):

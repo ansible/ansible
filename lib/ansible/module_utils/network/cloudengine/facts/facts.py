@@ -9,6 +9,9 @@ this file validates each subset of facts and selectively
 calls the appropriate facts gathering function
 """
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 from ansible.module_utils.network.cloudengine.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.cloudengine.facts.lldp.lldp import LldpFacts
