@@ -40,8 +40,8 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
         self.mock_get_resource_connection.start()
         self.get_resource_connection.start()
 
-        self.mock_get_resource_connection = [None]*100
-        self.get_resource_connection = [None]*100
+        self.mock_get_resource_connection = [None] * 100
+        self.get_resource_connection = [None] * 100
 
         self.mock_set_config = patch('ansible.module_utils.network.cloudengine.config.lldp_interface.lldp_interface.set_nc_config')
         self.set_nc_config = self.mock_set_config.start()
@@ -71,7 +71,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
                   'undo lldp tlv-disable dot3-tlv max-frame-size',
                   'undo lldp tlv-disable dot3-tlv eee']
         self.get_nc_config.side_effect = (self.xml_absent, self.xml_present)
-        self.set_nc_config.side_effect = [self.result_ok]*11
+        self.set_nc_config.side_effect = [self.result_ok] * 11
         config = dict(
             ifname='10GE1/0/1',
             admin_status='rxonly',
@@ -90,7 +90,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
                           mac_physic=True,
                           max_frame_size=True,
                           eee=True)
-          )
+        )
         set_module_args(dict(config=config))
         result = self.execute_module(changed=True)
         self.assertEquals(sorted(result['commands']), sorted(update))
@@ -111,7 +111,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
                   'undo lldp tlv-disable dot3-tlv max-frame-size',
                   'undo lldp tlv-disable dot3-tlv eee']
         self.get_nc_config.side_effect = (self.xml_present, self.xml_present)
-        self.set_nc_config.side_effect = [self.result_ok]*11
+        self.set_nc_config.side_effect = [self.result_ok] * 11
         config = dict(
             ifname='10GE1/0/1',
             admin_status='rxonly',
@@ -130,7 +130,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
                           mac_physic=True,
                           max_frame_size=True,
                           eee=True)
-          )
+        )
         set_module_args(dict(config=config))
         result = self.execute_module(changed=True)
         self.assertEquals(sorted(result['commands']), sorted(update))
