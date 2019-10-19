@@ -178,7 +178,6 @@ class VmwareAdapterConfigManager(PyVmomi):
         )
         if not self.hosts:
             self.module.fail_json(msg="Failed to find host system.")
-        # self.change_list = []
         self.results = {"before": {}, "after": {}, "changes": {}}
 
     def set_host_state(self):
