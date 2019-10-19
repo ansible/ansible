@@ -87,7 +87,7 @@ options:
 EXAMPLES = '''
 - name: "Delete GitLab Group"
   gitlab_group:
-    server_url: https://gitlab.example.com/
+    api_url: https://gitlab.example.com/
     api_token: "{{ access_token }}"
     validate_certs: False
     name: my_first_group
@@ -95,7 +95,7 @@ EXAMPLES = '''
 
 - name: "Create GitLab Group"
   gitlab_group:
-    server_url: https://gitlab.example.com/
+    api_url: https://gitlab.example.com/
     validate_certs: True
     api_username: dj-wasabi
     api_password: "MySecretPassword"
@@ -106,7 +106,7 @@ EXAMPLES = '''
 # The group will by created at https://gitlab.dj-wasabi.local/super_parent/parent/my_first_group
 - name: "Create GitLab SubGroup"
   gitlab_group:
-    server_url: https://gitlab.example.com/
+    api_url: https://gitlab.example.com/
     validate_certs: True
     api_username: dj-wasabi
     api_password: "MySecretPassword"
@@ -277,7 +277,7 @@ def deprecation_warning(module):
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        server_url=dict(type='str', required=True, removed_in_version="2.10"),
+        server_url=dict(type='str', removed_in_version="2.10"),
         login_user=dict(type='str', no_log=True, removed_in_version="2.10"),
         login_password=dict(type='str', no_log=True, removed_in_version="2.10"),
         api_token=dict(type='str', no_log=True, aliases=["login_token"]),
