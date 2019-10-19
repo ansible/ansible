@@ -1,0 +1,104 @@
+# Test code for the  module vmware_host_sriov
+
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+
+    - name: enable SR-IOV on vmnic0 with 8 functions
+      vmware_host_sriov:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: "{{ esxi1 }}"
+        validate_certs: no
+        vmnic: vmnic0
+        sriovOn: true
+        numVirtFunc: 8
+      register: present
+    - debug: var=present
+
+    - name: enable SR-IOV on already enabled interface vmnic0
+      vmware_host_sriov:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: "{{ esxi1 }}"
+        validate_certs: no
+        vmnic: vmnic0
+        sriovOn: true
+        numVirtFunc: 8
+      register: present
+    - debug: var=present
+
+    - name: enable SR-IOV on vmnic0 with big num. of functions
+      vmware_host_sriov:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: "{{ esxi1 }}"
+        validate_certs: no
+        vmnic: vmnic0
+        sriovOn: true
+        numVirtFunc: 100
+      ignore_errors: yes
+      register: present
+    - debug: var=present
+
+    - name: change num of functions only
+      vmware_host_sriov:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: "{{ esxi1 }}"
+        validate_certs: no
+        vmnic: vmnic0
+        sriovOn: true
+        numVirtFunc: 10
+      register: present
+    - debug: var=present
+
+    - name: disable SR-IOV on vmnic0
+      vmware_host_sriov:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: "{{ esxi1 }}"
+        validate_certs: no
+        vmnic: vmnic0
+        sriovOn: false
+        numVirtFunc: 0
+      register: present
+    - debug: var=present
+
+    - name: change num of functions only, check mode
+      vmware_host_sriov:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: "{{ esxi1 }}"
+        validate_certs: no
+        vmnic: vmnic0
+        sriovOn: true
+        numVirtFunc: 10
+      check_mode: yes
+      register: present
+    - debug: var=present
+
+    - name: eanble SR-IOV on vmnic0, check mode
+      vmware_host_sriov:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: "{{ esxi1 }}"
+        validate_certs: no
+        vmnic: vmnic0
+        sriovOn: false
+        numVirtFunc: 1
+      check_mode: yes
+      register: present
+    - debug: var=present
+
+
