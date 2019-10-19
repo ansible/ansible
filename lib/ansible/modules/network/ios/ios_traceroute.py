@@ -18,7 +18,7 @@ description:
 - from Cisco IOS network devices.
 author:
 - Tachashi (@tech_kitara)
-version_added: '2.9'
+version_added: '2.10'
 extends_documentation_fragment: ios
 options:
   probe:
