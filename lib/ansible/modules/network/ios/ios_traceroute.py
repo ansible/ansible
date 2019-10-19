@@ -50,6 +50,7 @@ options:
     description:
     - The VRF to use for forwarding.
     type: str
+extends_documentation_fragment: ios
 '''
 
 EXAMPLES = r'''
