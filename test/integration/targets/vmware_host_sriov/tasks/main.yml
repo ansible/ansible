@@ -15,8 +15,8 @@
         esxi_hostname: "{{ esxi1 }}"
         validate_certs: no
         vmnic: vmnic0
-        sriovOn: true
-        numVirtFunc: 8
+        sriov_on: true
+        num_virt_func: 8
       register: present
     - debug: var=present
 
@@ -28,8 +28,8 @@
         esxi_hostname: "{{ esxi1 }}"
         validate_certs: no
         vmnic: vmnic0
-        sriovOn: true
-        numVirtFunc: 8
+        sriov_on: true
+        num_virt_func: 8
       register: present
     - debug: var=present
 
@@ -41,8 +41,8 @@
         esxi_hostname: "{{ esxi1 }}"
         validate_certs: no
         vmnic: vmnic0
-        sriovOn: true
-        numVirtFunc: 100
+        sriov_on: true
+        num_virt_func: 100
       ignore_errors: yes
       register: present
     - debug: var=present
@@ -55,8 +55,8 @@
         esxi_hostname: "{{ esxi1 }}"
         validate_certs: no
         vmnic: vmnic0
-        sriovOn: true
-        numVirtFunc: 10
+        sriov_on: true
+        num_virt_func: 10
       register: present
     - debug: var=present
 
@@ -68,8 +68,8 @@
         esxi_hostname: "{{ esxi1 }}"
         validate_certs: no
         vmnic: vmnic0
-        sriovOn: false
-        numVirtFunc: 0
+        sriov_on: false
+        num_virt_func: 0
       register: present
     - debug: var=present
 
@@ -81,8 +81,8 @@
         esxi_hostname: "{{ esxi1 }}"
         validate_certs: no
         vmnic: vmnic0
-        sriovOn: true
-        numVirtFunc: 10
+        sriov_on: true
+        num_virt_func: 10
       check_mode: yes
       register: present
     - debug: var=present
@@ -95,8 +95,8 @@
         esxi_hostname: "{{ esxi1 }}"
         validate_certs: no
         vmnic: vmnic0
-        sriovOn: false
-        numVirtFunc: 1
+        sriov_on: false
+        num_virt_func: 1
       check_mode: yes
       register: present
     - debug: var=present

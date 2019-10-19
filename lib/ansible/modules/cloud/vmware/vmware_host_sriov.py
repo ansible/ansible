@@ -51,8 +51,8 @@ options:
   num_virt_func:
     description:
     - number of functions to activate on interface.
-    - if sriovOn false should be equal 0
-    - if sriovOn true should be more then 0
+    - if sriov_on false should be equal 0
+    - if sriov_on true should be more then 0
     type: int
     required: True
 extends_documentation_fragment: vmware.documentation
@@ -67,8 +67,8 @@ EXAMPLES = r"""
     esxi_hostname: "{{ esxi1 }}"
     validate_certs: no
     vmnic: vmnic0
-    sriovOn: true
-    numVirtFunc: 8
+    sriov_on: true
+    num_virt_func: 8
 
 - name: enable SR-IOV on already enabled interface vmnic0
   vmware_host_sriov:
@@ -78,8 +78,8 @@ EXAMPLES = r"""
     esxi_hostname: "{{ esxi1 }}"
     validate_certs: no
     vmnic: vmnic0
-    sriovOn: true
-    numVirtFunc: 8
+    sriov_on: true
+    num_virt_func: 8
 
 - name: enable SR-IOV on vmnic0 with big num. of functions
   vmware_host_sriov:
@@ -89,8 +89,8 @@ EXAMPLES = r"""
     esxi_hostname: "{{ esxi1 }}"
     validate_certs: no
     vmnic: vmnic0
-    sriovOn: true
-    numVirtFunc: 100
+    sriov_on: true
+    num_virt_func: 100
   ignore_errors: yes
 
 - name: disable SR-IOV on vmnic0
@@ -101,8 +101,8 @@ EXAMPLES = r"""
     esxi_hostname: "{{ esxi1 }}"
     validate_certs: no
     vmnic: vmnic0
-    sriovOn: false
-    numVirtFunc: 0
+    sriov_on: false
+    num_virt_func: 0
 """
 
 RETURN = r"""
@@ -170,8 +170,8 @@ class VmwareAdapterConfigManager(PyVmomi):
         esxi_host_name = self.params.get("esxi_hostname", None)
 
         self.vmnic = self.params.get("vmnic", None)
-        self.sriovOn = self.params.get("sriovOn", None)
-        self.numVirtFunc = self.params.get("numVirtFunc", None)
+        self.sriov_on = self.params.get("sriov_on", None)
+        self.num_virt_func = self.params.get("num_virt_func", None)
 
         self.hosts = self.get_all_host_objs(
             cluster_name=cluster_name, esxi_host_name=esxi_host_name
@@ -204,7 +204,7 @@ class VmwareAdapterConfigManager(PyVmomi):
 
             if (
                 self.results["before"][host.name]["maxVirtualFunctionSupported"]
-                < self.numVirtFunc
+                < self.num_virt_func
             ):
                 change_list.append(False)
                 maxVirtualFun = self.results["before"][host.name][
@@ -219,14 +219,14 @@ class VmwareAdapterConfigManager(PyVmomi):
 
             # check current settings
             params_to_change = {"sriovEnabled": None, "numVirtualFunction": None}
-            if self.results["before"][host.name]["sriovEnabled"] != self.sriovOn:
-                params_to_change["sriovEnabled"] = self.sriovOn
+            if self.results["before"][host.name]["sriovEnabled"] != self.sriov_on:
+                params_to_change["sriovEnabled"] = self.sriov_on
 
             if (
                 self.results["before"][host.name]["numVirtualFunction"]
-                != self.numVirtFunc
+                != self.num_virt_func
             ):
-                params_to_change["numVirtualFunction"] = self.numVirtFunc
+                params_to_change["numVirtualFunction"] = self.num_virt_func
 
             success = self._update_sriov(host, **params_to_change)
             if success:
@@ -313,13 +313,13 @@ def main():
         cluster_name=dict(type="str", required=False),
         esxi_hostname=dict(type="str", required=False),
         vmnic=dict(type="str", required=True),
-        sriovOn=dict(type="bool", required=True),
-        numVirtFunc=dict(type="int", required=True),
+        sriov_on=dict(type="bool", required=True),
+        num_virt_func=dict(type="int", required=True),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=[["cluster_name", "esxi_hostname"], ["sriovOn", "numVirtFunc"]],
+        required_one_of=[["cluster_name", "esxi_hostname"], ["sriov_on", "num_virt_func"]],
         supports_check_mode=True,
     )
 

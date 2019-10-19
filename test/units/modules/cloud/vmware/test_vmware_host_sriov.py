@@ -32,8 +32,8 @@ tests = [
         "mock_attrs": {
             "hostname": "test_vCenter",
             "esxi_host_name": "test_host",
-            "sriovOn": True,
-            "numVirtFunc": 8,
+            "sriov_on": True,
+            "num_virt_func": 8,
             "vmnic": "vmnic7",
             "results": {"before": {}, "after": {}, "changes": {}},
             "hosts": [mock_host],
@@ -60,8 +60,8 @@ tests = [
         "mock_attrs": {
             "hostname": "test_vCenter",
             "esxi_host_name": "test_host",
-            "sriovOn": True,
-            "numVirtFunc": 8,
+            "sriov_on": True,
+            "num_virt_func": 8,
             "vmnic": "vmnic7",
             "results": {"before": {}, "after": {}, "changes": {}},
             "hosts": [mock_host],
@@ -87,8 +87,8 @@ tests = [
         "mock_attrs": {
             "hostname": "test_vCenter",
             "esxi_host_name": "test_host",
-            "sriovOn": True,
-            "numVirtFunc": 8,
+            "sriov_on": True,
+            "num_virt_func": 8,
             "vmnic": "vmnic7",
             "results": {"before": {}, "after": {}, "changes": {}},
             "hosts": [mock_host],
@@ -100,7 +100,7 @@ tests = [
             }
         },
     },
-    # 4. not suported numVirtFunc
+    # 4. not suported num_virt_func
     {
         "pnic_info": {
             "sriovCapable": True,
@@ -114,8 +114,8 @@ tests = [
         "mock_attrs": {
             "hostname": "test_vCenter",
             "esxi_host_name": "test_host",
-            "sriovOn": True,
-            "numVirtFunc": 100,
+            "sriov_on": True,
+            "num_virt_func": 100,
             "vmnic": "vmnic7",
             "results": {"before": {}, "after": {}, "changes": {}},
             "hosts": [mock_host],
@@ -141,8 +141,8 @@ tests = [
         "mock_attrs": {
             "hostname": "test_vCenter",
             "esxi_host_name": "test_host",
-            "sriovOn": True,
-            "numVirtFunc": 8,
+            "sriov_on": True,
+            "num_virt_func": 8,
             "vmnic": "vmnic7",
             "results": {"before": {}, "after": {}, "changes": {}},
             "hosts": [mock_host],
