@@ -19,7 +19,7 @@ description:
 - This module can be used to configure, enable/disable SR-IOV functions an ESXi host.
 - module didn't reboot host after changes, but put in output "rebootRequired" key.
 - User can specify an ESXi hostname or Cluster name. In case of cluster name, all ESXi hosts are updated.
-version_added: 2.9
+version_added: 2.10
 author:
 - Viktor Tsymbalyuk (@victron)
 notes:

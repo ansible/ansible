@@ -100,5 +100,3 @@
       check_mode: yes
       register: present
     - debug: var=present
-
-
