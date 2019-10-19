@@ -1,12 +1,3 @@
-- name: set connection information for all tasks
-  set_fact:
-    aws_connection_info: &aws_connection_info
-      aws_access_key: "{{ aws_access_key }}"
-      aws_secret_key: "{{ aws_secret_key }}"
-      security_token: "{{ security_token }}"
-      region: "{{ aws_region }}"
-  no_log: true
-
 - name: New instance and don't wait for it to complete
   ec2_instance:
     name: "{{ resource_prefix }}-test-no-wait"
@@ -16,7 +7,6 @@
       TestId: "{{ resource_prefix }}"
     wait: false
     instance_type: t2.micro
-    <<: *aws_connection_info
   register: in_test_vpc
 
 - assert:
@@ -36,14 +26,12 @@
       TestId: "{{ resource_prefix }}"
     wait: false
     instance_type: t2.micro
-    <<: *aws_connection_info
   check_mode: yes
 
 - name: Facts for ec2 test instance
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-no-wait"
-    <<: *aws_connection_info
   register: real_instance_fact
   until: real_instance_fact.instances | length > 0
   retries: 10
@@ -52,7 +40,6 @@
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-no-wait-checkmode"
-    <<: *aws_connection_info
   register: checkmode_instance_fact
 
 - name: "Confirm whether the check mode is working normally."

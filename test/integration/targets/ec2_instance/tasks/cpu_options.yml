@@ -1,13 +1,4 @@
 - block:
-    - name: set connection information for all tasks
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: true
-
     - name: create t3.nano instance with cpu_options
       ec2_instance:
         name: "{{ resource_prefix }}-test-t3nano-1-threads-per-core"
@@ -20,7 +11,6 @@
             core_count: 1
             threads_per_core: 1
         wait: false
-        <<: *aws_connection_info
       register: instance_creation
 
     - name: instance with cpu_options created with the right options
@@ -42,7 +32,6 @@
             core_count: 1
             threads_per_core: 2
         wait: false
-        <<: *aws_connection_info
       register: cpu_options_update
       ignore_errors: yes
 
@@ -63,21 +52,18 @@
         cpu_options:
             core_count: 1
             threads_per_core: 1
-        <<: *aws_connection_info
       check_mode: yes
 
     - name: "fact presented ec2 instance"
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-test-t3nano-1-threads-per-core"
-        <<: *aws_connection_info
       register: presented_instance_fact
 
     - name: "fact checkmode ec2 instance"
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-test-t3nano-1-threads-per-core-checkmode"
-        <<: *aws_connection_info
       register: checkmode_instance_fact
 
     - name: "Confirm existence of instance id."
@@ -96,6 +82,5 @@
           tag:TestId: "{{ resource_prefix }}"
         state: absent
         wait: false
-        <<: *aws_connection_info
       register: result
       ignore_errors: yes

@@ -1,12 +1,3 @@
-- name: set connection information for all tasks
-  set_fact:
-    aws_connection_info: &aws_connection_info
-      aws_access_key: "{{ aws_access_key }}"
-      aws_secret_key: "{{ aws_secret_key }}"
-      security_token: "{{ security_token }}"
-      region: "{{ aws_region }}"
-  no_log: true
-
 - name: New instance with an extra block device
   ec2_instance:
     name: "{{ resource_prefix }}-test-ebs-vols"
@@ -22,14 +13,12 @@
       TestId: "{{ resource_prefix }}"
     instance_type: t2.micro
     wait: true
-    <<: *aws_connection_info
   register: in_test_vpc
 
 - name: Gather instance info
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-ebs-vols"
-    <<: *aws_connection_info
   register: in_test_vpc_instance
 
 - assert:
@@ -54,7 +43,6 @@
     tags:
       TestId: "{{ resource_prefix }}"
     instance_type: t2.micro
-    <<: *aws_connection_info
   check_mode: yes
 
 - name: "fact presented ec2 instance"
@@ -62,14 +50,12 @@
     filters:
       "tag:Name": "{{ resource_prefix }}-test-ebs-vols"
       "instance-state-name": "running"
-    <<: *aws_connection_info
   register: presented_instance_fact
 
 - name: "fact checkmode ec2 instance"
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-ebs-vols-checkmode"
-    <<: *aws_connection_info
   register: checkmode_instance_fact
 
 - name: "Confirm whether the check mode is working normally."

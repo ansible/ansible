@@ -1,35 +1,13 @@
-- name: set connection information for all tasks
-  set_fact:
-    aws_connection_info: &aws_connection_info
-      aws_access_key: "{{ aws_access_key }}"
-      aws_secret_key: "{{ aws_secret_key }}"
-      security_token: "{{ security_token }}"
-      region: "{{ aws_region }}"
-  no_log: true
-  
-- name: remove any instances in the test VPC
-  ec2_instance:
-    filters:
-      vpc_id: "{{ testing_vpc.vpc.id }}"
-    state: absent
-    <<: *aws_connection_info
-  register: removed
-  until: removed is not failed
-  ignore_errors: yes
-  retries: 10
-
 - name: remove ENIs
   ec2_eni_info:
     filters:
       vpc-id: "{{ testing_vpc.vpc.id }}"
-    <<: *aws_connection_info
   register: enis
 
 - name: delete all ENIs
   ec2_eni:
     eni_id: "{{ item.id }}"
     state: absent
-    <<: *aws_connection_info
   until: removed is not failed
   with_items: "{{ enis.network_interfaces }}"
   ignore_errors: yes
@@ -41,7 +19,6 @@
     description: a security group for ansible tests
     vpc_id: "{{ testing_vpc.vpc.id }}"
     state: absent
-    <<: *aws_connection_info
   register: removed
   until: removed is not failed
   ignore_errors: yes
@@ -59,7 +36,6 @@
     subnets:
       - "{{ testing_subnet_a.subnet.id }}"
       - "{{ testing_subnet_b.subnet.id }}"
-    <<: *aws_connection_info
   register: removed
   until: removed is not failed
   ignore_errors: yes
@@ -69,7 +45,6 @@
   ec2_vpc_igw:
     vpc_id: "{{ testing_vpc.vpc.id }}"
     state: absent
-    <<: *aws_connection_info
   register: removed
   until: removed is not failed
   ignore_errors: yes
@@ -80,7 +55,6 @@
     state: absent
     vpc_id: "{{ testing_vpc.vpc.id }}"
     cidr: 10.22.32.0/24
-    <<: *aws_connection_info
   register: removed
   until: removed is not failed
   ignore_errors: yes
@@ -91,7 +65,6 @@
     state: absent
     vpc_id: "{{ testing_vpc.vpc.id }}"
     cidr: 10.22.33.0/24
-    <<: *aws_connection_info
   register: removed
   until: removed is not failed
   ignore_errors: yes
@@ -105,7 +78,6 @@
     tags:
       Name: Ansible Testing VPC
     tenancy: default
-    <<: *aws_connection_info
   register: removed
   until: removed is not failed
   ignore_errors: yes
