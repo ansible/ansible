@@ -71,13 +71,22 @@
         instance_type: t2.micro
         instance_role: "{{ iam_role_2.arn.replace(':role/', ':instance-profile/') }}"
       register: instance_with_updated_role
-      until: instance_with_updated_role is not failed
-      retries: 10
+
+    # XXX We shouldn't need this
+    - name: wait 10 seconds for role update to complete
+      pause:
+        seconds: 10
+
+    - name: "fact checkmode ec2 instance"
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-test-instance-role"
+      register: updates_instance_info
 
     - assert:
         that:
-          - 'instance_with_updated_role.instances[0].iam_instance_profile.arn == iam_role_2.arn.replace(":role/", ":instance-profile/")'
-          - 'instance_with_updated_role.instances[0].instance_id == instance_with_role.instances[0].instance_id'
+          - 'updates_instance_info.instances[0].iam_instance_profile.arn == iam_role_2.arn.replace(":role/", ":instance-profile/")'
+          - 'updates_instance_info.instances[0].instance_id == instance_with_role.instances[0].instance_id'
 
   always:
     - name: Terminate instance
