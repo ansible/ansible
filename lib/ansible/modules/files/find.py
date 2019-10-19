@@ -117,6 +117,16 @@ options:
             - Default is unlimited depth.
         type: int
         version_added: "2.6"
+    owner:
+        description:
+            - Select files whose owner is the specified user.
+            - Can be specified by user name or UID.
+        version_added: "2.10"
+    group:
+        description:
+            - Select files whose owner belongs to the specified group.
+            - Can be specified by group name or GID.
+        version_added: "2.10"
 seealso:
 - module: win_find
 '''
@@ -180,6 +190,16 @@ EXAMPLES = r'''
     patterns:
       - '^_[0-9]{2,4}_.*.log$'
       - '^[a-z]{1,5}_.*log$'
+
+- name: Find all files belonging to the root user in /var/log
+  find:
+    paths: /var/log
+    owner: root
+
+- name: Find all files belonging to the root group in /var/log
+  find:
+    paths: /var/log
+    group: root
 
 '''
 
@@ -307,6 +327,27 @@ def contentfilter(fsname, pattern):
     return False
 
 
+def ownerfilter(st, owner, group):
+    '''Filter files owned by the provided user and/or group'''
+    # If no owner or group are provided, skip this filter
+    if owner is None and group is None:
+        return True
+
+    # Get stat info
+    stat = statinfo(st)
+
+    # If owner is provided and does not match user name or UID, fail the filter
+    if owner is not None and not (stat['uid'] == owner or stat['pw_name'] == owner):
+        return False
+
+    # If group is provided and does not match group name or GID, fail the filter
+    if group is not None and not (stat['gid'] == group or stat['gr_name'] == group):
+        return False
+
+    # Otherwise, whatever was provided matched
+    return True
+
+
 def statinfo(st):
     pw_name = ""
     gr_name = ""
@@ -372,6 +413,8 @@ def main():
             get_checksum=dict(type='bool', default=False),
             use_regex=dict(type='bool', default=False),
             depth=dict(type='int'),
+            owner=dict(type='str'),
+            group=dict(type='str')
         ),
         supports_check_mode=True,
     )
@@ -402,6 +445,9 @@ def main():
         else:
             module.fail_json(size=params['size'], msg="failed to process size")
 
+    owner = params['owner']
+    group = params['group']
+
     now = time.time()
     msg = ''
     looked = 0
@@ -431,7 +477,8 @@ def main():
 
                     r = {'path': fsname}
                     if params['file_type'] == 'any':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
+                           agefilter(st, now, age, params['age_stamp']) and ownerfilter(st, owner, group):
 
                             r.update(statinfo(st))
                             if stat.S_ISREG(st.st_mode) and params['get_checksum']:
@@ -439,7 +486,8 @@ def main():
                             filelist.append(r)
 
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
+                           agefilter(st, now, age, params['age_stamp']) and ownerfilter(st, owner, group):
 
                             r.update(statinfo(st))
                             filelist.append(r)
@@ -447,7 +495,8 @@ def main():
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
                            agefilter(st, now, age, params['age_stamp']) and \
-                           sizefilter(st, size) and contentfilter(fsname, params['contains']):
+                           sizefilter(st, size) and contentfilter(fsname, params['contains']) and \
+                           ownerfilter(st, owner, group):
 
                             r.update(statinfo(st))
                             if params['get_checksum']:
@@ -455,7 +504,8 @@ def main():
                             filelist.append(r)
 
                     elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
+                           agefilter(st, now, age, params['age_stamp']) and ownerfilter(st, owner, group):
 
                             r.update(statinfo(st))
                             filelist.append(r)

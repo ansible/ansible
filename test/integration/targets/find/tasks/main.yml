@@ -24,6 +24,14 @@
 - name: create our testing sub-directory
   file: path="{{ output_dir_test }}" state=directory
 
+- name: ensure a test users group exists
+  group:
+    name: find_testers
+
+- name: ensure a test user exists
+  user:
+    name: find_tester
+
 ##
 ## find
 ##
@@ -35,6 +43,7 @@
   with_items:
       - a/b/c/d
       - e/f/g/h
+      - i/j/k/l
 
 - name: make some files
   copy:
@@ -49,6 +58,19 @@
       - e/f/6.swp
       - e/f/g/7.img
       - e/f/g/h/8.ogg
+
+- name: make test user files
+  copy:
+      dest: "{{ output_dir_test }}/{{ item }}"
+      content: 'data'
+      owner: find_tester
+      group: find_testers
+  with_items:
+      - i/11.txt
+      - i/j/12.jpg
+      - i/j/k/13
+      - i/j/k/l/14.xml
+
 
 - name: find the directories
   find:
@@ -65,8 +87,8 @@
           - 'find_test0.files is defined'
           - 'find_test0.matched is defined'
           - 'find_test0.msg is defined'
-          - 'find_test0.matched == 8'
-          - 'find_test0.files | length == 8'
+          - 'find_test0.matched == 12'
+          - 'find_test0.files | length == 12'
 
 - name: find the xml and img files
   find:
@@ -79,10 +101,10 @@
 - name: validate directory results
   assert:
       that:
-          - 'find_test1.matched == 2'
-          - 'find_test1.files | length == 2'
+          - 'find_test1.matched == 3'
+          - 'find_test1.files | length == 3'
 
-- name: find the xml file
+- name: find the xml files
   find:
       paths: "{{ output_dir_test }}"
       patterns: "*.xml"
@@ -92,6 +114,32 @@
 - name: validate gr_name and pw_name are defined
   assert:
       that:
-          - 'find_test2.matched == 1'
+          - 'find_test2.matched == 2'
           - 'find_test2.files[0].pw_name is defined'
           - 'find_test2.files[0].gr_name is defined'
+
+- name: find files belonging to find_testers group
+  find:
+      paths: "{{ output_dir_test }}"
+      group: find_testers
+      recurse: yes
+  register: find_by_group_test
+- debug:
+      var: find_by_group_test
+- assert:
+      that:
+          - 'find_by_group_test.matched == 4'
+          - 'find_by_group_test.files | length == 4'
+
+- name: find files belonging to find_tester user
+  find:
+      paths: "{{ output_dir_test }}"
+      owner: find_tester
+      recurse: yes
+  register: find_by_owner_test
+- debug:
+      var: find_by_owner_test
+- assert:
+      that:
+          - 'find_by_owner_test.matched == 4'
+          - 'find_by_owner_test.files | length == 4'
