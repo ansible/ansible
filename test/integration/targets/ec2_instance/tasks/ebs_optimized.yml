@@ -1,7 +1,7 @@
 - name: Make EBS optimized instance in the testing subnet of the test VPC
   ec2_instance:
     name: "{{ resource_prefix }}-test-ebs-optimized-instance-in-vpc"
-    image_id: "{{ ec2_ebs_optimized_ami_image[aws_region] }}"
+    image_id: "{{ ec2_ami_image }}"
     tags:
       TestId: "{{ resource_prefix }}"
     security_groups: "{{ sg.group_id }}"

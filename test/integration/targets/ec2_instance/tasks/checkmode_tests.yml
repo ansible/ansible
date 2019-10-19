@@ -2,7 +2,7 @@
     - name: Make basic instance
       ec2_instance:
         name: "{{ resource_prefix }}-checkmode-comparison"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
@@ -12,7 +12,7 @@
     - name: Make basic instance(check mode)
       ec2_instance:
         name: "{{ resource_prefix }}-checkmode-comparison-checkmode"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
         vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"

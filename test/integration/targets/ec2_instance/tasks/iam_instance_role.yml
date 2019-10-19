@@ -22,7 +22,7 @@
     - name: Make instance with an instance_role
       ec2_instance:
         name: "{{ resource_prefix }}-test-instance-role"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
         instance_role: "ansible-test-sts-{{ resource_prefix }}-test-policy"
@@ -35,7 +35,7 @@
     - name: Make instance with an instance_role(check mode)
       ec2_instance:
         name: "{{ resource_prefix }}-test-instance-role-checkmode"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
         instance_role: "{{ iam_role.arn.replace(':role/', ':instance-profile/') }}"
@@ -62,7 +62,7 @@
     - name: Update instance with new instance_role
       ec2_instance:
         name: "{{ resource_prefix }}-test-instance-role"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
         instance_role: "{{ iam_role_2.arn.replace(':role/', ':instance-profile/') }}"

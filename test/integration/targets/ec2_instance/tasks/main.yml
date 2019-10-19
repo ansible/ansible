@@ -15,6 +15,18 @@
       region: "{{ aws_region }}"
   block:
 
+    - name: Find AMI to use
+      ec2_ami_info:
+        owners: 'amazon'
+        filters:
+          name: '{{ ec2_ami_name }}'
+      register: ec2_amis
+    - name: Set fact with latest AMI
+      vars:
+        latest_ami: '{{ ec2_amis.images | sort(attribute="creation_date") | last }}'
+      set_fact:
+        ec2_ami_image: '{{ latest_ami.image_id }}'
+
     - set_fact:
         virtualenv: "{{ remote_tmp_dir }}/virtualenv"
         virtualenv_command: "{{ ansible_python_interpreter }} -m virtualenv"
@@ -50,7 +62,6 @@
         virtualenv: "{{ virtualenv }}"
         virtualenv_command: "{{ virtualenv_command }}"
         virtualenv_site_packages: no
-
 
     - include_tasks: env_setup.yml
     - include_tasks: cpu_options.yml

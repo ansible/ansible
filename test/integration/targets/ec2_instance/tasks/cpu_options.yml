@@ -2,7 +2,7 @@
     - name: create t3.nano instance with cpu_options
       ec2_instance:
         name: "{{ resource_prefix }}-test-t3nano-1-threads-per-core"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         tags:
           TestId: "{{ resource_prefix }}"
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
@@ -23,7 +23,7 @@
       ec2_instance:
         state: present
         name: "{{ resource_prefix }}-test-t3nano-1-threads-per-core"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         tags:
           TestId: "{{ resource_prefix }}"
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
@@ -44,7 +44,7 @@
     - name: create t3.nano instance with cpu_options(check mode)
       ec2_instance:
         name: "{{ resource_prefix }}-test-t3nano-1-threads-per-core-checkmode"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         tags:
           TestId: "{{ resource_prefix }}"
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"

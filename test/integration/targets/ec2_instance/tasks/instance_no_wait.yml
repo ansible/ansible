@@ -1,7 +1,7 @@
 - name: New instance and don't wait for it to complete
   ec2_instance:
     name: "{{ resource_prefix }}-test-no-wait"
-    image_id: "{{ ec2_ami_image[aws_region] }}"
+    image_id: "{{ ec2_ami_image }}"
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     tags:
       TestId: "{{ resource_prefix }}"
@@ -20,7 +20,7 @@
 - name: New instance and don't wait for it to complete ( check mode )
   ec2_instance:
     name: "{{ resource_prefix }}-test-no-wait-checkmode"
-    image_id: "{{ ec2_ami_image[aws_region] }}"
+    image_id: "{{ ec2_ami_image }}"
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     tags:
       TestId: "{{ resource_prefix }}"

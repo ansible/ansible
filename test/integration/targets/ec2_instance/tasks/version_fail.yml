@@ -3,7 +3,7 @@
       ec2_instance:
         state: present
         name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-ec2"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         instance_type: t3.nano
         cpu_options:
             core_count: 1

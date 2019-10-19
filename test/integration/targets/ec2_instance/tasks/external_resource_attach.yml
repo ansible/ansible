@@ -31,7 +31,7 @@
         network:
           interfaces:
             - id: "{{ eni_a.interface.id }}"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         availability_zone: '{{ aws_region }}b'
         tags:
           TestId: "{{ resource_prefix }}"
@@ -57,7 +57,7 @@
           interfaces:
             - id: "{{ eni_a.interface.id }}"
             - id: "{{ eni_b.interface.id }}"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         tags:
           TestId: "{{ resource_prefix }}"
         instance_type: t2.micro
@@ -74,7 +74,7 @@
         network:
           interfaces:
             - id: "{{ eni_c.interface.id }}"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         availability_zone: '{{ aws_region }}b'
         tags:
           TestId: "{{ resource_prefix }}"

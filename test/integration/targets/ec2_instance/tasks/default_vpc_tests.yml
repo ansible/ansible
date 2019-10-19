@@ -2,7 +2,7 @@
     - name: Make instance in a default subnet of the VPC
       ec2_instance:
         name: "{{ resource_prefix }}-test-default-vpc"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         tags:
           TestId: "{{ resource_prefix }}"
         security_groups: "{{ sg.group_id }}"
@@ -13,7 +13,7 @@
     - name: Make instance in a default subnet of the VPC(check mode)
       ec2_instance:
         name: "{{ resource_prefix }}-test-default-vpc-checkmode"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         tags:
           TestId: "{{ resource_prefix }}"
         security_groups: "{{ sg.group_id }}"

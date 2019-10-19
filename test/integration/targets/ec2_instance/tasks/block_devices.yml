@@ -1,7 +1,7 @@
 - name: New instance with an extra block device
   ec2_instance:
     name: "{{ resource_prefix }}-test-ebs-vols"
-    image_id: "{{ ec2_ami_image[aws_region] }}"
+    image_id: "{{ ec2_ami_image }}"
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     volumes:
     - device_name: /dev/sdb
@@ -32,7 +32,7 @@
 - name: New instance with an extra block device(check mode)
   ec2_instance:
     name: "{{ resource_prefix }}-test-ebs-vols-checkmode"
-    image_id: "{{ ec2_ami_image[aws_region] }}"
+    image_id: "{{ ec2_ami_image }}"
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     volumes:
     - device_name: /dev/sdb
