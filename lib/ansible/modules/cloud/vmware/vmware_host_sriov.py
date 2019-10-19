@@ -50,7 +50,7 @@ options:
     required: True
   numVirtFunc:
     description:
-    - number of functions to activate on interface
+    - number of functions to activate on interface.
     - if sriovOn false should be equal 0
     - if sriovOn true should be more then 0
     type: int
