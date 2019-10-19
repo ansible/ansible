@@ -50,7 +50,6 @@ options:
     description:
     - The VRF to use for forwarding.
     type: str
-extends_documentation_fragment: ios
 '''
 
 EXAMPLES = r'''
@@ -105,8 +104,6 @@ def main():
         ttl_max=dict(type="int"),
         vrf=dict(type="str")
     )
-
-    argument_spec.update(ios_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec)
 
