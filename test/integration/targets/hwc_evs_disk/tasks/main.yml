@@ -1,0 +1,104 @@
+---
+- name: delete a disk
+  hwc_evs_disk:
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: absent
+#----------------------------------------------------------
+- name: create a disk
+  hwc_evs_disk:
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: present
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      result is changed
+# ------------------------------------------------------------
+- name: test create a disk in check mode
+  hwc_evs_disk:
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: present
+  register: result
+  check_mode: true
+- name: verify results of test create a disk in check mode
+  assert:
+    that:
+      result is changed
+# ----------------------------------------------------------------------------
+- name: create a disk that already exists
+  hwc_evs_disk:
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: present
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false
+#----------------------------------------------------------
+- name: delete a disk (check mode)
+  hwc_evs_disk:
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: absent
+  check_mode: yes
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      result is changed
+#----------------------------------------------------------
+- name: delete a disk
+  hwc_evs_disk:
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: absent
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      result is changed
+# ----------------------------------------------------------------------------
+- name: delete a disk that does not exist (check mode)
+  hwc_evs_disk:
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: absent
+  check_mode: yes
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.changed == false
+# ----------------------------------------------------------------------------
+- name: delete a disk that does not exist
+  hwc_evs_disk:
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: absent
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false
