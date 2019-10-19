@@ -3,3 +3,8 @@
 ec2_instance_name: '{{ resource_prefix }}-node'
 ec2_instance_owner: 'integration-run-{{ resource_prefix }}'
 ec2_ami_name: 'amzn2-ami-hvm-2.*-x86_64-gp2'
+vpc_cidr: '10.{{ 256 | random(seed=resource_prefix) }}.0.0/16'
+subnet_a_cidr: '10.{{ 256 | random(seed=resource_prefix) }}.32.0/24'
+subnet_a_startswith: '10.{{ 256 | random(seed=resource_prefix) }}.32.'
+subnet_b_cidr: '10.{{ 256 | random(seed=resource_prefix) }}.33.0/24'
+subnet_b_startswith: '10.{{ 256 | random(seed=resource_prefix) }}.33.'

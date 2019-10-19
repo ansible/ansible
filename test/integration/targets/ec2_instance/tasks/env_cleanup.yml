@@ -54,7 +54,7 @@
   ec2_vpc_subnet:
     state: absent
     vpc_id: "{{ testing_vpc.vpc.id }}"
-    cidr: 10.22.32.0/24
+    cidr: "{{ subnet_a_cidr }}"
   register: removed
   until: removed is not failed
   ignore_errors: yes
@@ -64,7 +64,7 @@
   ec2_vpc_subnet:
     state: absent
     vpc_id: "{{ testing_vpc.vpc.id }}"
-    cidr: 10.22.33.0/24
+    cidr: "{{ subnet_b_cidr }}"
   register: removed
   until: removed is not failed
   ignore_errors: yes
@@ -73,7 +73,7 @@
 - name: remove the VPC
   ec2_vpc_net:
     name: "{{ resource_prefix }}-vpc"
-    cidr_block: 10.22.32.0/23
+    cidr_block: "{{ vpc_cidr }}"
     state: absent
     tags:
       Name: Ansible Testing VPC

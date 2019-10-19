@@ -125,7 +125,7 @@
       assert:
         that:
           - check_tags.instances[0].public_dns_name == ""
-          - check_tags.instances[0].private_ip_address.startswith("10.22.33")
+          - check_tags.instances[0].private_ip_address.startswith(subnet_b_startswith)
           - check_tags.instances[0].subnet_id == testing_subnet_b.subnet.id
     - name: check that tags were applied
       assert:

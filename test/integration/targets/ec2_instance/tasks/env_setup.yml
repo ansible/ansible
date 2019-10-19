@@ -1,7 +1,7 @@
 - name: Create VPC for use in testing
   ec2_vpc_net:
     name: "{{ resource_prefix }}-vpc"
-    cidr_block: 10.22.32.0/23
+    cidr_block: "{{ vpc_cidr }}"
     tags:
       Name: Ansible ec2_instance Testing VPC
     tenancy: default
@@ -17,7 +17,7 @@
   ec2_vpc_subnet:
     state: present
     vpc_id: "{{ testing_vpc.vpc.id }}"
-    cidr: 10.22.32.0/24
+    cidr: "{{ subnet_a_cidr }}"
     az: "{{ aws_region }}a"
     resource_tags:
       Name: "{{ resource_prefix }}-subnet-a"
@@ -27,7 +27,7 @@
   ec2_vpc_subnet:
     state: present
     vpc_id: "{{ testing_vpc.vpc.id }}"
-    cidr: 10.22.33.0/24
+    cidr: "{{ subnet_b_cidr }}"
     az: "{{ aws_region }}b"
     resource_tags:
       Name: "{{ resource_prefix }}-subnet-b"
