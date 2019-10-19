@@ -25,7 +25,7 @@ author:
 notes:
 - Tested on vSphere 6.0
 requirements:
-- python >= 2.6
+- python >= 2.7
 - PyVmomi
 options:
   esxi_hostname:
