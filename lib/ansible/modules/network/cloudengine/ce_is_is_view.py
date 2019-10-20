@@ -211,10 +211,6 @@ options:
     description:
       - Specifies the permitibgp.
     type: bool
-  preference_value:
-    description:
-      - Specifies the preference value.
-    type: int
   processid:
     description:
       - Specifies the process id.
@@ -249,8 +245,8 @@ options:
     type: int
   preference_value:
     description:
-      - Specifies the preference_value.
-    type: str
+      - Specifies the preference value.
+    type: int
   state:
     description:
       - Determines whether the config should be present or not on the device.
