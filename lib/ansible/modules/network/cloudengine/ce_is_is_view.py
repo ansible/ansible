@@ -158,7 +158,7 @@ options:
   import_ipprefix:
     description:
       - Specifies import ip prefix.
-    type: int
+    type: str
   import_route_policy:
     description:
       - Specifies import route policy.
@@ -210,11 +210,11 @@ options:
   permitibgp:
     description:
       - Specifies the permitibgp.
-    type: str
+    type: bool
   preference_value:
     description:
-      - Specifies the preference_value.
-    type: str
+      - Specifies the preference value.
+    type: int
   processid:
     description:
       - Specifies the process id.
@@ -230,7 +230,7 @@ options:
   stdbandwidth:
     description:
       - Specifies the std band width.
-    type: str
+    type: int
   stdlevel1cost:
     description:
       - Specifies the std level1 cost.
