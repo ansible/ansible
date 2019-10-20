@@ -41,90 +41,90 @@ class TestOnyxNtpServersPeersModule(TestOnyxModule):
 
     def test_ntp_peer_state_no_change(self):
         set_module_args(dict(peer=[dict(ip_or_name='1.1.1.1',
-                                         enabled='yes')]))
+                                        enabled='yes')]))
         self.execute_module(changed=False)
 
     def test_ntp_peer_state_with_change(self):
         set_module_args(dict(peer=[dict(ip_or_name='1.1.1.1',
-                                         enabled='no')]))
+                                        enabled='no')]))
         commands = ['ntp peer 1.1.1.1 disable']
         self.execute_module(changed=True, commands=commands)
 
     def test_ntp_peer_version_no_change(self):
         set_module_args(dict(peer=[dict(ip_or_name='1.1.1.1',
-                                         version='4')]))
+                                        version='4')]))
         self.execute_module(changed=False)
 
     def test_ntp_peer_version_with_change(self):
         set_module_args(dict(peer=[dict(ip_or_name='1.1.1.1',
-                                         version='3')]))
+                                        version='3')]))
         commands = ['ntp peer 1.1.1.1 version 3']
         self.execute_module(changed=True, commands=commands)
 
     def test_ntp_peer_key_id_no_change(self):
         set_module_args(dict(peer=[dict(ip_or_name='1.1.1.1',
-                                         key_id='5')]))
+                                        key_id='5')]))
         self.execute_module(changed=False)
 
     def test_ntp_peer_key_id_with_change(self):
         set_module_args(dict(peer=[dict(ip_or_name='1.1.1.1',
-                                         key_id='6')]))
+                                        key_id='6')]))
         commands = ['ntp peer 1.1.1.1 keyID 6']
         self.execute_module(changed=True, commands=commands)
 
     def test_ntp_peer_delete_with_change(self):
         set_module_args(dict(peer=[dict(ip_or_name='1.1.1.1',
-                                         state='absent')]))
+                                        state='absent')]))
         commands = ['no ntp peer 1.1.1.1']
         self.execute_module(changed=True, commands=commands)
 
     def test_ntp_server_state_no_change(self):
         set_module_args(dict(server=[dict(ip_or_name='2.2.2.2',
-                                           enabled='no')]))
+                                          enabled='no')]))
         self.execute_module(changed=False)
 
     def test_ntp_server_state_with_change(self):
         set_module_args(dict(server=[dict(ip_or_name='2.2.2.2',
-                                           enabled='yes')]))
+                                          enabled='yes')]))
         commands = ['no ntp server 2.2.2.2 disable']
         self.execute_module(changed=True, commands=commands)
 
     def test_ntp_server_version_no_change(self):
         set_module_args(dict(server=[dict(ip_or_name='2.2.2.2',
-                                           version='4')]))
+                                          version='4')]))
         self.execute_module(changed=False)
 
     def test_ntp_server_version_with_change(self):
         set_module_args(dict(server=[dict(ip_or_name='2.2.2.2',
-                                           version='3')]))
+                                          version='3')]))
         commands = ['ntp server 2.2.2.2 version 3']
         self.execute_module(changed=True, commands=commands)
 
     def test_ntp_server_keyID_no_change(self):
         set_module_args(dict(server=[dict(ip_or_name='2.2.2.2',
-                                           key_id='99')]))
+                                          key_id='99')]))
         self.execute_module(changed=False)
 
     def test_ntp_server_keyID_with_change(self):
         set_module_args(dict(server=[dict(ip_or_name='2.2.2.2',
-                                           key_id='8')]))
+                                          key_id='8')]))
         commands = ['ntp server 2.2.2.2 keyID 8']
         self.execute_module(changed=True, commands=commands)
 
     def test_ntp_server_trusted_state_no_change(self):
         set_module_args(dict(server=[dict(ip_or_name='2.2.2.2',
-                                           trusted_enable='yes')]))
+                                          trusted_enable='yes')]))
         self.execute_module(changed=False)
 
     def test_ntp_server_trusted_state_with_change(self):
         set_module_args(dict(server=[dict(ip_or_name='2.2.2.2',
-                                           trusted_enable='no')]))
+                                          trusted_enable='no')]))
         commands = ['no ntp server 2.2.2.2 trusted-enable']
         self.execute_module(changed=True, commands=commands)
 
     def test_ntp_server_delete_with_change(self):
         set_module_args(dict(server=[dict(ip_or_name='2.2.2.2',
-                                           state='absent')]))
+                                          state='absent')]))
         commands = ['no ntp server 2.2.2.2']
         self.execute_module(changed=True, commands=commands)
 
