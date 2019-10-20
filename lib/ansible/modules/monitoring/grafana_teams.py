@@ -159,31 +159,31 @@ team:
         avatarUrl:
             description: The url of the Team avatar on Grafana server
             returned: always
-            type: string
+            type: str
             sample:
                 - "/avatar/a7440323a684ea47406313a33156e5e9"
         email:
             description: The Team email address
             returned: always
-            type: string
+            type: str
             sample:
                 - "foo.bar@example.com"
         id:
             description: The Team email address
             returned: always
-            type: integer
+            type: int
             sample:
                 - 42
         memberCount:
             description: The number of Team members
             returned: always
-            type: integer
+            type: int
             sample:
                 - 42
         name:
             description: The name of the team.
             returned: always
-            type: string
+            type: str
             sample:
                 - "grafana_working_group"
         members:
@@ -195,7 +195,7 @@ team:
         orgId:
             description: The organization id that the team is part of.
             returned: always
-            type: integer
+            type: int
             sample:
                 - 1
 '''
