@@ -24,12 +24,11 @@ DOCUMENTATION = """
 ---
 module: ce_is_is_interface
 version_added: "2.10"
+author: "xuxiaowei0512"
 short_description: Manages isis interface configuration on HUAWEI CloudEngine devices.
 description:
     - Manages  isis process id, creates a isis instance id or deletes a process id
       on HUAWEI CloudEngine devices.
-author:
-  - xuxiaowei0512
 notes:
     - Interface must already be a L3 port when using this module.
 options:
@@ -67,7 +66,7 @@ options:
       - enable the interface can send isis message.
         The value is a bool type.
     required: false
-    type: str
+    type: bool
   silentcost:
     description:
       - Specifies whether the routing cost of the silent interface is 0.
@@ -121,7 +120,7 @@ options:
       - Configure static BFD on a specific interface enabled with ISIS.
         The value is a bool type.
     required: false
-    default: bool
+    type: bool
   bfdblocken:
     description:
       - Blocking interfaces to dynamically create BFD features.
@@ -133,6 +132,7 @@ options:
       - Determines whether the config should be present or not on the device.
     required: false
     type: str
+    default: 'present'
     choices: ['present', 'absent']
 """
 
@@ -244,7 +244,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: boo
     sample: true
 '''
 
