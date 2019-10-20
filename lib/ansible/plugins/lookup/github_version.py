@@ -8,7 +8,7 @@ __metaclass__ = type
 DOCUMENTATION = r"""
 lookup: github_version
 author:
-  - Ari Kalfus (@Artis3n) <dev@quantummadness.com>
+  - Ari Kalfus (@artis3n) <dev@quantummadness.com>
 version_added: "2.8"
 requirements:
   - json
