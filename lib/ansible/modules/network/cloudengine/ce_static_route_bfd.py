@@ -1574,6 +1574,8 @@ class StaticRouteBFD(object):
             self.set_update_cmd()
 
         self.get_end_state()
+        if self.existing == self.end_state:
+            self.changed = False
         self.results['changed'] = self.changed
         self.results['proposed'] = self.proposed
         self.results['existing'] = self.existing
