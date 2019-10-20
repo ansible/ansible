@@ -13,7 +13,6 @@ version_added: "2.8"
 requirements:
   - json
   - re
-  - urllib
 short_description: Get the latest tagged release version from a public Github repository.
 description:
   - This lookup returns the latest release tag of a public Github repository.
@@ -23,7 +22,11 @@ options:
     description: A list of Github repositories from which to retrieve versions.
     required: True
 notes:
-  - The version tag is returned however it is defined by the Github repository. Most repositories used the convention 'vX.X.X' for a tag, while some use 'X.X.X'. Some may use release tagging structures other than semver. This plugin does not perform opinionated formatting of the release tag structure. Users should format the value via filters after calling this plugin, if needed.
+  - The version tag is returned however it is defined by the Github repository.
+  - Most repositories used the convention 'vX.X.X' for a tag, while some use 'X.X.X'.
+  - Some may use release tagging structures other than semver.
+  - This plugin does not perform opinionated formatting of the release tag structure.
+  - Users should format the value via filters after calling this plugin, if needed.
 seealso:
   - name: Github Releases API
     description: API documentation for retrieving the latest version of a release.
@@ -57,11 +60,11 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.display import Display
 from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import open_url
 
 from json import JSONDecodeError, loads
 from re import compile as regex_compile
 from urllib.error import URLError
-from urllib.request import Request, urlopen
 
 display = Display()
 
@@ -74,7 +77,7 @@ class LookupModule(LookupBase):
         versions = []
 
         if len(repos) == 0:
-          raise AnsibleParserError("You must specify at least one repo name")
+            raise AnsibleParserError("You must specify at least one repo name")
 
         for repo in repos:
 
@@ -88,24 +91,20 @@ class LookupModule(LookupBase):
 
             # Retrieve the Github API Releases JSON
             try:
-                github_request = Request('https://api.github.com/repos/%s/releases/latest' % repo,
-                headers={ 'Accept': 'application/vnd.github.v3+json' }
+                # ansible.module_utils.urls appears to handle the request errors for us
+                response = open_url('https://api.github.com/repos/%s/releases/latest' % repo,
+                    headers={'Accept': 'application/vnd.github.v3+json'}
                 )
-                response = urlopen(github_request)
                 json_response = loads(response.read().decode('utf-8'))
 
                 version = json_response.get('tag_name')
-                if version != None and len(version) != 0:
+                if version is not None and len(version) != 0:
                     versions.append(version)
                 else:
                     raise AnsibleError("Error extracting version from Github API response:\n%s" % github_request.text)
-            # Any errors raised by the urllib library inherit from URLError
-            except URLError as e:
-                raise AnsibleError("Error communicating with the Github API: %s" % to_native(e))
             except JSONDecodeError as e:
                 raise AnsibleError("Error parsing JSON from Github API response: %s" % to_native(e))
 
             display.vvvv(u"Github version lookup using %s as repo" % repo)
-
 
         return versions
