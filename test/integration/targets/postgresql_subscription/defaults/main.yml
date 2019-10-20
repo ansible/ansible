@@ -8,3 +8,4 @@ test_pub: acme_publication
 replication_role: logical_replication
 replication_pass: alsdjfKJKDf1#
 test_db: acme_db
+test_subscription: test

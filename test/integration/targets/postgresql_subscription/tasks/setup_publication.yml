@@ -1,6 +1,6 @@
 # Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-# The file for testing postgresql_copy module.
+# Preparation for further tests of postgresql_subscription module.
 
 - vars:
     task_parameters: &task_parameters
@@ -62,3 +62,7 @@
   - assert:
       that:
       - result.rowcount == 1
+
+#
+# COPY SCHEMA, ETC
+#

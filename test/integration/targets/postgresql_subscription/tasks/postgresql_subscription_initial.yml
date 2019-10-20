@@ -1,4 +1,43 @@
 # Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- meta: end_play
+- vars:
+    task_parameters: &task_parameters
+      become_user: '{{ pg_user }}'
+      become: yes
+      register: result
+    pg_parameters: &pg_parameters
+      login_user: '{{ pg_user }}'
+      login_db: '{{ test_db }}'
+
+  block:
+  #################
+  # Test mode: stat
+  #################
+
+  - name: Stat mode in check mode
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      name: '{{ test_subscription }}'
+      state: stat
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is not changed
+      - result.initial_state == {}
+      - result.final_state == result.initial_state
+
+  - name: Stat mode
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      name: '{{ test_subscription }}'
+      state: stat
+
+  - assert:
+      that:
+      - result is not changed
+      - result.initial_state == {}
+      - result.final_state == result.initial_state
