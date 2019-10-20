@@ -38,101 +38,101 @@ options:
       - Specifies the id of a isis process.
         The value is a number of 1 to 4294967295.
     required: true
-    default: null
+    type: int
   ifname:
     description:
       -  a L3 interface port.
     required: true
-    default: null
+    type: str
   leveltype:
     description:
       - level type for three types.
     required: false
-    default: level_1_2
+    type: str
     choices: ['level_1', 'level_2', 'level_1_2']
   level1dispriority:
     description:
       - the dispriority of the level1.
         The value is a number of 1 to 127.
     required: false
-    default: 64
+    type: int
   level2dispriority:
     description:
       - the dispriority of the level1.
         The value is a number of 1 to 127.
     required: false
-    default: 64
+    type: int
   silentenable:
     description:
       - enable the interface can send isis message.
         The value is a bool type.
     required: false
-    default: false
+    type: str
   silentcost:
     description:
       - Specifies whether the routing cost of the silent interface is 0.
         The value is a bool type.
     required: false
-    default: false
+    type: bool
   typep2penable:
     description:
       - Simulate the network type of the interface as P2P.
         The value is a bool type.
     required: false
-    default: false
+    type: bool
   snpacheck:
     description:
       - Enable SNPA check for LSPs and SNPs.
         The value is a bool type.
     required: false
-    default: false
+    type: bool
   p2pnegotiationmode:
     description:
        - Set the P2P neighbor negotiation type.
     required: false
-    default: 3_way
+    type: str
     choices: ['2_way', '3_way', '3_wayonly']
   p2ppeeripignore:
     description:
       - When the P2P hello packet is received, no IP address check is performed.
         The value is a bool type.
     required: false
-    default: false
+    type: bool
   ppposicpcheckenable:
     description:
       - Interface for setting PPP link protocol to check OSICP negotiation status.
         The value is a bool type.
     required: false
-    default: false
+    type: bool
   level1cost:
     description:
       - Specifies the link cost of the interface when performing Level-1 SPF calculation.
         The value is a number of 0 to 16777215.
     required: false
-    default: null
+    type: int
   level2cost:
     description:
       - Specifies the link cost of the interface when performing Level-2 SPF calculation.
         The value is a number of 0 to 16777215.
     required: false
-    default: null
+    type: int
   bfdstaticen:
     description:
       - Configure static BFD on a specific interface enabled with ISIS.
         The value is a bool type.
     required: false
-    default: false
+    default: bool
   bfdblocken:
     description:
       - Blocking interfaces to dynamically create BFD features.
         The value is a bool type.
     required: false
-    default: false
+    type: bool
   state:
     description:
       - Determines whether the config should be present or not on the device.
     required: false
-    default: present
+    type: str
     choices: ['present', 'absent']
 """
 
