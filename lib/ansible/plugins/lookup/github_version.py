@@ -64,7 +64,6 @@ from ansible.module_utils.urls import open_url
 
 from json import JSONDecodeError, loads
 from re import compile as regex_compile
-from urllib.error import URLError
 
 display = Display()
 
