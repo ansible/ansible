@@ -117,6 +117,21 @@ options:
             - Default is unlimited depth.
         type: int
         version_added: "2.6"
+    owner:
+        description:
+            - Find the list of files whose owner matches the owner specified 
+            - Owner must exist in the system otherwise the task will fail
+            - Default is any owner
+        type: str
+        version_added: "2.10"
+    group:
+        description:
+            - Find the list of files whose group matches the group specified 
+            - Group must exist in the system otherwise the task will fail
+            - Default is any group
+        type: str
+        version_added: "2.10"
+        
 seealso:
 - module: win_find
 '''
@@ -355,6 +370,16 @@ def statinfo(st):
         'isgid': bool(st.st_mode & stat.S_ISGID),
     }
 
+def filterbyownerandgroup(path, uid, gid):
+    path_stat = os.stat(path)
+    if uid != -1 and path_stat.st_uid == uid:
+        return True
+    elif gid != -1 and path_stat.st_gid == gid:
+        return True
+    elif uid == -1 and gid == -1:
+        return True
+    else:
+        return False
 
 def main():
     module = AnsibleModule(
@@ -373,6 +398,8 @@ def main():
             get_checksum=dict(type='bool', default=False),
             use_regex=dict(type='bool', default=False),
             depth=dict(type='int'),
+            owner=dict(type='str'),
+            group=dict(type='str')
         ),
         supports_check_mode=True,
     )
@@ -406,11 +433,20 @@ def main():
     now = time.time()
     msg = ''
     looked = 0
+    search_uid = -1
+    search_gid = -1
+    if params['owner']:
+        search_uid = pwd.getpwnam(params['owner'])[2]
+    if params['group']:
+        search_gid = grp.getgrnam(params['group'])[2]
+
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
         if os.path.isdir(npath):
             ''' ignore followlinks for python version < 2.6 '''
             for root, dirs, files in (sys.version_info < (2, 6, 0) and os.walk(npath)) or os.walk(npath, followlinks=params['follow']):
+                dirs = list(filter(lambda dir: True if filterbyownerandgroup(os.path.join(root, dir), search_uid, search_gid) else False, dirs))
+                files = list(filter(lambda file: True if filterbyownerandgroup(os.path.join(root, file), search_uid, search_gid) else False, files))
                 if params['depth']:
                     depth = root.replace(npath.rstrip(os.path.sep), '').count(os.path.sep)
                     if files or dirs:
