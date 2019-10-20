@@ -41,6 +41,10 @@ options:
         - ID of organization.
         aliases: [ id ]
         type: str
+    delete_confirm_id:
+        description:
+        - ID of network to be deleted.
+        - This is a confirmation since deleting an organization is impactful and unrecoverable.
 author:
 - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -59,6 +63,7 @@ EXAMPLES = r'''
     auth_key: abc12345
     org_name: YourOrg
     state: absent
+    delete_confirm_id: 987654321
   delegate_to: localhost
 
 - name: Query information about all organizations associated to the user
@@ -135,6 +140,7 @@ def main():
                          state=dict(type='str', choices=['absent', 'present', 'query'], default='present'),
                          org_name=dict(type='str', aliases=['name', 'organization']),
                          org_id=dict(type='str', aliases=['id']),
+                         delete_confirm_id=dict(type='str'),
                          )
 
     # seed the result dict in the object
@@ -225,6 +231,8 @@ def main():
             org_id = meraki.get_org_id(meraki.params['org_name'])
         elif meraki.params['org_id'] is not None:
             org_id = meraki.params['org_id']
+        if meraki.params['delete_confirm_id'] != org_id:
+            meraki.fail_json(msg="delete_confirm_id must equal organization ID of organization to be deleted.")
         if meraki.check_mode is True:
             meraki.result['data'] = {}
             meraki.result['changed'] = True

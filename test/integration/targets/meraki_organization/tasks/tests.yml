@@ -56,7 +56,6 @@
   - name: Present assertions
     assert:
       that:
-        - '"https" in new_org.url'
         - new_org.changed == True
         - new_org.data.id is defined
         - cloned_org.changed == True
@@ -101,6 +100,7 @@
       auth_key: '{{ auth_key }}'
       state: absent
       org_name: IntTestOrgCloned
+      delete_confirm_id: '{{cloned_org.data.id}}'
     register: deleted_org_check
     check_mode: yes
 
@@ -108,11 +108,28 @@
       that:
         - deleted_org_check is changed
 
+  - name: Delete organization without matching ID
+    meraki_organization:
+      auth_key: '{{ auth_key }}'
+      state: absent
+      org_name: IntTestOrgCloned
+      delete_confirm_id: 12345
+    register: deleted_org_no_id
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - deleted_org_no_id.msg == 'delete_confirm_id must equal organization ID of organization to be deleted.'
+
+  - debug:
+      var: cloned_org.data
+
   - name: Delete cloned organizations
     meraki_organization:
       auth_key: '{{ auth_key }}'
       state: absent
       org_name: IntTestOrgCloned
+      delete_confirm_id: '{{cloned_org.data.id}}'
     register: deleted_org
 
   - name: Delete renamed organization by id
@@ -120,6 +137,7 @@
       auth_key: '{{ auth_key }}'
       state: absent
       org_id: '{{renamed_org_id}}'
+      delete_confirm_id: '{{renamed_org_id}}'
     register: deleted_org_id
 
   - assert:
