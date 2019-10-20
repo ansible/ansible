@@ -106,7 +106,7 @@ from ansible.module_utils.ec2 import HAS_BOTO3
 import traceback
 
 try:
-    from botocore.exceptions import ClientError, ParamValidationError
+    from botocore.exceptions import ClientError, ParamValidationError, BotoCoreError
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
@@ -242,14 +242,8 @@ def destroy_user(connection, module):
     try:
         for policy in get_attached_policy_list(connection, module, user_name):
             connection.detach_user_policy(UserName=user_name, PolicyArn=policy['PolicyArn'])
-    except ClientError as e:
-        module.fail_json(msg="Unable to detach policy {0} from user {1}: {2}".format(
-                         policy['PolicyArn'], user_name, to_native(e)),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    except ParamValidationError as e:
-        module.fail_json(msg="Unable to detach policy {0} from user {1}: {2}".format(
-                         policy['PolicyArn'], user_name, to_native(e)),
-                         exception=traceback.format_exc())
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Unable to delete user {0}".format(user_name))
 
     try:
         # Remove user's access keys
@@ -297,10 +291,7 @@ def destroy_user(connection, module):
             connection.remove_user_from_group(UserName=user_name, GroupName=group["GroupName"])
 
         connection.delete_user(UserName=user_name)
-    except ClientError as e:
-        module.fail_json(msg="Unable to delete user {0}: {1}".format(user_name, to_native(e)),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    except ParamValidationError as e:
+    except (ClientError, BotoCoreError) as e:
         module.fail_json_aws(e, msg="Unable to delete user {0}".format(user_name))
 
     module.exit_json(changed=True)
