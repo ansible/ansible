@@ -146,6 +146,5 @@
       - "'<lacpMlagSysId>1111-2222-3333</lacpMlagSysId>' in result_present.end_state.result"
       - "'<priority>123</priority>' in result_present.end_state.result"
 - include_tasks: cleanup.yaml
-- include_tasks: delete.yaml
 - debug:
     msg: "END ce_static_route_bfd presentd integration tests on connection={{ ansible_connection }}"
