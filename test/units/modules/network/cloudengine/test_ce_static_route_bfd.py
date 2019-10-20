@@ -45,9 +45,9 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
         self.mock_get_config.stop()
 
     def test_ce_static_route_bfd_changed_false(self):
-        xml_existing = load_fixture('ce_static_route_bfd', 'srBfdPara_1.txt')
-        xml_end_state = load_fixture('ce_static_route_bfd', 'srBfdPara_1.txt')
-        self.get_nc_config.side_effect = (xml_existing, xml_end_state)
+        srBfdPara_1 = load_fixture('ce_static_route_bfd', 'srBfdPara_1.txt')
+        staticrtbase_1 = load_fixture('ce_static_route_bfd', 'staticrtbase_1.txt')
+        self.get_nc_config.side_effect = (srBfdPara_1, srBfdPara_1, staticrtbase_1, staticrtbase_1)
 
         config = dict(
             prefix='255.255.0.0',
