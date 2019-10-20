@@ -34,7 +34,7 @@ seealso:
 EXAMPLES = r"""
 - name: Strip the 'v' out of the tag version, e.g. 'v1.0.0' -> '1.0.0'
   set_fact:
-    nvm_version: "{{ lookup('github_version', 'nvm-sh/nvm')[1:] }}"
+    nvm_version: "{{ lookup('github_version', 'ansible/ansible')[1:] }}"
 
 - name: Operate on multiple repositories
   git:
