@@ -24,7 +24,7 @@ DOCUMENTATION = """
 ---
 module: ce_is_is_interface
 version_added: "2.10"
-author: "xuxiaowei0512"
+author: xuxiaowei0512 (@CloudEngine-Ansible)
 short_description: Manages isis interface configuration on HUAWEI CloudEngine devices.
 description:
     - Manages  isis process id, creates a isis instance id or deletes a process id
