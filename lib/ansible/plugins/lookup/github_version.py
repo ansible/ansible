@@ -3,7 +3,7 @@
 #
 # (c) 2019, Ari Kalfus <dev@quantummadness.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-# 
+
 # python 3 headers, required if submitting to Ansible
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
