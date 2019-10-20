@@ -45,6 +45,7 @@ options:
         description:
         - ID of network to be deleted.
         - This is a confirmation since deleting an organization is impactful and unrecoverable.
+        version_added: "2.10"
 author:
 - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
