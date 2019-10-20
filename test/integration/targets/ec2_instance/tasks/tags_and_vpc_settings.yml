@@ -14,7 +14,7 @@
         network:
           source_dest_check: false
         vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
         wait: false
       register: in_test_vpc
 
@@ -33,7 +33,7 @@
         network:
           source_dest_check: false
         vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
       check_mode: yes
 
     - name: Try to re-make the instance, hopefully this shows changed=False
@@ -49,7 +49,7 @@
           Something: else
         security_groups: "{{ sg.group_id }}"
         vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
       register: remake_in_test_vpc
     - name: "Remaking the same instance resulted in no changes"
       assert:
@@ -88,7 +88,7 @@
           Another: thing
         security_groups: "{{ sg.group_id }}"
         vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
       register: add_another_tag
 
     - ec2_instance_info:
@@ -110,7 +110,7 @@
           Another: thing
         security_groups: "{{ sg.group_id }}"
         vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
 
     - ec2_instance_info:
         instance_ids: "{{ add_another_tag.instance_ids }}"

@@ -4,7 +4,7 @@
         name: "{{ resource_prefix }}-checkmode-comparison"
         image_id: "{{ ec2_ami_image }}"
         security_groups: "{{ sg.group_id }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
         wait: false
       register: basic_instance
@@ -14,7 +14,7 @@
         name: "{{ resource_prefix }}-checkmode-comparison-checkmode"
         image_id: "{{ ec2_ami_image }}"
         security_groups: "{{ sg.group_id }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
         vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
       check_mode: yes
 

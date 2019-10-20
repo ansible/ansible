@@ -35,7 +35,7 @@
         availability_zone: '{{ subnet_b_az }}'
         tags:
           TestId: "{{ resource_prefix }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
         wait: false
       register: in_test_vpc
 
@@ -60,7 +60,7 @@
         image_id: "{{ ec2_ami_image }}"
         tags:
           TestId: "{{ resource_prefix }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
         wait: false
       register: add_interface
       until: add_interface is not failed
@@ -78,7 +78,7 @@
         availability_zone: '{{ subnet_b_az }}'
         tags:
           TestId: "{{ resource_prefix }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
       check_mode: yes
 
     - name: "fact presented ec2 instance"

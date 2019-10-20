@@ -7,7 +7,7 @@
       tags:
         TestId: "{{ resource_prefix }}"
       wait: false
-      instance_type: t2.micro
+      instance_type: "{{ ec2_instance_type }}"
     register: in_test_vpc
 
   - assert:
@@ -26,7 +26,7 @@
       tags:
         TestId: "{{ resource_prefix }}"
       wait: false
-      instance_type: t2.micro
+      instance_type: "{{ ec2_instance_type }}"
     check_mode: yes
 
   - name: Facts for ec2 test instance

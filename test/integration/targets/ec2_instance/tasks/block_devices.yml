@@ -12,7 +12,7 @@
           volume_type: standard
       tags:
         TestId: "{{ resource_prefix }}"
-      instance_type: t2.micro
+      instance_type: "{{ ec2_instance_type }}"
       wait: true
     register: in_test_vpc
 
@@ -43,7 +43,7 @@
           volume_type: standard
       tags:
         TestId: "{{ resource_prefix }}"
-      instance_type: t2.micro
+      instance_type: "{{ ec2_instance_type }}"
     check_mode: yes
 
   - name: "fact presented ec2 instance"
