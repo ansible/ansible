@@ -46,6 +46,56 @@ options:
       - Specifies the peer IP address type.
     type: str
     choices: ['ipv4']
+  coststyle:
+    description:
+      - Specifies the cost style.
+    type: str
+    choices: ['narrow', 'wide', 'transition', 'ntransition', 'wtransition']
+  cost_type:
+    description:
+      - Specifies the cost type.
+    type: str
+    choices: ['external', 'internal']
+  defaultmode:
+    description:
+      - Specifies the default mode.
+    type: str
+    choices: ['always', 'matchDefault', 'matchAny']
+  export_policytype:
+    description:
+      - Specifies the default mode.
+    type: str
+    choices: ['aclNumOrName', 'ipPrefix', 'routePolicy']
+  export_protocol:
+    description:
+      - Specifies the export router protocol.
+    type: str
+    choices: ['direct', 'ospf', 'isis', 'static', 'rip', 'bgp', 'ospfv3', 'all']
+  impotr_leveltype:
+    description:
+      - Specifies the export router protocol.
+    type: str
+    choices: ['level_1', 'level_2', 'level_1_2']
+  islevel:
+    description:
+      - Specifies the isis level.
+    type: str
+    choices: ['level_1', 'level_2', 'level_1_2']
+  level_type:
+    description:
+      - Specifies the isis level type.
+    type: str
+    choices: ['level_1', 'level_2', 'level_1_2']
+  penetration_direct:
+    description:
+      - Specifies the penetration direct.
+    type: str
+    choices: ['level2-level1', 'level1-level2']
+  protocol:
+    description:
+      - Specifies the protocol.
+    type: str
+    choices: ['direct', 'ospf', 'isis', 'static', 'rip', 'bgp', 'ospfv3', 'all']
   out_if_name:
     description:
       - Specifies the type and number of the interface bound to the isis session.
@@ -75,8 +125,8 @@ options:
   state:
     description:
       - Determines whether the config should be present or not on the device.
-    required: false
     default: present
+    type: str
     choices: ['present', 'absent']
 """
 
