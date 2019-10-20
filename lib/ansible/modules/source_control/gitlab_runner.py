@@ -26,7 +26,7 @@ description:
     To create shared runners, you need to ask your administrator to give you this token.
     It can be found at U(https://$GITLAB_URL/admin/runners/).
 notes:
-  - To create a new runner at least the C(api_token), C(description) and C(url) options are required.
+  - To create a new runner at least the C(api_token), C(description) and C(api_url) options are required.
   - Runners need to have unique descriptions.
 version_added: 2.8
 author:
@@ -38,17 +38,11 @@ requirements:
 extends_documentation_fragment:
     - auth_basic
 options:
-  url:
-    description:
-      - The URL of the GitLab server, with protocol (i.e. http or https).
-    type: str
   api_token:
     description:
       - Your private token to interact with the GitLab API.
     required: True
     type: str
-    aliases:
-      - private_token
   description:
     description:
       - The unique name of the runner.
@@ -151,8 +145,6 @@ runner:
   type: dict
 '''
 
-import os
-import re
 import traceback
 
 GITLAB_IMP_ERR = None
@@ -217,7 +209,7 @@ class GitLabRunner(object):
             return False
 
     '''
-    @param arguments Attributs of the runner
+    @param arguments Attributes of the runner
     '''
     def createRunner(self, arguments):
         if self._module.check_mode:
@@ -232,7 +224,7 @@ class GitLabRunner(object):
 
     '''
     @param runner Runner object
-    @param arguments Attributs of the runner
+    @param arguments Attributes of the runner
     '''
     def updateRunner(self, runner, arguments):
         changed = False
@@ -284,19 +276,10 @@ class GitLabRunner(object):
         return runner.delete()
 
 
-def deprecation_warning(module):
-    deprecated_aliases = ['private_token']
-
-    for aliase in deprecated_aliases:
-        if aliase in module.params:
-            module.deprecate("Alias \'{aliase}\' is deprecated".format(aliase=aliase), "2.10")
-
-
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        url=dict(type='str', removed_in_version="2.10"),
-        api_token=dict(type='str', no_log=True, aliases=["private_token"]),
+        api_token=dict(type='str', no_log=True),
         description=dict(type='str', required=True, aliases=["name"]),
         active=dict(type='bool', default=True),
         tag_list=dict(type='list', default=[]),
@@ -311,30 +294,20 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[
-            ['api_url', 'url'],
             ['api_username', 'api_token'],
             ['api_password', 'api_token'],
         ],
         required_together=[
             ['api_username', 'api_password'],
-            ['login_user', 'login_password'],
         ],
         required_one_of=[
             ['api_username', 'api_token'],
-            ['api_url', 'url']
         ],
         supports_check_mode=True,
     )
 
-    deprecation_warning(module)
-
-    if module.params['url'] is not None:
-        url = re.sub('/api.*', '', module.params['url'])
-
-    api_url = module.params['api_url']
+    gitlab_url = module.params['api_url']
     validate_certs = module.params['validate_certs']
-
-    gitlab_url = url if api_url is None else api_url
     gitlab_user = module.params['api_username']
     gitlab_password = module.params['api_password']
     gitlab_token = module.params['api_token']

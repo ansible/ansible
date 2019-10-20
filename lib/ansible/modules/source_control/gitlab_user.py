@@ -31,24 +31,10 @@ requirements:
 extends_documentation_fragment:
     - auth_basic
 options:
-  server_url:
-    description:
-      - The URL of the GitLab server, with protocol (i.e. http or https).
-    type: str
-  login_user:
-    description:
-      - GitLab user name.
-    type: str
-  login_password:
-    description:
-      - GitLab password for login_user
-    type: str
   api_token:
     description:
       - GitLab token for logging in.
     type: str
-    aliases:
-      - login_token
   name:
     description:
       - Name of the user you want to create
@@ -174,8 +160,6 @@ user:
   type: dict
 '''
 
-import os
-import re
 import traceback
 
 GITLAB_IMP_ERR = None
@@ -298,7 +282,7 @@ class GitLabUser(object):
     def findMember(self, group, user_id):
         try:
             member = group.members.get(user_id)
-        except gitlab.exceptions.GitlabGetError as e:
+        except gitlab.exceptions.GitlabGetError:
             return None
         return member
 
@@ -409,21 +393,10 @@ class GitLabUser(object):
         return user.delete()
 
 
-def deprecation_warning(module):
-    deprecated_aliases = ['login_token']
-
-    for aliase in deprecated_aliases:
-        if aliase in module.params:
-            module.deprecate("Alias \'{aliase}\' is deprecated".format(aliase=aliase), "2.10")
-
-
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        server_url=dict(type='str', removed_in_version="2.10"),
-        login_user=dict(type='str', no_log=True, removed_in_version="2.10"),
-        login_password=dict(type='str', no_log=True, removed_in_version="2.10"),
-        api_token=dict(type='str', no_log=True, aliases=["login_token"]),
+        api_token=dict(type='str', no_log=True),
         name=dict(type='str', required=True),
         state=dict(type='str', default="present", choices=["absent", "present"]),
         username=dict(type='str', required=True),
@@ -441,41 +414,23 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[
-            ['api_url', 'server_url'],
-            ['api_username', 'login_user'],
-            ['api_password', 'login_password'],
             ['api_username', 'api_token'],
             ['api_password', 'api_token'],
-            ['login_user', 'login_token'],
-            ['login_password', 'login_token']
         ],
         required_together=[
             ['api_username', 'api_password'],
-            ['login_user', 'login_password'],
         ],
         required_one_of=[
-            ['api_username', 'api_token', 'login_user', 'login_token'],
-            ['server_url', 'api_url']
+            ['api_username', 'api_token']
         ],
         supports_check_mode=True,
     )
 
-    deprecation_warning(module)
-
-    server_url = module.params['server_url']
-    login_user = module.params['login_user']
-    login_password = module.params['login_password']
-
-    api_url = module.params['api_url']
+    gitlab_url = module.params['api_url']
     validate_certs = module.params['validate_certs']
-    api_user = module.params['api_username']
-    api_password = module.params['api_password']
-
-    gitlab_url = server_url if api_url is None else api_url
-    gitlab_user = login_user if api_user is None else api_user
-    gitlab_password = login_password if api_password is None else api_password
+    gitlab_user = module.params['api_username']
+    gitlab_password = module.params['api_password']
     gitlab_token = module.params['api_token']
-
     user_name = module.params['name']
     state = module.params['state']
     user_username = module.params['username'].lower()

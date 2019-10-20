@@ -35,9 +35,6 @@ options:
       - GitLab token for logging in.
     version_added: "2.8"
     type: str
-    aliases:
-      - private_token
-      - access_token
   project:
     description:
       - Id or Full path of the project in the form of group/name.
@@ -165,7 +162,6 @@ hook:
   type: dict
 '''
 
-import os
 import re
 import traceback
 
@@ -242,7 +238,7 @@ class GitLabHook(object):
 
     '''
     @param project Project Object
-    @param arguments Attributs of the hook
+    @param arguments Attributes of the hook
     '''
     def createHook(self, project, arguments):
         if self._module.check_mode:
@@ -254,7 +250,7 @@ class GitLabHook(object):
 
     '''
     @param hook Hook Object
-    @param arguments Attributs of the hook
+    @param arguments Attributes of the hook
     '''
     def updateHook(self, hook, arguments):
         changed = False
@@ -296,18 +292,10 @@ class GitLabHook(object):
         return self.hookObject.delete()
 
 
-def deprecation_warning(module):
-    deprecated_aliases = ['private_token', 'access_token', 'enable_ssl_verification']
-
-    for aliase in deprecated_aliases:
-        if aliase in module.params:
-            module.deprecate("Alias \'{aliase}\' is deprecated".format(aliase=aliase), "2.10")
-
-
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        api_token=dict(type='str', no_log=True, aliases=["private_token", "access_token"]),
+        api_token=dict(type='str', no_log=True),
         state=dict(type='str', default="present", choices=["absent", "present"]),
         project=dict(type='str', required=True),
         hook_url=dict(type='str', required=True),
@@ -337,8 +325,6 @@ def main():
         ],
         supports_check_mode=True,
     )
-
-    deprecation_warning(module)
 
     gitlab_url = re.sub('/api.*', '', module.params['api_url'])
     validate_certs = module.params['validate_certs']
