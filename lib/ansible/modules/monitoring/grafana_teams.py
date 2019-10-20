@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Copyright: (c) 2019, Rémi REY (@rrey)
 
 from __future__ import absolute_import, division, print_function
 
