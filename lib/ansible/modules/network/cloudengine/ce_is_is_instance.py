@@ -33,117 +33,92 @@ description:
 author:
   - xuxiaowei0512
 options:
-    instance_id:
-        description:
-            - Specifies the id of a isis process.The value is a number of 1 to 4294967295.
-        required: true
-        default: null
-    vpn_name:
-        description:
-            - VPN Instance, Associate the VPN instance with the corresponding IS-IS process.
-        required: false
-        default: null
-    state:
-        description:
-            - Determines whether the config should be present or not on the device.
-        required: false
-        default: present
-        choices: ['present', 'absent']
+  instance_id:
+    description:
+      - Specifies the id of a isis process.The value is a number of 1 to 4294967295.
+    required: true
+    type: int
+  vpn_name:
+    description:
+      - VPN Instance, Associate the VPN instance with the corresponding IS-IS process.
+    required: false
+    type: str
+  state:
+    description:
+      - Determines whether the config should be present or not on the device.
+    required: false
+    default: present
+    type: str
+    choices: ['present', 'absent']
 '''
 
 EXAMPLES = '''
-- name: ce_is_is_instance module test
-  hosts: cloudengine
-  connection: local
-  gather_facts: no
-  vars:
-    cli:
-      host: "{{ inventory_hostname }}"
-      port: "{{ ansible_ssh_port }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      transport: cli
-
-  tasks:
-
-  - name: create vpn instance
-    ce_config:
-      lines: 'ip vpn-instance {{test_vpn}},ipv4-family'
-      match: none
-      provider: "{{ cli }}"
-      transport: cli
-
   - name: Set isis process
     ce_is_is_instance:
       instance_id: 3
       state: present
-      provider: '{{ cli }}'
 
   - name: Unset isis process
     ce_is_is_instance:
       instance_id: 3
       state: absent
-      provider: '{{ cli }}'
 
   - name: check isis process
     ce_is_is_instance:
       instance_id: 4294967296
       state: present
-      provider: '{{ cli }}'
 
   - name: Set vpn name
     ce_is_is_instance:
       instance_id: 22
       vpn_name: vpn1
       state: present
-      provider: '{{ cli }}'
 
   - name: check vpn name
     ce_is_is_instance:
       instance_id: 22
       vpn_name: vpn1234567896321452212221556asdasdasdasdsadvdv
       state: present
-      provider: '{{ cli }}'
 '''
 
 RETURN = '''
 proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {
-        "instance_id": 1,
-        "vpn_name": null
-    }
+  description: k/v pairs of parameters passed into module
+  returned: always
+  type: dict
+  sample: {
+      "instance_id": 1,
+      "vpn_name": null
+  }
 existing:
-    description: k/v pairs of existing configuration
-    returned: always
-    type: dict
-    sample: {
-        "session": {}
-    }
+  description: k/v pairs of existing configuration
+  returned: always
+  type: dict
+  sample: {
+      "session": {}
+  }
 end_state:
-    description: k/v pairs of configuration after module execution
-    returned: always
-    type: dict
-    sample: {
-        "session": {
-            "instance_id": 1,
-            "vpn_name": null
-        }
-    }
+  description: k/v pairs of configuration after module execution
+  returned: always
+  type: dict
+  sample: {
+      "session": {
+          "instance_id": 1,
+          "vpn_name": null
+      }
+  }
 updates:
-    description: commands sent to the device
-    returned: always
-    type: list
-    sample: [
-        "isis 1"
-    ]
+  description: commands sent to the device
+  returned: always
+  type: list
+  sample: [
+      "isis 1"
+  ]
 changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
+  description: check to see if a change was made on the device
+  returned: always
+  type: bool
+  sample: true
 '''
 
 from xml.etree import ElementTree
