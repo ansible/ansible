@@ -1,9 +1,4 @@
 ---
-- debug:
-    msg: "START ce_static_route_bfd merged integration tests on connection={{ ansible_connection }}"
-# befor removing, it should be merged
-- include_tasks: merge.yaml
-
 - name: Merge the provided configuration with the exisiting running configuration
   ce_static_route_bfd:
     function_flag: 'singleBFD'
@@ -34,6 +29,3 @@
   assert:
     that:
       - "result['changed'] == true"
-
-- debug:
-    msg: "END ce_static_route_bfd merged integration tests on connection={{ ansible_connection }}"
