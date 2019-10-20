@@ -145,7 +145,7 @@ options:
 """
 EXAMPLES = """
 - name: Merge the provided configuration with the exisiting running configuration - basic-tlv
-  ce_lldp_interface: &merged
+  ce_lldp_interface:
     config:
       msg_interval: 8
       ifname: 10GE 1/0/1
@@ -158,7 +158,7 @@ EXAMPLES = """
         system_name: true
 
 - name: Merge the provided configuration with the exisiting running configuration - dot1-tlv
-  ce_lldp_interface: &merged
+  ce_lldp_interface:
     config:
       msg_interval: 8
       ifname: 10GE 1/0/1
@@ -171,7 +171,7 @@ EXAMPLES = """
         vlan_name_enable: true
 
 - name: Merge the provided configuration with the exisiting running configuration - dot3-tlv
-  ce_lldp_interface: &merged
+  ce_lldp_interface:
     config:
       msg_interval: 8
       ifname: 10GE 1/0/1
