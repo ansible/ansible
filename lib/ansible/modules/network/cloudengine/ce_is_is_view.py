@@ -120,6 +120,134 @@ options:
     description:
       - Specifies the bfd cost.
     type: int
+  description:
+    description:
+      - Specifies description of isis.
+    type: str
+  enablelevel1tolevel2:
+    description:
+      - Enable level1 to level2.
+    type: bool
+  export_aclnumorname:
+    description:
+      - Specifies export acl number or name.
+    type: str
+  export_ipprefix:
+    description:
+      - Specifies export ip prefix.
+    type: str
+  export_processid:
+    description:
+      - Specifies export process id.
+    type: int
+  export_routepolicyname:
+    description:
+      - Specifies export route policy name.
+    type: str
+  import_aclnumorname:
+    description:
+      - Specifies import acl number or name.
+    type: str
+  import_cost:
+    description:
+      - Specifies import cost.
+    type: int
+  import_ipprefix:
+    description:
+      - Specifies import ip prefix.
+    type: int
+  import_route_policy:
+    description:
+      - Specifies import route policy.
+    type: str
+  import_routepolicy_name:
+    description:
+      - Specifies import route policy name.
+    type: str
+  import_routepolicyname:
+    description:
+      - Specifies import route policy name.
+    type: str
+  import_tag:
+    description:
+      - Specifies import tag.
+    type: int
+  inheritcost:
+    description:
+      - Enable inherit cost.
+    type: bool
+  instance_id:
+    description:
+      - Specifies instance id.
+    type: int
+  ip_address:
+    description:
+      - Specifies ip address.
+    type: str
+  ip_prefix_name:
+    description:
+      - Specifies ip prefix name.
+    type: str
+  max_load:
+    description:
+      - Specifies route max load.
+    type: int
+  mode_routepolicyname:
+    description:
+      - Specifies the mode of route polic yname.
+    type: str
+  mode_tag:
+    description:
+      - Specifies the tag of mode.
+    type: int
+  netentity:
+    description:
+      - Specifies the netentity.
+    type: str
+  permitibgp:
+    description:
+      - Specifies the permitibgp.
+    type: str
+  preference_value:
+    description:
+      - Specifies the preference_value.
+    type: str
+  processid:
+    description:
+      - Specifies the process id.
+    type: int
+  relaxspfLimit:
+    description:
+      - Specifies enable the relax spf limit.
+    type: bool
+  route_policy_name:
+    description:
+      - Specifies the route policy name.
+    type: str
+  stdbandwidth:
+    description:
+      - Specifies the std band width.
+    type: str
+  stdlevel1cost:
+    description:
+      - Specifies the std level1 cost.
+    type: int
+  stdlevel2cost:
+    description:
+      - Specifies the std level2 cost.
+    type: int
+  tag:
+    description:
+      - Specifies the isis tag.
+    type: int
+  weight:
+    description:
+      - Specifies the isis weight.
+    type: int
+  preference_value:
+    description:
+      - Specifies the preference_value.
+    type: str
   state:
     description:
       - Determines whether the config should be present or not on the device.
