@@ -25,133 +25,120 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ce_static_route_bfd
-version_added: "2.9"
+version_added: "2.10"
 short_description: Manages static route configuration on HUAWEI CloudEngine switches.
 description:
     - Manages the static routes on HUAWEI CloudEngine switches.
 author: xuxiaowei0512 (@CloudEngine-Ansible)
 notes:
-    - If no vrf is supplied, vrf is set to default.
-      If I(state=absent), the route configuration will be removed, regardless of the
-      non-required parameters.
+  - If no vrf is supplied, vrf is set to default.
+    If I(state=absent), the route configuration will be removed, regardless of the
+    non-required parameters.
 options:
-    prefix:
-        description:
-            - Destination ip address of static route.
-        required: true
-        type: str
-    mask:
-        description:
-            - Destination ip mask of static route.
-        type: str
-    aftype:
-        description:
-            - Destination ip address family type of static route.
-        required: true
-        type: str
-        choices: ['v4','v6']
-    next_hop:
-        description:
-            - Next hop address of static route.
-        required: false
-        default: null
-        type: str
-    nhp_interface:
-        description:
-            - Next hop interface full name of static route.
-        required: false
-        default: null
-        type: str
-    vrf:
-        description:
-            - VPN instance of destination ip address.
-        required: false
-        default: null
-        type: str
-    destvrf:
-        description:
-            - VPN instance of next hop ip address.
-        required: false
-        default: null
-        type: str
-    tag:
-        description:
-            - Route tag value (numeric).
-        required: false
-        default: null
-        type: int
+  prefix:
     description:
-        description:
-            - Name of the route. Used with the name parameter on the CLI.
-        required: false
-        default: null
-        type: str
-    pref:
-        description:
-            - Preference or administrative difference of route (range 1-255).
-        required: false
-        default: null
-        type: int
-    function_flag:
-        description:
-            - Used to distinguish between command line functions.
-        required: true
-        choices: ['globalBFD','singleBFD','dynamicBFD','staticBFD']
-        default: null
-        type: str
-    min_tx_interval:
-        description:
-            - Set the minimum BFD session sending interval (range 50-1000).
-        required: false
-        default: null
-        type: int
-    min_rx_interval:
-        description:
-            - Set the minimum BFD receive interval (range 50-1000).
-        required: false
-        default: null
-        type: int
-    detect_multiplier:
-        description:
-            - Configure the BFD multiplier (range 3-50).
-        required: false
-        default: null
-        type: int
-    bfd_session_name:
-        description:
-            - bfd name (range 1-15).
-        required: false
-        default: null
-        type: str
-    commands:
-        description:
-            - Incoming command line is used to send sys,undo ip route-static default-bfd,commit.
-        required: false
-        default: null
-        type: list
-    state:
-        description:
-            - Specify desired state of the resource.
-        required: false
-        choices: ['present','absent']
-        type: str
-        default: present
-    provider:
-        description:
-            - Specify parameters that are used to connect host.
-            - Tis parameter is unnecessary and will be removed.
-        required: false
-        type: dict
+      - Destination ip address of static route.
+    required: true
+    type: str
+  mask:
+   description:
+     - Destination ip mask of static route.
+   type: str
+  aftype:
+    description:
+      - Destination ip address family type of static route.
+    required: true
+    type: str
+    choices: ['v4','v6']
+  next_hop:
+    description:
+      - Next hop address of static route.
+    required: false
+    default: null
+    type: str
+  nhp_interface:
+    description:
+      - Next hop interface full name of static route.
+    required: false
+    default: null
+    type: str
+  vrf:
+    description:
+      - VPN instance of destination ip address.
+    required: false
+    default: null
+    type: str
+  destvrf:
+    description:
+      - VPN instance of next hop ip address.
+    required: false
+    default: null
+    type: str
+  tag:
+    description:
+      - Route tag value (numeric).
+    required: false
+    default: null
+    type: int
+  description:
+    description:
+      - Name of the route. Used with the name parameter on the CLI.
+    required: false
+    default: null
+    type: str
+  pref:
+    description:
+      - Preference or administrative difference of route (range 1-255).
+    required: false
+    default: null
+    type: int
+  function_flag:
+    description:
+      - Used to distinguish between command line functions.
+    required: true
+    choices: ['globalBFD','singleBFD','dynamicBFD','staticBFD']
+    default: null
+    type: str
+  min_tx_interval:
+    description:
+      - Set the minimum BFD session sending interval (range 50-1000).
+    required: false
+    default: null
+    type: int
+  min_rx_interval:
+    description:
+      - Set the minimum BFD receive interval (range 50-1000).
+    required: false
+    default: null
+    type: int
+  detect_multiplier:
+    description:
+      - Configure the BFD multiplier (range 3-50).
+    required: false
+    default: null
+    type: int
+  bfd_session_name:
+    description:
+      - bfd name (range 1-15).
+    required: false
+    default: null
+    type: str
+  commands:
+    description:
+      - Incoming command line is used to send sys,undo ip route-static default-bfd,commit.
+    required: false
+    default: null
+    type: list
+  state:
+    description:
+      - Specify desired state of the resource.
+    required: false
+    choices: ['present','absent']
+    type: str
+    default: present
 '''
 
 EXAMPLES = '''
-- name: sample playbook
-  gather_facts: no
-  connection: local
-  hosts: device1
-
-  tasks:
-
   #ip route-static bfd interface-type interface-number nexthop-address [ local-address address ]
   #[ min-rx-interval min-rx-interval | min-tx-interval min-tx-interval | detect-multiplier multiplier ]
   - name: Config an ip route-static bfd 10GE1/0/1 3.3.3.3 min-rx-interval 50 min-tx-interval 50 detect-multiplier 5
@@ -239,7 +226,7 @@ changed:
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
-from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config
 
 CE_NC_GET_STATIC_ROUTE_BFD_SESSIONNAME = """
 <filter type="subtree">
@@ -1625,7 +1612,6 @@ def main():
         state=dict(choices=['absent', 'present'],
                    default='present', required=False),
     )
-    argument_spec.update(ce_argument_spec)
     interface = StaticRouteBFD(argument_spec)
     interface.work()
 
