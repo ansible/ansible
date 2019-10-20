@@ -27,7 +27,7 @@ DOCUMENTATION = '''
 ---
 module: ce_is_is_instance
 version_added: "2.10"
-author: "xuxiaowei0512"
+author: xuxiaowei0512 (@CloudEngine-Ansible)
 short_description: Manages isis process id configuration on HUAWEI CloudEngine devices.
 description:
     - Manages  isis process id, creates a isis instance id or deletes a process id on HUAWEI CloudEngine devices.
