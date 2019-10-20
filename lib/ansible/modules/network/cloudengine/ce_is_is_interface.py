@@ -141,19 +141,16 @@ EXAMPLES = '''
     ce_config:
       lines: 'vlan {{ test_vlan_id }},quit,interface {{test_intf_vlanif}},ip address {{test_vlanif_ip}} 24'
       match: none
-      provider: "{{ cli }}"
 
   - name: "create eth-trunk and config eth-trunk"
     ce_config:
       lines: 'interface {{test_intf_trunk}},undo portswitch,ip address {{test_trunk_ip}} 24'
       match: none
-      provider: "{{ cli }}"
 
   - name: "create vpn instance"
     ce_config:
       lines: 'ip vpn-instance {{test_vpn}},ipv4-family'
       match: none
-      provider: "{{ cli }}"
 
   - name: Set isis circuit-level
     ce_is_is_interface:
@@ -161,7 +158,6 @@ EXAMPLES = '''
       ifname: Eth-Trunk10
       leveltype: level_1_2
       state: present
-      provider: '{{ cli }}'
 
   - name: Set isis level1dispriority
     ce_is_is_interface:
@@ -169,7 +165,6 @@ EXAMPLES = '''
       ifname: Eth-Trunk10
       level1dispriority: 0
       state: present
-      provider: '{{ cli }}'
 
   - name: Set isis level2dispriority
     ce_is_is_interface:
@@ -177,7 +172,6 @@ EXAMPLES = '''
       ifname: Eth-Trunk10
       level2dispriority: 0
       state: present
-      provider: '{{ cli }}'
 
   - name: Set isis silentenable
     ce_is_is_interface:
@@ -185,14 +179,12 @@ EXAMPLES = '''
       ifname: Eth-Trunk10
       silentenable: true
       state: present
-      provider: '{{ cli }}'
 
   - name: Set vpn name
     ce_is_is_instance:
       instance_id: 22
       vpn_name: vpn1
       state: present
-      provider: '{{ cli }}'
 '''
 
 RETURN = '''
@@ -244,7 +236,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boo
+    type: bool
     sample: true
 '''
 
