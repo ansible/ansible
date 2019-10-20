@@ -29,7 +29,7 @@ To ensure that your module documentation matches your ``argument_spec``:
 
    .. code-block:: bash
 
-      pip install --user -r test/runner/requirements/sanity.txt
+      pip install --user -r test/sanity/requirements.txt
 
 #. run the ``validate-modules`` test::
 
