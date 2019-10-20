@@ -309,7 +309,7 @@
 
 # Github version lookups
 
-- name: Test that retrieving a url works
+- name: Test that getting a version works
   set_fact:
     ansible_github_version: "{{ lookup('github_version', 'ansible/ansible') }}"
 
