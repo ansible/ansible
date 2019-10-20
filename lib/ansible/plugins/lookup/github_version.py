@@ -18,7 +18,6 @@ short_description: Get the latest tagged release version from a public Github re
 description:
   - This lookup returns the latest release tag of a public Github repository.
   - A future implementation will accept an optional Github token to allow lookup of private repositories.
-  - A future implementation will accept an optional version to look up a specific release, which defaults to the latest if not provided.
 options:
   repos:
     description: A list of Github repositories from which to retrieve versions.
