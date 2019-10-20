@@ -35,11 +35,21 @@
       register: cpu_options_update
       ignore_errors: yes
 
+    - name: "fact presented ec2 instance"
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-test-t3nano-1-threads-per-core"
+      register: presented_instance_fact
+
     - name: modify cpu_options has no effect on existing instance
       assert:
         that:
           - cpu_options_update is success
           - cpu_options_update is not changed
+          - "{{ presented_instance_fact.instances | length }} > 0"
+          - "'{{ presented_instance_fact.instances.0.state.name }}' in ['running','pending']"
+          - "{{ presented_instance_fact.instances.0.cpu_options.core_count }} == 1"
+          - "{{ presented_instance_fact.instances.0.cpu_options.threads_per_core }} == 1"
 
     - name: create t3.nano instance with cpu_options(check mode)
       ec2_instance:
@@ -54,12 +64,6 @@
             threads_per_core: 1
       check_mode: yes
 
-    - name: "fact presented ec2 instance"
-      ec2_instance_info:
-        filters:
-          "tag:Name": "{{ resource_prefix }}-test-t3nano-1-threads-per-core"
-      register: presented_instance_fact
-
     - name: "fact checkmode ec2 instance"
       ec2_instance_info:
         filters:
@@ -69,11 +73,7 @@
     - name: "Confirm existence of instance id."
       assert:
         that:
-          - "{{ presented_instance_fact.instances | length }} > 0"
-          - "'{{ presented_instance_fact.instances.0.state.name }}' in ['running','pending']"
           - "{{ checkmode_instance_fact.instances | length }} == 0"
-          - "{{ presented_instance_fact.instances.0.cpu_options.core_count }} == 1"
-          - "{{ presented_instance_fact.instances.0.cpu_options.threads_per_core }} == 1"
 
   always:
     - name: Terminate instances
