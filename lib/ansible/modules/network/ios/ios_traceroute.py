@@ -27,7 +27,7 @@ options:
     type: int
   dest:
     description:
-    - The IP Address or hostname (resolvable by switch) of the remote node.
+    - The IP Address or hostname (resolvable by network device) of the remote node.
     type: str
     required: true
   source:
@@ -150,7 +150,7 @@ def main():
 
 def build_trace(module, dest, source=None, probe=None, udp=None, ttl_min=None, ttl_max=None, vrf=None):
     """
-    Function to build the command to send to the terminal for the switch
+    Function to build the command to send to the terminal for the network device
     to execute. All args come from the module's unique params.
     """
     if vrf is not None:
