@@ -30,22 +30,6 @@ description:
     - Manages  isis process id, creates a isis instance id or deletes a process id
       on HUAWEI CloudEngine devices.
 options:
-  session_name:
-    description:
-      - Specifies the name of a isis session.
-        The value is a string of 1 to 15 case-sensitive characters without spaces.
-    type: str
-  create_type:
-    description:
-      - Isis session creation mode, the currently created isis session
-        only supports static or static auto-negotiation mode.
-    type: str
-    choices: ['static', 'auto']
-  addr_type:
-    description:
-      - Specifies the peer IP address type.
-    type: str
-    choices: ['ipv4']
   coststyle:
     description:
       - Specifies the cost style.
@@ -96,32 +80,46 @@ options:
       - Specifies the protocol.
     type: str
     choices: ['direct', 'ospf', 'isis', 'static', 'rip', 'bgp', 'ospfv3', 'all']
-  out_if_name:
+  aclnum_or_name:
     description:
-      - Specifies the type and number of the interface bound to the isis session.
+      - Specifies the acl number or name for isis.
     type: str
-  dest_addr:
+  allow_filter:
     description:
-      - Specifies the peer IP address bound to the isis session.
-    type: str
-  src_addr:
+      - Specifies the alow filter or not.
+    type: bool
+  allow_up_down:
     description:
-      - Indicates the source IP address carried in isis packets.
-    type: str
-  vrf_name:
+      - Specifies the alow up or down.
+    type: bool
+  autocostenable:
     description:
-      - Specifies the name of a Virtual Private Network (VPN) instance that is bound to a isis session.
-        The value is a string of 1 to 31 case-sensitive characters, spaces not supported.
-        When double quotation marks are used around the string, spaces are allowed in the string.
-        The value _public_ is reserved and cannot be used as the VPN instance name.
-    type: str
-  use_default_ip:
+      - Specifies the alow auto cost enable.
+    type: bool
+  autocostenablecompatible:
     description:
-      - Indicates the default multicast IP address that is bound to a isis session.
-        By default, isis uses the multicast IP address 224.0.0.184.
-        You can set the multicast IP address by running the default-ip-address command.
-        The value is a bool type.
-    default: false
+      - Specifies the alow auto cost enable compatible.
+    type: bool
+  avoid_learning:
+    description:
+      - Specifies the alow avoid learning.
+    type: bool
+  bfd_min_tx:
+    description:
+      - Specifies the bfd min sent package.
+    type: int
+  bfd_min_rx:
+    description:
+      - Specifies the bfd min received package.
+    type: int
+  bfd_multiplier_num:
+    description:
+      - Specifies the bfd multiplier number.
+    type: int
+  cost:
+    description:
+      - Specifies the bfd cost.
+    type: int
   state:
     description:
       - Determines whether the config should be present or not on the device.
@@ -173,15 +171,7 @@ proposed:
     returned: always
     type: dict
     sample: {
-        "addr_type": null,
-        "create_type": null,
-        "dest_addr": null,
-        "out_if_name": "10GE1/0/1",
-        "session_name": "bfd_l2link",
-        "src_addr": null,
-        "state": "present",
-        "use_default_ip": true,
-        "vrf_name": null
+        "state": "present"
     }
 existing:
     description: k/v pairs of existing configuration
