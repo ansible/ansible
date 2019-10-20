@@ -372,11 +372,11 @@ def statinfo(st):
 
 def filterbyownerandgroup(path, uid, gid):
     path_stat = os.stat(path)
-    if uid != -1 and path_stat.st_uid == uid:
+    if uid is not None and path_stat.st_uid == uid:
         return True
-    elif gid != -1 and path_stat.st_gid == gid:
+    elif gid is not None and path_stat.st_gid == gid:
         return True
-    elif uid == -1 and gid == -1:
+    elif uid is None and gid is None:
         return True
     else:
         return False
@@ -433,20 +433,16 @@ def main():
     now = time.time()
     msg = ''
     looked = 0
-    search_uid = -1
-    search_gid = -1
-    if params['owner']:
-        search_uid = pwd.getpwnam(params['owner'])[2]
-    if params['group']:
-        search_gid = grp.getgrnam(params['group'])[2]
+    uid = params['owner']
+    gid = params['group']
 
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
         if os.path.isdir(npath):
             ''' ignore followlinks for python version < 2.6 '''
             for root, dirs, files in (sys.version_info < (2, 6, 0) and os.walk(npath)) or os.walk(npath, followlinks=params['follow']):
-                dirs = list(filter(lambda dir: True if filterbyownerandgroup(os.path.join(root, dir), search_uid, search_gid) else False, dirs))
-                files = list(filter(lambda file: True if filterbyownerandgroup(os.path.join(root, file), search_uid, search_gid) else False, files))
+                dirs = list(filter(lambda dir: True if filterbyownerandgroup(os.path.join(root, dir), uid, gid) else False, dirs))
+                files = list(filter(lambda file: True if filterbyownerandgroup(os.path.join(root, file), uid, gid) else False, files))
                 if params['depth']:
                     depth = root.replace(npath.rstrip(os.path.sep), '').count(os.path.sep)
                     if files or dirs:
