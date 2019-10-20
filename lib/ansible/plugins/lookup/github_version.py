@@ -1,6 +1,9 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
 # (c) 2019, Ari Kalfus <dev@quantummadness.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
+# 
 # python 3 headers, required if submitting to Ansible
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -92,7 +95,7 @@ class LookupModule(LookupBase):
             try:
                 # ansible.module_utils.urls appears to handle the request errors for us
                 response = open_url('https://api.github.com/repos/%s/releases/latest' % repo,
-                    headers={'Accept': 'application/vnd.github.v3+json'}
+                                    headers={'Accept': 'application/vnd.github.v3+json'}
                 )
                 json_response = loads(response.read().decode('utf-8'))
 
@@ -100,7 +103,7 @@ class LookupModule(LookupBase):
                 if version is not None and len(version) != 0:
                     versions.append(version)
                 else:
-                    raise AnsibleError("Error extracting version from Github API response:\n%s" % github_request.text)
+                    raise AnsibleError("Error extracting version from Github API response:\n%s" % response.text)
             except JSONDecodeError as e:
                 raise AnsibleError("Error parsing JSON from Github API response: %s" % to_native(e))
 
