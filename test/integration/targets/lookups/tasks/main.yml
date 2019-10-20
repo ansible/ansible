@@ -306,3 +306,23 @@
     that:
       - 'var_host_info[0] == ansible_host'
       - 'var_host_info[1] == ansible_connection'
+
+# Github version lookups
+
+- name: Test that retrieving a url works
+  set_fact:
+    ansible_github_version: "{{ lookup('github_version', 'ansible/ansible') }}"
+
+- name: Collect the version in a task
+  shell: |
+    set -o pipefail
+    curl https://api.github.com/repos/ansible/ansible/releases/latest | jq .tag_name
+  args:
+    executable: /bin/bash
+  changed_when: false
+  register: ansible_task_version
+
+- name: Assert that the version was retrieved
+  assert:
+    that:
+      - 'ansible_github_version == ansible_task_version'
