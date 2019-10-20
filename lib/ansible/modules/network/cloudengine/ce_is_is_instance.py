@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -27,7 +30,7 @@ version_added: "2.10"
 short_description: Manages isis process id configuration on HUAWEI CloudEngine devices.
 description:
     - Manages  isis process id, creates a isis instance id or deletes a process id on HUAWEI CloudEngine devices.
-author: 
+author:
   - xuxiaowei0512
 options:
     instance_id:
