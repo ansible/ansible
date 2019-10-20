@@ -38,7 +38,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: ce_lldp_interface
-version_added: 2.10
+version_added: '2.10'
 short_description: Manages interfaces LLDP configuration on HUAWEI CloudEngine switches.
 description:
   - Manages interfaces LLDP configuration on HUAWEI CloudEngine switches.
