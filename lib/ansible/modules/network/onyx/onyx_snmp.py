@@ -23,8 +23,7 @@ options:
   state_enabled:
     description:
       - Enables/Disables the state of the SNMP configuration.
-    choices: ['yes', 'no']
-    type: str
+    type: bool
   contact_name:
     description:
       - Sets the SNMP contact name.
@@ -36,13 +35,11 @@ options:
   communities_enabled:
     description:
       - Enables/Disables community-based authentication on the system.
-    choices: ['yes', 'no']
-    type: str
+    type: bool
   multi_communities_enabled:
     description:
       - Enables/Disables multiple communities to be configured.
-    choices: ['yes', 'no']
-    type: str
+    type: bool
   snmp_communities:
     type: list
     description:
@@ -56,18 +53,17 @@ options:
       community_type:
         description:
           - Add this community as either a read-only or read-write community.
-        choices: ['ro', 'rw']
+        choices: ['read-only', 'read-write']
         type: str
-      delete:
+      state:
         description:
              - Used to decide if you want to delete the given snmp community or not
-        choices: ['yes', 'no']
+        choices: ['present', 'absent']
         type: str
   notify_enabled:
     description:
       - Enables/Disables sending of SNMP notifications (traps and informs) from thee system.
-    choices: ['yes', 'no']
-    type: str
+    type: bool
   notify_port:
     description:
       - Sets the default port to which notifications are sent.
@@ -112,8 +108,7 @@ options:
         description:
           - Enables/Disables the request.
         required: true
-        choices: ['yes','no']
-        type: str
+        type: bool
       permission_type:
         description:
           - Configures the request type.
@@ -136,8 +131,8 @@ EXAMPLES = """
     notify_event: temperature-too-high
     snmp_communities:
         - community_name: public
-          community_type: ro
-          delete: no
+          community_type: read-only
+          state: absent
     snmp_permissions:
         - state_enabled: yes
           permission_type: MELLANOX-CONFIG-DB-MIB
@@ -182,10 +177,10 @@ class OnyxSNMPModule(BaseOnyxModule):
         """
 
         community_spec = dict(community_name=dict(required=True),
-                              community_type=dict(choices=['ro', 'rw']),
-                              delete=dict(choices=['yes', 'no']))
+                              community_type=dict(choices=['read-only', 'read-write']),
+                              state=dict(choices=['present', 'absent']))
 
-        snmp_permission_spec = dict(state_enabled=dict(choices=['yes', 'no'], required=True),
+        snmp_permission_spec = dict(state_enabled=dict(type='bool', required=True),
                                     permission_type=dict(choices=['MELLANOX-CONFIG-DB-MIB', 'MELLANOX-EFM-MIB', 'MELLANOX-POWER-CYCLE',
                                                                   'MELLANOX-SW-UPDATE', 'RFC1213-MIB']))
 
@@ -203,13 +198,13 @@ class OnyxSNMPModule(BaseOnyxModule):
                          'sm-restart', 'unexpected-shutdown', 'dcbx-pfc-port-admin-state-trap', 'insufficient-fans-recover', 'memusage-high',
                          'ospf-if-state-change', 'sm-start', 'user-login']
         element_spec = dict(
-            state_enabled=dict(choices=['yes', 'no']),
+            state_enabled=dict(type='bool'),
             contact_name=dict(type='str'),
             location=dict(type='str'),
-            communities_enabled=dict(choices=['yes', 'no']),
-            multi_communities_enabled=dict(choices=['yes', 'no']),
+            communities_enabled=dict(type='bool'),
+            multi_communities_enabled=dict(type='bool'),
             snmp_communities=dict(type='list', elements='dict', options=community_spec),
-            notify_enabled=dict(choices=['yes', 'no']),
+            notify_enabled=dict(type='bool'),
             notify_port=dict(type='str'),
             notify_community=dict(type='str'),
             notify_send_test=dict(type='str', choices=['yes', 'no']),
@@ -242,53 +237,61 @@ class OnyxSNMPModule(BaseOnyxModule):
         snmp_config = all_snmp_config[0]
         if not snmp_config:
             return
-        self._current_config['state_enabled'] = snmp_config.get("SNMP enabled")
+        if snmp_config.get("SNMP enabled") == 'yes':
+            self._current_config['state_enabled'] = True
+        else:
+            self._current_config['state_enabled'] = False
         self._current_config['contact_name'] = snmp_config.get("System contact")
         self._current_config['location'] = snmp_config.get("System location")
-        if snmp_config.get("Read-only community"):
-            ro_arr = snmp_config.get("Read-only community").split(' ')
+        curr_ro_comm = snmp_config.get("Read-only community")
+        if curr_ro_comm:
+            ro_arr = curr_ro_comm.split(' ')
             rw_arr = snmp_config.get("Read-write community").split(' ')
             ro_communities_list = ro_arr[0]
             rw_communities_list = rw_arr[0]
             if (len(ro_arr) == 2):
-                self._current_config['communities_enabled'] = "no"
+                self._current_config['communities_enabled'] = False
             else:
-                self._current_config['communities_enabled'] = "yes"
+                self._current_config['communities_enabled'] = True
         else:
             read_only_communities = all_snmp_config[1]
             read_write_communities = all_snmp_config[2]
             if not read_only_communities:
                 return
-            if read_only_communities.get("Read-only communities"):
-                self._current_config['communities_enabled'] = "yes"
-                ro_communities_list = read_only_communities.get("Read-only communities")[0].get("Lines")
+            read_only_comm = read_only_communities.get("Read-only communities")
+            if read_only_comm:
+                self._current_config['communities_enabled'] = True
+                ro_communities_list = read_only_comm[0].get("Lines")
             else:
-                self._current_config['communities_enabled'] = "no"
-                if read_only_communities.get("Read-only communities (DISABLED)"):
-                    ro_communities_list = read_only_communities.get("Read-only communities (DISABLED)")[0].get("Lines")
+                self._current_config['communities_enabled'] = False
+                ro_comm_disabled = read_only_communities.get("Read-only communities (DISABLED)")
+                if ro_comm_disabled:
+                    ro_communities_list = ro_comm_disabled[0].get("Lines")
             if not read_write_communities:
                 return
-            if read_write_communities.get("Read-write communities"):
-                self._current_config['communities_enabled'] = "yes"
-                rw_communities_list = read_write_communities.get("Read-write communities")[0].get("Lines")
+            read_write_comm = read_write_communities.get("Read-write communities")
+            if read_write_comm:
+                self._current_config['communities_enabled'] = True
+                rw_communities_list = read_write_comm[0].get("Lines")
             else:
-                self._current_config['communities_enabled'] = "no"
-                if read_write_communities.get("Read-write communities (DISABLED)"):
-                    rw_communities_list = read_write_communities.get("Read-write communities (DISABLED)")[0].get("Lines")
+                self._current_config['communities_enabled'] = False
+                rw_comm_disabled = read_write_communities.get("Read-write communities (DISABLED)")
+                if rw_comm_disabled:
+                    rw_communities_list = rw_comm_disabled[0].get("Lines")
         self._current_config['ro_communities_list'] = ro_communities_list
         self._current_config['rw_communities_list'] = rw_communities_list
 
     def _set_snmp_running_config(self, snmp_running_config):
-        self._current_config['multi_comm_enabled'] = 'yes'
-        self._current_config['notify_enabled'] = 'yes'
+        self._current_config['multi_comm_enabled'] = True
+        self._current_config['notify_enabled'] = True
         curr_config_arr = []
         snmp_lines = snmp_running_config.get('Lines')
         for runn_config in snmp_lines:
             curr_config_arr.append(runn_config.strip())
         if 'no snmp-server enable mult-communities' in snmp_lines:
-            self._current_config['multi_comm_enabled'] = 'no'
+            self._current_config['multi_comm_enabled'] = False
         if 'no snmp-server enable notify' in snmp_lines:
-            self._current_config['notify_enabled'] = 'no'
+            self._current_config['notify_enabled'] = False
         self._current_config['snmp_running_config'] = curr_config_arr
 
     def load_current_config(self):
@@ -302,122 +305,117 @@ class OnyxSNMPModule(BaseOnyxModule):
     def generate_commands(self):
         current_state = self._current_config.get("state_enabled")
         state = current_state
-        if self._required_config.get("state_enabled"):
-            state = self._required_config.get("state_enabled")
+        req_state = self._required_config.get("state_enabled")
+        if req_state is not None:
+            state = req_state
         if state is not None:
             if current_state != state:
-                if (state == 'yes'):
+                if state is True:
                     self._commands.append('snmp-server enable')
                 else:
                     self._commands.append('no snmp-server enable')
 
-        if self._required_config.get("contact_name"):
-            contact_name = self._required_config.get("contact_name")
+        contact_name = self._required_config.get("contact_name")
+        if contact_name:
             current_contact_name = self._current_config.get("contact_name")
             if contact_name is not None:
                 if current_contact_name != contact_name:
                     self._commands.append('snmp-server contact {0}' .format(contact_name))
 
-        if self._required_config.get("location"):
-            location = self._required_config.get("location")
+        location = self._required_config.get("location")
+        if location:
             current_location = self._current_config.get("location")
             if location is not None:
                 if current_location != location:
                     self._commands.append('snmp-server location {0}' .format(location))
 
-        if self._required_config.get("communities_enabled"):
-            communities_enabled = self._required_config.get("communities_enabled")
+        communities_enabled = self._required_config.get("communities_enabled")
+        if communities_enabled is not None:
             current_communities_enabled = self._current_config.get("communities_enabled")
             if communities_enabled is not None:
                 if current_communities_enabled != communities_enabled:
-                    if communities_enabled == "yes":
+                    if communities_enabled is True:
                         self._commands.append('snmp-server enable communities')
                     else:
                         self._commands.append('no snmp-server enable communities')
 
         ro_communities = self._current_config.get("ro_communities_list")
         rw_communities = self._current_config.get("rw_communities_list")
-        if self._required_config.get("snmp_communities"):
-            snmp_communities = self._required_config.get("snmp_communities")
+        snmp_communities = self._required_config.get("snmp_communities")
+        if snmp_communities:
             if snmp_communities is not None:
                 for community in snmp_communities:
-                    if community.get("delete"):
-                        if community.get("delete") == 'yes':
-                            self._commands.append('no snmp-server community {0}' .format(community.get("community_name")))
+                    community_name = community.get("community_name")
+                    state = community.get("state")
+                    if state:
+                        if state == 'absent':
+                            self._commands.append('no snmp-server community {0}' .format(community_name))
                             continue
-                    if community.get("community_type"):
-                        if community.get("community_type") == 'ro':
-                            if community.get("community_name") not in ro_communities:
-                                self._commands.append('snmp-server community {0} {1}' .format(community.get("community_name"),
-                                                                                              community.get("community_type")))
+                    community_type = community.get("community_type")
+                    if community_type:
+                        if community_type == 'read-only':
+                            if community_name not in ro_communities:
+                                self._commands.append('snmp-server community {0} ro' .format(community_name))
                         else:
-                            if community.get("community_name") not in rw_communities:
-                                self._commands.append('snmp-server community {0} {1}' .format(community.get("community_name"),
-                                                                                              community.get("community_type")))
+                            if community_name not in rw_communities:
+                                self._commands.append('snmp-server community {0} rw' .format(community_name))
                     else:
-                        if community.get("community_name") not in ro_communities:
-                            self._commands.append('snmp-server community {0}' .format(community.get("community_name")))
+                        if community_name not in ro_communities:
+                            self._commands.append('snmp-server community {0}' .format(community_name))
 
-        if self._required_config.get("engine_id_reset"):
-            engine_id_reset = self._required_config.get("engine_id_reset")
-            if engine_id_reset is not None:
-                if engine_id_reset == 'yes':
-                    self._commands.append('snmp-server engineID reset')
+        engine_id_reset = self._required_config.get("engine_id_reset")
+        if engine_id_reset is not None:
+            if engine_id_reset == 'yes':
+                self._commands.append('snmp-server engineID reset')
 
         current_multi_comm_state = self._current_config.get("multi_comm_enabled")
-        if self._required_config.get("multi_communities_enabled"):
-            multi_communities_enabled = self._required_config.get("multi_communities_enabled")
-            if multi_communities_enabled is not None:
-                if current_multi_comm_state != multi_communities_enabled:
-                    if multi_communities_enabled == 'yes':
-                        self._commands.append('snmp-server enable mult-communities')
-                    else:
-                        self._commands.append('no snmp-server enable mult-communities')
+        multi_communities_enabled = self._required_config.get("multi_communities_enabled")
+        if multi_communities_enabled is not None:
+            if current_multi_comm_state != multi_communities_enabled:
+                if multi_communities_enabled is True:
+                    self._commands.append('snmp-server enable mult-communities')
+                else:
+                    self._commands.append('no snmp-server enable mult-communities')
 
-        if self._required_config.get("notify_enabled"):
-            notify_enabled = self._required_config.get("notify_enabled")
+        notify_enabled = self._required_config.get("notify_enabled")
+        if notify_enabled is not None:
             current_notify_state = self._current_config.get("notify_enabled")
-            if notify_enabled is not None:
-                if current_notify_state != notify_enabled:
-                    if notify_enabled == 'yes':
-                        self._commands.append('snmp-server enable notify')
-                    else:
-                        self._commands.append('no snmp-server enable notify')
+            if current_notify_state != notify_enabled:
+                if notify_enabled is True:
+                    self._commands.append('snmp-server enable notify')
+                else:
+                    self._commands.append('no snmp-server enable notify')
 
-        if self._required_config.get("snmp_permissions"):
-            snmp_permissions = self._required_config.get("snmp_permissions")
-            if snmp_permissions is not None:
-                for permission in snmp_permissions:
-                    if permission.get('state_enabled') == 'yes':
-                        self._commands.append('snmp-server enable set-permission {0}' .format(permission.get('permission_type')))
-                    else:
-                        self._commands.append('no snmp-server enable set-permission {0}' .format(permission.get('permission_type')))
+        snmp_permissions = self._required_config.get("snmp_permissions")
+        if snmp_permissions is not None:
+            for permission in snmp_permissions:
+                permission_type = permission.get('permission_type')
+                if permission.get('state_enabled') is True:
+                    self._commands.append('snmp-server enable set-permission {0}' .format(permission_type))
+                else:
+                    self._commands.append('no snmp-server enable set-permission {0}' .format(permission_type))
 
         snmp_running_config = self._current_config.get("snmp_running_config")
-        if self._required_config.get("notify_port"):
-            notify_port = self._required_config.get("notify_port")
-            if notify_port is not None:
-                notified_cmd = 'snmp-server notify port {0}' .format(notify_port)
-                if notified_cmd not in snmp_running_config:
-                    self._commands.append('snmp-server notify port {0}' .format(notify_port))
+        notify_port = self._required_config.get("notify_port")
+        if notify_port is not None:
+            notified_cmd = 'snmp-server notify port {0}' .format(notify_port)
+            if notified_cmd not in snmp_running_config:
+                self._commands.append('snmp-server notify port {0}' .format(notify_port))
 
-        if self._required_config.get("notify_community"):
-            notify_community = self._required_config.get("notify_community")
-            if notify_community is not None:
-                notified_cmd = 'snmp-server notify community {0}' .format(notify_community)
-                if notified_cmd not in snmp_running_config:
-                    self._commands.append('snmp-server notify community {0}' .format(notify_community))
+        notify_community = self._required_config.get("notify_community")
+        if notify_community is not None:
+            notified_cmd = 'snmp-server notify community {0}' .format(notify_community)
+            if notified_cmd not in snmp_running_config:
+                self._commands.append('snmp-server notify community {0}' .format(notify_community))
 
-        if self._required_config.get("notify_send_test"):
-            notify_send_test = self._required_config.get("notify_send_test")
-            if notify_send_test is not None:
-                if notify_send_test == 'yes':
-                    self._commands.append('snmp-server notify send-test')
+        notify_send_test = self._required_config.get("notify_send_test")
+        if notify_send_test is not None:
+            if notify_send_test == 'yes':
+                self._commands.append('snmp-server notify send-test')
 
-        if self._required_config.get("notify_event"):
-            notify_event = self._required_config.get("notify_event")
-            if notify_event is not None:
-                self._commands.append('snmp-server notify event {0}' .format(notify_event))
+        notify_event = self._required_config.get("notify_event")
+        if notify_event is not None:
+            self._commands.append('snmp-server notify event {0}' .format(notify_event))
 
 
 def main():

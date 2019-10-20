@@ -40,11 +40,11 @@ class TestOnyxSNMPModule(TestOnyxModule):
         self.load_config.return_value = None
 
     def test_snmp_state_no_change(self):
-        set_module_args(dict(state_enabled='yes'))
+        set_module_args(dict(state_enabled=True))
         self.execute_module(changed=False)
 
     def test_snmp_state_with_change(self):
-        set_module_args(dict(state_enabled='no'))
+        set_module_args(dict(state_enabled=False))
         commands = ['no snmp-server enable']
         self.execute_module(changed=True, commands=commands)
 
@@ -67,46 +67,46 @@ class TestOnyxSNMPModule(TestOnyxModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_snmp_communities_state_no_change(self):
-        set_module_args(dict(communities_enabled='yes'))
+        set_module_args(dict(communities_enabled=True))
         self.execute_module(changed=False)
 
     def test_snmp_communities_state_with_change(self):
-        set_module_args(dict(communities_enabled='no'))
+        set_module_args(dict(communities_enabled=False))
         commands = ['no snmp-server enable communities']
         self.execute_module(changed=True, commands=commands)
 
     def test_snmp_multi_communities_state_with_no_change(self):
-        set_module_args(dict(multi_communities_enabled='yes'))
+        set_module_args(dict(multi_communities_enabled=True))
         self.execute_module(changed=False)
 
     def test_snmp_multi_communities_state_with_change(self):
-        set_module_args(dict(multi_communities_enabled='no'))
+        set_module_args(dict(multi_communities_enabled=False))
         commands = ['no snmp-server enable mult-communities']
         self.execute_module(changed=True, commands=commands)
 
     def test_snmp_communities_no_change(self):
         set_module_args(dict(snmp_communities=[dict(community_name='community_2',
-                                                    community_type='rw')]))
+                                                    community_type='read-write')]))
         self.execute_module(changed=False)
 
     def test_snmp_communities_with_change(self):
         set_module_args(dict(snmp_communities=[dict(community_name='community_2',
-                                                    community_type='ro')]))
+                                                    community_type='read-only')]))
         commands = ['snmp-server community community_2 ro']
         self.execute_module(changed=True, commands=commands)
 
     def test_snmp_communities_delete_with_change(self):
         set_module_args(dict(snmp_communities=[dict(community_name='community_1',
-                                                    delete='yes')]))
+                                                    state='absent')]))
         commands = ['no snmp-server community community_1']
         self.execute_module(changed=True, commands=commands)
 
     def test_snmp_notify_state_no_change(self):
-        set_module_args(dict(notify_enabled='yes'))
+        set_module_args(dict(notify_enabled=True))
         self.execute_module(changed=False)
 
     def test_snmp_notify_state_with_change(self):
-        set_module_args(dict(notify_enabled='no'))
+        set_module_args(dict(notify_enabled=False))
         commands = ['no snmp-server enable notify']
         self.execute_module(changed=True, commands=commands)
 
@@ -139,7 +139,7 @@ class TestOnyxSNMPModule(TestOnyxModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_snmp_permissions_with_change(self):
-        set_module_args(dict(snmp_permissions=[dict(state_enabled='yes',
+        set_module_args(dict(snmp_permissions=[dict(state_enabled=True,
                                                     permission_type='RFC1213-MIB')]))
         commands = ['snmp-server enable set-permission RFC1213-MIB']
         self.execute_module(changed=True, commands=commands)
