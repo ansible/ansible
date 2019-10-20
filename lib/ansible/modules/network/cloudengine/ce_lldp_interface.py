@@ -144,22 +144,42 @@ options:
     default: present
 """
 EXAMPLES = """
-  - name: "Configure interface state"
-    ce_lldp_interface:
-      config:
-        ifname: 10GE 1/1/1
-        mdnstatus: rxonly
+- name: Merge the provided configuration with the exisiting running configuration - basic-tlv
+  ce_lldp_interface: &merged
+    config:
+      msg_interval: 8
+      ifname: 10GE 1/0/1
+      admin_status: txandrx
+      basic_tlv:
+        management_addr: true
+        port_desc: true
+        system_capability: true
+        system_description: true
+        system_name: true
 
-  - name: "Configure LLDP interface and ensure global LLDP state is already enabled"
-    ce_lldp_interface:
-      config:
-        ifname: 10GE 1/1/1
-        dot3_tlv:
-          link_aggregation: true
-          max_frame_size: true
-          eee: true
+- name: Merge the provided configuration with the exisiting running configuration - dot1-tlv
+  ce_lldp_interface: &merged
+    config:
+      msg_interval: 8
+      ifname: 10GE 1/0/1
+      dot1_tlv:
+        port_vlan_enable: true
+        port_desc: true
+        prot_vlan_enable: true
+        prot_vlan_id: 123
+        vlan_name: 234
+        vlan_name_enable: true
 
-
+- name: Merge the provided configuration with the exisiting running configuration - dot3-tlv
+  ce_lldp_interface: &merged
+    config:
+      msg_interval: 8
+      ifname: 10GE 1/0/1
+      dot3_tlv:
+        eee: true
+        link_aggregation: true
+        mac_physic: true
+        max_frame_size: true
 """
 RETURN = """
 before:
