@@ -560,7 +560,7 @@ class AzureHost(object):
         # set nic-related values from the primary NIC first
         for nic in sorted(self.nics, key=lambda n: n.is_primary, reverse=True):
             # and from the primary IP config per NIC first
-            for ipc in sorted(nic._nic_model['properties']['ipConfigurations'], key=lambda i: i['properties']['primary'], reverse=True):
+            for ipc in sorted(nic._nic_model['properties']['ipConfigurations'], key=lambda i: i['properties'].get('primary', False), reverse=True):
                 private_ip = ipc['properties'].get('privateIPAddress')
                 if private_ip:
                     new_hostvars['private_ipv4_addresses'].append(private_ip)
