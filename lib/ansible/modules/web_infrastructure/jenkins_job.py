@@ -165,7 +165,7 @@ except ImportError:
     python_lxml_installed = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils._text import to_native
+from ansible.module_utils.six import ensure_str, ensure_binary
 
 
 class JenkinsJob:
@@ -208,7 +208,7 @@ class JenkinsJob:
             else:
                 return jenkins.Jenkins(self.jenkins_url)
         except Exception as e:
-            self.module.fail_json(msg='Unable to connect to Jenkins server, %s' % to_native(e), exception=traceback.format_exc())
+            self.module.fail_json(msg='Unable to connect to Jenkins server, %s' % ensure_str(e), exception=traceback.format_exc())
 
     def get_job_status(self):
         try:
@@ -216,23 +216,23 @@ class JenkinsJob:
             if "color" not in response:
                 return self.EXCL_STATE
             else:
-                return response['color'].encode('utf-8')
+                return ensure_str(response['color'])
 
         except Exception as e:
-            self.module.fail_json(msg='Unable to fetch job information, %s' % to_native(e), exception=traceback.format_exc())
+            self.module.fail_json(msg='Unable to fetch job information, %s' % ensure_str(e), exception=traceback.format_exc())
 
     def job_exists(self):
         try:
             return bool(self.server.job_exists(self.name))
         except Exception as e:
-            self.module.fail_json(msg='Unable to validate if job exists, %s for %s' % (to_native(e), self.jenkins_url),
+            self.module.fail_json(msg='Unable to validate if job exists, %s for %s' % (ensure_str(e), self.jenkins_url),
                                   exception=traceback.format_exc())
 
     def get_config(self):
         return job_config_to_string(self.config)
 
     def get_current_config(self):
-        return job_config_to_string(self.server.get_job_config(self.name).encode('utf-8'))
+        return job_config_to_string(self.server.get_job_config(self.name))
 
     def has_config_changed(self):
         # config is optional, if not provided we keep the current config as is
@@ -290,7 +290,7 @@ class JenkinsJob:
                     self.switch_state()
 
         except Exception as e:
-            self.module.fail_json(msg='Unable to reconfigure job, %s for %s' % (to_native(e), self.jenkins_url),
+            self.module.fail_json(msg='Unable to reconfigure job, %s for %s' % (ensure_str(e), self.jenkins_url),
                                   exception=traceback.format_exc())
 
     def create_job(self):
@@ -304,7 +304,7 @@ class JenkinsJob:
             if not self.module.check_mode:
                 self.server.create_job(self.name, config_file)
         except Exception as e:
-            self.module.fail_json(msg='Unable to create job, %s for %s' % (to_native(e), self.jenkins_url),
+            self.module.fail_json(msg='Unable to create job, %s for %s' % (ensure_str(e), self.jenkins_url),
                                   exception=traceback.format_exc())
 
     def absent_job(self):
@@ -315,7 +315,7 @@ class JenkinsJob:
                 try:
                     self.server.delete_job(self.name)
                 except Exception as e:
-                    self.module.fail_json(msg='Unable to delete job, %s for %s' % (to_native(e), self.jenkins_url),
+                    self.module.fail_json(msg='Unable to delete job, %s for %s' % (ensure_str(e), self.jenkins_url),
                                           exception=traceback.format_exc())
 
     def get_result(self):
@@ -341,7 +341,8 @@ def test_dependencies(module):
 
 
 def job_config_to_string(xml_str):
-    return ET.tostring(ET.fromstring(xml_str))
+    xml_element_tree = ET.fromstring(ensure_binary(xml_str))
+    return ensure_str(ET.tostring(xml_element_tree))
 
 
 def main():
