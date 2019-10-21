@@ -102,6 +102,9 @@ def syspatch_run(module):
     changed = False
     reboot_needed = False
     warnings = []
+    # Check mode by default
+    run_flag = ['-c']
+    check_flag = ['-c']
 
     # Setup command flags
     if module.params['revert']:
@@ -112,7 +115,6 @@ def syspatch_run(module):
         else:
             run_flag = ['-r']
     elif module.params['apply']:
-        check_flag = ['-c']
         run_flag = []
 
     # Run check command
