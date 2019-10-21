@@ -134,9 +134,9 @@ class Vlans(ConfigBase):
         """Removes non-empty but default states from the obj.
         """
         default_states = {
-          'enabled': True,
-          'state':   'active',
-          'mode':    'ce',
+            'enabled': True,
+            'state': 'active',
+            'mode': 'ce',
         }
         for k in default_states.keys():
             if obj[k] == default_states[k]:
@@ -242,11 +242,11 @@ class Vlans(ConfigBase):
         if not obj:
             return commands
         default_cmds = {
-          'name':       'no name',
-          'state':      'no state',
-          'enabled':    'no shutdown',
-          'mode':       'mode ce',
-          'mapped_vni': 'no vn-segment',
+            'name': 'no name',
+            'state': 'no state',
+            'enabled': 'no shutdown',
+            'mode': 'mode ce',
+            'mapped_vni': 'no vn-segment',
         }
         for k in obj:
             commands.append(default_cmds[k])
@@ -268,7 +268,7 @@ class Vlans(ConfigBase):
         if 'state' in d:
             commands.append('state ' + d['state'])
         if 'enabled' in d:
-            if d['enabled'] == True:
+            if d['enabled'] is True:
                 commands.append('no shutdown')
             else:
                 commands.append('shutdown')
