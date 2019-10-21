@@ -15,7 +15,6 @@ $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $tru
 $source = Get-AnsibleParam -obj $params -name "source" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent"
 $installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" -type "str" -validateset "trusted", "untrusted"
-$overwrite = Get-AnsibleParam -obj $params -name "rename_repository" -type "bool" -default $false
 
 $result = @{"changed" = $false}
 
@@ -44,7 +43,7 @@ if ($state -eq "present") {
                 Update-NuGetPackageProvider
                 Register-PSRepository -Name $name -SourceLocation $source -InstallationPolicy $installationpolicy
             }
-            catch 
+            catch
             {
                 Fail-Json $result $_.Exception.Message
             }
@@ -68,7 +67,7 @@ if ($state -eq "present") {
                     Update-NuGetPackageProvider
                     Set-PSRepository -Name $name @changed_properties
                 }
-                catch 
+                catch
                 {
                     Fail-Json $result $_.Exception.Message
                 }
