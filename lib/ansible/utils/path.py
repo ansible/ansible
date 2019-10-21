@@ -41,24 +41,24 @@ def realpath_safe(path):
         would change the existence of the file.
     '''
 
-    path = to_text(path, errors='surrogate_or_strict')
-    path = os.path.abspath(path)
+    b_path = to_bytes(path, errors='surrogate_or_strict', nonstring='passthru')
+    b_path = os.path.abspath(b_path)
 
-    real = os.path.realpath(path)
-    if os.path.exists(real) or not os.path.exists(path):
-        return real
+    b_real = os.path.realpath(b_path)
+    if os.path.exists(b_real) or not os.path.exists(b_path):
+        return to_text(b_real, errors='surrogate_or_strict')
 
-    root = os.path.abspath(os.sep)
-    head, tail = os.path.split(path)
-    while head != root:
-        realhead = os.path.realpath(head)
-        if os.path.isdir(realhead):
-            return os.path.join(realhead, tail)
-        head, name = os.path.split(head)
-        tail = os.path.join(name, tail)
+    b_root = to_bytes(os.path.abspath(os.sep), errors='surrogate_or_strict')
+    b_head, b_tail = os.path.split(b_path)
+    while b_head != b_root:
+        b_realhead = os.path.realpath(b_head)
+        if os.path.isdir(b_realhead):
+            return to_text(os.path.join(b_realhead, b_tail), errors='surrogate_or_strict')
+        b_head, b_name = os.path.split(b_head)
+        b_tail = os.path.join(b_name, b_tail)
 
     # no parent realpath exists, just return real and let it die downstream
-    return real
+    return to_text(b_real, errors='surrogate_or_strict')
 
 
 def unfrackpath(path, follow=True, basedir=None):
