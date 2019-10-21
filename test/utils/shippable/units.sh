@@ -16,6 +16,7 @@ fi
 
 group1=()
 group2=()
+group3=()
 
 # create two groups by putting long running network tests into one group
 # add or remove more network platforms as needed to balance the two groups
@@ -43,14 +44,26 @@ networks=(
     vyos
 )
 
+group3_networks=(
+    f5
+    fortios
+    fortimanager
+    nxos
+)
+
 for network in "${networks[@]}"; do
     group1+=(--exclude "test/units/modules/network/${network}/")
-    group2+=("test/units/modules/network/${network}/")
+    if [[ ! "${group3_networks[*]}" =~ $network ]]; then
+        group2+=("test/units/modules/network/${network}/")
+    else
+        group3+=("test/units/modules/network/${network}/")
+    fi
 done
 
 case "${group}" in
     1) options=("${group1[@]}") ;;
     2) options=("${group2[@]}") ;;
+    3) options=("${group3[@]}") ;;
 esac
 
 ansible-test env --timeout "${timeout}" --color -v
