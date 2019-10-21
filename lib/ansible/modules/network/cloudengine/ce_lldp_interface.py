@@ -58,6 +58,11 @@ options:
       - Set interface lldp enable state.
     type: str
     choices: ['txOnly', 'rxOnly', 'txAndRx', 'disabled']
+  type_tlv_disable:
+    description:
+      - Select tlv type to configure.
+    type: str
+    choices: ['basic_tlv', 'dot3_tlv']
   ifname:
     description:
       - Interface name.
@@ -66,6 +71,18 @@ options:
     description:
       - LLDP send message interval.
     type: int
+  txprotocolvlanid:
+    description:
+      - Set tx protocol vlan id.
+    type: int
+  txvlannameid:
+    description:
+      - Set tx vlan name id.
+    type: int
+  vlannametxenable:
+    description:
+      - Set vlan name tx enable or not.
+    type: bool
   manaddrtxenable:
     description:
       - Make it able to send management address TLV.
@@ -85,6 +102,18 @@ options:
   sysnametxenable:
     description:
       - Enable the ability to send system name TLV.
+    type: bool
+  portvlantxenable:
+    description:
+      - Enable port vlan tx.
+    type: bool
+  protovlantxenable:
+    description:
+      - Enable protocol vlan tx.
+    type: bool
+  identity:
+    description:
+      - Enable  the ability to identity TLV.
     type: bool
   protoidtxenable:
      description:
