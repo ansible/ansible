@@ -37,8 +37,6 @@ No notable changes
 Modules
 =======
 
-No notable changes
-
 
 Modules removed
 ---------------
