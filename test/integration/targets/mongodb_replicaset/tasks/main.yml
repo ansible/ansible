@@ -190,7 +190,7 @@
 - include_tasks: mongod_teardown.yml
 
 - set_fact:
-    mongod_ssl: false
+    mongo_ssl: false
 
 - set_fact:
     current_replicaset: "{{ mongodb_replicaset2 }}"
