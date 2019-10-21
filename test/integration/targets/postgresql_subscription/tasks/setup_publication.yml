@@ -18,7 +18,6 @@
       login_user: '{{ pg_user }}'
       login_port: '{{ master_port }}'
       maintenance_db: '{{ db_default }}'
-      login_port: '{{ master_port }}'
       name: '{{ test_db }}'
 
   - name: postgresql_publication - create test role

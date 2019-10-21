@@ -15,6 +15,10 @@
   # Test mode: stat
   #################
 
+  - name: Create subscription via shell
+    <<: *task_parameters
+    shell: psql '{{ test_db }}' -p '{{ replica_port }}' -c "CREATE SUBSCRIPTION {{ test_subscription }} CONNECTION 'host=127.0.0.1 port={{ master_port }} user={{ replication_role }} password={{ replication_pass }} dbname={{ test_db }}' PUBLICATION {{ test_pub }};"
+
   - name: Stat mode in check mode
     <<: *task_parameters
     postgresql_subscription: 
