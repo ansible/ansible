@@ -93,7 +93,7 @@ class LookupModule(LookupBase):
                 # ansible.module_utils.urls appears to handle the request errors for us
                 response = open_url('https://api.github.com/repos/%s/releases/latest' % repo,
                                     headers={'Accept': 'application/vnd.github.v3+json'}
-                           )
+                                   )
                 json_response = loads(response.read().decode('utf-8'))
 
                 version = json_response.get('tag_name')
