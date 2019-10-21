@@ -1145,179 +1145,177 @@ class Lldp_interface(object):
     def get_update_cmd(self):
         """Get updated commands"""
 
-        cli_str = ""
+        cmds = []
         if self.state == "present":
             if self.lldpenable == "enabled":
-                cli_str = "%s %s\n" % (cli_str, "lldp enable")
+                cmds.append("lldp enable")
                 if self.function_lldp_interface_flag == 'disableINTERFACE':
                     if self.ifname:
-                        cli_str = "%s %s %s\n" % (cli_str, "interface", self.ifname)
+                        cmds.append("%s %s" % ("interface", self.ifname))
                         if self.lldpadminstatus == 'disabled':
-                            cli_str = "%s %s\n" % (cli_str, "lldp disable")
+                            cmds.append("lldp disable")
                         else:
-                            cli_str = "%s %s\n" % (cli_str, "undo lldp disable")
+                            cmds.append("undo lldp disable")
                 elif self.function_lldp_interface_flag == 'tlvdisableINTERFACE':
                     if self.type_tlv_disable == 'basic_tlv':
                         if self.ifname:
-                            cli_str = "%s %s %s\n" % (cli_str, "interface", self.ifname)
+                            cmds.append("%s %s" % ("interface", self.ifname))
                             if self.manaddrtxenable:
                                 if self.manaddrtxenable == "false":
-                                    cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable basic-tlv management-address")
+                                    cmds.append("lldp tlv-disable basic-tlv management-address")
                                 if self.manaddrtxenable == "true":
-                                    cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable basic-tlv management-address")
+                                    cmds.append("undo lldp tlv-disable basic-tlv management-address")
                             if self.portdesctxenable:
                                 if self.portdesctxenable == "false":
-                                    cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable basic-tlv port-description")
+                                    cmds.append("lldp tlv-disable basic-tlv port-description")
                                 if self.portdesctxenable == "true":
-                                    cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable basic-tlv port-description")
+                                    cmds.append("undo lldp tlv-disable basic-tlv port-description")
                             if self.syscaptxenable:
                                 if self.syscaptxenable == "false":
-                                    cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable basic-tlv system-capability")
+                                    cmds.append("lldp tlv-disable basic-tlv system-capability")
                                 if self.syscaptxenable == "true":
-                                    cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable basic-tlv system-capability")
+                                    cmds.append("undo lldp tlv-disable basic-tlv system-capability")
                             if self.sysdesctxenable:
                                 if self.sysdesctxenable == "false":
-                                    cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable basic-tlv system-description")
+                                    cmds.append("lldp tlv-disable basic-tlv system-description")
                                 if self.sysdesctxenable == "true":
-                                    cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable basic-tlv system-description")
+                                    cmds.append("undo lldp tlv-disable basic-tlv system-description")
                             if self.sysnametxenable:
                                 if self.sysnametxenable == "false":
-                                    cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable basic-tlv system-name")
+                                    cmds.append("lldp tlv-disable basic-tlv system-name")
                                 if self.sysnametxenable == "true":
-                                    cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable basic-tlv system-name")
+                                    cmds.append("undo lldp tlv-disable basic-tlv system-name")
                     if self.type_tlv_disable == 'dot3_tlv':
                         if self.ifname:
-                            cli_str = "%s %s %s\n" % (cli_str, "interface", self.ifname)
+                            cmds.append("%s %s" % ("interface", self.ifname))
                             if self.linkaggretxenable:
                                 if self.linkaggretxenable == "false":
-                                    cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable dot3-tlv link-aggregation")
+                                    cmds.append("lldp tlv-disable dot3-tlv link-aggregation")
                                 if self.linkaggretxenable == "true":
-                                    cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable dot3-tlv link-aggregation")
+                                    cmds.append("undo lldp tlv-disable dot3-tlv link-aggregation")
                             if self.macphytxenable:
                                 if self.macphytxenable == "false":
-                                    cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable dot3-tlv mac-physic")
+                                    cmds.append("lldp tlv-disable dot3-tlv mac-physic")
                                 if self.macphytxenable == "true":
-                                    cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable dot3-tlv mac-physic")
+                                    cmds.append("undo lldp tlv-disable dot3-tlv mac-physic")
                             if self.maxframetxenable:
                                 if self.maxframetxenable == "false":
-                                    cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable dot3-tlv max-frame-size")
+                                    cmds.append("lldp tlv-disable dot3-tlv max-frame-size")
                                 if self.maxframetxenable == "true":
-                                    cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable dot3-tlv max-frame-size")
+                                    cmds.append("undo lldp tlv-disable dot3-tlv max-frame-size")
                             if self.eee:
                                 if self.eee == "false":
-                                    cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable dot3-tlv eee")
+                                    cmds.append("lldp tlv-disable dot3-tlv eee")
                                 if self.eee == "true":
-                                    cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable dot3-tlv eee")
+                                    cmds.append("undo lldp tlv-disable dot3-tlv eee")
                 elif self.function_lldp_interface_flag == 'tlvenableINTERFACE':
                     if self.type_tlv_enable == 'dot1_tlv':
                         if self.ifname:
-                            cli_str = "%s %s %s\n" % (cli_str, "interface", self.ifname)
+                            cmds.append("%s %s" % ("interface", self.ifname))
                             if self.protoidtxenable:
                                 if self.protoidtxenable == "false":
-                                    cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-enable dot1-tlv protocol-identity")
+                                    cmds.append("undo lldp tlv-enable dot1-tlv protocol-identity")
                                 if self.protoidtxenable == "true":
-                                    cli_str = "%s %s\n" % (cli_str, "lldp tlv-enable dot1-tlv protocol-identity")
+                                    cmds.append("lldp tlv-enable dot1-tlv protocol-identity")
                     if self.type_tlv_enable == 'dcbx':
                         if self.ifname:
-                            cli_str = "%s %s %s\n" % (cli_str, "interface", self.ifname)
+                            cmds.append("%s %s" % ("interface", self.ifname))
                             if self.dcbx:
                                 if self.dcbx == "false":
-                                    cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-enable dcbx")
+                                    cmds.append("undo lldp tlv-enable dcbx")
                                 if self.dcbx == "true":
-                                    cli_str = "%s %s\n" % (cli_str, "lldp tlv-enable dcbx")
+                                    cmds.append("lldp tlv-enable dcbx")
                 elif self.function_lldp_interface_flag == 'intervalINTERFACE':
                     if self.ifname:
-                        cli_str = "%s %s %s\n" % (cli_str, "interface", self.ifname)
+                        cmds.append("%s %s" % ("interface", self.ifname))
                         if self.txinterval:
-                            cli_str = "%s %s %s\n" % (cli_str, "lldp transmit fast-mode interval", self.txinterval)
-
+                            cmds.append("lldp transmit fast-mode interval %s" % self.txinterval)
             elif self.lldpenable == "disabled":
-                cli_str = "%s %s\n" % (cli_str, "undo lldp enable")
-
+                cmds.append("undo lldp enable")
             else:
                 if self.enable_flag == 1:
                     if self.function_lldp_interface_flag == 'disableINTERFACE':
                         if self.ifname:
-                            cli_str = "%s %s %s\n" % (cli_str, "interface", self.ifname)
+                            cmds.append("interface %s" % self.ifname)
                             if self.lldpadminstatus == 'disabled':
-                                cli_str = "%s %s\n" % (cli_str, "lldp disable")
+                                cmds.append("lldp disable")
                             else:
-                                cli_str = "%s %s\n" % (cli_str, "undo lldp disable")
+                                cmds.append("undo lldp disable")
                     elif self.function_lldp_interface_flag == 'tlvdisableINTERFACE':
                         if self.type_tlv_disable == 'basic_tlv':
                             if self.ifname:
-                                cli_str = "%s %s %s\n" % (cli_str, "interface", self.ifname)
+                                cmds.append("interface %s" % self.ifname)
                                 if self.manaddrtxenable:
                                     if self.manaddrtxenable == "false":
-                                        cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable basic-tlv management-address")
+                                        cmds.append("lldp tlv-disable basic-tlv management-address")
                                     if self.manaddrtxenable == "true":
-                                        cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable basic-tlv management-address")
+                                        cmds.append("undo lldp tlv-disable basic-tlv management-address")
                                 if self.portdesctxenable:
                                     if self.portdesctxenable == "false":
-                                        cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable basic-tlv port-description")
+                                        cmds.append("lldp tlv-disable basic-tlv port-description")
                                     if self.portdesctxenable == "true":
-                                        cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable basic-tlv port-description")
+                                        cmds.append("undo lldp tlv-disable basic-tlv port-description")
                                 if self.syscaptxenable:
                                     if self.syscaptxenable == "false":
-                                        cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable basic-tlv system-capability")
+                                        cmds.append("lldp tlv-disable basic-tlv system-capability")
                                     if self.syscaptxenable == "true":
-                                        cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable basic-tlv system-capability")
+                                        cmds.append("undo lldp tlv-disable basic-tlv system-capability")
                                 if self.sysdesctxenable:
                                     if self.sysdesctxenable == "false":
-                                        cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable basic-tlv system-description")
+                                        cmds.append("lldp tlv-disable basic-tlv system-description")
                                     if self.sysdesctxenable == "true":
                                         cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable basic-tlv system-description")
                                 if self.sysnametxenable:
                                     if self.sysnametxenable == "false":
-                                        cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable basic-tlv system-name")
+                                        cmds.append("lldp tlv-disable basic-tlv system-name")
                                     if self.sysnametxenable == "true":
-                                        cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable basic-tlv system-name")
+                                        cmds.append("undo lldp tlv-disable basic-tlv system-name")
                         if self.type_tlv_disable == 'dot3_tlv':
                             if self.ifname:
-                                cli_str = "%s %s %s\n" % (cli_str, "interface", self.ifname)
+                                cmds.append("interface %s" % self.ifname)
                                 if self.linkaggretxenable:
                                     if self.linkaggretxenable == "false":
-                                        cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable dot3-tlv link-aggregation")
+                                        cmds.append("lldp tlv-disable dot3-tlv link-aggregation")
                                     if self.linkaggretxenable == "true":
-                                        cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable dot3-tlv link-aggregation")
+                                        cmds.append( "undo lldp tlv-disable dot3-tlv link-aggregation")
                                 if self.macphytxenable:
                                     if self.macphytxenable == "false":
-                                        cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable dot3-tlv mac-physic")
+                                        cmds.append("lldp tlv-disable dot3-tlv mac-physic")
                                     if self.macphytxenable == "true":
                                         cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable dot3-tlv mac-physic")
                                 if self.maxframetxenable:
                                     if self.maxframetxenable == "false":
-                                        cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable dot3-tlv max-frame-size")
+                                        cmds.append("lldp tlv-disable dot3-tlv max-frame-size")
                                     if self.maxframetxenable == "true":
-                                        cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable dot3-tlv max-frame-size")
+                                        cmds.append("undo lldp tlv-disable dot3-tlv max-frame-size")
                                 if self.eee:
                                     if self.eee == "false":
-                                        cli_str = "%s %s\n" % (cli_str, "lldp tlv-disable dot3-tlv eee")
+                                        cmds.append("lldp tlv-disable dot3-tlv eee")
                                     if self.eee == "true":
-                                        cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-disable dot3-tlv eee")
+                                        cmds.append("undo lldp tlv-disable dot3-tlv eee")
                     elif self.function_lldp_interface_flag == 'tlvenableINTERFACE':
                         if self.type_tlv_enable == 'dot1_tlv':
                             if self.ifname:
-                                cli_str = "%s %s %s\n" % (cli_str, "interface", self.ifname)
+                                cmds.append("interface %s" % self.ifname)
                                 if self.protoidtxenable:
                                     if self.protoidtxenable == "false":
-                                        cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-enable dot1-tlv protocol-identity")
+                                        cmds.append("undo lldp tlv-enable dot1-tlv protocol-identity")
                                     if self.protoidtxenable == "true":
-                                        cli_str = "%s %s\n" % (cli_str, "lldp tlv-enable dot1-tlv protocol-identity")
+                                        cmds.append("lldp tlv-enable dot1-tlv protocol-identity")
                         if self.type_tlv_enable == 'dcbx':
                             if self.ifname:
-                                cli_str = "%s %s %s\n" % (cli_str, "interface", self.ifname)
+                                cmds.append("interface %s" % self.ifname)
                                 if self.dcbx:
                                     if self.dcbx == "false":
-                                        cli_str = "%s %s\n" % (cli_str, "undo lldp tlv-enable dcbx")
+                                        cmds.append("undo lldp tlv-enable dcbx")
                                     if self.dcbx == "true":
-                                        cli_str = "%s %s\n" % (cli_str, "lldp tlv-enable dcbx")
+                                        cmds.append("lldp tlv-enable dcbx")
                     elif self.function_lldp_interface_flag == 'intervalINTERFACE':
                         if self.ifname:
-                            cli_str = "%s %s %s\n" % (cli_str, "interface", self.ifname)
+                            cmds.append("interface %s" % self.ifname)
                             if self.txinterval:
-                                cli_str = "%s %s %s\n" % (cli_str, "lldp transmit fast-mode interval", self.txinterval)
-        self.updates_cmd = cli_str.strip().split('\n')
+                                cmds.append("lldp transmit fast-mode interval %s" % self.txinterval)
+        self.updates_cmd = cmds
 
     def work(self):
         """Execute task"""
@@ -1338,7 +1336,7 @@ def main():
         function_lldp_interface_flag=dict(choices=['disableINTERFACE', 'tlvdisableINTERFACE', 'tlvenableINTERFACE', 'intervalINTERFACE'], type='str'),
         type_tlv_disable=dict(choices=['basic_tlv', 'dot3_tlv'], type='str'),
         type_tlv_enable=dict(choices=['dot1_tlv', 'dcbx'], type='str'),
-        ifname=dict( type='str'),
+        ifname=dict(type='str'),
         lldpadminstatus=dict(choices=['txOnly', 'rxOnly', 'txAndRx', 'disabled'], type='str'),
         manaddrtxenable=dict(type='bool'),
         portdesctxenable=dict(type='bool'),
