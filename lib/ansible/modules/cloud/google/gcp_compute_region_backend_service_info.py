@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_compute_region_backend_service_info
 description:
 - Gather info for GCP RegionBackendService
-- This module was called C(gcp_compute_region_backend_service_facts) before Ansible
-  2.9. The usage has not changed.
 short_description: Gather info for GCP RegionBackendService
 version_added: '2.10'
 author: Google Inc. (@googlecloudplatform)
@@ -229,9 +227,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str'), region=dict(type='str')))
-
-    if module._name == 'gcp_compute_region_backend_service_facts':
-        module.deprecate("The 'gcp_compute_region_backend_service_facts' module has been renamed to 'gcp_compute_region_backend_service_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
