@@ -39,10 +39,10 @@ options:
     type: str
     choices: ['enabled', 'disabled']
   function_lldp_interface_flag:
-     description:
-       - Used to distinguish between command line functions.
-     type: str
-     choices: ['disableINTERFACE','tlvdisableINTERFACE','tlvenableINTERFACE','intervalINTERFACE']
+    description:
+      - Used to distinguish between command line functions.
+    type: str
+    choices: ['disableINTERFACE','tlvdisableINTERFACE','tlvenableINTERFACE','intervalINTERFACE']
   type_tlv_disable:
     description:
       - Used to distinguish between command line functions.
