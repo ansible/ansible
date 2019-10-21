@@ -104,7 +104,7 @@ options:
      - '   This value is ignored, if SCSI Controller is already present or C(state) is C(absent).'
      - '   Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual).'
      - '   C(paravirtual) is default value for this parameter.'
-     - ' - C(destroy) (bool) If C(state) is C(absent), make sure the disk file is deleted from the datastore (default C(yes)).
+     - ' - C(destroy) (bool): If C(state) is C(absent), make sure the disk file is deleted from the datastore (default C(yes)).'
      - '   Added in version 2.10.'
      - ' - C(filename) (string): Existing disk image to be used. Filename must already exist on the datastore.'
      - '   Specify filename string in C([datastore_name] path/to/file.vmdk) format. Added in version 2.10.'
@@ -366,10 +366,11 @@ class PyVmomiHelper(PyVmomi):
                 elif disk['disk_type'] == 'eagerzeroedthick':
                     disk_spec.device.backing.eagerlyScrub = True
                 if disk['filename'] is None:
-                    disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (disk['datastore'].name,
-                                                                               vm_name, vm_name,
-                                                                               str(scsi_controller),
-                                                                               str(disk['disk_unit_number']))
+                    disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (
+                        disk['datastore'].name,
+                        vm_name, vm_name,
+                        str(scsi_controller),
+                        str(disk['disk_unit_number']))
                 else:
                     disk_spec.device.backing.fileName = disk['filename']
                 disk_spec.device.backing.datastore = disk['datastore']
