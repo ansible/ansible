@@ -17,7 +17,7 @@ module: vmware_host_sriov
 short_description: Manage SR-IOV settings on host
 description:
 - This module can be used to configure, enable/disable SR-IOV functions on ESXi host.
-- module didn't reboot host after changes, but put in output "rebootRequired" key.
+- Module doesn't  reboot the host after changes, but puts it in output "rebootRequired" state.
 - User can specify an ESXi hostname or Cluster name. In case of cluster name, all ESXi hosts are updated.
 version_added: "2.10"
 author:
