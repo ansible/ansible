@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_bigquery_table_info
 description:
 - Gather info for GCP Table
-- This module was called C(gcp_bigquery_table_facts) before Ansible 2.9. The usage
-  has not changed.
 short_description: Gather info for GCP Table
 version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
@@ -586,9 +584,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(dataset=dict(type='str')))
-
-    if module._name == 'gcp_bigquery_table_facts':
-        module.deprecate("The 'gcp_bigquery_table_facts' module has been renamed to 'gcp_bigquery_table_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/bigquery']
