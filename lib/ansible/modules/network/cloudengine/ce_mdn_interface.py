@@ -27,7 +27,7 @@ DOCUMENTATION = '''
 ---
 
 module: ce_mdn_interface
-version_added: "2.4"
+version_added: "2.10"
 short_description: Manages MDN configuration on HUAWEI CloudEngine switches.
 description:
     - Manages MDN configuration on HUAWEI CloudEngine switches.
@@ -51,6 +51,7 @@ options:
     description:
       - Manage the state of the resource.
     required: false
+    default: present
     type: str
     choices: ['present','absent']
 '''
