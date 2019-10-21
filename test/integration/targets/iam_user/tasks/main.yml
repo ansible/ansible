@@ -132,154 +132,154 @@
         - iam_user_info.iam_users[0].user_id == test_iam_user.user_id
         - iam_user_info.iam_users[0].user_name == test_iam_user.user_name
 
-    # ===========================================
-    # Test Managed Policy management
-    #
-    # Use a couple of benign policies for testing:
-    # - AWSOrganizationsReadOnlyAccess
-    # - ServiceQuotasReadOnlyAccess
-    #
-    - name: attach managed policy to user (check mode)
-      check_mode: yes
-      iam_user:
-        name: '{{ test_user }}'
-        state: present
-        managed_policy:
-          - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
-      register: iam_user
+  # ===========================================
+  # Test Managed Policy management
+  #
+  # Use a couple of benign policies for testing:
+  # - AWSOrganizationsReadOnlyAccess
+  # - ServiceQuotasReadOnlyAccess
+  #
+  - name: attach managed policy to user (check mode)
+    check_mode: yes
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
+    register: iam_user
 
-    - name: assert that the user is changed
-      assert:
-        that:
-          - iam_user is changed
+  - name: assert that the user is changed
+    assert:
+      that:
+        - iam_user is changed
 
-    - name: attach managed policy to user
-      iam_user:
-        name: '{{ test_user }}'
-        state: present
-        managed_policy:
-          - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
-      register: iam_user
+  - name: attach managed policy to user
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
+    register: iam_user
 
-    - name: assert that the user is changed
-      assert:
-        that:
-          - iam_user is changed
+  - name: assert that the user is changed
+    assert:
+      that:
+        - iam_user is changed
 
-    - name: ensure managed policy is attached to user (no change)
-      iam_user:
-        name: '{{ test_user }}'
-        state: present
-        managed_policy:
-          - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
-      register: iam_user
+  - name: ensure managed policy is attached to user (no change)
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
+    register: iam_user
 
-    - name: assert that the user hasn't changed
-      assert:
-        that:
-          - iam_user is not changed
+  - name: assert that the user hasn't changed
+    assert:
+      that:
+        - iam_user is not changed
 
-    - name: attach different managed policy to user (check mode)
-      check_mode: yes
-      iam_user:
-        name: '{{ test_user }}'
-        state: present
-        managed_policy:
-          - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
-        purge_policy: no
-      register: iam_user
+  - name: attach different managed policy to user (check mode)
+    check_mode: yes
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: no
+    register: iam_user
 
-    - name: assert that the user changed
-      assert:
-        that:
-          - iam_user is changed
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is changed
 
-    - name: attach different managed policy to user
-      iam_user:
-        name: '{{ test_user }}'
-        state: present
-        managed_policy:
-          - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
-        purge_policy: no
-      register: iam_user
+  - name: attach different managed policy to user
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: no
+    register: iam_user
 
-    - name: assert that the user changed
-      assert:
-        that:
-          - iam_user is changed
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is changed
 
-    - name: Check first policy wasn't purged
-      iam_user:
-        name: '{{ test_user }}'
-        state: present
-        managed_policy:
-          - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
-          - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
-        purge_policy: no
-      register: iam_user
+  - name: Check first policy wasn't purged
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
+      purge_policy: no
+    register: iam_user
 
-    - name: assert that the user hasn't changed
-      assert:
-        that:
-          - iam_user is not changed
+  - name: assert that the user hasn't changed
+    assert:
+      that:
+        - iam_user is not changed
 
-    - name: Check that managed policy order doesn't matter
-      iam_user:
-        name: '{{ test_user }}'
-        state: present
-        managed_policy:
-          - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
-          - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
-        purge_policy: no
-      register: iam_user
+  - name: Check that managed policy order doesn't matter
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: no
+    register: iam_user
 
-    - name: assert that the user hasn't changed
-      assert:
-        that:
-          - iam_user is not changed
+  - name: assert that the user hasn't changed
+    assert:
+      that:
+        - iam_user is not changed
 
-    - name: Remove one of the managed policies - with purge (check mode)
-      check_mode: yes
-      iam_user:
-        name: '{{ test_user }}'
-        state: present
-        managed_policy:
-          - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
-        purge_policy: yes
-      register: iam_user
+  - name: Remove one of the managed policies - with purge (check mode)
+    check_mode: yes
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: yes
+    register: iam_user
 
-    - name: assert that the user changed
-      assert:
-        that:
-          - iam_user is changed
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is changed
 
-    - name: Remove one of the managed policies - with purge
-      iam_user:
-        name: '{{ test_user }}'
-        state: present
-        managed_policy:
-          - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
-        purge_policy: yes
-      register: iam_user
+  - name: Remove one of the managed policies - with purge
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: yes
+    register: iam_user
 
-    - name: assert that the user changed
-      assert:
-        that:
-          - iam_user is changed
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is changed
 
-    - name: Check we only have the one policy attached
-      iam_user:
-        name: '{{ test_user }}'
-        state: present
-        managed_policy:
-          - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
-        purge_policy: yes
-      register: iam_user
+  - name: Check we only have the one policy attached
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: yes
+    register: iam_user
 
-    - name: assert that the user changed
-      assert:
-        that:
-          - iam_user is not changed
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is not changed
 
   - name: ensure group exists
     iam_group:
@@ -289,16 +289,17 @@
       state: present
     register: iam_group
 
-    - assert:
-        that:
-          - iam_group.changed
-          - iam_group.iam_group.users
+  - assert:
+      that:
+        - iam_group.changed
+        - iam_group.iam_group.users
 
   - name: get info on IAM user(s) in group
     iam_user_info:
       group: '{{ test_group }}'
       name: '{{ test_user }}'
     register: iam_user_info
+
   - assert:
       that:
         - iam_user_info.iam_users | length == 1
