@@ -463,8 +463,8 @@ def main():
 
     if module.params['save']:
         if not module.check_mode:
-            run_commands(module, ['return', 'mmi-mode-enable', 'save'])
-    run_commands(module, ['return', 'undo mmi-mode-enable'])
+            run_commands(module, ['return', 'mmi-mode enable', 'save'])
+    run_commands(module, ['return', 'undo mmi-mode enable'])
 
     module.exit_json(**result)
 
