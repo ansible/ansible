@@ -95,7 +95,8 @@ options:
 
     next_update:
         description:
-            - The point in time from which a new CRL will be issued and the client has to check for it.
+            - "The absolute latest point in time by which this I(issuer) is expected to have issued
+               another CRL. Many clients will treat a CRL as expired once I(next_update) occurs."
             - Time can be specified either as relative time or as absolute timestamp.
             - Time will always be interpreted as UTC.
             - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
@@ -119,7 +120,8 @@ options:
         suboptions:
             path:
                 description:
-                    - Serial number of the certificate.
+                    - Path to a certificate in PEM format.
+                    - The serial number and issuer will be extracted from the certificate.
                     - If specified, I(serial_number) and I(issuer) must not be specified.
                 type: path
             serial_number:
