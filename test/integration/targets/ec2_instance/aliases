@@ -1,3 +1,4 @@
+ec2_instance_info
 cloud/aws
-shippable/aws/group2
-unstable
+#shippable/aws/group2
+unsupported

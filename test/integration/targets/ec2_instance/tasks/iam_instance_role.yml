@@ -1,12 +1,3 @@
-- name: set connection information for all tasks
-  set_fact:
-    aws_connection_info: &aws_connection_info
-      aws_access_key: "{{ aws_access_key }}"
-      aws_secret_key: "{{ aws_secret_key }}"
-      security_token: "{{ security_token }}"
-      region: "{{ aws_region }}"
-  no_log: true
-
 - block:
     - name: Create IAM role for test
       iam_role:
@@ -16,7 +7,6 @@
         create_instance_profile: yes
         managed_policy:
         - AmazonEC2ContainerServiceRole
-        <<: *aws_connection_info
       register: iam_role
 
     - name: Create second IAM role for test
@@ -27,17 +17,19 @@
         create_instance_profile: yes
         managed_policy:
         - AmazonEC2ContainerServiceRole
-        <<: *aws_connection_info
       register: iam_role_2
+
+    - name: wait 10 seconds for roles to become available
+      pause:
+        seconds: 10
 
     - name: Make instance with an instance_role
       ec2_instance:
         name: "{{ resource_prefix }}-test-instance-role"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         security_groups: "{{ sg.group_id }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
         instance_role: "ansible-test-sts-{{ resource_prefix }}-test-policy"
-        <<: *aws_connection_info
       register: instance_with_role
 
     - assert:
@@ -47,25 +39,22 @@
     - name: Make instance with an instance_role(check mode)
       ec2_instance:
         name: "{{ resource_prefix }}-test-instance-role-checkmode"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         security_groups: "{{ sg.group_id }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
         instance_role: "{{ iam_role.arn.replace(':role/', ':instance-profile/') }}"
-        <<: *aws_connection_info
       check_mode: yes
 
     - name: "fact presented ec2 instance"
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-test-instance-role"
-        <<: *aws_connection_info
       register: presented_instance_fact
 
     - name: "fact checkmode ec2 instance"
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-test-instance-role-checkmode"
-        <<: *aws_connection_info
       register: checkmode_instance_fact
 
     - name: "Confirm whether the check mode is working normally."
@@ -77,26 +66,34 @@
     - name: Update instance with new instance_role
       ec2_instance:
         name: "{{ resource_prefix }}-test-instance-role"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         security_groups: "{{ sg.group_id }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
         instance_role: "{{ iam_role_2.arn.replace(':role/', ':instance-profile/') }}"
-        <<: *aws_connection_info
       register: instance_with_updated_role
-      until: instance_with_updated_role is not failed
-      retries: 10
+
+    # XXX We shouldn't need this
+    - name: wait 10 seconds for role update to complete
+      pause:
+        seconds: 10
+
+    - name: "fact checkmode ec2 instance"
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-test-instance-role"
+      register: updates_instance_info
 
     - assert:
         that:
-          - 'instance_with_updated_role.instances[0].iam_instance_profile.arn == iam_role_2.arn.replace(":role/", ":instance-profile/")'
-          - 'instance_with_updated_role.instances[0].instance_id == instance_with_role.instances[0].instance_id'
+          - 'updates_instance_info.instances[0].iam_instance_profile.arn == iam_role_2.arn.replace(":role/", ":instance-profile/")'
+          - 'updates_instance_info.instances[0].instance_id == instance_with_role.instances[0].instance_id'
 
   always:
     - name: Terminate instance
       ec2:
         instance_ids: "{{ instance_with_role.instance_ids }}"
         state: absent
-        <<: *aws_connection_info
+        wait: no
       register: removed
       until: removed is not failed
       ignore_errors: yes
@@ -110,7 +107,6 @@
         create_instance_profile: yes
         managed_policy:
         - AmazonEC2ContainerServiceRole
-        <<: *aws_connection_info
       loop:
         - "ansible-test-sts-{{ resource_prefix }}-test-policy"
         - "ansible-test-sts-{{ resource_prefix }}-test-policy-2"

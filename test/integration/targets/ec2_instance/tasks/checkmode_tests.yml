@@ -1,46 +1,33 @@
-- name: set connection information for all tasks
-  set_fact:
-    aws_connection_info: &aws_connection_info
-      aws_access_key: "{{ aws_access_key }}"
-      aws_secret_key: "{{ aws_secret_key }}"
-      security_token: "{{ security_token }}"
-      region: "{{ aws_region }}"
-  no_log: true
-
 - block:
     - name: Make basic instance
       ec2_instance:
         name: "{{ resource_prefix }}-checkmode-comparison"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         security_groups: "{{ sg.group_id }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
         wait: false
-        <<: *aws_connection_info
       register: basic_instance
 
     - name: Make basic instance(check mode)
       ec2_instance:
         name: "{{ resource_prefix }}-checkmode-comparison-checkmode"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         security_groups: "{{ sg.group_id }}"
-        instance_type: t2.micro
+        instance_type: "{{ ec2_instance_type }}"
         vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
-        <<: *aws_connection_info
       check_mode: yes
 
     - name: fact presented ec2 instance
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
-        <<: *aws_connection_info
       register: presented_instance_fact
 
     - name: fact checkmode ec2 instance
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison-checkmode"
-        <<: *aws_connection_info
       register: checkmode_instance_fact
 
     - name: Confirm whether the check mode is working normally.
@@ -54,14 +41,12 @@
         name: "{{ resource_prefix }}-checkmode-comparison"
         state: stopped
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
-        <<: *aws_connection_info
       check_mode: yes
 
     - name: fact ec2 instance
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
-        <<: *aws_connection_info
       register: confirm_checkmode_stopinstance_fact
 
     - name: Verify that it was not stopped.
@@ -74,17 +59,14 @@
         name: "{{ resource_prefix }}-checkmode-comparison"
         state: stopped
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
-        <<: *aws_connection_info
       register: instance_stop
       until: not instance_stop.failed
       retries: 10
 
-      
     - name: fact stopped ec2 instance
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
-        <<: *aws_connection_info
       register: confirm_stopinstance_fact
 
     - name: Verify that it was stopped.
@@ -97,16 +79,14 @@
         name: "{{ resource_prefix }}-checkmode-comparison"
         state: running
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
-        <<: *aws_connection_info
       check_mode: yes
-      
+
     - name: fact ec2 instance
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
-        <<: *aws_connection_info
       register: confirm_checkmode_runninginstance_fact
-      
+
     - name: Verify that it was not running.
       assert:
         that:
@@ -117,13 +97,11 @@
         name: "{{ resource_prefix }}-checkmode-comparison"
         state: running
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
-        <<: *aws_connection_info
-          
+
     - name: fact ec2 instance.
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
-        <<: *aws_connection_info
       register: confirm_runninginstance_fact
 
     - name: Verify that it was running.
@@ -136,16 +114,14 @@
         name: "{{ resource_prefix }}-checkmode-comparison"
         state: absent
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
-        <<: *aws_connection_info
       check_mode: yes
 
     - name: fact ec2 instance
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
-        <<: *aws_connection_info
       register: confirm_checkmode_terminatedinstance_fact
-      
+
     - name: Verify that it was not terminated,
       assert:
         that:
@@ -156,26 +132,24 @@
         name: "{{ resource_prefix }}-checkmode-comparison"
         state: absent
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
-        <<: *aws_connection_info
 
     - name: fact ec2 instance
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
-        <<: *aws_connection_info
       register: confirm_terminatedinstance_fact
-      
+
     - name: Verify that it was terminated,
       assert:
         that:
           - '"{{ confirm_terminatedinstance_fact.instances[0].state.name }}" == "terminated"'
-        
+
   always:
     - name: Terminate instance
       ec2:
         instance_ids: "{{ basic_instance.instance_ids }}"
         state: absent
-        <<: *aws_connection_info
+        wait: false
       register: removed
       until: removed is not failed
       ignore_errors: yes

@@ -753,12 +753,6 @@ lib/ansible/modules/cloud/amazon/ec2_group.py validate-modules:undocumented-para
 lib/ansible/modules/cloud/amazon/ec2_group.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/amazon/ec2_group.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/amazon/ec2_group_info.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/cloud/amazon/ec2_instance.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/cloud/amazon/ec2_instance.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/cloud/amazon/ec2_instance.py validate-modules:doc-missing-type
-lib/ansible/modules/cloud/amazon/ec2_instance.py validate-modules:return-syntax-error
-lib/ansible/modules/cloud/amazon/ec2_instance_info.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/cloud/amazon/ec2_instance_info.py validate-modules:return-syntax-error
 lib/ansible/modules/cloud/amazon/ec2_key.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/amazon/ec2_key.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/amazon/ec2_launch_template.py validate-modules:nonexistent-parameter-documented

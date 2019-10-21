@@ -1,17 +1,8 @@
 - block:
-    - name: set connection information for all tasks
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: true
-
     - name: create t3.nano instance with cpu_options
       ec2_instance:
         name: "{{ resource_prefix }}-test-t3nano-1-threads-per-core"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         tags:
           TestId: "{{ resource_prefix }}"
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
@@ -20,7 +11,6 @@
             core_count: 1
             threads_per_core: 1
         wait: false
-        <<: *aws_connection_info
       register: instance_creation
 
     - name: instance with cpu_options created with the right options
@@ -33,7 +23,7 @@
       ec2_instance:
         state: present
         name: "{{ resource_prefix }}-test-t3nano-1-threads-per-core"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         tags:
           TestId: "{{ resource_prefix }}"
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
@@ -42,20 +32,29 @@
             core_count: 1
             threads_per_core: 2
         wait: false
-        <<: *aws_connection_info
       register: cpu_options_update
       ignore_errors: yes
+
+    - name: "fact presented ec2 instance"
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-test-t3nano-1-threads-per-core"
+      register: presented_instance_fact
 
     - name: modify cpu_options has no effect on existing instance
       assert:
         that:
           - cpu_options_update is success
           - cpu_options_update is not changed
+          - "{{ presented_instance_fact.instances | length }} > 0"
+          - "'{{ presented_instance_fact.instances.0.state.name }}' in ['running','pending']"
+          - "{{ presented_instance_fact.instances.0.cpu_options.core_count }} == 1"
+          - "{{ presented_instance_fact.instances.0.cpu_options.threads_per_core }} == 1"
 
     - name: create t3.nano instance with cpu_options(check mode)
       ec2_instance:
         name: "{{ resource_prefix }}-test-t3nano-1-threads-per-core-checkmode"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
+        image_id: "{{ ec2_ami_image }}"
         tags:
           TestId: "{{ resource_prefix }}"
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
@@ -63,31 +62,18 @@
         cpu_options:
             core_count: 1
             threads_per_core: 1
-        <<: *aws_connection_info
       check_mode: yes
-
-    - name: "fact presented ec2 instance"
-      ec2_instance_info:
-        filters:
-          "tag:Name": "{{ resource_prefix }}-test-t3nano-1-threads-per-core"
-        <<: *aws_connection_info
-      register: presented_instance_fact
 
     - name: "fact checkmode ec2 instance"
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-test-t3nano-1-threads-per-core-checkmode"
-        <<: *aws_connection_info
       register: checkmode_instance_fact
 
     - name: "Confirm existence of instance id."
       assert:
         that:
-          - "{{ presented_instance_fact.instances | length }} > 0"
-          - "'{{ presented_instance_fact.instances.0.state.name }}' in ['running','pending']"
           - "{{ checkmode_instance_fact.instances | length }} == 0"
-          - "{{ presented_instance_fact.instances.0.cpu_options.core_count }} == 1"
-          - "{{ presented_instance_fact.instances.0.cpu_options.threads_per_core }} == 1"
 
   always:
     - name: Terminate instances
@@ -96,6 +82,5 @@
           tag:TestId: "{{ resource_prefix }}"
         state: absent
         wait: false
-        <<: *aws_connection_info
       register: result
       ignore_errors: yes
