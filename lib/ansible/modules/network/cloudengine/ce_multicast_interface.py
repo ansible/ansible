@@ -912,7 +912,7 @@ def main():
         timer_hello=dict(type='int', required=False),
         hello_opt_holdtime=dict(type='int', required=False),
         neighbor_policy=dict(required=False, type='str'),
-        require_genid=dict(required=False, choices=['true']),
+        require_genid=dict(type='bool),
         dr_priority=dict(type='int', required=False),
         graft_retry=dict(type='int', required=False),
         dr_switch_delay=dict(type='int', required=False),
@@ -922,12 +922,12 @@ def main():
         override_interval=dict(type='int', required=False),
         join_policy=dict(required=False, type='str'),
         holdtime_assert=dict(type='int', required=False),
-        bfd=dict(required=False, choices=['true']),
+        bfd=dict(type='bool),
         bfd_min_rx=dict(type='int', required=False),
         bfd_min_tx=dict(type='int', required=False),
         bfd_detect_multiplier=dict(type='int', required=False),
-        silent=dict(required=False, choices=['true']),
-        igmp=dict(required=False, choices=['true'])
+        silent=dict(type='bool'),
+        igmp=dict(type='bool')
     )
     multicast = MulticastInterface(argument_spec)
     multicast.work()
