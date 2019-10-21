@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_bigquery_dataset_info
 description:
 - Gather info for GCP Dataset
-- This module was called C(gcp_bigquery_dataset_facts) before Ansible 2.9. The usage
-  has not changed.
 short_description: Gather info for GCP Dataset
 version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
@@ -311,9 +309,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict())
-
-    if module._name == 'gcp_bigquery_dataset_facts':
-        module.deprecate("The 'gcp_bigquery_dataset_facts' module has been renamed to 'gcp_bigquery_dataset_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/bigquery']
