@@ -3,6 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -170,8 +171,8 @@ class VmwareAdapterConfigManager(PyVmomi):
         esxi_host_name = self.params.get("esxi_hostname", None)
 
         self.vmnic = self.params.get("vmnic", None)
-        self.sriov_on = self.params.get("sriov_on", None)
         self.num_virt_func = self.params.get("num_virt_func", None)
+        self.sriov_on = self.params.get("sriov_on", None)
 
         self.hosts = self.get_all_host_objs(
             cluster_name=cluster_name, esxi_host_name=esxi_host_name
@@ -179,6 +180,72 @@ class VmwareAdapterConfigManager(PyVmomi):
         if not self.hosts:
             self.module.fail_json(msg="Failed to find host system.")
         self.results = {"before": {}, "after": {}, "changes": {}}
+
+    def sanitize_params(self, before, hostname, vmnic):
+        """
+        :before     : dict, of params on target interface before changing
+        :hostname   : str, hosthame
+        :vmnic      : srt, target nic
+        :return     : dict, of params forwarded to vCenter, or raise fail in case iconsistancy 
+        """
+        params_to_change = {
+            "sriovEnabled": None,
+            "numVirtualFunction": None,
+            "msg": "",
+            "change": False,
+            "changes": {},
+        }
+        # change = False
+        if self.num_virt_func < 0:
+            self.module.fail_json(msg="allowed value for num_virt_func >= 0")
+
+        if self.num_virt_func == 0:
+            if self.sriov_on == True:
+                self.module.fail_json(
+                    msg="with sriov_on == true,  alowed value for num_virt_func > 0"
+                )
+            params_to_change.update({"sriovEnabled": False, "numVirtualFunction": 0})
+
+        if self.num_virt_func > 0:
+            if self.sriov_on == False:
+                self.module.fail_json(
+                    msg="with sriov_on == false,  alowed value for num_virt_func is 0"
+                )
+            params_to_change.update(
+                {"sriovEnabled": True, "numVirtualFunction": self.num_virt_func}
+            )
+
+            # check compatability
+            if not before["sriovCapable"]:
+                self.module.fail_json(
+                    "sriov not supported on host= %s, nic= %s" % (hostname, vmnic)
+                )
+
+            if (
+                before["maxVirtualFunctionSupported"]
+                < params_to_change["numVirtualFunction"]
+            ):
+                self.module.fail_json(
+                    msg="maxVirtualFunctionSupported= %d on %s"
+                    % (before["maxVirtualFunctionSupported"], vmnic)
+                )
+
+        # check current settings
+        if before["sriovEnabled"] != params_to_change["sriovEnabled"]:
+            params_to_change["changes"]["sriovEnabled"] = params_to_change[
+                "sriovEnabled"
+            ]
+            params_to_change["change"] = True
+        if before["numVirtualFunction"] != params_to_change["numVirtualFunction"]:
+            params_to_change["changes"]["numVirtualFunction"] = params_to_change[
+                "numVirtualFunction"
+            ]
+            params_to_change["change"] = True
+
+        if not params_to_change["change"]:
+            params_to_change["changes"]["msg"] = "No any changes, already configured"
+
+        return params_to_change
 
     def set_host_state(self):
         """Check ESXi host configuration"""
@@ -193,40 +260,14 @@ class VmwareAdapterConfigManager(PyVmomi):
                 "before"
             ][host.name]["rebootRequired"]
 
-            # check compatability
-            if not self.results["before"][host.name]["sriovCapable"]:
+            params_to_change = self.sanitize_params(
+                self.results["before"][host.name], host.name, self.vmnic
+            )
+            if not params_to_change["change"]:
                 change_list.append(False)
-                self.results["changes"][host.name][
-                    "msg"
-                ] = "sriov not supported on host= %s, nic= %s" % (host.name, self.vmnic)
+                self.results["changes"][host.name] = params_to_change["changes"]
                 self.results["after"][host.name] = self._check_sriov(host)
                 continue
-
-            if (
-                self.results["before"][host.name]["maxVirtualFunctionSupported"]
-                < self.num_virt_func
-            ):
-                change_list.append(False)
-                maxVirtualFun = self.results["before"][host.name][
-                    "maxVirtualFunctionSupported"
-                ]
-                self.results["changes"][host.name]["msg"] = (
-                    "maxVirtualFunctionSupported= %d on %s"
-                    % (maxVirtualFun, self.vmnic)
-                )
-                self.results["after"][host.name] = self._check_sriov(host)
-                continue
-
-            # check current settings
-            params_to_change = {"sriovEnabled": None, "numVirtualFunction": None}
-            if self.results["before"][host.name]["sriovEnabled"] != self.sriov_on:
-                params_to_change["sriovEnabled"] = self.sriov_on
-
-            if (
-                self.results["before"][host.name]["numVirtualFunction"]
-                != self.num_virt_func
-            ):
-                params_to_change["numVirtualFunction"] = self.num_virt_func
 
             success = self._update_sriov(host, **params_to_change)
             if success:
@@ -273,22 +314,12 @@ class VmwareAdapterConfigManager(PyVmomi):
                 return pnic.pci
         self.module.fail_json(msg="No nic= %s on host= %s" % (self.vmnic, host.name))
 
-    def _update_sriov(self, host, sriovEnabled=None, numVirtualFunction=None):
-        if sriovEnabled is None and numVirtualFunction is None:
-            self.results["changes"][host.name][
-                "msg"
-            ] = "No any changes, already configured"
-            return False
+    def _update_sriov(self, host, sriovEnabled=None, numVirtualFunction=None, **kwargs):
         nic_sriov = vim.host.SriovConfig()
         nic_sriov.id = self._getPciId(host)
-        if sriovEnabled is not None:
-            nic_sriov.sriovEnabled = sriovEnabled
-            self.results["changes"][host.name]["sriovEnabled"] = sriovEnabled
-        if numVirtualFunction is not None and numVirtualFunction >= 0:
-            nic_sriov.numVirtualFunction = numVirtualFunction
-            self.results["changes"][host.name][
-                "numVirtualFunction"
-            ] = numVirtualFunction
+        nic_sriov.sriovEnabled = sriovEnabled
+        nic_sriov.numVirtualFunction = numVirtualFunction
+        self.results["changes"][host.name] = kwargs["changes"]
 
         try:
             if not self.module.check_mode:
@@ -313,13 +344,16 @@ def main():
         cluster_name=dict(type="str", required=False),
         esxi_hostname=dict(type="str", required=False),
         vmnic=dict(type="str", required=True),
-        sriov_on=dict(type="bool", required=True),
         num_virt_func=dict(type="int", required=True),
+        sriov_on=dict(type="bool", required=False),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=[["cluster_name", "esxi_hostname"], ["sriov_on", "num_virt_func"]],
+        required_one_of=[
+            ["cluster_name", "esxi_hostname"],
+            ["sriov_on", "num_virt_func"],
+        ],
         supports_check_mode=True,
     )
 
