@@ -56,6 +56,7 @@
     iam_user:
       name: '{{ test_user }}'
       state: present
+    check_mode: yes
     register: iam_user
 
   - name: assert that the user would be created
@@ -400,7 +401,7 @@
 
   - name: remove group
     iam_group:
-      name: ansible_test
+      name: '{{ test_group }}'
       state: absent
     register: iam_group
 
