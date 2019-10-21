@@ -83,33 +83,37 @@ EXAMPLES = '''
       memory_size: 128
       role: "arn:aws:iam::{{ account }}:role/API2LambdaExecRole"
 
+  - name: Get information
+    lambda_info:
+      name: myLambdaFunction
+    register: lambda_info
   - name: show results
     debug:
-      var: lambda_facts
+      msg: "{{ lambda_info['lambda_facts'] }}"
 
 # The following will set the Dev alias to the latest version ($LATEST) since version is omitted (or = 0)
-  - name: "alias 'Dev' for function {{ lambda_facts.FunctionName }} "
+  - name: "alias 'Dev' for function {{ lambda_info.lambda_facts.FunctionName }} "
     lambda_alias:
       state: "{{ state | default('present') }}"
-      function_name: "{{ lambda_facts.FunctionName }}"
+      function_name: "{{ lambda_info.lambda_facts.FunctionName }}"
       name: Dev
       description: Development is $LATEST version
 
 # The QA alias will only be created when a new version is published (i.e. not = '$LATEST')
-  - name: "alias 'QA' for function {{ lambda_facts.FunctionName }} "
+  - name: "alias 'QA' for function {{ lambda_info.lambda_facts.FunctionName }} "
     lambda_alias:
       state: "{{ state | default('present') }}"
-      function_name: "{{ lambda_facts.FunctionName }}"
+      function_name: "{{ lambda_info.lambda_facts.FunctionName }}"
       name: QA
-      version: "{{ lambda_facts.Version }}"
-      description: "QA is version {{ lambda_facts.Version }}"
-    when: lambda_facts.Version != "$LATEST"
+      version: "{{ lambda_info.lambda_facts.Version }}"
+      description: "QA is version {{ lambda_info.lambda_facts.Version }}"
+    when: lambda_info.lambda_facts.Version != "$LATEST"
 
 # The Prod alias will have a fixed version based on a variable
-  - name: "alias 'Prod' for function {{ lambda_facts.FunctionName }} "
+  - name: "alias 'Prod' for function {{ lambda_info.lambda_facts.FunctionName }} "
     lambda_alias:
       state: "{{ state | default('present') }}"
-      function_name: "{{ lambda_facts.FunctionName }}"
+      function_name: "{{ lambda_info.lambda_facts.FunctionName }}"
       name: Prod
       version: "{{ production_version }}"
       description: "Production is version {{ production_version }}"

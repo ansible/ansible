@@ -116,7 +116,7 @@ options:
   disks:
     description:
     - A list of disks to add to VM.
-    - All parameters are case sensetive.
+    - All parameters are case sensitive.
     - Removing or detaching existing disks of VM is not supported.
     - 'Required parameters per entry:'
     - ' - C(size_[tb,gb,mb,kb,b]) (integer): Disk storage size in specified unit. VM needs to be shut down to reconfigure this parameter.'
@@ -139,7 +139,7 @@ options:
   networks:
     description:
     - A list of networks (in the order of the NICs).
-    - All parameters are case sensetive.
+    - All parameters are case sensitive.
     - 'Required parameters per entry:'
     - ' - C(name) (string): Name of a XenServer network to attach the network interface to. You can also use C(name_label) as an alias.'
     - 'Optional parameters per entry (used for VM hardware):'
@@ -708,7 +708,11 @@ class XenServerVM(XenServerObject):
                             }
 
                             new_disk_vbd['VDI'] = self.xapi_session.xenapi.VDI.create(new_disk_vdi)
-                            self.xapi_session.xenapi.VBD.create(new_disk_vbd)
+                            vbd_ref_new = self.xapi_session.xenapi.VBD.create(new_disk_vbd)
+
+                            if self.vm_params['power_state'].lower() == "running":
+                                self.xapi_session.xenapi.VBD.plug(vbd_ref_new)
+
                     elif change.get('cdrom'):
                         vm_cdrom_params_list = [cdrom_params for cdrom_params in self.vm_params['VBDs'] if cdrom_params['type'] == "CD"]
 

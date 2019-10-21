@@ -157,7 +157,7 @@ EXAMPLES = '''
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
           - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
-          - Type: forward # Required. Only 'forward' is accepted at this time
+          - Type: forward # Required.
             TargetGroupName: # Required. The name of the target group
     state: present
 
@@ -181,7 +181,7 @@ EXAMPLES = '''
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
           - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
-          - Type: forward # Required. Only 'forward' is accepted at this time
+          - Type: forward # Required.
             TargetGroupName: # Required. The name of the target group
     state: present
 
@@ -212,6 +212,31 @@ EXAMPLES = '''
             Actions:
               - TargetGroupName: test-target-group
                 Type: forward
+          - Conditions:
+              - Field: path-pattern
+                Values:
+                  - "/redirect-path/*"
+            Priority: '2'
+            Actions:
+              - Type: redirect
+                RedirectConfig:
+                  Host: "#{host}"
+                  Path: "/example/redir" # or /#{path}
+                  Port: "#{port}"
+                  Protocol: "#{protocol}"
+                  Query: "#{query}"
+                  StatusCode: "HTTP_302" # or HTTP_301
+          - Conditions:
+              - Field: path-pattern
+                Values:
+                  - "/fixed-response-path/"
+            Priority: '3'
+            Actions:
+              - Type: fixed-response
+                FixedResponseConfig:
+                  ContentType: "text/plain"
+                  MessageBody: "This is the page you're looking for"
+                  StatusCode: "200"
     state: present
 
 # Remove an ELB
@@ -545,7 +570,7 @@ def main():
                                   ('state', 'present', ['subnets', 'security_groups'])
                               ],
                               required_together=[
-                                  ['access_logs_enabled', 'access_logs_s3_bucket', 'access_logs_s3_prefix']
+                                  ['access_logs_enabled', 'access_logs_s3_bucket']
                               ]
                               )
 

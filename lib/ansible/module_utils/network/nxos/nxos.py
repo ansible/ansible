@@ -32,6 +32,7 @@ import collections
 import json
 import re
 import sys
+from copy import deepcopy
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
@@ -39,7 +40,8 @@ from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-from ansible.module_utils.six import iteritems, string_types, PY2, PY3
+from ansible.module_utils.network.common.config import CustomNetworkConfig
+from ansible.module_utils.six import iteritems, PY2, PY3
 from ansible.module_utils.urls import fetch_url
 
 try:
@@ -103,10 +105,6 @@ nxos_argument_spec.update(nxos_top_spec)
 
 def get_provider_argspec():
     return nxos_provider_spec
-
-
-def check_args(module, warnings):
-    pass
 
 
 def load_params(module):
@@ -737,11 +735,15 @@ class NxosCmdRef:
           multiplier: 3
     """
 
-    def __init__(self, module, cmd_ref_str):
+    def __init__(self, module, cmd_ref_str, ref_only=False):
         """Initialize cmd_ref from yaml data."""
+
         self._module = module
         self._check_imports()
         self._yaml_load(cmd_ref_str)
+        self.cache_existing = None
+        self.present_states = ['present', 'merged', 'replaced']
+        self.absent_states = ['absent', 'deleted']
         ref = self._ref
 
         # Create a list of supported commands based on ref keys
@@ -749,10 +751,12 @@ class NxosCmdRef:
         ref['_proposed'] = []
         ref['_context'] = []
         ref['_resource_key'] = None
-        ref['_state'] = module.params.get('state', 'present')
-        self.feature_enable()
-        self.get_platform_defaults()
-        self.normalize_defaults()
+
+        if not ref_only:
+            ref['_state'] = module.params.get('state', 'present')
+            self.feature_enable()
+            self.get_platform_defaults()
+            self.normalize_defaults()
 
     def __getitem__(self, key=None):
         if key is None:
@@ -932,31 +936,37 @@ class NxosCmdRef:
         # Last key in context is the resource key
         ref['_resource_key'] = context[-1] if context else ref['_resource_key']
 
-    def get_existing(self):
+    def get_existing(self, cache_output=None):
         """Update ref with existing command states from the device.
         Store these states in each command's 'existing' key.
         """
         ref = self._ref
         if ref.get('_cli_is_feature_disabled'):
             # Add context to proposed if state is present
-            if 'present' in ref['_state']:
+            if ref['_state'] in self.present_states:
                 [ref['_proposed'].append(ctx) for ctx in ref['_context']]
             return
 
         show_cmd = ref['_template']['get_command']
-        # Add additional command context if needed.
-        for filter in ref['_context']:
-            show_cmd = show_cmd + " | section '{0}'".format(filter)
+        if cache_output:
+            output = cache_output
+        else:
+            output = self.execute_show_command(show_cmd, 'text') or []
+            self.cache_existing = output
 
-        output = self.execute_show_command(show_cmd, 'text') or []
+        # Add additional command context if needed.
+        if ref['_context']:
+            output = CustomNetworkConfig(indent=2, contents=output)
+            output = output.get_section(ref['_context'])
+
         if not output:
             # Add context to proposed if state is present
-            if 'present' in ref['_state']:
+            if ref['_state'] in self.present_states:
                 [ref['_proposed'].append(ctx) for ctx in ref['_context']]
             return
 
         # We need to remove the last item in context for state absent case.
-        if 'absent' in ref['_state'] and ref['_context']:
+        if ref['_state'] in self.absent_states and ref['_context']:
             if ref['_resource_key'] and ref['_resource_key'] == ref['_context'][-1]:
                 if ref['_context'][-1] in output:
                     ref['_context'][-1] = 'no ' + ref['_context'][-1]
@@ -997,18 +1007,35 @@ class NxosCmdRef:
         """
         ref = self._ref
         module = self._module
+        params = {}
+        if module.params.get('config'):
+            # Resource module builder packs playvals under 'config' key
+            param_data = module.params.get('config')
+            params['global'] = param_data
+            for key in param_data.keys():
+                if isinstance(param_data[key], list):
+                    params[key] = param_data[key]
+        else:
+            params['global'] = module.params
         for k in ref.keys():
-            if k in module.params and module.params[k] is not None:
-                playval = module.params[k]
-                # Normalize each value
-                if 'int' == ref[k]['kind']:
-                    playval = int(playval)
-                elif 'list' == ref[k]['kind']:
-                    playval = [str(i) for i in playval]
-                elif 'dict' == ref[k]['kind']:
-                    for key, v in playval.items():
-                        playval[key] = str(v)
-                ref[k]['playval'] = playval
+            for level in params.keys():
+                if isinstance(params[level], dict):
+                    params[level] = [params[level]]
+                for item in params[level]:
+                    if k in item and item[k] is not None:
+                        if not ref[k].get('playval'):
+                            ref[k]['playval'] = {}
+                        playval = item[k]
+                        index = params[level].index(item)
+                        # Normalize each value
+                        if 'int' == ref[k]['kind']:
+                            playval = int(playval)
+                        elif 'list' == ref[k]['kind']:
+                            playval = [str(i) for i in playval]
+                        elif 'dict' == ref[k]['kind']:
+                            for key, v in playval.items():
+                                playval[key] = str(v)
+                        ref[k]['playval'][index] = playval
 
     def build_cmd_set(self, playval, existing, k):
         """Helper function to create list of commands to configure device
@@ -1037,7 +1064,7 @@ class NxosCmdRef:
         else:
             raise ValueError("get_proposed: unknown 'kind' value specified for key '{0}'".format(k))
         if cmd:
-            if 'absent' == ref['_state'] and not re.search(r'^no', cmd):
+            if ref['_state'] in self.absent_states and not re.search(r'^no', cmd):
                 cmd = 'no ' + cmd
             # Commands may require parent commands for proper context.
             # Global _template context is replaced by parameter context
@@ -1062,7 +1089,7 @@ class NxosCmdRef:
         play_keys = [k for k in ref['commands'] if 'playval' in ref[k]]
 
         def compare(playval, existing):
-            if 'present' in ref['_state']:
+            if ref['_state'] in self.present_states:
                 if existing is None:
                     return False
                 elif playval == existing:
@@ -1070,7 +1097,7 @@ class NxosCmdRef:
                 elif isinstance(existing, dict) and playval in existing.values():
                     return True
 
-            if 'absent' in ref['_state']:
+            if ref['_state'] in self.absent_states:
                 if isinstance(existing, dict) and all(x is None for x in existing.values()):
                     existing = None
                 if existing is None or playval not in existing.values():
@@ -1080,36 +1107,48 @@ class NxosCmdRef:
         # Compare against current state
         for k in play_keys:
             playval = ref[k]['playval']
+            # Create playval copy to avoid RuntimeError
+            #   dictionary changed size during iteration error
+            playval_copy = deepcopy(playval)
             existing = ref[k].get('existing', ref[k]['default'])
             multiple = 'multiple' in ref[k].keys()
 
             # Multiple Instances:
             if isinstance(existing, dict) and multiple:
-                item_found = False
-                for dkey, dvalue in existing.items():
-                    if isinstance(dvalue, dict):
+                for ekey, evalue in existing.items():
+                    if isinstance(evalue, dict):
                         # Remove values set to string 'None' from dvalue
-                        dvalue = dict((k, v) for k, v in dvalue.items() if v != 'None')
-                    if compare(playval, dvalue):
-                        item_found = True
-                if item_found:
+                        evalue = dict((k, v) for k, v in evalue.items() if v != 'None')
+                    for pkey, pvalue in playval.items():
+                        if compare(pvalue, evalue):
+                            if playval_copy.get(pkey):
+                                del playval_copy[pkey]
+                if not playval_copy:
                     continue
             # Single Instance:
             else:
-                if compare(playval, existing):
+                for pkey, pval in playval.items():
+                    if compare(pval, existing):
+                        if playval_copy.get(pkey):
+                            del playval_copy[pkey]
+                if not playval_copy:
                     continue
 
+            playval = playval_copy
             # Multiple Instances:
             if isinstance(existing, dict):
                 for dkey, dvalue in existing.items():
-                    self.build_cmd_set(playval, dvalue, k)
+                    for pval in playval.values():
+                        self.build_cmd_set(pval, dvalue, k)
             # Single Instance:
             else:
-                self.build_cmd_set(playval, existing, k)
+                for pval in playval.values():
+                    self.build_cmd_set(pval, existing, k)
 
         # Remove any duplicate commands before returning.
         # pylint: disable=unnecessary-lambda
-        return sorted(set(proposed), key=lambda x: proposed.index(x))
+        cmds = sorted(set(proposed), key=lambda x: proposed.index(x))
+        return cmds
 
 
 def nxosCmdRef_import_check():

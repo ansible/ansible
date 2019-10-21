@@ -26,6 +26,7 @@ __metaclass__ = type
 import os
 import yaml
 
+import ansible.constants as C
 from ansible import context
 from ansible.module_utils._text import to_bytes
 
@@ -43,9 +44,10 @@ class Galaxy(object):
     ''' Keeps global galaxy info '''
 
     def __init__(self):
+        # TODO: eventually remove this as it contains a mismash of properties that aren't really global
 
         # roles_path needs to be a list and will be by default
-        roles_path = context.CLIARGS.get('roles_path', tuple())
+        roles_path = context.CLIARGS.get('roles_path', C.DEFAULT_ROLES_PATH)
         # cli option handling is responsible for splitting roles_path
         self.roles_paths = roles_path
 

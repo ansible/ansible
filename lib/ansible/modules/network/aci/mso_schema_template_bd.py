@@ -50,16 +50,27 @@ options:
         - The name of the VRF to associate with.
         required: true
         type: str
+      schema:
+        description:
+        - The schema that defines the referenced VRF.
+        - If this parameter is unspecified, it defaults to the current schema.
+        type: str
+      template:
+        description:
+        - The template that defines the referenced VRF.
+        - If this parameter is unspecified, it defaults to the current template.
+        type: str
   subnets:
     description:
     - The subnets associated to this BD.
     type: list
     suboptions:
-      ip:
+      subnet:
         description:
         - The IP range in CIDR notation.
         type: str
         required: true
+        aliases: [ ip ]
       description:
         description:
         - The description of this subnet.
@@ -256,7 +267,7 @@ def main():
         payload = dict(
             name=bd,
             displayName=display_name,
-            intersiteBumTraffic=intersite_bum_traffic,
+            intersiteBumTrafficAllow=intersite_bum_traffic,
             optimizeWanBandwidth=optimize_wan_bandwidth,
             l2UnknownUnicast=layer2_unknown_unicast,
             l2Stretch=layer2_stretch,

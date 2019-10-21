@@ -142,7 +142,7 @@ options:
             type: int
   disallowed:
     description:
-      - Disalloved parameter values.
+      - Disallowed parameter values.
     type: dict
     suboptions:
       disk_types:
@@ -379,7 +379,7 @@ class AzureRMGalleryImages(AzureRMModuleBaseExt):
 
         self.body = {}
         self.query_parameters = {}
-        self.query_parameters['api-version'] = '2019-03-01'
+        self.query_parameters['api-version'] = '2019-07-01'
         self.header_parameters = {}
         self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 

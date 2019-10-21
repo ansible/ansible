@@ -79,7 +79,7 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
-from ansible.module_utils._text import to_native, to_bytes, to_text
+from ._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.text.converters import (
     jsonify,
     container_to_bytes as json_dict_unicode_to_bytes,
@@ -567,7 +567,10 @@ def missing_required_lib(library, reason=None, url=None):
     if url:
         msg += " See %s for more info." % url
 
-    return msg + " Please read module documentation and install in the appropriate location"
+    msg += (" Please read module documentation and install in the appropriate location."
+            " If the required library is installed, but Ansible is using the wrong Python interpreter,"
+            " please consult the documentation on ansible_python_interpreter")
+    return msg
 
 
 class AnsibleFallbackNotFound(Exception):
@@ -1424,6 +1427,18 @@ class AnsibleModule(object):
         alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings=alias_warnings)
         for option, alias in alias_warnings:
             self._warnings.append('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
+
+        deprecated_aliases = []
+        for i in spec.keys():
+            if 'deprecated_aliases' in spec[i].keys():
+                for alias in spec[i]['deprecated_aliases']:
+                    deprecated_aliases.append(alias)
+
+        for deprecation in deprecated_aliases:
+            if deprecation['name'] in param.keys():
+                self._deprecations.append(
+                    {'msg': "Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
+                     'version': deprecation['version']})
         return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):
@@ -1432,7 +1447,11 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-        self.no_log_values.update(list_no_log_values(spec, param))
+        try:
+            self.no_log_values.update(list_no_log_values(spec, param))
+        except TypeError as te:
+            self.fail_json(msg="Failure when processing no_log parameters. Module invocation will be hidden. "
+                               "%s" % to_native(te), invocation={'module_args': 'HIDDEN DUE TO FAILURE'})
         self._deprecations.extend(list_deprecations(spec, param))
 
     def _check_arguments(self, check_invalid_arguments, spec=None, param=None, legal_inputs=None):
@@ -1707,7 +1726,6 @@ class AnsibleModule(object):
                     self._set_fallbacks(spec, param)
                     options_aliases = self._handle_aliases(spec, param, option_prefix=new_prefix)
 
-                    self._handle_no_log_values(spec, param)
                     options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
 
                     self._check_arguments(self.check_invalid_arguments, spec, param, options_legal_inputs)

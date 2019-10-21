@@ -70,12 +70,19 @@ options:
     - Absolute path to place the exported files on the server running this task, must have write permission.
     - If folder not exist will create it, also create a folder under this path named with VM name.
     required: yes
-    type: str
+    type: path
   export_with_images:
     default: false
     description:
     - Export an ISO image of the media mounted on the CD/DVD Drive within the virtual machine.
     type: bool
+  download_timeout:
+    description:
+    - The user defined timeout in minute of exporting file.
+    - If the vmdk file is too large to export in 10 minutes, specify the value larger than 10, the maximum value is 60.
+    default: 10
+    type: int
+    version_added: '2.9'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -156,6 +163,7 @@ class VMwareExportVmOvf(PyVmomi):
         # set lease progress update interval to 15 seconds
         self.lease_interval = 15
         self.facts = {'device_files': []}
+        self.download_timeout = 10
 
     def create_export_dir(self, vm_obj):
         self.ovf_dir = os.path.join(self.params['export_dir'], vm_obj.name)
@@ -175,7 +183,7 @@ class VMwareExportVmOvf(PyVmomi):
         with open(self.mf_file, 'a') as mf_handle:
             with open(temp_target_disk, 'wb') as handle:
                 try:
-                    response = open_url(device_url, headers=headers, validate_certs=False)
+                    response = open_url(device_url, headers=headers, validate_certs=False, timeout=self.download_timeout)
                 except Exception as err:
                     lease_updater.httpNfcLease.HttpNfcLeaseAbort()
                     lease_updater.stop()
@@ -208,6 +216,9 @@ class VMwareExportVmOvf(PyVmomi):
         export_with_iso = False
         if 'export_with_images' in self.params and self.params['export_with_images']:
             export_with_iso = True
+        if 60 > self.params['download_timeout'] > 10:
+            self.download_timeout = self.params['download_timeout']
+
         ovf_files = []
         # get http nfc lease firstly
         http_nfc_lease = vm_obj.ExportVm()
@@ -318,8 +329,9 @@ def main():
         moid=dict(type='str'),
         folder=dict(type='str'),
         datacenter=dict(type='str', default='ha-datacenter'),
-        export_dir=dict(type='str'),
+        export_dir=dict(type='path', required=True),
         export_with_images=dict(type='bool', default=False),
+        download_timeout=dict(type='int', default=10),
     )
 
     module = AnsibleModule(argument_spec=argument_spec,

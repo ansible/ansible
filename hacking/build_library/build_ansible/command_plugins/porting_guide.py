@@ -20,9 +20,9 @@ from ..commands import Command  # pylint: disable=relative-beyond-top-level
 PORTING_GUIDE_TEMPLATE = """
 .. _porting_{{ ver }}_guide:
 
-*************************
+**************************
 Ansible {{ ver }} Porting Guide
-*************************
+**************************
 
 This section discusses the behavioral changes between Ansible {{ prev_ver }} and Ansible {{ ver }}.
 

@@ -39,7 +39,6 @@ from ansible.module_utils.six.moves import builtins
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.loader import PluginLoader
 from ansible.plugins.lookup import password
-from ansible.utils import encrypt
 
 
 DEFAULT_CHARS = sorted([u'ascii_letters', u'digits', u".,:-_"])
@@ -422,7 +421,8 @@ class TestLookupModuleWithoutPasslib(BaseTestLookupModule):
         for result in results:
             self.assertEquals(result, u'a' * password.DEFAULT_LENGTH)
 
-    def test_lock_been_held(self):
+    @patch('time.sleep')
+    def test_lock_been_held(self, mock_sleep):
         # pretend the lock file is here
         password.os.path.exists = lambda x: True
         try:

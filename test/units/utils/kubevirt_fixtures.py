@@ -1,4 +1,3 @@
-import json
 import pytest
 
 from units.compat.mock import MagicMock

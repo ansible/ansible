@@ -209,7 +209,8 @@ interface:
       sample: Firewall network interface
     groups:
       description: list of security groups
-      type: list of dictionaries
+      type: list
+      elements: dict
       sample: [ { "sg-f8a8a9da": "default" } ]
     id:
       description: network interface id
@@ -229,7 +230,8 @@ interface:
       sample: 10.20.30.40
     private_ip_addresses:
       description: list of all private ip addresses associated to this interface
-      type: list of dictionaries
+      type: list
+      elements: dict
       sample: [ { "primary_address": true, "private_ip_address": "10.20.30.40" } ]
     source_dest_check:
       description: value of source/dest check flag

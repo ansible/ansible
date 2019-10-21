@@ -105,13 +105,13 @@ elasticache_clusters:
               returned: always
               type: int
               sample: 6379
-        parameter_grou_status:
+        parameter_group_status:
           description: Status of the Cache Parameter Group
           returned: always
           type: str
           sample: in-sync
     cache_parameter_group:
-      description: Contents of the Cache Parameter GGroup
+      description: Contents of the Cache Parameter Group
       returned: always
       type: complex
       contains:

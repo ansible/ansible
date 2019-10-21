@@ -17,6 +17,13 @@
     subject:
       commonName: www.example.com
 
+- name: (Selfsigned, {{select_crypto_backend}}) Generate CSR
+  openssl_csr:
+    path: '{{ output_dir }}/csr_minimal_change.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.example.org
+
 - name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate
   openssl_certificate:
     path: '{{ output_dir }}/cert.pem'
@@ -46,6 +53,17 @@
     selfsigned_digest: sha256
     select_crypto_backend: '{{ select_crypto_backend }}'
   check_mode: yes
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate (check mode, other CSR)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert.pem'
+    csr_path: '{{ output_dir }}/csr_minimal_change.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  check_mode: yes
+  register: selfsigned_certificate_csr_minimal_change
 
 - name: (Selfsigned, {{select_crypto_backend}}) Check selfsigned certificate
   openssl_certificate:
@@ -289,5 +307,65 @@
     backup: yes
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: selfsigned_backup_5
+
+- name: (Selfsigned, {{select_crypto_backend}}) Create subject key identifier test
+  openssl_certificate:
+    path: '{{ output_dir }}/selfsigned_cert_ski.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    selfsigned_create_subject_key_identifier: always_create
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: selfsigned_subject_key_identifier_1
+
+- name: (Selfsigned, {{select_crypto_backend}}) Create subject key identifier test (idempotency)
+  openssl_certificate:
+    path: '{{ output_dir }}/selfsigned_cert_ski.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    selfsigned_create_subject_key_identifier: always_create
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: selfsigned_subject_key_identifier_2
+
+- name: (Selfsigned, {{select_crypto_backend}}) Create subject key identifier test (remove)
+  openssl_certificate:
+    path: '{{ output_dir }}/selfsigned_cert_ski.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    selfsigned_create_subject_key_identifier: never_create
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: selfsigned_subject_key_identifier_3
+
+- name: (Selfsigned, {{select_crypto_backend}}) Create subject key identifier test (remove idempotency)
+  openssl_certificate:
+    path: '{{ output_dir }}/selfsigned_cert_ski.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    selfsigned_create_subject_key_identifier: never_create
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: selfsigned_subject_key_identifier_4
+
+- name: (Selfsigned, {{select_crypto_backend}}) Create subject key identifier test (re-enable)
+  openssl_certificate:
+    path: '{{ output_dir }}/selfsigned_cert_ski.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    selfsigned_create_subject_key_identifier: always_create
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: selfsigned_subject_key_identifier_5
 
 - import_tasks: ../tests/validate_selfsigned.yml

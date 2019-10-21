@@ -39,7 +39,7 @@ The environment can also be stored in a variable, and accessed like so::
           package:
             name: cobbler
             state: present
-          environment: "{{proxy_env}}"
+          environment: "{{ proxy_env }}"
 
 You can also use it at a play level::
 

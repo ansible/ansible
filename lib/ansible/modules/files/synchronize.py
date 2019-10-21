@@ -83,6 +83,7 @@ options:
     description:
       - Delete files in C(dest) that don't exist (after transfer, not before) in the C(src) path.
       - This option requires C(recursive=yes).
+      - This option ignores excluded files and behaves like the rsync opt --delete-excluded.
     type: bool
     default: no
   dirs:
@@ -200,7 +201,7 @@ notes:
    - rsync daemon must be up and running with correct permission when using rsync protocol in source or destination path.
    - The C(synchronize) module forces `--delay-updates` to avoid leaving a destination in a broken in-between state if the underlying rsync process
      encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should call rsync directly.
-   - link_destination is subject to the same limitations as the underlaying rsync daemon. Hard links are only preserved if the relative subtrees
+   - link_destination is subject to the same limitations as the underlying rsync daemon. Hard links are only preserved if the relative subtrees
      of the source and destination are the same. Attempts to hardlink into a directory that is a subdirectory of the source will be prevented.
 seealso:
 - module: copy

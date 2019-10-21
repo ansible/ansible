@@ -64,6 +64,8 @@ class MockONTAPConnection(object):
         self.xml_in = xml
         if self.kind == 'initiator':
             xml = self.build_igroup_initiator()
+        elif self.kind == 'initiator_fail':
+            raise netapp_utils.zapi.NaApiError(code='TEST', message="This exception is from the unit test")
         self.xml_out = xml
         return xml
 
@@ -202,3 +204,14 @@ class TestMyModule(unittest.TestCase):
             obj.apply()
         assert data['name'] not in current_list
         assert not exc.value.args[0]['changed']
+
+    def test_if_all_methods_catch_exception(self):
+        data = self.mock_args()
+        set_module_args(data)
+        my_obj = self.get_initiator_mock_object('initiator_fail')
+        with pytest.raises(AnsibleFailJson) as exc:
+            my_obj.get_initiators()
+        assert 'Error fetching igroup info ' in exc.value.args[0]['msg']
+        with pytest.raises(AnsibleFailJson) as exc:
+            my_obj.modify_initiator(data['name'], 'igroup-add')
+        assert 'Error modifying igroup initiator ' in exc.value.args[0]['msg']

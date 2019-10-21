@@ -9,7 +9,7 @@ import os
 
 def main():
     src = 'packaging/requirements/requirements-azure.txt'
-    dst = 'test/runner/requirements/integration.cloud.azure.txt'
+    dst = 'test/lib/ansible_test/_data/requirements/integration.cloud.azure.txt'
 
     missing = [p for p in [src, dst] if not os.path.isfile(p)]
 

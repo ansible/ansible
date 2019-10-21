@@ -34,6 +34,7 @@
                 "rds:PromoteReadReplica",
                 "rds:RebootDBInstance",
                 "rds:RemoveTagsFromResource",
+                "rds:RestoreDBInstanceToPointInTime",
                 "rds:StartDBInstance",
                 "rds:StopDBInstance"
             ],

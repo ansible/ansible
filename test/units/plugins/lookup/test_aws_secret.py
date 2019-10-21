@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 
 import pytest
 import datetime
-from copy import copy
 
 from ansible.errors import AnsibleError
 

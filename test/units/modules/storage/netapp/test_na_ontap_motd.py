@@ -8,7 +8,7 @@ import json
 import pytest
 
 from units.compat import unittest
-from units.compat.mock import patch, Mock
+from units.compat.mock import patch
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
 import ansible.module_utils.netapp as netapp_utils

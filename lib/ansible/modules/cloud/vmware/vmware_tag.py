@@ -99,7 +99,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-results:
+tag_status:
   description: dictionary of tag metadata
   returned: on success
   type: dict
@@ -176,10 +176,9 @@ class VmwareTag(VmwareRestClient):
 
         if tag_id:
             self.module.exit_json(changed=True,
-                                  results=dict(msg="Tag '%s' created." % tag_spec.name,
-                                               tag_id=tag_id))
+                                  tag_status=dict(msg="Tag '%s' created." % tag_spec.name, tag_id=tag_id))
         self.module.exit_json(changed=False,
-                              results=dict(msg="No tag created", tag_id=tag_id))
+                              tag_status=dict(msg="No tag created", tag_id=tag_id))
 
     def state_unchanged(self):
         """
@@ -210,7 +209,7 @@ class VmwareTag(VmwareRestClient):
             results['msg'] = 'Tag %s updated.' % self.tag_name
             changed = True
 
-        self.module.exit_json(changed=changed, results=results)
+        self.module.exit_json(changed=changed, tag_status=results)
 
     def state_delete_tag(self):
         """
@@ -223,8 +222,7 @@ class VmwareTag(VmwareRestClient):
         except Error as error:
             self.module.fail_json(msg="%s" % self.get_error_message(error))
         self.module.exit_json(changed=True,
-                              results=dict(msg="Tag '%s' deleted." % self.tag_name,
-                                           tag_id=tag_id))
+                              tag_status=dict(msg="Tag '%s' deleted." % self.tag_name, tag_id=tag_id))
 
     def check_tag_status(self):
         """

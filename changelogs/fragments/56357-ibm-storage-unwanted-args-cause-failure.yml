@@ -1,2 +1,0 @@
-bugfixes:
-- ibm_storage - Added a check for null fields in ibm_storage utils module.

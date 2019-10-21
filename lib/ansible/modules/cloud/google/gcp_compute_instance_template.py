@@ -39,7 +39,7 @@ description:
 - 'Tip: Disks should be set to autoDelete=true so that leftover disks are not left
   behind on machine deletion.'
 short_description: Creates a GCP InstanceTemplate
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -230,6 +230,12 @@ options:
             - 'Some valid choices include: "SCRATCH", "PERSISTENT"'
             required: false
             type: str
+      labels:
+        description:
+        - Labels to apply to this address. A list of key->value pairs.
+        required: false
+        type: dict
+        version_added: '2.9'
       machine_type:
         description:
         - The machine type to use in the VM instance template.
@@ -437,7 +443,43 @@ options:
               with RFC1035.
             required: false
             type: list
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -673,6 +715,11 @@ properties:
             the default is PERSISTENT.
           returned: success
           type: str
+    labels:
+      description:
+      - Labels to apply to this address. A list of key->value pairs.
+      returned: success
+      type: dict
     machineType:
       description:
       - The machine type to use in the VM instance template.
@@ -921,6 +968,7 @@ def main():
                             type=dict(type='str'),
                         ),
                     ),
+                    labels=dict(type='dict'),
                     machine_type=dict(required=True, type='str'),
                     min_cpu_platform=dict(type='str'),
                     metadata=dict(type='dict'),
@@ -1105,7 +1153,11 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
-    return decode_response(fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instanceTemplate'), module)
+    response = fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instanceTemplate')
+    if response:
+        return decode_response(response, module)
+    else:
+        return {}
 
 
 def wait_for_completion(status, op_result, module):
@@ -1190,6 +1242,7 @@ class InstanceTemplateProperties(object):
                 u'canIpForward': self.request.get('can_ip_forward'),
                 u'description': self.request.get('description'),
                 u'disks': InstanceTemplateDisksArray(self.request.get('disks', []), self.module).to_request(),
+                u'labels': self.request.get('labels'),
                 u'machineType': self.request.get('machine_type'),
                 u'minCpuPlatform': self.request.get('min_cpu_platform'),
                 u'metadata': self.request.get('metadata'),
@@ -1207,6 +1260,7 @@ class InstanceTemplateProperties(object):
                 u'canIpForward': self.request.get(u'canIpForward'),
                 u'description': self.request.get(u'description'),
                 u'disks': InstanceTemplateDisksArray(self.request.get(u'disks', []), self.module).from_response(),
+                u'labels': self.request.get(u'labels'),
                 u'machineType': self.request.get(u'machineType'),
                 u'minCpuPlatform': self.request.get(u'minCpuPlatform'),
                 u'metadata': self.request.get(u'metadata'),

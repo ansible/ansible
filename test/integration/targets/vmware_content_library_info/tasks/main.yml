@@ -4,6 +4,14 @@
 
 - when: vcsim is not defined
   block:
+
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+        setup_datastore: true
+        setup_content_library: true
+
     # Get List of Content Libraries
     - name: Get List of Content Libraries
       vmware_content_library_info:
@@ -13,6 +21,7 @@
         validate_certs: false
       register: content_library_info
 
+    - debug: var=content_library_info
     - set_fact: content_library="{{ content_library_info['content_libs'][0] }}"
 
     # Get Details of content library
@@ -23,9 +32,9 @@
         password: '{{ vcenter_password }}'
         library_id: '{{ content_library }}'
         validate_certs: false
-      register: content_lib_facts
+      register: content_lib_info
 
     - name: Check Content Library details
       assert:
         that:
-          - '{{ content_lib_facts.content_lib_details[0].library_id == content_library }}'
+          - '{{ content_lib_info.content_lib_details[0].library_id == content_library }}'

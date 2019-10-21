@@ -26,25 +26,25 @@
       - result is failed
       - 'result.msg == "missing required arguments: size"'
 
-- name: test create volume with check mode
+- name: test create Volume with check mode
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
     size: 10
     location: "fsn1"
   register: result
   check_mode: yes
-- name: verify create volume with check mode result
+- name: verify create Volume with check mode result
   assert:
     that:
       - result is changed
 
-- name: test create volume
+- name: test create Volume
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
     size: 10
     location: "fsn1"
   register: volume
-- name: verify test create volume
+- name: verify test create Volume
   assert:
     that:
       - volume is changed
@@ -52,31 +52,32 @@
       - volume.hcloud_volume.location == "fsn1"
       - volume.hcloud_volume.size == 10
       - volume.hcloud_volume.server != "{{hcloud_server_name}}"
+      - volume.hcloud_volume.linux_device is defined
 
-- name: test create volume idempotence
+- name: test create Volume idempotence
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
     size: 10
     location: "fsn1"
   register: volume
-- name: verify test create volume
+- name: verify test create Volume
   assert:
     that:
       - volume is not changed
 
-- name: test attach volume with checkmode
+- name: test attach Volume with checkmode
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
     server: "{{hcloud_server_name}}"
   check_mode: yes
   register: volume
-- name: verify test attach volume with checkmode
+- name: verify test attach Volume with checkmode
   assert:
     that:
       - volume is changed
       - volume.hcloud_volume.server != "{{hcloud_server_name}}"
 
-- name: test attach volume
+- name: test attach Volume
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
     server: "{{hcloud_server_name}}"
@@ -87,29 +88,29 @@
       - volume is changed
       - volume.hcloud_volume.server == "{{hcloud_server_name}}"
 
-- name: test attach volume idempotence
+- name: test attach Volume idempotence
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
     server: "{{hcloud_server_name}}"
   register: volume
-- name: verify attach volume idempotence
+- name: verify attach Volume idempotence
   assert:
     that:
       - volume is not changed
       - volume.hcloud_volume.server == "{{hcloud_server_name}}"
 
-- name: test detach volume with checkmode
+- name: test detach Volume with checkmode
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
   check_mode: yes
   register: volume
-- name: verify detach volume with checkmode
+- name: verify detach Volume with checkmode
   assert:
     that:
       - volume is changed
       - volume.hcloud_volume.server == "{{hcloud_server_name}}"
 
-- name: test detach volume
+- name: test detach Volume
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
   register: volume
@@ -120,57 +121,112 @@
       - volume.hcloud_volume.location == "fsn1"
       - volume.hcloud_volume.server != "{{hcloud_server_name}}"
 
-- name: test update volume label
+- name: test update Volume label
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
     labels:
       key: value
   register: volume
-- name: verify test update volume lable
+- name: verify test update Volume label
   assert:
     that:
       - volume is changed
       - volume.hcloud_volume.labels.key == "value"
 
-- name: test update volume label with the same label
+- name: test update Volume label with the same label
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
     labels:
       key: value
   register: volume
-- name: verify test update volume lable with the same label
+- name: verify test update Volume lable with the same label
   assert:
     that:
       - volume is not changed
 
-- name: test increase volume size
+- name: test increase Volume size
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
     size: 11
   register: volume
-- name: verify test increase volume size
+- name: verify test increase Volume size
   assert:
     that:
       - volume is changed
       - volume.hcloud_volume.size == 11
 
-- name: test decreace volume size
+- name: test decreace Volume size
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
     size: 10
   register: volume
-- name: verify test decreace volume size
+- name: verify test decreace Volume size
   assert:
     that:
       - volume is not changed
       - volume.hcloud_volume.size == 11
 
-- name: test delete volume
+- name: test update Volume delete protection
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    delete_protection: true
+  register: volume
+- name: verify test update Volume delete protection
+  assert:
+    that:
+      - volume is changed
+      - volume.hcloud_volume.delete_protection is sameas true
+
+- name: test update Volume delete protection idempotency
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    delete_protection: true
+  register: volume
+- name: verify test update Volume delete protection idempotency
+  assert:
+    that:
+      - volume is not changed
+      - volume.hcloud_volume.delete_protection is sameas true
+
+- name: test Volume without delete protection set to be idempotent
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+  register: volume
+- name: verify test Volume without delete protection set to be idempotent
+  assert:
+    that:
+      - volume is not changed
+      - volume.hcloud_volume.delete_protection is sameas true
+
+- name: test delete Volume fails if it is protected
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    state: absent
+  ignore_errors: yes
+  register: result
+- name: verify delete Volume fails if it is protected
+  assert:
+    that:
+      - result is failed
+      - 'result.msg == "volume deletion is protected"'
+
+- name: test update Volume delete protection
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    delete_protection: false
+  register: volume
+- name: verify test update Volume delete protection
+  assert:
+    that:
+      - volume is changed
+      - volume.hcloud_volume.delete_protection is sameas false
+
+- name: test delete Volume
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
     state: absent
   register: result
-- name: verify delete volume
+- name: verify delete Volume
   assert:
     that:
       - result is success

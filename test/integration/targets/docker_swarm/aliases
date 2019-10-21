@@ -1,4 +1,5 @@
 shippable/posix/group2
+disabled  # See: https://github.com/ansible/ansible/issues/61815
 skip/osx
 skip/freebsd
 destructive
@@ -8,4 +9,3 @@ skip/docker  # The tests sometimes make docker daemon unstable; hence,
              # after finishing the tests to minimize potential effects
              # on other tests.
 needs/root
-unstable

@@ -145,6 +145,8 @@ options:
     managed_disk_type:
         description:
             - Managed OS disk type.
+            - Create OS disk with managed disk if defined.
+            - If not defined, the OS disk will be created with virtual hard disk (VHD).
         choices:
             - Standard_LRS
             - StandardSSD_LRS
@@ -176,21 +178,27 @@ options:
         default: Linux
     data_disks:
         description:
-            - List of data disks.
+            - Describes list of data disks.
+            - Use M(azure_rm_mangeddisk) to manage the specific disk.
         version_added: "2.4"
         suboptions:
             lun:
                 description:
                     - The logical unit number for data disk.
-                default: 0
+                    - This value is used to identify data disks within the VM and therefore must be unique for each data disk attached to a VM.
+                required: true
                 version_added: "2.4"
             disk_size_gb:
                 description:
                     - The initial disk size in GB for blank data disks.
+                    - This value cannot be larger than C(1023) GB.
+                    - Size can be changed only when the virtual machine is deallocated.
+                    - Not sure when I(managed_disk_id) defined.
                 version_added: "2.4"
             managed_disk_type:
                 description:
                     - Managed data disk type.
+                    - Only used when OS disk created with managed disk.
                 choices:
                     - Standard_LRS
                     - StandardSSD_LRS
@@ -199,19 +207,28 @@ options:
             storage_account_name:
                 description:
                     - Name of an existing storage account that supports creation of VHD blobs.
-                    - If not specified for a new data disk, a new storage account named <vm name>01 will be created using storage type C(Standard_LRS).
+                    - If not specified for a new VM, a new storage account started with I(name) will be created using storage type C(Standard_LRS).
+                    - Only used when OS disk created with virtual hard disk (VHD).
+                    - Used when I(managed_disk_type) not defined.
+                    - Cannot be updated unless I(lun) updated.
                 version_added: "2.4"
             storage_container_name:
                 description:
                     - Name of the container to use within the storage account to store VHD blobs.
-                    - If not specified, a default container will created.
+                    - If no name is specified a default container named 'vhds' will created.
+                    - Only used when OS disk created with virtual hard disk (VHD).
+                    - Used when I(managed_disk_type) not defined.
+                    - Cannot be updated unless I(lun) updated.
                 default: vhds
                 version_added: "2.4"
             storage_blob_name:
                 description:
                     - Name of the storage blob used to hold the OS disk image of the VM.
                     - Must end with '.vhd'.
-                    - If not specified, defaults to the VM name + '.vhd'.
+                    - Default to the I(name) + timestamp + I(lun) + '.vhd'.
+                    - Only used when OS disk created with virtual hard disk (VHD).
+                    - Used when I(managed_disk_type) not defined.
+                    - Cannot be updated unless I(lun) updated.
                 version_added: "2.4"
             caching:
                 description:
@@ -445,8 +462,7 @@ EXAMPLES = '''
       version: latest
     data_disks:
       - lun: 0
-        disk_size_gb: 64
-        managed_disk_type: Standard_LRS
+        managed_disk_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDisk"
       - lun: 1
         disk_size_gb: 128
         managed_disk_type: Premium_LRS
@@ -511,7 +527,7 @@ EXAMPLES = '''
     image:
       id: '{{image_id}}'
 
-- name: Create VM with spcified OS disk size
+- name: Create VM with specified OS disk size
   azure_rm_virtualmachine:
     resource_group: myResourceGroup
     name: big-os-disk
@@ -1188,10 +1204,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     self.log("Create virtual machine {0}".format(self.name))
                     self.results['actions'].append('Created VM {0}'.format(self.name))
 
-                    # Validate parameters
-                    if not self.admin_username:
-                        self.fail("Parameter error: admin_username required when creating a virtual machine.")
-
                     if self.os_type == 'Linux':
                         if disable_ssh_password and not self.ssh_public_keys:
                             self.fail("Parameter error: ssh_public_keys required when disabling SSH password.")
@@ -1256,13 +1268,16 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if self.boot_diagnostics_present and self.boot_diagnostics['enabled']:
                         boot_diag_storage_account = self.get_boot_diagnostics_storage_account()
 
+                    os_profile = None
+                    if self.admin_username:
+                        os_profile = self.compute_models.OSProfile(
+                            admin_username=self.admin_username,
+                            computer_name=self.short_hostname,
+                        )
                     vm_resource = self.compute_models.VirtualMachine(
                         location=self.location,
                         tags=self.tags,
-                        os_profile=self.compute_models.OSProfile(
-                            admin_username=self.admin_username,
-                            computer_name=self.short_hostname,
-                        ),
+                        os_profile=os_profile,
                         hardware_profile=self.compute_models.HardwareProfile(
                             vm_size=self.vm_size
                         ),
@@ -1338,7 +1353,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         # Azure SDK (erroneously?) wants native string type for this
                         vm_resource.os_profile.custom_data = to_native(base64.b64encode(to_bytes(self.custom_data)))
 
-                    if self.os_type == 'Linux':
+                    if self.os_type == 'Linux' and os_profile:
                         vm_resource.os_profile.linux_configuration = self.compute_models.LinuxConfiguration(
                             disable_password_authentication=disable_ssh_password
                         )
@@ -1868,7 +1883,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         return True
 
     def delete_vm_storage(self, vhd_uris):
-        # FUTURE: figure out a cloud_env indepdendent way to delete these
+        # FUTURE: figure out a cloud_env independent way to delete these
         for uri in vhd_uris:
             self.log("Extracting info from blob uri '{0}'".format(uri))
             try:

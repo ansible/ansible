@@ -384,7 +384,7 @@ class VMwareLocalRoleManager(PyVmomi):
                         details=no_permission.msg
                     )
         else:
-            results['msg'] = "Role priviledges are properly configured"
+            results['msg'] = "Role privileges are properly configured"
 
         self.module.exit_json(changed=changed, result=results)
 

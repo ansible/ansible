@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_system_dns
 short_description: Configure DNS in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify system feature and dns category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,64 +41,97 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     system_dns:
         description:
             - Configure DNS.
         default: null
+        type: dict
         suboptions:
-            cache-notfound-responses:
+            cache_notfound_responses:
                 description:
                     - Enable/disable response from the DNS server when a record is not in cache.
+                type: str
                 choices:
                     - disable
                     - enable
-            dns-cache-limit:
+            dns_cache_limit:
                 description:
                     - Maximum number of records in the DNS cache.
-            dns-cache-ttl:
+                type: int
+            dns_cache_ttl:
                 description:
                     - Duration in seconds that the DNS cache retains information.
+                type: int
             domain:
                 description:
-                    - Domain name suffix for the IP addresses of the DNS server.
-            ip6-primary:
+                    - Search suffix list for hostname lookup.
+                type: list
+                suboptions:
+                    domain:
+                        description:
+                            - DNS search domain list separated by space (maximum 8 domains)
+                        required: true
+                        type: str
+            ip6_primary:
                 description:
                     - Primary DNS server IPv6 address.
-            ip6-secondary:
+                type: str
+            ip6_secondary:
                 description:
                     - Secondary DNS server IPv6 address.
+                type: str
             primary:
                 description:
-                    - Primary DNS server IP address, default is FortiGuard server at 208.81.112.53.
+                    - Primary DNS server IP address.
+                type: str
+            retry:
+                description:
+                    - Number of times to retry (0 - 5).
+                type: int
             secondary:
                 description:
-                    - Secondary DNS server IP address, default is FortiGuard server at 208.81.112.52.
-            source-ip:
+                    - Secondary DNS server IP address.
+                type: str
+            source_ip:
                 description:
                     - IP address used by the DNS server as its source IP.
+                type: str
+            timeout:
+                description:
+                    - DNS query timeout interval in seconds (1 - 10).
+                type: int
 '''
 
 EXAMPLES = '''
@@ -111,6 +141,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure DNS.
     fortios_system_dns:
@@ -120,15 +151,19 @@ EXAMPLES = '''
       vdom:  "{{ vdom }}"
       https: "False"
       system_dns:
-        cache-notfound-responses: "disable"
-        dns-cache-limit: "4"
-        dns-cache-ttl: "5"
-        domain: "<your_own_value>"
-        ip6-primary: "<your_own_value>"
-        ip6-secondary: "<your_own_value>"
+        cache_notfound_responses: "disable"
+        dns_cache_limit: "4"
+        dns_cache_ttl: "5"
+        domain:
+         -
+            domain: "<your_own_value>"
+        ip6_primary: "<your_own_value>"
+        ip6_secondary: "<your_own_value>"
         primary: "<your_own_value>"
+        retry: "11"
         secondary: "<your_own_value>"
-        source-ip: "84.230.14.43"
+        source_ip: "84.230.14.43"
+        timeout: "14"
 '''
 
 RETURN = '''
@@ -191,14 +226,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -206,13 +243,14 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_system_dns_data(json):
-    option_list = ['cache-notfound-responses', 'dns-cache-limit', 'dns-cache-ttl',
-                   'domain', 'ip6-primary', 'ip6-secondary',
-                   'primary', 'secondary', 'source-ip']
+    option_list = ['cache_notfound_responses', 'dns_cache_limit', 'dns_cache_ttl',
+                   'domain', 'ip6_primary', 'ip6_secondary',
+                   'primary', 'retry', 'secondary',
+                   'source_ip', 'timeout']
     dictionary = {}
 
     for attribute in option_list:
@@ -222,17 +260,15 @@ def filter_system_dns_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
@@ -240,44 +276,55 @@ def flatten_multilists_attributes(data):
 def system_dns(data, fos):
     vdom = data['vdom']
     system_dns_data = data['system_dns']
-    flattened_data = flatten_multilists_attributes(system_dns_data)
-    filtered_data = filter_system_dns_data(flattened_data)
+    filtered_data = underscore_to_hyphen(filter_system_dns_data(system_dns_data))
+
     return fos.set('system',
                    'dns',
                    data=filtered_data,
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_system(data, fos):
-    login(data)
 
     if data['system_dns']:
         resp = system_dns(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "system_dns": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "cache-notfound-responses": {"required": False, "type": "str",
+                "cache_notfound_responses": {"required": False, "type": "str",
                                              "choices": ["disable", "enable"]},
-                "dns-cache-limit": {"required": False, "type": "int"},
-                "dns-cache-ttl": {"required": False, "type": "int"},
-                "domain": {"required": False, "type": "str"},
-                "ip6-primary": {"required": False, "type": "str"},
-                "ip6-secondary": {"required": False, "type": "str"},
+                "dns_cache_limit": {"required": False, "type": "int"},
+                "dns_cache_ttl": {"required": False, "type": "int"},
+                "domain": {"required": False, "type": "list",
+                           "options": {
+                               "domain": {"required": True, "type": "str"}
+                           }},
+                "ip6_primary": {"required": False, "type": "str"},
+                "ip6_secondary": {"required": False, "type": "str"},
                 "primary": {"required": False, "type": "str"},
+                "retry": {"required": False, "type": "int"},
                 "secondary": {"required": False, "type": "str"},
-                "source-ip": {"required": False, "type": "str"}
+                "source_ip": {"required": False, "type": "str"},
+                "timeout": {"required": False, "type": "int"}
 
             }
         }
@@ -285,15 +332,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_system(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_system(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_system(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

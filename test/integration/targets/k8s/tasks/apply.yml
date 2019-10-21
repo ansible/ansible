@@ -55,6 +55,27 @@
         that:
           - k8s_configmap_2 is not changed
 
+    - name: add same configmap again with check mode on
+      k8s:
+        definition:
+          kind: ConfigMap
+          apiVersion: v1
+          metadata:
+            name: "apply-configmap"
+            namespace: "{{ apply_namespace }}"
+          data:
+            one: "1"
+            two: "2"
+            three: "3"
+        apply: yes
+      check_mode: yes
+      register: k8s_configmap_check
+
+    - name: check nothing changed
+      assert:
+        that:
+          - k8s_configmap_check is not changed
+
     - name: add same configmap again but using name and namespace args
       k8s:
         name: "apply-configmap"

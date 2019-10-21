@@ -152,6 +152,7 @@ options:
       - Specifies the name of service environment or the hostname of the BIG-IP that
         the application will be deployed to.
       - When creating a new application, this parameter is required.
+    type: str
   add_analytics:
     description:
       - Collects statistics of the BIG-IP that the application is deployed to.

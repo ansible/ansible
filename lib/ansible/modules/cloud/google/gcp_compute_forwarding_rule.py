@@ -35,7 +35,7 @@ description:
   virtual machines to forward a packet to if it matches the given [IPAddress, IPProtocol,
   portRange] tuple.
 short_description: Creates a GCP ForwardingRule
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -187,7 +187,7 @@ options:
       }}"'
     required: false
     type: dict
-    version_added: 2.7
+    version_added: '2.7'
   all_ports:
     description:
     - For internal TCP/UDP load balancing (i.e. load balancing scheme is INTERNAL
@@ -196,7 +196,7 @@ options:
       Used with backend service. Cannot be set if port or portRange are set.
     required: false
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
   network_tier:
     description:
     - 'The networking tier used for configuring this address. This field can take
@@ -205,7 +205,7 @@ options:
     - 'Some valid choices include: "PREMIUM", "STANDARD"'
     required: false
     type: str
-    version_added: 2.8
+    version_added: '2.8'
   service_label:
     description:
     - An optional prefix to the service name for this Forwarding Rule.
@@ -218,17 +218,63 @@ options:
     - This field is only used for INTERNAL load balancing.
     required: false
     type: str
-    version_added: 2.8
+    version_added: '2.8'
   region:
     description:
     - A reference to the region where the regional forwarding rule resides.
     - This field is not applicable to global forwarding rules.
     required: true
     type: str
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/forwardingRule)'
 - 'Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/network/forwarding-rules)'
+- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''

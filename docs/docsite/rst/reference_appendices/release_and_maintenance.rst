@@ -15,15 +15,15 @@ Ansible is developed and released on a flexible 4 months release cycle.
 This cycle can be extended in order to allow for larger changes to be properly
 implemented and tested before a new release is made available.
 
-Ansible has a graduated support structure that extends to three major releases.
+Ansible has a graduated maintenance structure that extends to three major releases.
 For more information, read about the :ref:`development_and_stable_version_maintenance_workflow` or
-see the chart in :ref:`release_schedule` for the degrees to which current releases are supported.
+see the chart in :ref:`release_schedule` for the degrees to which current releases are maintained.
 
-If you are using a release of Ansible that is no longer supported, we strongly
+If you are using a release of Ansible that is no longer maintained, we strongly
 encourage you to upgrade as soon as possible in order to benefit from the
 latest features and security fixes.
 
-Older, unsupported versions of Ansible can contain unfixed security
+Older, unmaintained versions of Ansible can contain unfixed security
 vulnerabilities (*CVE*).
 
 You can refer to the :ref:`porting guides<porting_guides>` for tips on updating your Ansible
@@ -39,22 +39,22 @@ This table links to the release notes for each major release. These release note
 Ansible Release                     Status
 ==============================      =================================================
 devel                               In development (2.9 unreleased, trunk)
-`2.8 Release Notes`_                Supported (security **and** general bug fixes)
-`2.7 Release Notes`_                Supported (security **and** critical bug fixes)
-`2.6 Release Notes`_                Supported (security fixes)
-`2.5 Release Notes`_                Unsupported (end of life)
-`2.4 Release Notes`_                Unsupported (end of life)
-`2.3 Release Notes`_                Unsupported (end of life)
-`2.2 Release Notes`_                Unsupported (end of life)
-`2.1 Release Notes`_                Unsupported (end of life)
-`2.0 Release Notes`_                Unsupported (end of life)
-`1.9 Release Notes`_                Unsupported (end of life)
-<1.9                                Unsupported (end of life)
+`2.8 Release Notes`_                Maintained (security **and** general bug fixes)
+`2.7 Release Notes`_                Maintained (security **and** critical bug fixes)
+`2.6 Release Notes`_                Maintained (security fixes)
+`2.5 Release Notes`_                Unmaintained (end of life)
+`2.4 Release Notes`_                Unmaintained (end of life)
+`2.3 Release Notes`_                Unmaintained (end of life)
+`2.2 Release Notes`_                Unmaintained (end of life)
+`2.1 Release Notes`_                Unmaintained (end of life)
+`2.0 Release Notes`_                Unmaintained (end of life)
+`1.9 Release Notes`_                Unmaintained (end of life)
+<1.9                                Unmaintained (end of life)
 ==============================      =================================================
 
 You can download the releases from `<https://releases.ansible.com/ansible/>`_.
 
-.. note:: Ansible support lasts for 3 releases.  Thus the latest Ansible release receives
+.. note:: Ansible maintenance continues for 3 releases.  Thus the latest Ansible release receives
     security and general bug fixes when it is first released, security and critical bug fixes when
     the next Ansible version is released, and **only** security fixes once the follow on to that version is released.
 
@@ -85,17 +85,17 @@ Development and stable version maintenance workflow
 The Ansible community develops and maintains Ansible on GitHub_.
 
 New modules, plugins, features and bugfixes will always be integrated in what will become the next
-major version of Ansible.  This work is tracked on the ``devel`` git branch.
+major version of Ansible. This work is tracked on the ``devel`` git branch.
 
 Ansible provides bugfixes and security improvements for the most recent major release. The previous
 major release will only receive fixes for security issues and critical bugs. Ansible only applies
 security fixes to releases which are two releases old. This work is tracked on the
 ``stable-<version>`` git branches.
 
-The fixes that land in supported stable branches will eventually be released
+The fixes that land in maintained stable branches will eventually be released
 as a new version when necessary.
 
-Note that while there are no guarantees for providing fixes for unsupported
+Note that while there are no guarantees for providing fixes for Unmaintained
 releases of Ansible, there can sometimes be exceptions for critical issues.
 
 .. _GitHub: https://github.com/ansible/ansible

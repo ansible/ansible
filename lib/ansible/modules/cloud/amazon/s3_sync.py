@@ -31,7 +31,6 @@ options:
   mode:
     description:
     - sync direction.
-    required: true
     default: 'push'
     choices: [ push ]
   file_change_strategy:
@@ -86,7 +85,7 @@ options:
     description:
     - This is a string.
     - Cache-Control header set on uploaded objects.
-    - Directives are separated by commmas.
+    - Directives are separated by commas.
     required: false
     version_added: "2.4"
   delete:
@@ -131,7 +130,7 @@ EXAMPLES = '''
 
 RETURN = '''
 filelist_initial:
-  description: file listing (dicts) from inital globbing
+  description: file listing (dicts) from initial globbing
   returned: always
   type: list
   sample: [{

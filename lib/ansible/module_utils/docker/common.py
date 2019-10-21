@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 import os
 import platform
 import re
@@ -554,16 +558,16 @@ class AnsibleDockerClient(Client):
 
         return result
 
-    def get_network(self, name=None, id=None):
+    def get_network(self, name=None, network_id=None):
         '''
         Lookup a network and return the inspection results.
         '''
-        if name is None and id is None:
+        if name is None and network_id is None:
             return None
 
         result = None
 
-        if id is None:
+        if network_id is None:
             try:
                 for network in self.networks():
                     self.log("testing network: %s" % (network['Name']))
@@ -579,12 +583,12 @@ class AnsibleDockerClient(Client):
                 self.fail("Error retrieving network list: %s" % exc)
 
         if result is not None:
-            id = result['Id']
+            network_id = result['Id']
 
-        if id is not None:
+        if network_id is not None:
             try:
-                self.log("Inspecting network Id %s" % id)
-                result = self.inspect_network(id)
+                self.log("Inspecting network Id %s" % network_id)
+                result = self.inspect_network(network_id)
                 self.log("Completed network inspection")
             except NotFound as dummy:
                 return None
@@ -602,7 +606,7 @@ class AnsibleDockerClient(Client):
 
         self.log("Find image %s:%s" % (name, tag))
         images = self._image_lookup(name, tag)
-        if len(images) == 0:
+        if not images:
             # In API <= 1.20 seeing 'docker.io/<name>' as the name of images pulled from docker hub
             registry, repo_name = auth.resolve_repository_name(name)
             if registry == 'docker.io':
@@ -610,12 +614,12 @@ class AnsibleDockerClient(Client):
                 # isn't found in some cases (#41509)
                 self.log("Check for docker.io image: %s" % repo_name)
                 images = self._image_lookup(repo_name, tag)
-                if len(images) == 0 and repo_name.startswith('library/'):
+                if not images and repo_name.startswith('library/'):
                     # Sometimes library/xxx images are not found
                     lookup = repo_name[len('library/'):]
                     self.log("Check for docker.io image: %s" % lookup)
                     images = self._image_lookup(lookup, tag)
-                if len(images) == 0:
+                if not images:
                     # Last case: if docker.io wasn't there, it can be that
                     # the image wasn't found either (#15586)
                     lookup = "%s/%s" % (registry, repo_name)
@@ -635,18 +639,18 @@ class AnsibleDockerClient(Client):
         self.log("Image %s:%s not found." % (name, tag))
         return None
 
-    def find_image_by_id(self, id):
+    def find_image_by_id(self, image_id):
         '''
         Lookup an image (by ID) and return the inspection results.
         '''
-        if not id:
+        if not image_id:
             return None
 
-        self.log("Find image %s (by ID)" % id)
+        self.log("Find image %s (by ID)" % image_id)
         try:
-            inspection = self.inspect_image(id)
+            inspection = self.inspect_image(image_id)
         except Exception as exc:
-            self.fail("Error inspecting image ID %s - %s" % (id, str(exc)))
+            self.fail("Error inspecting image ID %s - %s" % (image_id, str(exc)))
         return inspection
 
     def _image_lookup(self, name, tag):
@@ -721,7 +725,7 @@ class AnsibleDockerClient(Client):
         elif isinstance(result, string_types) and result:
             self.module.warn('Docker warning: {0}'.format(result))
 
-    def inspect_distribution(self, image):
+    def inspect_distribution(self, image, **kwargs):
         '''
         Get image digest by directly calling the Docker API when running Docker SDK < 4.0.0
         since prior versions did not support accessing private repositories.
@@ -734,7 +738,7 @@ class AnsibleDockerClient(Client):
                     self._url('/distribution/{0}/json', image),
                     headers={'X-Registry-Auth': header}
                 ), json=True)
-        return super(AnsibleDockerClient, self).inspect_distribution(image)
+        return super(AnsibleDockerClient, self).inspect_distribution(image, **kwargs)
 
 
 def compare_dict_allow_more_present(av, bv):
@@ -749,22 +753,22 @@ def compare_dict_allow_more_present(av, bv):
     return True
 
 
-def compare_generic(a, b, method, type):
+def compare_generic(a, b, method, datatype):
     '''
-    Compare values a and b as described by method and type.
+    Compare values a and b as described by method and datatype.
 
     Returns ``True`` if the values compare equal, and ``False`` if not.
 
     ``a`` is usually the module's parameter, while ``b`` is a property
     of the current object. ``a`` must not be ``None`` (except for
-    ``type == 'value'``).
+    ``datatype == 'value'``).
 
     Valid values for ``method`` are:
     - ``ignore`` (always compare as equal);
     - ``strict`` (only compare if really equal)
     - ``allow_more_present`` (allow b to have elements which a does not have).
 
-    Valid values for ``type`` are:
+    Valid values for ``datatype`` are:
     - ``value``: for simple values (strings, numbers, ...);
     - ``list``: for ``list``s or ``tuple``s where order matters;
     - ``set``: for ``list``s, ``tuple``s or ``set``s where order does not
@@ -783,7 +787,7 @@ def compare_generic(a, b, method, type):
             return True
         # Otherwise, not equal for values, and equal
         # if the other is empty for set/list/dict
-        if type == 'value':
+        if datatype == 'value':
             return False
         # For allow_more_present, allow a to be None
         if method == 'allow_more_present' and a is None:
@@ -791,9 +795,9 @@ def compare_generic(a, b, method, type):
         # Otherwise, the iterable object which is not None must have length 0
         return len(b if a is None else a) == 0
     # Do proper comparison (both objects not None)
-    if type == 'value':
+    if datatype == 'value':
         return a == b
-    elif type == 'list':
+    elif datatype == 'list':
         if method == 'strict':
             return a == b
         else:
@@ -805,19 +809,19 @@ def compare_generic(a, b, method, type):
                     return False
                 i += 1
             return True
-    elif type == 'dict':
+    elif datatype == 'dict':
         if method == 'strict':
             return a == b
         else:
             return compare_dict_allow_more_present(a, b)
-    elif type == 'set':
+    elif datatype == 'set':
         set_a = set(a)
         set_b = set(b)
         if method == 'strict':
             return set_a == set_b
         else:
             return set_b >= set_a
-    elif type == 'set(dict)':
+    elif datatype == 'set(dict)':
         for av in a:
             found = False
             for bv in b:
@@ -1005,3 +1009,10 @@ def parse_healthcheck(healthcheck):
         return None, True
 
     return result, False
+
+
+def omit_none_from_dict(d):
+    """
+    Return a copy of the dictionary with all keys with value None omitted.
+    """
+    return dict((k, v) for (k, v) in d.items() if v is not None)

@@ -299,10 +299,10 @@
     state: present
   register: dnf_result
 
-- name: check foo with rpm
-  command: rpm -q foo
+- name: check dinginessentail with rpm
+  command: rpm -q dinginessentail
   failed_when: False
-  register: foo_result
+  register: dinginessentail_result
 
 - name: verify installation of the group
   assert:
@@ -310,7 +310,7 @@
     - not dnf_result is failed
     - dnf_result is changed
     - "'results' in dnf_result"
-    - foo_result.rc == 0
+    - dinginessentail_result.rc == 0
 
 - name: install the group again
   dnf:
@@ -324,30 +324,30 @@
     - not dnf_result is changed
     - "'msg' in dnf_result"
 
-- name: verify that bar is not installed
+- name: verify that landsidescalping is not installed
   dnf:
-    name: bar
+    name: landsidescalping
     state: absent
 
 - name: install the group again but also with a package that is not yet installed
   dnf:
     name:
       - "@Custom Group"
-      - bar
+      - landsidescalping
     state: present
   register: dnf_result
 
-- name: check bar with rpm
-  command: rpm -q bar
+- name: check landsidescalping with rpm
+  command: rpm -q landsidescalping
   failed_when: False
-  register: bar_result
+  register: landsidescalping_result
 
-- name: verify bar is installed
+- name: verify landsidescalping is installed
   assert:
     that:
     - dnf_result is changed
     - "'results' in dnf_result"
-    - bar_result.rc == 0
+    - landsidescalping_result.rc == 0
 
 - name: try to install the group again, with --check to check 'changed'
   dnf:
@@ -362,9 +362,9 @@
     - not dnf_result is changed
     - "'msg' in dnf_result"
 
-- name: remove bar after test
+- name: remove landsidescalping after test
   dnf:
-    name: bar
+    name: landsidescalping
     state: absent
 
 # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
@@ -455,9 +455,9 @@
     state: latest
   register: dnf_result
 
-- name: check bar with rpm
-  command: rpm -q bar
-  register: bar_result
+- name: check landsidescalping with rpm
+  command: rpm -q landsidescalping
+  register: landsidescalping_result
 
 - name: verify installation of the environment
   assert:
@@ -465,12 +465,12 @@
     - not dnf_result is failed
     - dnf_result is changed
     - "'results' in dnf_result"
-    - bar_result.rc == 0
+    - landsidescalping_result.rc == 0
 
 # Fedora 28 (DNF 2) does not support this, just remove the package itself
-- name: remove bar package on Fedora 28
+- name: remove landsidescalping package on Fedora 28
   dnf:
-    name: bar
+    name: landsidescalping
     state: absent
   when: ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28
 

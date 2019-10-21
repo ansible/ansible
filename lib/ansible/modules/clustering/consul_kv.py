@@ -75,7 +75,7 @@ options:
         type: str
     token:
         description:
-          - The token key indentifying an ACL rule set that controls access to
+          - The token key identifying an ACL rule set that controls access to
             the key value pair
         type: str
     cas:

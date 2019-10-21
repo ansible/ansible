@@ -36,9 +36,15 @@ options:
      type: str
    uuid:
      description:
-     - UUID of the instance to gather facts if known, this is VMware's unique identifier.
+     - UUID of the instance to gather info if known, this is VMware's unique identifier.
      - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
      type: str
+   use_instance_uuid:
+     description:
+     - Whether to use the VMware instance UUID rather than the BIOS UUID.
+     default: False
+     type: bool
+     version_added: '2.10'
    moid:
      description:
      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
@@ -77,12 +83,13 @@ options:
      description:
      - The datacenter name to which virtual machine belongs to.
      type: str
-   gather_network_facts:
+   gather_network_info:
      description:
      - If set to C(True), return settings of all network adapters, other parameters are ignored.
      - If set to C(False), will add, reconfigure or remove network adapters according to the parameters in C(networks).
      type: bool
      default: False
+     aliases: [ gather_network_facts ]
    networks:
      type: list
      description:
@@ -124,7 +131,7 @@ EXAMPLES = '''
     datacenter: "{{ datacenter_name }}"
     validate_certs: no
     name: test-vm
-    gather_network_facts: false
+    gather_network_info: false
     networks:
       - name: "VM Network"
         state: new
@@ -138,7 +145,7 @@ EXAMPLES = '''
       - state: absent
         mac: "00:50:56:44:55:77"
   delegate_to: localhost
-  register: network_facts
+  register: network_info
 
 - name: Change network adapter settings of virtual machine using MoID
   vmware_guest_network:
@@ -148,7 +155,22 @@ EXAMPLES = '''
     datacenter: "{{ datacenter_name }}"
     validate_certs: no
     moid: vm-42
-    gather_network_facts: false
+    gather_network_info: false
+    networks:
+      - state: absent
+        mac: "00:50:56:44:55:77"
+  delegate_to: localhost
+
+- name: Change network adapter settings of virtual machine using instance UUID
+  vmware_guest_network:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    uuid: 5003b4f5-c705-2f37-ccf6-dfc0b40afeb7
+    use_instance_uuid: True
+    gather_network_info: false
     networks:
       - state: absent
         mac: "00:50:56:44:55:77"
@@ -270,10 +292,10 @@ class PyVmomiHelper(PyVmomi):
 
         return nic
 
-    def get_network_facts(self, vm_obj):
-        network_facts = dict()
+    def get_network_info(self, vm_obj):
+        network_info = dict()
         if vm_obj is None:
-            return network_facts
+            return network_info
 
         nic_index = 0
         for nic in vm_obj.config.hardware.device:
@@ -291,7 +313,7 @@ class PyVmomiHelper(PyVmomi):
             elif isinstance(nic, vim.vm.device.VirtualSriovEthernetCard):
                 nic_type = 'SriovEthernetCard'
             if nic_type is not None:
-                network_facts[nic_index] = dict(
+                network_info[nic_index] = dict(
                     device_type=nic_type,
                     label=nic.deviceInfo.label,
                     name=nic.deviceInfo.summary,
@@ -304,7 +326,7 @@ class PyVmomiHelper(PyVmomi):
                 )
                 nic_index += 1
 
-        return network_facts
+        return network_info
 
     def sanitize_network_params(self):
         network_list = []
@@ -422,10 +444,10 @@ class PyVmomiHelper(PyVmomi):
 
     def reconfigure_vm_network(self, vm_obj):
         network_list = self.sanitize_network_params()
-        # gather network adapter facts only
-        if (self.params['gather_network_facts'] is not None and self.params['gather_network_facts']) or len(network_list) == 0:
-            results = {'changed': False, 'failed': False, 'network_data': self.get_network_facts(vm_obj)}
-        # do reconfigure then gather facts
+        # gather network adapter info only
+        if (self.params['gather_network_info'] is not None and self.params['gather_network_info']) or len(network_list) == 0:
+            results = {'changed': False, 'failed': False, 'network_data': self.get_network_info(vm_obj)}
+        # do reconfigure then gather info
         else:
             self.get_network_config_spec(vm_obj, network_list)
             try:
@@ -441,8 +463,8 @@ class PyVmomiHelper(PyVmomi):
             if task.info.state == 'error':
                 results = {'changed': self.change_detected, 'failed': True, 'msg': task.info.error.msg}
             else:
-                network_facts = self.get_network_facts(vm_obj)
-                results = {'changed': self.change_detected, 'failed': False, 'network_data': network_facts}
+                network_info = self.get_network_info(vm_obj)
+                results = {'changed': self.change_detected, 'failed': False, 'network_data': network_info}
 
         return results
 
@@ -452,12 +474,13 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         moid=dict(type='str'),
         folder=dict(type='str'),
         datacenter=dict(type='str', default='ha-datacenter'),
         esxi_hostname=dict(type='str'),
         cluster=dict(type='str'),
-        gather_network_facts=dict(type='bool', default=False),
+        gather_network_info=dict(type='bool', default=False, aliases=['gather_network_facts']),
         networks=dict(type='list', default=[])
     )
 

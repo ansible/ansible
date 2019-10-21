@@ -438,3 +438,19 @@
   assert:
     that:
     - add_firewall_rule_with_var_expand_path.changed == false
+- name: Add firewall rule for application group
+  win_firewall_rule:
+    name: Rule for application group
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    group: application
+  register: add_firewall_rule_with_group
+
+- name: Check that creating firewall rule for application group succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_group.changed == true

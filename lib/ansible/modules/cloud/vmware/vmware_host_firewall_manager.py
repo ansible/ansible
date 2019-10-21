@@ -317,7 +317,7 @@ class VmwareFirewallManager(PyVmomi):
                                                   " rule set : %s" % (rule_name,
                                                                       to_native(host_config_fault.msg)))
                     except vim.fault.RuntimeFault as runtime_fault:
-                        self.module.fail_json(msg="Failed to conifgure the rule set %s as a runtime"
+                        self.module.fail_json(msg="Failed to configure the rule set %s as a runtime"
                                                   " error happened while applying the reconfiguration:"
                                                   " %s" % (rule_name, to_native(runtime_fault.msg)))
 

@@ -26,7 +26,11 @@
 # Copyright (c) the OpenSSL contributors
 # For more details, search for the function _OID_MAP.
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
+
+import sys
 from distutils.version import LooseVersion
 
 try:
@@ -300,7 +304,7 @@ def select_message_digest(digest_string):
     return digest
 
 
-def write_file(module, content, default_mode=None):
+def write_file(module, content, default_mode=None, path=None):
     '''
     Writes content into destination file as securely as possible.
     Uses file arguments from module.
@@ -309,6 +313,9 @@ def write_file(module, content, default_mode=None):
     file_args = module.load_file_common_arguments(module.params)
     if file_args['mode'] is None:
         file_args['mode'] = default_mode
+    # If the path was set to override module path
+    if path is not None:
+        file_args['path'] = path
     # Create tempfile name
     tmp_fd, tmp_name = tempfile.mkstemp(prefix=b'.ansible_tmp')
     try:
@@ -1504,6 +1511,7 @@ _OID_MAP = {
 
 _OID_LOOKUP = dict()
 _NORMALIZE_NAMES = dict()
+_NORMALIZE_NAMES_SHORT = dict()
 
 for dotted, names in _OID_MAP.items():
     for name in names:
@@ -1513,6 +1521,7 @@ for dotted, names in _OID_MAP.items():
                 .format(name, dotted, _OID_LOOKUP[name])
             )
         _NORMALIZE_NAMES[name] = names[0]
+        _NORMALIZE_NAMES_SHORT[name] = names[-1]
         _OID_LOOKUP[name] = dotted
 for alias, original in [('userID', 'userId')]:
     if alias in _NORMALIZE_NAMES:
@@ -1521,15 +1530,19 @@ for alias, original in [('userID', 'userId')]:
             .format(alias, original, _OID_LOOKUP[alias])
         )
     _NORMALIZE_NAMES[alias] = original
+    _NORMALIZE_NAMES_SHORT[alias] = _NORMALIZE_NAMES_SHORT[original]
     _OID_LOOKUP[alias] = _OID_LOOKUP[original]
 
 
-def pyopenssl_normalize_name(name):
+def pyopenssl_normalize_name(name, short=False):
     nid = OpenSSL._util.lib.OBJ_txt2nid(to_bytes(name))
     if nid != 0:
         b_name = OpenSSL._util.lib.OBJ_nid2ln(nid)
         name = to_text(OpenSSL._util.ffi.string(b_name))
-    return _NORMALIZE_NAMES.get(name, name)
+    if short:
+        return _NORMALIZE_NAMES_SHORT.get(name, name)
+    else:
+        return _NORMALIZE_NAMES.get(name, name)
 
 
 # #####################################################################################
@@ -1695,11 +1708,14 @@ def cryptography_name_to_oid(name):
     return x509.oid.ObjectIdentifier(dotted)
 
 
-def cryptography_oid_to_name(oid):
+def cryptography_oid_to_name(oid, short=False):
     dotted_string = oid.dotted_string
     names = _OID_MAP.get(dotted_string)
     name = names[0] if names else oid._name
-    return _NORMALIZE_NAMES.get(name, name)
+    if short:
+        return _NORMALIZE_NAMES_SHORT.get(name, name)
+    else:
+        return _NORMALIZE_NAMES.get(name, name)
 
 
 def cryptography_get_name(name):
@@ -1723,10 +1739,10 @@ def cryptography_get_name(name):
     raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}" (potentially unsupported by cryptography backend)'.format(name))
 
 
-def _get_hex(bytes):
-    if bytes is None:
-        return bytes
-    data = binascii.hexlify(bytes)
+def _get_hex(bytesstr):
+    if bytesstr is None:
+        return bytesstr
+    data = binascii.hexlify(bytesstr)
     data = to_text(b':'.join(data[i:i + 2] for i in range(0, len(data), 2)))
     return data
 
@@ -1868,3 +1884,48 @@ def quick_is_not_prime(n):
     # TODO: maybe do some iterations of Miller-Rabin to increase confidence
     # (https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test)
     return False
+
+
+python_version = (sys.version_info[0], sys.version_info[1])
+if python_version >= (2, 7) or python_version >= (3, 1):
+    # Ansible still supports Python 2.6 on remote nodes
+    def count_bits(no):
+        no = abs(no)
+        if no == 0:
+            return 0
+        return no.bit_length()
+else:
+    # Slow, but works
+    def count_bits(no):
+        no = abs(no)
+        count = 0
+        while no > 0:
+            no >>= 1
+            count += 1
+        return count
+
+
+PEM_START = '-----BEGIN '
+PEM_END = '-----'
+PKCS8_PRIVATEKEY_NAMES = ('PRIVATE KEY', 'ENCRYPTED PRIVATE KEY')
+PKCS1_PRIVATEKEY_SUFFIX = ' PRIVATE KEY'
+
+
+def identify_private_key_format(content):
+    '''Given the contents of a private key file, identifies its format.'''
+    # See https://github.com/openssl/openssl/blob/master/crypto/pem/pem_pkey.c#L40-L85
+    # (PEM_read_bio_PrivateKey)
+    # and https://github.com/openssl/openssl/blob/master/include/openssl/pem.h#L46-L47
+    # (PEM_STRING_PKCS8, PEM_STRING_PKCS8INF)
+    try:
+        lines = content.decode('utf-8').splitlines(False)
+        if lines[0].startswith(PEM_START) and lines[0].endswith(PEM_END) and len(lines[0]) > len(PEM_START) + len(PEM_END):
+            name = lines[0][len(PEM_START):-len(PEM_END)]
+            if name in PKCS8_PRIVATEKEY_NAMES:
+                return 'pkcs8'
+            if len(name) > len(PKCS1_PRIVATEKEY_SUFFIX) and name.endswith(PKCS1_PRIVATEKEY_SUFFIX):
+                return 'pkcs1'
+            return 'unknown-pem'
+    except UnicodeDecodeError:
+        pass
+    return 'raw'

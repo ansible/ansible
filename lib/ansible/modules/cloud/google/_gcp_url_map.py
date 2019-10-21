@@ -15,9 +15,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_url_map
 version_added: "2.4"
-short_description: Create, Update or Destory a Url_Map.
+short_description: Create, Update or Destroy a Url_Map.
 description:
-    - Create, Update or Destory a Url_Map. See
+    - Create, Update or Destroy a Url_Map. See
       U(https://cloud.google.com/compute/docs/load-balancing/http/url-map) for an overview.
       More details on the Url_Map API can be found at
       U(https://cloud.google.com/compute/docs/reference/latest/urlMaps#resource).
@@ -330,7 +330,7 @@ def get_url_map(client, name, project_id=None):
     """
     Get a Url_Map from GCP.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param name: Name of the Url Map.
@@ -353,7 +353,7 @@ def create_url_map(client, params, project_id):
     """
     Create a new Url_Map.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param params: Dictionary of arguments from AnsibleModule.
@@ -379,7 +379,7 @@ def delete_url_map(client, name, project_id):
     """
     Delete a Url_Map.
 
-    :param client: An initialized GCE Compute Disover resource.
+    :param client: An initialized GCE Compute Discover resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param name: Name of the Url Map.
@@ -405,7 +405,7 @@ def update_url_map(client, url_map, params, name, project_id):
 
     If the url_map has not changed, the update will not occur.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param url_map: Name of the Url Map.

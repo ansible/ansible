@@ -89,7 +89,7 @@ Configure your installation
 
 Prepare a configuration file that describes your set-up. The file
 should be called :file:`test/integration/cloud-config-vcenter.ini` and based on
-:file:`test/integration/cloud-config-vcenter.ini.template`. For instance, if you've deployed your lab with
+:file:`test/lib/ansible_test/config/cloud-config-vcenter.ini.template`. For instance, if you've deployed your lab with
 `vmware-on-libvirt <https://github.com/goneri/vmware-on-libvirt>`:
 
 .. code-block:: ini
@@ -136,6 +136,10 @@ Once your configuration is ready, you can trigger a run with the following comma
 
 ``vmware_host_firewall_manager`` is the name of the module to test.
 
+``vmware_guest`` is much larger than any other test role and is rather slow. You can enable or disable some of its test playbooks in
+:file:`test/integration/targets/vmware_guest/defaults/main.yml`.
+
+
 Unit-test
 =========
 
@@ -173,6 +177,75 @@ Depending upon the functionality provided by ESXi or vCenter, some modules can s
         self.host = find_obj(self.content, [vim.HostSystem], None)
     if self.host is None:
         self.module.fail_json(msg="Failed to find host system.")
+
+Functional tests
+----------------
+
+Writing new tests
+~~~~~~~~~~~~~~~~~
+
+If you are writing a new collection of integration tests, there are a few VMware-specific things to note beyond
+the standard Ansible :ref:`integration testing<testing_integration>` process.
+
+The test-suite uses a set of common, pre-defined vars located in the :file:`test/integration/targets/prepare_vmware_tests/` role.
+The resources defined there are automatically created by importing that role at the start of your test:
+
+.. code-block:: yaml
+
+  - import_role:
+      name: prepare_vmware_tests
+    vars:
+      setup_datacenter: true
+
+This will give you a ready to use cluster, datacenter, datastores, folder, switch, dvswitch, ESXi hosts, and VMs.
+
+No need to create too much resources
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Most of the time, it's not necessary to use ``with_items`` to create multiple resources. By avoiding it,
+you speed up the test execution and you simplify the clean up afterwards.
+
+VM names should be predictable
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you need to create a new VM during your test, you can use ``test_vm1``, ``test_vm2`` or ``test_vm3``. This
+way it will be automatically clean up for you.
+
+Avoid the common boiler plate code in your test playbook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+From Ansible 2.10, the test suite uses `modules_defaults`. This module
+allow us to preinitialize the following default keys of the VMware modules:
+
+- hostname
+- username
+- password
+- validate_certs
+
+For example, the following block:
+
+.. code-block:: yaml
+
+    - name: Add a VMware vSwitch
+      vmware_vswitch:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: 'no'
+        esxi_hostname: 'esxi1'
+        switch_name: "boby"
+        state: present
+
+should be simplified to just:
+
+.. code-block:: yaml
+
+    - name: Add a VMware vSwitch
+      vmware_vswitch:
+        esxi_hostname: 'esxi1'
+        switch_name: "boby"
+        state: present
+
 
 Typographic convention
 ======================

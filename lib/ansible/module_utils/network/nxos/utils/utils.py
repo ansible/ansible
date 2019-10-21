@@ -10,6 +10,20 @@ def search_obj_in_list(name, lst, identifier):
     return None
 
 
+def flatten_dict(x):
+    result = {}
+    if not isinstance(x, dict):
+        return result
+
+    for key, value in iteritems(x):
+        if isinstance(value, dict):
+            result.update(flatten_dict(value))
+        else:
+            result[key] = value
+
+    return result
+
+
 def validate_ipv4_addr(address):
     address = address.split('/')[0]
     try:
@@ -87,6 +101,12 @@ def get_interface_type(interface):
         return 'nve'
     else:
         return 'unknown'
+
+
+def remove_rsvd_interfaces(interfaces):
+    """Exclude reserved interfaces from user management
+    """
+    return [i for i in interfaces if get_interface_type(i['name']) != 'management']
 
 
 def vlan_range_to_list(vlans):

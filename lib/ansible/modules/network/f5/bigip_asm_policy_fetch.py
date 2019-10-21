@@ -183,7 +183,7 @@ try:
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import flatten_boolean
-    from library.module_utils.network.f5.icontrol import download_file
+    from library.module_utils.network.f5.icontrol import download_asm_file
     from library.module_utils.network.f5.icontrol import module_provisioned
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
@@ -192,7 +192,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import flatten_boolean
-    from ansible.module_utils.network.f5.icontrol import download_file
+    from ansible.module_utils.network.f5.icontrol import download_asm_file
     from ansible.module_utils.network.f5.icontrol import module_provisioned
 
 
@@ -592,7 +592,7 @@ class ModuleManager(object):
             self.want.file
         )
         try:
-            download_file(self.client, url, dest)
+            download_asm_file(self.client, url, dest)
         except F5ModuleError:
             raise F5ModuleError(
                 "Failed to download the file."

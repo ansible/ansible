@@ -1,1 +1,0 @@
-hcloud ; python_version >= '2.7' and python_version <= '3.7'  # Python 2.6 and 3.8 are not supported

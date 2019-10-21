@@ -95,13 +95,14 @@ options:
     version_added: "1.3"
   executable:
     description:
-      - The explicit executable or a pathname to the executable to be used to
-        run pip for a specific version of Python installed in the system. For
-        example C(pip-3.3), if there are both Python 2.7 and 3.3 installations
+      - The explicit executable or pathname for the pip executable,
+        if different from the Ansible Python interpreter. For
+        example C(pip3.3), if there are both Python 2.7 and 3.3 installations
         in the system and you want to run pip for the Python 3.3 installation.
-        It cannot be specified together with the 'virtualenv' parameter (added in 2.1).
-        By default, it will take the appropriate version for the python interpreter
-        use by ansible, e.g. pip3 on python 3, and pip2 or pip on python 2.
+      - Mutually exclusive with I(virtualenv) (added in 2.1).
+      - Does not affect the Ansible Python interpreter.
+      - The setuptools package must be installed for both the Ansible Python interpreter
+        and for the version of Python specified by this option.
     type: path
     version_added: "1.3"
   umask:
@@ -114,11 +115,16 @@ options:
     type: str
     version_added: "2.1"
 notes:
-   - Please note that virtualenv (U(http://www.virtualenv.org/)) must be
+   - The virtualenv (U(http://www.virtualenv.org/)) must be
      installed on the remote host if the virtualenv parameter is specified and
      the virtualenv needs to be created.
-   - By default, this module will use the appropriate version of pip for the
-     interpreter used by ansible (e.g. pip3 when using python 3, pip2 otherwise)
+   - Although it executes using the Ansible Python interpreter, the pip module shells out to
+     run the actual pip command, so it can use any pip version you specify with I(executable).
+     By default, it uses the pip version for the Ansible Python interpreter. For example, pip3 on python 3, and pip2 or pip on python 2.
+   - The interpreter used by Ansible
+     (see :ref:`ansible_python_interpreter<ansible_python_interpreter>`)
+     requires the setuptools package, regardless of the version of pip set with
+     the I(executable) option.
 requirements:
 - pip
 - virtualenv
@@ -206,10 +212,10 @@ EXAMPLES = '''
     requirements: /my_app/requirements.txt
     extra_args: "--no-index --find-links=file:///my_downloaded_packages_dir"
 
-# Install (Bottle) for Python 3.3 specifically,using the 'pip-3.3' executable.
+# Install (Bottle) for Python 3.3 specifically,using the 'pip3.3' executable.
 - pip:
     name: bottle
-    executable: pip-3.3
+    executable: pip3.3
 
 # Install (Bottle), forcing reinstallation if it's already installed
 - pip:

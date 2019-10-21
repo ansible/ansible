@@ -10,11 +10,6 @@ __metaclass__ = type
 import os
 from itertools import product
 
-try:
-    import builtins
-except ImportError:
-    import __builtin__ as builtins
-
 import pytest
 
 
@@ -101,19 +96,15 @@ def test_mode_unchanged_when_already_0660(am, mock_stats, mocker, mode, check_mo
 @pytest.mark.parametrize('check_mode, stdin',
                          product((True, False), ({},)),
                          indirect=['stdin'])
-def test_missing_lchmod_is_not_link(am, mock_stats, mocker, check_mode):
+def test_missing_lchmod_is_not_link(am, mock_stats, mocker, monkeypatch, check_mode):
     """Some platforms have lchmod (*BSD) others do not (Linux)"""
 
     am.check_mode = check_mode
     original_hasattr = hasattr
 
-    def _hasattr(obj, name):
-        if obj == os and name == 'lchmod':
-            return False
-        return original_hasattr(obj, name)
+    monkeypatch.delattr(os, 'lchmod', raising=False)
 
     mocker.patch('os.lstat', side_effect=[mock_stats['before'], mock_stats['after']])
-    mocker.patch.object(builtins, 'hasattr', side_effect=_hasattr)
     mocker.patch('os.path.islink', return_value=False)
     mocker.patch('os.path.exists', return_value=True)
     m_chmod = mocker.patch('os.chmod', return_value=None)
@@ -128,19 +119,15 @@ def test_missing_lchmod_is_not_link(am, mock_stats, mocker, check_mode):
 @pytest.mark.parametrize('check_mode, stdin',
                          product((True, False), ({},)),
                          indirect=['stdin'])
-def test_missing_lchmod_is_link(am, mock_stats, mocker, check_mode):
+def test_missing_lchmod_is_link(am, mock_stats, mocker, monkeypatch, check_mode):
     """Some platforms have lchmod (*BSD) others do not (Linux)"""
 
     am.check_mode = check_mode
     original_hasattr = hasattr
 
-    def _hasattr(obj, name):
-        if obj == os and name == 'lchmod':
-            return False
-        return original_hasattr(obj, name)
+    monkeypatch.delattr(os, 'lchmod', raising=False)
 
     mocker.patch('os.lstat', side_effect=[mock_stats['before'], mock_stats['after']])
-    mocker.patch.object(builtins, 'hasattr', side_effect=_hasattr)
     mocker.patch('os.path.islink', return_value=True)
     mocker.patch('os.path.exists', return_value=True)
     m_chmod = mocker.patch('os.chmod', return_value=None)

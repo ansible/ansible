@@ -25,13 +25,14 @@ options:
   filter:
     description:
     - Limit the collected information by comma separated string or YAML list.
-    - Allowable values are C(version), C(databases), C(settings), C(users),
-      C(slave_status), C(slave_hosts), C(master_status), C(engines).
+    - Allowable values are C(version), C(databases), C(settings), C(global_status),
+      C(users), C(engines), C(master_status), C(slave_status), C(slave_hosts).
     - By default, collects all subsets.
     - You can use '!' before value (for example, C(!settings)) to exclude it from the information.
     - If you pass including and excluding values to the filter, for example, I(filter=!settings,version),
       the excluding values, C(!settings) in this case, will be ignored.
     type: list
+    elements: str
   login_db:
     description:
     - Database name to connect to.
@@ -128,6 +129,13 @@ settings:
   type: dict
   sample:
   - { "innodb_open_files": 300, innodb_page_size": 16384 }
+global_status:
+  description: Global status information.
+  returned: if not excluded by filter
+  type: dict
+  sample:
+  - { "Innodb_buffer_pool_read_requests": 123, "Innodb_buffer_pool_reads": 32 }
+  version_added: "2.10"
 users:
   description: Users information.
   returned: if not excluded by filter
@@ -183,7 +191,7 @@ class MySQL_Info(object):
 
     Arguments:
         module (AnsibleModule): Object of AnsibleModule class.
-        cursor (pymysql/mysql-python): Cursor class for interraction with
+        cursor (pymysql/mysql-python): Cursor class for interaction with
             the database.
 
     Note:
@@ -202,6 +210,7 @@ class MySQL_Info(object):
             'version': {},
             'databases': {},
             'settings': {},
+            'global_status': {},
             'engines': {},
             'users': {},
             'master_status': {},
@@ -254,6 +263,7 @@ class MySQL_Info(object):
         """Collect all possible subsets."""
         self.__get_databases()
         self.__get_global_variables()
+        self.__get_global_status()
         self.__get_engines()
         self.__get_users()
         self.__get_master_status()
@@ -305,6 +315,14 @@ class MySQL_Info(object):
                 minor=int(ver[1]),
                 release=int(release),
             )
+
+    def __get_global_status(self):
+        """Get global status."""
+        res = self.__exec_sql('SHOW GLOBAL STATUS')
+
+        if res:
+            for var in res:
+                self.info['global_status'][var['Variable_name']] = self.__convert(var['Value'])
 
     def __get_master_status(self):
         """Get master status if the instance is a master."""

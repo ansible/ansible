@@ -55,11 +55,11 @@ options:
       port:
         description:
           - Specifies the port to use when building the connection to the remote
-            device.  This value applies to either I(cli) or I(eapi).  The port
-            value will default to the appropriate transport common port if
-            none is provided in the task.  (cli=22, http=80, https=443).
+            device.  This value applies to either I(cli) or I(eapi).
+          - The port value will default to the appropriate transport common port
+            if none is provided in the task (cli=22, http=80, https=443).
         type: int
-        default: 0 (use common port)
+        default: 0
       username:
         description:
           - Configures the username to use to authenticate the connection to
@@ -81,7 +81,6 @@ options:
             for either connecting or sending commands.  If the timeout is
             exceeded before the operation is completed, the module will error.
         type: int
-        default: 10
       ssh_keyfile:
         description:
           - Specifies the SSH keyfile to use to authenticate the connection to
@@ -126,6 +125,7 @@ options:
             on personally controlled sites using self-signed certificates.  If the transport
             argument is not eapi, this value is ignored.
         type: bool
+        default: true
       use_proxy:
         description:
           - If C(no), the environment variables C(http_proxy) and C(https_proxy) will be ignored.

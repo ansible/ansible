@@ -98,7 +98,7 @@ EXAMPLES = """
     display: xml
     filter: /netconf-state/schemas/schema
 
-- name: get interface confiugration with filter (iosxr)
+- name: get interface configuration with filter (iosxr)
   netconf_get:
     display: pretty
     filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
@@ -138,7 +138,7 @@ output:
                or pretty XML string response (human-readable) or response with
                namespace removed from XML string.
   returned: when the display format is selected as JSON it is returned as dict type, if the
-            display format is xml or pretty pretty it is retured as a string apart from low-level
+            display format is xml or pretty pretty it is returned as a string apart from low-level
             errors (such as action plugin).
   type: complex
   contains:
@@ -148,16 +148,16 @@ output:
 import sys
 
 try:
-    from lxml.etree import Element, SubElement, tostring, fromstring, XMLSyntaxError
+    from lxml.etree import tostring, fromstring, XMLSyntaxError
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
+    from xml.etree.ElementTree import tostring, fromstring
     if sys.version_info < (2, 7):
         from xml.parsers.expat import ExpatError as XMLSyntaxError
     else:
         from xml.etree.ElementTree import ParseError as XMLSyntaxError
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.netconf.netconf import get_capabilities, locked_config, get_config, get
+from ansible.module_utils.network.netconf.netconf import get_capabilities, get_config, get
 from ansible.module_utils.network.common.netconf import remove_namespaces
 from ansible.module_utils._text import to_text
 

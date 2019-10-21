@@ -22,18 +22,21 @@ options:
   group:
     description:
     - The maintenance group name that you want to add the node to.
+    type: str
     required: true
   node:
     description:
     - The node to be added to the maintenance group.
     - The value equals the nodeid.
+    type: str
     required: true
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
-    default: present
+    type: str
     choices: [ absent, present, query ]
+    default: present
 extends_documentation_fragment:
 - aci
 author:
@@ -198,13 +201,13 @@ def main():
         root_class=dict(
             aci_class='maintMaintGrp',
             aci_rn='fabric/maintgrp-{0}'.format(group),
-            filter_target='eq(maintMaintGrp.name, "{0}")'.format(group),
+            target_filter={'name': group},
             module_object=group,
         ),
         subclass_1=dict(
             aci_class='fabricNodeBlk',
             aci_rn='nodeblk-blk{0}-{0}'.format(node),
-            filter_target='eq(fabricNodeBlk.name, "blk{0}-{0}")'.format(node),
+            target_filter={'name': 'blk{0}-{0}'.format(node)},
             module_object=node,
         ),
     )

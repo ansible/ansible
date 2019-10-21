@@ -70,7 +70,7 @@ exists:
 container:
     description:
       - Facts representing the current state of the container. Matches the docker inspection output.
-      - Will be C(None) if container does not exist.
+      - Will be C(none) if container does not exist.
     returned: always
     type: dict
     sample: '{

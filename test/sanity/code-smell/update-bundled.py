@@ -70,9 +70,6 @@ def get_files_with_bundled_metadata(paths):
 
     with_metadata = set()
     for path in paths:
-        if path == 'test/sanity/code-smell/update-bundled.py':
-            continue
-
         with open(path, 'rb') as f:
             body = f.read()
 

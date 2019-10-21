@@ -27,7 +27,7 @@ _ITALIC = re.compile(r"I\(([^)]+)\)")
 _BOLD = re.compile(r"B\(([^)]+)\)")
 _MODULE = re.compile(r"M\(([^)]+)\)")
 _URL = re.compile(r"U\(([^)]+)\)")
-_LINK = re.compile(r"L\(([^)]+),([^)]+)\)")
+_LINK = re.compile(r"L\(([^)]+), *([^)]+)\)")
 _CONST = re.compile(r"C\(([^)]+)\)")
 _RULER = re.compile(r"HORIZONTALLINE")
 

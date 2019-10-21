@@ -151,6 +151,19 @@ ec2_data = {
                 },
             ]
         },
+        "VpnGatewayDetached": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeVpnGateways",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "VpnGateways[0].State == 'available'",
+                    "state": "success"
+                },
+            ]
+        },
     }
 }
 
@@ -195,6 +208,24 @@ eks_data = {
                 },
                 {
                     "state": "retry",
+                    "matcher": "error",
+                    "expected": "ResourceNotFoundException"
+                }
+            ]
+        },
+        "ClusterDeleted": {
+            "delay": 20,
+            "maxAttempts": 60,
+            "operation": "DescribeCluster",
+            "acceptors": [
+                {
+                    "state": "retry",
+                    "matcher": "path",
+                    "argument": "cluster.status != 'DELETED'",
+                    "expected": True
+                },
+                {
+                    "state": "success",
                     "matcher": "error",
                     "expected": "ResourceNotFoundException"
                 }
@@ -299,6 +330,12 @@ waiters_by_name = {
         core_waiter.NormalizedOperationMethod(
             ec2.describe_vpn_gateways
         )),
+    ('EC2', 'vpn_gateway_detached'): lambda ec2: core_waiter.Waiter(
+        'vpn_gateway_detached',
+        ec2_model('VpnGatewayDetached'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_vpn_gateways
+        )),
     ('WAF', 'change_token_in_sync'): lambda waf: core_waiter.Waiter(
         'change_token_in_sync',
         waf_model('ChangeTokenInSync'),
@@ -314,6 +351,12 @@ waiters_by_name = {
     ('EKS', 'cluster_active'): lambda eks: core_waiter.Waiter(
         'cluster_active',
         eks_model('ClusterActive'),
+        core_waiter.NormalizedOperationMethod(
+            eks.describe_cluster
+        )),
+    ('EKS', 'cluster_deleted'): lambda eks: core_waiter.Waiter(
+        'cluster_deleted',
+        eks_model('ClusterDeleted'),
         core_waiter.NormalizedOperationMethod(
             eks.describe_cluster
         )),

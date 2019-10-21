@@ -207,7 +207,7 @@ class NtpAuth(object):
         self.module = None
         self.init_module()
 
-        # ntp_auth configration info
+        # ntp_auth configuration info
         self.key_id = self.module.params['key_id']
         self.password = self.module.params['auth_pwd'] or None
         self.auth_mode = self.module.params['auth_mode'] or None
@@ -483,7 +483,7 @@ class NtpAuth(object):
         self.module.exit_json(**self.results)
 
     def work(self):
-        """Excute task"""
+        """Execute task"""
 
         self.get_existing()
         self.get_proposed()

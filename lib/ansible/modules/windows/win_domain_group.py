@@ -126,7 +126,7 @@ EXAMPLES = r'''
     scope: global
     path: OU=groups,DC=ansible,DC=local
 
-- name: Ensure the group Cow does't exist using the Distinguished Name
+- name: Ensure the group Cow doesn't exist using the Distinguished Name
   win_domain_group:
     name: CN=Cow,OU=groups,DC=ansible,DC=local
     state: absent

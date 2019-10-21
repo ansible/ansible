@@ -12,7 +12,7 @@
 
 - pip:
     name:
-      - 'openshift>=0.9.0'
+      - openshift>=0.9.2
       - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
@@ -25,13 +25,14 @@
 - file:
     path: "{{ virtualenv }}"
     state: absent
+  no_log: yes
 
 # Test validate with kubernetes-validate
 
 - pip:
     name:
       - kubernetes-validate==1.12.0
-      - 'openshift>=0.9.0'
+      - openshift>=0.9.2
       - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
@@ -45,6 +46,7 @@
 - file:
     path: "{{ virtualenv }}"
     state: absent
+  no_log: yes
 
 # Test graceful failure for older versions of openshift
 
@@ -66,12 +68,13 @@
 - file:
     path: "{{ virtualenv }}"
     state: absent
+  no_log: yes
 
 # Run full test suite
 
 - pip:
     name:
-      - 'openshift>=0.9.0'
+      - openshift>=0.9.2
       - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
@@ -86,3 +89,4 @@
 - file:
     path: "{{ virtualenv }}"
     state: absent
+  no_log: yes

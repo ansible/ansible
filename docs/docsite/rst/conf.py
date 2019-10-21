@@ -61,8 +61,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General substitutions.
-project = 'Ansible Documentation'
-copyright = "2013-2018 Ansible, Inc"
+project = 'Ansible'
+copyright = "2019 Red Hat, Inc."
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -112,17 +112,14 @@ highlight_language = 'YAML+Jinja'
 
 # Substitutions, variables, entities, & shortcuts for text which do not need to link to anything.
 # For titles which should be a link, use the intersphinx anchors set at the index, chapter, and section levels, such as  qi_start_:
+# |br| is useful for formatting fields inside of tables
+# |_| is a nonbreaking space; similarly useful inside of tables
 rst_epilog = """
-.. |acapi| replace:: *Ansible Core API Guide*
-.. |acrn| replace:: *Ansible Core Release Notes*
-.. |ac| replace:: Ansible Core
-.. |acversion| replace:: Ansible Core Version 2.1
-.. |acversionshort| replace:: Ansible Core 2.1
-.. |versionshortest| replace:: 2.2
-.. |versiondev| replace:: 2.3
-.. |pubdate| replace:: July 19, 2016
-.. |rhel| replace:: Red Hat Enterprise Linux
+.. |br| raw:: html
 
+   <br>
+.. |_| unicode:: 0xA0
+    :trim:
 """
 
 
@@ -132,10 +129,10 @@ rst_epilog = """
 html_theme_path = ['../_themes']
 html_theme = 'sphinx_rtd_theme'
 html_short_title = 'Ansible Documentation'
+html_show_sphinx = False
 
 html_theme_options = {
     'canonical_url': "https://docs.ansible.com/ansible/latest/",
-    'collapse_navigation': "True",
     'vcs_pageview_mode': 'edit'
 }
 
@@ -148,7 +145,9 @@ html_context = {
     'current_version': version,
     'latest_version': '2.8',
     # list specifically out of order to make latest work
-    'available_versions': ('latest', '2.7', '2.6', 'devel')
+    'available_versions': ('latest', '2.7', '2.6', 'devel'),
+    'css_files': ('_static/ansible.css',  # overrides to the standard theme
+                  ),
 }
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
@@ -165,7 +164,7 @@ html_title = 'Ansible Documentation'
 
 # The name of an image file (within the static path) to place at the top of
 # the sidebar.
-# html_logo = None
+# html_logo =
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32

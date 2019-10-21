@@ -1,0 +1,137 @@
+---
+merged:
+  before:
+    - name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "switchport access vlan 30"
+    - "interface GigabitEthernet0/2"
+    - "switchport trunk encapsulation dot1q"
+    - "switchport trunk native vlan 20"
+    - "switchport trunk allowed vlan 15-20,40"
+    - "switchport trunk pruning vlan 10,20"
+
+  after:
+    - name: GigabitEthernet0/0
+    - access:
+        vlan: 30
+      name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2
+      trunk:
+        allowed_vlans:
+        - 15-20
+        - '40'
+        encapsulation: dot1q
+        native_vlan: 20
+        pruning_vlans:
+        - '10'
+        - '20'
+
+replaced:
+  before:
+  - name: GigabitEthernet0/0
+  - access:
+      vlan: 10
+    name: GigabitEthernet0/1
+  - name: GigabitEthernet0/2
+    trunk:
+      allowed_vlans:
+      - 10-20
+      - '40'
+      encapsulation: dot1q
+      native_vlan: 10
+      pruning_vlans:
+      - '10'
+      - '20'
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "switchport access vlan 40"
+    - "interface GigabitEthernet0/2"
+    - "no switchport trunk allowed vlan"
+    - "switchport trunk native vlan 20"
+    - "switchport trunk pruning vlan 10-20,30"
+
+  after:
+    - name: GigabitEthernet0/0
+    - access:
+        vlan: 40
+      name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2
+      trunk:
+        encapsulation: dot1q
+        native_vlan: 20
+        pruning_vlans:
+        - 10-20
+        - '30'
+
+overridden:
+  before:
+    - name: GigabitEthernet0/0
+    - access:
+        vlan: 10
+      name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2
+      trunk:
+        allowed_vlans:
+        - 10-20
+        - '40'
+        encapsulation: dot1q
+        native_vlan: 10
+        pruning_vlans:
+        - '10'
+        - '20'
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "no switchport access vlan"
+    - "interface GigabitEthernet0/2"
+    - "no switchport trunk pruning vlan"
+    - "switchport trunk encapsulation isl"
+    - "switchport trunk native vlan 30"
+    - "switchport trunk allowed vlan 30-35,40"
+
+  after:
+    - name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2
+      trunk:
+        allowed_vlans:
+        - 30-35
+        - '40'
+        encapsulation: isl
+        native_vlan: 30
+
+deleted:
+  before:
+    - name: GigabitEthernet0/0
+    - access:
+        vlan: 10
+      name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2
+      trunk:
+        allowed_vlans:
+        - 10-20
+        - '40'
+        encapsulation: dot1q
+        native_vlan: 10
+        pruning_vlans:
+        - '10'
+        - '20'
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "no switchport access vlan"
+    - "interface GigabitEthernet0/2"
+    - "no switchport trunk encapsulation"
+    - "no switchport trunk native vlan"
+    - "no switchport trunk allowed vlan"
+    - "no switchport trunk pruning vlan"
+
+  after:
+    - name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2

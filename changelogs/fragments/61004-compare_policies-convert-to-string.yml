@@ -1,0 +1,2 @@
+bugfixes:
+- compare_policies() Explicitly convert bools and ints to strings when comparing AWS IAM policies

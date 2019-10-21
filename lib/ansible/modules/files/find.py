@@ -56,7 +56,7 @@ options:
         version_added: "2.5"
     contains:
         description:
-            - One or more regex patterns which should be matched against the file content.
+            - A regular expression or pattern which should be matched against the file content.
         type: str
     paths:
         description:

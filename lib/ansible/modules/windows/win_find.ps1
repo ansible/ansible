@@ -17,7 +17,7 @@ $age_stamp = Get-AnsibleParam -obj $params -name 'age_stamp' -default 'mtime' -V
 $file_type = Get-AnsibleParam -obj $params -name 'file_type' -default 'file' -ValidateSet 'file','directory'
 $follow = Get-AnsibleParam -obj $params -name 'follow' -type "bool" -default $false
 $hidden = Get-AnsibleParam -obj $params -name 'hidden' -type "bool" -default $false
-$patterns = Get-AnsibleParam -obj $params -name 'patterns'
+$patterns = Get-AnsibleParam -obj $params -name 'patterns' -aliases "regex","regexp"
 $recurse = Get-AnsibleParam -obj $params -name 'recurse' -type "bool" -default $false
 $size = Get-AnsibleParam -obj $params -name 'size'
 $use_regex = Get-AnsibleParam -obj $params -name 'use_regex' -type "bool" -default $false
@@ -177,7 +177,7 @@ Function Assert-Size($info) {
         $size_pattern = '^(-?\d+)(b|k|m|g|t)?$'
         $match = $size -match $size_pattern
         if ($match) {
-            [int]$specified_size = $matches[1]
+            [int64]$specified_size = $matches[1]
             if ($null -eq $matches[2]) {
                 $chosen_byte = 'b'
             } else {
@@ -238,13 +238,12 @@ Function Get-FileStat($file) {
     }
 
     $islnk = $false
-    $isdir = $false
+    $isdir = $attributes -contains 'Directory'
     $isshared = $false
 
     if ($attributes -contains 'ReparsePoint') {
         # TODO: Find a way to differenciate between soft and junction links
         $islnk = $true
-        $isdir = $true
 
         # Try and get the symlink source, can result in failure if link is broken
         try {

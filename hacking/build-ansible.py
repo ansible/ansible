@@ -54,6 +54,8 @@ def main():
     subcommands = load('build_ansible.command_plugins', subclasses=commands.Command)
 
     arg_parser = create_arg_parser(os.path.basename(sys.argv[0]))
+    arg_parser.add_argument('--debug', dest='debug', required=False, default=False, action='store_true',
+                            help='Show tracebacks and other debugging information')
     subparsers = arg_parser.add_subparsers(title='Subcommands', dest='command',
                                            help='for help use build-ansible.py SUBCOMMANDS -h')
     subcommands.pipe('init_parser', subparsers.add_parser)
@@ -77,8 +79,10 @@ def main():
 
     try:
         retval = command.main(args)
-    except errors.DependencyError as e:
+    except (errors.DependencyError, errors.MissingUserInput, errors.InvalidUserInput) as e:
         print(e)
+        if args.debug:
+            raise
         sys.exit(2)
 
     sys.exit(retval)

@@ -6,10 +6,6 @@
 """
 The arg spec for the nxos facts module.
 """
-CHOICES = [
-    'all',
-    'lag_interfaces',
-]
 
 
 class FactsArgs(object):
@@ -21,5 +17,5 @@ class FactsArgs(object):
 
     argument_spec = {
         'gather_subset': dict(default=['!config'], type='list'),
-        'gather_network_resources': dict(choices=CHOICES, type='list'),
+        'gather_network_resources': dict(type='list'),
     }

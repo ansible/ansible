@@ -52,7 +52,7 @@ options:
         type: str
     ephemeral:
         description:
-            - If (true) ephemeral vitual machine will be created. When destroyed it won't be accessible again.
+            - If (true) ephemeral virtual machine will be created. When destroyed it won't be accessible again.
             - Works only with C(state) I(present) and I(absent).
         type: bool
         default: false

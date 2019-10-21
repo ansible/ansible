@@ -30,6 +30,11 @@ options:
             - Key from which to return values from the specified database, otherwise the
               full contents are returned.
         default: ''
+    service:
+        description:
+            - Override all databases with the specified service
+            - The underlying system must support the service flag which is not always available.
+        version_added: "2.9"
     split:
         description:
             - "Character used to split the database values into lists/arrays such as ':' or '\t', otherwise  it will try to pick one depending on the database."
@@ -94,6 +99,7 @@ def main():
         argument_spec=dict(
             database=dict(type='str', required=True),
             key=dict(type='str'),
+            service=dict(type='str'),
             split=dict(type='str'),
             fail_key=dict(type='bool', default=True),
         ),
@@ -105,6 +111,7 @@ def main():
     database = module.params['database']
     key = module.params.get('key')
     split = module.params.get('split')
+    service = module.params.get('service')
     fail_key = module.params.get('fail_key')
 
     getent_bin = module.get_bin_path('getent', True)
@@ -113,6 +120,9 @@ def main():
         cmd = [getent_bin, database, key]
     else:
         cmd = [getent_bin, database]
+
+    if service is not None:
+        cmd.extend(['-s', service])
 
     if split is None and database in colon:
         split = ':'

@@ -218,6 +218,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if need_to_fetch:
             self.display.v("Fetching: " + url)
             response = open_url(url, headers=self.headers, timeout=self.timeout, validate_certs=self.validate_certs)
+
             try:
                 raw_data = to_text(response.read(), errors='surrogate_or_strict')
             except UnicodeError:

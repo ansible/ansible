@@ -1,0 +1,2 @@
+minor_changes:
+  - ec2_vpc_net - Enable IPv6 CIDR assignment 

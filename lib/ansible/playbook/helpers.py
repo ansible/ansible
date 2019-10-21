@@ -25,6 +25,7 @@ from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, Ansible
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser
+from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.display import Display
 
 display = Display()
@@ -117,12 +118,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             )
             task_list.append(t)
         else:
-            collection_list = task_ds.get('collections')
-            if collection_list is None and block is not None and block.collections:
-                collection_list = block.collections
-            args_parser = ModuleArgsParser(task_ds, collection_list=collection_list)
+            args_parser = ModuleArgsParser(task_ds)
             try:
-                (action, args, delegate_to) = args_parser.parse()
+                (action, args, delegate_to) = args_parser.parse(skip_action_validation=True)
             except AnsibleParserError as e:
                 # if the raises exception was created with obj=ds args, then it includes the detail
                 # so we dont need to add it so we can just re raise.
@@ -370,12 +368,17 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     return task_list
 
 
-def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, loader=None):
-    '''
-    Loads and returns a list of RoleInclude objects from the datastructure
-    list of role definitions
-    '''
-
+def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, loader=None, collection_search_list=None):
+    """
+    Loads and returns a list of RoleInclude objects from the ds list of role definitions
+    :param ds: list of roles to load
+    :param play: calling Play object
+    :param current_role_path: path of the owning role, if any
+    :param variable_manager: varmgr to use for templating
+    :param loader: loader to use for DS parsing/services
+    :param collection_search_list: list of collections to search for unqualified role names
+    :return:
+    """
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.role.include import RoleInclude
 
@@ -385,7 +388,7 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
     roles = []
     for role_def in ds:
         i = RoleInclude.load(role_def, play=play, current_role_path=current_role_path, variable_manager=variable_manager,
-                             loader=loader, collection_list=play.collections)
+                             loader=loader, collection_list=collection_search_list)
         roles.append(i)
 
     return roles

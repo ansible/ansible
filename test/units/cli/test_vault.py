@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # (c) 2017, Adrian Likins <alikins@redhat.com>
 #
 # This file is part of Ansible
@@ -19,16 +20,28 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+import pytest
+
 from units.compat import unittest
-from units.compat.mock import patch
+from units.compat.mock import patch, MagicMock
 from units.mock.vault_helper import TextVaultSecret
 
-from ansible import errors
+from ansible import context, errors
 from ansible.cli.vault import VaultCLI
+from ansible.module_utils._text import to_text
+from ansible.utils import context_objects as co
 
 
 # TODO: make these tests assert something, likely by verifing
 #       mock calls
+
+
+@pytest.fixture(autouse='function')
+def reset_cli_args():
+    co.GlobalCLIArgs._Singleton__instance = None
+    yield
+    co.GlobalCLIArgs._Singleton__instance = None
 
 
 class TestVaultCli(unittest.TestCase):
@@ -174,3 +187,31 @@ class TestVaultCli(unittest.TestCase):
         cli = VaultCLI(args=['ansible-vault', 'rekey', '/dev/null/foo'])
         cli.parse()
         cli.run()
+
+
+@pytest.mark.parametrize('cli_args, expected', [
+    (['ansible-vault', 'view', 'vault.txt'], 0),
+    (['ansible-vault', 'view', 'vault.txt', '-vvv'], 3),
+    (['ansible-vault', '-vv', 'view', 'vault.txt'], 2),
+    # Due to our manual parsing we want to verify that -v set in the sub parser takes precedence. This behaviour is
+    # deprecated and tests should be removed when the code that handles it is removed
+    (['ansible-vault', '-vv', 'view', 'vault.txt', '-v'], 1),
+    (['ansible-vault', '-vv', 'view', 'vault.txt', '-vvvv'], 4),
+])
+def test_verbosity_arguments(cli_args, expected, tmp_path_factory, monkeypatch):
+    # Add a password file so we don't get a prompt in the test
+    test_dir = to_text(tmp_path_factory.mktemp('test-ansible-vault'))
+    pass_file = os.path.join(test_dir, 'pass.txt')
+    with open(pass_file, 'w') as pass_fd:
+        pass_fd.write('password')
+
+    cli_args.extend(['--vault-id', pass_file])
+
+    # Mock out the functions so we don't actually execute anything
+    for func_name in [f for f in dir(VaultCLI) if f.startswith("execute_")]:
+        monkeypatch.setattr(VaultCLI, func_name, MagicMock())
+
+    cli = VaultCLI(args=cli_args)
+    cli.run()
+
+    assert context.CLIARGS['verbosity'] == expected

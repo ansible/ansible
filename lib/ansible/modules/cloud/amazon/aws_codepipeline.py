@@ -72,7 +72,7 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Example for creating a pipeline for continuous deploy of Github code to an ECS cluster (container)
-- code_pipeline:
+- aws_codepipeline:
     name: my_deploy_pipeline
     role_arn: arn:aws:iam::123456:role/AWS-CodePipeline-Service
     artifact_store:
@@ -139,19 +139,19 @@ EXAMPLES = '''
 
 RETURN = '''
 pipeline:
-  description: Returns the dictionary desribing the code pipeline configuration.
+  description: Returns the dictionary describing the code pipeline configuration.
   returned: success
   type: complex
   contains:
     name:
       description: Name of the CodePipeline
       returned: always
-      type: string
+      type: str
       sample: my_deploy_pipeline
     role_arn:
       description: ARN of the IAM role attached to the code pipeline
       returned: always
-      type: string
+      type: str
       sample: arn:aws:iam::123123123:role/codepipeline-service-role
     artifact_store:
       description: Information about where the build artifacts are stored
@@ -161,17 +161,17 @@ pipeline:
         type:
           description: The type of the artifacts store, such as S3
           returned: always
-          type: string
+          type: str
           sample: S3
         location:
           description: The location of the artifacts storage (s3 bucket name)
           returned: always
-          type: string
+          type: str
           sample: my_s3_codepipline_bucket
         encryption_key:
           description: The encryption key used to encrypt the artifacts store, such as an AWS KMS key.
           returned: when configured
-          type: string
+          type: str
     stages:
       description: List of stages configured for this pipeline
       returned: always

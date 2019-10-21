@@ -5,21 +5,16 @@
   environment: "{{ ansible_test.environment }}"
   tasks:
 
-    - block:
+    - module_defaults:
+        group/aws:
+          aws_access_key: '{{ aws_access_key }}'
+          aws_secret_key: '{{ aws_secret_key }}'
+          security_token: '{{ security_token | default(omit) }}'
+          region: '{{ aws_region }}'
+      block:
 
         - set_fact:
             instance_id: "{{ resource_prefix }}-mariadb"
-
-        # Create new host, refresh inventory
-
-        - name: set connection information for all tasks
-          set_fact:
-            aws_connection_info: &aws_connection_info
-              aws_access_key: '{{ aws_access_key }}'
-              aws_secret_key: '{{ aws_secret_key }}'
-              security_token: '{{ security_token }}'
-              region: '{{ aws_region }}'
-          no_log: yes
 
         - name: create minimal mariadb instance in default VPC and default subnet group
           rds_instance:
@@ -32,20 +27,28 @@
             master_user_password: 'password-{{ resource_prefix | regex_findall(".{8}$") | first }}'
             tags:
               workload_type: other
-            <<: *aws_connection_info
           register: setup_instance
 
         - meta: refresh_inventory
         - debug: var=groups
+
+        - name: 'generate expected group name based off the db parameter groups'
+          vars:
+            parameter_group_name: '{{ setup_instance.db_parameter_groups[0].db_parameter_group_name }}'
+          set_fact:
+            parameter_group_key: 'rds_parameter_group_{{ parameter_group_name | replace(".", "_") }}'
 
         - name: assert the keyed groups from constructed config were added to inventory
           assert:
             that:
               # There are 6 groups: all, ungrouped, aws_rds, tag keyed group, engine keyed group, parameter group keyed group
               - "groups | length == 6"
-              - groups.tag_workload_type_other
-              - groups.rds_mariadb
-              - groups.rds_parameter_group_default_mariadb10_3
+              - '"all" in groups'
+              - '"ungrouped" in groups'
+              - '"aws_rds" in groups'
+              - '"tag_workload_type_other" in groups'
+              - '"rds_mariadb" in groups'
+              - 'parameter_group_key in groups'
 
       always:
 
@@ -55,6 +58,5 @@
             engine: mariadb
             skip_final_snapshot: yes
             instance_id: '{{ instance_id }}'
-            <<: *aws_connection_info
           ignore_errors: yes
           when: setup_instance is defined

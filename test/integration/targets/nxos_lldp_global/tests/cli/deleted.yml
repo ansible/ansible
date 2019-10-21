@@ -1,0 +1,63 @@
+---
+  - debug:
+      msg: "Start nxos_lldp_global deleted integration tests connection = {{ ansible_connection }}"
+  
+  - name: Enable LLDP feature
+    nxos_feature:
+      feature: lldp
+      state: enabled
+
+  - block:
+    - name: Setup
+      cli_config:
+        config: |
+          lldp holdtime 125
+          lldp timer 32
+          no lldp tlv-select dcbxp 
+          lldp tlv-select system-name
+          no lldp tlv-select system-description
+          lldp tlv-select power-management
+
+    - name: Gather lldp_global facts
+      nxos_facts: &facts
+        gather_subset:
+          - '!all'
+          - '!min'
+        gather_network_resources: lldp_global
+
+    - name: Deleted
+      nxos_lldp_global: &deleted
+        state: deleted
+      register: result
+
+    - assert:
+        that:
+          - "ansible_facts.network_resources.lldp_global == result.before"
+          - "'no lldp holdtime 125' in result.commands"
+          - "'no lldp timer 32' in result.commands"
+          - "'lldp tlv-select dcbxp' in result.commands"
+          - "'lldp tlv-select system-description' in result.commands"
+          - "result.changed == true "
+          - "result.after | length == 0"
+
+    - name: Gather lldp_global post facts
+      nxos_facts: *facts
+
+    - assert:
+        that:
+          - "ansible_facts.network_resources == {} "
+
+    - name: Idempotence - deleted
+      nxos_lldp_global: *deleted
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+          - "result.commands|length == 0"
+
+    always:
+    - name: teardown
+      nxos_feature:
+        feature: lldp
+        state: disabled
