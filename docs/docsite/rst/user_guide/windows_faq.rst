@@ -169,7 +169,7 @@ to manage Windows hosts. To connect to Windows hosts over SSH, you must install 
 fork that is in development with Microsoft on
 the Windows host(s). While most of the basics should work with SSH,
 ``Win32-OpenSSH`` is rapidly changing, with new features added and bugs
-fixed in every release. It is highly recommend you install the latest release
+fixed in every release. It is highly recommend you `install <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_ the latest release
 of ``Win32-OpenSSH`` from the GitHub Releases page when using it with Ansible
 on Windows hosts.
 
