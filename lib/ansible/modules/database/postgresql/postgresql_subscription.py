@@ -24,20 +24,30 @@ options:
   name:
     description:
     - Name of the subscription to add, update, or remove.
-    required: true
     type: str
+    required: yes
   db:
     description:
     - Name of the database to connect to and where
       the subscription state will be changed.
     aliases: [ login_db ]
     type: str
+    required: yes
   state:
     description:
     - The subscription state.
-    default: present
-    choices: [ absent, present, stat ]
     type: str
+    choices: [ absent, present, stat ]
+    default: stat
+  pubname:
+    description:
+    - The publication name on the publisher.
+    type: str
+  connparams:
+    description:
+    - The connection dict param-value to connect to the publisher.
+    - For more information see U(https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING).
+    type: dict
 notes:
 - PostgreSQL version must be 10 or greater.
 seealso:
@@ -58,6 +68,21 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = r'''
+- name: >
+    Create acme subscription in mydb database using acme_publication and
+    the following connection parameters to connect to the publisher
+  postgresql_subscription:
+    db: mydb
+    name: acme
+    state: present
+    pubname: acme_publication
+    connparams:
+      host: 127.0.0.1
+      port: 5432
+      user: repl
+      password: replpass
+      dbname: mydb
+
 - name: Return the configuration of subscription acme if exists in mydb database
   postgresql_subscription:
     db: mydb
@@ -106,7 +131,7 @@ from ansible.module_utils.postgres import (
     get_conn_params,
     postgres_common_argument_spec,
 )
-# from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import iteritems
 
 SUPPORTED_PG_VERSION = 10000
 
@@ -115,6 +140,22 @@ SUPPORTED_PG_VERSION = 10000
 # Module functions and classes #
 ################################
 
+def convert_conn_params(conn_dict):
+    """Converts the passed connection dictionary to string.
+
+    Args:
+        conn_dict (list): Dictionary which needs to be converted.
+
+    Returns:
+        Connection string.
+    """
+    conn_list = []
+    for (param, val) in iteritems(conn_dict):
+        conn_list.append('%s=%s' % (param, val))
+
+    return ' '.join(conn_list)
+
+
 class PgSubscription():
     """Class to work with PostgreSQL subscription.
 
@@ -122,6 +163,7 @@ class PgSubscription():
         module (AnsibleModule): Object of AnsibleModule class.
         cursor (cursor): Cursor object of psycopg2 library to work with PostgreSQL.
         name (str): The name of the subscription.
+        db (str): The database name the subscription will be associated with.
 
     Attributes:
         module (AnsibleModule): Object of AnsibleModule class.
@@ -177,15 +219,17 @@ class PgSubscription():
         self.attrs['publications'] = subscr_info.get('subpublications')
         if subscr_info.get('subconninfo'):
             for param in subscr_info['subconninfo'].split(' '):
-                    tmp = param.split('=')
-                    self.attrs['conninfo'][tmp[0]] = tmp[1]
+                tmp = param.split('=')
+                self.attrs['conninfo'][tmp[0]] = tmp[1]
 
         return True
 
-    def create(self, check_mode=True):
+    def create(self, connparams, pubname, check_mode=True):
         """Create the subscription.
 
         Args:
+            connparams (str): Connection string in ligpq style.
+            pubname (str): Publication name on the master to use.
 
         Kwargs:
             check_mode (bool): If True, don't actually change anything,
@@ -194,7 +238,11 @@ class PgSubscription():
         Returns:
             changed (bool): True if the subscription has been created, otherwise False.
         """
-        return False
+        query_fragments = ["CREATE SUBSCRIPTION %s CONNECTION '%s' PUBLICATION %s" % (self.name, connparams, pubname)]
+
+        changed = self.__exec_sql(' '.join(query_fragments), check_mode=check_mode)
+
+        return changed
 
     def update(self, check_mode=True):
         """Update the subscription.
@@ -276,7 +324,9 @@ def main():
     argument_spec.update(
         name=dict(required=True),
         db=dict(type='str', aliases=['login_db']),
-        state=dict(type='str', default='present', choices=['absent', 'present', 'stat']),
+        state=dict(type='str', default='stat', choices=['absent', 'present', 'stat']),
+        pubname=dict(type='str'),
+        connparams=dict(type='dict'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -287,6 +337,11 @@ def main():
     db = module.params['db']
     name = module.params['name']
     state = module.params['state']
+    pubname = module.params['pubname']
+    if module.params.get('connparams'):
+        connparams = convert_conn_params(module.params['connparams'])
+    else:
+        connparams = None
 
     # Connect to DB and make cursor object:
     conn_params = get_conn_params(module, module.params)
@@ -318,7 +373,7 @@ def main():
 
     if state == 'present':
         if not subscription.exists:
-            changed = subscription.create(check_mode=module.check_mode)
+            changed = subscription.create(connparams, pubname, check_mode=module.check_mode)
 
         else:
             changed = subscription.update(check_mode=module.check_mode)
