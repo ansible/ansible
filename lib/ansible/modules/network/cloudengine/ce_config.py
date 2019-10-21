@@ -232,11 +232,21 @@ import re
 def check_args(module, warnings):
     ce_check_args(module, warnings)
 
+def not_user_view(prompt):
+    return prompt is not None and prompt.strip().startswith("[")
+
+
+def command_level(command):
+    regex_level = re.search(r"^(\s*)\S+", command)
+    if regex_level is not None:
+        level = str(regex_level.group(1))
+        return len(level)
+    return 0
+
 
 def _load_config(module, config):
     """Sends configuration commands to the remote device
     """
-    regex_user_view = re.compile(r'<.+>')
     connection = Connection(module._socket_path)
     rc, out, err = exec_command(module, 'mmi-mode enable')
     if rc != 0:
@@ -247,18 +257,21 @@ def _load_config(module, config):
     current_view_prompt = system_view_prompt = connection.get_prompt()
 
     for index, cmd in enumerate(config):
+        level = command_level(cmd)
         current_view_prompt = connection.get_prompt()
-        if cmd.strip() == '#':
-            if current_view_prompt != system_view_prompt and regex_user_view.search(current_view_prompt) is None:
-                exec_command(module, "quit")
         rc, out, err = exec_command(module, cmd)
         if rc != 0:
             print_msg = cli_err_msg(cmd.strip(), err)
-            for i in (1, 2, 3, 4):
+            # re-try command max 3 times
+            for i in (1, 2, 3):
                 current_view_prompt = connection.get_prompt()
-                if current_view_prompt != system_view_prompt and regex_user_view.search(current_view_prompt) is None:
+                if current_view_prompt != system_view_prompt and not_user_view(current_view_prompt):
                     exec_command(module, "quit")
-                elif current_view_prompt == system_view_prompt or regex_user_view.search(current_view_prompt) is not None:
+                    current_view_prompt = connection.get_prompt()
+                    # if current view is system-view, break.
+                    if current_view_prompt == system_view_prompt and level > 0:
+                        break
+                elif current_view_prompt != system_view_prompt or not not_user_view(current_view_prompt):
                     break
                 rc, out, err = exec_command(module, cmd)
                 if rc == 0:
@@ -267,21 +280,15 @@ def _load_config(module, config):
             if print_msg is not None:
                 module.fail_json(msg=print_msg)
 
-    rc, out, err = exec_command(module, 'return')
-    if rc != 0:
-        module.fail_json(msg='unable to return', output=err)
-    rc, out, err = exec_command(module, 'undo mmi-mode enable')
-    if rc != 0:
-        module.fail_json(msg='unable to undo mmi-mode enable', output=err)
-
 
 def get_running_config(module):
     contents = module.params['config']
     if not contents:
-        flags = []
+        command = "display current-configuration "
         if module.params['defaults']:
-            flags.append('include-default')
-        contents = get_config(module, flags=flags)
+            command += 'include-default'
+        resp = run_commands(module, commands)
+        contents = resp[0]
     return NetworkConfig(indent=1, contents=contents)
 
 
@@ -303,14 +310,17 @@ def run(module, result):
     candidate = get_candidate(module)
 
     if match != 'none':
-        config = get_running_config(module)
+        before = get_running_config(module)
         path = module.params['parents']
-        configobjs = candidate.difference(config, match=match, replace=replace, path=path)
+        configobjs = candidate.difference(before, match=match, replace=replace, path=path)
     else:
         configobjs = candidate.items
 
     if configobjs:
-        commands = dumps(configobjs, 'commands').split('\n')
+        out_type = "commands"
+        if module.params["src"] is not None:
+            out_type = "raw"
+        commands = dumps(configobjs, out_type).split('\n')
 
         if module.params['lines']:
             if module.params['before']:
@@ -332,8 +342,16 @@ def run(module, result):
                 load_config(module, commands)
             else:
                 _load_config(module, commands)
-
-        result['changed'] = True
+        if match != "none":
+            after = get_running_config(module)
+            path = module.params["parents"]
+            configobjs = after.difference(before, match=match, replace=replace, path=path)
+            if len(configobjs) > 0:
+                result["changed"] = True
+            else:
+                result["changed"] = False
+        else:
+            result['changed'] = True
 
 
 class NetworkConfig(_NetworkConfig):
