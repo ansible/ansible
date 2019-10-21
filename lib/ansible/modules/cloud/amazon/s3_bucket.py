@@ -133,6 +133,24 @@ EXAMPLES = '''
     name: mydobucket
     s3_url: 'https://nyc3.digitaloceanspaces.com'
 
+# Create a bucket with AES256 encryption
+- s3_bucket:
+    name: mys3bucket
+    state: present
+    encryption: "AES256"
+
+# Create a bucket with aws:kms encryption, KMS key
+- s3_bucket:
+    name: mys3bucket
+    state: present
+    encryption: "aws:kms"
+    encryption_key_id: "arn:aws:kms:us-east-1:1234/5678example"
+
+# Create a bucket with aws:kms encryption, default key
+- s3_bucket:
+    name: mys3bucket
+    state: present
+    encryption: "aws:kms"
 '''
 
 import json
@@ -326,7 +344,7 @@ def create_or_update_bucket(s3_client, module, location):
             changed = True
         elif encryption != 'none' and (encryption != current_encryption_algorithm) or (encryption == 'aws:kms' and current_encryption_key != encryption_key_id):
             expected_encryption = {'SSEAlgorithm': encryption}
-            if encryption == 'aws:kms':
+            if encryption == 'aws:kms' and encryption_key_id is not None:
                 expected_encryption.update({'KMSMasterKeyID': encryption_key_id})
             try:
                 put_bucket_encryption(s3_client, name, expected_encryption)
@@ -660,7 +678,6 @@ def main():
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
-        required_if=[['encryption', 'aws:kms', ['encryption_key_id']]]
     )
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
