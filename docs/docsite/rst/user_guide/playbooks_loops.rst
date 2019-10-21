@@ -33,7 +33,7 @@ Comparing ``loop`` and ``with_*``
 
 you would need::
 
-  loop: [1, [2,3] ,4] | flatten(1)
+  loop: "{{ [1, [2,3] ,4] | flatten(1) }}"
 
 * Any ``with_*`` statement that requires using ``lookup`` within a loop should not be converted to use the ``loop`` keyword. For example, instead of doing:
 
@@ -317,6 +317,8 @@ When looping over complex data structures, the console output of your task can b
 
 The output of this task will display just the ``name`` field for each ``item`` instead of the entire contents of the multi-line ``{{ item }}`` variable.
 
+.. note:: This is for making console output more readable, not protecting sensitive data. If there is sensitive data in ``loop``, set ``no_log: yes`` on the task to prevent disclosure.
+
 Pausing within a loop
 ---------------------
 .. versionadded:: 2.2
@@ -376,6 +378,8 @@ You can specify the name of the variable for each loop using ``loop_var`` with `
 
 .. note:: If Ansible detects that the current loop is using a variable which has already been defined, it will raise an error to fail the task.
 
+Extended loop variables
+-----------------------
 .. versionadded:: 2.8
 
 As of Ansible 2.8 you can get extended loop information using the ``extended`` option to loop control. This option will expose the following information.
@@ -400,6 +404,8 @@ Variable                    Description
       loop_control:
         extended: yes
 
+Accessing the name of your loop_var
+-----------------------------------
 .. versionadded:: 2.8
 
 As of Ansible 2.8 you can get the name of the value provided to ``loop_control.loop_var`` using the ``ansible_loop_var`` variable

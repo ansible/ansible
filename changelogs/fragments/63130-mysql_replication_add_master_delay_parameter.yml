@@ -1,0 +1,2 @@
+minor_changes:
+- mysql_replication - add ``master_delay`` parameter (https://github.com/ansible/ansible/issues/51326).

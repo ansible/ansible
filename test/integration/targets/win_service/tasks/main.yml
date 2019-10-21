@@ -51,12 +51,6 @@
     - TestServiceParent2
     - TestServiceDependency
 
-  - name: remove test environment variable
-    win_environment:
-      name: TEST_SERVICE_PATH
-      level: machine
-      state: absent
-
   - name: remove test directory
     win_file:
       path: '{{ test_win_service_dir }}'

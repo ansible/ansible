@@ -3,18 +3,17 @@
 # Copyright: (c) 2014, Paul Durivage <paul.durivage@rackspace.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+#AnsibleRequires -CSharpUtil Ansible.AccessToken
 #Requires -Module Ansible.ModuleUtils.Legacy
 
 ########
 $ADS_UF_PASSWD_CANT_CHANGE = 64
 $ADS_UF_DONT_EXPIRE_PASSWD = 65536
-$LOGON32_LOGON_NETWORK = 3
-$LOGON32_PROVIDER_DEFAULT = 0
 
 $adsi = [ADSI]"WinNT://$env:COMPUTERNAME"
 
 function Get-User($user) {
-    $adsi.Children | where {$_.SchemaClassName -eq 'user' -and $_.Name -eq $user }
+    $adsi.Children | Where-Object {$_.SchemaClassName -eq 'user' -and $_.Name -eq $user }
     return
 }
 
@@ -27,7 +26,7 @@ function Get-UserFlag($user, $flag) {
     }
 }
 
-function Set-UserFlag($user, $flag) { 
+function Set-UserFlag($user, $flag) {
     $user.UserFlags = ($user.UserFlags[0] -BOR $flag)
 }
 
@@ -36,51 +35,18 @@ function Clear-UserFlag($user, $flag) {
 }
 
 function Get-Group($grp) {
-    $adsi.Children | where { $_.SchemaClassName -eq 'Group' -and $_.Name -eq $grp }
+    $adsi.Children | Where-Object { $_.SchemaClassName -eq 'Group' -and $_.Name -eq $grp }
     return
 }
 
 Function Test-LocalCredential {
     param([String]$Username, [String]$Password)
 
-    $platform_util = @'
-using System;
-using System.Runtime.InteropServices;
-
-namespace Ansible
-{
-    public class WinUserPInvoke
-    {
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool LogonUser(
-            string lpszUsername,
-            string lpszDomain,
-            string lpszPassword,
-            UInt32 dwLogonType,
-            UInt32 dwLogonProvider,
-            out IntPtr phToken);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool CloseHandle(
-            IntPtr hObject);
-    }
-}
-'@
-
-    $original_tmp = $env:TMP
-    $env:TMP = $_remote_tmp
-    Add-Type -TypeDefinition $platform_util
-    $env:TMP = $original_tmp
-
-    $handle = [IntPtr]::Zero
-    $logon_res = [Ansible.WinUserPInvoke]::LogonUser($Username, $null, $Password,
-        $LOGON32_LOGON_NETWORK, $LOGON32_PROVIDER_DEFAULT, [Ref]$handle)
-
-    if ($logon_res) {
+    try {
+        $handle = [Ansible.AccessToken.TokenUtil]::LogonUser($Username, $null, $Password, "Network", "Default")
+        $handle.Dispose()
         $valid_credentials = $true
-        [Ansible.WinUserPInvoke]::CloseHandle($handle) > $null
-    } else {
-        $err_code = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+    } catch [Ansible.AccessToken.Win32Exception] {
         # following errors indicate the creds are correct but the user was
         # unable to log on for other reasons, which we don't care about
         $success_codes = @(
@@ -90,26 +56,22 @@ namespace Ansible
             0x00000569  # ERROR_LOGON_TYPE_GRANTED
         )
 
-        if ($err_code -eq 0x0000052E) {
+        if ($_.Exception.NativeErrorCode -eq 0x0000052E) {
             # ERROR_LOGON_FAILURE - the user or pass was incorrect
             $valid_credentials = $false
-        } elseif ($err_code -in $success_codes) {
+        } elseif ($_.Exception.NativeErrorCode -in $success_codes) {
             $valid_credentials = $true
         } else {
-            # an unknown failure, raise an Exception for this
-            $win32_exp = New-Object -TypeName System.ComponentModel.Win32Exception -ArgumentList $err_code
-            $err_msg = "LogonUserW failed: $($win32_exp.Message) (Win32ErrorCode: $err_code)"
-            throw New-Object -TypeName System.ComponentModel.Win32Exception -ArgumentList $err_code, $err_msg
+            # an unknown failure, reraise exception
+            throw $_
         }
     }
-
     return $valid_credentials
 }
 
 ########
 
 $params = Parse-Args $args;
-$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $result = @{
     changed = $false
@@ -140,7 +102,7 @@ If ($null -ne $groups) {
     ElseIf ($groups -isnot [System.Collections.IList]) {
         Fail-Json $result "groups must be a string or array"
     }
-    $groups = $groups | ForEach { ([string]$_).Trim() } | Where { $_ }
+    $groups = $groups | ForEach-Object { ([string]$_).Trim() } | Where-Object { $_ }
     If ($null -eq $groups) {
         $groups = @()
     }
@@ -219,7 +181,7 @@ If ($state -eq 'present') {
             $user_obj.SetInfo()
         }
         If ($null -ne $groups) {
-            [string[]]$current_groups = $user_obj.Groups() | ForEach { $_.GetType().InvokeMember("Name", "GetProperty", $null, $_, $null) }
+            [string[]]$current_groups = $user_obj.Groups() | ForEach-Object { $_.GetType().InvokeMember("Name", "GetProperty", $null, $_, $null) }
             If (($groups_action -eq "remove") -or ($groups_action -eq "replace")) {
                 ForEach ($grp in $current_groups) {
                     If ((($groups_action -eq "remove") -and ($groups -contains $grp)) -or (($groups_action -eq "replace") -and ($groups -notcontains $grp))) {

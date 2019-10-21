@@ -1,2 +1,0 @@
-minor_changes:
-- "openssl_certificate - the messages of the ``assertonly`` provider with respect to private key and CSR checking are now more precise."

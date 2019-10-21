@@ -8,6 +8,7 @@ import os
 import time
 
 from ansible import constants as C
+from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import combine_vars
 
@@ -39,6 +40,9 @@ class ActionModule(ActionBase):
         # This ensures we don't pass a ``None`` value as an argument expecting a specific type
         mod_args = dict((k, v) for k, v in mod_args.items() if v is not None)
 
+        # handle module defaults
+        mod_args = get_action_args_with_defaults(fact_module, mod_args, self._task.module_defaults, self._templar)
+
         return mod_args
 
     def run(self, tmp=None, task_vars=None):
@@ -50,10 +54,10 @@ class ActionModule(ActionBase):
 
         modules = C.config.get_config_value('FACTS_MODULES', variables=task_vars)
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
-
         if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
-            modules.extend([connection_map.get(self._connection._load_name, 'setup')])
+            network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os', task_vars.get('ansible_facts', {}).get('network_os')))
+            modules.extend([connection_map.get(network_os or self._connection._load_name, 'setup')])
             modules.pop(modules.index('smart'))
 
         failed = {}
@@ -65,11 +69,13 @@ class ActionModule(ActionBase):
                 mod_args = self._get_module_args(fact_module, task_vars)
                 res = self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=False)
                 if res.get('failed', False):
-                    failed[fact_module] = res.get('msg')
+                    failed[fact_module] = res
                 elif res.get('skipped', False):
-                    skipped[fact_module] = res.get('msg')
+                    skipped[fact_module] = res
                 else:
                     result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})})
+
+            self._remove_tmp_path(self._connection._shell.tmpdir)
         else:
             # do it async
             jobs = {}
@@ -85,9 +91,9 @@ class ActionModule(ActionBase):
                     res = self._execute_module(module_name='async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
                     if res.get('finished', 0) == 1:
                         if res.get('failed', False):
-                            failed[module] = res.get('msg')
+                            failed[module] = res
                         elif res.get('skipped', False):
-                            skipped[module] = res.get('msg')
+                            skipped[module] = res
                         else:
                             result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})})
                         del jobs[module]
@@ -99,18 +105,19 @@ class ActionModule(ActionBase):
 
         if skipped:
             result['msg'] = "The following modules were skipped: %s\n" % (', '.join(skipped.keys()))
-            for skip in skipped:
-                result['msg'] += '  %s: %s\n' % (skip, skipped[skip])
+            result['skipped_modules'] = skipped
             if len(skipped) == len(modules):
                 result['skipped'] = True
 
         if failed:
             result['failed'] = True
             result['msg'] = "The following modules failed to execute: %s\n" % (', '.join(failed.keys()))
-            for fail in failed:
-                result['msg'] += '  %s: %s\n' % (fail, failed[fail])
+            result['failed_modules'] = failed
 
         # tell executor facts were gathered
         result['ansible_facts']['_ansible_facts_gathered'] = True
+
+        # hack to keep --verbose from showing all the setup module result
+        result['_ansible_verbose_override'] = True
 
         return result

@@ -1,2 +1,0 @@
-minor_changes:
-- "openssl_csr - add ``useCommonNameForSAN`` option which allows to disable using the common name as a SAN if no SAN is specified."

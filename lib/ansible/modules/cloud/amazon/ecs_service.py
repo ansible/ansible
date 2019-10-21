@@ -134,16 +134,16 @@ options:
         version_added: 2.8
     service_registries:
         description:
-          - describes service disovery registries this service will register with.
+          - describes service discovery registries this service will register with.
         required: false
         version_added: 2.8
         suboptions:
             container_name:
                 description:
-                  - container name for service disovery registration
+                  - container name for service discovery registration
             container_port:
                 description:
-                  - container port for service disovery registration
+                  - container port for service discovery registration
             arn:
                 description:
                   - Service discovery registry ARN
@@ -160,18 +160,14 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+# Basic provisioning example
 - ecs_service:
     state: present
     name: console-test-service
     cluster: new_cluster
     task_definition: 'new_cluster-task:1'
     desired_count: 0
-
-# Basic provisioning example
-- ecs_service:
-    name: default
-    state: present
-    cluster: new_cluster
 
 - name: create ECS service on VPC network
   ecs_service:
@@ -271,7 +267,8 @@ service:
         deployments:
             description: list of service deployments
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
         deploymentConfiguration:
             description: dictionary of deploymentConfiguration
             returned: always
@@ -288,11 +285,13 @@ service:
         events:
             description: list of service events
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
         placementConstraints:
             description: List of placement constraints objects
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
             contains:
                 type:
                     description: The type of constraint. Valid values are distinctInstance and memberOf.
@@ -306,7 +305,8 @@ service:
         placementStrategy:
             description: List of placement strategy objects
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
             contains:
                 type:
                     description: The type of placement strategy. Valid values are random, spread and binpack.
@@ -602,7 +602,7 @@ def main():
                         loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
 
                 if update:
-                    # check various parameters and boto versions and give a helpful erro in boto is not new enough for feature
+                    # check various parameters and boto versions and give a helpful error in boto is not new enough for feature
 
                     if module.params['scheduling_strategy']:
                         if not module.botocore_at_least('1.10.37'):

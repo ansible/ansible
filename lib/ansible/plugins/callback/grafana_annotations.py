@@ -193,7 +193,7 @@ class CallbackModule(CallbackBase):
             self._display.warning('Grafana URL was not provided. The '
                                   'Grafana URL can be provided using '
                                   'the `GRAFANA_URL` environment variable.')
-        self._display.info('Grafana URL: %s' % self.grafana_url)
+        self._display.debug('Grafana URL: %s' % self.grafana_url)
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook._file_name

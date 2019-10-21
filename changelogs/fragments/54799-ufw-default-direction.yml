@@ -1,2 +1,0 @@
-bugfixes:
-- "ufw - when ``default`` is specified, ``direction`` does not needs to be specified. This was accidentally introduced in Ansible 2.7.8."

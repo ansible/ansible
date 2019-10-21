@@ -30,7 +30,7 @@ description:
   - Pass the object definition from a source file or inline. See examples for reading
     files and using Jinja templates or vault-encrypted files.
   - Access to the full range of K8s APIs.
-  - Use the M(k8s_facts) module to obtain a list of items about an object of type C(kind)
+  - Use the M(k8s_info) module to obtain a list of items about an object of type C(kind)
   - Authenticate using either a config file, certificates, password or token.
   - Supports check mode.
 
@@ -39,6 +39,13 @@ extends_documentation_fragment:
   - k8s_name_options
   - k8s_resource_options
   - k8s_auth_options
+
+notes:
+  - If your OpenShift Python library is not 0.9.0 or newer and you are trying to
+    remove an item from an associative array/dictionary, for example a label or
+    an annotation, you will need to explicitly set the value of the item to be
+    removed to `null`. Simply deleting the entry in the dictionary will not
+    remove it from openshift or kubernetes.
 
 options:
   merge_type:
@@ -53,6 +60,7 @@ options:
     - If openshift >= 0.6.2, this defaults to C(['strategic-merge', 'merge']), which is ideal for using the same parameters
       on resource kinds that combine Custom Resources and built-in resources. For openshift < 0.6.2, the default
       is simply C(strategic-merge).
+    - mutually exclusive with C(apply)
     choices:
     - json
     - merge
@@ -68,6 +76,11 @@ options:
     default: no
     type: bool
     version_added: "2.8"
+  wait_sleep:
+    description:
+    - Number of seconds to sleep between checks.
+    default: 5
+    version_added: "2.9"
   wait_timeout:
     description:
     - How long in seconds to wait for the resource to end up in the desired state. Ignored if C(wait) is not set.
@@ -124,6 +137,14 @@ options:
       the generated hash and append_hash=no)
     type: bool
     version_added: "2.8"
+  apply:
+    description:
+    - C(apply) compares the desired resource definition with the previously supplied resource definition,
+      ignoring properties that are automatically generated
+    - C(apply) works better with Services than 'force=yes'
+    - mutually exclusive with C(merge_type)
+    type: bool
+    version_added: "2.9"
 
 requirements:
   - "python >= 2.7"

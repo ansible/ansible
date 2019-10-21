@@ -113,9 +113,10 @@ def check_cli(module, cli):
     user_name = module.params['pn_user_name']
     show = cli
 
-    cli += ' snmp-user-show user-name %s format user-name no-show-headers' % user_name
+    cli += ' snmp-user-show format user-name no-show-headers'
     rc, out, err = run_commands(module, cli)
-    if out:
+
+    if out and user_name in out.split():
         pass
     else:
         return None
@@ -124,7 +125,8 @@ def check_cli(module, cli):
     cli += ' snmp-vacm-show format user-name no-show-headers'
     out = run_commands(module, cli)[1]
 
-    out = out.split()
+    if out:
+        out = out.split()
 
     return True if user_name in out else False
 

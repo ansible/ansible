@@ -1,2 +1,0 @@
-bugfixes:
-    - ensure we always have internal module attributes set, even if not being passed (fixes using modules as script)

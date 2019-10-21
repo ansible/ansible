@@ -51,6 +51,7 @@ options:
   value:
     description:
     - The value(s) to specify. Required when C(state=present).
+    - When c(type=PTR) only the partial part of the IP should be given.
     aliases: [ values ]
     type: list
   zone:
@@ -71,17 +72,24 @@ options:
 EXAMPLES = r'''
 - name: Create database server alias
   win_dns_record:
-    name: db1
-    type: CNAME
-    value: cgyl1404p.amer.example.com
-    zone: amer.example.com
+    name: "db1"
+    type: "CNAME"
+    value: "cgyl1404p.amer.example.com"
+    zone: "amer.example.com"
+
+- name: PTR example
+  win_dns_record:
+    name: "1.1.1"
+    type: "PTR"
+    value: "db1"
+    zone: "10.in-addr.arpa"
 
 - name: Remove static record
   win_dns_record:
-    name: db1
-    type: A
+    name: "db1"
+    type: "A"
     state: absent
-    zone: amer.example.com
+    zone: "amer.example.com"
 '''
 
 RETURN = r'''

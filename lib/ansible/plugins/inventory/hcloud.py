@@ -179,6 +179,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.inventory.set_variable(server.name, "image_name", to_native(server.image.name))
         self.inventory.set_variable(server.name, "image_os_flavor", to_native(server.image.os_flavor))
 
+        # Labels
+        self.inventory.set_variable(server.name, "labels", dict(server.labels))
+
     def verify_file(self, path):
         """Return the possibly of a file being consumable by this plugin."""
         return (

@@ -1,2 +1,0 @@
-bugfixes:
-- ssh - Properly quote the username to allow usernames containing spaces (https://github.com/ansible/ansible/issues/49968)

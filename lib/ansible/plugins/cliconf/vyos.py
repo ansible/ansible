@@ -71,10 +71,18 @@ class Cliconf(CliconfBase):
             if format not in option_values['format']:
                 raise ValueError("'format' value %s is invalid. Valid values of format are %s" % (format, ', '.join(option_values['format'])))
 
+        if not flags:
+            flags = []
+
         if format == 'text':
-            out = self.send_command('show configuration')
+            command = 'show configuration'
         else:
-            out = self.send_command('show configuration commands')
+            command = 'show configuration commands'
+
+        command += ' '.join(to_list(flags))
+        command = command.strip()
+
+        out = self.send_command(command)
         return out
 
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
@@ -109,6 +117,8 @@ class Cliconf(CliconfBase):
                 self.discard_changes()
         else:
             self.send_command('exit')
+            if to_text(self._connection.get_prompt(), errors='surrogate_or_strict').strip().endswith('#'):
+                self.discard_changes()
 
         if diff_config:
             resp['diff'] = diff_config
@@ -116,14 +126,13 @@ class Cliconf(CliconfBase):
         resp['request'] = requests
         return resp
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, newline=True, check_all=False):
         if not command:
             raise ValueError('must provide value of command to execute')
-
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
 
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def commit(self, comment=None):
         if comment:

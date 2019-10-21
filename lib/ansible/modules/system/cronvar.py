@@ -98,7 +98,6 @@ EXAMPLES = r'''
 '''
 
 import os
-import pipes
 import platform
 import pwd
 import re
@@ -107,8 +106,7 @@ import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-
-CRONCMD = "/usr/bin/crontab"
+from ansible.module_utils.six.moves import shlex_quote
 
 
 class CronVarError(Exception):
@@ -128,6 +126,7 @@ class CronVar(object):
         self.user = user
         self.lines = None
         self.wordchars = ''.join(chr(x) for x in range(128) if chr(x) not in ('=', "'", '"',))
+        self.cron_cmd = self.module.get_bin_path('crontab', required=True)
 
         if cron_file:
             self.cron_file = ""
@@ -296,14 +295,14 @@ class CronVar(object):
 
         if self.user:
             if platform.system() == 'SunOS':
-                return "su %s -c '%s -l'" % (pipes.quote(self.user), pipes.quote(CRONCMD))
+                return "su %s -c '%s -l'" % (shlex_quote(self.user), shlex_quote(self.cron_cmd))
             elif platform.system() == 'AIX':
-                return "%s -l %s" % (pipes.quote(CRONCMD), pipes.quote(self.user))
+                return "%s -l %s" % (shlex_quote(self.cron_cmd), shlex_quote(self.user))
             elif platform.system() == 'HP-UX':
-                return "%s %s %s" % (CRONCMD, '-l', pipes.quote(self.user))
+                return "%s %s %s" % (self.cron_cmd, '-l', shlex_quote(self.user))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
-                user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD, user, '-l')
+                user = '-u %s' % shlex_quote(self.user)
+        return "%s %s %s" % (self.cron_cmd, user, '-l')
 
     def _write_execute(self, path):
         """
@@ -312,10 +311,11 @@ class CronVar(object):
         user = ''
         if self.user:
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
-                return "chown %s %s ; su '%s' -c '%s %s'" % (pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), CRONCMD, pipes.quote(path))
+                return "chown %s %s ; su '%s' -c '%s %s'" % (
+                    shlex_quote(self.user), shlex_quote(path), shlex_quote(self.user), self.cron_cmd, shlex_quote(path))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
-                user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD, user, pipes.quote(path))
+                user = '-u %s' % shlex_quote(self.user)
+        return "%s %s %s" % (self.cron_cmd, user, shlex_quote(path))
 
 
 # ==================================================
@@ -372,7 +372,7 @@ def main():
     # --- user input validation ---
 
     if name is None and ensure_present:
-        module.fail_json(msg="You must specify 'name' to insert a new cron variabale")
+        module.fail_json(msg="You must specify 'name' to insert a new cron variable")
 
     if value is None and ensure_present:
         module.fail_json(msg="You must specify 'value' to insert a new cron variable")

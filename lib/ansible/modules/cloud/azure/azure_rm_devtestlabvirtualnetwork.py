@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabvirtualnetwork
 version_added: "2.8"
-short_description: Manage Azure DevTest Lab Virtual Network instance.
+short_description: Manage Azure DevTest Lab Virtual Network instance
 description:
     - Create, update and delete instance of Azure DevTest Lab Virtual Network.
 
@@ -42,19 +42,19 @@ options:
             - The description of the virtual network.
     state:
       description:
-        - Assert the state of the Virtual Network.
-        - Use C(present) to create or update an Virtual Network and C(absent) to delete it.
+          - Assert the state of the Virtual Network.
+          - Use C(present) to create or update an Virtual Network and C(absent) to delete it.
       default: present
       choices:
-        - absent
-        - present
+          - absent
+          - present
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -208,7 +208,7 @@ class AzureRMDevTestLabVirtualNetwork(AzureRMModuleBase):
             if self.check_mode:
                 return self.results
             self.delete_virtualnetwork()
-            # This currently doesnt' work as there is a bug in SDK / Service
+            # This currently doesn't work as there is a bug in SDK / Service
             if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
         else:

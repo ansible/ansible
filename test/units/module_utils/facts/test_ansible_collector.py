@@ -207,7 +207,9 @@ class TestCollectedFacts(unittest.TestCase):
     def _mock_module(self, gather_subset=None):
         return mock_module(gather_subset=self.gather_subset)
 
-    def setUp(self):
+    @patch('platform.system', return_value='Linux')
+    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value='systemd')
+    def setUp(self, mock_gfc, mock_ps):
         mock_module = self._mock_module()
         collectors = self._collectors(mock_module)
 

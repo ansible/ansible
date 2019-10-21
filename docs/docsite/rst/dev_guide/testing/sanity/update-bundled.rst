@@ -1,7 +1,7 @@
 :orphan:
 
-Sanity Tests » update-bundled
-=============================
+update-bundled
+==============
 
 Check whether any of our known bundled code needs to be updated for a new upstream release.
 

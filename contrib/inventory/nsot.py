@@ -25,7 +25,7 @@ Features
   will also append ``site_id`` and ``id`` as facts to utilize.
 
 
-Confguration
+Configuration
 ------------
 
 Since it'd be annoying and failure prone to guess where you're configuration

@@ -1,13 +1,25 @@
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import sys
+
+import pytest
 
 import units.compat.unittest as unittest
 from units.compat.mock import MagicMock
 from units.compat.unittest import TestCase
 from units.modules.utils import set_module_args
 
+
 # Exoscale's cs doesn't support Python 2.6
+pytestmark = []
 if sys.version_info[:2] != (2, 6):
     from ansible.modules.cloud.cloudstack.cs_traffic_type import AnsibleCloudStackTrafficType, setup_module_object
+    from ansible.module_utils.cloudstack import HAS_LIB_CS
+    if not HAS_LIB_CS:
+        pytestmark.append(pytest.mark.skip('The cloudstack library, "cs", is needed to test cs_traffic_type'))
+else:
+    pytestmark.append(pytest.mark.skip('Exoscale\'s cs doesn\'t support Python 2.6'))
 
 
 EXISTING_TRAFFIC_TYPES_RESPONSE = {
@@ -85,13 +97,11 @@ base_module_args = {
 
 class TestAnsibleCloudstackTraffiType(TestCase):
 
-    @unittest.skipUnless(sys.version_info[:2] >= (2, 7), "Exoscale's cs doesn't support Python 2.6")
     def test_module_is_created_sensibly(self):
         set_module_args(base_module_args)
         module = setup_module_object()
         assert module.params['traffic_type'] == 'Guest'
 
-    @unittest.skipUnless(sys.version_info[:2] >= (2, 7), "Exoscale's cs doesn't support Python 2.6")
     def test_update_called_when_traffic_type_exists(self):
         set_module_args(base_module_args)
         module = setup_module_object()
@@ -101,7 +111,6 @@ class TestAnsibleCloudstackTraffiType(TestCase):
         actt.present_traffic_type()
         self.assertTrue(actt.update_traffic_type.called)
 
-    @unittest.skipUnless(sys.version_info[:2] >= (2, 7), "Exoscale's cs doesn't support Python 2.6")
     def test_update_not_called_when_traffic_type_doesnt_exist(self):
         set_module_args(base_module_args)
         module = setup_module_object()
@@ -113,7 +122,6 @@ class TestAnsibleCloudstackTraffiType(TestCase):
         self.assertFalse(actt.update_traffic_type.called)
         self.assertTrue(actt.add_traffic_type.called)
 
-    @unittest.skipUnless(sys.version_info[:2] >= (2, 7), "Exoscale's cs doesn't support Python 2.6")
     def test_traffic_type_returned_if_exists(self):
         set_module_args(base_module_args)
         module = setup_module_object()

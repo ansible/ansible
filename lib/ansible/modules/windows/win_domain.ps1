@@ -16,7 +16,9 @@ Function Ensure-Prereqs {
 
         # NOTE: AD-Domain-Services includes: RSAT-AD-AdminCenter, RSAT-AD-Powershell and RSAT-ADDS-Tools
         $awf = Add-WindowsFeature AD-Domain-Services -WhatIf:$check_mode
+        $result.reboot_required = $awf.RestartNeeded
         # FUTURE: Check if reboot necessary
+
         return $true
     }
     return $false
@@ -74,7 +76,8 @@ try {
     # Cannot use Get-ADForest as that requires credential delegation, the below does not
     $forest_context = New-Object -TypeName System.DirectoryServices.ActiveDirectory.DirectoryContext -ArgumentList Forest, $dns_domain_name
     $forest = [System.DirectoryServices.ActiveDirectory.Forest]::GetForest($forest_context)
-} catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryObjectNotFoundException] { }
+} catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryObjectNotFoundException] {
+} catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryOperationException] { }
 
 if (-not $forest) {
     $result.changed = $true
@@ -121,10 +124,10 @@ if (-not $forest) {
     } catch [Microsoft.DirectoryServices.Deployment.DCPromoExecutionException] {
         # ExitCode 15 == 'Role change is in progress or this computer needs to be restarted.'
         # DCPromo exit codes details can be found at https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/deploy/troubleshooting-domain-controller-deployment
-        if ($_.Exception.ExitCode -eq 15) {
+        if ($_.Exception.ExitCode -in @(15, 19)) {
             $result.reboot_required = $true
         } else {
-            Fail-Json -obj $result -message "Failed to install ADDSForest with DCPromo: $($_.Exception.Message)"
+            Fail-Json -obj $result -message "Failed to install ADDSForest, DCPromo exited with $($_.Exception.ExitCode): $($_.Exception.Message)"
         }
     }
 

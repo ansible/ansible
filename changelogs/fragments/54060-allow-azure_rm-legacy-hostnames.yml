@@ -1,3 +1,0 @@
----
-minor_changes:
-  - add option to azure_rm inventory plugin which will allow the legacy script host names to be used

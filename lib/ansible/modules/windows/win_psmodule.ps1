@@ -70,12 +70,23 @@ Function Install-PrereqModule {
             else {
                 try {
                     if ( $Name -eq 'PowerShellGet' ) {
+                    
+                        $install_params = @{
+                            Name = $Name
+                            MinimumVersion = $PrereqModules[$Name]
+                            Force = $true
+                            WhatIf = $CheckMode
+                        }
+                        
+                        if ((Get-Command -Name Install-Module).Parameters.ContainsKey('SkipPublisherCheck')) {
+                            $install_params.SkipPublisherCheck = $true
+                        }
                         
                         if ($null -ne (Get-InstalledModule | Where-Object {$_.Name -eq $Name})) {
-                            Update-Module -Name $Name -Force
+                            Update-Module @install_params
                         } 
                         else {
-                            Install-Module -Name $Name -Force
+                            Install-Module @install_params
                         }
                     }
                     $result.changed = $true

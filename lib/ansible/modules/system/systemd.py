@@ -22,7 +22,8 @@ description:
 options:
     name:
         description:
-            - Name of the service. When using in a chroot environment you always need to specify the full name i.e. (crond.service).
+            - Name of the service. This parameter takes the name of exactly one service to work with.
+            - When using in a chroot environment you always need to specify the full name i.e. (crond.service).
         aliases: [ service, unit ]
     state:
         description:
@@ -83,6 +84,7 @@ notes:
     - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', ('daemon_reexec' since 2.8),
       and all except 'daemon_reload' (and 'daemon_reexec' since 2.8) also require 'name'.
     - Before 2.4 you always required 'name'.
+    - Globs are not supported in name, i.e ``postgres*.service``.
 requirements:
     - A system managed by systemd.
 '''
@@ -135,7 +137,7 @@ status:
     description: A dictionary with the key=value pairs returned from `systemctl show`
     returned: success
     type: complex
-    contains: {
+    sample: {
             "ActiveEnterTimestamp": "Sun 2016-05-15 18:28:49 EDT",
             "ActiveEnterTimestampMonotonic": "8135942",
             "ActiveExitTimestampMonotonic": "0",
@@ -272,6 +274,10 @@ def is_running_service(service_status):
     return service_status['ActiveState'] in set(['active', 'activating'])
 
 
+def is_deactivating_service(service_status):
+    return service_status['ActiveState'] in set(['deactivating'])
+
+
 def request_was_ignored(out):
     return '=' not in out and 'ignoring request' in out
 
@@ -339,6 +345,12 @@ def main():
         mutually_exclusive=[['scope', 'user']],
     )
 
+    unit = module.params['name']
+    if unit is not None:
+        for globpattern in (r"*", r"?", r"["):
+            if globpattern in unit:
+                module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
+
     systemctl = module.get_bin_path('systemctl', True)
 
     if os.getenv('XDG_RUNTIME_DIR') is None:
@@ -364,7 +376,6 @@ def main():
     if module.params['force']:
         systemctl += " --force"
 
-    unit = module.params['name']
     rc = 0
     out = err = ''
     result = dict(
@@ -492,7 +503,7 @@ def main():
                     if not is_running_service(result['status']):
                         action = 'start'
                 elif module.params['state'] == 'stopped':
-                    if is_running_service(result['status']):
+                    if is_running_service(result['status']) or is_deactivating_service(result['status']):
                         action = 'stop'
                 else:
                     if not is_running_service(result['status']):

@@ -16,6 +16,7 @@ from ansible.module_utils.six import PY3
 # Internal API while this is still being developed.  Eventually move to
 # module_utils.common.text
 from ansible.module_utils._text import to_text, to_bytes, to_native
+from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
 
 
 # Format: byte representation, text representation, encoding of byte representation
@@ -51,3 +52,13 @@ def test_to_bytes(in_string, encoding, expected):
 def test_to_native(in_string, encoding, expected):
     """test happy path of encoding to native strings"""
     assert to_native(in_string, encoding) == expected
+
+
+def test_to_text_unsafe():
+    assert isinstance(to_text(AnsibleUnsafeBytes(b'foo')), AnsibleUnsafeText)
+    assert to_text(AnsibleUnsafeBytes(b'foo')) == AnsibleUnsafeText(u'foo')
+
+
+def test_to_bytes_unsafe():
+    assert isinstance(to_bytes(AnsibleUnsafeText(u'foo')), AnsibleUnsafeBytes)
+    assert to_bytes(AnsibleUnsafeText(u'foo')) == AnsibleUnsafeBytes(b'foo')

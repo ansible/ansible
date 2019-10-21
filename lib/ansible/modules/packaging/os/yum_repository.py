@@ -227,10 +227,10 @@ options:
         disable the global proxy setting.
   proxy_password:
     description:
-      - Username to use for proxy.
+      - Password for this proxy.
   proxy_username:
     description:
-      - Password for this proxy.
+      - Username to use for proxy.
   repo_gpgcheck:
     description:
       - This tells yum whether or not it should perform a GPG signature check

@@ -3,11 +3,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #AnsibleRequires -CSharpUtil Ansible.Basic
-#AnsibleRequires -CSharpUtil AnsibleCollections.testns.testcoll.MyCSMU
+#AnsibleRequires -CSharpUtil ansible_collections.testns.testcoll.plugins.module_utils.MyCSMU
+#AnsibleRequires -CSharpUtil ansible_collections.testns.testcoll.plugins.module_utils.subpkg.subcs
 
 $spec = @{
     options = @{
-        data = @{ type = "str"; default = "called from $([AnsibleCollections.testns.testcoll.MyCSMU.CustomThing]::HelloWorld())" }
+        data = @{ type = "str"; default = "called from $([ansible_collections.testns.testcoll.plugins.module_utils.MyCSMU.CustomThing]::HelloWorld())" }
     }
     supports_check_mode = $true
 }
@@ -20,4 +21,6 @@ if ($data -eq "crash") {
 
 $module.Result.ping = $data
 $module.Result.source = "user"
+$module.Result.subpkg = [ansible_collections.testns.testcoll.plugins.module_utils.subpkg.subcs.NestedUtil]::HelloWorld()
+$module.Result.type_accelerator = "called from $([MyCSMU]::HelloWorld())"
 $module.ExitJson()

@@ -1,2 +1,0 @@
-minor_changes:
-- inventory - added new TOML inventory plugin (https://github.com/ansible/ansible/pull/41593)

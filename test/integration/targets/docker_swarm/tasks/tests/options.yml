@@ -1,4 +1,6 @@
----
+- debug:
+    msg: Running tests/options.yml
+
 - name: Create a Swarm cluster
   docker_swarm:
     state: present
@@ -65,6 +67,7 @@
   docker_swarm:
     state: present
     force: yes
+    advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
     autolock_managers: yes
   diff: yes
   register: output_7
@@ -111,7 +114,8 @@
 - assert:
     that:
     - output_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.6.0') in output_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in output_1.msg"
+    - "'Minimum version required is 2.6.0 ' in output_1.msg"
   when: docker_py_version is version('2.6.0', '<')
 
 ####################################################################
@@ -200,7 +204,8 @@
 - assert:
     that:
     - output_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.6.0') in output_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in output_1.msg"
+    - "'Minimum version required is 2.6.0 ' in output_1.msg"
   when: docker_py_version is version('2.6.0', '<')
 
 ####################################################################
@@ -694,7 +699,8 @@
 - assert:
     that:
     - output_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.6.0') in output_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in output_1.msg"
+    - "'Minimum version required is 2.6.0 ' in output_1.msg"
   when: docker_py_version is version('2.6.0', '<')
 
 ####################################################################
@@ -1148,3 +1154,5 @@
        - 'output_6.actions[0] == "Swarm cluster updated"'
        - 'output_6.diff.before is defined'
        - 'output_6.diff.after is defined'
+
+- include_tasks: cleanup.yml

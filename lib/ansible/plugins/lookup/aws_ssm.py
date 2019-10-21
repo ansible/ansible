@@ -96,9 +96,13 @@ EXAMPLES = '''
 - name: return a dictionary of ssm parameters from a hierarchy path with shortened names (param instead of /PATH/to/param)
   debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', region='ap-southeast-2', shortnames=true, bypath=true, recursive=true ) }}"
 
-- name: Iterate over a parameter hierarchy
-  debug: msg='key contains {{item.Name}} with value {{item.Value}} '
-  loop: '{{ query("aws_ssm", "/TEST/test-list", region="ap-southeast-2", bypath=true) }}'
+- name: Iterate over a parameter hierarchy (one iteration per parameter)
+  debug: msg='Key contains {{ item.key }} , with value {{ item.value }}'
+  loop: '{{ lookup("aws_ssm", "/demo/", region="ap-southeast-2", bypath=True) | dict2items }}'
+
+- name: Iterate over multiple paths as dictionaries (one iteration per path)
+  debug: msg='Path contains {{ item }}'
+  loop: '{{ lookup("aws_ssm", "/demo/", "/demo1/", bypath=True)}}'
 
 '''
 
@@ -217,7 +221,7 @@ class LookupModule(LookupBase):
             params = boto3_tag_list_to_ansible_dict(response['Parameters'], tag_name_key_name="Name",
                                                     tag_value_key_name="Value")
             for i in terms:
-                if i in params:
+                if i.split(':', 1)[0] in params:
                     ret.append(params[i])
                 elif i in response['InvalidParameters']:
                     ret.append(None)

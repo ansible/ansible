@@ -1047,7 +1047,7 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           This last one can be superceeded by the user via ``ansible_group_priority``, which defaults to ``1`` for all groups.
           This variable, ``ansible_group_priority``, can only be set in the inventory source and not in group_vars/ as the variable is used in the loading of group_vars/.
 
-Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords.  For example, if your inventory specifies ``ansible_user: ramon`` and you run::
+Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords. See :ref:`general_precedence_rules` for more details. For example, if your inventory specifies ``ansible_user: ramon`` and you run::
 
     ansible -u lola myhost
 
@@ -1229,7 +1229,7 @@ For information about advanced YAML syntax used to declare variables and have mo
        Best practices in playbooks
    :ref:`special_variables`
        List of special variables
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

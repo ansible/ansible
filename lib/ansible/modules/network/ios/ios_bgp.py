@@ -18,7 +18,7 @@ DOCUMENTATION = """
 ---
 module: ios_bgp
 version_added: "2.8"
-author: "Nilashish Chakraborty (@nilashishc)"
+author: "Nilashish Chakraborty (@NilashishC)"
 short_description: Configure global BGP protocol settings on Cisco IOS.
 description:
   - This module provides configuration management of global BGP parameters
@@ -419,7 +419,7 @@ def main():
                            supports_check_mode=True)
 
     try:
-        result = module.edit_config(config_filter='| section bgp')
+        result = module.edit_config(config_filter='| section ^router bgp')
     except Exception as exc:
         module.fail_json(msg=to_text(exc))
 

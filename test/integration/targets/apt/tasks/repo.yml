@@ -46,7 +46,7 @@
   - name: Fail to install foo=1.0.1 since foo is not installed and only_upgrade is set
     apt:
       name: foo=1.0.1
-      state: installed
+      state: present
       only_upgrade: yes
       allow_unauthenticated: yes
     ignore_errors: yes
@@ -64,7 +64,7 @@
   - name: Upgrade foo to 1.0.1
     apt:
       name: foo=1.0.1
-      state: installed
+      state: present
       only_upgrade: yes
       allow_unauthenticated: yes
     register: apt_result
