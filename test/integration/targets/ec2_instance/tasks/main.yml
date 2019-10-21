@@ -1,4 +1,11 @@
 ---
+# This test suite is currently marked "unsupported" because it takes too long to
+# run within the 'shippable' test environment.
+# If a test suite runs longer than around 15 minutes aws-terminator can start
+# pulling resources created at the start of the test out from under it.
+#
+# ###############################################################################
+#
 # A Note about ec2 environment variable name preference:
 #  - EC2_URL -> AWS_URL
 #  - EC2_ACCESS_KEY -> AWS_ACCESS_KEY_ID -> AWS_ACCESS_KEY
