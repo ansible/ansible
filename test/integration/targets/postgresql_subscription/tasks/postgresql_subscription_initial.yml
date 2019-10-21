@@ -19,6 +19,7 @@
     <<: *task_parameters
     postgresql_subscription: 
       <<: *pg_parameters
+      login_port: '{{ replica_port }}'
       name: '{{ test_subscription }}'
       state: stat
     check_mode: yes
@@ -33,6 +34,7 @@
     <<: *task_parameters
     postgresql_subscription: 
       <<: *pg_parameters
+      login_port: '{{ replica_port }}'
       name: '{{ test_subscription }}'
       state: stat
 
