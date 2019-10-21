@@ -15,6 +15,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -48,6 +52,7 @@ options:
       - Specify desired state of the resource.
     required: false
     type: str
+    default: present
     choices: ['present','absent']
 '''
 
