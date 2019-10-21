@@ -272,7 +272,7 @@ def _load_config(module, config):
                     # if current view is system-view, break.
                     if current_view_prompt == system_view_prompt and level > 0:
                         break
-                elif current_view_prompt != system_view_prompt or not not_user_view(current_view_prompt):
+                elif current_view_prompt == system_view_prompt or not not_user_view(current_view_prompt):
                     break
                 rc, out, err = exec_command(module, cmd)
                 if rc == 0:
@@ -463,8 +463,8 @@ def main():
 
     if module.params['save']:
         if not module.check_mode:
-            run_commands(module, ['save'])
-        result['changed'] = True
+            run_commands(module, ['return', 'mmi-mode-enable', 'save'])
+    run_commands(module, ['return', 'undo mmi-mode-enable'])
 
     module.exit_json(**result)
 
