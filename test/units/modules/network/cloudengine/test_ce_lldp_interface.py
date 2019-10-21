@@ -75,6 +75,8 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
             eee=True,
             dcbx=True
         )
+        set_module_args(config)
+        result = self.execute_module(changed=True)
 
     def test_lldp_absent(self):
         self.get_nc_config.side_effect = (self.xml_present, self.xml_present, self.xml_absent, self.xml_absent)
@@ -86,23 +88,23 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
             type_tlv_enable='dot1_tlv',
             ifname='10GE1/0/1',
             lldpadminstatus='txOnly',
-            manaddrtxenable=True,
-            portdesctxenable=True,
-            syscaptxenable=True,
-            sysdesctxenable=True,
-            sysnametxenable=True,
-            portvlantxenable=True,
-            protovlantxenable=True,
-            txprotocolvlanid=True,
-            vlannametxenable=True,
-            txvlannameid=8,
-            txinterval=8,
-            protoidtxenable=True,
-            macphytxenable=True,
-            linkaggretxenable=True,
-            maxframetxenable=True,
-            eee=True,
-            dcbx=True,
+            manaddrtxenable=False,
+            portdesctxenable=False,
+            syscaptxenable=False,
+            sysdesctxenable=False,
+            sysnametxenable=False,
+            portvlantxenable=False,
+            protovlantxenable=False,
+            txprotocolvlanid=False,
+            vlannametxenable=False,
+            txvlannameid=18,
+            txinterval=18,
+            protoidtxenable=False,
+            macphytxenable=False,
+            linkaggretxenable=False,
+            maxframetxenable=False,
+            eee=False,
+            dcbx=False,
             state='absent'
         )
         set_module_args(config)
