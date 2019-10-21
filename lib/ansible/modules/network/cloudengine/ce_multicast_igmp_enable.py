@@ -74,37 +74,23 @@ options:
       - Specify desired state of the resource.
     required: false
     choices: ['present','absent']
+    default: present
     type: str
 '''
 
 EXAMPLES = '''
-- name: sample playbook
-  gather_facts: no
-  connection: local
-  hosts: device1
-  vars:
-    cli:
-      host: "{{ inventory_hostname }}"
-      port: "{{ ansible_ssh_port }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      transport: cli
-
-  tasks:
 
   - name: config global igmp enable
     ce_multicast_igmp_enable:
       aftype: v4
       features: 'global'
       state: present
-      provider: "{{ cli }}"
 
   - name: config global igmp disable
     ce_multicast_igmp_enable:
       features: 'global'
       aftype: v4
       state: absent
-      provider: "{{ cli }}"
 
   - name: config vlan igmp enable
     ce_multicast_igmp_enable:
@@ -112,7 +98,6 @@ EXAMPLES = '''
       aftype: v4
       vlan_id: 1
       igmp: true
-      provider: "{{ cli }}"
 
   - name: new proxy,igmp,version
     ce_multicast_igmp_enable:
@@ -122,7 +107,6 @@ EXAMPLES = '''
       proxy: true
       igmp: true
       version: 1
-      provider: "{{ cli }}"
 
   - name: modify proxy,igmp,version
     ce_multicast_igmp_enable:
@@ -130,7 +114,6 @@ EXAMPLES = '''
       aftype: v4
       vlan_id: 1
       version: 2
-      provider: "{{ cli }}"
 
   - name: delete proxy,igmp,version
     ce_multicast_igmp_enable:
@@ -138,7 +121,6 @@ EXAMPLES = '''
       aftype: v4
       vlan_id: 1
       state: absent
-      provider: "{{ cli }}"
 '''
 RETURN = '''
 proposed:
