@@ -11,9 +11,6 @@
       login_db: '{{ test_db }}'
 
   block:
-#  - name: Create subscription via shell
-#    <<: *task_parameters
-#    shell: psql '{{ test_db }}' -p '{{ replica_port }}' -c "CREATE SUBSCRIPTION {{ test_subscription }} CONNECTION 'host=127.0.0.1 port={{ master_port }} user={{ replication_role }} password={{ replication_pass }} dbname={{ test_db }}' PUBLICATION {{ test_pub }};"
 
   ####################
   # Test mode: present
@@ -33,6 +30,23 @@
         password: '{{ replication_pass }}'
         dbname: '{{ test_db }}'
 
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["CREATE SUBSCRIPTION test CONNECTION 'host=127.0.0.1 port={{ master_port }} user={{ replication_role }} password={{ replication_pass }} dbname={{ test_db }}' PUBLICATION {{ test_pub }}"]
+      - result.exists == true
+      - result.initial_state == {}
+      - result.final_state.owner == '{{ pg_user }}'
+      - result.final_state.enabled == true
+      - result.final_state.publications == ["{{ test_pub }}"]
+      - result.final_state.synccommit == true
+      - result.final_state.slotname == '{{ test_subscription }}'
+      - result.final_state.conninfo.dbname == '{{ test_db }}'
+      - result.final_state.conninfo.host == '127.0.0.1'
+      - result.final_state.conninfo.port == '{{ master_port }}'
+      - result.final_state.conninfo.user == '{{ replication_role }}'
+      - result.final_state.conninfo.password == '{{ replication_pass }}'
+
   #################
   # Test mode: stat
   #################
@@ -49,8 +63,18 @@
   - assert:
       that:
       - result is not changed
-      - result.initial_state != {}
       - result.final_state == result.initial_state
+      - result.exists == true
+      - result.final_state.owner == '{{ pg_user }}'
+      - result.final_state.enabled == true
+      - result.final_state.publications == ["{{ test_pub }}"]
+      - result.final_state.synccommit == true
+      - result.final_state.slotname == '{{ test_subscription }}'
+      - result.final_state.conninfo.dbname == '{{ test_db }}'
+      - result.final_state.conninfo.host == '127.0.0.1'
+      - result.final_state.conninfo.port == '{{ master_port }}'
+      - result.final_state.conninfo.user == '{{ replication_role }}'
+      - result.final_state.conninfo.password == '{{ replication_pass }}'
 
   - name: Stat mode
     <<: *task_parameters
@@ -63,5 +87,15 @@
   - assert:
       that:
       - result is not changed
-      - result.initial_state != {}
       - result.final_state == result.initial_state
+      - result.exists == true
+      - result.final_state.owner == '{{ pg_user }}'
+      - result.final_state.enabled == true
+      - result.final_state.publications == ["{{ test_pub }}"]
+      - result.final_state.synccommit == true
+      - result.final_state.slotname == '{{ test_subscription }}'
+      - result.final_state.conninfo.dbname == '{{ test_db }}'
+      - result.final_state.conninfo.host == '127.0.0.1'
+      - result.final_state.conninfo.port == '{{ master_port }}'
+      - result.final_state.conninfo.user == '{{ replication_role }}'
+      - result.final_state.conninfo.password == '{{ replication_pass }}'
