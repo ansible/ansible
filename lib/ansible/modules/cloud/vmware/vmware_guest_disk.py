@@ -152,10 +152,11 @@ EXAMPLES = '''
         scsi_type: 'buslogic'
         unit_number: 1
         disk_mode: 'independent_nonpersistent'
+      - filename: "[datastore1] path/to/existing/disk.vmdk"
   delegate_to: localhost
   register: disk_facts
 
-- name: Remove disks from virtual machine using name
+- name: Remove disk from virtual machine using name
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -170,7 +171,7 @@ EXAMPLES = '''
   delegate_to: localhost
   register: disk_facts
 
-- name: Remove disks from virtual machine using moid
+- name: Remove disk from virtual machine using moid
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -182,6 +183,22 @@ EXAMPLES = '''
       - state: absent
         scsi_controller: 1
         unit_number: 1
+  delegate_to: localhost
+  register: disk_facts
+
+- name: Remove disk from virtual machine but keep the VMDK file on the datastore
+  vmware_guest_disk:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    name: VM_225
+    disk:
+      - state: absent
+        scsi_controller: 1
+        unit_number: 2
+        destroy: no
   delegate_to: localhost
   register: disk_facts
 '''
