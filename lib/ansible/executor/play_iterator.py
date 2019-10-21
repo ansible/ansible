@@ -118,13 +118,10 @@ class HostState:
 
         if self.cur_dep_chain is not None:
             new_state.cur_dep_chain = self.cur_dep_chain[:]
-
         if self.tasks_child_state is not None:
             new_state.tasks_child_state = self.tasks_child_state.copy()
-
         if self.rescue_child_state is not None:
             new_state.rescue_child_state = self.rescue_child_state.copy()
-
         if self.always_child_state is not None:
             new_state.always_child_state = self.always_child_state.copy()
 
