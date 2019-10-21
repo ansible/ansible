@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_compute_target_ssl_proxy_info
 description:
 - Gather info for GCP TargetSslProxy
-- This module was called C(gcp_compute_target_ssl_proxy_facts) before Ansible 2.9.
-  The usage has not changed.
 short_description: Gather info for GCP TargetSslProxy
 version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
@@ -179,9 +177,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str')))
-
-    if module._name == 'gcp_compute_target_ssl_proxy_facts':
-        module.deprecate("The 'gcp_compute_target_ssl_proxy_facts' module has been renamed to 'gcp_compute_target_ssl_proxy_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
