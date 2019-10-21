@@ -25,6 +25,7 @@ from units.compat.mock import patch
 from ansible.modules.network.aireos import aireos_command
 from units.modules.utils import set_module_args
 from .aireos_module import TestCiscoWlcModule, load_fixture
+from ansible.module_utils import six
 
 
 class TestCiscoWlcCommandModule(TestCiscoWlcModule):
@@ -105,3 +106,17 @@ class TestCiscoWlcCommandModule(TestCiscoWlcModule):
         commands = ['show sysinfo', 'show sysinfo']
         set_module_args(dict(commands=commands, wait_for=wait_for, match='all'))
         self.execute_module(failed=True)
+
+    def test_aireos_command_to_lines_non_ascii(self):
+        ''' Test data is one variation of the result of a `show run-config commands`
+        command on Cisco WLC version 8.8.120.0 '''
+        test_data = '''
+        wlan flexconnect learn-ipaddr 101 enable
+        `\xc8\x92\xef\xbf\xbdR\x7f`\xc8\x92\xef\xbf\xbdR\x7f`
+        wlan wgb broadcast-tagging disable 1
+        '''.strip()
+        test_string = six.u(test_data)
+        test_stdout = [test_string, ]
+        result = list(aireos_command.to_lines(test_stdout))
+        print(result[0])
+        self.assertEqual(len(result[0]), 3)

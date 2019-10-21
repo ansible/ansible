@@ -228,7 +228,7 @@ from functools import partial
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.ios.ios import get_config, load_config
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import ios_argument_spec
 from ansible.module_utils.six import iteritems
 
 
@@ -264,7 +264,6 @@ def sshkey_fingerprint(sshkey):
 
 def map_obj_to_commands(updates, module):
     commands = list()
-    state = module.params['state']
     update_password = module.params['update_password']
     password_type = module.params['password_type']
 
@@ -357,7 +356,7 @@ def parse_password_type(data):
 
 
 def map_config_to_obj(module):
-    data = get_config(module, flags=['| include username'])
+    data = get_config(module, flags=['| section username'])
 
     match = re.findall(r'(?:^(?:u|\s{2}u))sername (\S+)', data, re.M)
     if not match:
@@ -511,8 +510,6 @@ def main():
             'The "password" argument is used to authenticate the current connection. ' +
             'To set a user password use "configured_password" instead.'
         )
-
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:

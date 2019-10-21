@@ -44,10 +44,10 @@ imagetemplate: Creates a host group for each image template containing all hosts
 import os
 import sys
 import time
-import ConfigParser
 
 import json
 
+from ansible.module_utils.six.moves import configparser as ConfigParser
 from ansible.module_utils.urls import open_url
 
 

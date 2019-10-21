@@ -32,7 +32,9 @@ options:
     type: bool
     default: no
 seealso:
+- module: win_acl
 - module: win_file
+- module: win_stat
 author:
 - Hans-Joachim Kliemeck (@h0nIg)
 '''

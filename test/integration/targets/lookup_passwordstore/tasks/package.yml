@@ -3,21 +3,34 @@
     name: pass
     state: present
   when: ansible_pkg_mgr == 'apt'
+
 - name: "Install package"
   yum:
     name: pass
     state: present
   when: ansible_pkg_mgr == 'yum'
+
 - name: "Install package"
   dnf:
     name: pass
     state: present
   when: ansible_pkg_mgr == 'dnf'
-- name: "Install package"
-  zypper:
-    name: password-store
-    state: present
+
+- block:
+  # OpenSUSE Leap>=15.0 don't include password-store in main repo
+  - name: add security:privacy repo
+    template:
+      src: security-privacy.repo.j2
+      dest: /etc/zypp/repos.d/security:privacy.repo
+
+  - name: "Install package"
+    zypper:
+      name: password-store
+      state: present
+      update_cache: yes
+      disable_gpg_check: yes
   when: ansible_pkg_mgr == 'zypper'
+
 - name: "Install package"
   pkgng:
     name: "{{ item }}"

@@ -149,6 +149,7 @@ changed:
 
 
 import re
+from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
@@ -159,7 +160,7 @@ CE_NC_GET_INTFS = """
     <interfaces>
       <interface>
         <ifName></ifName>
-        <ifPhyType></ifPhyType>
+        <ifPhyType>%s</ifPhyType>
         <ifNumber></ifNumber>
         <ifDescr></ifDescr>
         <ifAdminStatus></ifAdminStatus>
@@ -193,7 +194,7 @@ CE_NC_GET_INTF = """
 CE_NC_XML_CREATE_INTF = """
 <ifm xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
 <interfaces>
-  <interface operation="create">
+  <interface operation="merge">
     <ifName>%s</ifName>
     <ifDescr>%s</ifDescr>
   </interface>
@@ -204,7 +205,7 @@ CE_NC_XML_CREATE_INTF = """
 CE_NC_XML_CREATE_INTF_L2SUB = """
 <ifm xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
 <interfaces>
-  <interface operation="create">
+  <interface operation="merge">
     <ifName>%s</ifName>
     <ifDescr>%s</ifDescr>
     <l2SubIfFlag>true</l2SubIfFlag>
@@ -370,27 +371,28 @@ class Interface(object):
         """ get interfaces attributes dict."""
 
         intfs_info = dict()
-        conf_str = CE_NC_GET_INTFS
+        conf_str = CE_NC_GET_INTFS % self.interface_type
         recv_xml = get_nc_config(self.module, conf_str)
 
         if "<data/>" in recv_xml:
             return intfs_info
 
-        intf = re.findall(
-            r'.*<ifName>(.*)</ifName>.*\s*<ifPhyType>(.*)</ifPhyType>.*\s*'
-            r'<ifNumber>(.*)</ifNumber>.*\s*<ifDescr>(.*)</ifDescr>.*\s*'
-            r'<isL2SwitchPort>(.*)</isL2SwitchPort>.*\s*<ifAdminStatus>'
-            r'(.*)</ifAdminStatus>.*\s*<ifMtu>(.*)</ifMtu>.*', recv_xml)
+        xml_str = recv_xml.replace('\r', '').replace('\n', '').\
+            replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
+            replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
-        for tmp in intf:
-            if tmp[1]:
-                if not intfs_info.get(tmp[1].lower()):
-                    # new interface type list
-                    intfs_info[tmp[1].lower()] = list()
-                intfs_info[tmp[1].lower()].append(dict(ifName=tmp[0], ifPhyType=tmp[1], ifNumber=tmp[2],
-                                                       ifDescr=tmp[3], isL2SwitchPort=tmp[4],
-                                                       ifAdminStatus=tmp[5], ifMtu=tmp[6]))
-
+        root = ElementTree.fromstring(xml_str)
+        intfs = root.findall("ifm/interfaces/")
+        if intfs:
+            for intf in intfs:
+                intf_type = intf.find("ifPhyType").text.lower()
+                if intf_type:
+                    if not intfs_info.get(intf_type):
+                        intfs_info[intf_type] = list()
+                    intf_info = dict()
+                    for tmp in intf:
+                        intf_info[tmp.tag] = tmp.text
+                    intfs_info[intf_type].append(intf_info)
         return intfs_info
 
     def get_interface_dict(self, ifname):
@@ -402,22 +404,15 @@ class Interface(object):
 
         if "<data/>" in recv_xml:
             return intf_info
+        xml_str = recv_xml.replace('\r', '').replace('\n', '').\
+            replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
+            replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
-        intf = re.findall(
-            r'.*<ifName>(.*)</ifName>.*\s*'
-            r'<ifPhyType>(.*)</ifPhyType>.*\s*'
-            r'<ifNumber>(.*)</ifNumber>.*\s*'
-            r'<ifDescr>(.*)</ifDescr>.*\s*'
-            r'<isL2SwitchPort>(.*)</isL2SwitchPort>.*\s*'
-            r'<ifAdminStatus>(.*)</ifAdminStatus>.*\s*'
-            r'<ifMtu>(.*)</ifMtu>.*', recv_xml)
-
-        if intf:
-            intf_info = dict(ifName=intf[0][0], ifPhyType=intf[0][1],
-                             ifNumber=intf[0][2], ifDescr=intf[0][3],
-                             isL2SwitchPort=intf[0][4],
-                             ifAdminStatus=intf[0][5], ifMtu=intf[0][6])
-
+        root = ElementTree.fromstring(xml_str)
+        intfs = root.findall("ifm/interfaces/interface/")
+        if intfs:
+            for intf in intfs:
+                intf_info[intf.tag] = intf.text
         return intf_info
 
     def create_interface(self, ifname, description, admin_state, mode, l2sub):
@@ -752,10 +747,23 @@ class Interface(object):
                 else:
                     self.existing["mode"] = "layer3"
 
+        if self.intfs_info:
+            intfs = self.intfs_info.get(self.intf_type.lower())
+            for intf in intfs:
+                intf_para = dict()
+                if intf["ifAdminStatus"]:
+                    intf_para["admin_state"] = intf["ifAdminStatus"]
+                intf_para["description"] = intf["ifDescr"]
+
+                if intf["isL2SwitchPort"] == "true":
+                    intf_para["mode"] = "layer2"
+                else:
+                    intf_para["mode"] = "layer3"
+                self.existing[intf["ifName"]] = intf_para
+
     def get_end_state(self):
         """get_end_state"""
-
-        if self.intf_info:
+        if self.interface:
             end_info = self.get_interface_dict(self.interface)
             if end_info:
                 self.end_state["interface"] = end_info["ifName"]
@@ -767,6 +775,21 @@ class Interface(object):
                         self.end_state["mode"] = "layer2"
                     else:
                         self.end_state["mode"] = "layer3"
+
+        if self.interface_type:
+            end_info = self.get_interfaces_dict()
+            intfs = end_info.get(self.intf_type.lower())
+            for intf in intfs:
+                intf_para = dict()
+                if intf["ifAdminStatus"]:
+                    intf_para["admin_state"] = intf["ifAdminStatus"]
+                intf_para["description"] = intf["ifDescr"]
+
+                if intf["isL2SwitchPort"] == "true":
+                    intf_para["mode"] = "layer2"
+                else:
+                    intf_para["mode"] = "layer3"
+                self.end_state[intf["ifName"]] = intf_para
 
     def work(self):
         """worker"""

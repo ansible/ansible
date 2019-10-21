@@ -48,15 +48,18 @@ DOCUMENTATION = """
         ini:
           - section: callback_grafana_annotations
             key: grafana_url
-      validate_grafana_certs:
+      validate_certs:
         description: validate the SSL certificate of the Grafana server. (For HTTPS url)
         env:
           - name: GRAFANA_VALIDATE_CERT
         ini:
           - section: callback_grafana_annotations
             key: validate_grafana_certs
+          - section: callback_grafana_annotations
+            key: validate_certs
         default: True
         type: bool
+        aliases: [ validate_grafana_certs ]
       http_agent:
         description: The HTTP 'User-agent' value to set in HTTP requets.
         env:
@@ -173,7 +176,7 @@ class CallbackModule(CallbackBase):
 
         self.grafana_api_key = self.get_option('grafana_api_key')
         self.grafana_url = self.get_option('grafana_url')
-        self.validate_grafana_certs = self.get_option('validate_grafana_certs')
+        self.validate_grafana_certs = self.get_option('validate_certs')
         self.http_agent = self.get_option('http_agent')
         self.grafana_user = self.get_option('grafana_user')
         self.grafana_password = self.get_option('grafana_password')
@@ -190,7 +193,7 @@ class CallbackModule(CallbackBase):
             self._display.warning('Grafana URL was not provided. The '
                                   'Grafana URL can be provided using '
                                   'the `GRAFANA_URL` environment variable.')
-        self._display.info('Grafana URL: %s' % self.grafana_url)
+        self._display.debug('Grafana URL: %s' % self.grafana_url)
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook._file_name

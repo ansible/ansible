@@ -7,7 +7,6 @@ import uuid
 from urllib3.response import HTTPResponse
 
 from units.compat.mock import patch
-from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
 from ansible.modules.monitoring import circonus_annotation
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args

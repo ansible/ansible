@@ -40,6 +40,7 @@ options:
             - BFD session creation mode, the currently created BFD session
               only supports static or static auto-negotiation mode.
         choices: ['static', 'auto']
+        default: static
     addr_type:
         description:
             - Specifies the peer IP address type.
@@ -53,6 +54,14 @@ options:
     src_addr:
         description:
             - Indicates the source IP address carried in BFD packets.
+    local_discr:
+        version_added: 2.9
+        description:
+            - The BFD session local identifier does not need to be configured when the mode is auto.
+    remote_discr:
+        version_added: 2.9
+        description:
+            - The BFD session remote identifier does not need to be configured when the mode is auto.
     vrf_name:
         description:
             - Specifies the name of a Virtual Private Network (VPN) instance that is bound to a BFD session.
@@ -93,6 +102,8 @@ EXAMPLES = '''
       session_name: bfd_l2link
       use_default_ip: true
       out_if_name: 10GE1/0/1
+      local_discr: 163
+      remote_discr: 163
       provider: '{{ cli }}'
 
   - name: Configuring Single-Hop BFD on a VLANIF Interface
@@ -100,12 +111,16 @@ EXAMPLES = '''
       session_name: bfd_vlanif
       dest_addr: 10.1.1.6
       out_if_name: Vlanif100
+      local_discr: 163
+      remote_discr: 163
       provider: '{{ cli }}'
 
   - name: Configuring Multi-Hop BFD
     ce_bfd_session:
       session_name: bfd_multi_hop
       dest_addr: 10.1.1.1
+      local_discr: 163
+      remote_discr: 163
       provider: '{{ cli }}'
 '''
 
@@ -172,19 +187,10 @@ from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_co
 CE_NC_GET_BFD = """
     <filter type="subtree">
       <bfd xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-      %s
-      </bfd>
-    </filter>
-"""
-
-CE_NC_GET_BFD_GLB = """
         <bfdSchGlobal>
           <bfdEnable></bfdEnable>
           <defaultIp></defaultIp>
         </bfdSchGlobal>
-"""
-
-CE_NC_GET_BFD_SESSION = """
         <bfdCfgSessions>
           <bfdCfgSession>
             <sessName>%s</sessName>
@@ -192,11 +198,15 @@ CE_NC_GET_BFD_SESSION = """
             <addrType></addrType>
             <outIfName></outIfName>
             <destAddr></destAddr>
+            <localDiscr></localDiscr>
+            <remoteDiscr></remoteDiscr>
             <srcAddr></srcAddr>
             <vrfName></vrfName>
             <useDefaultIp></useDefaultIp>
           </bfdCfgSession>
         </bfdCfgSessions>
+      </bfd>
+    </filter>
 """
 
 
@@ -301,7 +311,8 @@ class BfdSession(object):
         self.vrf_name = self.module.params['vrf_name']
         self.use_default_ip = self.module.params['use_default_ip']
         self.state = self.module.params['state']
-
+        self.local_discr = self.module.params['local_discr']
+        self.remote_discr = self.module.params['remote_discr']
         # host info
         self.host = self.module.params['host']
         self.username = self.module.params['username']
@@ -331,7 +342,7 @@ class BfdSession(object):
         bfd_dict = dict()
         bfd_dict["global"] = dict()
         bfd_dict["session"] = dict()
-        conf_str = CE_NC_GET_BFD % (CE_NC_GET_BFD_GLB + (CE_NC_GET_BFD_SESSION % self.session_name))
+        conf_str = CE_NC_GET_BFD % self.session_name
 
         xml_str = get_nc_config(self.module, conf_str)
         if "<data/>" in xml_str:
@@ -343,13 +354,13 @@ class BfdSession(object):
         root = ElementTree.fromstring(xml_str)
 
         # get bfd global info
-        glb = root.find("data/bfd/bfdSchGlobal")
+        glb = root.find("bfd/bfdSchGlobal")
         if glb:
             for attr in glb:
                 bfd_dict["global"][attr.tag] = attr.text
 
         # get bfd session info
-        sess = root.find("data/bfd/bfdCfgSessions/bfdCfgSession")
+        sess = root.find("bfd/bfdCfgSessions/bfdCfgSession")
         if sess:
             for attr in sess:
                 bfd_dict["session"][attr.tag] = attr.text
@@ -390,6 +401,12 @@ class BfdSession(object):
         if str(self.use_default_ip).lower() != session.get("useDefaultIp"):
             return False
 
+        if self.create_type == "static" and self.state == "present":
+            if str(self.local_discr).lower() != session.get("localDiscr", ""):
+                return False
+            if str(self.remote_discr).lower() != session.get("remoteDiscr", ""):
+                return False
+
         return True
 
     def config_session(self):
@@ -397,6 +414,7 @@ class BfdSession(object):
 
         xml_str = ""
         cmd_list = list()
+        discr = list()
 
         if not self.session_name:
             return xml_str
@@ -415,7 +433,7 @@ class BfdSession(object):
                         msg="Error: dest_addr or use_default_ip must be set when bfd session is creating.")
 
                 # Creates a BFD session
-                if self.create_type:
+                if self.create_type == "auto":
                     xml_str += "<createType>SESS_%s</createType>" % self.create_type.upper()
                 else:
                     xml_str += "<createType>SESS_STATIC</createType>"
@@ -440,8 +458,14 @@ class BfdSession(object):
                 if self.src_addr:
                     xml_str += "<srcAddr>%s</srcAddr>" % self.src_addr
                     cmd_session += " source-%s %s" % ("ipv6" if self.addr_type == "ipv6" else "ip", self.src_addr)
+
                 if self.create_type == "auto":
                     cmd_session += " auto"
+                else:
+                    xml_str += "<localDiscr>%s</localDiscr>" % self.local_discr
+                    discr.append("discriminator local %s" % self.local_discr)
+                    xml_str += "<remoteDiscr>%s</remoteDiscr>" % self.remote_discr
+                    discr.append("discriminator remote %s" % self.remote_discr)
 
             elif not self.is_session_match():
                 # Bfd session is not match
@@ -460,6 +484,7 @@ class BfdSession(object):
                 return ""
             else:
                 cmd_list.insert(0, cmd_session)
+                cmd_list.extend(discr)
                 self.updates_cmd.extend(cmd_list)
                 return '<bfdCfgSessions><bfdCfgSession operation="merge">' + xml_str\
                        + '</bfdCfgSession></bfdCfgSessions>'
@@ -494,6 +519,22 @@ class BfdSession(object):
         if self.session_name:
             if len(self.session_name) < 1 or len(self.session_name) > 15:
                 self.module.fail_json(msg="Error: Session name is invalid.")
+
+        # check local_discr
+        # check remote_discr
+
+        if self.local_discr:
+            if self.local_discr < 1 or self.local_discr > 16384:
+                self.module.fail_json(msg="Error: Session local_discr is not ranges from 1 to 16384.")
+        if self.remote_discr:
+            if self.remote_discr < 1 or self.remote_discr > 4294967295:
+                self.module.fail_json(msg="Error: Session remote_discr is not ranges from 1 to 4294967295.")
+
+        if self.state == "present" and self.create_type == "static":
+            if not self.local_discr:
+                self.module.fail_json(msg="Error: Missing required arguments: local_discr.")
+            if not self.remote_discr:
+                self.module.fail_json(msg="Error: Missing required arguments: remote_discr.")
 
         # check out_if_name
         if self.out_if_name:
@@ -534,6 +575,8 @@ class BfdSession(object):
         self.proposed["vrf_name"] = self.vrf_name
         self.proposed["use_default_ip"] = self.use_default_ip
         self.proposed["state"] = self.state
+        self.proposed["local_discr"] = self.local_discr
+        self.proposed["remote_discr"] = self.remote_discr
 
     def get_existing(self):
         """get existing info"""
@@ -551,6 +594,8 @@ class BfdSession(object):
             return
 
         self.end_state["session"] = bfd_dict.get("session")
+        if self.end_state == self.existing:
+            self.changed = False
 
     def work(self):
         """worker"""
@@ -588,14 +633,16 @@ def main():
 
     argument_spec = dict(
         session_name=dict(required=True, type='str'),
-        create_type=dict(required=False, type='str', choices=['static', 'auto']),
+        create_type=dict(required=False, default='static', type='str', choices=['static', 'auto']),
         addr_type=dict(required=False, type='str', choices=['ipv4']),
         out_if_name=dict(required=False, type='str'),
         dest_addr=dict(required=False, type='str'),
         src_addr=dict(required=False, type='str'),
         vrf_name=dict(required=False, type='str'),
         use_default_ip=dict(required=False, type='bool', default=False),
-        state=dict(required=False, default='present', choices=['present', 'absent'])
+        state=dict(required=False, default='present', choices=['present', 'absent']),
+        local_discr=dict(required=False, type='int'),
+        remote_discr=dict(required=False, type='int')
     )
 
     argument_spec.update(ce_argument_spec)

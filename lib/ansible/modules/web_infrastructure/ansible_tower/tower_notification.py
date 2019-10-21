@@ -101,7 +101,7 @@ options:
       required: False
     account_sid:
       description:
-        - The Twillio accound SID. Required if I(notification_type=twillio).
+        - The Twillio account SID. Required if I(notification_type=twillio).
       required: False
     subdomain:
       description:
@@ -382,7 +382,7 @@ def main():
                 result = notification_template.delete(name=name)
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update notification template, organization not found: {0}'.format(excinfo), changed=False)
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update notification template: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']

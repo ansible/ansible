@@ -37,7 +37,7 @@ description:
 - The record will include the domain/subdomain name, a type (i.e. A, AAA, CAA, MX,
   CNAME, NS, etc) .
 short_description: Creates a GCP ResourceRecordSet
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -51,78 +51,106 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
-    - For example, U(www.example.com.)
+    - For example, U(www.example.com).
     required: true
+    type: str
   type:
     description:
     - One of valid DNS resource types.
+    - 'Some valid choices include: "A", "AAAA", "CAA", "CNAME", "MX", "NAPTR", "NS",
+      "PTR", "SOA", "SPF", "SRV", "TLSA", "TXT"'
     required: true
-    choices:
-    - A
-    - AAAA
-    - CAA
-    - CNAME
-    - MX
-    - NAPTR
-    - NS
-    - PTR
-    - SOA
-    - SPF
-    - SRV
-    - TXT
+    type: str
   ttl:
     description:
     - Number of seconds that this ResourceRecordSet can be cached by resolvers.
     required: false
+    type: int
   target:
     description:
     - As defined in RFC 1035 (section 5) and RFC 1034 (section 3.6.1) .
     required: false
+    type: list
   managed_zone:
     description:
-    - Identifies the managed zone addressed by this request.
-    - Can be the managed zone name or id.
-    - 'This field represents a link to a ManagedZone resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_dns_managed_zone
-      task and then set this managed_zone field to "{{ name-of-resource }}"'
+    - Identifies the managed zone addressed by this request. This must be a dictionary
+      that contains both a 'name' key and a 'dnsName' key. You can pass in the results
+      of the gcp_dns_managed_zone module, which will contain both.
     required: true
-extends_documentation_fragment: gcp
+    type: dict
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
 - name: create a managed zone
   gcp_dns_managed_zone:
-      name: "managedzone-rrs"
-      dns_name: testzone-4.com.
-      description: test zone
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: managedzone-rrs
+    dns_name: testzone-4.com.
+    description: test zone
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: managed_zone
 
 - name: create a resource record set
   gcp_dns_resource_record_set:
-      name: www.testzone-4.com.
-      managed_zone: "{{ managed_zone }}"
-      type: A
-      ttl: 600
-      target:
-      - 10.1.2.3
-      - 40.5.6.7
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: www.testzone-4.com.
+    managed_zone: "{{ managed_zone }}"
+    type: A
+    ttl: 600
+    target:
+    - 10.1.2.3
+    - 40.5.6.7
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
 name:
   description:
-  - For example, U(www.example.com.)
+  - For example, U(www.example.com).
   returned: success
   type: str
 type:
@@ -142,10 +170,11 @@ target:
   type: list
 managed_zone:
   description:
-  - Identifies the managed zone addressed by this request.
-  - Can be the managed zone name or id.
+  - Identifies the managed zone addressed by this request. This must be a dictionary
+    that contains both a 'name' key and a 'dnsName' key. You can pass in the results
+    of the gcp_dns_managed_zone module, which will contain both.
   returned: success
-  type: str
+  type: dict
 '''
 
 ################################################################################
@@ -170,10 +199,10 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
-            type=dict(required=True, type='str', choices=['A', 'AAAA', 'CAA', 'CNAME', 'MX', 'NAPTR', 'NS', 'PTR', 'SOA', 'SPF', 'SRV', 'TXT']),
+            type=dict(required=True, type='str'),
             ttl=dict(type='int'),
             target=dict(type='list', elements='str'),
-            managed_zone=dict(required=True),
+            managed_zone=dict(required=True, type='dict'),
         )
     )
 
@@ -185,6 +214,9 @@ def main():
 
     fetch = fetch_wrapped_resource(module, 'dns#resourceRecordSet', 'dns#resourceRecordSetsListResponse', 'rrsets')
     changed = False
+
+    if 'dnsName' not in module.params.get('managed_zone') or 'name' not in module.params.get('managed_zone'):
+        module.fail_json(msg="managed_zone dictionary must contain both the name of the zone and the dns name of the zone")
 
     if fetch:
         if state == 'present':
@@ -358,18 +390,18 @@ class SOAForwardable(object):
 
 
 def prefetch_soa_resource(module):
-    name = module.params['name'].split('.')[1:]
 
     resource = SOAForwardable(
         {
             'type': 'SOA',
             'managed_zone': module.params['managed_zone'],
-            'name': '.'.join(name),
+            'name': replace_resource_dict(module.params['managed_zone'], 'dnsName'),
             'project': module.params['project'],
             'scopes': module.params['scopes'],
-            'service_account_file': module.params['service_account_file'],
+            'service_account_file': module.params.get('service_account_file'),
             'auth_kind': module.params['auth_kind'],
-            'service_account_email': module.params['service_account_email'],
+            'service_account_email': module.params.get('service_account_email'),
+            'service_account_contents': module.params.get('service_account_contents'),
         },
         module,
     )

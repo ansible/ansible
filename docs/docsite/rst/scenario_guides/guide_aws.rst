@@ -18,7 +18,6 @@ Whereas classically ansible will execute tasks in its host loop against multiple
 In your playbook steps we'll typically be using the following pattern for provisioning steps::
 
     - hosts: localhost
-      connection: local
       gather_facts: False
       tasks:
         - ...
@@ -68,7 +67,6 @@ instance.::
     # demo_setup.yml
 
     - hosts: localhost
-      connection: local
       gather_facts: False
 
       tasks:
@@ -94,7 +92,6 @@ From this, we'll use the add_host module to dynamically create a host group cons
     # demo_setup.yml
 
     - hosts: localhost
-      connection: local
       gather_facts: False
 
       tasks:
@@ -134,6 +131,37 @@ With the host group now created, a second play at the bottom of the same provisi
 
          - name: Check NTP service
            service: name=ntpd state=started
+
+.. _aws_security_groups:
+
+Security Groups
+```````````````
+
+Security groups on AWS are stateful. The response of a request from your instance is allowed to flow in regardless of inbound security group rules and vice-versa.
+In case you only want allow traffic with AWS S3 service, you need to fetch the current IP ranges of AWS S3 for one region and apply them as an egress rule.::
+
+    - name: fetch raw ip ranges for aws s3
+      set_fact:
+        raw_s3_ranges: "{{ lookup('aws_service_ip_ranges', region='eu-central-1', service='S3', wantlist=True) }}"
+
+    - name: prepare list structure for ec2_group module
+      set_fact:
+        s3_ranges: "{{ s3_ranges | default([]) + [{'proto': 'all', 'cidr_ip': item, 'rule_desc': 'S3 Service IP range'}] }}"
+      with_items: "{{ raw_s3_ranges }}"
+
+    - name: set S3 IP ranges to egress rules
+      ec2_group:
+        name: aws_s3_ip_ranges
+        description: allow outgoing traffic to aws S3 service
+        region: eu-central-1
+        state: present
+        vpc_id: vpc-123456
+        purge_rules: true
+        purge_rules_egress: true
+        rules: []
+        rules_egress: "{{ s3_ranges }}"
+        tags:
+          Name: aws_s3_ip_ranges
 
 .. _aws_host_inventory:
 

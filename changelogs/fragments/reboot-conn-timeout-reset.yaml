@@ -1,2 +1,0 @@
-bugfixes:
-- reboot - Fix bug where the connection timeout was not reset in the same task after rebooting

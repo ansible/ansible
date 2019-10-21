@@ -95,6 +95,7 @@ options:
       - When C(sip-malformed), configures the "sip-malformed" SIP Protocol Security vector.
       - When C(subscribe), configures the "SIP SUBSCRIBE Method" SIP Protocol Security vector.
       - When C(uri-limit), configures the "uri-limit" SIP Protocol Security vector.
+    type: str
     choices:
       - ext-hdr-too-large
       - hop-cnt-low
@@ -157,6 +158,7 @@ options:
       - Vectors can be managed in either DoS Profiles, or Device Configuration. By
         specifying a profile of 'device-config', this module will specifically tailor
         configuration of the provided vectors to the Device Configuration.
+    type: str
     required: True
   auto_blacklist:
     description:
@@ -179,6 +181,7 @@ options:
         specified.
       - To set no hard limit and allow automatic thresholds to manage all rate limiting,
         set this to C(infinite).
+    type: str
   attack_floor:
     description:
       - Specifies packets per second to identify an attack.
@@ -187,6 +190,7 @@ options:
       - As the automatic detection thresholds adjust to traffic and CPU usage on the
         system over time, this attack floor becomes less relevant.
       - This value may not exceed the value in C(attack_floor).
+    type: str
   allow_advertisement:
     description:
       - Specifies that addresses that are identified for blacklisting are advertised to
@@ -201,28 +205,34 @@ options:
   blacklist_detection_seconds:
     description:
       - Detection, in seconds, before blacklisting occurs.
+    type: int
   blacklist_duration:
     description:
       - Duration, in seconds, that the blacklist will last.
+    type: int
   per_source_ip_detection_threshold:
     description:
       - Specifies the number of packets per second to identify an IP address as a bad
         actor.
+    type: str
   per_source_ip_mitigation_threshold:
     description:
       - Specifies the rate limit applied to a source IP that is identified as a bad
         actor.
+    type: str
   detection_threshold_percent:
     description:
       - Lists the threshold percent increase over time that the system must detect in
         traffic in order to detect this attack.
       - The C(tcp-half-open) vector does not support this parameter.
+    type: str
     aliases:
       - rate_increase
   detection_threshold_eps:
     description:
       - Lists how many packets per second the system must discover in traffic in order
         to detect this attack.
+    type: str
     aliases:
       - rate_threshold
   mitigation_threshold_eps:
@@ -230,6 +240,7 @@ options:
       - Specify the maximum number of this type of packet per second the system allows
         for a vector.
       - The system drops packets once the traffic level exceeds the rate limit.
+    type: str
     aliases:
       - rate_limit
   threshold_mode:
@@ -240,6 +251,7 @@ options:
         for this parameter.
       - The C(sip-malformed) vector does not support C(fully-automatic), or C(stress-based-mitigation)
         for this parameter.
+    type: str
     choices:
       - manual
       - stress-based-mitigation
@@ -254,6 +266,7 @@ options:
         and thresholds, but is still tracked in logs and statistics.
       - When C(state) is C(learn-only), ensures that the vector does not "detect" any attacks.
         Only learning and stat collecting is performed.
+    type: str
     choices:
       - mitigate
       - detect-only
@@ -263,6 +276,7 @@ options:
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
 extends_documentation_fragment: f5
 requirements:
@@ -374,22 +388,16 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import flatten_boolean
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import flatten_boolean
 
@@ -740,7 +748,7 @@ class Difference(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
 
         # A list of all the vectors queried from the API when reading current info
         # from the device. This is used when updating the API as the value that needs
@@ -1287,16 +1295,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

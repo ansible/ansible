@@ -220,14 +220,67 @@ backup_path:
   sample: /playbooks/ansible/backup/ce_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.config import NetworkConfig, dumps
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config, run_commands
-from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
+from ansible.module_utils.network.common.config import NetworkConfig as _NetworkConfig
+from ansible.module_utils.network.common.config import dumps, ConfigLine, ignore_line
+from ansible.module_utils.network.cloudengine.ce import get_config, run_commands, exec_command, cli_err_msg
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, load_config
 from ansible.module_utils.network.cloudengine.ce import check_args as ce_check_args
+import re
 
 
 def check_args(module, warnings):
     ce_check_args(module, warnings)
+
+
+def _load_config(module, config):
+    """Sends configuration commands to the remote device
+    """
+    rc, out, err = exec_command(module, 'mmi-mode enable')
+    if rc != 0:
+        module.fail_json(msg='unable to set mmi-mode enable', output=err)
+    rc, out, err = exec_command(module, 'system-view immediately')
+    if rc != 0:
+        module.fail_json(msg='unable to enter system-view', output=err)
+
+    for index, cmd in enumerate(config):
+        rc, out, err = exec_command(module, cmd)
+        if rc != 0:
+            print_msg = cli_err_msg(cmd.strip(), err)
+            exec_command(module, "quit")
+            rc, out, err = exec_command(module, cmd)
+            if rc != 0:
+                print_msg1 = cli_err_msg(cmd.strip(), err)
+                if not re.findall(r"unrecognized command found", print_msg1):
+                    print_msg = print_msg1
+                exec_command(module, "return")
+                exec_command(module, "system-view immediately")
+                rc, out, err = exec_command(module, cmd)
+                if rc != 0:
+                    print_msg2 = cli_err_msg(cmd.strip(), err)
+                    if not re.findall(r"unrecognized command found", print_msg2):
+                        print_msg = print_msg2
+                    module.fail_json(msg=print_msg)
+
+    rc, out, err = exec_command(module, 'return')
+    if rc != 0:
+        module.fail_json(msg='unable to return', output=err)
+    rc, out, err = exec_command(module, 'undo mmi-mode enable')
+    if rc != 0:
+        module.fail_json(msg='unable to undo mmi-mode enable', output=err)
+
+
+def conversion_src(module):
+    src_list = module.params['src'].split('\n')
+    src_list_organize = []
+    if src_list[0].strip() == '#':
+        src_list.pop(0)
+    for per_config in src_list:
+        if per_config.strip() == '#':
+            src_list_organize.append('quit')
+        else:
+            src_list_organize.append(per_config)
+    src_str = '\n'.join(src_list_organize)
+    return src_str
 
 
 def get_running_config(module):
@@ -243,7 +296,8 @@ def get_running_config(module):
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
-        candidate.load(module.params['src'])
+        config = conversion_src(module)
+        candidate.load(config)
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
@@ -273,13 +327,76 @@ def run(module, result):
             if module.params['after']:
                 commands.extend(module.params['after'])
 
-        result['commands'] = commands
-        result['updates'] = commands
+        command_display = []
+        for per_command in commands:
+            if per_command.strip() not in ['quit', 'return', 'system-view']:
+                command_display.append(per_command)
+
+        result['commands'] = command_display
+        result['updates'] = command_display
 
         if not module.check_mode:
-            load_config(module, commands)
+            if module.params['parents'] is not None:
+                load_config(module, commands)
+            else:
+                _load_config(module, commands)
 
         result['changed'] = True
+
+
+class NetworkConfig(_NetworkConfig):
+
+    def add(self, lines, parents=None):
+        ancestors = list()
+        offset = 0
+        obj = None
+
+        # global config command
+        if not parents:
+            for line in lines:
+                # handle ignore lines
+                if ignore_line(line):
+                    continue
+
+                item = ConfigLine(line)
+                item.raw = line
+                self.items.append(item)
+
+        else:
+            for index, p in enumerate(parents):
+                try:
+                    i = index + 1
+                    obj = self.get_block(parents[:i])[0]
+                    ancestors.append(obj)
+
+                except ValueError:
+                    # add parent to config
+                    offset = index * self._indent
+                    obj = ConfigLine(p)
+                    obj.raw = p.rjust(len(p) + offset)
+                    if ancestors:
+                        obj._parents = list(ancestors)
+                        ancestors[-1]._children.append(obj)
+                    self.items.append(obj)
+                    ancestors.append(obj)
+
+            # add child objects
+            for line in lines:
+                # handle ignore lines
+                if ignore_line(line):
+                    continue
+
+                # check if child already exists
+                for child in ancestors[-1]._children:
+                    if child.text == line:
+                        break
+                else:
+                    offset = len(parents) * self._indent
+                    item = ConfigLine(line)
+                    item.raw = line.rjust(len(line) + offset)
+                    item._parents = ancestors
+                    ancestors[-1]._children.append(item)
+                    self.items.append(item)
 
 
 def main():

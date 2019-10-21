@@ -15,7 +15,7 @@ description:
     - This module allows the management of AWS Lambda policy statements.
       It is idempotent and supports "Check" mode.  Use module M(lambda) to manage the lambda
       function itself, M(lambda_alias) to manage function aliases, M(lambda_event) to manage event source mappings
-      such as Kinesis streams, M(execute_lambda) to execute a lambda function and M(lambda_facts) to gather facts
+      such as Kinesis streams, M(execute_lambda) to execute a lambda function and M(lambda_info) to gather information
       relating to one or more lambda functions.
 
 version_added: "2.4"
@@ -37,7 +37,6 @@ options:
   state:
     description:
       - Describes the desired state.
-    required: true
     default: "present"
     choices: ["present", "absent"]
 

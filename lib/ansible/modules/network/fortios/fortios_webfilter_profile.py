@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from __future__ import (absolute_import, division, print_function)
-# Copyright 2018 Fortinet, Inc.
+# Copyright 2019 Fortinet, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -27,12 +24,12 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: fortios_webfilter_profile
-short_description: Configure Web filter profiles.
+short_description: Configure Web filter profiles in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure webfilter feature and profile category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify webfilter feature and profile category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,113 +41,156 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
-        default: false
+        default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     webfilter_profile:
         description:
             - Configure Web filter profiles.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
             comment:
                 description:
                     - Optional comments.
-            extended-log:
+                type: str
+            extended_log:
                 description:
                     - Enable/disable extended logging for web filtering.
+                type: str
                 choices:
                     - enable
                     - disable
-            ftgd-wf:
+            ftgd_wf:
                 description:
                     - FortiGuard Web Filter settings.
+                type: dict
                 suboptions:
-                    exempt-quota:
+                    exempt_quota:
                         description:
                             - Do not stop quota for these categories.
+                        type: str
                     filters:
                         description:
                             - FortiGuard filters.
+                        type: list
                         suboptions:
                             action:
                                 description:
                                     - Action to take for matches.
+                                type: str
                                 choices:
                                     - block
                                     - authenticate
                                     - monitor
                                     - warning
-                            auth-usr-grp:
+                            auth_usr_grp:
                                 description:
                                     - Groups with permission to authenticate.
+                                type: str
                                 suboptions:
                                     name:
                                         description:
                                             - User group name. Source user.group.name.
                                         required: true
+                                        type: str
                             category:
                                 description:
                                     - Categories and groups the filter examines.
+                                type: int
                             id:
                                 description:
                                     - ID number.
                                 required: true
+                                type: int
                             log:
                                 description:
                                     - Enable/disable logging.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
-                            override-replacemsg:
+                            override_replacemsg:
                                 description:
                                     - Override replacement message.
-                            warn-duration:
+                                type: str
+                            warn_duration:
                                 description:
                                     - Duration of warnings.
-                            warning-duration-type:
+                                type: str
+                            warning_duration_type:
                                 description:
                                     - Re-display warning after closing browser or after a timeout.
+                                type: str
                                 choices:
                                     - session
                                     - timeout
-                            warning-prompt:
+                            warning_prompt:
                                 description:
                                     - Warning prompts in each category or each domain.
+                                type: str
                                 choices:
                                     - per-domain
                                     - per-category
-                    max-quota-timeout:
+                    max_quota_timeout:
                         description:
                             - Maximum FortiGuard quota used by single page view in seconds (excludes streams).
+                        type: int
                     options:
                         description:
                             - Options for FortiGuard Web Filter.
+                        type: str
                         choices:
                             - error-allow
                             - rate-server-ip
@@ -159,32 +199,40 @@ options:
                     ovrd:
                         description:
                             - Allow web filter profile overrides.
+                        type: str
                     quota:
                         description:
                             - FortiGuard traffic quota settings.
+                        type: list
                         suboptions:
                             category:
                                 description:
                                     - FortiGuard categories to apply quota to (category action must be set to monitor).
+                                type: str
                             duration:
                                 description:
                                     - Duration of quota.
+                                type: str
                             id:
                                 description:
                                     - ID number.
                                 required: true
-                            override-replacemsg:
+                                type: int
+                            override_replacemsg:
                                 description:
                                     - Override replacement message.
+                                type: str
                             type:
                                 description:
                                     - Quota type.
+                                type: str
                                 choices:
                                     - time
                                     - traffic
                             unit:
                                 description:
                                     - Traffic quota unit of measurement.
+                                type: str
                                 choices:
                                     - B
                                     - KB
@@ -193,45 +241,53 @@ options:
                             value:
                                 description:
                                     - Traffic quota value.
-                    rate-crl-urls:
+                                type: int
+                    rate_crl_urls:
                         description:
                             - Enable/disable rating CRL by URL.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    rate-css-urls:
+                    rate_css_urls:
                         description:
                             - Enable/disable rating CSS by URL.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    rate-image-urls:
+                    rate_image_urls:
                         description:
                             - Enable/disable rating images by URL.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    rate-javascript-urls:
+                    rate_javascript_urls:
                         description:
                             - Enable/disable rating JavaScript by URL.
+                        type: str
                         choices:
                             - disable
                             - enable
-            https-replacemsg:
+            https_replacemsg:
                 description:
                     - Enable replacement messages for HTTPS.
+                type: str
                 choices:
                     - enable
                     - disable
-            inspection-mode:
+            inspection_mode:
                 description:
                     - Web filtering inspection mode.
+                type: str
                 choices:
                     - proxy
                     - flow-based
-            log-all-url:
+            log_all_url:
                 description:
                     - Enable/disable logging all URLs visited.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -239,9 +295,11 @@ options:
                 description:
                     - Profile name.
                 required: true
+                type: str
             options:
                 description:
                     - Options.
+                type: str
                 choices:
                     - activexfilter
                     - cookiefilter
@@ -258,50 +316,60 @@ options:
             override:
                 description:
                     - Web Filter override settings.
+                type: dict
                 suboptions:
-                    ovrd-cookie:
+                    ovrd_cookie:
                         description:
                             - Allow/deny browser-based (cookie) overrides.
+                        type: str
                         choices:
                             - allow
                             - deny
-                    ovrd-dur:
+                    ovrd_dur:
                         description:
                             - Override duration.
-                    ovrd-dur-mode:
+                        type: str
+                    ovrd_dur_mode:
                         description:
                             - Override duration mode.
+                        type: str
                         choices:
                             - constant
                             - ask
-                    ovrd-scope:
+                    ovrd_scope:
                         description:
                             - Override scope.
+                        type: str
                         choices:
                             - user
                             - user-group
                             - ip
                             - browser
                             - ask
-                    ovrd-user-group:
+                    ovrd_user_group:
                         description:
                             - User groups with permission to use the override.
+                        type: str
                         suboptions:
                             name:
                                 description:
                                     - User group name. Source user.group.name.
                                 required: true
+                                type: str
                     profile:
                         description:
                             - Web filter profile with permission to create overrides.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Web profile. Source webfilter.profile.name.
                                 required: true
-                    profile-attribute:
+                                type: str
+                    profile_attribute:
                         description:
                             - Profile attribute to retrieve from the RADIUS server.
+                        type: str
                         choices:
                             - User-Name
                             - NAS-IP-Address
@@ -325,74 +393,89 @@ options:
                             - Framed-AppleTalk-Zone
                             - Acct-Session-Id
                             - Acct-Multi-Session-Id
-                    profile-type:
+                    profile_type:
                         description:
                             - Override profile type.
+                        type: str
                         choices:
                             - list
                             - radius
-            ovrd-perm:
+            ovrd_perm:
                 description:
                     - Permitted override types.
+                type: str
                 choices:
                     - bannedword-override
                     - urlfilter-override
                     - fortiguard-wf-override
                     - contenttype-check-override
-            post-action:
+            post_action:
                 description:
                     - Action taken for HTTP POST traffic.
+                type: str
                 choices:
                     - normal
                     - block
-            replacemsg-group:
+            replacemsg_group:
                 description:
                     - Replacement message group. Source system.replacemsg-group.name.
+                type: str
             web:
                 description:
                     - Web content filtering settings.
+                type: dict
                 suboptions:
                     blacklist:
                         description:
                             - Enable/disable automatic addition of URLs detected by FortiSandbox to blacklist.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    bword-table:
+                    bword_table:
                         description:
                             - Banned word table ID. Source webfilter.content.id.
-                    bword-threshold:
+                        type: int
+                    bword_threshold:
                         description:
                             - Banned word score threshold.
-                    content-header-list:
+                        type: int
+                    content_header_list:
                         description:
                             - Content header list. Source webfilter.content-header.id.
-                    keyword-match:
+                        type: int
+                    keyword_match:
                         description:
                             - Search keywords to log when match is found.
+                        type: str
                         suboptions:
                             pattern:
                                 description:
                                     - Pattern/keyword to search for.
                                 required: true
-                    log-search:
+                                type: str
+                    log_search:
                         description:
                             - Enable/disable logging all search phrases.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    safe-search:
+                    safe_search:
                         description:
                             - Safe search type.
+                        type: str
                         choices:
                             - url
                             - header
-                    urlfilter-table:
+                    urlfilter_table:
                         description:
                             - URL filter table ID. Source webfilter.urlfilter.id.
+                        type: int
                     whitelist:
                         description:
                             - FortiGuard whitelist settings.
+                        type: str
                         choices:
                             - exempt-av
                             - exempt-webcontent
@@ -400,147 +483,173 @@ options:
                             - exempt-dlp
                             - exempt-rangeblock
                             - extended-log-others
-                    youtube-restrict:
+                    youtube_restrict:
                         description:
                             - YouTube EDU filter level.
+                        type: str
                         choices:
                             - none
                             - strict
                             - moderate
-            web-content-log:
+            web_content_log:
                 description:
                     - Enable/disable logging logging blocked web content.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-extended-all-action-log:
+            web_extended_all_action_log:
                 description:
                     - Enable/disable extended any filter action logging for web filtering.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-filter-activex-log:
+            web_filter_activex_log:
                 description:
                     - Enable/disable logging ActiveX.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-filter-applet-log:
+            web_filter_applet_log:
                 description:
                     - Enable/disable logging Java applets.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-filter-command-block-log:
+            web_filter_command_block_log:
                 description:
                     - Enable/disable logging blocked commands.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-filter-cookie-log:
+            web_filter_cookie_log:
                 description:
                     - Enable/disable logging cookie filtering.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-filter-cookie-removal-log:
+            web_filter_cookie_removal_log:
                 description:
                     - Enable/disable logging blocked cookies.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-filter-js-log:
+            web_filter_js_log:
                 description:
                     - Enable/disable logging Java scripts.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-filter-jscript-log:
+            web_filter_jscript_log:
                 description:
                     - Enable/disable logging JScripts.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-filter-referer-log:
+            web_filter_referer_log:
                 description:
                     - Enable/disable logging referrers.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-filter-unknown-log:
+            web_filter_unknown_log:
                 description:
                     - Enable/disable logging unknown scripts.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-filter-vbs-log:
+            web_filter_vbs_log:
                 description:
                     - Enable/disable logging VBS scripts.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-ftgd-err-log:
+            web_ftgd_err_log:
                 description:
                     - Enable/disable logging rating errors.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-ftgd-quota-usage:
+            web_ftgd_quota_usage:
                 description:
                     - Enable/disable logging daily quota usage.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-invalid-domain-log:
+            web_invalid_domain_log:
                 description:
                     - Enable/disable logging invalid domain names.
+                type: str
                 choices:
                     - enable
                     - disable
-            web-url-log:
+            web_url_log:
                 description:
                     - Enable/disable logging URL filtering.
+                type: str
                 choices:
                     - enable
                     - disable
             wisp:
                 description:
                     - Enable/disable web proxy WISP.
+                type: str
                 choices:
                     - enable
                     - disable
-            wisp-algorithm:
+            wisp_algorithm:
                 description:
                     - WISP server selection algorithm.
+                type: str
                 choices:
                     - primary-secondary
                     - round-robin
                     - auto-learning
-            wisp-servers:
+            wisp_servers:
                 description:
                     - WISP servers.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Server name. Source web-proxy.wisp.name.
                         required: true
-            youtube-channel-filter:
+                        type: str
+            youtube_channel_filter:
                 description:
                     - YouTube channel filter.
+                type: list
                 suboptions:
-                    channel-id:
+                    channel_id:
                         description:
                             - YouTube channel ID to be filtered.
+                        type: str
                     comment:
                         description:
                             - Comment.
+                        type: str
                     id:
                         description:
                             - ID.
                         required: true
-            youtube-channel-status:
+                        type: int
+            youtube_channel_status:
                 description:
                     - YouTube channel filter status.
+                type: str
                 choices:
                     - disable
                     - blacklist
@@ -554,6 +663,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure Web filter profiles.
     fortios_webfilter_profile:
@@ -561,26 +671,27 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
+      https: "False"
+      state: "present"
       webfilter_profile:
-        state: "present"
         comment: "Optional comments."
-        extended-log: "enable"
-        ftgd-wf:
-            exempt-quota: "<your_own_value>"
+        extended_log: "enable"
+        ftgd_wf:
+            exempt_quota: "<your_own_value>"
             filters:
              -
                 action: "block"
-                auth-usr-grp:
+                auth_usr_grp:
                  -
                     name: "default_name_10 (source user.group.name)"
                 category: "11"
                 id:  "12"
                 log: "enable"
-                override-replacemsg: "<your_own_value>"
-                warn-duration: "<your_own_value>"
-                warning-duration-type: "session"
-                warning-prompt: "per-domain"
-            max-quota-timeout: "18"
+                override_replacemsg: "<your_own_value>"
+                warn_duration: "<your_own_value>"
+                warning_duration_type: "session"
+                warning_prompt: "per-domain"
+            max_quota_timeout: "18"
             options: "error-allow"
             ovrd: "<your_own_value>"
             quota:
@@ -588,75 +699,75 @@ EXAMPLES = '''
                 category: "<your_own_value>"
                 duration: "<your_own_value>"
                 id:  "24"
-                override-replacemsg: "<your_own_value>"
+                override_replacemsg: "<your_own_value>"
                 type: "time"
                 unit: "B"
                 value: "28"
-            rate-crl-urls: "disable"
-            rate-css-urls: "disable"
-            rate-image-urls: "disable"
-            rate-javascript-urls: "disable"
-        https-replacemsg: "enable"
-        inspection-mode: "proxy"
-        log-all-url: "enable"
+            rate_crl_urls: "disable"
+            rate_css_urls: "disable"
+            rate_image_urls: "disable"
+            rate_javascript_urls: "disable"
+        https_replacemsg: "enable"
+        inspection_mode: "proxy"
+        log_all_url: "enable"
         name: "default_name_36"
         options: "activexfilter"
         override:
-            ovrd-cookie: "allow"
-            ovrd-dur: "<your_own_value>"
-            ovrd-dur-mode: "constant"
-            ovrd-scope: "user"
-            ovrd-user-group:
+            ovrd_cookie: "allow"
+            ovrd_dur: "<your_own_value>"
+            ovrd_dur_mode: "constant"
+            ovrd_scope: "user"
+            ovrd_user_group:
              -
                 name: "default_name_44 (source user.group.name)"
             profile:
              -
                 name: "default_name_46 (source webfilter.profile.name)"
-            profile-attribute: "User-Name"
-            profile-type: "list"
-        ovrd-perm: "bannedword-override"
-        post-action: "normal"
-        replacemsg-group: "<your_own_value> (source system.replacemsg-group.name)"
+            profile_attribute: "User-Name"
+            profile_type: "list"
+        ovrd_perm: "bannedword-override"
+        post_action: "normal"
+        replacemsg_group: "<your_own_value> (source system.replacemsg-group.name)"
         web:
             blacklist: "enable"
-            bword-table: "54 (source webfilter.content.id)"
-            bword-threshold: "55"
-            content-header-list: "56 (source webfilter.content-header.id)"
-            keyword-match:
+            bword_table: "54 (source webfilter.content.id)"
+            bword_threshold: "55"
+            content_header_list: "56 (source webfilter.content-header.id)"
+            keyword_match:
              -
                 pattern: "<your_own_value>"
-            log-search: "enable"
-            safe-search: "url"
-            urlfilter-table: "61 (source webfilter.urlfilter.id)"
+            log_search: "enable"
+            safe_search: "url"
+            urlfilter_table: "61 (source webfilter.urlfilter.id)"
             whitelist: "exempt-av"
-            youtube-restrict: "none"
-        web-content-log: "enable"
-        web-extended-all-action-log: "enable"
-        web-filter-activex-log: "enable"
-        web-filter-applet-log: "enable"
-        web-filter-command-block-log: "enable"
-        web-filter-cookie-log: "enable"
-        web-filter-cookie-removal-log: "enable"
-        web-filter-js-log: "enable"
-        web-filter-jscript-log: "enable"
-        web-filter-referer-log: "enable"
-        web-filter-unknown-log: "enable"
-        web-filter-vbs-log: "enable"
-        web-ftgd-err-log: "enable"
-        web-ftgd-quota-usage: "enable"
-        web-invalid-domain-log: "enable"
-        web-url-log: "enable"
+            youtube_restrict: "none"
+        web_content_log: "enable"
+        web_extended_all_action_log: "enable"
+        web_filter_activex_log: "enable"
+        web_filter_applet_log: "enable"
+        web_filter_command_block_log: "enable"
+        web_filter_cookie_log: "enable"
+        web_filter_cookie_removal_log: "enable"
+        web_filter_js_log: "enable"
+        web_filter_jscript_log: "enable"
+        web_filter_referer_log: "enable"
+        web_filter_unknown_log: "enable"
+        web_filter_vbs_log: "enable"
+        web_ftgd_err_log: "enable"
+        web_ftgd_quota_usage: "enable"
+        web_invalid_domain_log: "enable"
+        web_url_log: "enable"
         wisp: "enable"
-        wisp-algorithm: "primary-secondary"
-        wisp-servers:
+        wisp_algorithm: "primary-secondary"
+        wisp_servers:
          -
             name: "default_name_83 (source web-proxy.wisp.name)"
-        youtube-channel-filter:
+        youtube_channel_filter:
          -
-            channel-id: "<your_own_value>"
+            channel_id: "<your_own_value>"
             comment: "Comment."
             id:  "87"
-        youtube-channel-status: "disable"
+        youtube_channel_status: "disable"
 '''
 
 RETURN = '''
@@ -679,7 +790,7 @@ mkey:
   description: Master key (id) used in the last call to FortiGate
   returned: success
   type: str
-  sample: "key1"
+  sample: "id"
 name:
   description: Name of the table used to fulfill the request
   returned: always
@@ -719,14 +830,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -734,85 +847,110 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_webfilter_profile_data(json):
-    option_list = ['comment', 'extended-log', 'ftgd-wf',
-                   'https-replacemsg', 'inspection-mode', 'log-all-url',
+    option_list = ['comment', 'extended_log', 'ftgd_wf',
+                   'https_replacemsg', 'inspection_mode', 'log_all_url',
                    'name', 'options', 'override',
-                   'ovrd-perm', 'post-action', 'replacemsg-group',
-                   'web', 'web-content-log', 'web-extended-all-action-log',
-                   'web-filter-activex-log', 'web-filter-applet-log', 'web-filter-command-block-log',
-                   'web-filter-cookie-log', 'web-filter-cookie-removal-log', 'web-filter-js-log',
-                   'web-filter-jscript-log', 'web-filter-referer-log', 'web-filter-unknown-log',
-                   'web-filter-vbs-log', 'web-ftgd-err-log', 'web-ftgd-quota-usage',
-                   'web-invalid-domain-log', 'web-url-log', 'wisp',
-                   'wisp-algorithm', 'wisp-servers', 'youtube-channel-filter',
-                   'youtube-channel-status']
+                   'ovrd_perm', 'post_action', 'replacemsg_group',
+                   'web', 'web_content_log', 'web_extended_all_action_log',
+                   'web_filter_activex_log', 'web_filter_applet_log', 'web_filter_command_block_log',
+                   'web_filter_cookie_log', 'web_filter_cookie_removal_log', 'web_filter_js_log',
+                   'web_filter_jscript_log', 'web_filter_referer_log', 'web_filter_unknown_log',
+                   'web_filter_vbs_log', 'web_ftgd_err_log', 'web_ftgd_quota_usage',
+                   'web_invalid_domain_log', 'web_url_log', 'wisp',
+                   'wisp_algorithm', 'wisp_servers', 'youtube_channel_filter',
+                   'youtube_channel_status']
     dictionary = {}
 
     for attribute in option_list:
-        if attribute in json:
+        if attribute in json and json[attribute] is not None:
             dictionary[attribute] = json[attribute]
 
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def webfilter_profile(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['webfilter_profile'] and data['webfilter_profile']:
+        state = data['webfilter_profile']['state']
+    else:
+        state = True
     webfilter_profile_data = data['webfilter_profile']
-    filtered_data = filter_webfilter_profile_data(webfilter_profile_data)
-    if webfilter_profile_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_webfilter_profile_data(webfilter_profile_data))
+
+    if state == "present":
         return fos.set('webfilter',
                        'profile',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif webfilter_profile_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('webfilter',
                           'profile',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_webfilter(data, fos):
-    login(data)
 
-    methodlist = ['webfilter_profile']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['webfilter_profile']:
+        resp = webfilter_profile(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
-        "https": {"required": False, "type": "bool", "default": "False"},
+        "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "webfilter_profile": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "comment": {"required": False, "type": "str"},
-                "extended-log": {"required": False, "type": "str",
+                "extended_log": {"required": False, "type": "str",
                                  "choices": ["enable", "disable"]},
-                "ftgd-wf": {"required": False, "type": "dict",
+                "ftgd_wf": {"required": False, "type": "dict",
                             "options": {
-                                "exempt-quota": {"required": False, "type": "str"},
+                                "exempt_quota": {"required": False, "type": "str"},
                                 "filters": {"required": False, "type": "list",
                                             "options": {
                                                 "action": {"required": False, "type": "str",
                                                            "choices": ["block", "authenticate", "monitor",
                                                                        "warning"]},
-                                                "auth-usr-grp": {"required": False, "type": "str",
+                                                "auth_usr_grp": {"required": False, "type": "str",
                                                                  "options": {
                                                                      "name": {"required": True, "type": "str"}
                                                                  }},
@@ -820,14 +958,14 @@ def main():
                                                 "id": {"required": True, "type": "int"},
                                                 "log": {"required": False, "type": "str",
                                                         "choices": ["enable", "disable"]},
-                                                "override-replacemsg": {"required": False, "type": "str"},
-                                                "warn-duration": {"required": False, "type": "str"},
-                                                "warning-duration-type": {"required": False, "type": "str",
+                                                "override_replacemsg": {"required": False, "type": "str"},
+                                                "warn_duration": {"required": False, "type": "str"},
+                                                "warning_duration_type": {"required": False, "type": "str",
                                                                           "choices": ["session", "timeout"]},
-                                                "warning-prompt": {"required": False, "type": "str",
+                                                "warning_prompt": {"required": False, "type": "str",
                                                                    "choices": ["per-domain", "per-category"]}
                                             }},
-                                "max-quota-timeout": {"required": False, "type": "int"},
+                                "max_quota_timeout": {"required": False, "type": "int"},
                                 "options": {"required": False, "type": "str",
                                             "choices": ["error-allow", "rate-server-ip", "connect-request-bypass",
                                                         "ftgd-disable"]},
@@ -837,7 +975,7 @@ def main():
                                               "category": {"required": False, "type": "str"},
                                               "duration": {"required": False, "type": "str"},
                                               "id": {"required": True, "type": "int"},
-                                              "override-replacemsg": {"required": False, "type": "str"},
+                                              "override_replacemsg": {"required": False, "type": "str"},
                                               "type": {"required": False, "type": "str",
                                                        "choices": ["time", "traffic"]},
                                               "unit": {"required": False, "type": "str",
@@ -845,20 +983,20 @@ def main():
                                                                    "GB"]},
                                               "value": {"required": False, "type": "int"}
                                           }},
-                                "rate-crl-urls": {"required": False, "type": "str",
+                                "rate_crl_urls": {"required": False, "type": "str",
                                                   "choices": ["disable", "enable"]},
-                                "rate-css-urls": {"required": False, "type": "str",
+                                "rate_css_urls": {"required": False, "type": "str",
                                                   "choices": ["disable", "enable"]},
-                                "rate-image-urls": {"required": False, "type": "str",
+                                "rate_image_urls": {"required": False, "type": "str",
                                                     "choices": ["disable", "enable"]},
-                                "rate-javascript-urls": {"required": False, "type": "str",
+                                "rate_javascript_urls": {"required": False, "type": "str",
                                                          "choices": ["disable", "enable"]}
                             }},
-                "https-replacemsg": {"required": False, "type": "str",
+                "https_replacemsg": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "inspection-mode": {"required": False, "type": "str",
+                "inspection_mode": {"required": False, "type": "str",
                                     "choices": ["proxy", "flow-based"]},
-                "log-all-url": {"required": False, "type": "str",
+                "log_all_url": {"required": False, "type": "str",
                                 "choices": ["enable", "disable"]},
                 "name": {"required": True, "type": "str"},
                 "options": {"required": False, "type": "str",
@@ -868,15 +1006,15 @@ def main():
                                         "wf-referer", "wf-cookie", "per-user-bwl"]},
                 "override": {"required": False, "type": "dict",
                              "options": {
-                                 "ovrd-cookie": {"required": False, "type": "str",
+                                 "ovrd_cookie": {"required": False, "type": "str",
                                                  "choices": ["allow", "deny"]},
-                                 "ovrd-dur": {"required": False, "type": "str"},
-                                 "ovrd-dur-mode": {"required": False, "type": "str",
+                                 "ovrd_dur": {"required": False, "type": "str"},
+                                 "ovrd_dur_mode": {"required": False, "type": "str",
                                                    "choices": ["constant", "ask"]},
-                                 "ovrd-scope": {"required": False, "type": "str",
+                                 "ovrd_scope": {"required": False, "type": "str",
                                                 "choices": ["user", "user-group", "ip",
                                                             "browser", "ask"]},
-                                 "ovrd-user-group": {"required": False, "type": "str",
+                                 "ovrd_user_group": {"required": False, "type": "str",
                                                      "options": {
                                                          "name": {"required": True, "type": "str"}
                                                      }},
@@ -884,7 +1022,7 @@ def main():
                                              "options": {
                                                  "name": {"required": True, "type": "str"}
                                              }},
-                                 "profile-attribute": {"required": False, "type": "str",
+                                 "profile_attribute": {"required": False, "type": "str",
                                                        "choices": ["User-Name", "NAS-IP-Address", "Framed-IP-Address",
                                                                    "Framed-IP-Netmask", "Filter-Id", "Login-IP-Host",
                                                                    "Reply-Message", "Callback-Number", "Callback-Id",
@@ -893,84 +1031,84 @@ def main():
                                                                    "Proxy-State", "Login-LAT-Service", "Login-LAT-Node",
                                                                    "Login-LAT-Group", "Framed-AppleTalk-Zone", "Acct-Session-Id",
                                                                    "Acct-Multi-Session-Id"]},
-                                 "profile-type": {"required": False, "type": "str",
+                                 "profile_type": {"required": False, "type": "str",
                                                   "choices": ["list", "radius"]}
                              }},
-                "ovrd-perm": {"required": False, "type": "str",
+                "ovrd_perm": {"required": False, "type": "str",
                               "choices": ["bannedword-override", "urlfilter-override", "fortiguard-wf-override",
                                           "contenttype-check-override"]},
-                "post-action": {"required": False, "type": "str",
+                "post_action": {"required": False, "type": "str",
                                 "choices": ["normal", "block"]},
-                "replacemsg-group": {"required": False, "type": "str"},
+                "replacemsg_group": {"required": False, "type": "str"},
                 "web": {"required": False, "type": "dict",
                         "options": {
                             "blacklist": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                            "bword-table": {"required": False, "type": "int"},
-                            "bword-threshold": {"required": False, "type": "int"},
-                            "content-header-list": {"required": False, "type": "int"},
-                            "keyword-match": {"required": False, "type": "str",
+                            "bword_table": {"required": False, "type": "int"},
+                            "bword_threshold": {"required": False, "type": "int"},
+                            "content_header_list": {"required": False, "type": "int"},
+                            "keyword_match": {"required": False, "type": "str",
                                               "options": {
                                                   "pattern": {"required": True, "type": "str"}
                                               }},
-                            "log-search": {"required": False, "type": "str",
+                            "log_search": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
-                            "safe-search": {"required": False, "type": "str",
+                            "safe_search": {"required": False, "type": "str",
                                             "choices": ["url", "header"]},
-                            "urlfilter-table": {"required": False, "type": "int"},
+                            "urlfilter_table": {"required": False, "type": "int"},
                             "whitelist": {"required": False, "type": "str",
                                           "choices": ["exempt-av", "exempt-webcontent", "exempt-activex-java-cookie",
                                                       "exempt-dlp", "exempt-rangeblock", "extended-log-others"]},
-                            "youtube-restrict": {"required": False, "type": "str",
+                            "youtube_restrict": {"required": False, "type": "str",
                                                  "choices": ["none", "strict", "moderate"]}
                         }},
-                "web-content-log": {"required": False, "type": "str",
+                "web_content_log": {"required": False, "type": "str",
                                     "choices": ["enable", "disable"]},
-                "web-extended-all-action-log": {"required": False, "type": "str",
+                "web_extended_all_action_log": {"required": False, "type": "str",
                                                 "choices": ["enable", "disable"]},
-                "web-filter-activex-log": {"required": False, "type": "str",
+                "web_filter_activex_log": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
-                "web-filter-applet-log": {"required": False, "type": "str",
+                "web_filter_applet_log": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                "web-filter-command-block-log": {"required": False, "type": "str",
+                "web_filter_command_block_log": {"required": False, "type": "str",
                                                  "choices": ["enable", "disable"]},
-                "web-filter-cookie-log": {"required": False, "type": "str",
+                "web_filter_cookie_log": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                "web-filter-cookie-removal-log": {"required": False, "type": "str",
+                "web_filter_cookie_removal_log": {"required": False, "type": "str",
                                                   "choices": ["enable", "disable"]},
-                "web-filter-js-log": {"required": False, "type": "str",
+                "web_filter_js_log": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "web-filter-jscript-log": {"required": False, "type": "str",
+                "web_filter_jscript_log": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
-                "web-filter-referer-log": {"required": False, "type": "str",
+                "web_filter_referer_log": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
-                "web-filter-unknown-log": {"required": False, "type": "str",
+                "web_filter_unknown_log": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
-                "web-filter-vbs-log": {"required": False, "type": "str",
+                "web_filter_vbs_log": {"required": False, "type": "str",
                                        "choices": ["enable", "disable"]},
-                "web-ftgd-err-log": {"required": False, "type": "str",
+                "web_ftgd_err_log": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "web-ftgd-quota-usage": {"required": False, "type": "str",
+                "web_ftgd_quota_usage": {"required": False, "type": "str",
                                          "choices": ["enable", "disable"]},
-                "web-invalid-domain-log": {"required": False, "type": "str",
+                "web_invalid_domain_log": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
-                "web-url-log": {"required": False, "type": "str",
+                "web_url_log": {"required": False, "type": "str",
                                 "choices": ["enable", "disable"]},
                 "wisp": {"required": False, "type": "str",
                          "choices": ["enable", "disable"]},
-                "wisp-algorithm": {"required": False, "type": "str",
+                "wisp_algorithm": {"required": False, "type": "str",
                                    "choices": ["primary-secondary", "round-robin", "auto-learning"]},
-                "wisp-servers": {"required": False, "type": "list",
+                "wisp_servers": {"required": False, "type": "list",
                                  "options": {
                                      "name": {"required": True, "type": "str"}
                                  }},
-                "youtube-channel-filter": {"required": False, "type": "list",
+                "youtube_channel_filter": {"required": False, "type": "list",
                                            "options": {
-                                               "channel-id": {"required": False, "type": "str"},
+                                               "channel_id": {"required": False, "type": "str"},
                                                "comment": {"required": False, "type": "str"},
                                                "id": {"required": True, "type": "int"}
                                            }},
-                "youtube-channel-status": {"required": False, "type": "str",
+                "youtube_channel_status": {"required": False, "type": "str",
                                            "choices": ["disable", "blacklist", "whitelist"]}
 
             }
@@ -979,15 +1117,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_webfilter(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_webfilter(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_webfilter(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

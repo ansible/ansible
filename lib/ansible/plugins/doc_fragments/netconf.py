@@ -1,31 +1,19 @@
-#
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
 
     # Standard files documentation fragment
-    DOCUMENTATION = """
+    DOCUMENTATION = r'''
 options:
   host:
     description:
       - Specifies the DNS host name or address for connecting to the remote
         device over the specified transport.  The value of host is used as
         the destination address for the transport.
+    type: str
     required: true
   port:
     description:
@@ -39,12 +27,14 @@ options:
         the remote device.  This value is used to authenticate
         the SSH session. If the value is not specified in the task, the
         value of environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
+    type: str
   password:
     description:
       - Specifies the password to use to authenticate the connection to
         the remote device.   This value is used to authenticate
         the SSH session. If the value is not specified in the task, the
         value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
+    type: str
   timeout:
     description:
       - Specifies the timeout in seconds for communicating with the network device
@@ -62,16 +52,16 @@ options:
     type: path
   hostkey_verify:
     description:
-      - If set to true, the ssh host key of the device must match a ssh key present on
-        the host if false, the ssh host key of the device is not checked.
+      - If set to C(yes), the ssh host key of the device must match a ssh key present on
+        the host if set to C(no), the ssh host key of the device is not checked.
     type: bool
-    default: True
+    default: yes
   look_for_keys:
     description:
       - Enables looking in the usual locations for the ssh keys (e.g. :file:`~/.ssh/id_*`)
     type: bool
-    default: True
+    default: yes
 notes:
   - For information on using netconf see the :ref:`Platform Options guide using Netconf<netconf_enabled_platform_options>`
   - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`
-"""
+'''

@@ -136,7 +136,7 @@ options:
               is a list of dict where each dict has source and prefix defined or just
               prefix if source is not needed. The specified values will be configured
               on the device and if any previous prefix/sources exist, they will be removed.
-              Keyword 'default' is also accpted which removes all existing prefix/sources.
+              Keyword 'default' is also accepted which removes all existing prefix/sources.
         version_added: 2.6
     restart:
         description:
@@ -189,8 +189,8 @@ changed:
     sample: true
 '''
 
-from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.network.nxos.nxos import get_interface_type
 from ansible.module_utils.basic import AnsibleModule
 
@@ -367,7 +367,7 @@ def config_igmp_interface(delta, existing, existing_oif_prefix_source):
     def_vals = get_igmp_interface_defaults()
 
     for key, value in delta.items():
-        if key == 'oif_ps':
+        if key == 'oif_ps' and value != 'default':
             for each in value:
                 if each in existing_oif_prefix_source:
                     existing_oif_prefix_source.remove(each)
@@ -497,7 +497,7 @@ def main():
         oif_routemap=dict(required=False, type='str'),
         oif_prefix=dict(required=False, type='str', removed_in_version='2.10'),
         oif_source=dict(required=False, type='str', removed_in_version='2.10'),
-        oif_ps=dict(required=False, type='list', elements='dict'),
+        oif_ps=dict(required=False, type='raw'),
         restart=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent', 'default'],
                    default='present')
@@ -514,7 +514,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     state = module.params['state']
     interface = module.params['interface']
@@ -592,7 +591,7 @@ def main():
     delta = dict(set(proposed.items()).difference(existing.items()))
 
     if oif_ps:
-        if oif_ps == ['default']:
+        if oif_ps == 'default':
             delta['oif_ps'] = []
         else:
             delta['oif_ps'] = oif_ps

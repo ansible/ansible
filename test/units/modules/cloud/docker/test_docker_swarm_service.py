@@ -1,3 +1,6 @@
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import pytest
 
 
@@ -98,3 +101,260 @@ def test_get_docker_environment(mocker, docker_swarm_service):
         None, env_files=[]
     )
     assert result == []
+
+
+def test_get_nanoseconds_from_raw_option(docker_swarm_service):
+    value = docker_swarm_service.get_nanoseconds_from_raw_option('test', None)
+    assert value is None
+
+    value = docker_swarm_service.get_nanoseconds_from_raw_option('test', '1m30s535ms')
+    assert value == 90535000000
+
+    value = docker_swarm_service.get_nanoseconds_from_raw_option('test', 10000000000)
+    assert value == 10000000000
+
+    with pytest.raises(ValueError):
+        docker_swarm_service.get_nanoseconds_from_raw_option('test', [])
+
+
+def test_has_dict_changed(docker_swarm_service):
+    assert not docker_swarm_service.has_dict_changed(
+        {"a": 1},
+        {"a": 1},
+    )
+    assert not docker_swarm_service.has_dict_changed(
+        {"a": 1},
+        {"a": 1, "b": 2}
+    )
+    assert docker_swarm_service.has_dict_changed(
+        {"a": 1},
+        {"a": 2, "b": 2}
+    )
+    assert docker_swarm_service.has_dict_changed(
+        {"a": 1, "b": 1},
+        {"a": 1}
+    )
+    assert not docker_swarm_service.has_dict_changed(
+        None,
+        {"a": 2, "b": 2}
+    )
+    assert docker_swarm_service.has_dict_changed(
+        {},
+        {"a": 2, "b": 2}
+    )
+    assert docker_swarm_service.has_dict_changed(
+        {"a": 1},
+        {}
+    )
+    assert docker_swarm_service.has_dict_changed(
+        {"a": 1},
+        None
+    )
+    assert not docker_swarm_service.has_dict_changed(
+        {},
+        {}
+    )
+    assert not docker_swarm_service.has_dict_changed(
+        None,
+        None
+    )
+    assert not docker_swarm_service.has_dict_changed(
+        {},
+        None
+    )
+    assert not docker_swarm_service.has_dict_changed(
+        None,
+        {}
+    )
+
+
+def test_has_list_changed(docker_swarm_service):
+    assert docker_swarm_service.has_list_changed(
+        [
+            {"a": 1},
+            {"b": 1}
+        ],
+        [
+            {"a": 1}
+        ]
+    )
+    assert docker_swarm_service.has_list_changed(
+        [
+            {"a": 1},
+        ],
+        [
+            {"a": 1},
+            {"b": 1},
+        ]
+    )
+    assert not docker_swarm_service.has_list_changed(
+        [
+            {"a": 1},
+            {"b": 1},
+        ],
+        [
+            {"a": 1},
+            {"b": 1}
+        ]
+    )
+    assert not docker_swarm_service.has_list_changed(
+        None,
+        [
+            {"b": 1},
+            {"a": 1}
+        ]
+    )
+    assert docker_swarm_service.has_list_changed(
+        [],
+        [
+            {"b": 1},
+            {"a": 1}
+        ]
+    )
+    assert not docker_swarm_service.has_list_changed(
+        None,
+        None
+    )
+    assert not docker_swarm_service.has_list_changed(
+        [],
+        None
+    )
+    assert not docker_swarm_service.has_list_changed(
+        None,
+        []
+    )
+    assert not docker_swarm_service.has_list_changed(
+        [
+            {"src": 1, "dst": 2},
+            {"src": 1, "dst": 2, "protocol": "udp"},
+        ],
+        [
+            {"src": 1, "dst": 2, "protocol": "tcp"},
+            {"src": 1, "dst": 2, "protocol": "udp"},
+        ]
+    )
+    assert not docker_swarm_service.has_list_changed(
+        [
+            {"src": 1, "dst": 2, "protocol": "udp"},
+            {"src": 1, "dst": 3, "protocol": "tcp"},
+        ],
+        [
+            {"src": 1, "dst": 2, "protocol": "udp"},
+            {"src": 1, "dst": 3, "protocol": "tcp"},
+        ]
+    )
+    assert docker_swarm_service.has_list_changed(
+        [
+            {"src": 1, "dst": 2, "protocol": "udp"},
+            {"src": 1, "dst": 2},
+            {"src": 3, "dst": 4},
+        ],
+        [
+            {"src": 1, "dst": 3, "protocol": "udp"},
+            {"src": 1, "dst": 2, "protocol": "tcp"},
+            {"src": 3, "dst": 4, "protocol": "tcp"},
+        ]
+    )
+    assert docker_swarm_service.has_list_changed(
+        [
+            {"src": 1, "dst": 3, "protocol": "tcp"},
+            {"src": 1, "dst": 2, "protocol": "udp"},
+        ],
+        [
+            {"src": 1, "dst": 2, "protocol": "tcp"},
+            {"src": 1, "dst": 2, "protocol": "udp"},
+        ]
+    )
+    assert docker_swarm_service.has_list_changed(
+        [
+            {"src": 1, "dst": 2, "protocol": "udp"},
+            {"src": 1, "dst": 2, "protocol": "tcp", "extra": {"test": "foo"}},
+        ],
+        [
+            {"src": 1, "dst": 2, "protocol": "udp"},
+            {"src": 1, "dst": 2, "protocol": "tcp"},
+        ]
+    )
+    assert not docker_swarm_service.has_list_changed(
+        [{'id': '123', 'aliases': []}],
+        [{'id': '123'}]
+    )
+
+
+def test_get_docker_networks(docker_swarm_service):
+    network_names = [
+        'network_1',
+        'network_2',
+        'network_3',
+        'network_4',
+    ]
+    networks = [
+        network_names[0],
+        {'name': network_names[1]},
+        {'name': network_names[2], 'aliases': ['networkalias1']},
+        {'name': network_names[3], 'aliases': ['networkalias2'], 'options': {'foo': 'bar'}},
+    ]
+    network_ids = {
+        network_names[0]: '1',
+        network_names[1]: '2',
+        network_names[2]: '3',
+        network_names[3]: '4',
+    }
+    parsed_networks = docker_swarm_service.get_docker_networks(
+        networks,
+        network_ids
+    )
+    assert len(parsed_networks) == 4
+    for i, network in enumerate(parsed_networks):
+        assert 'name' not in network
+        assert 'id' in network
+        expected_name = network_names[i]
+        assert network['id'] == network_ids[expected_name]
+        if i == 2:
+            assert network['aliases'] == ['networkalias1']
+        if i == 3:
+            assert network['aliases'] == ['networkalias2']
+        if i == 3:
+            assert 'foo' in network['options']
+    # Test missing name
+    with pytest.raises(TypeError):
+        docker_swarm_service.get_docker_networks([{'invalid': 'err'}], {'err': 1})
+    # test for invalid aliases type
+    with pytest.raises(TypeError):
+        docker_swarm_service.get_docker_networks(
+            [{'name': 'test', 'aliases': 1}],
+            {'test': 1}
+        )
+    # Test invalid aliases elements
+    with pytest.raises(TypeError):
+        docker_swarm_service.get_docker_networks(
+            [{'name': 'test', 'aliases': [1]}],
+            {'test': 1}
+        )
+    # Test for invalid options type
+    with pytest.raises(TypeError):
+        docker_swarm_service.get_docker_networks(
+            [{'name': 'test', 'options': 1}],
+            {'test': 1}
+        )
+    # Test for invalid networks type
+    with pytest.raises(TypeError):
+        docker_swarm_service.get_docker_networks(
+            1,
+            {'test': 1}
+        )
+    # Test for non existing networks
+    with pytest.raises(ValueError):
+        docker_swarm_service.get_docker_networks(
+            [{'name': 'idontexist'}],
+            {'test': 1}
+        )
+    # Test empty values
+    assert docker_swarm_service.get_docker_networks([], {}) == []
+    assert docker_swarm_service.get_docker_networks(None, {}) is None
+    # Test invalid options
+    with pytest.raises(TypeError):
+        docker_swarm_service.get_docker_networks(
+            [{'name': 'test', 'nonexisting_option': 'foo'}],
+            {'test': '1'}
+        )

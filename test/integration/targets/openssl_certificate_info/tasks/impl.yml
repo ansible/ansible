@@ -1,0 +1,109 @@
+---
+- debug:
+    msg: "Executing tests with backend {{ select_crypto_backend }}"
+
+- name: ({{select_crypto_backend}}) Get certificate info
+  openssl_certificate_info:
+    path: '{{ output_dir }}/cert_1.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Check whether issuer and subject behave as expected
+  assert:
+    that:
+      - result.issuer.organizationalUnitName == 'ACME Department'
+      - "['organizationalUnitName', 'Crypto Department'] in result.issuer_ordered"
+      - "['organizationalUnitName', 'ACME Department'] in result.issuer_ordered"
+      - result.subject.organizationalUnitName == 'ACME Department'
+      - "['organizationalUnitName', 'Crypto Department'] in result.subject_ordered"
+      - "['organizationalUnitName', 'ACME Department'] in result.subject_ordered"
+
+- name: Check SubjectKeyIdentifier and AuthorityKeyIdentifier
+  assert:
+    that:
+      - result.subject_key_identifier == "00:11:22:33"
+      - result.authority_key_identifier == "44:55:66:77"
+      - result.authority_cert_issuer == expected_authority_cert_issuer
+      - result.authority_cert_serial_number == 12345
+  vars:
+    expected_authority_cert_issuer:
+      - "DNS:ca.example.org"
+      - "IP:1.2.3.4"
+  when: select_crypto_backend != 'pyopenssl' and cryptography_version.stdout is version('1.3', '>=')
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get certificate info
+  openssl_certificate_info:
+    path: '{{ output_dir }}/cert_2.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+    valid_at:
+      today: "+0d"
+      past: "20190101235901Z"
+      twentydays: "+20d"
+  register: result
+- assert:
+    that:
+    - result.valid_at.today
+    - not result.valid_at.past
+    - not result.valid_at.twentydays
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get certificate info
+  openssl_certificate_info:
+    path: '{{ output_dir }}/cert_3.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Check AuthorityKeyIdentifier
+  assert:
+    that:
+      - result.authority_key_identifier is none
+      - result.authority_cert_issuer == expected_authority_cert_issuer
+      - result.authority_cert_serial_number == 12345
+  vars:
+    expected_authority_cert_issuer:
+      - "DNS:ca.example.org"
+      - "IP:1.2.3.4"
+  when: select_crypto_backend != 'pyopenssl' and cryptography_version.stdout is version('1.3', '>=')
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get certificate info
+  openssl_certificate_info:
+    path: '{{ output_dir }}/cert_4.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Check AuthorityKeyIdentifier
+  assert:
+    that:
+      - result.authority_key_identifier == "44:55:66:77"
+      - result.authority_cert_issuer is none
+      - result.authority_cert_serial_number is none
+  when: select_crypto_backend != 'pyopenssl' and cryptography_version.stdout is version('1.3', '>=')
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get certificate info for packaged cert 1
+  openssl_certificate_info:
+    path: '{{ role_path }}/files/cert1.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+- assert:
+    that:
+      - "'ocsp_uri' in result"
+      - "result.ocsp_uri == 'http://ocsp.int-x3.letsencrypt.org'"
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"

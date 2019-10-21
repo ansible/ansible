@@ -61,19 +61,20 @@ class HttpApiBase(AnsiblePlugin):
         :returns:
             * True if the code has been handled in a way that the request
             may be resent without changes.
-            * False if this code indicates a fatal or unknown error which
-            cannot be handled by the plugin. This will result in an
-            AnsibleConnectionFailure being raised.
-            * Any other response passes the HTTPError along to the caller to
-            deal with as appropriate.
-        """
+            * False if the error cannot be handled or recovered from by the
+            plugin. This will result in the HTTPError being returned to the
+            caller to deal with as appropriate.
+            * Any other value returned is taken as a valid response from the
+            server without making another request. In many cases, this can just
+            be the original exception.
+            """
         if exc.code == 401 and self.connection._auth:
             # Stored auth appears to be invalid, clear and retry
             self.connection._auth = None
             self.login(self.connection.get_option('remote_user'), self.connection.get_option('password'))
             return True
 
-        return False
+        return exc
 
     @abstractmethod
     def send_request(self, data, **message_kwargs):

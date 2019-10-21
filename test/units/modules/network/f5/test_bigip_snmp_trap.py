@@ -79,9 +79,6 @@ class TestParameters(unittest.TestCase):
             destination='10.10.10.10',
             port=1000,
             network='other',
-            password='password',
-            server='localhost',
-            user='admin'
         )
         p = V2Parameters(params=args)
         assert p.name == 'foo'
@@ -99,9 +96,6 @@ class TestParameters(unittest.TestCase):
             destination='10.10.10.10',
             port=1000,
             network='other',
-            password='password',
-            server='localhost',
-            user='admin'
         )
         p = V1Parameters(params=args)
         assert p.name == 'foo'
@@ -142,9 +136,11 @@ class TestManager(unittest.TestCase):
             destination='10.10.10.10',
             port=1000,
             network='other',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -177,9 +173,11 @@ class TestManager(unittest.TestCase):
             community='public',
             destination='10.10.10.10',
             port=1000,
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

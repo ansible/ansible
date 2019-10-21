@@ -5,39 +5,41 @@ SLX-OS Platform Options
 ***************************************
 
 Extreme SLX-OS Ansible modules only support CLI connections today. ``httpapi`` modules may be added in future.
-This page offers details on how to use ``network_cli`` on SLX-OS in Ansible 2.6.
+This page offers details on how to use ``network_cli`` on SLX-OS in Ansible.
 
 .. contents:: Topics
 
 Connections Available
 ================================================================================
 
-+---------------------------+-----------------------------------------------+
-|..                         | CLI                                           |
-+===========================+===============================================+
-| **Protocol**              |  SSH                                          |
-+---------------------------+-----------------------------------------------+
-| | **Credentials**         | | uses SSH keys / SSH-agent if present        |
-| |                         | | accepts ``-u myuser -k`` if using password  |
-+---------------------------+-----------------------------------------------+
-| **Indirect Access**       | via a bastion (jump host)                     |
-+---------------------------+-----------------------------------------------+
-| | **Connection Settings** | | ``ansible_connection: network_cli``         |
-| |                         | |                                             |
-| |                         | |                                             |
-| |                         | |                                             |
-| |                         | |                                             |
-+---------------------------+-----------------------------------------------+
-| | **Enable Mode**         | | not supported by SLX-OS                     |
-| | (Privilege Escalation)  | |                                             |
-+---------------------------+-----------------------------------------------+
-| **Returned Data Format**  | ``stdout[0].``                                |
-+---------------------------+-----------------------------------------------+
+.. table::
+    :class: documentation-table
+
+    ====================  ==========================================
+    ..                    CLI
+    ====================  ==========================================
+    Protocol              SSH
+
+    Credentials           uses SSH keys / SSH-agent if present
+
+                          accepts ``-u myuser -k`` if using password
+
+    Indirect Access       via a bastion (jump host)
+
+    Connection Settings   ``ansible_connection: network_cli``
+
+    |enable_mode|         not supported by SLX-OS
+
+    Returned Data Format  ``stdout[0].``
+    ====================  ==========================================
+
+.. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
+
 
 SLX-OS does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli``.
 
-Using CLI in Ansible 2.6
-================================================================================
+Using CLI in Ansible
+====================
 
 Example CLI ``group_vars/slxos.yml``
 ------------------------------------

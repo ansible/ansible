@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Gregory Shulov (gregory.shulov@gmail.com)
+# Copyright: (c) 2016, Gregory Shulov (gregory.shulov@gmail.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -112,7 +112,7 @@ def get_filesystem(module, system):
 
 @api_wrapper
 def get_export(module, filesystem, system):
-    """Retrun export if found. When not found return None"""
+    """Return export if found. When not found return None"""
 
     export = None
     exports_to_list = system.exports.to_list()
@@ -182,7 +182,7 @@ def main():
     export = get_export(module, filesystem, system)
 
     if filesystem is None:
-        module.fail_json(msg='Filesystem {} not found'.format(module.params['filesystem']))
+        module.fail_json(msg='Filesystem {0} not found'.format(module.params['filesystem']))
 
     if state == 'present':
         update_export(module, export, filesystem, system)

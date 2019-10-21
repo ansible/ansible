@@ -105,6 +105,7 @@ changed:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli
+from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
 def check_cli(module, cli):
@@ -130,9 +131,10 @@ def check_cli(module, cli):
     nic_str = module.params['pn_nic']
 
     # Check for vRouter
-    check_vrouter = cli + ' vrouter-show format name no-show-headers '
-    out = module.run_command(check_vrouter, use_unsafe_shell=True)[1]
-    out = out.split()
+    check_vrouter = cli + ' vrouter-show format name no-show-headers'
+    out = run_commands(module, check_vrouter)[1]
+    if out:
+        out = out.split()
 
     VROUTER_EXISTS = True if vrouter_name in out else False
 
@@ -140,9 +142,9 @@ def check_cli(module, cli):
         # Check for interface and VRRP and fetch nic for VRRP
         show = cli + ' vrouter-interface-show vrouter-name %s ' % vrouter_name
         show += 'ip2 %s format ip2,nic no-show-headers' % interface_ip
-        out = module.run_command(show, use_unsafe_shell=True)[1]
+        out = run_commands(module, show)[1]
 
-        if out and interface_ip in out.split(' ')[1]:
+        if out and interface_ip in out.split(' ')[-2]:
             INTERFACE_EXISTS = True
         else:
             INTERFACE_EXISTS = False
@@ -150,8 +152,11 @@ def check_cli(module, cli):
     if nic_str:
         # Check for nic
         show = cli + ' vrouter-interface-show vrouter-name %s ' % vrouter_name
-        show += ' format nic no-show-headers'
-        out = module.run_command(show, use_unsafe_shell=True)[1]
+        show += 'format nic no-show-headers'
+        out = run_commands(module, show)[1]
+
+        if out:
+            out = out.split()
 
         NIC_EXISTS = True if nic_str in out else False
 
@@ -219,7 +224,7 @@ def main():
         if INTERFACE_EXISTS is True:
             module.exit_json(
                 skipped=True,
-                msg='vRouter with interface %s exist' % ip
+                msg='vRouter with interface ip %s exist' % ip
             )
         cli += ' nic %s ip %s ' % (nic, ip)
 
@@ -234,7 +239,7 @@ def main():
         if INTERFACE_EXISTS is False:
             module.exit_json(
                 skipped=True,
-                msg='vRouter with interface %s does not exist' % ip
+                msg='vRouter with interface ip %s does not exist' % ip
             )
         if nic:
             cli += ' nic %s ' % nic

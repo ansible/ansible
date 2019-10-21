@@ -36,7 +36,8 @@ description:
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
 notes:
-  - Tested against VYOS 1.1.7
+  - Tested against VyOS 1.1.8 (helium).
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 options:
   aggregate:
     description:
@@ -149,7 +150,6 @@ def validate_level(value, module):
 
 def spec_to_commands(updates, module):
     commands = list()
-    state = module.params['state']
     update_password = module.params['update_password']
 
     def needs_update(want, have, x):

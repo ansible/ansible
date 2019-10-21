@@ -14,7 +14,7 @@ $log_path = $null
 
 Function Write-DebugLog {
     Param(
-    [string]$msg
+        [string]$msg
     )
 
     $DebugPreference = "Continue"
@@ -22,7 +22,6 @@ Function Write-DebugLog {
     $msg = "$date_str $msg"
 
     Write-Debug $msg
-
     if($log_path) {
         Add-Content $log_path $msg
     }
@@ -48,11 +47,11 @@ Function Get-DomainMembershipMatch {
     }
     catch [System.Security.Authentication.AuthenticationException] {
         Write-DebugLog "Failed to get computer domain.  Attempting a different method."
-        Add-Type -AssemblyName System.DirectoryServices.AccountManagement            
+        Add-Type -AssemblyName System.DirectoryServices.AccountManagement
         $user_principal = [System.DirectoryServices.AccountManagement.UserPrincipal]::Current
         If ($user_principal.ContextType -eq "Machine") {
             $current_dns_domain = (Get-CimInstance -ClassName Win32_ComputerSystem -Property Domain).Domain
-            
+
             $domain_match = $current_dns_domain -eq $dns_domain_name
 
             Write-DebugLog ("current domain {0} matches {1}: {2}" -f $current_dns_domain, $dns_domain_name, $domain_match)
@@ -86,7 +85,7 @@ Function Get-HostnameMatch {
 }
 
 Function Is-DomainJoined {
-    return (Get-WmiObject Win32_ComputerSystem).PartOfDomain
+    return (Get-CIMInstance Win32_ComputerSystem).PartOfDomain
 }
 
 Function Join-Domain {
@@ -126,7 +125,7 @@ Function Join-Domain {
 }
 
 Function Get-Workgroup {
-    return (Get-WmiObject Win32_ComputerSystem).Workgroup
+    return (Get-CIMInstance Win32_ComputerSystem).Workgroup
 }
 
 Function Set-Workgroup {
@@ -136,15 +135,14 @@ Function Set-Workgroup {
 
     Write-DebugLog ("Calling JoinDomainOrWorkgroup with workgroup {0}" -f $workgroup_name)
     try {
-        $swg_result = (Get-WmiObject -ClassName Win32_ComputerSystem).JoinDomainOrWorkgroup($workgroup_name)
+        $swg_result = Get-CimInstance Win32_ComputerSystem | Invoke-CimMethod -MethodName JoinDomainOrWorkgroup -Arguments @{Name="$workgroup_name"}
     } catch {
         Fail-Json -obj $result -message "failed to call Win32_ComputerSystem.JoinDomainOrWorkgroup($workgroup_name): $($_.Exception.Message)"
     }
 
     if ($swg_result.ReturnValue -ne 0) {
         Fail-Json -obj $result -message "failed to set workgroup through WMI, return value: $($swg_result.ReturnValue)"
-    
-    return $swg_result}
+    }
 }
 
 Function Join-Workgroup {
@@ -165,7 +163,7 @@ Function Join-Workgroup {
 
     # we're already on a workgroup- change it.
     Else {
-        $swg_result = Set-Workgroup $workgroup_name
+        Set-Workgroup $workgroup_name
     }
 }
 
@@ -202,7 +200,6 @@ Else { # workgroup
     }
 }
 
-
 $global:log_path = $log_path
 
 Try {
@@ -236,12 +233,12 @@ Try {
                         Write-DebugLog "adding hostname change to domain-join args"
                         $join_args.new_hostname = $hostname
                     }
-                    If($domain_ou_path -ne $null){ # If OU Path is not empty
+                    If($null -ne $domain_ou_path){ # If OU Path is not empty
                         Write-DebugLog "adding domain_ou_path to domain-join args"
                         $join_args.domain_ou_path = $domain_ou_path
                     }
 
-                    $join_result = Join-Domain @join_args
+                    Join-Domain @join_args
 
                     # this change requires a reboot
                     $result.reboot_required = $true
@@ -255,7 +252,7 @@ Try {
                         $rename_args.DomainCredential = $domainAdminCredentials
                     }
 
-                    $rename_result = Rename-Computer @rename_args
+                    Rename-Computer @rename_args
 
                     # this change requires a reboot
                     $result.reboot_required = $true
@@ -279,13 +276,12 @@ Try {
                 If(-not $workgroup_match) {
                     Write-DebugLog ("setting workgroup to {0}" -f $workgroup_name)
                     $join_wg_result = Join-Workgroup -workgroup_name $workgroup_name -domainCredential $domainAdminCredentials
-
                     # this change requires a reboot
                     $result.reboot_required = $true
                 }
                 If(-not $hostname_match) {
                     Write-DebugLog ("setting hostname to {0}" -f $hostname)
-                    $rename_result = Rename-Computer -NewName $hostname
+                    Rename-Computer -NewName $hostname
 
                     # this change requires a reboot
                     $result.reboot_required = $true

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -25,14 +25,20 @@ options:
     default: present
   source_intercluster_lifs:
     description:
-      - Intercluster addresses of the source cluster.
+      - List of intercluster addresses of the source cluster.
       - Used as peer-addresses in destination cluster.
+      - All these intercluster lifs should belong to the source cluster.
     version_added: "2.8"
+    aliases:
+    - source_intercluster_lif
   dest_intercluster_lifs:
     description:
-      - Intercluster addresses of the destination cluster.
+      - List of intercluster addresses of the destination cluster.
       - Used as peer-addresses in source cluster.
+      - All these intercluster lifs should belong to the destination cluster.
     version_added: "2.8"
+    aliases:
+    - dest_intercluster_lif
   passphrase:
     description:
       - The arbitrary passphrase that matches the one given to the peer cluster.
@@ -42,9 +48,11 @@ options:
   dest_cluster_name:
     description:
       - The name of the destination cluster name in the peer relation to be deleted.
+      - Required for delete
   dest_hostname:
     description:
-      - Destination cluster IP or hostname which needs to be peered.
+      - Destination cluster IP or hostname which needs to be peered
+      - Required to complete the peering process at destination cluster.
     required: True
   dest_username:
     description:
@@ -104,8 +112,8 @@ class NetAppONTAPClusterPeer(object):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
-            source_intercluster_lifs=dict(required=False, type='list'),
-            dest_intercluster_lifs=dict(required=False, type='list'),
+            source_intercluster_lifs=dict(required=False, type='list', aliases=['source_intercluster_lif']),
+            dest_intercluster_lifs=dict(required=False, type='list', aliases=['dest_intercluster_lif']),
             passphrase=dict(required=False, type='str', no_log=True),
             dest_hostname=dict(required=True, type='str'),
             dest_username=dict(required=False, type='str'),
@@ -116,7 +124,7 @@ class NetAppONTAPClusterPeer(object):
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
-            required_together=[['source_intercluster_lifs', 'dest_intercluster_lifs', 'passphrase']],
+            required_together=[['source_intercluster_lifs', 'dest_intercluster_lifs']],
             required_if=[('state', 'absent', ['source_cluster_name', 'dest_cluster_name'])],
             supports_check_mode=True
         )
@@ -169,7 +177,7 @@ class NetAppONTAPClusterPeer(object):
         :return: Dictionary of current cluster peer details if query successful, else return None
         """
         cluster_peer_get_iter = self.cluster_peer_get_iter(cluster)
-        cluster_info = dict()
+        result, cluster_info = None, dict()
         if cluster == 'source':
             server = self.server
         else:
@@ -217,8 +225,9 @@ class NetAppONTAPClusterPeer(object):
         :param cluster: type of cluster (source or destination)
         :return: None
         """
-        cluster_peer_create = netapp_utils.zapi.NaElement.create_node_with_children(
-            'cluster-peer-create', **{'passphrase': self.parameters['passphrase']})
+        cluster_peer_create = netapp_utils.zapi.NaElement.create_node_with_children('cluster-peer-create')
+        if self.parameters.get('passphrase') is not None:
+            cluster_peer_create.add_new_child('passphrase', self.parameters['passphrase'])
         peer_addresses = netapp_utils.zapi.NaElement('peer-addresses')
         if cluster == 'source':
             server, peer_address = self.server, self.parameters['dest_intercluster_lifs']
@@ -239,9 +248,7 @@ class NetAppONTAPClusterPeer(object):
         Apply action to cluster peer
         :return: None
         """
-        results = netapp_utils.get_cserver(self.server)
-        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
-        netapp_utils.ems_log_event("na_ontap_cluster_peer", cserver)
+        self.asup_log_for_cserver("na_ontap_cluster_peer")
         source = self.cluster_peer_get('source')
         destination = self.cluster_peer_get('destination')
         source_action = self.na_helper.get_cd_action(source, self.parameters)
@@ -262,6 +269,17 @@ class NetAppONTAPClusterPeer(object):
                 self.na_helper.changed = True
 
         self.module.exit_json(changed=self.na_helper.changed)
+
+    def asup_log_for_cserver(self, event_name):
+        """
+        Fetch admin vserver for the given cluster
+        Create and Autosupport log event with the given module name
+        :param event_name: Name of the event log
+        :return: None
+        """
+        results = netapp_utils.get_cserver(self.server)
+        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
+        netapp_utils.ems_log_event(event_name, cserver)
 
 
 def main():

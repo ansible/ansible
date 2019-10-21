@@ -47,16 +47,12 @@ Ansible releases a new major release of Ansible approximately three to four time
 
 .. toctree::
    :glob:
-   :maxdepth: 2
-   :caption: Scenario Guides
+   :maxdepth: 1
+   :caption: Common Ansible Scenarios
 
-   scenario_guides/guide_*
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Ansible for VMWare
-
-   vmware/index
+   scenario_guides/cloud_guides
+   scenario_guides/network_guides
+   scenario_guides/virt_guides
 
 .. toctree::
    :maxdepth: 2
@@ -65,16 +61,25 @@ Ansible releases a new major release of Ansible approximately three to four time
    network/index
 
 .. toctree::
+   :maxdepth: 2
+   :caption: Ansible Galaxy
+
+   galaxy/user_guide/index
+   galaxy/dev_guide/index
+
+
+.. toctree::
    :maxdepth: 1
    :caption: Reference & Appendices
 
    ../modules/modules_by_category
    reference_appendices/playbooks_keywords
-   reference_appendices/galaxy
    reference_appendices/common_return_values
    reference_appendices/config
+   reference_appendices/general_precedence
    reference_appendices/YAMLSyntax
    reference_appendices/python_3_support
+   reference_appendices/interpreter_discovery
    reference_appendices/release_and_maintenance
    reference_appendices/test_strategies
    dev_guide/testing/sanity/index
@@ -83,6 +88,7 @@ Ansible releases a new major release of Ansible approximately three to four time
    reference_appendices/module_utils
    reference_appendices/special_variables
    reference_appendices/tower
+   reference_appendices/logging
 
 
 .. toctree::

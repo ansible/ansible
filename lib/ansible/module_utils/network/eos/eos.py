@@ -31,8 +31,8 @@ import json
 import os
 import time
 
-from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list, ComplexList
@@ -84,10 +84,6 @@ def get_provider_argspec():
     return eos_provider_spec
 
 
-def check_args(module, warnings):
-    pass
-
-
 def load_params(module):
     provider = module.params.get('provider') or dict()
     for key, value in iteritems(provider):
@@ -120,6 +116,12 @@ class Cli:
         self._device_configs = {}
         self._session_support = None
         self._connection = None
+
+    @property
+    def supports_sessions(self):
+        if self._session_support is None:
+            self._session_support = self._get_connection().supports_sessions()
+        return self._session_support
 
     def _get_connection(self):
         if self._connection:
@@ -185,6 +187,20 @@ class Cli:
             self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         return diff
 
+    def get_capabilities(self):
+        """Returns platform info of the remove device
+        """
+        if hasattr(self._module, '_capabilities'):
+            return self._module._capabilities
+
+        connection = self._get_connection()
+        try:
+            capabilities = connection.get_capabilities()
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+        self._module._capabilities = json.loads(capabilities)
+        return self._module._capabilities
+
 
 class LocalEapi:
 
@@ -216,10 +232,9 @@ class LocalEapi:
 
     @property
     def supports_sessions(self):
-        if self._session_support:
-            return self._session_support
-        response = self.send_request(['show configuration sessions'])
-        self._session_support = 'error' not in response
+        if self._session_support is None:
+            response = self.send_request(['show configuration sessions'])
+            self._session_support = 'error' not in response
         return self._session_support
 
     def _request_builder(self, commands, output, reqid=None):
@@ -414,6 +429,12 @@ class HttpApi:
 
         return self._connection_obj
 
+    @property
+    def supports_sessions(self):
+        if self._session_support is None:
+            self._session_support = self._connection.supports_sessions()
+        return self._session_support
+
     def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
         """
@@ -424,10 +445,10 @@ class HttpApi:
         def run_queue(queue, output):
             try:
                 response = to_list(self._connection.send_request(queue, output=output))
-            except Exception as exc:
+            except ConnectionError as exc:
                 if check_rc:
                     raise
-                return to_text(exc)
+                return to_list(to_text(exc))
 
             if output == 'json':
                 response = [json.loads(item) for item in response]
@@ -574,9 +595,12 @@ def is_json(cmd):
 
 
 def is_local_eapi(module):
-    transport = module.params['transport']
-    provider_transport = (module.params['provider'] or {}).get('transport')
-    return 'eapi' in (transport, provider_transport)
+    transports = []
+    transports.append(module.params.get('transport', ""))
+    provider = module.params.get('provider')
+    if provider:
+        transports.append(provider.get('transport', ""))
+    return 'eapi' in transports
 
 
 def to_command(module, commands):
@@ -590,6 +614,7 @@ def to_command(module, commands):
         output=dict(default=default_output),
         prompt=dict(type='list'),
         answer=dict(type='list'),
+        newline=dict(type='bool', default=True),
         sendonly=dict(type='bool', default=False),
         check_all=dict(type='bool', default=False),
     ), module)
@@ -617,3 +642,8 @@ def load_config(module, config, commit=False, replace=False):
 def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
     conn = self.get_connection()
     return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path, diff_replace=diff_replace)
+
+
+def get_capabilities(module):
+    conn = get_connection(module)
+    return conn.get_capabilities()

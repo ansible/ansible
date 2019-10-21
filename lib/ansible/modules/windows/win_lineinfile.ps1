@@ -3,6 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.Backup
 
 function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_mode) {
 	Try {
@@ -42,14 +43,14 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_
 	# Commit changes to the path
 	$cleanpath = $path.Replace("/", "\");
 	Try {
-		Copy-Item $temppath $cleanpath -force -ErrorAction Stop -WhatIf:$check_mode;
+		Copy-Item -Path $temppath -Destination $cleanpath -Force -WhatIf:$check_mode;
 	}
 	Catch {
 		Fail-Json @{} "Cannot write to: $cleanpath ($($_.Exception.Message))";
 	}
 
 	Try {
-		Remove-Item $temppath -force -ErrorAction Stop -WhatIf:$check_mode;
+		Remove-Item -Path $temppath -Force -WhatIf:$check_mode;
 	}
 	Catch {
 		Fail-Json @{} "Cannot remove temporary file: $temppath ($($_.Exception.Message))";
@@ -60,21 +61,8 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_
 }
 
 
-# Backup the file specified with a date/time filename
-function BackupFile($path, $check_mode) {
-	$backuppath = $path + "." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss");
-	Try {
-		Copy-Item $path $backuppath -WhatIf:$check_mode;
-	}
-	Catch {
-		Fail-Json @{} "Cannot copy backup file! ($($_.Exception.Message))";
-	}
-	return $backuppath;
-}
-
-
 # Implement the functionality for state == 'present'
-function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $backup, $backrefs, $validate, $encodingobj, $linesep, $check_mode, $diff_support) {
+function Present($path, $regex, $line, $insertafter, $insertbefore, $create, $backup, $backrefs, $validate, $encodingobj, $linesep, $check_mode, $diff_support) {
 
 	# Note that we have to clean up the path because ansible wants to treat / and \ as
 	# interchangeable in windows pathnames, but .NET framework internals do not support that.
@@ -99,7 +87,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 
 	# Read the dest file lines using the indicated encoding into a mutable ArrayList.
 	$before = [System.IO.File]::ReadAllLines($cleanpath, $encodingobj)
-	If ($before -eq $null) {
+	If ($null -eq $before) {
 		$lines = New-Object System.Collections.ArrayList;
 	}
 	Else {
@@ -114,8 +102,8 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 
 	# Compile the regex specified, if provided
 	$mre = $null;
-	If ($regexp) {
-		$mre = New-Object Regex $regexp, 'Compiled';
+	If ($regex) {
+		$mre = New-Object Regex $regex, 'Compiled';
 	}
 
 	# Compile the regex for insertafter or insertbefore, if provided
@@ -127,8 +115,8 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 		$insre = New-Object Regex $insertbefore, 'Compiled';
 	}
 
-	# index[0] is the line num where regexp has been found
-	# index[1] is the line num where insertafter/inserbefore has been found
+	# index[0] is the line num where regex has been found
+	# index[1] is the line num where insertafter/insertbefore has been found
 	$index = -1, -1;
 	$lineno = 0;
 
@@ -137,7 +125,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 
 	# Iterate through the lines in the file looking for matches
 	Foreach ($cur_line in $lines) {
-		If ($regexp) {
+		If ($regex) {
 			$m = $mre.Match($cur_line);
 			$match_found = $m.Success;
 			If ($match_found) {
@@ -163,7 +151,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 
 	If ($index[0] -ne -1) {
 		If ($backrefs) {
-		    $new_line = [regex]::Replace($matched_line, $regexp, $line);
+		    $new_line = [regex]::Replace($matched_line, $regex, $line);
 		}
 		Else {
 			$new_line = $line;
@@ -198,10 +186,20 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 
 		# Write backup file if backup == "yes"
 		If ($backup) {
-			$result.backup = BackupFile $path $check_mode;
+			$result.backup_file = Backup-File -path $path -WhatIf:$check_mode
+			# Ensure backward compatibility (deprecate in future)
+			$result.backup = $result.backup_file
 		}
 
-		$after = WriteLines $lines $path $linesep $encodingobj $validate $check_mode;
+		$writelines_params = @{
+			outlines = $lines
+			path = $path
+			linesep = $linesep
+			encodingobj = $encodingobj
+			validate = $validate
+			check_mode = $check_mode
+		}
+		$after = WriteLines @writelines_params;
 
 		if ($diff_support) {
 			$result.diff.after = $after;
@@ -215,7 +213,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 
 
 # Implement the functionality for state == 'absent'
-function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linesep, $check_mode, $diff_support) {
+function Absent($path, $regex, $line, $backup, $validate, $encodingobj, $linesep, $check_mode, $diff_support) {
 
 	# Check if path exists. If it does not exist, fail with a reasonable error message.
 	If (-not (Test-Path -LiteralPath $path)) {
@@ -234,7 +232,7 @@ function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linese
 	# interchangeable in windows pathnames, but .NET framework internals do not support that.
 	$cleanpath = $path.Replace("/", "\");
 	$before = [System.IO.File]::ReadAllLines($cleanpath, $encodingobj);
-	If ($before -eq $null) {
+	If ($null -eq $before) {
 		$lines = New-Object System.Collections.ArrayList;
 	}
 	Else {
@@ -249,15 +247,15 @@ function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linese
 
 	# Compile the regex specified, if provided
 	$cre = $null;
-	If ($regexp) {
-		$cre = New-Object Regex $regexp, 'Compiled';
+	If ($regex) {
+		$cre = New-Object Regex $regex, 'Compiled';
 	}
 
 	$found = New-Object System.Collections.ArrayList;
 	$left = New-Object System.Collections.ArrayList;
 
 	Foreach ($cur_line in $lines) {
-		If ($regexp) {
+		If ($regex) {
 			$m = $cre.Match($cur_line);
 			$match_found = $m.Success;
 		}
@@ -278,10 +276,20 @@ function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linese
 
 		# Write backup file if backup == "yes"
 		If ($backup) {
-			$result.backup = BackupFile $path $check_mode;
+			$result.backup_file = Backup-File -path $path -WhatIf:$check_mode
+			# Ensure backward compatibility (deprecate in future)
+			$result.backup = $result.backup_file
 		}
 
-		$after = WriteLines $left $path $linesep $encodingobj $validate $check_mode;
+		$writelines_params = @{
+			outlines = $left
+			path = $path
+			linesep = $linesep
+			encodingobj = $encodingobj
+			validate = $validate
+			check_mode = $check_mode
+		}
+		$after = WriteLines @writelines_params;
 
 		if ($diff_support) {
 			$result.diff.after = $after;
@@ -303,7 +311,7 @@ $diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool"
 
 # Initialize defaults for input parameters.
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","destfile","name";
-$regexp = Get-AnsibleParam -obj $params -name "regexp" -type "str";
+$regex = Get-AnsibleParam -obj $params -name "regex" -type "str" -aliases "regexp";
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent";
 $line = Get-AnsibleParam -obj $params -name "line" -type "str";
 $backrefs = Get-AnsibleParam -obj $params -name "backrefs" -type "bool" -default $false;
@@ -387,7 +395,7 @@ ElseIf (Test-Path -LiteralPath $path) {
 # call the appropriate handler function.
 If ($state -eq "present") {
 
-	If ($backrefs -and -not $regexp) {
+	If ($backrefs -and -not $regex) {
 	    Fail-Json @{} "regexp= is required with backrefs=true";
 	}
 
@@ -403,14 +411,40 @@ If ($state -eq "present") {
 		$insertafter = "EOF";
 	}
 
-	Present $path $regexp $line $insertafter $insertbefore $create $backup $backrefs $validate $encodingobj $linesep $check_mode $diff_support;
+	$present_params = @{
+		path = $path
+		regex = $regex
+		line = $line
+		insertafter = $insertafter
+		insertbefore = $insertbefore
+		create = $create
+		backup = $backup
+		backrefs = $backrefs
+		validate = $validate
+		encodingobj = $encodingobj
+		linesep = $linesep
+		check_mode = $check_mode
+		diff_support = $diff_support
+	}
+	Present @present_params;
 
 }
 ElseIf ($state -eq "absent") {
 
-	If (-not $regexp -and -not $line) {
+	If (-not $regex -and -not $line) {
 		Fail-Json @{} "one of line= or regexp= is required with state=absent";
 	}
 
-	Absent $path $regexp $line $backup $validate $encodingobj $linesep $check_mode $diff_support;
+	$absent_params = @{
+		path = $path
+		regex = $regex
+		line = $line
+		backup = $backup
+		validate = $validate
+		encodingobj = $encodingobj
+		linesep = $linesep
+		check_mode = $check_mode
+		diff_support = $diff_support
+	}
+	Absent @absent_params;
 }

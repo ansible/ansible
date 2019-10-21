@@ -63,7 +63,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove a site from a schema
-  mso_schema:
+  mso_schema_site:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -74,7 +74,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query a schema site
-  mso_schema:
+  mso_schema_site:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -86,7 +86,7 @@ EXAMPLES = r'''
   register: query_result
 
 - name: Query all schema sites
-  mso_schema:
+  mso_schema_site:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -108,8 +108,8 @@ def main():
     argument_spec = mso_argument_spec()
     argument_spec.update(
         schema=dict(type='str', required=True),
-        site=dict(type='str', required=False, aliases=['name']),
-        template=dict(type='str', required=False),
+        site=dict(type='str', aliases=['name']),
+        template=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 

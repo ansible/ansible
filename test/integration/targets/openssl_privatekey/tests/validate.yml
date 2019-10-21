@@ -104,3 +104,85 @@
   when: "'skip_reason' not in item"
   loop_control:
     label: "{{ item.item.curve }}"
+
+- name: Validate other type generation (just check changed)
+  assert:
+    that:
+    - item is changed
+  loop: "{{ privatekey_t1_generate.results }}"
+  when: "'skip_reason' not in item"
+  loop_control:
+    label: "{{ item.item.type }}"
+
+
+- name: Validate other type generation idempotency
+  assert:
+    that:
+    - item is not changed
+  loop: "{{ privatekey_t1_idempotency.results }}"
+  when: "'skip_reason' not in item"
+  loop_control:
+    label: "{{ item.item.type }}"
+
+- name: Validate passphrase changing
+  assert:
+    that:
+      - passphrase_1 is changed
+      - passphrase_2 is not changed
+      - passphrase_3 is changed
+      - passphrase_4 is not changed
+      - passphrase_5 is changed
+      - passphrase_1.backup_file is undefined
+      - passphrase_2.backup_file is undefined
+      - passphrase_3.backup_file is string
+      - passphrase_4.backup_file is undefined
+      - passphrase_5.backup_file is string
+
+- name: Verify that broken key will be regenerated
+  assert:
+    that:
+      - output_broken is changed
+
+- name: Validate remove
+  assert:
+    that:
+      - remove_1 is changed
+      - remove_2 is not changed
+      - remove_1.backup_file is string
+      - remove_2.backup_file is undefined
+
+- name: Validate mode
+  assert:
+    that:
+      - privatekey_mode_1 is changed
+      - privatekey_mode_1_stat.stat.mode == '0400'
+      - privatekey_mode_2 is not changed
+      - privatekey_mode_3 is changed
+      - privatekey_mode_3_stat.stat.mode == '0400'
+      - privatekey_mode_1_stat.stat.mtime != privatekey_mode_3_stat.stat.mtime
+
+- name: Validate format 1
+  assert:
+    that:
+      - privatekey_fmt_1_step_1 is changed
+      - privatekey_fmt_1_step_2 is not changed
+      - privatekey_fmt_1_step_3 is not changed
+      - privatekey_fmt_1_step_4 is changed
+      - privatekey_fmt_1_step_5 is not changed
+      - privatekey_fmt_1_step_6 is not changed
+      - privatekey_fmt_1_step_7 is changed
+      - privatekey_fmt_1_step_8 is failed
+      - privatekey_fmt_1_step_9 is changed
+      - privatekey_fmt_1_step_9_before.public_key == privatekey_fmt_1_step_9_after.public_key
+  when: 'select_crypto_backend == "cryptography"'
+
+- name: Validate format 2
+  assert:
+    that:
+      - privatekey_fmt_2_step_1 is changed
+      - privatekey_fmt_2_step_2 is not changed
+      - privatekey_fmt_2_step_3 is changed
+      - privatekey_fmt_2_step_4 is not changed
+      - privatekey_fmt_2_step_5 is not changed
+      - privatekey_fmt_2_step_6 is changed
+  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=")'

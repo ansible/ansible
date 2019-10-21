@@ -36,7 +36,7 @@ description:
   template. Unlike managed instance groups, you must create and add instances to an
   instance group manually.
 short_description: Creates a GCP InstanceGroup
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -50,16 +50,19 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   name:
     description:
     - The name of the instance group.
     - The name must be 1-63 characters long, and comply with RFC1035.
     required: false
+    type: str
   named_ports:
     description:
     - Assigns a name to a port number.
@@ -69,40 +72,49 @@ options:
     - 'For example: [{name: "http", port: 80},{name: "http", port: 8080}] Named ports
       apply to all instances in this instance group.'
     required: false
+    type: list
     suboptions:
       name:
         description:
         - The name for this named port.
         - The name must be 1-63 characters long, and comply with RFC1035.
         required: false
+        type: str
       port:
         description:
         - The port number, which can be a value between 1 and 65535.
         required: false
+        type: int
   network:
     description:
     - The network to which all instances in the instance group belong.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_network task and then set this network field to "{{ name-of-resource
+      }}"'
     required: false
+    type: dict
   region:
     description:
     - The region where the instance group is located (for regional resources).
     required: false
+    type: str
   subnetwork:
     description:
     - The subnetwork to which all instances in the instance group belong.
     - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_subnetwork
-      task and then set this subnetwork field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_subnetwork task and then set this subnetwork field to "{{ name-of-resource
+      }}"'
     required: false
+    type: dict
   zone:
     description:
     - A reference to the zone where the instance group resides.
     required: true
+    type: str
   instances:
     description:
     - The list of instances associated with this InstanceGroup.
@@ -111,32 +123,69 @@ options:
       not be deleted.
     - Only the full identifier of the instance will be returned.
     required: false
-    version_added: 2.8
-extends_documentation_fragment: gcp
+    type: list
+    version_added: '2.8'
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "network-instancegroup"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-instancegroup
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a instance group
   gcp_compute_instance_group:
-      name: "test_object"
-      named_ports:
-      - name: ansible
-        port: 1234
-      network: "{{ network }}"
-      zone: us-central1-a
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    named_ports:
+    - name: ansible
+      port: 1234
+    network: "{{ network }}"
+    zone: us-central1-a
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -188,7 +237,7 @@ network:
   description:
   - The network to which all instances in the instance group belong.
   returned: success
-  type: str
+  type: dict
 region:
   description:
   - The region where the instance group is located (for regional resources).
@@ -198,7 +247,7 @@ subnetwork:
   description:
   - The subnetwork to which all instances in the instance group belong.
   returned: success
-  type: str
+  type: dict
 zone:
   description:
   - A reference to the zone where the instance group resides.
@@ -238,11 +287,11 @@ def main():
             description=dict(type='str'),
             name=dict(type='str'),
             named_ports=dict(type='list', elements='dict', options=dict(name=dict(type='str'), port=dict(type='int'))),
-            network=dict(),
+            network=dict(type='dict'),
             region=dict(type='str'),
-            subnetwork=dict(),
+            subnetwork=dict(type='dict'),
             zone=dict(required=True, type='str'),
-            instances=dict(type='list'),
+            instances=dict(type='list', elements='dict'),
         )
     )
 
@@ -384,7 +433,7 @@ def response_to_hash(module, response):
 def region_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/.*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/regions/%s".format(**params) % name
     return name

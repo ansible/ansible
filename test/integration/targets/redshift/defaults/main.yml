@@ -1,0 +1,6 @@
+---
+# defaults file for test_redshift
+redshift_cluster_name: '{{ resource_prefix }}'
+reshift_master_password: "th1s_is_A_test"
+redshift_master_username: "master_user"
+node_type: "dc2.large"

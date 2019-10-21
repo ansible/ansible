@@ -21,8 +21,6 @@ __metaclass__ = type
 
 import os
 
-from collections import defaultdict
-
 from units.compat import unittest
 from units.compat.mock import MagicMock, patch
 from ansible.inventory.manager import InventoryManager
@@ -199,7 +197,6 @@ class TestVariableManager(unittest.TestCase):
 
         inv1 = InventoryManager(loader=fake_loader, sources=['/etc/ansible/inventory1'])
         v = VariableManager(inventory=mock_inventory, loader=fake_loader)
-        v._fact_cache = defaultdict(dict)
 
         play1 = Play.load(dict(
             hosts=['all'],
@@ -297,7 +294,6 @@ class TestVariableManager(unittest.TestCase):
         })
 
         v = VariableManager(loader=fake_loader, inventory=mock_inventory)
-        v._fact_cache = defaultdict(dict)
 
         play1 = Play.load(dict(
             hosts=['all'],

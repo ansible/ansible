@@ -1,0 +1,37 @@
+# Test code for the deploy VM from content library template.
+# Copyright: (c) 2019, Pavan Bidkar <pbidkar@vmware.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_datacenter: true
+
+- when: vcsim is not defined
+  block: 
+    - &deploy_vm_from_content_library_template
+      vmware_content_deploy_template:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        template: '{{ test_vm_temp }}'
+        datastore: '{{ ds1 }}'
+        datacenter: '{{ dc1 }}'
+        folder: '{{ f0 }}'
+        host: '{{ esx1 }}'
+        name: 'test_content_deploy_vm'
+        state: poweredon
+        validate_certs: false
+      register: template_deploy
+
+    - name: Check VM deployed successfully
+      assert:
+        that:
+          - template_deploy.changed
+
+    - <<: *deploy_vm_from_content_library_template
+      name: Deploy VM from template again
+
+    - name: Check VM with same name is deployed
+      assert:
+        that:
+          - not template_deploy.changed

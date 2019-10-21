@@ -105,7 +105,7 @@ class ActionModule(ActionBase):
                                     wrap_async, use_task):
         orig_become = self._play_context.become
         orig_become_method = self._play_context.become_method
-        orig_become_user = self._play_context.become_user\
+        orig_become_user = self._play_context.become_user
 
         if not use_task:
             if orig_become is None or orig_become is False:
@@ -141,9 +141,9 @@ class ActionModule(ActionBase):
         use_task = boolean(self._task.args.get('use_scheduled_task', False),
                            strict=False)
 
-        if state not in ['installed', 'searched']:
+        if state not in ['installed', 'searched', 'downloaded']:
             result['failed'] = True
-            result['msg'] = "state must be either installed or searched"
+            result['msg'] = "state must be either installed, searched or downloaded"
             return result
 
         try:

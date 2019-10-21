@@ -1,0 +1,12 @@
+---
+- name: Populate config
+  exos_config:
+    lines:
+      - create vlan vlan_10 tag 10
+      - create vlan vlan_20 tag 20
+      - create vlan vlan_30 tag 30
+      - create vlan vlan_40 tag 40
+      - configure vlan 10 add ports 1 untagged
+      - configure vlan 20 add ports 2 tagged
+      - configure vlan 20 add ports 3 untagged
+      - configure vlan 30 add ports 3 tagged

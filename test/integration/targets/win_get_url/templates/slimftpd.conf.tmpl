@@ -8,14 +8,14 @@ LookupHosts On
 
 <User "anonymous">
   Password ""
-  Mount / {{test_win_get_url_path}}\ftp
+  Mount / "{{ slimftpd_link | replace('\\', '\\\\') }}\\ftp"
   Allow /anon All
   Deny /user All
   Deny /user-pass All
 </User>
 
 <User "username">
-  Mount / {{test_win_get_url_path}}\ftp
+  Mount / "{{ slimftpd_link | replace('\\', '\\\\') }}\\ftp"
   Allow /anon All
   Allow /user All
   Deny /user-pass All
@@ -23,6 +23,6 @@ LookupHosts On
 
 <User "userpass">
   Password "password"
-  Mount / {{test_win_get_url_path}}\ftp
+  Mount / "{{ slimftpd_link | replace('\\', '\\\\') }}\\ftp"
   Allow / All
 </User>

@@ -142,9 +142,11 @@ list:
 '''
 
 import csv
+from io import BytesIO, StringIO
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six import PY3
 
 
 # Add Unix dialect from Python 3
@@ -201,11 +203,19 @@ def main():
         dialect = 'custom'
 
     try:
-        f = open(path, 'r')
+        with open(path, 'rb') as f:
+            data = f.read()
     except (IOError, OSError) as e:
         module.fail_json(msg="Unable to open file: %s" % to_text(e))
 
-    reader = csv.DictReader(f, fieldnames=fieldnames, dialect=dialect)
+    if PY3:
+        # Manually decode on Python3 so that we can use the surrogateescape error handler
+        data = to_text(data, errors='surrogate_or_strict')
+        fake_fh = StringIO(data)
+    else:
+        fake_fh = BytesIO(data)
+
+    reader = csv.DictReader(fake_fh, fieldnames=fieldnames, dialect=dialect)
 
     if key and key not in reader.fieldnames:
         module.fail_json(msg="Key '%s' was not found in the CSV header fields: %s" % (key, ', '.join(reader.fieldnames)))

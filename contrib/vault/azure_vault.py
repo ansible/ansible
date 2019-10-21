@@ -122,12 +122,7 @@ import sys
 import inspect
 from azure.keyvault import KeyVaultClient
 
-try:
-    # python2
-    import ConfigParser as cp
-except ImportError:
-    # python3
-    import configparser as cp
+from ansible.module_utils.six.moves import configparser as cp
 
 from os.path import expanduser
 import ansible.module_utils.six.moves.urllib.parse as urlparse

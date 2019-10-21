@@ -1,0 +1,276 @@
+---
+# A Note about ec2 environment variable name preference:
+#  - EC2_URL -> AWS_URL
+#  - EC2_ACCESS_KEY -> AWS_ACCESS_KEY_ID -> AWS_ACCESS_KEY
+#  - EC2_SECRET_KEY -> AWS_SECRET_ACCESS_KEY -> AWX_SECRET_KEY
+#  - EC2_REGION -> AWS_REGION
+#
+
+- block:
+
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token | default(omit) }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    # ============================================================
+    - name: test failure with no parameters
+      redshift:
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+
+    - name: assert failure with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg == "missing required arguments: command, identifier"'
+
+    # ============================================================
+    - name: test failure with only identifier
+      redshift:
+        identifier: '{{ redshift_cluster_name }}'
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert failure with only identifier
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg == "missing required arguments: command"'
+
+    # ============================================================
+    - name: test create with no identifier
+      redshift:
+        command: create
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert failure with no identifier
+      assert:
+        that:
+          - 'result.failed'
+          - 'result.msg == "missing required arguments: identifier"'
+
+    # ============================================================
+    - name: test create with missing node_type
+      redshift:
+        command: create
+        identifier: "{{ redshift_cluster_name }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert failure with missing node_type
+      assert:
+        that:
+          - 'result.failed'
+          - 'result.msg == "command is create but all of the following are missing: node_type, username, password"'
+
+    # ============================================================
+
+    - name: test create with missing username
+      redshift:
+        command: create
+        identifier: "{{ redshift_cluster_name }}"
+        username: "{{ redshift_master_username }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert create failure with missing username
+      assert:
+        that:
+          - 'result.failed'
+          - 'result.msg == "command is create but all of the following are missing: node_type, password"'
+
+    # ============================================================
+
+    - name: test create with missing username
+      redshift:
+        command: create
+        identifier: "{{ redshift_cluster_name }}"
+        password: "{{ reshift_master_password }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert create failure with missing username
+      assert:
+        that:
+          - 'result.failed'
+          - 'result.msg == "command is create but all of the following are missing: node_type, username"'
+
+    # ============================================================
+
+    - name: test create with default params
+      redshift:
+        command: create
+        identifier: "{{ redshift_cluster_name }}"
+        username: "{{ redshift_master_username }}"
+        password: "{{ reshift_master_password }}"
+        node_type: "{{ node_type }}"
+        wait: yes
+        wait_timeout: 1000
+        <<: *aws_connection_info
+      register: result
+    - debug:
+        msg: "{{ result }}"
+        verbosity: 1
+    - name: assert create success
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.cluster.identifier == "{{ redshift_cluster_name }}"'
+
+    # ============================================================
+
+    - name: test create again with default params
+      redshift:
+        command: create
+        identifier: "{{ redshift_cluster_name }}"
+        username: "{{ redshift_master_username }}"
+        password: "{{ reshift_master_password }}"
+        node_type: "{{ node_type }}"
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert no change gets made to the existing cluster
+      assert:
+        that:
+          - 'not result.changed'
+          - 'result.cluster.identifier == "{{ redshift_cluster_name }}"'
+    # ============================================================
+
+    - name: test modify cluster
+      redshift:
+        command: modify
+        identifier: "{{ redshift_cluster_name }}"
+        new_cluster_identifier: "{{ redshift_cluster_name }}-modified"
+        enhanced_vpc_routing: True
+        wait: yes
+        wait_timeout: 1000
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert cluster was modified
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.cluster.identifier == "{{ redshift_cluster_name }}-modified"'
+          - 'result.cluster.enhanced_vpc_routing == True'
+
+
+    # ============================================================
+    - name: test delete with no cluster identifier
+      redshift:
+        command: delete
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert failure with no identifier
+      assert:
+        that:
+          - 'result.failed'
+          - 'result.msg == "missing required arguments: identifier"'
+
+    # ============================================================
+    - name: test delete with no snapshot id
+      redshift:
+        command: delete
+        identifier: "{{ redshift_cluster_name }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert failure for no snapshot identifier
+      assert:
+        that:
+          - 'result.failed'
+          - 'result.msg == "Need to specify final_cluster_snapshot_identifier if skip_final_cluster_snapshot is False"'
+
+
+    # ============================================================
+    - name: test successful delete
+      redshift:
+        command: delete
+        identifier: "{{ redshift_cluster_name }}-modified"
+        skip_final_cluster_snapshot: true
+        wait: yes
+        wait_timeout: 1200
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert delete
+      assert:
+        that:
+          - 'result.changed'
+
+  # ============================================================
+
+    - name: test create multi-node cluster with custom db-name
+      redshift:
+        command: create
+        identifier: "{{ redshift_cluster_name }}"
+        username: "{{ redshift_master_username }}"
+        password: "{{ reshift_master_password }}"
+        node_type: "{{ node_type }}"
+        cluster_type: multi-node
+        number_of_nodes: 3
+        wait: yes
+        db_name: "integration_test"
+        wait_timeout: 1800
+        <<: *aws_connection_info
+      register: result
+
+
+    - name: assert create
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.cluster.identifier == "{{ redshift_cluster_name }}"'
+          - 'result.cluster.db_name == "integration_test"'
+
+  #  ============================================================
+
+    - name: test successful delete of multi-node cluster
+      redshift:
+        command: delete
+        identifier: "{{ redshift_cluster_name }}"
+        skip_final_cluster_snapshot: true
+        wait: yes
+        wait_timeout: 1200
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert delete
+      assert:
+        that:
+          - 'result.changed'
+
+  always:
+
+    - name: Remove cluster if tests failed
+      redshift:
+        command: delete
+        identifier: "{{ item }}"
+        skip_final_cluster_snapshot: true
+        wait: yes
+        wait_timeout: 1200
+        <<: *aws_connection_info
+      register: cleanup
+      ignore_errors: yes
+      retries: 10
+      delay: 10
+      until: cleanup is success
+      loop:
+        - "{{ redshift_cluster_name }}"
+        - "{{ redshift_cluster_name }}-modified"

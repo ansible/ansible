@@ -75,7 +75,8 @@ class MockONTAPConnection(object):
         xml = netapp_utils.zapi.NaElement('xml')
         data = {'num-records': 1,
                 'attributes-list': {'portset-info': {'portset-name': portset,
-                                                     'vserver': vserver, 'portset-type': type}}}
+                                                     'vserver': vserver, 'portset-type': type,
+                                                     'portset-port-total': '0'}}}
         xml.translate_struct(data)
         print(xml.to_string())
         return xml
@@ -101,6 +102,7 @@ class TestMyModule(unittest.TestCase):
             name = 'test'
             type = 'mixed'
             vserver = 'ansible_test'
+            ports = ['a1', 'a2']
         else:
             hostname = 'hostname'
             username = 'username'
@@ -108,13 +110,15 @@ class TestMyModule(unittest.TestCase):
             name = 'name'
             type = 'mixed'
             vserver = 'vserver'
+            ports = ['a1', 'a2']
         return dict({
             'hostname': hostname,
             'username': username,
             'password': password,
             'name': name,
             'type': type,
-            'vserver': vserver
+            'vserver': vserver,
+            'ports': ports
         })
 
     def test_module_fail_when_required_args_missing(self):
@@ -134,7 +138,7 @@ class TestMyModule(unittest.TestCase):
         assert portset is None
 
     def test_ensure_portset_apply_called(self):
-        ''' a more interesting test '''
+        ''' Test successful create '''
         module_args = {'name': 'create'}
         module_args.update(self.set_default_args())
         set_module_args(module_args)
@@ -153,10 +157,33 @@ class TestMyModule(unittest.TestCase):
         portset = my_obj.portset_get()
         print('Info: test_portset_get: %s' % repr(portset))
         assert portset is not None
-        assert 'create' == portset['portset_name']
         with pytest.raises(AnsibleExitJson) as exc:
             my_obj.apply()
         print('Info: test_portset_apply: %s' % repr(exc.value))
         assert exc.value.args[0]['changed']
-        portset = my_obj.portset_get()
-        assert 'create' == portset['portset_name']
+
+    def test_modify_ports(self):
+        ''' Test modify_portset method '''
+        module_args = {'ports': ['l1', 'l2']}
+        module_args.update(self.set_default_args())
+        set_module_args(module_args)
+        my_obj = my_module()
+        if not self.use_vsim:
+            my_obj.server = MockONTAPConnection('portset')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        print('Info: test_portset_apply: %s' % repr(exc.value))
+        assert exc.value.args[0]['changed']
+
+    def test_delete_portset(self):
+        ''' Test successful delete '''
+        module_args = {'state': 'absent'}
+        module_args.update(self.set_default_args())
+        set_module_args(module_args)
+        my_obj = my_module()
+        if not self.use_vsim:
+            my_obj.server = MockONTAPConnection('portset')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        print('Info: test_portset_apply: %s' % repr(exc.value))
+        assert exc.value.args[0]['changed']

@@ -29,8 +29,8 @@ options:
      required: true
    protocol:
       description:
-        - IP protocols TCP UDP ICMP 112 (VRRP)
-      choices: ['tcp', 'udp', 'icmp', '112', None]
+        - IP protocols TCP UDP ICMP 112 (VRRP) 132 (SCTP)
+      choices: ['tcp', 'udp', 'icmp', '112', '132', None]
    port_range_min:
       description:
         - Starting port
@@ -239,16 +239,16 @@ def _find_matching_rule(module, secgroup, remotegroup):
     remote_group_id = remotegroup['id']
 
     for rule in secgroup['security_group_rules']:
-        if (protocol == rule['protocol']
-                and remote_ip_prefix == rule['remote_ip_prefix']
-                and ethertype == rule['ethertype']
-                and direction == rule['direction']
-                and remote_group_id == rule['remote_group_id']
-                and _ports_match(protocol,
-                                 module.params['port_range_min'],
-                                 module.params['port_range_max'],
-                                 rule['port_range_min'],
-                                 rule['port_range_max'])):
+        if (protocol == rule['protocol'] and
+                remote_ip_prefix == rule['remote_ip_prefix'] and
+                ethertype == rule['ethertype'] and
+                direction == rule['direction'] and
+                remote_group_id == rule['remote_group_id'] and
+                _ports_match(protocol,
+                             module.params['port_range_min'],
+                             module.params['port_range_max'],
+                             rule['port_range_min'],
+                             rule['port_range_max'])):
             return rule
     return None
 
@@ -273,7 +273,7 @@ def main():
         # NOTE(Shrews): None is an acceptable protocol value for
         # Neutron, but Nova will balk at this.
         protocol=dict(default=None,
-                      choices=[None, 'tcp', 'udp', 'icmp', '112']),
+                      choices=[None, 'tcp', 'udp', 'icmp', '112', '132']),
         port_range_min=dict(required=False, type='int'),
         port_range_max=dict(required=False, type='int'),
         remote_ip_prefix=dict(required=False, default=None),

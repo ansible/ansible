@@ -3,7 +3,7 @@
     name: "{{ item }}"
     state: present
   with_items:
-    - "@Development Tools"
+    - "@Custom Group"
     - yum-utils
   when: ansible_pkg_mgr == "yum"
 
@@ -12,13 +12,13 @@
     name: "{{ item }}"
     state: present
   with_items:
-    - "@Development Tools"
+    - "@Custom Group"
     - dnf-utils
   when: ansible_pkg_mgr == "dnf"
 
 - name: check mode remove the group
   yum:
-    name: "@Development Tools"
+    name: "@Custom Group"
     state: absent
   check_mode: yes
   register: yum_result
@@ -36,7 +36,7 @@
 
 - name: remove the group
   yum:
-    name: "@Development Tools"
+    name: "@Custom Group"
     state: absent
   register: yum_result
 
@@ -55,7 +55,7 @@
 
 - name: remove the group again
   yum:
-    name: "@Development Tools"
+    name: "@Custom Group"
     state: absent
   register: yum_result
 
@@ -73,7 +73,7 @@
 
 - name: check mode remove the group again
   yum:
-    name: "@Development Tools"
+    name: "@Custom Group"
     state: absent
   check_mode: yes
   register: yum_result
@@ -91,13 +91,13 @@
 
 - name: install a group and a package to test
   yum:
-    name: "@Development Tools,sos"
+    name: "@Custom Group,sos"
     state: present
   register: yum_output
 
 - name: check mode remove the group along with the package
   yum:
-    name: "@Development Tools,sos"
+    name: "@Custom Group,sos"
     state: absent
   register: yum_result
   check_mode: yes
@@ -115,7 +115,7 @@
 
 - name: remove the group along with the package
   yum:
-    name: "@Development Tools,sos"
+    name: "@Custom Group,sos"
     state: absent
   register: yum_result
 
@@ -133,7 +133,7 @@
 
 - name: check mode remove the group along with the package
   yum:
-    name: "@Development Tools,sos"
+    name: "@Custom Group,sos"
     state: absent
   register: yum_result
   check_mode: yes

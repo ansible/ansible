@@ -49,7 +49,7 @@ options:
     default: 1
   count_group:
     description:
-      - Required when exact_count is specified.  The Server Group use to determine how many severs to deploy.
+      - Required when exact_count is specified.  The Server Group use to determine how many servers to deploy.
   cpu:
     description:
       - How many CPUs to provision on the server
@@ -534,8 +534,8 @@ class ClcServer:
             group=dict(default='Default Group'),
             network_id=dict(),
             location=dict(default=None),
-            cpu=dict(default=1),
-            memory=dict(default=1),
+            cpu=dict(default=1, type='int'),
+            memory=dict(default=1, type='int'),
             alias=dict(default=None),
             password=dict(default=None, no_log=True),
             ip_address=dict(default=None),

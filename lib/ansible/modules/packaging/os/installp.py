@@ -263,7 +263,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='list', required=True, aliases=['pkg']),
-            repository_path=dict(type='str'),
+            repository_path=dict(type='path'),
             accept_license=dict(type='bool', default=False),
             state=dict(type='str', default='present', choices=['absent', 'present']),
         ),

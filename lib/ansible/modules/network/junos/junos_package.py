@@ -211,7 +211,7 @@ def main():
     device = connect(module)
 
     if not module.params['force']:
-        facts = device.facts_refresh()
+        device.facts_refresh()
         has_ver = device.facts.get('version')
         wants_ver = module.params['version']
         do_upgrade = has_ver != wants_ver

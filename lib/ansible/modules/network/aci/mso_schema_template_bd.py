@@ -29,7 +29,7 @@ options:
   template:
     description:
     - The name of the template.
-    type: list
+    type: str
     required: yes
   bd:
     description:
@@ -42,18 +42,35 @@ options:
     type: str
   vrf:
     description:
-    - The VRF associated to this BD.
-    type: str
+    - The VRF associated to this BD. This is required only when creating a new BD.
+    type: dict
+    suboptions:
+      name:
+        description:
+        - The name of the VRF to associate with.
+        required: true
+        type: str
+      schema:
+        description:
+        - The schema that defines the referenced VRF.
+        - If this parameter is unspecified, it defaults to the current schema.
+        type: str
+      template:
+        description:
+        - The template that defines the referenced VRF.
+        - If this parameter is unspecified, it defaults to the current template.
+        type: str
   subnets:
     description:
     - The subnets associated to this BD.
     type: list
     suboptions:
-      ip:
+      subnet:
         description:
         - The IP range in CIDR notation.
         type: str
         required: true
+        aliases: [ ip ]
       description:
         description:
         - The description of this subnet.
@@ -111,6 +128,8 @@ EXAMPLES = r'''
     schema: Schema 1
     template: Template 1
     bd: BD 1
+    vrf:
+      name: VRF1
     state: present
   delegate_to: localhost
 
@@ -161,7 +180,7 @@ def main():
     argument_spec.update(
         schema=dict(type='str', required=True),
         template=dict(type='str', required=True),
-        bd=dict(type='str', required=False, aliases=['name']),  # This parameter is not required for querying all objects
+        bd=dict(type='str', aliases=['name']),  # This parameter is not required for querying all objects
         display_name=dict(type='str'),
         intersite_bum_traffic=dict(type='bool'),
         optimize_wan_bandwidth=dict(type='bool'),
@@ -248,7 +267,7 @@ def main():
         payload = dict(
             name=bd,
             displayName=display_name,
-            intersiteBumTraffic=intersite_bum_traffic,
+            intersiteBumTrafficAllow=intersite_bum_traffic,
             optimizeWanBandwidth=optimize_wan_bandwidth,
             l2UnknownUnicast=layer2_unknown_unicast,
             l2Stretch=layer2_stretch,

@@ -204,10 +204,14 @@ Every Ansible ACI module accepts the following parameters that influence the mod
         Password for ``username`` to log on to the APIC, using password-based authentication.
 
     private_key
-        Private key for ``username`` to log on to APIC, using signature-based authentication. *New in version 2.5*
+        Private key for ``username`` to log on to APIC, using signature-based authentication.
+        This could either be the raw private key content (include header/footer) or a file that stores the key content.
+        *New in version 2.5*
 
     certificate_name
-        Name of the certificate in the ACI Web GUI. (Defaults to ``private_key`` file base name) *New in version 2.5*
+        Name of the certificate in the ACI Web GUI.
+        This defaults to either the ``username`` value or the ``private_key`` file base name).
+        *New in version 2.5*
 
     timeout
         Timeout value for socket-level communication.
@@ -367,11 +371,70 @@ You need the following parameters with your ACI module(s) for it to work:
     private_key: pki/admin.key
     certificate_name: admin  # This could be left out !
 
+or you can use the private key content:
+
+.. code-block:: yaml
+   :emphasize-lines: 2,3
+
+    username: admin
+    private_key: |
+        -----BEGIN PRIVATE KEY-----
+        <<your private key content>>
+        -----END PRIVATE KEY-----
+    certificate_name: admin  # This could be left out !
+
+
 .. hint:: If you use a certificate name in ACI that matches the private key's basename, you can leave out the ``certificate_name`` parameter like the example above.
+
+
+Using Ansible Vault to encrypt the private key
+``````````````````````````````````````````````
+.. versionadded:: 2.8
+
+To start, encrypt the private key and give it a strong password.
+
+.. code-block:: bash
+
+    ansible-vault encrypt admin.key
+
+Use a text editor to open the private-key. You should have an encrypted cert now.
+
+.. code-block:: bash
+
+    $ANSIBLE_VAULT;1.1;AES256
+    56484318584354658465121889743213151843149454864654151618131547984132165489484654
+    45641818198456456489479874513215489484843614848456466655432455488484654848489498
+    ....
+
+Copy and paste the new encrypted cert into your playbook as a new variable. 
+
+.. code-block:: yaml
+
+    private_key: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          56484318584354658465121889743213151843149454864654151618131547984132165489484654
+          45641818198456456489479874513215489484843614848456466655432455488484654848489498
+          ....
+
+Use the new variable for the private_key:
+
+.. code-block:: yaml
+
+    username: admin
+    private_key: "{{ private_key }}"
+    certificate_name: admin  # This could be left out !
+
+When running the playbook, use "--ask-vault-pass" to decrypt the private key.
+
+.. code-block:: bash
+
+    ansible-playbook site.yaml --ask-vault-pass
+
 
 More information
 ````````````````
-Detailed information about Signature-based Authentication is available from `Cisco APIC Signature-Based Transactions <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/kb/b_KB_Signature_Based_Transactions.html>`_.
+- Detailed information about Signature-based Authentication is available from `Cisco APIC Signature-Based Transactions <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/kb/b_KB_Signature_Based_Transactions.html>`_.
+- More information on Ansible Vault can be found on the :ref:`Ansible Vault <vault>` page.
 
 
 .. _aci_guide_rest:
@@ -548,7 +611,7 @@ The :ref:`aci_rest <aci_rest_module>` module is a wrapper around the APIC REST A
 All below issues either have been reported to the vendor, and most can simply be avoided.
 
     Too many consecutive API calls may result in connection throttling
-        Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using password-based authentication. Currently, one solution is to increase this threshold within the nginx configuration, but using signature-based authentication is recommended.
+        Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific threshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using password-based authentication. Currently, one solution is to increase this threshold within the nginx configuration, but using signature-based authentication is recommended.
 
         **NOTE:** It is advisable to use signature-based authentication with ACI as it not only prevents connection-throttling, but also improves general performance when using the ACI modules.
 

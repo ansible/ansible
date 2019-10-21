@@ -1,0 +1,16 @@
+- block:
+    - name: Include distribution specific variables
+      include_vars: "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml"
+
+    - name: Enable extras repo
+      command: "{{ repo_command[ansible_facts.distribution ~ ansible_facts.distribution_major_version] | default('echo') }}"
+
+    - name: Install podman
+      yum:
+        name: "{{ podman_package }}"
+        state: present
+      when: ansible_facts.pkg_mgr in ['yum', 'dnf']
+  when:
+    - ansible_facts.distribution == 'RedHat'
+    - ansible_facts.virtualization_type != 'docker'
+    - ansible_facts.distribution_major_version is version_compare('7', '>=')

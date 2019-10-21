@@ -202,11 +202,16 @@ def map_obj_to_ele(module, want):
         else:
             operation = 'merge'
 
-        user = SubElement(login, 'user', {'operation': operation})
-
-        SubElement(user, 'name').text = item['name']
+        if item['name'] != 'root':
+            user = SubElement(login, 'user', {'operation': operation})
+            SubElement(user, 'name').text = item['name']
+        else:
+            user = auth = SubElement(element, 'root-authentication', {'operation': operation})
 
         if operation == 'merge':
+            if item['name'] == 'root' and (not item['active'] or item['role'] or item['full_name']):
+                module.fail_json(msg="'root' account cannot be deactivated or be assigned a role and a full name")
+
             if item['active']:
                 user.set('active', 'active')
             else:
@@ -228,11 +233,10 @@ def map_obj_to_ele(module, want):
                     ssh_rsa = SubElement(auth, 'ssh-ecdsa')
                 elif 'ssh-ed25519' in item['sshkey']:
                     ssh_rsa = SubElement(auth, 'ssh-ed25519')
-                key = SubElement(ssh_rsa, 'name').text = item['sshkey']
+                SubElement(ssh_rsa, 'name').text = item['sshkey']
 
             if item.get('encrypted_password'):
-                if 'auth' not in locals():
-                    auth = SubElement(user, 'authentication')
+                auth = SubElement(user, 'authentication')
                 SubElement(auth, 'encrypted-password').text = item['encrypted_password']
 
     return element
@@ -308,7 +312,7 @@ def main():
         name=dict(),
         full_name=dict(),
         role=dict(choices=ROLES),
-        encrypted_password=dict(),
+        encrypted_password=dict(no_log=True),
         sshkey=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
         active=dict(type='bool', default=True)

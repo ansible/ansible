@@ -1,0 +1,173 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_bfd_global sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: set facts common
+  # nd_* vars are "non-default" values
+  set_fact:
+    echo: deleted
+    nd_echo: loopback1
+    interval: &def_interval
+      tx: 50
+      min_rx: 50
+      multiplier: 3
+    nd_interval:
+      tx: 51
+      min_rx: 52
+      multiplier: 4
+    slow: 2000
+    nd_slow: 2001
+
+- name: set facts (exclude 5K/6K)
+  set_fact:
+    echo_rx: 50
+    nd_echo_rx: 51
+    ipv4_echo_rx: 50
+    nd_ipv4_echo_rx: 54
+    ipv4_interval: *def_interval
+    nd_ipv4_interval: &nd_afi_interval
+      tx: 54
+      min_rx: 56
+      multiplier: 8
+    ipv4_slow: 2000
+    nd_ipv4_slow: 2044
+  when: platform is not search('N5K|N6K')
+
+- name: set facts (exclude 35/5K/6K)
+  set_fact:
+    ipv6_echo_rx: 50
+    nd_ipv6_echo_rx: 56
+    ipv6_interval: *def_interval
+    nd_ipv6_interval: *nd_afi_interval
+    ipv6_slow: 2000
+    nd_ipv6_slow: 2046
+  when: platform is not search('N35|N5K|N6K')
+
+- name: set facts (exclude 5K/6K/7K)
+  set_fact:
+    startup: 5
+    nd_startup: 6
+  when: platform is not search('N35|N5K|N6K|N7K')
+
+- name: set facts 3k defaults (resets some values above)
+  set_fact:
+    echo_rx: 250
+    interval: &n3k_def_interval
+      tx: 250
+      min_rx: 250
+      multiplier: 3
+    ipv4_echo_rx: 250
+    ipv6_echo_rx: 250
+    ipv4_interval: *n3k_def_interval
+    ipv6_interval: *n3k_def_interval
+    ipv4_slow: 2000
+    ipv6_slow: 2000
+  when: platform is search('N3K')
+
+- name: set facts fabricpath
+  set_fact:
+    fab_interval: *def_interval
+    nd_fab_interval:
+      tx: 57
+      min_rx: 57
+      multiplier: 7
+    fab_slow_timer: 2000
+    nd_fab_slow_timer: 2007
+    fab_vlan: 1
+    nd_fab_vlan: 47
+  when: platform is not search('N35|N3K|N9K')
+
+- name: Setup
+  nxos_feature: &setup_teardown
+    feature: bfd
+    provider: "{{ connection }}"
+    state: disabled
+  ignore_errors: yes
+
+- name: Setup supporting loopback interface
+  nxos_config:
+    lines: interface loopback1
+    match: none
+
+- name: feature bfd init
+  # 'feature bfd' init is slow on some platforms, retry on fail
+  nxos_bfd_global:
+    slow_timer:            "{{ nd_slow }}"
+  delay: 3
+  retries: 1
+  register: result
+  until: result is not failed
+  ignore_errors: yes
+
+- block:
+  - name: BFD non defaults
+    nxos_bfd_global: &bfd_non_def
+      echo_interface:        "{{ nd_echo }}"
+      echo_rx_interval:      "{{ nd_echo_rx | default(omit) }}"
+      interval:              "{{ nd_interval }}"
+      slow_timer:            "{{ nd_slow }}"
+      startup_timer:         "{{ nd_startup | default(omit) }}"
+      ipv4_echo_rx_interval: "{{ nd_ipv4_echo_rx | default(omit) }}"
+      ipv6_echo_rx_interval: "{{ nd_ipv6_echo_rx | default(omit) }}"
+      ipv4_interval:         "{{ nd_ipv4_interval | default(omit) }}"
+      ipv6_interval:         "{{ nd_ipv6_interval | default(omit) }}"
+      ipv4_slow_timer:       "{{ nd_ipv4_slow | default(omit) }}"
+      ipv6_slow_timer:       "{{ nd_ipv6_slow | default(omit) }}"
+      fabricpath_interval:   "{{ nd_fab_interval | default(omit) }}"
+      fabricpath_slow_timer: "{{ nd_fab_slow | default(omit) }}"
+      fabricpath_vlan:       "{{ nd_fab_vlan | default(omit) }}"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: bfd_non_def idempotence
+    nxos_bfd_global: *bfd_non_def
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: BFD defaults
+    nxos_bfd_global: &bfd_def
+      echo_interface:        "{{ echo }}"
+      echo_rx_interval:      "{{ echo_rx | default(omit) }}"
+      interval:              "{{ interval }}"
+      slow_timer:            "{{ slow }}"
+      startup_timer:         "{{ startup | default(omit) }}"
+      ipv4_echo_rx_interval: "{{ ipv4_echo_rx | default(omit) }}"
+      ipv6_echo_rx_interval: "{{ ipv6_echo_rx | default(omit) }}"
+      ipv4_interval:         "{{ ipv4_interval | default(omit) }}"
+      ipv6_interval:         "{{ ipv6_interval | default(omit) }}"
+      ipv4_slow_timer:       "{{ ipv4_slow | default(omit) }}"
+      ipv6_slow_timer:       "{{ ipv6_slow | default(omit) }}"
+      fabricpath_interval:   "{{ fab_interval | default(omit) }}"
+      fabricpath_slow_timer: "{{ fab_slow | default(omit) }}"
+      fabricpath_vlan:       "{{ fab_vlan | default(omit) }}"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: bfd_def idempotence
+    nxos_bfd_global: *bfd_def
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Teardown
+    nxos_feature: *setup_teardown
+    ignore_errors: yes
+
+  - name: Teardown supporting loopback interface
+    nxos_config:
+      lines: no interface loopback1
+      match: none
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_bfd_global sanity test"

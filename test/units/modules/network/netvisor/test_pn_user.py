@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_user
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestUserModule(TestNvosModule):
@@ -58,19 +56,19 @@ class TestUserModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_scope': 'local', 'pn_password': 'test123', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 user-create name foo  scope local password test123'
+        expected_cmd = ' switch sw01 user-create name foo  scope local password test123'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_user_delete(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'state': 'absent'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 user-delete name foo '
+        expected_cmd = ' switch sw01 user-delete name foo '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_user_modify(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_password': 'test1234', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 user-modify name foo  password test1234'
+        expected_cmd = ' switch sw01 user-modify name foo  password test1234'
         self.assertEqual(result['cli_cmd'], expected_cmd)
