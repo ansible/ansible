@@ -56,7 +56,7 @@ options:
   hello_opt_holdtime:
     description:
       - Specify pim hello-option holdtime interval,int value of interval is from 1 to 65535.
-    type: str
+    type: int
   neighbor_policy:
     description:
       - Specify pim neighbor-policy basic-acl-number or acl-name acl-name.
@@ -912,7 +912,7 @@ def main():
         timer_hello=dict(type='int', required=False),
         hello_opt_holdtime=dict(type='int', required=False),
         neighbor_policy=dict(required=False, type='str'),
-        require_genid=dict(type='bool),
+        require_genid=dict(type='bool'),
         dr_priority=dict(type='int', required=False),
         graft_retry=dict(type='int', required=False),
         dr_switch_delay=dict(type='int', required=False),
