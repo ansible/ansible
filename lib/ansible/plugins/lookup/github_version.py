@@ -9,7 +9,7 @@ DOCUMENTATION = r"""
 lookup: github_version
 author:
   - Ari Kalfus (@artis3n) <dev@quantummadness.com>
-version_added: "2.8"
+version_added: "2.10"
 requirements:
   - json
   - re
