@@ -25,7 +25,6 @@ from ..util import (
     display,
     parse_to_list_of_dict,
     is_subdir,
-    ANSIBLE_LIB_ROOT,
     generate_pip_command,
     find_python,
 )
@@ -33,7 +32,6 @@ from ..util import (
 from ..util_common import (
     intercept_command,
     run_command,
-    write_text_file,
     ResultType,
 )
 
@@ -107,39 +105,17 @@ class ImportTest(SanityMultipleVersion):
         if not args.explain:
             os.symlink(os.path.abspath(os.path.join(SANITY_ROOT, 'import', 'importer.py')), importer_path)
 
-        # create a minimal python library
-        python_path = os.path.join(temp_root, 'lib')
-        ansible_path = os.path.join(python_path, 'ansible')
-        ansible_init = os.path.join(ansible_path, '__init__.py')
-        ansible_link = os.path.join(ansible_path, 'module_utils')
-
-        if not args.explain:
-            remove_tree(ansible_path)
-
-            write_text_file(ansible_init, '', create_directories=True)
-
-            os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'module_utils'), ansible_link)
-
-            if data_context().content.collection:
-                # inject just enough Ansible code for the collections loader to work on all supported Python versions
-                # the __init__.py files are needed only for Python 2.x
-                # the empty modules directory is required for the collection loader to generate the synthetic packages list
-
-                write_text_file(os.path.join(ansible_path, 'utils/__init__.py'), '', create_directories=True)
-
-                os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'utils', 'collection_loader.py'), os.path.join(ansible_path, 'utils', 'collection_loader.py'))
-                os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'utils', 'singleton.py'), os.path.join(ansible_path, 'utils', 'singleton.py'))
-
-                write_text_file(os.path.join(ansible_path, 'modules/__init__.py'), '', create_directories=True)
-
         # activate the virtual environment
         env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
-        env['PYTHONPATH'] = python_path
 
         env.update(
-            SANITY_IMPORT_DIR=os.path.relpath(temp_root, data_context().content.root) + os.path.sep,
-            SANITY_MINIMAL_DIR=os.path.relpath(virtual_environment_path, data_context().content.root) + os.path.sep,
+            SANITY_TEMP_PATH=ResultType.TMP.path,
         )
+
+        if data_context().content.collection:
+            env.update(
+                SANITY_COLLECTION_FULL_NAME=data_context().content.collection.full_name,
+            )
 
         virtualenv_python = os.path.join(virtual_environment_bin, 'python')
         virtualenv_pip = generate_pip_command(virtualenv_python)
