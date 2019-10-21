@@ -922,7 +922,7 @@ def main():
         override_interval=dict(type='int', required=False),
         join_policy=dict(required=False, type='str'),
         holdtime_assert=dict(type='int', required=False),
-        bfd=dict(type='bool),
+        bfd=dict(type='bool'),
         bfd_min_rx=dict(type='int', required=False),
         bfd_min_tx=dict(type='int', required=False),
         bfd_detect_multiplier=dict(type='int', required=False),
