@@ -367,7 +367,7 @@ class AnsibleEc2Tgw(object):
         if self._module.params.get('asn'):
             options['AmazonSideAsn'] = self._module.params.get('asn')
 
-        options['AutoAcceptSharedAttachments'] = self.enable_option_flag(self._module.params.get('auto_accept'))
+        options['AutoAcceptSharedAttachments'] = self.enable_option_flag(self._module.params.get('auto_attach'))
         options['DefaultRouteTableAssociation'] = self.enable_option_flag(self._module.params.get('auto_associate'))
         options['DefaultRouteTablePropagation'] = self.enable_option_flag(self._module.params.get('auto_propagate'))
         options['VpnEcmpSupport'] = self.enable_option_flag(self._module.params.get('vpn_ecmp_support'))
