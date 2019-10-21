@@ -638,7 +638,7 @@ def main():
 
     # Get final publication info:
     pub_fin_info = {}
-    if state != 'absent' or (state == 'absent' and module.check_mode):
+    if state == 'present' or (state == 'absent' and module.check_mode):
         pub_fin_info = publication.get_info()
     elif state == 'absent' and not module.check_mode:
         publication.exists = False
