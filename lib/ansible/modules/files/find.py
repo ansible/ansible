@@ -130,7 +130,7 @@ options:
             - Group must exist in the system otherwise the task will fail
             - Default is any group
         type: str
-        version_added: "2.10"   
+        version_added: "2.10"
 seealso:
 - module: win_find
 '''
