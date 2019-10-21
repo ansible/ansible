@@ -91,6 +91,12 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+name:
+  description:
+  - Name of the subscription.
+  returned: always
+  type: str
+  sample: acme
 exists:
   description:
   - Flag indicates the subscription exists or not at the end of runtime.
@@ -106,12 +112,12 @@ initial_state:
   description: Subscription configuration at the beginning of runtime.
   returned: always
   type: dict
-  sample: {}
+  sample: {"conninfo": {}, "enabled": true, "owner": "postgres", "slotname": "test", "synccommit": true}
 final_state:
   description: Subscription configuration at the end of runtime.
   returned: always
   type: dict
-  sample: {}
+  sample: {"conninfo": {}, "enabled": true, "owner": "postgres", "slotname": "test", "synccommit": true}
 '''
 
 from copy import deepcopy
@@ -393,6 +399,7 @@ def main():
 
     # Return ret values and exit:
     module.exit_json(changed=changed,
+                     name=name,
                      exists=subscription.exists,
                      queries=subscription.executed_queries,
                      initial_state=initial_state,

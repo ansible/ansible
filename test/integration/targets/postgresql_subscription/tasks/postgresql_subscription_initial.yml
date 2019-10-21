@@ -33,6 +33,7 @@
   - assert:
       that:
       - result is changed
+      - result.name == '{{ test_subscription }}'
       - result.queries == ["CREATE SUBSCRIPTION test CONNECTION 'host=127.0.0.1 port={{ master_port }} user={{ replication_role }} password={{ replication_pass }} dbname={{ test_db }}' PUBLICATION {{ test_pub }}"]
       - result.exists == true
       - result.initial_state == {}
@@ -63,8 +64,9 @@
   - assert:
       that:
       - result is not changed
-      - result.final_state == result.initial_state
+      - result.name == '{{ test_subscription }}'
       - result.exists == true
+      - result.final_state == result.initial_state
       - result.final_state.owner == '{{ pg_user }}'
       - result.final_state.enabled == true
       - result.final_state.publications == ["{{ test_pub }}"]
@@ -87,8 +89,9 @@
   - assert:
       that:
       - result is not changed
-      - result.final_state == result.initial_state
+      - result.name == '{{ test_subscription }}'
       - result.exists == true
+      - result.final_state == result.initial_state
       - result.final_state.owner == '{{ pg_user }}'
       - result.final_state.enabled == true
       - result.final_state.publications == ["{{ test_pub }}"]
