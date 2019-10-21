@@ -27,43 +27,10 @@
       set_fact:
         ec2_ami_image: '{{ latest_ami.image_id }}'
 
-    - set_fact:
-        virtualenv: "{{ remote_tmp_dir }}/virtualenv"
-        virtualenv_command: "{{ ansible_python_interpreter }} -m virtualenv"
-
-    - set_fact:
-        virtualenv_interpreter: "{{ virtualenv }}/bin/python"
-
-    - pip:
-        name: virtualenv
-
-    - pip:
-        name:
-          - 'botocore<1.10.16'
-          - boto3
-          - coverage
-        virtualenv: "{{ virtualenv }}"
-        virtualenv_command: "{{ virtualenv_command }}"
-        virtualenv_site_packages: no
-
-    - include_tasks: version_fail.yml
-      vars:
-        ansible_python_interpreter: "{{ virtualenv_interpreter }}"
-
-    - file:
-        path: "{{ virtualenv }}"
-        state: absent
-
-    - pip:
-        name:
-          - 'botocore>=1.10.16'
-          - boto3
-          - coverage
-        virtualenv: "{{ virtualenv }}"
-        virtualenv_command: "{{ virtualenv_command }}"
-        virtualenv_site_packages: no
+    - include_tasks: version_fail_wrapper.yml
 
     - include_tasks: env_setup.yml
+
     - include_tasks: cpu_options.yml
     - include_tasks: termination_protection.yml
     - include_tasks: tags_and_vpc_settings.yml
