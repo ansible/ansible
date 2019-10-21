@@ -146,20 +146,31 @@
     that:
       - "result.stat.checksum == 'e1cae425403507feea4b55bb30a74decfdd4a23e'"
 
-- name: replace a line with backrefs
+- name: Replace a line with backrefs
   lineinfile:
     dest: "{{ output_dir }}/test.txt"
     state: present
     line: "This is line 3"
     backrefs: yes
     regexp: "^(REF) .* \\1$"
-  register: result
+  register: backrefs_result1
+
+- name: Replace a line with backrefs again
+  lineinfile:
+    dest: "{{ output_dir }}/test.txt"
+    state: present
+    line: "This is line 3"
+    backrefs: yes
+    regexp: "^(REF) .* \\1$"
+  register: backrefs_result2
+- command: cat {{ output_dir }}/test.txt
 
 - name: assert that the line with backrefs was changed
   assert:
     that:
-      - result is changed
-      - "result.msg == 'line replaced'"
+      - backrefs_result1 is changed
+      - backrefs_result2 is not changed
+      - "backrefs_result1.msg == 'line replaced'"
 
 - name: stat the test after the backref line was replaced
   stat:

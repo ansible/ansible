@@ -287,6 +287,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     # index[1] is the line num where insertafter/insertbefore has been found
     index = [-1, -1]
     m = None
+    exact_line_match = False
     b_line = to_bytes(line, errors='surrogate_or_strict')
 
     # The module's doc says
@@ -311,10 +312,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     # parse for searching insertafter/insertbefore:
     if not m:
         for lineno, b_cur_line in enumerate(b_lines):
-            match_found = b_line == b_cur_line.rstrip(b'\r\n')
-            if match_found:
+            if b_line == b_cur_line.rstrip(b'\r\n'):
                 index[0] = lineno
-                m = match_found
+                exact_line_match = True
 
             elif bre_ins is not None and bre_ins.search(b_cur_line):
                 if insertafter:
@@ -334,7 +334,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     b_linesep = to_bytes(os.linesep, errors='surrogate_or_strict')
     # Exact line or Regexp matched a line in the file
     if index[0] != -1:
-        if backrefs:
+        if backrefs and m:
             b_new_line = m.expand(b_line)
         else:
             # Don't do backref expansion if not asked.
@@ -345,7 +345,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
         # If no regexp was given and no line match is found anywhere in the file,
         # insert the line appropriately if using insertbefore or insertafter
-        if regexp is None and m is None:
+        if regexp is None and m is None and not exact_line_match:
 
             # Insert lines
             if insertafter and insertafter != 'EOF':
