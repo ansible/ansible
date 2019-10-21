@@ -451,7 +451,7 @@ def create_changeset(module, stack_params, cfn, events_limit):
                 # Lets not hog the cpu/spam the AWS API
                 time.sleep(1)
             result = stack_operation(cfn, stack_params['StackName'], 'CREATE_CHANGESET', events_limit)
-            result['change_set_name'] = cs['Id']
+            result['change_set_id'] = cs['Id']
             result['warnings'] = ['Created changeset named %s for stack %s' % (changeset_name, stack_params['StackName']),
                                   'You can execute it using: aws cloudformation execute-change-set --change-set-name %s' % cs['Id'],
                                   'NOTE that dependencies on this stack might fail due to pending changes!']
