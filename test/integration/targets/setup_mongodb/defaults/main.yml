@@ -47,5 +47,4 @@ redhat_packages_py3:
 pip_packages:
   - psutil
   - pymongo
-  - cryptography
   - PyOpenSSL
