@@ -56,7 +56,7 @@ options:
     description:
       - Candidate BSR interface name. PIM-SM must be enabled
         on the corresponding interface before the candidate BSR can take effect (range 1-63).
-    type: int
+    type: str
   pri:
     description:
       - The priority of this global domain candidate BSR,priority is from 0 to 255.
@@ -113,7 +113,6 @@ options:
       - The BSR waits to receive the timeout period for the C-RP to send
         Advertisement announcement messages. Unit is second (range 1-65535).
     type: int
-    default: 150
   adinterval:
     description:
       - The C-RP waits to receive the timeout period for the C-RP to send
