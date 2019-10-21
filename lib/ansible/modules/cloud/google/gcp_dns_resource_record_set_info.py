@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_dns_resource_record_set_info
 description:
 - Gather info for GCP ResourceRecordSet
-- This module was called C(gcp_dns_resource_record_set_facts) before Ansible 2.9.
-  The usage has not changed.
 short_description: Gather info for GCP ResourceRecordSet
 version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
@@ -156,9 +154,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(managed_zone=dict(required=True, type='dict')))
-
-    if module._name == 'gcp_dns_resource_record_set_facts':
-        module.deprecate("The 'gcp_dns_resource_record_set_facts' module has been renamed to 'gcp_dns_resource_record_set_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/ndev.clouddns.readwrite']
