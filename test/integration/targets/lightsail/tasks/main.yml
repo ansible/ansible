@@ -1,0 +1,136 @@
+---
+
+- name: Integration test for lightsail module
+  block:
+
+    # ==== Setup ==================================================
+
+    - name: Set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    # ==== Tests ===================================================
+
+    - name: Create a new instance
+      lightsail:
+        name: "{{ instance_name }}"
+        zone: "{{ zone }}"
+        blueprint_id: amazon_linux
+        bundle_id: nano_2_0
+        key_pair_name: "{{ keypair_name }}"
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed == True
+          - "'instance' in result and result.instance.name == instance_name"
+
+    - name: Make sure create is idempotent
+      lightsail:
+        name: "{{ instance_name }}"
+        zone: "{{ zone }}"
+        blueprint_id: amazon_linux
+        bundle_id: nano_2_0
+        key_pair_name: "{{ keypair_name }}"
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed == False
+
+    - name: Start the running instance
+      lightsail:
+        name: "{{ instance_name }}"
+        state: running
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed == False
+
+    - name: Stop the instance
+      lightsail:
+        name: "{{ instance_name }}"
+        state: stopped
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed == True
+          - "result.instance.state.name in ['stopping', 'stopped']"
+
+    - name: Stop the stopped instance
+      lightsail:
+        name: "{{ instance_name }}"
+        state: stopped
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed == False
+
+    - name: Start the instance
+      lightsail:
+        name: "{{ instance_name }}"
+        state: running
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed == True
+          - "result.instance.state.name in ['running', 'pending']"
+
+    - name: Restart the instance
+      lightsail:
+        name: "{{ instance_name }}"
+        state: restarted
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed == True
+
+    - name: Delete the instance
+      lightsail:
+        name: "{{ instance_name }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed == True
+
+    - name: Make sure instance deletion is idempotent
+      lightsail:
+        name: "{{ instance_name }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed == False
+
+  # ==== Cleanup ====================================================
+
+  always:
+
+    - name: Cleanup - delete instance
+      lightsail:
+        name: "{{ instance_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: true
