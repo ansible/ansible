@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_sourcerepo_repository_info
 description:
 - Gather info for GCP Repository
-- This module was called C(gcp_sourcerepo_repository_facts) before Ansible 2.9. The
-  usage has not changed.
 short_description: Gather info for GCP Repository
 version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
@@ -138,9 +136,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict())
-
-    if module._name == 'gcp_sourcerepo_repository_facts':
-        module.deprecate("The 'gcp_sourcerepo_repository_facts' module has been renamed to 'gcp_sourcerepo_repository_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']

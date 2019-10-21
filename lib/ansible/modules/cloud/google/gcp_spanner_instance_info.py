@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_spanner_instance_info
 description:
 - Gather info for GCP Instance
-- This module was called C(gcp_spanner_instance_facts) before Ansible 2.9. The usage
-  has not changed.
 short_description: Gather info for GCP Instance
 version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
@@ -154,9 +152,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict())
-
-    if module._name == 'gcp_spanner_instance_facts':
-        module.deprecate("The 'gcp_spanner_instance_facts' module has been renamed to 'gcp_spanner_instance_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/spanner.admin']
