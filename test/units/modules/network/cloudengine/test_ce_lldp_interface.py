@@ -33,104 +33,77 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
         super(TestCloudEngineLacpModule, self).setUp()
 
         # self.mock_get_config = patch('ansible.modules.network.cloudengine.ce_lldp.get_nc_config')
-        self.mock_get_resource_connection = patch('ansible.module_utils.network.common.cfg.base.get_resource_connection')
-        self.get_resource_connection = patch('ansible.module_utils.network.common.facts.facts.get_resource_connection')
-        self.mock_get_config = patch('ansible.module_utils.network.cloudengine.facts.lldp_interface.lldp_interface.get_nc_config')
+        self.mock_get_config = patch('ansible.modules.network.cloudengine.ce_lldp_interface.get_nc_config')
         self.get_nc_config = self.mock_get_config.start()
-        self.mock_get_resource_connection.start()
-        self.get_resource_connection.start()
 
-        self.mock_get_resource_connection = [None] * 100
-        self.get_resource_connection = [None] * 100
-
-        self.mock_set_config = patch('ansible.module_utils.network.cloudengine.config.lldp_interface.lldp_interface.set_nc_config')
-        self.set_nc_config = self.mock_set_config.start()
-        self.set_nc_config.return_value = None
+        self.mock_set_nc_config = patch('ansible.modules.network.cloudengine.ce_lldp_interface.set_nc_config')
+        self.set_nc_config = self.mock_set_nc_config.start()
         self.xml_absent = load_fixture('ce_lldp_interface', 'lldp_interface_existing.txt')
         self.xml_present = load_fixture('ce_lldp_interface', 'lldp_interface_changed.txt')
         self.result_ok = load_fixture('ce_lldp_interface', 'result_ok.txt')
 
     def tearDown(self):
         super(TestCloudEngineLacpModule, self).tearDown()
-        self.mock_set_config.stop()
+        self.mock_set_nc_config.stop()
         self.mock_get_config.stop()
 
     def test_lldp_present(self):
-        update = ['lldp transmit fast-mode interval 8',
-                  'lldp admin-status txrx',
-                  'undo lldp tlv-disable basic-tlv management-address',
-                  'undo lldp tlv-disable basic-tlv port-description',
-                  'undo lldp tlv-disable basic-tlv system-capability',
-                  'undo lldp tlv-disable basic-tlv system-description',
-                  'undo lldp tlv-disable basic-tlv system-name',
-                  'undo lldp tlv-disable dot1-tlv port-vlan-id',
-                  'undo lldp tlv-disable dot1-tlv protocol-vlan-id 112',
-                  'undo lldp tlv-disable dot1-tlv vlan-name 32',
-                  'undo lldp tlv-disable dot3-tlv link-aggregation',
-                  'undo lldp tlv-disable dot3-tlv mac-physic',
-                  'undo lldp tlv-disable dot3-tlv max-frame-size',
-                  'undo lldp tlv-disable dot3-tlv eee']
-        self.get_nc_config.side_effect = (self.xml_absent, self.xml_present)
-        self.set_nc_config.side_effect = [self.result_ok] * 11
+        self.get_nc_config.side_effect = (self.xml_absent, self.xml_present) * 5
+        self.set_nc_config.return_value = self.result_ok
         config = dict(
+            lldpenable='enabled',
+            function_lldp_interface_flag='disableINTERFACE',
+            type_tlv_disable='basic_tlv',
+            type_tlv_enable='dot1_tlv',
             ifname='10GE1/0/1',
-            admin_status='rxonly',
-            msg_interval=8,
-            basic_tlv=dict(management_addr=True,
-                           port_desc=True,
-                           system_capability=True,
-                           system_description=True,
-                           system_name=True),
-            dot1_tlv=dict(port_vlan_enable=True,
-                          prot_vlan_enable=True,
-                          prot_vlan_id=1,
-                          vlan_name_enable=True,
-                          vlan_name=1),
-            dot3_tlv=dict(link_aggregation=True,
-                          mac_physic=True,
-                          max_frame_size=True,
-                          eee=True)
+            lldpadminstatus='txOnly',
+            manaddrtxenable=True,
+            portdesctxenable=True,
+            syscaptxenable=True,
+            sysdesctxenable=True,
+            sysnametxenable=True,
+            portvlantxenable=True,
+            protovlantxenable=True,
+            txprotocolvlanid=True,
+            vlannametxenable=True,
+            txvlannameid=8,
+            txinterval=8,
+            protoidtxenable=True,
+            macphytxenable=True,
+            linkaggretxenable=True,
+            maxframetxenable=True,
+            eee=True,
+            dcbx=True
         )
-        set_module_args(dict(config=config))
-        result = self.execute_module(changed=True)
-        self.assertEquals(sorted(result['commands']), sorted(update))
 
-    def repeat_config(self):
-        update = ['lldp transmit fast-mode interval 8',
-                  'lldp admin-status txrx',
-                  'undo lldp tlv-disable basic-tlv management-address',
-                  'undo lldp tlv-disable basic-tlv port-description',
-                  'undo lldp tlv-disable basic-tlv system-capability',
-                  'undo lldp tlv-disable basic-tlv system-description',
-                  'undo lldp tlv-disable basic-tlv system-name',
-                  'undo lldp tlv-disable dot1-tlv port-vlan-id',
-                  'undo lldp tlv-disable dot1-tlv protocol-vlan-id 112',
-                  'undo lldp tlv-disable dot1-tlv vlan-name 32',
-                  'undo lldp tlv-disable dot3-tlv link-aggregation',
-                  'undo lldp tlv-disable dot3-tlv mac-physic',
-                  'undo lldp tlv-disable dot3-tlv max-frame-size',
-                  'undo lldp tlv-disable dot3-tlv eee']
-        self.get_nc_config.side_effect = (self.xml_present, self.xml_present)
-        self.set_nc_config.side_effect = [self.result_ok] * 11
+    def test_lldp_absent(self):
+        self.get_nc_config.side_effect = (self.xml_present, self.xml_present, self.xml_absent, self.xml_absent)
+        self.set_nc_config.return_value = self.result_ok
         config = dict(
+            lldpenable='enabled',
+            function_lldp_interface_flag='disableINTERFACE',
+            type_tlv_disable='basic_tlv',
+            type_tlv_enable='dot1_tlv',
             ifname='10GE1/0/1',
-            admin_status='rxonly',
-            msg_interval=8,
-            basic_tlv=dict(management_addr=True,
-                           port_desc=True,
-                           system_capability=True,
-                           system_description=True,
-                           system_name=True),
-            dot1_tlv=dict(port_vlan_enable=True,
-                          prot_vlan_enable=True,
-                          prot_vlan_id=1,
-                          vlan_name_enable=True,
-                          vlan_name=1),
-            dot3_tlv=dict(link_aggregation=True,
-                          mac_physic=True,
-                          max_frame_size=True,
-                          eee=True)
+            lldpadminstatus='txOnly',
+            manaddrtxenable=True,
+            portdesctxenable=True,
+            syscaptxenable=True,
+            sysdesctxenable=True,
+            sysnametxenable=True,
+            portvlantxenable=True,
+            protovlantxenable=True,
+            txprotocolvlanid=True,
+            vlannametxenable=True,
+            txvlannameid=8,
+            txinterval=8,
+            protoidtxenable=True,
+            macphytxenable=True,
+            linkaggretxenable=True,
+            maxframetxenable=True,
+            eee=True,
+            dcbx=True,
+            state='absent'
         )
-        set_module_args(dict(config=config))
-        result = self.execute_module(changed=True)
-        self.assertEquals(sorted(result['commands']), sorted(update))
+        set_module_args(config)
+        result = self.execute_module(changed=False)
