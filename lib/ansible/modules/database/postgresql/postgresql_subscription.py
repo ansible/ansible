@@ -20,6 +20,7 @@ short_description: Add, update, or remove PostgreSQL subscription
 description:
 - Add, update, or remove PostgreSQL subscription.
 version_added: '2.10'
+
 options:
   name:
     description:
@@ -38,7 +39,7 @@ options:
     - The subscription state.
     type: str
     choices: [ absent, present, stat ]
-    default: stat
+    default: present
   pubname:
     description:
     - The publication name on the publisher.
@@ -48,8 +49,15 @@ options:
     - The connection dict param-value to connect to the publisher.
     - For more information see U(https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING).
     type: dict
+  cascade:
+    description:
+    - Drop subscription dependencies. Has effect with I(state=absent) only.
+    type: bool
+    default: false
+
 notes:
 - PostgreSQL version must be 10 or greater.
+
 seealso:
 - module: postgresql_publication
 - name: CREATE SUBSCRIPTION reference
@@ -61,8 +69,10 @@ seealso:
 - name: DROP SUBSCRIPTION reference
   description: Complete reference of the DROP SUBSCRIPTION command documentation.
   link: https://www.postgresql.org/docs/current/sql-dropsubscription.html
+
 author:
 - Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+
 extends_documentation_fragment:
 - postgres
 '''
@@ -88,6 +98,13 @@ EXAMPLES = r'''
     db: mydb
     name: acme
     state: stat
+
+- name: Drop acme subscription from mydb with dependencies (cascade=yes)
+  postgresql_subscription:
+    db: mydb
+    name: acme
+    state: absent
+    cascade: yes
 '''
 
 RETURN = r'''
@@ -194,6 +211,7 @@ class PgSubscription():
             'slotname': '',
             'publications': [],
         }
+        self.empty_attrs = deepcopy(self.attrs)
         self.exists = self.check_subscr()
 
     def get_info(self):
@@ -216,6 +234,7 @@ class PgSubscription():
 
         if not subscr_info:
             # The subcrtiption does not exist:
+            self.attrs = deepcopy(self.empty_attrs)
             return False
 
         self.attrs['owner'] = subscr_info.get('rolname')
@@ -264,17 +283,24 @@ class PgSubscription():
         """
         return False
 
-    def drop(self, check_mode=True):
+    def drop(self, cascade=False, check_mode=True):
         """Drop the subscription.
 
         Kwargs:
+            cascade (bool): Flag indicates that the subscription needs to be deleted
+                with its dependencies.
             check_mode (bool): If True, don't actually change anything,
                 just make SQL, add it to ``self.executed_queries`` and return True.
 
         Returns:
             changed (bool): True if publication has been updated, otherwise False.
         """
-        return False
+        if self.exists:
+            query_fragments = ["DROP SUBSCRIPTION %s" % self.name]
+            if cascade:
+                query_fragments.append("CASCADE")
+
+            return self.__exec_sql(' '.join(query_fragments), check_mode=check_mode)
 
     def __get_general_subscr_info(self):
         """Get and return general subscription information.
@@ -330,9 +356,10 @@ def main():
     argument_spec.update(
         name=dict(required=True),
         db=dict(type='str', aliases=['login_db']),
-        state=dict(type='str', default='stat', choices=['absent', 'present', 'stat']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'stat']),
         pubname=dict(type='str'),
         connparams=dict(type='dict'),
+        cascade=dict(type='bool', default=False),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -344,10 +371,14 @@ def main():
     name = module.params['name']
     state = module.params['state']
     pubname = module.params['pubname']
+    cascade = module.params['cascade']
     if module.params.get('connparams'):
         connparams = convert_conn_params(module.params['connparams'])
     else:
         connparams = None
+
+    if state == 'present' and cascade:
+        module.warm('parameter "cascade" is ignored when state is not absent')
 
     # Connect to DB and make cursor object:
     conn_params = get_conn_params(module, module.params)
@@ -385,13 +416,10 @@ def main():
             changed = subscription.update(check_mode=module.check_mode)
 
     elif state == 'absent':
-        changed = subscription.drop(check_mode=module.check_mode)
+        changed = subscription.drop(cascade, check_mode=module.check_mode)
 
     # Get final subscription info if needed:
-    if state == 'present' or (state == 'absent' and module.check_mode):
-        final_state = subscription.get_info()
-    elif state == 'absent' and not module.check_mode:
-        subscription.exists = False
+    final_state = subscription.get_info()
 
     # Connection is not needed any more:
     cursor.close()

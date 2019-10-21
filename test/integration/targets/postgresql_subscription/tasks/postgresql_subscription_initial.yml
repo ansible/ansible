@@ -102,3 +102,143 @@
       - result.final_state.conninfo.port == '{{ master_port }}'
       - result.final_state.conninfo.user == '{{ replication_role }}'
       - result.final_state.conninfo.password == '{{ replication_pass }}'
+
+  ###################
+  # Test mode: absent
+  ###################
+
+  - name: Drop subscription in check mode
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: absent
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["DROP SUBSCRIPTION {{ test_subscription }}"]
+      - result.final_state == result.initial_state
+
+  - name: Check the subscription exists
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: stat
+
+  - assert:
+      that:
+      - result is not changed
+      - result.name == '{{ test_subscription }}'
+      - result.exists == true
+
+  - name: Drop subscription
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: absent
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["DROP SUBSCRIPTION {{ test_subscription }}"]
+      - result.final_state != result.initial_state
+
+  - name: Check the subscription doesn't exist
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: stat
+
+  - assert:
+      that:
+      - result is not changed
+      - result.name == '{{ test_subscription }}'
+      - result.exists == false
+
+  ####################
+  # Test cascade param
+  ####################
+
+  - name: Create subscription for further tests
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: present
+      pubname: '{{ test_pub }}'
+      connparams:
+        host: 127.0.0.1
+        port: '{{ master_port }}'
+        user: '{{ replication_role }}'
+        password: '{{ replication_pass }}'
+        dbname: '{{ test_db }}'
+
+
+  - name: Drop subscription cascade in check mode
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: absent
+      cascade: yes
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["DROP SUBSCRIPTION {{ test_subscription }} CASCADE"]
+      - result.final_state == result.initial_state
+
+  - name: Check the subscription exists
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: stat
+
+  - assert:
+      that:
+      - result is not changed
+      - result.name == '{{ test_subscription }}'
+      - result.exists == true
+
+  - name: Drop subscription cascade
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: absent
+      cascade: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["DROP SUBSCRIPTION {{ test_subscription }} CASCADE"]
+      - result.final_state != result.initial_state
+
+  - name: Check the subscription doesn't exist
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: stat
+
+  - assert:
+      that:
+      - result is not changed
+      - result.name == '{{ test_subscription }}'
+      - result.exists == false
