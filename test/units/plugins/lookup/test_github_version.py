@@ -17,6 +17,7 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 # TODO: Add the freaking tests
 # Test 1: correct format (ansible/ansible)
