@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-#
 # (c) 2019, Ari Kalfus <dev@quantummadness.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -96,7 +93,7 @@ class LookupModule(LookupBase):
                 # ansible.module_utils.urls appears to handle the request errors for us
                 response = open_url('https://api.github.com/repos/%s/releases/latest' % repo,
                                     headers={'Accept': 'application/vnd.github.v3+json'}
-                )
+                           )
                 json_response = loads(response.read().decode('utf-8'))
 
                 version = json_response.get('tag_name')
