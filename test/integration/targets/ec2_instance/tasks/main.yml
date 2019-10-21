@@ -13,8 +13,6 @@
       aws_secret_key: "{{ aws_secret_key }}"
       security_token: "{{ security_token | default(omit) }}"
       region: "{{ aws_region }}"
-    ec2_instance:
-      wait: yes
   block:
 
     - name: Find AMI to use

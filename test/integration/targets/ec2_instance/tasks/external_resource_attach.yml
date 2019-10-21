@@ -115,16 +115,10 @@
       ignore_errors: yes
 
     - ec2_eni:
-        eni_id: '{{ eni_a.interface.id }}'
+        eni_id: '{{ item.interface.id }}'
         state: absent
       ignore_errors: yes
-
-    - ec2_eni:
-        eni_id: '{{ eni_b.interface.id }}'
-        state: absent
-      ignore_errors: yes
-
-    - ec2_eni:
-        eni_id: '{{ eni_c.interface.id }}'
-        state: absent
-      ignore_errors: yes
+      with_items:
+      - '{{ eni_a }}'
+      - '{{ eni_b }}'
+      - '{{ eni_c }}'
