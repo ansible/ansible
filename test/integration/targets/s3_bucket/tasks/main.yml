@@ -394,6 +394,34 @@
           - output.changed
           - not output.encryption
 
+    - name: Enable aws:kms encryption with KMS master key
+      s3_bucket:
+        name: "{{ resource_prefix }}-testbucket-encrypt-ansible"
+        state: present
+        encryption: "aws:kms"
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+          - output.encryption
+          - output.encryption.SSEAlgorithm == 'aws:kms'
+
+    - name: Enable aws:kms encryption with KMS master key (idempotent)
+      s3_bucket:
+        name: "{{ resource_prefix }}-testbucket-encrypt-ansible"
+        state: present
+        encryption: "aws:kms"
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - not output.changed
+          - output.encryption
+          - output.encryption.SSEAlgorithm == 'aws:kms'
+
     # ============================================================
     - name: Pause to help with s3 bucket eventual consistency
       pause:
