@@ -1,5 +1,5 @@
-Sanity Tests » no-basestring
-============================
+no-basestring
+=============
 
 Do not use ``isinstance(s, basestring)`` as basestring has been removed in
 Python3.  You can import ``string_types``, ``binary_type``, or ``text_type``

@@ -280,7 +280,7 @@ class TransactionContextManager(object):
         return self.client
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        self.client.request.headers.pop('X-F5-REST-Coordination-Id')
+        self.client.api.request.headers.pop('X-F5-REST-Coordination-Id')
         if exc_tb is None:
             uri = "https://{0}:{1}/mgmt/tm/transaction/{2}".format(
                 self.client.provider['server'],
@@ -294,6 +294,45 @@ class TransactionContextManager(object):
             resp = self.client.api.patch(uri, json=params)
             if resp.status not in [200]:
                 raise Exception
+
+
+def download_asm_file(client, url, dest):
+    """Download an ASM file from the remote device
+
+    This method handles issues with ASM file endpoints that allow
+    downloads of ASM objects on the BIG-IP.
+
+    Arguments:
+        client (object): The F5RestClient connection object.
+        url (string): The URL to download.
+        dest (string): The location on (Ansible controller) disk to store the file.
+
+    Returns:
+        bool: True on success. False otherwise.
+    """
+
+    with open(dest, 'wb') as fileobj:
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        data = {'headers': headers,
+                'verify': False
+                }
+
+        response = client.api.get(url, headers=headers, json=data)
+        if response.status == 200:
+            if 'Content-Length' not in response.headers:
+                error_message = "The Content-Length header is not present."
+                raise F5ModuleError(error_message)
+
+            length = response.headers['Content-Length']
+
+            if int(length) > 0:
+                fileobj.write(response.content)
+            else:
+                error = "Invalid Content-Length value returned: %s ," \
+                        "the value should be greater than 0" % length
+                raise F5ModuleError(error)
 
 
 def download_file(client, url, dest):
@@ -504,6 +543,35 @@ def tmos_version(client):
     query = to_parse.query
     version = query.split('=')[1]
     return version
+
+
+def bigiq_version(client):
+    uri = "https://{0}:{1}/mgmt/shared/resolver/device-groups/cm-shared-all-big-iqs/devices".format(
+        client.provider['server'],
+        client.provider['server_port'],
+    )
+    query = "?$select=version"
+
+    resp = client.api.get(uri + query)
+
+    try:
+        response = resp.json()
+    except ValueError as ex:
+        raise F5ModuleError(str(ex))
+
+    if 'code' in response and response['code'] in [400, 403]:
+        if 'message' in response:
+            raise F5ModuleError(response['message'])
+        else:
+            raise F5ModuleError(resp.content)
+
+    if 'items' in response:
+        version = response['items'][0]['version']
+        return version
+
+    raise F5ModuleError(
+        'Failed to retrieve BIGIQ version information.'
+    )
 
 
 def module_provisioned(client, module_name):

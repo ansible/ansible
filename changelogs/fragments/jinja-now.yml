@@ -1,2 +1,0 @@
-minor_changes:
-- jinja2 - Add ``now()`` function for getting the current time

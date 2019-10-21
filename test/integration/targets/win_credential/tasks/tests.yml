@@ -409,6 +409,10 @@
   register: generic_password_actual
   vars: *become_vars
 
+- name: set encoded password result
+  set_fact:
+    encoded_pass: '{{ "genericpass" | string | b64encode(encoding="utf-16-le") }}'
+
 - name: assert create generic password
   assert:
     that:
@@ -419,7 +423,7 @@
     - generic_password_actual.comment == None
     - generic_password_actual.name == test_hostname
     - generic_password_actual.persistence == "Enterprise"
-    - generic_password_actual.secret == "genericpass"|b64encode
+    - generic_password_actual.secret == encoded_pass
     - generic_password_actual.type == "Generic"
     - generic_password_actual.username == "genericuser"
 

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - "dnf module properly load and initialize dnf package manager plugins"

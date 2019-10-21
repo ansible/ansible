@@ -1,0 +1,328 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+####################
+# Prepare for tests:
+
+# Create test roles:
+- name: postgresql_membership - create test roles
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: "{{ item }}"
+  ignore_errors: yes
+  with_items:
+  - group1
+  - group2
+  - user1
+  - user2
+
+################
+# Do main tests:
+
+### Test check_mode
+# Grant group1 to user1 in check_mode:
+- name: postgresql_membership - grant group1 to user1 in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_membership:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    group: group1
+    user: user1
+    state: present
+  register: result
+  ignore_errors: yes
+  check_mode: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.groups == ["group1"]
+    - result.queries == ["GRANT \"group1\" TO \"user1\""]
+    - result.granted.group1 == ["user1"]
+    - result.state == "present"
+    - result.target_roles == ["user1"]
+
+# Try to revoke group1 from user1 to check that
+# nothing actually changed in check_mode at the previous step:
+- name: postgresql_membership - try to revoke group1 from user1 for checking check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_membership:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    group: group1
+    user: user1
+    state: absent
+  register: result
+  ignore_errors: yes
+  check_mode: yes
+
+- assert:
+    that:
+    - result is not changed
+    - result.groups == ["group1"]
+    - result.queries == []
+    - result.revoked.group1 == []
+    - result.state == "absent"
+    - result.target_roles == ["user1"]
+### End of test check_mode
+
+# Grant group1 to user1:
+- name: postgresql_membership - grant group1 to user1
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_membership:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    group: group1
+    user: user1
+    state: present
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.groups == ["group1"]
+    - result.queries == ["GRANT \"group1\" TO \"user1\""]
+    - result.granted.group1 == ["user1"]
+    - result.state == "present"
+    - result.target_roles == ["user1"]
+
+# Grant group1 to user1 again to check that nothing changes:
+- name: postgresql_membership - grant group1 to user1 again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_membership:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    group: group1
+    user: user1
+    state: present
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is not changed
+    - result.groups == ["group1"]
+    - result.queries == []
+    - result.granted.group1 == []
+    - result.state == "present"
+    - result.target_roles == ["user1"]
+
+# Revoke group1 from user1:
+- name: postgresql_membership - revoke group1 from user1
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_membership:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    group: group1
+    user: user1
+    state: absent
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.groups == ["group1"]
+    - result.queries == ["REVOKE \"group1\" FROM \"user1\""]
+    - result.revoked.group1 == ["user1"]
+    - result.state == "absent"
+    - result.target_roles == ["user1"]
+
+# Revoke group1 from user1 again to check that nothing changes:
+- name: postgresql_membership - revoke group1 from user1 again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_membership:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    group: group1
+    user: user1
+    state: absent
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is not changed
+    - result.groups == ["group1"]
+    - result.queries == []
+    - result.revoked.group1 == []
+    - result.state == "absent"
+    - result.target_roles == ["user1"]
+
+# Grant group1 and group2 to user1 and user2:
+- name: postgresql_membership - grant two groups to two users
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_membership:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    group:
+    - group1
+    - group2
+    user:
+    - user1
+    - user2
+    state: present
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.groups == ["group1", "group2"]
+    - result.queries == ["GRANT \"group1\" TO \"user1\"", "GRANT \"group1\" TO \"user2\"", "GRANT \"group2\" TO \"user1\"", "GRANT \"group2\" TO \"user2\""]
+    - result.granted.group1 == ["user1", "user2"]
+    - result.granted.group2 == ["user1", "user2"]
+    - result.state == "present"
+    - result.target_roles == ["user1", "user2"]
+
+# Grant group1 and group2 to user1 and user2 again to check that nothing changes:
+- name: postgresql_membership - grant two groups to two users again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_membership:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    group:
+    - group1
+    - group2
+    user:
+    - user1
+    - user2
+    state: present
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is not changed
+    - result.groups == ["group1", "group2"]
+    - result.queries == []
+    - result.granted.group1 == []
+    - result.granted.group2 == []
+    - result.state == "present"
+    - result.target_roles == ["user1", "user2"]
+
+# Revoke only group1 from user1:
+- name: postgresql_membership - revoke one group from one user
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_membership:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    group: group1
+    user: user1
+    state: absent
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.groups == ["group1"]
+    - result.queries == ["REVOKE \"group1\" FROM \"user1\""]
+    - result.revoked.group1 == ["user1"]
+    - result.state == "absent"
+    - result.target_roles == ["user1"]
+
+# Try to grant group1 and group2 to user1 and user2 again to check that nothing changes with user2:
+- name: postgresql_membership - grant two groups to two users again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_membership:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    group:
+    - group1
+    - group2
+    user:
+    - user1
+    - user2
+    state: present
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.groups == ["group1", "group2"]
+    - result.queries == ["GRANT \"group1\" TO \"user1\""]
+    - result.granted.group1 == ["user1"]
+    - result.granted.group2 == []
+    - result.state == "present"
+    - result.target_roles == ["user1", "user2"]
+
+#####################
+# Check fail_on_role:
+
+# Try to grant non existent group to non existent role with fail_on_role=yes:
+- name: postgresql_membership - grant group1 to user1
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_membership:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    group: fake_group
+    user: fake_user
+    state: present
+    fail_on_role: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is not changed
+
+# Try to grant non existent group to non existent role with fail_on_role=no:
+- name: postgresql_membership - grant group1 to user1
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_membership:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    group: fake_group
+    user: fake_user
+    state: present
+    fail_on_role: no
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is not changed
+    - result.granted == {}
+    - result.groups == []
+    - result.target_roles == []
+    - result.state == 'present'
+
+# Try to revoke non existent group from non existent role with fail_on_role=no:
+- name: postgresql_membership - grant group1 to user1
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_membership:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    group: fake_group
+    user: fake_user
+    state: absent
+    fail_on_role: no
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is not changed
+    - result.revoked == {}
+    - result.groups == []
+    - result.target_roles == []
+    - result.state == 'absent'

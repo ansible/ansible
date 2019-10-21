@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 module: user
 version_added: "0.2"
 short_description: Manage user accounts
@@ -38,7 +38,6 @@ options:
             - macOS only, optionally hide the user from the login window and system preferences.
             - The default will be C(yes) if the I(system) option is used.
         type: bool
-        required: false
         version_added: "2.6"
     non_unique:
         description:
@@ -58,15 +57,16 @@ options:
     groups:
         description:
             - List of groups user will be added to. When set to an empty string C(''),
-              C(null), or C(~), the user is removed from all groups except the
-              primary group. (C(~) means C(null) in YAML)
+              the user is removed from all groups except the primary group.
             - Before Ansible 2.3, the only input format allowed was a comma separated string.
+            - Mutually exclusive with C(local)
         type: list
     append:
         description:
             - If C(yes), add the user to the groups specified in C(groups).
             - If C(no), user will only be added to the groups specified in C(groups),
               removing them from all other groups.
+            - Mutually exclusive with C(local)
         type: bool
         default: no
     shell:
@@ -92,7 +92,8 @@ options:
             - Optionally set the user's password to this crypted value.
             - On macOS systems, this value has to be cleartext. Beware of security issues.
             - To create a disabled account on Linux systems, set this to C('!') or C('*').
-            - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
+            - To create a disabled account on OpenBSD, set this to C('*************').
+            - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
               for details on various ways to generate these password values.
         type: str
     state:
@@ -163,8 +164,8 @@ options:
         description:
             - Optionally specify the SSH key filename.
             - If this is a relative filename then it will be relative to the user's home directory.
+            - This parameter defaults to I(.ssh/id_rsa).
         type: path
-        default: .ssh/id_rsa
         version_added: "0.9"
     ssh_key_comment:
         description:
@@ -207,7 +208,10 @@ options:
             - Forces the use of "local" command alternatives on platforms that implement it.
             - This is useful in environments that use centralized authentification when you want to manipulate the local users
               (i.e. it uses C(luseradd) instead of C(useradd)).
-            - This requires that these commands exist on the targeted host, otherwise it will be a fatal error.
+            - This will check C(/etc/passwd) for an existing account before invoking commands. If the local account database
+              exists somewhere other than C(/etc/passwd), this setting will not work properly.
+            - This requires that the above commands as well as C(/etc/passwd) must exist on the target host, otherwise it will be a fatal error.
+            - Mutually exclusive with C(groups) and C(append)
         type: bool
         default: no
         version_added: "2.4"
@@ -259,7 +263,7 @@ author:
 - Stephen Fromm (@sfromm)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Add the user 'johnd' with a specific uid and a primary group of 'admin'
   user:
     name: johnd
@@ -300,7 +304,7 @@ EXAMPLES = '''
     expires: -1
 '''
 
-RETURN = '''
+RETURN = r'''
 append:
   description: Whether or not to append the user to groups
   returned: When state is 'present' and the user exists
@@ -367,7 +371,7 @@ ssh_fingerprint:
   type: str
   sample: '2048 SHA256:aYNHYcyVm87Igh0IMEDMbvW0QDlRQfE0aJugp684ko8 ansible-generated on host (RSA)'
 ssh_key_file:
-  description: Path to generated SSH public key file
+  description: Path to generated SSH private key file
   returned: When C(generate_ssh_key) is C(True)
   type: str
   sample: /home/asmith/.ssh/id_rsa
@@ -404,6 +408,7 @@ uid:
 
 import errno
 import grp
+import calendar
 import os
 import re
 import pty
@@ -446,6 +451,7 @@ class User(object):
 
     platform = 'Generic'
     distribution = None
+    PASSWORDFILE = '/etc/passwd'
     SHADOWFILE = '/etc/shadow'
     SHADOWFILE_EXPIRE_INDEX = 7
     LOGIN_DEFS = '/etc/login.defs'
@@ -508,8 +514,8 @@ class User(object):
         if self.module.params['password'] and self.platform != 'Darwin':
             maybe_invalid = False
 
-            # Allow setting the password to * or ! in order to disable the account
-            if self.module.params['password'] in set(['*', '!']):
+            # Allow setting certain passwords in order to disable the account
+            if self.module.params['password'] in set(['*', '!', '*************']):
                 maybe_invalid = False
             else:
                 # : for delimiter, * for disable user, ! for lock user
@@ -613,7 +619,7 @@ class User(object):
             else:
                 cmd.append('-N')
 
-        if self.groups is not None and len(self.groups):
+        if self.groups is not None and not self.local and len(self.groups):
             groups = self.get_groups_set()
             cmd.append('-G')
             cmd.append(','.join(groups))
@@ -623,6 +629,12 @@ class User(object):
             cmd.append(self.comment)
 
         if self.home is not None:
+            # If the specified path to the user home contains parent directories that
+            # do not exist, first create the home directory since useradd cannot
+            # create parent directories
+            parent = os.path.dirname(self.home)
+            if not os.path.isdir(parent):
+                self.create_homedir(self.home)
             cmd.append('-d')
             cmd.append(self.home)
 
@@ -734,7 +746,7 @@ class User(object):
                     else:
                         groups_need_mod = True
 
-            if groups_need_mod:
+            if groups_need_mod and not self.local:
                 if self.append and not has_append:
                     cmd.append('-A')
                     cmd.append(','.join(group_diff))
@@ -840,11 +852,37 @@ class User(object):
         return groups
 
     def user_exists(self):
-        try:
-            if pwd.getpwnam(self.name):
-                return True
-        except KeyError:
-            return False
+        # The pwd module does not distinguish between local and directory accounts.
+        # It's output cannot be used to determine whether or not an account exists locally.
+        # It returns True if the account exists locally or in the directory, so instead
+        # look in the local PASSWORD file for an existing account.
+        if self.local:
+            if not os.path.exists(self.PASSWORDFILE):
+                self.module.fail_json(msg="'local: true' specified but unable to find local account file {0} to parse.".format(self.PASSWORDFILE))
+
+            exists = False
+            name_test = '{0}:'.format(self.name)
+            with open(self.PASSWORDFILE, 'rb') as f:
+                reversed_lines = f.readlines()[::-1]
+                for line in reversed_lines:
+                    if line.startswith(to_bytes(name_test)):
+                        exists = True
+                        break
+
+            if not exists:
+                self.module.warn(
+                    "'local: true' specified and user '{name}' was not found in {file}. "
+                    "The local user account may already exist if the local account database exists "
+                    "somewhere other than {file}.".format(file=self.PASSWORDFILE, name=self.name))
+
+            return exists
+
+        else:
+            try:
+                if pwd.getpwnam(self.name):
+                    return True
+            except KeyError:
+                return False
 
     def get_pwd_info(self):
         if not self.user_exists():
@@ -880,13 +918,19 @@ class User(object):
         if not self.user_exists():
             return passwd, expires
         elif self.SHADOWFILE:
-            # Read shadow file for user's encrypted password string
-            if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
-                with open(self.SHADOWFILE, 'r') as f:
-                    for line in f:
-                        if line.startswith('%s:' % self.name):
-                            passwd = line.split(':')[1]
-                            expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX] or -1
+            passwd, expires = self.parse_shadow_file()
+
+        return passwd, expires
+
+    def parse_shadow_file(self):
+        passwd = ''
+        expires = ''
+        if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+            with open(self.SHADOWFILE, 'r') as f:
+                for line in f:
+                    if line.startswith('%s:' % self.name):
+                        passwd = line.split(':')[1]
+                        expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX] or -1
         return passwd, expires
 
     def get_ssh_key_path(self):
@@ -1150,7 +1194,7 @@ class FreeBsdUser(User):
             if self.expires < time.gmtime(0):
                 cmd.append('0')
             else:
-                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+                cmd.append(str(calendar.timegm(self.expires)))
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
@@ -1268,7 +1312,7 @@ class FreeBsdUser(User):
                 # Current expires is negative or we compare year, month, and day only
                 if current_expires <= 0 or current_expire_date[:3] != self.expires[:3]:
                     cmd.append('-e')
-                    cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+                    cmd.append(str(calendar.timegm(self.expires)))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
@@ -2299,6 +2343,7 @@ class AIX(User):
       - create_user()
       - remove_user()
       - modify_user()
+      - parse_shadow_file()
     """
 
     platform = 'AIX'
@@ -2439,6 +2484,52 @@ class AIX(User):
             return (rc, out + out2, err + err2)
         else:
             return (rc2, out + out2, err + err2)
+
+    def parse_shadow_file(self):
+        """Example AIX shadowfile data:
+        nobody:
+                password = *
+
+        operator1:
+                password = {ssha512}06$xxxxxxxxxxxx....
+                lastupdate = 1549558094
+
+        test1:
+                password = *
+                lastupdate = 1553695126
+
+        """
+
+        b_name = to_bytes(self.name)
+        b_passwd = b''
+        b_expires = b''
+        if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+            with open(self.SHADOWFILE, 'rb') as bf:
+                b_lines = bf.readlines()
+
+            b_passwd_line = b''
+            b_expires_line = b''
+            try:
+                for index, b_line in enumerate(b_lines):
+                    # Get password and lastupdate lines which come after the username
+                    if b_line.startswith(b'%s:' % b_name):
+                        b_passwd_line = b_lines[index + 1]
+                        b_expires_line = b_lines[index + 2]
+                        break
+
+                # Sanity check the lines because sometimes both are not present
+                if b' = ' in b_passwd_line:
+                    b_passwd = b_passwd_line.split(b' = ', 1)[-1].strip()
+
+                if b' = ' in b_expires_line:
+                    b_expires = b_expires_line.split(b' = ', 1)[-1].strip()
+
+            except IndexError:
+                self.module.fail_json(msg='Failed to parse shadow file %s' % self.SHADOWFILE)
+
+        passwd = to_native(b_passwd)
+        expires = to_native(b_expires) or -1
+        return passwd, expires
 
 
 class HPUX(User):
@@ -2586,6 +2677,145 @@ class HPUX(User):
         return self.execute_command(cmd)
 
 
+class BusyBox(User):
+    """
+    This is the BusyBox class for use on systems that have adduser, deluser,
+    and delgroup commands. It overrides the following methods:
+        - create_user()
+        - remove_user()
+        - modify_user()
+    """
+
+    def create_user(self):
+        cmd = [self.module.get_bin_path('adduser', True)]
+
+        cmd.append('-D')
+
+        if self.uid is not None:
+            cmd.append('-u')
+            cmd.append(self.uid)
+
+        if self.group is not None:
+            if not self.group_exists(self.group):
+                self.module.fail_json(msg='Group {0} does not exist'.format(self.group))
+            cmd.append('-G')
+            cmd.append(self.group)
+
+        if self.comment is not None:
+            cmd.append('-g')
+            cmd.append(self.comment)
+
+        if self.home is not None:
+            cmd.append('-h')
+            cmd.append(self.home)
+
+        if self.shell is not None:
+            cmd.append('-s')
+            cmd.append(self.shell)
+
+        if not self.create_home:
+            cmd.append('-H')
+
+        if self.skeleton is not None:
+            cmd.append('-k')
+            cmd.append(self.skeleton)
+
+        if self.system:
+            cmd.append('-S')
+
+        cmd.append(self.name)
+
+        rc, out, err = self.execute_command(cmd)
+
+        if rc is not None and rc != 0:
+            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        if self.password is not None:
+            cmd = [self.module.get_bin_path('chpasswd', True)]
+            cmd.append('--encrypted')
+            data = '{name}:{password}'.format(name=self.name, password=self.password)
+            rc, out, err = self.execute_command(cmd, data=data)
+
+            if rc is not None and rc != 0:
+                self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        # Add to additional groups
+        if self.groups is not None and len(self.groups):
+            groups = self.get_groups_set()
+            add_cmd_bin = self.module.get_bin_path('adduser', True)
+            for group in groups:
+                cmd = [add_cmd_bin, self.name, group]
+                rc, out, err = self.execute_command(cmd)
+                if rc is not None and rc != 0:
+                    self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        return rc, out, err
+
+    def remove_user(self):
+
+        cmd = [
+            self.module.get_bin_path('deluser', True),
+            self.name
+        ]
+
+        if self.remove:
+            cmd.append('--remove-home')
+
+        return self.execute_command(cmd)
+
+    def modify_user(self):
+        current_groups = self.user_group_membership()
+        groups = []
+        rc = None
+        out = ''
+        err = ''
+        info = self.user_info()
+        add_cmd_bin = self.module.get_bin_path('adduser', True)
+        remove_cmd_bin = self.module.get_bin_path('delgroup', True)
+
+        # Manage group membership
+        if self.groups is not None and len(self.groups):
+            groups = self.get_groups_set()
+            group_diff = set(current_groups).symmetric_difference(groups)
+
+            if group_diff:
+                for g in groups:
+                    if g in group_diff:
+                        add_cmd = [add_cmd_bin, self.name, g]
+                        rc, out, err = self.execute_command(add_cmd)
+                        if rc is not None and rc != 0:
+                            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+                for g in group_diff:
+                    if g not in groups and not self.append:
+                        remove_cmd = [remove_cmd_bin, self.name, g]
+                        rc, out, err = self.execute_command(remove_cmd)
+                        if rc is not None and rc != 0:
+                            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        # Manage password
+        if self.password is not None:
+            if info[1] != self.password:
+                cmd = [self.module.get_bin_path('chpasswd', True)]
+                cmd.append('--encrypted')
+                data = '{name}:{password}'.format(name=self.name, password=self.password)
+                rc, out, err = self.execute_command(cmd, data=data)
+
+                if rc is not None and rc != 0:
+                    self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        return rc, out, err
+
+
+class Alpine(BusyBox):
+    """
+    This is the Alpine User manipulation class. It inherits the BusyBox class
+    behaviors such as using adduser and deluser commands.
+    """
+    platform = 'Linux'
+    distribution = 'Alpine'
+
+
 def main():
     ssh_defaults = dict(
         bits=0,
@@ -2597,7 +2827,7 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'present']),
             name=dict(type='str', required=True, aliases=['user']),
-            uid=dict(type='str'),
+            uid=dict(type='int'),
             non_unique=dict(type='bool', default=False),
             group=dict(type='str'),
             groups=dict(type='list'),
@@ -2635,7 +2865,11 @@ def main():
             authorization=dict(type='str'),
             role=dict(type='str'),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        mutually_exclusive=[
+            ('local', 'groups'),
+            ('local', 'append')
+        ]
     )
 
     user = User(module)
@@ -2664,7 +2898,24 @@ def main():
         if not user.user_exists():
             if module.check_mode:
                 module.exit_json(changed=True)
+
+            # Check to see if the provided home path contains parent directories
+            # that do not exist.
+            path_needs_parents = False
+            if user.home:
+                parent = os.path.dirname(user.home)
+                if not os.path.isdir(parent):
+                    path_needs_parents = True
+
             (rc, out, err) = user.create_user()
+
+            # If the home path had parent directories that needed to be created,
+            # make sure file permissions are correct in the created home directory.
+            if path_needs_parents:
+                info = user.user_info()
+                if info is not False:
+                    user.chown_homedir(info[2], info[3], user.home)
+
             if module.check_mode:
                 result['system'] = user.name
             else:

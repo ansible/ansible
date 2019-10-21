@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_stp_port
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestStpPortModule(TestNvosModule):
@@ -38,12 +36,12 @@ class TestStpPortModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_port': '1',
                          'pn_filter': True, 'pn_priority': '144', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 stp-port-modify  priority 144 cost 2000 port 1 filter '
+        expected_cmd = ' switch sw01 stp-port-modify  priority 144 cost 2000 port 1 filter '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_stp_port_modify_t2(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_port': '1,2',
                          'pn_cost': '200', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 stp-port-modify  priority 128 cost 200 port 1,2'
+        expected_cmd = ' switch sw01 stp-port-modify  priority 128 cost 200 port 1,2'
         self.assertEqual(result['cli_cmd'], expected_cmd)

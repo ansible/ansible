@@ -9,13 +9,14 @@ from random import choice
 from string import ascii_lowercase
 from gettext import dgettext
 
+from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.plugins import AnsiblePlugin
 
 
 def _gen_id(length=32):
-    ''' return random string used to identify the current privelege escalation '''
+    ''' return random string used to identify the current privilege escalation '''
     return ''.join(choice(ascii_lowercase) for x in range(length))
 
 
@@ -49,7 +50,11 @@ class BecomeBase(AnsiblePlugin):
         if not all((cmd, shell, self.success)):
             return cmd
 
-        cmd = shlex_quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
+        try:
+            cmd = shlex_quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
+        except AttributeError:
+            # TODO: This should probably become some more robust functionlity used to detect incompat
+            raise AnsibleError('The %s shell family is incompatible with the %s become plugin' % (shell.SHELL_FAMILY, self.name))
         exe = getattr(shell, 'executable', None)
         if exe and not noexe:
             cmd = '%s -c %s' % (exe, cmd)
@@ -65,7 +70,7 @@ class BecomeBase(AnsiblePlugin):
         return any(b_success in l.rstrip() for l in b_output.splitlines(True))
 
     def check_password_prompt(self, b_output):
-        ''' checks if the expected passwod prompt exists in b_output '''
+        ''' checks if the expected password prompt exists in b_output '''
         if self.prompt:
             b_prompt = to_bytes(self.prompt).strip()
             return any(l.strip().startswith(b_prompt) for l in b_output.splitlines())

@@ -27,7 +27,7 @@ import sys
 from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
-from ansible.cli.arguments import optparse_helpers as opt_help
+from ansible.cli.arguments import option_helpers as opt_help
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -80,7 +80,6 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def init_parser(self):
         super(ConsoleCLI, self).init_parser(
-            usage='%prog [<host-pattern>] [options]',
             desc="REPL console for executing Ansible tasks.",
             epilog="This is not a live session/connection, each task executes in the background and returns it's results."
         )
@@ -94,14 +93,15 @@ class ConsoleCLI(CLI, cmd.Cmd):
         opt_help.add_basedir_options(self.parser)
 
         # options unique to shell
-        self.parser.add_option('--step', dest='step', action='store_true',
-                               help="one-step-at-a-time: confirm each task before running")
+        self.parser.add_argument('pattern', help='host pattern', metavar='pattern', default='all', nargs='?')
+        self.parser.add_argument('--step', dest='step', action='store_true',
+                                 help="one-step-at-a-time: confirm each task before running")
 
-    def post_process_args(self, options, args):
-        options, args = super(ConsoleCLI, self).post_process_args(options, args)
+    def post_process_args(self, options):
+        options = super(ConsoleCLI, self).post_process_args(options)
         display.verbosity = options.verbosity
-        self.validate_conflicts(options, runas_opts=True, vault_opts=True, fork_opts=True)
-        return options, args
+        self.validate_conflicts(options, runas_opts=True, fork_opts=True)
+        return options
 
     def get_names(self):
         return dir(self)
@@ -408,10 +408,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         becomepass = None
 
         # hosts
-        if len(context.CLIARGS['args']) != 1:
-            self.pattern = 'all'
-        else:
-            self.pattern = context.CLIARGS['args'][0]
+        self.pattern = context.CLIARGS['pattern']
         self.cwd = self.pattern
 
         # Defaults from the command line

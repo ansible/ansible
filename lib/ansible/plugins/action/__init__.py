@@ -20,6 +20,8 @@ from abc import ABCMeta, abstractmethod
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail
 from ansible.executor.module_common import modify_module
+from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
+from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
 from ansible.module_utils.six.moves import shlex_quote
@@ -27,9 +29,8 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
 from ansible.utils.display import Display
-from ansible.utils.unsafe_proxy import wrap_var
+from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafeText
 from ansible.vars.clean import remove_internal_keys
-
 
 display = Display()
 
@@ -57,6 +58,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         self._supports_check_mode = True
         self._supports_async = False
+
+        # interpreter discovery state
+        self._discovered_interpreter_key = None
+        self._discovered_interpreter = False
+        self._discovery_deprecation_warnings = []
+        self._discovery_warnings = []
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
@@ -158,39 +165,46 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         if key in module_args:
                             module_args[key] = self._connection._shell._unquote(module_args[key])
 
-            module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, mod_type)
+            module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, mod_type, collection_list=self._task.collections)
             if module_path:
                 break
         else:  # This is a for-else: http://bit.ly/1ElPkyg
-            # Use Windows version of ping module to check module paths when
-            # using a connection that supports .ps1 suffixes. We check specifically
-            # for win_ping here, otherwise the code would look for ping.ps1
-            if '.ps1' in self._connection.module_implementation_preferences:
-                ping_module = 'win_ping'
-            else:
-                ping_module = 'ping'
-            module_path2 = self._shared_loader_obj.module_loader.find_plugin(ping_module, self._connection.module_implementation_preferences)
-            if module_path2 is not None:
-                raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
-            else:
-                raise AnsibleError("The module %s was not found in configured module paths. "
-                                   "Additionally, core modules are missing. If this is a checkout, "
-                                   "run 'git pull --rebase' to correct this problem." % (module_name))
+            raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
 
         # insert shared code and arguments into the module
         final_environment = dict()
         self._compute_environment_string(final_environment)
 
-        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
-                                                                    task_vars=task_vars,
-                                                                    module_compression=self._play_context.module_compression,
-                                                                    async_timeout=self._task.async_val,
-                                                                    become=self._play_context.become,
-                                                                    become_method=self._play_context.become_method,
-                                                                    become_user=self._play_context.become_user,
-                                                                    become_password=self._play_context.become_pass,
-                                                                    become_flags=self._play_context.become_flags,
-                                                                    environment=final_environment)
+        # modify_module will exit early if interpreter discovery is required; re-run after if necessary
+        for dummy in (1, 2):
+            try:
+                (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
+                                                                            task_vars=task_vars,
+                                                                            module_compression=self._play_context.module_compression,
+                                                                            async_timeout=self._task.async_val,
+                                                                            become=self._play_context.become,
+                                                                            become_method=self._play_context.become_method,
+                                                                            become_user=self._play_context.become_user,
+                                                                            become_password=self._play_context.become_pass,
+                                                                            become_flags=self._play_context.become_flags,
+                                                                            environment=final_environment)
+                break
+            except InterpreterDiscoveryRequiredError as idre:
+                self._discovered_interpreter = AnsibleUnsafeText(discover_interpreter(
+                    action=self,
+                    interpreter_name=idre.interpreter_name,
+                    discovery_mode=idre.discovery_mode,
+                    task_vars=task_vars))
+
+                # update the local task_vars with the discovered interpreter (which might be None);
+                # we'll propagate back to the controller in the task result
+                discovered_key = 'discovered_interpreter_%s' % idre.interpreter_name
+                # store in local task_vars facts collection for the retry and any other usages in this worker
+                if task_vars.get('ansible_facts') is None:
+                    task_vars['ansible_facts'] = {}
+                task_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
+                # preserve this so _execute_module can propagate back to controller as a fact
+                self._discovered_interpreter_key = discovered_key
 
         return (module_style, module_shebang, module_data, module_path)
 
@@ -291,7 +305,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # we need to return become_unprivileged as True
         admin_users = self._get_admin_users()
         remote_user = self._get_remote_user()
-        return bool(self.get_become_option('become_user') not in admin_users + [remote_user])
+        become_user = self.get_become_option('become_user')
+        return bool(become_user and become_user not in admin_users + [remote_user])
 
     def _make_tmp_path(self, remote_user=None):
         '''
@@ -379,6 +394,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 self._connection._shell.tmpdir = None
 
     def _transfer_file(self, local_path, remote_path):
+        """
+        Copy a file from the controller to a remote path
+
+        :arg local_path: Path on controller to transfer
+        :arg remote_path: Path on the remote system to transfer into
+
+        .. warning::
+            * When you use this function you likely want to use use fixup_perms2() on the
+              remote_path to make sure that the remote file is readable when the user becomes
+              a non-privileged user.
+            * If you use fixup_perms2() on the file and copy or move the file into place, you will
+              need to then remove filesystem acls on the file once it has been copied into place by
+              the module.  See how the copy module implements this for help.
+        """
         self._connection.put_file(local_path, remote_path)
         return remote_path
 
@@ -434,7 +463,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if remote_user is None:
             remote_user = self._get_remote_user()
 
-        if self._connection._shell.SHELL_FAMILY == 'powershell':
+        if getattr(self._connection._shell, "_IS_WINDOWS", False):
             # This won't work on Powershell as-is, so we'll just completely skip until
             # we have a need for it, at which point we'll have to do something different.
             return remote_paths
@@ -682,6 +711,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # let module know about filesystems that selinux treats specially
         module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
 
+        # what to do when parameter values are converted to strings
+        module_args['_ansible_string_conversion_action'] = C.STRING_CONVERSION_ACTION
+
         # give the module the socket for persistent connections
         module_args['_ansible_socket'] = getattr(self._connection, 'socket_path')
         if not module_args['_ansible_socket']:
@@ -879,6 +911,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if data.pop("_ansible_suppress_tmpdir_delete", False):
             self._cleanup_remote_tmp = False
 
+        # NOTE: yum returns results .. but that made it 'compatible' with squashing, so we allow mappings, for now
+        if 'results' in data and (not isinstance(data['results'], Sequence) or isinstance(data['results'], string_types)):
+            data['ansible_module_results'] = data['results']
+            del data['results']
+            display.warning("Found internal 'results' key in module return, renamed to 'ansible_module_results'.")
+
         # remove internal keys
         remove_internal_keys(data)
 
@@ -900,6 +938,27 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             txt = data.get('stderr', None) or u''
             data['stderr_lines'] = txt.splitlines()
 
+        # propagate interpreter discovery results back to the controller
+        if self._discovered_interpreter_key:
+            if data.get('ansible_facts') is None:
+                data['ansible_facts'] = {}
+
+            data['ansible_facts'][self._discovered_interpreter_key] = self._discovered_interpreter
+
+        if self._discovery_warnings:
+            if data.get('warnings') is None:
+                data['warnings'] = []
+            data['warnings'].extend(self._discovery_warnings)
+
+        if self._discovery_deprecation_warnings:
+            if data.get('deprecations') is None:
+                data['deprecations'] = []
+            data['deprecations'].extend(self._discovery_deprecation_warnings)
+
+        # mark the entire module results untrusted as a template right here, since the current action could
+        # possibly template one of these values.
+        data = wrap_var(data)
+
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
@@ -910,9 +969,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 display.warning(w)
 
             data = json.loads(filtered_output)
-
-            if 'ansible_facts' in data and isinstance(data['ansible_facts'], dict):
-                data['ansible_facts'] = wrap_var(data['ansible_facts'])
             data['_ansible_parsed'] = True
         except ValueError:
             # not valid json, lets try to capture error
@@ -923,13 +979,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 if res['stderr'].startswith(u'Traceback'):
                     data['exception'] = res['stderr']
 
+            # in some cases a traceback will arrive on stdout instead of stderr, such as when using ssh with -tt
+            if 'exception' not in data and data['module_stdout'].startswith(u'Traceback'):
+                data['exception'] = data['module_stdout']
+
             # The default
             data['msg'] = "MODULE FAILURE"
 
             # try to figure out if we are missing interpreter
             if self._used_interpreter is not None:
-                match = '%s: No such file or directory' % self._used_interpreter.lstrip('!#')
-                if match in data['module_stderr'] or match in data['module_stdout']:
+                match = re.compile('%s: (?:No such file or directory|not found)' % self._used_interpreter.lstrip('!#'))
+                if match.search(data['module_stderr']) or match.search(data['module_stdout']):
                     data['msg'] = "The module failed to execute correctly, you probably need to set the interpreter."
 
             # always append hint
@@ -966,9 +1026,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
             cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
-        if (sudoable and self._connection.transport != 'network_cli' and self._connection.become and
-                (C.BECOME_ALLOW_SAME_USER or
-                 self.get_become_option('become_user') != self._get_remote_user())):
+        ruser = self._get_remote_user()
+        buser = self.get_become_option('become_user')
+        if (sudoable and self._connection.become and  # if sudoable and have become
+                self._connection.transport != 'network_cli' and  # if not using network_cli
+                (C.BECOME_ALLOW_SAME_USER or (buser != ruser or not any((ruser, buser))))):  # if we allow same user PE or users are different and either is set
             display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._connection.become.build_become_command(cmd, self._connection._shell)
 
@@ -985,13 +1047,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # Change directory to basedir of task for command execution when connection is local
         if self._connection.transport == 'local':
-            cwd = os.getcwd()
-            os.chdir(to_bytes(self._loader.get_basedir()))
-        try:
-            rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        finally:
-            if self._connection.transport == 'local':
-                os.chdir(cwd)
+            self._connection.cwd = to_bytes(self._loader.get_basedir(), errors='surrogate_or_strict')
+
+        rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type
@@ -1035,7 +1093,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         if not peek_result.get('failed', False) or peek_result.get('rc', 0) == 0:
 
-            if peek_result.get('state') == 'absent':
+            if peek_result.get('state') in (None, 'absent'):
                 diff['before'] = u''
             elif peek_result.get('appears_binary'):
                 diff['dst_binary'] = 1

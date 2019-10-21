@@ -5,39 +5,42 @@ VOSS Platform Options
 ***************************************
 
 Extreme VOSS Ansible modules only support CLI connections today. This page offers details on how to
-use ``network_cli`` on VOSS in Ansible >= 2.7.
+use ``network_cli`` on VOSS in Ansible.
 
 .. contents:: Topics
 
 Connections Available
 ================================================================================
 
-+---------------------------+-----------------------------------------------+
-|..                         | CLI                                           |
-+===========================+===============================================+
-| **Protocol**              |  SSH                                          |
-+---------------------------+-----------------------------------------------+
-| | **Credentials**         | | uses SSH keys / SSH-agent if present        |
-| |                         | | accepts ``-u myuser -k`` if using password  |
-+---------------------------+-----------------------------------------------+
-| **Indirect Access**       | via a bastion (jump host)                     |
-+---------------------------+-----------------------------------------------+
-| | **Connection Settings** | | ``ansible_connection: network_cli``         |
-| |                         | |                                             |
-| |                         | |                                             |
-| |                         | |                                             |
-| |                         | |                                             |
-+---------------------------+-----------------------------------------------+
-| | **Enable Mode**         | | supported - use ``ansible_become: yes``     |
-| | (Privilege Escalation)  | | with ``ansible_become_method: enable``      |
-+---------------------------+-----------------------------------------------+
-| **Returned Data Format**  | ``stdout[0].``                                |
-+---------------------------+-----------------------------------------------+
+.. table::
+    :class: documentation-table
+
+    ====================  ==========================================
+    ..                    CLI
+    ====================  ==========================================
+    Protocol              SSH
+
+    Credentials           uses SSH keys / SSH-agent if present
+
+                          accepts ``-u myuser -k`` if using password
+
+    Indirect Access       via a bastion (jump host)
+
+    Connection Settings   ``ansible_connection: network_cli``
+
+    |enable_mode|         supported: use ``ansible_become: yes``
+                          with ``ansible_become_method: enable``
+
+    Returned Data Format  ``stdout[0].``
+    ====================  ==========================================
+
+.. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
+
 
 VOSS does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli``.
 
-Using CLI in Ansible >= 2.7
-================================================================================
+Using CLI in Ansible
+====================
 
 Example CLI ``group_vars/voss.yml``
 -----------------------------------

@@ -25,7 +25,6 @@ try:
     # In Ansible 2.8, Ansible changed import paths.
     from test.units.compat import unittest
     from test.units.compat.mock import Mock
-    from test.units.compat.mock import patch
 
     from test.units.modules.utils import set_module_args
 except ImportError:
@@ -37,7 +36,6 @@ except ImportError:
     # Ansible 2.8 imports
     from units.compat import unittest
     from units.compat.mock import Mock
-    from units.compat.mock import patch
 
     from units.modules.utils import set_module_args
 
@@ -88,14 +86,17 @@ class TestUntypedManager(unittest.TestCase):
     def test_create(self, *args):
         set_module_args(dict(
             name='ipsec1',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
 
         # Override methods to force specific logic in the module to happen

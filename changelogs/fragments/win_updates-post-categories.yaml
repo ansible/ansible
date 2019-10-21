@@ -1,2 +1,0 @@
-minor_changes:
-- win_updates - Reworked filtering updates based on category classification - https://github.com/ansible/ansible/issues/45476

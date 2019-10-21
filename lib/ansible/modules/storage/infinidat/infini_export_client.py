@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Gregory Shulov (gregory.shulov@gmail.com)
+# Copyright: (c) 2016, Gregory Shulov (gregory.shulov@gmail.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -103,12 +103,12 @@ def transform(d):
 
 @api_wrapper
 def get_export(module, system):
-    """Retrun export if found. Fail module if not found"""
+    """Return export if found. Fail module if not found"""
 
     try:
         export = system.exports.get(export_path=module.params['export'])
     except Exception:
-        module.fail_json(msg="Export with export path {} not found".format(module.params['export']))
+        module.fail_json(msg="Export with export path {0} not found".format(module.params['export']))
 
     return export
 

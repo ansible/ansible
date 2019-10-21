@@ -127,11 +127,13 @@ stack:
             sample: "test-stack/97a3f543-8136-4570-920e-fd7605c989d6"
         links:
             description: Links to the current Stack.
-            type: list of dict
+            type: list
+            elements: dict
             sample: "[{'href': 'http://foo:8004/v1/7f6a/stacks/test-stack/97a3f543-8136-4570-920e-fd7605c989d6']"
         outputs:
             description: Output returned by the Stack.
-            type: list of dict
+            type: list
+            elements: dict
             sample: "{'description': 'IP address of server1 in private network',
                         'output_key': 'server1_private_ip',
                         'output_value': '10.1.10.103'}"
@@ -154,16 +156,15 @@ from ansible.module_utils.openstack import openstack_full_argument_spec, opensta
 from ansible.module_utils._text import to_native
 
 
-def _create_stack(module, stack, cloud, sdk):
+def _create_stack(module, stack, cloud, sdk, parameters):
     try:
         stack = cloud.create_stack(module.params['name'],
-                                   tags=module.params['tag'],
                                    template_file=module.params['template'],
                                    environment_files=module.params['environment'],
                                    timeout=module.params['timeout'],
                                    wait=True,
                                    rollback=module.params['rollback'],
-                                   **module.params['parameters'])
+                                   **parameters)
 
         stack = cloud.get_stack(stack.id, None)
         if stack.stack_status == 'CREATE_COMPLETE':
@@ -177,7 +178,7 @@ def _create_stack(module, stack, cloud, sdk):
             module.fail_json(msg=to_native(e))
 
 
-def _update_stack(module, stack, cloud, sdk):
+def _update_stack(module, stack, cloud, sdk, parameters):
     try:
         stack = cloud.update_stack(
             module.params['name'],
@@ -186,7 +187,7 @@ def _update_stack(module, stack, cloud, sdk):
             timeout=module.params['timeout'],
             rollback=module.params['rollback'],
             wait=module.params['wait'],
-            **module.params['parameters'])
+            **parameters)
 
         if stack['stack_status'] == 'UPDATE_COMPLETE':
             return stack
@@ -241,16 +242,24 @@ def main():
         stack = cloud.get_stack(name)
 
         if module.check_mode:
-            module.exit_json(changed=_system_state_change(module, stack,
-                                                          cloud))
+            module.exit_json(changed=_system_state_change(module, stack, cloud))
 
         if state == 'present':
+            parameters = module.params['parameters']
+            if module.params['tag']:
+                parameters['tags'] = module.params['tag']
+                from distutils.version import StrictVersion
+                min_version = '0.28.0'
+                if StrictVersion(sdk.version.__version__) < StrictVersion(min_version) and stack:
+                    module.warn("To update tags using os_stack module, the"
+                                "installed version of the openstacksdk"
+                                "library MUST be >={min_version}"
+                                "".format(min_version=min_version))
             if not stack:
-                stack = _create_stack(module, stack, cloud, sdk)
+                stack = _create_stack(module, stack, cloud, sdk, parameters)
             else:
-                stack = _update_stack(module, stack, cloud, sdk)
-            changed = True
-            module.exit_json(changed=changed,
+                stack = _update_stack(module, stack, cloud, sdk, parameters)
+            module.exit_json(changed=True,
                              stack=stack,
                              id=stack.id)
         elif state == 'absent':

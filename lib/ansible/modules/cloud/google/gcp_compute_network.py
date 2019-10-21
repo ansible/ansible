@@ -31,20 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_network
 description:
-- Represents a Network resource.
-- Your Cloud Platform Console project can contain multiple networks, and each network
-  can have multiple instances attached to it. A network allows you to define a gateway
-  IP and the network range for the instances attached to that network. Every project
-  is provided with a default network with preset configurations and firewall rules.
-  You can choose to customize the default network by adding or removing rules, or
-  you can create new networks in that project. Generally, most users only need one
-  network, although you can have up to five networks per project by default.
-- A network belongs to only one project, and each instance can only belong to one
-  network. All Compute Engine networks use the IPv4 protocol. Compute Engine currently
-  does not support IPv6. However, Google is a major advocate of IPv6 and it is an
-  important future direction.
+- Manages a VPC network or legacy network resource on GCP.
 short_description: Creates a GCP Network
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -58,17 +47,24 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
-    - An optional description of this resource. Provide this property when you create
-      the resource.
+    - An optional description of this resource. The resource must be recreated to
+      modify this field.
     required: false
+    type: str
   ipv4_range:
     description:
-    - 'The range of internal addresses that are legal on this network. This range
-      is a CIDR specification, for example: 192.168.0.0/16. Provided by the client
-      when the network is created.'
+    - If this field is specified, a deprecated legacy network is created.
+    - You will no longer be able to create a legacy network on Feb 1, 2020.
+    - See the [legacy network docs](U(https://cloud.google.com/vpc/docs/legacy)) for
+      more details.
+    - The range of internal addresses that are legal on this legacy network.
+    - 'This range is a CIDR specification, for example: `192.168.0.0/16`.'
+    - The resource must be recreated to modify this field.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -78,12 +74,14 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   auto_create_subnetworks:
     description:
-    - When set to true, the network is created in "auto subnet mode". When set to
-      false, the network is in "custom subnet mode".
-    - In "auto subnet mode", a newly created network is assigned the default CIDR
-      of 10.128.0.0/9 and it automatically creates one subnetwork per region.
+    - When set to `true`, the network is created in "auto subnet mode" and it will
+      create a subnet for each region automatically across the `10.128.0.0/9` address
+      range.
+    - When set to `false`, the network is created in "custom subnet mode" so the user
+      can explicitly connect subnetwork resources.
     required: false
     type: bool
   routing_config:
@@ -91,48 +89,93 @@ options:
     - The network-level routing configuration for this network. Used by Cloud Router
       to determine what type of network-wide routing behavior to enforce.
     required: false
-    version_added: 2.8
+    type: dict
+    version_added: '2.8'
     suboptions:
       routing_mode:
         description:
-        - The network-wide routing mode to use. If set to REGIONAL, this network's
+        - The network-wide routing mode to use. If set to `REGIONAL`, this network's
           cloud routers will only advertise routes with subnetworks of this network
-          in the same region as the router. If set to GLOBAL, this network's cloud
+          in the same region as the router. If set to `GLOBAL`, this network's cloud
           routers will advertise routes with all subnetworks of this network, across
           regions.
+        - 'Some valid choices include: "REGIONAL", "GLOBAL"'
         required: true
-        choices:
-        - REGIONAL
-        - GLOBAL
-extends_documentation_fragment: gcp
+        type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/networks)'
 - 'Official Documentation: U(https://cloud.google.com/vpc/docs/vpc)'
+- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "test_object"
-      auto_create_subnetworks: true
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    auto_create_subnetworks: 'true'
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
 description:
   description:
-  - An optional description of this resource. Provide this property when you create
-    the resource.
+  - An optional description of this resource. The resource must be recreated to modify
+    this field.
   returned: success
   type: str
 gateway_ipv4:
   description:
-  - A gateway address for default routing to other networks. This value is read only
-    and is selected by the Google Compute Engine, typically as the first usable address
-    in the IPv4Range.
+  - The gateway address for default routing out of the network. This value is selected
+    by GCP.
   returned: success
   type: str
 id:
@@ -142,9 +185,13 @@ id:
   type: int
 ipv4_range:
   description:
-  - 'The range of internal addresses that are legal on this network. This range is
-    a CIDR specification, for example: 192.168.0.0/16. Provided by the client when
-    the network is created.'
+  - If this field is specified, a deprecated legacy network is created.
+  - You will no longer be able to create a legacy network on Feb 1, 2020.
+  - See the [legacy network docs](U(https://cloud.google.com/vpc/docs/legacy)) for
+    more details.
+  - The range of internal addresses that are legal on this legacy network.
+  - 'This range is a CIDR specification, for example: `192.168.0.0/16`.'
+  - The resource must be recreated to modify this field.
   returned: success
   type: str
 name:
@@ -164,10 +211,10 @@ subnetworks:
   type: list
 autoCreateSubnetworks:
   description:
-  - When set to true, the network is created in "auto subnet mode". When set to false,
-    the network is in "custom subnet mode".
-  - In "auto subnet mode", a newly created network is assigned the default CIDR of
-    10.128.0.0/9 and it automatically creates one subnetwork per region.
+  - When set to `true`, the network is created in "auto subnet mode" and it will create
+    a subnet for each region automatically across the `10.128.0.0/9` address range.
+  - When set to `false`, the network is created in "custom subnet mode" so the user
+    can explicitly connect subnetwork resources.
   returned: success
   type: bool
 creationTimestamp:
@@ -184,10 +231,11 @@ routingConfig:
   contains:
     routingMode:
       description:
-      - The network-wide routing mode to use. If set to REGIONAL, this network's cloud
-        routers will only advertise routes with subnetworks of this network in the
-        same region as the router. If set to GLOBAL, this network's cloud routers
-        will advertise routes with all subnetworks of this network, across regions.
+      - The network-wide routing mode to use. If set to `REGIONAL`, this network's
+        cloud routers will only advertise routes with subnetworks of this network
+        in the same region as the router. If set to `GLOBAL`, this network's cloud
+        routers will advertise routes with all subnetworks of this network, across
+        regions.
       returned: success
       type: str
 '''
@@ -215,7 +263,7 @@ def main():
             ipv4_range=dict(type='str'),
             name=dict(required=True, type='str'),
             auto_create_subnetworks=dict(type='bool'),
-            routing_config=dict(type='dict', options=dict(routing_mode=dict(required=True, type='str', choices=['REGIONAL', 'GLOBAL']))),
+            routing_config=dict(type='dict', options=dict(routing_mode=dict(required=True, type='str'))),
         ),
         mutually_exclusive=[['auto_create_subnetworks', 'ipv4_range']],
     )
@@ -232,7 +280,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                update(module, self_link(module), kind)
+                update(module, self_link(module), kind, fetch)
                 fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
@@ -256,9 +304,22 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind):
+def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
+    return fetch_resource(module, self_link(module), kind)
+
+
+def update_fields(module, request, response):
+    if response.get('routingConfig') != request.get('routingConfig'):
+        routing_config_update(module, request, response)
+
+
+def routing_config_update(module, request, response):
     auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.patch(link, resource_to_request(module)))
+    auth.patch(
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/networks/{name}"]).format(**module.params),
+        {u'routingConfig': NetworkRoutingconfig(module.params.get('routing_config', {}), module).to_request()},
+    )
 
 
 def delete(module, link, kind):

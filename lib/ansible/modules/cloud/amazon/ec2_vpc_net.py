@@ -31,6 +31,13 @@ options:
       - The primary CIDR of the VPC. After 2.5 a list of CIDRs can be provided. The first in the list will be used as the primary CIDR
         and is used in conjunction with the C(name) to ensure idempotence.
     required: yes
+  ipv6_cidr:
+    description:
+      - Request an Amazon-provided IPv6 CIDR block with /56 prefix length.  You cannot specify the range of IPv6 addresses,
+        or the size of the CIDR block.
+    default: False
+    type: bool
+    version_added: '2.10'
   purge_cidrs:
     description:
       - Remove CIDRs that are associated with the VPC and are not specified in C(cidr_block).
@@ -91,6 +98,14 @@ EXAMPLES = '''
       module: ec2_vpc_net
       this: works
     tenancy: dedicated
+
+- name: create a VPC with dedicated tenancy and request an IPv6 CIDR
+  ec2_vpc_net:
+    name: Module_dev2
+    cidr_block: 10.10.0.0/16
+    ipv6_cidr: True
+    region: us-east-1
+    tenancy: dedicated
 '''
 
 RETURN = '''
@@ -124,7 +139,7 @@ vpc:
       type: NoneType
       sample: null
     dhcp_options_id:
-      description: the id of the DHCP options assocaited with this VPC
+      description: the id of the DHCP options associated with this VPC
       returned: always
       type: str
       sample: dopt-0fb8bd6b
@@ -138,6 +153,20 @@ vpc:
       returned: always
       type: str
       sample: default
+    ipv6_cidr_block_association_set:
+      description: IPv6 CIDR blocks associated with the VPC
+      returned: success
+      type: list
+      sample:
+        "ipv6_cidr_block_association_set": [
+            {
+                "association_id": "vpc-cidr-assoc-97aeeefd",
+                "ipv6_cidr_block": "2001:db8::/56",
+                "ipv6_cidr_block_state": {
+                    "state": "associated"
+                }
+            }
+        ]
     is_default:
       description: indicates whether this is the default VPC
       returned: always
@@ -337,6 +366,7 @@ def main():
     argument_spec = dict(
         name=dict(required=True),
         cidr_block=dict(type='list', required=True),
+        ipv6_cidr=dict(type='bool', default=False),
         tenancy=dict(choices=['default', 'dedicated'], default='default'),
         dns_support=dict(type='bool', default=True),
         dns_hostnames=dict(type='bool', default=True),
@@ -354,6 +384,7 @@ def main():
 
     name = module.params.get('name')
     cidr_block = get_cidr_network_bits(module, module.params.get('cidr_block'))
+    ipv6_cidr = module.params.get('ipv6_cidr')
     purge_cidrs = module.params.get('purge_cidrs')
     tenancy = module.params.get('tenancy')
     dns_support = module.params.get('dns_support')
@@ -395,7 +426,21 @@ def main():
         if len(cidr_block) > 1:
             for cidr in to_add:
                 changed = True
-                connection.associate_vpc_cidr_block(CidrBlock=cidr, VpcId=vpc_id)
+                try:
+                    connection.associate_vpc_cidr_block(CidrBlock=cidr, VpcId=vpc_id)
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    module.fail_json_aws(e, "Unable to associate CIDR {0}.".format(ipv6_cidr))
+        if ipv6_cidr:
+            if 'Ipv6CidrBlockAssociationSet' in vpc_obj.keys():
+                module.warn("Only one IPv6 CIDR is permitted per VPC, {0} already has CIDR {1}".format(
+                    vpc_id,
+                    vpc_obj['Ipv6CidrBlockAssociationSet'][0]['Ipv6CidrBlock']))
+            else:
+                try:
+                    connection.associate_vpc_cidr_block(AmazonProvidedIpv6CidrBlock=ipv6_cidr, VpcId=vpc_id)
+                    changed = True
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    module.fail_json_aws(e, "Unable to associate CIDR {0}.".format(ipv6_cidr))
 
         if purge_cidrs:
             for association_id in to_remove:

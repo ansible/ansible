@@ -17,12 +17,6 @@ module: aci_access_port_to_interface_policy_leaf_profile
 short_description: Manage Fabric interface policy leaf profile interface selectors (infra:HPortS, infra:RsAccBaseGrp, infra:PortBlk)
 description:
 - Manage Fabric interface policy leaf profile interface selectors on Cisco ACI fabrics.
-seealso:
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC classes B(infra:HPortS), B(infra:RsAccBaseGrp) and B(infra:PortBlk).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 options:
   leaf_interface_profile:
@@ -106,7 +100,7 @@ options:
     aliases: [ policy_group_name ]
   interface_type:
     description:
-    - The type of interface for the static EPG deployement.
+    - The type of interface for the static EPG deployment.
     type: str
     choices: [ breakout, fex, port_channel, switch_port, vpc ]
     default: switch_port
@@ -119,6 +113,12 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:HPortS), B(infra:RsAccBaseGrp) and B(infra:PortBlk).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Bruno Calogero (@brunocalogero)
 '''
 
 EXAMPLES = r'''
@@ -276,8 +276,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 INTERFACE_TYPE_MAPPING = dict(
     breakout='uni/infra/funcprof/brkoutportgrp-{0}',
@@ -327,7 +327,7 @@ def main():
     interface_type = module.params['interface_type']
     state = module.params['state']
 
-    # Build child_configs dyanmically
+    # Build child_configs dynamically
     child_configs = [dict(
         infraPortBlk=dict(
             attributes=dict(

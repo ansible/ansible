@@ -181,7 +181,7 @@ options:
     description:
       - Amount of time to wait for the dnf lockfile to be freed.
     required: false
-    default: 0
+    default: 30
     type: int
     version_added: "2.8"
   install_weak_deps:
@@ -189,6 +189,12 @@ options:
       - Will also install all packages linked by a weak dependency relation.
     type: bool
     default: "yes"
+    version_added: "2.8"
+  download_dir:
+    description:
+      - Specifies an alternate directory to store packages.
+      - Has an effect only if I(download_only) is specified.
+    type: str
     version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
@@ -279,6 +285,7 @@ EXAMPLES = '''
 
 import os
 import re
+import sys
 import tempfile
 
 try:
@@ -322,15 +329,33 @@ class DnfModule(YumDnf):
         except AttributeError:
             self.with_modules = False
 
-    def _sanitize_dnf_error_msg(self, spec, error):
+    def is_lockfile_pid_valid(self):
+        # FIXME? it looks like DNF takes care of invalid lock files itself?
+        # https://github.com/ansible/ansible/issues/57189
+        return True
+
+    def _sanitize_dnf_error_msg_install(self, spec, error):
         """
         For unhandled dnf.exceptions.Error scenarios, there are certain error
-        messages we want to filter. Do that here.
+        messages we want to filter in an install scenario. Do that here.
         """
         if to_text("no package matched") in to_text(error):
             return "No package {0} available.".format(spec)
 
         return error
+
+    def _sanitize_dnf_error_msg_remove(self, spec, error):
+        """
+        For unhandled dnf.exceptions.Error scenarios, there are certain error
+        messages we want to ignore in a removal scenario as known benign
+        failures. Do that here.
+        """
+        if 'no package matched' in to_native(error):
+            return (False, "{0} is not installed".format(spec))
+
+        # Return value is tuple of:
+        #   ("Is this actually a failure?", "Error Message")
+        return (True, error)
 
     def _package_dict(self, package):
         """Return a dictionary of information for the package."""
@@ -377,7 +402,7 @@ class DnfModule(YumDnf):
         ]
 
         rpm_arch_re = re.compile(r'(.*)\.(.*)')
-        rpm_nevr_re = re.compile(r'(\S+)-(?:(\d*):)?(.*)-(~?\w+[\w.]*)')
+        rpm_nevr_re = re.compile(r'(\S+)-(?:(\d*):)?(.*)-(~?\w+[\w.+]*)')
         try:
             arch = None
             rpm_arch_match = rpm_arch_re.match(packagename)
@@ -482,7 +507,7 @@ class DnfModule(YumDnf):
                     results=[],
                 )
 
-            self.module.run_command(['dnf', 'install', '-y', package], check_rc=True)
+            rc, stdout, stderr = self.module.run_command(['dnf', 'install', '-y', package])
             global dnf
             try:
                 import dnf
@@ -493,9 +518,15 @@ class DnfModule(YumDnf):
                 import dnf.util
             except ImportError:
                 self.module.fail_json(
-                    msg="Could not import the dnf python module. "
-                    "Please install `{0}` package.".format(package),
+                    msg="Could not import the dnf python module using {0} ({1}). "
+                        "Please install `{2}` package or ensure you have specified the "
+                        "correct ansible_python_interpreter.".format(sys.executable, sys.version.replace('\n', ''),
+                                                                     package),
                     results=[],
+                    cmd='dnf install -y {0}'.format(package),
+                    rc=rc,
+                    stdout=stdout,
+                    stderr=stderr,
                 )
 
     def _configure_base(self, base, conf_file, disable_gpg_check, installroot='/'):
@@ -564,6 +595,8 @@ class DnfModule(YumDnf):
 
         if self.download_only:
             conf.downloadonly = True
+            if self.download_dir:
+                conf.destdir = self.download_dir
 
         # Default in dnf upstream is true
         conf.clean_requirements_on_remove = self.autoremove
@@ -592,13 +625,17 @@ class DnfModule(YumDnf):
         """Return a fully configured dnf Base object."""
         base = dnf.Base()
         self._configure_base(base, conf_file, disable_gpg_check, installroot)
-        self._specify_repositories(base, disablerepo, enablerepo)
         try:
             base.init_plugins(set(self.disable_plugin), set(self.enable_plugin))
             base.pre_configure_plugins()
+        except AttributeError:
+            pass  # older versions of dnf didn't require this and don't have these methods
+        self._specify_repositories(base, disablerepo, enablerepo)
+        try:
             base.configure_plugins()
         except AttributeError:
             pass  # older versions of dnf didn't require this and don't have these methods
+
         try:
             if self.update_cache:
                 try:
@@ -920,15 +957,9 @@ class DnfModule(YumDnf):
                             if not self._is_module_installed(module):
                                 response['results'].append("Module {0} installed.".format(module))
                             self.module_base.install([module])
+                            self.module_base.enable([module])
                         except dnf.exceptions.MarkingErrors as e:
-                            failure_response['failures'].append(
-                                " ".join(
-                                    (
-                                        ' '.join(module),
-                                        to_native(e)
-                                    )
-                                )
-                            )
+                            failure_response['failures'].append(' '.join((module, to_native(e))))
 
                 # Install groups.
                 for group in groups:
@@ -973,7 +1004,7 @@ class DnfModule(YumDnf):
                         install_result = self._mark_package_install(pkg_spec)
                         if install_result['failed']:
                             failure_response['msg'] += install_result['msg']
-                            failure_response['failures'].append(self._sanitize_dnf_error_msg(pkg_spec, install_result['failure']))
+                            failure_response['failures'].append(self._sanitize_dnf_error_msg_install(pkg_spec, install_result['failure']))
                         else:
                             response['results'].append(install_result['msg'])
 
@@ -991,14 +1022,7 @@ class DnfModule(YumDnf):
                                 response['results'].append("Module {0} upgraded.".format(module))
                             self.module_base.upgrade([module])
                         except dnf.exceptions.MarkingErrors as e:
-                            failure_response['failures'].append(
-                                " ".join(
-                                    (
-                                        ' '.join(module),
-                                        to_native(e)
-                                    )
-                                )
-                            )
+                            failure_response['failures'].append(' '.join((module, to_native(e))))
 
                 for group in groups:
                     try:
@@ -1040,7 +1064,7 @@ class DnfModule(YumDnf):
                         install_result = self._mark_package_install(pkg_spec, upgrade=True)
                         if install_result['failed']:
                             failure_response['msg'] += install_result['msg']
-                            failure_response['failures'].append(self._sanitize_dnf_error_msg(pkg_spec, install_result['failure']))
+                            failure_response['failures'].append(self._sanitize_dnf_error_msg_install(pkg_spec, install_result['failure']))
                         else:
                             response['results'].append(install_result['msg'])
 
@@ -1058,17 +1082,11 @@ class DnfModule(YumDnf):
                         try:
                             if self._is_module_installed(module):
                                 response['results'].append("Module {0} removed.".format(module))
-                            self.module_base.disable([module])
                             self.module_base.remove([module])
+                            self.module_base.disable([module])
+                            self.module_base.reset([module])
                         except dnf.exceptions.MarkingErrors as e:
-                            failure_response['failures'].append(
-                                " ".join(
-                                    (
-                                        ' '.join(module),
-                                        to_native(e)
-                                    )
-                                )
-                            )
+                            failure_response['failures'].append(' '.join((module, to_native(e))))
 
                 for group in groups:
                     try:
@@ -1094,8 +1112,33 @@ class DnfModule(YumDnf):
 
                 installed = self.base.sack.query().installed()
                 for pkg_spec in pkg_specs:
-                    if ("*" in pkg_spec) or installed.filter(name=pkg_spec):
-                        self.base.remove(pkg_spec)
+                    # short-circuit installed check for wildcard matching
+                    if '*' in pkg_spec:
+                        try:
+                            self.base.remove(pkg_spec)
+                        except dnf.exceptions.MarkingError as e:
+                            is_failure, handled_remove_error = self._sanitize_dnf_error_msg_remove(pkg_spec, to_native(e))
+                            if is_failure:
+                                failure_response['failures'].append('{0} - {1}'.format(pkg_spec, to_native(e)))
+                            else:
+                                response['results'].append(handled_remove_error)
+                        continue
+
+                    installed_pkg = list(map(str, installed.filter(name=pkg_spec).run()))
+                    if installed_pkg:
+                        candidate_pkg = self._packagename_dict(installed_pkg[0])
+                        installed_pkg = installed.filter(name=candidate_pkg['name']).run()
+                    else:
+                        candidate_pkg = self._packagename_dict(pkg_spec)
+                        installed_pkg = installed.filter(nevra=pkg_spec).run()
+                    if installed_pkg:
+                        installed_pkg = installed_pkg[0]
+                        evr_cmp = self._compare_evr(
+                            installed_pkg.epoch, installed_pkg.version, installed_pkg.release,
+                            candidate_pkg['epoch'], candidate_pkg['version'], candidate_pkg['release'],
+                        )
+                        if evr_cmp == 0:
+                            self.base.remove(pkg_spec)
 
                 # Like the dnf CLI we want to allow recursive removal of dependent
                 # packages
@@ -1122,6 +1165,10 @@ class DnfModule(YumDnf):
                     self.module.exit_json(**response)
 
                 try:
+                    if self.download_only and self.download_dir and self.base.conf.destdir:
+                        dnf.util.ensure_dir(self.base.conf.destdir)
+                        self.base.repos.all().pkgdir = self.base.conf.destdir
+
                     self.base.download_packages(self.base.transaction.install_set)
                 except dnf.exceptions.DownloadError as e:
                     self.module.fail_json(
@@ -1171,6 +1218,14 @@ class DnfModule(YumDnf):
                     results=[],
                 )
 
+        # Check if download_dir is called correctly
+        if self.download_dir:
+            if LooseVersion(dnf.__version__) < LooseVersion('2.6.2'):
+                self.module.fail_json(
+                    msg="download_dir requires dnf>=2.6.2. Current dnf version is %s" % dnf.__version__,
+                    results=[],
+                )
+
         if self.update_cache and not self.names and not self.list:
             self.base = self._base(
                 self.conf_file, self.disable_gpg_check, self.disablerepo,
@@ -1184,7 +1239,7 @@ class DnfModule(YumDnf):
             )
 
         # Set state as installed by default
-        # This is not set in AnsibleModule() because the following shouldn't happend
+        # This is not set in AnsibleModule() because the following shouldn't happen
         # - dnf: autoremove=yes state=installed
         if self.state is None:
             self.state = 'installed'

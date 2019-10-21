@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_extender_controller_extender
 short_description: Extender controller configuration in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure extender_controller feature and extender category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify extender_controller feature and extender category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,155 +41,209 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
-        default: false
+        default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     extender_controller_extender:
         description:
             - Extender controller configuration.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            aaa-shared-secret:
+            aaa_shared_secret:
                 description:
                     - AAA shared secret.
-            access-point-name:
+                type: str
+            access_point_name:
                 description:
                     - Access point name(APN).
+                type: str
             admin:
                 description:
                     - FortiExtender Administration (enable or disable).
+                type: str
                 choices:
                     - disable
                     - discovered
                     - enable
-            at-dial-script:
+            at_dial_script:
                 description:
                     - Initialization AT commands specific to the MODEM.
-            billing-start-day:
+                type: str
+            billing_start_day:
                 description:
                     - Billing start day.
-            cdma-aaa-spi:
+                type: int
+            cdma_aaa_spi:
                 description:
                     - CDMA AAA SPI.
-            cdma-ha-spi:
+                type: str
+            cdma_ha_spi:
                 description:
                     - CDMA HA SPI.
-            cdma-nai:
+                type: str
+            cdma_nai:
                 description:
                     - NAI for CDMA MODEMS.
-            conn-status:
+                type: str
+            conn_status:
                 description:
                     - Connection status.
+                type: int
             description:
                 description:
                     - Description.
-            dial-mode:
+                type: str
+            dial_mode:
                 description:
                     - Dial mode (dial-on-demand or always-connect).
+                type: str
                 choices:
                     - dial-on-demand
                     - always-connect
-            dial-status:
+            dial_status:
                 description:
                     - Dial status.
-            ext-name:
+                type: int
+            ext_name:
                 description:
                     - FortiExtender name.
-            ha-shared-secret:
+                type: str
+            ha_shared_secret:
                 description:
                     - HA shared secret.
+                type: str
             id:
                 description:
                     - FortiExtender serial number.
                 required: true
+                type: str
             ifname:
                 description:
                     - FortiExtender interface name.
-            initiated-update:
+                type: str
+            initiated_update:
                 description:
                     - Allow/disallow network initiated updates to the MODEM.
+                type: str
                 choices:
                     - enable
                     - disable
             mode:
                 description:
                     - FortiExtender mode.
+                type: str
                 choices:
                     - standalone
                     - redundant
-            modem-passwd:
+            modem_passwd:
                 description:
                     - MODEM password.
-            modem-type:
+                type: str
+            modem_type:
                 description:
                     - MODEM type (CDMA, GSM/LTE or WIMAX).
+                type: str
                 choices:
                     - cdma
                     - gsm/lte
                     - wimax
-            multi-mode:
+            multi_mode:
                 description:
                     - MODEM mode of operation(3G,LTE,etc).
+                type: str
                 choices:
                     - auto
                     - auto-3g
                     - force-lte
                     - force-3g
                     - force-2g
-            ppp-auth-protocol:
+            ppp_auth_protocol:
                 description:
                     - PPP authentication protocol (PAP,CHAP or auto).
+                type: str
                 choices:
                     - auto
                     - pap
                     - chap
-            ppp-echo-request:
+            ppp_echo_request:
                 description:
                     - Enable/disable PPP echo request.
+                type: str
                 choices:
                     - enable
                     - disable
-            ppp-password:
+            ppp_password:
                 description:
                     - PPP password.
-            ppp-username:
+                type: str
+            ppp_username:
                 description:
                     - PPP username.
-            primary-ha:
+                type: str
+            primary_ha:
                 description:
                     - Primary HA.
-            quota-limit-mb:
+                type: str
+            quota_limit_mb:
                 description:
                     - Monthly quota limit (MB).
+                type: int
             redial:
                 description:
                     - Number of redials allowed based on failed attempts.
+                type: str
                 choices:
                     - none
                     - 1
@@ -205,43 +256,52 @@ options:
                     - 8
                     - 9
                     - 10
-            redundant-intf:
+            redundant_intf:
                 description:
                     - Redundant interface.
+                type: str
             roaming:
                 description:
                     - Enable/disable MODEM roaming.
+                type: str
                 choices:
                     - enable
                     - disable
             role:
                 description:
                     - FortiExtender work role(Primary, Secondary, None).
+                type: str
                 choices:
                     - none
                     - primary
                     - secondary
-            secondary-ha:
+            secondary_ha:
                 description:
                     - Secondary HA.
-            sim-pin:
+                type: str
+            sim_pin:
                 description:
                     - SIM PIN.
+                type: str
             vdom:
                 description:
                     - VDOM
-            wimax-auth-protocol:
+                type: int
+            wimax_auth_protocol:
                 description:
                     - WiMax authentication protocol(TLS or TTLS).
+                type: str
                 choices:
                     - tls
                     - ttls
-            wimax-carrier:
+            wimax_carrier:
                 description:
                     - WiMax carrier.
-            wimax-realm:
+                type: str
+            wimax_realm:
                 description:
                     - WiMax realm.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -251,6 +311,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Extender controller configuration.
     fortios_extender_controller_extender:
@@ -258,45 +319,46 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
+      https: "False"
+      state: "present"
       extender_controller_extender:
-        state: "present"
-        aaa-shared-secret: "<your_own_value>"
-        access-point-name: "<your_own_value>"
+        aaa_shared_secret: "<your_own_value>"
+        access_point_name: "<your_own_value>"
         admin: "disable"
-        at-dial-script: "<your_own_value>"
-        billing-start-day: "7"
-        cdma-aaa-spi: "<your_own_value>"
-        cdma-ha-spi: "<your_own_value>"
-        cdma-nai: "<your_own_value>"
-        conn-status: "11"
+        at_dial_script: "<your_own_value>"
+        billing_start_day: "7"
+        cdma_aaa_spi: "<your_own_value>"
+        cdma_ha_spi: "<your_own_value>"
+        cdma_nai: "<your_own_value>"
+        conn_status: "11"
         description: "<your_own_value>"
-        dial-mode: "dial-on-demand"
-        dial-status: "14"
-        ext-name: "<your_own_value>"
-        ha-shared-secret: "<your_own_value>"
+        dial_mode: "dial-on-demand"
+        dial_status: "14"
+        ext_name: "<your_own_value>"
+        ha_shared_secret: "<your_own_value>"
         id:  "17"
         ifname: "<your_own_value>"
-        initiated-update: "enable"
+        initiated_update: "enable"
         mode: "standalone"
-        modem-passwd: "<your_own_value>"
-        modem-type: "cdma"
-        multi-mode: "auto"
-        ppp-auth-protocol: "auto"
-        ppp-echo-request: "enable"
-        ppp-password: "<your_own_value>"
-        ppp-username: "<your_own_value>"
-        primary-ha: "<your_own_value>"
-        quota-limit-mb: "29"
+        modem_passwd: "<your_own_value>"
+        modem_type: "cdma"
+        multi_mode: "auto"
+        ppp_auth_protocol: "auto"
+        ppp_echo_request: "enable"
+        ppp_password: "<your_own_value>"
+        ppp_username: "<your_own_value>"
+        primary_ha: "<your_own_value>"
+        quota_limit_mb: "29"
         redial: "none"
-        redundant-intf: "<your_own_value>"
+        redundant_intf: "<your_own_value>"
         roaming: "enable"
         role: "none"
-        secondary-ha: "<your_own_value>"
-        sim-pin: "<your_own_value>"
+        secondary_ha: "<your_own_value>"
+        sim_pin: "<your_own_value>"
         vdom: "36"
-        wimax-auth-protocol: "tls"
-        wimax-carrier: "<your_own_value>"
-        wimax-realm: "<your_own_value>"
+        wimax_auth_protocol: "tls"
+        wimax_carrier: "<your_own_value>"
+        wimax_realm: "<your_own_value>"
 '''
 
 RETURN = '''
@@ -359,14 +421,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -374,23 +438,23 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_extender_controller_extender_data(json):
-    option_list = ['aaa-shared-secret', 'access-point-name', 'admin',
-                   'at-dial-script', 'billing-start-day', 'cdma-aaa-spi',
-                   'cdma-ha-spi', 'cdma-nai', 'conn-status',
-                   'description', 'dial-mode', 'dial-status',
-                   'ext-name', 'ha-shared-secret', 'id',
-                   'ifname', 'initiated-update', 'mode',
-                   'modem-passwd', 'modem-type', 'multi-mode',
-                   'ppp-auth-protocol', 'ppp-echo-request', 'ppp-password',
-                   'ppp-username', 'primary-ha', 'quota-limit-mb',
-                   'redial', 'redundant-intf', 'roaming',
-                   'role', 'secondary-ha', 'sim-pin',
-                   'vdom', 'wimax-auth-protocol', 'wimax-carrier',
-                   'wimax-realm']
+    option_list = ['aaa_shared_secret', 'access_point_name', 'admin',
+                   'at_dial_script', 'billing_start_day', 'cdma_aaa_spi',
+                   'cdma_ha_spi', 'cdma_nai', 'conn_status',
+                   'description', 'dial_mode', 'dial_status',
+                   'ext_name', 'ha_shared_secret', 'id',
+                   'ifname', 'initiated_update', 'mode',
+                   'modem_passwd', 'modem_type', 'multi_mode',
+                   'ppp_auth_protocol', 'ppp_echo_request', 'ppp_password',
+                   'ppp_username', 'primary_ha', 'quota_limit_mb',
+                   'redial', 'redundant_intf', 'roaming',
+                   'role', 'secondary_ha', 'sim_pin',
+                   'vdom', 'wimax_auth_protocol', 'wimax_carrier',
+                   'wimax_realm']
     dictionary = {}
 
     for attribute in option_list:
@@ -400,101 +464,126 @@ def filter_extender_controller_extender_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def extender_controller_extender(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['extender_controller_extender'] and data['extender_controller_extender']:
+        state = data['extender_controller_extender']['state']
+    else:
+        state = True
     extender_controller_extender_data = data['extender_controller_extender']
-    filtered_data = filter_extender_controller_extender_data(extender_controller_extender_data)
-    if extender_controller_extender_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_extender_controller_extender_data(extender_controller_extender_data))
+
+    if state == "present":
         return fos.set('extender-controller',
                        'extender',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif extender_controller_extender_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('extender-controller',
                           'extender',
                           mkey=filtered_data['id'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_extender_controller(data, fos):
-    login(data)
 
-    methodlist = ['extender_controller_extender']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['extender_controller_extender']:
+        resp = extender_controller_extender(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
-        "https": {"required": False, "type": "bool", "default": "False"},
+        "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "extender_controller_extender": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "aaa-shared-secret": {"required": False, "type": "str"},
-                "access-point-name": {"required": False, "type": "str"},
+                "aaa_shared_secret": {"required": False, "type": "str"},
+                "access_point_name": {"required": False, "type": "str"},
                 "admin": {"required": False, "type": "str",
                           "choices": ["disable", "discovered", "enable"]},
-                "at-dial-script": {"required": False, "type": "str"},
-                "billing-start-day": {"required": False, "type": "int"},
-                "cdma-aaa-spi": {"required": False, "type": "str"},
-                "cdma-ha-spi": {"required": False, "type": "str"},
-                "cdma-nai": {"required": False, "type": "str"},
-                "conn-status": {"required": False, "type": "int"},
+                "at_dial_script": {"required": False, "type": "str"},
+                "billing_start_day": {"required": False, "type": "int"},
+                "cdma_aaa_spi": {"required": False, "type": "str"},
+                "cdma_ha_spi": {"required": False, "type": "str"},
+                "cdma_nai": {"required": False, "type": "str"},
+                "conn_status": {"required": False, "type": "int"},
                 "description": {"required": False, "type": "str"},
-                "dial-mode": {"required": False, "type": "str",
+                "dial_mode": {"required": False, "type": "str",
                               "choices": ["dial-on-demand", "always-connect"]},
-                "dial-status": {"required": False, "type": "int"},
-                "ext-name": {"required": False, "type": "str"},
-                "ha-shared-secret": {"required": False, "type": "str"},
+                "dial_status": {"required": False, "type": "int"},
+                "ext_name": {"required": False, "type": "str"},
+                "ha_shared_secret": {"required": False, "type": "str"},
                 "id": {"required": True, "type": "str"},
                 "ifname": {"required": False, "type": "str"},
-                "initiated-update": {"required": False, "type": "str",
+                "initiated_update": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
                 "mode": {"required": False, "type": "str",
                          "choices": ["standalone", "redundant"]},
-                "modem-passwd": {"required": False, "type": "str"},
-                "modem-type": {"required": False, "type": "str",
+                "modem_passwd": {"required": False, "type": "str"},
+                "modem_type": {"required": False, "type": "str",
                                "choices": ["cdma", "gsm/lte", "wimax"]},
-                "multi-mode": {"required": False, "type": "str",
+                "multi_mode": {"required": False, "type": "str",
                                "choices": ["auto", "auto-3g", "force-lte",
                                            "force-3g", "force-2g"]},
-                "ppp-auth-protocol": {"required": False, "type": "str",
+                "ppp_auth_protocol": {"required": False, "type": "str",
                                       "choices": ["auto", "pap", "chap"]},
-                "ppp-echo-request": {"required": False, "type": "str",
+                "ppp_echo_request": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "ppp-password": {"required": False, "type": "str"},
-                "ppp-username": {"required": False, "type": "str"},
-                "primary-ha": {"required": False, "type": "str"},
-                "quota-limit-mb": {"required": False, "type": "int"},
+                "ppp_password": {"required": False, "type": "str"},
+                "ppp_username": {"required": False, "type": "str"},
+                "primary_ha": {"required": False, "type": "str"},
+                "quota_limit_mb": {"required": False, "type": "int"},
                 "redial": {"required": False, "type": "str",
                            "choices": ["none", "1", "2",
                                        "3", "4", "5",
                                        "6", "7", "8",
                                        "9", "10"]},
-                "redundant-intf": {"required": False, "type": "str"},
+                "redundant_intf": {"required": False, "type": "str"},
                 "roaming": {"required": False, "type": "str",
                             "choices": ["enable", "disable"]},
                 "role": {"required": False, "type": "str",
                          "choices": ["none", "primary", "secondary"]},
-                "secondary-ha": {"required": False, "type": "str"},
-                "sim-pin": {"required": False, "type": "str"},
+                "secondary_ha": {"required": False, "type": "str"},
+                "sim_pin": {"required": False, "type": "str"},
                 "vdom": {"required": False, "type": "int"},
-                "wimax-auth-protocol": {"required": False, "type": "str",
+                "wimax_auth_protocol": {"required": False, "type": "str",
                                         "choices": ["tls", "ttls"]},
-                "wimax-carrier": {"required": False, "type": "str"},
-                "wimax-realm": {"required": False, "type": "str"}
+                "wimax_carrier": {"required": False, "type": "str"},
+                "wimax_realm": {"required": False, "type": "str"}
 
             }
         }
@@ -502,15 +591,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_extender_controller(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_extender_controller(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_extender_controller(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

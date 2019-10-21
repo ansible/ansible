@@ -39,12 +39,6 @@ class ShellBase(AnsiblePlugin):
         super(ShellBase, self).__init__()
 
         self.env = {}
-        if C.DEFAULT_MODULE_SET_LOCALE:
-            module_locale = C.DEFAULT_MODULE_LANG
-            self.env = {'LANG': module_locale,
-                        'LC_ALL': module_locale,
-                        'LC_MESSAGES': module_locale}
-
         self.tmpdir = None
         self.executable = None
 
@@ -221,3 +215,7 @@ class ShellBase(AnsiblePlugin):
     def wrap_for_exec(self, cmd):
         """wrap script execution with any necessary decoration (eg '&' for quoted powershell script paths)"""
         return cmd
+
+    def quote(self, cmd):
+        """Returns a shell-escaped string that can be safely used as one token in a shell command line"""
+        return shlex_quote(cmd)

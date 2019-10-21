@@ -1,0 +1,68 @@
+---
+- name: Create servers and test cloudscale inventory plugin
+  hosts: localhost
+  gather_facts: False
+  roles:
+    - cloudscale_common
+  tasks:
+    - block:
+        - import_tasks: setup.yml
+
+        - import_tasks: change-inventory-config.yml
+          vars:
+            inventory_config: inventory-public.yml
+
+        - import_tasks: common-asserts.yml
+          vars:
+            identifier: 'name'
+            inventory: 'Public v4'
+
+        - name: Verify inventory with public IP
+          assert:
+            that:
+              # Test ansible_host setting
+              - server_public.interfaces.0.addresses.0.address
+                == hostvars[server_public.name].ansible_host
+              - server_public_private.interfaces.0.addresses.0.address
+                == hostvars[server_public_private.name].ansible_host
+              - '"ansible_host" not in hostvars[server_private.name]'
+
+        - import_tasks: change-inventory-config.yml
+          vars:
+            inventory_config: inventory-private.yml
+
+        - import_tasks: common-asserts.yml
+          vars:
+            identifier: 'name'
+            inventory: 'Private v4'
+
+        - name: Verify inventory with private IP
+          assert:
+            that:
+              # Test ansible_host setting
+              - '"ansible_host" not in hostvars[server_public.name]'
+              - server_private.interfaces.0.addresses.0.address
+                == hostvars[server_private.name].ansible_host
+              - server_public_private.interfaces.1.addresses.0.address
+                == hostvars[server_public_private.name].ansible_host
+
+        - import_tasks: change-inventory-config.yml
+          vars:
+            inventory_config: inventory-uuid.yml
+
+        - import_tasks: common-asserts.yml
+          vars:
+            identifier: 'uuid'
+            inventory: 'UUID'
+
+        - name: Verify inventory with UUID
+          assert:
+            that:
+              # Test server name groups
+              - groups[server_public.name | safe_group_name] == [server_public.uuid]
+              - groups[server_private.name | safe_group_name] == [server_private.uuid]
+              - groups[server_public_private.name | safe_group_name] == [server_public_private.uuid]
+              - groups[server_unsafe_chars.name | safe_group_name] == [server_unsafe_chars.uuid]
+
+      always:
+        - import_tasks: cleanup.yml

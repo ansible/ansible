@@ -1,36 +1,36 @@
 ---
 # Setup tests
-- name: gather facts on host for use with later tests
-  setup:
+# Use single task to save on CI runtime
+- name: create test files
+  win_shell: |
+    $folders = @(
+        "folder",
+        "folder\folder1",
+        "folder\folder2",
+        "folder with space",
+        "folder with space\folder1",
+        "folder with space\folder2"
+    )
+    $tmp_dir = '{{ test_win_owner_path }}'
+    if (Test-Path -LiteralPath $tmp_dir) {
+        Remove-Item -LiteralPath $tmp_dir -Force -Recurse
+    }
+    New-Item -Path $tmp_dir -ItemType Directory
 
-- name: remove test path to ensure baseline
-  win_file:
-    path: "{{test_win_owner_path}}"
-    state: absent
-
-- name: create test paths
-  win_file:
-    path: "{{test_win_owner_path}}\\{{item}}"
-    state: directory
-  with_items:
-  - folder
-  - folder\folder1
-  - folder\folder2
-  - folder with space
-  - folder with space\folder1
-  - folder with space\folder2
-
-- name: create system test files
-  win_copy:
-    dest: "{{test_win_owner_path}}\\{{item}}"
-    content: content
-  with_items:
-  - folder\file.txt
-  - folder\folder1\file.txt
-  - folder\folder2\file.txt
-  - folder with space\file.txt
-  - folder with space\folder1\file.txt
-  - folder with space\folder2\file.txt
+    foreach ($folder in $folders) {
+        New-Item -Path "$tmp_dir\$folder" -ItemType Directory
+    }
+    $files = @(
+        "folder\file.txt",
+        "folder\folder1\file.txt",
+        "folder\folder2\file.txt",
+        "folder with space\file.txt",
+        "folder with space\folder1\file.txt",
+        "folder with space\folder2\file.txt"
+    )
+    foreach ($file in $files) {
+        Set-Content -LiteralPath "$tmp_dir\$file" -Value "content"
+    }
 
 # Run win_owner tests
 - name: set owner for invalid path
@@ -55,7 +55,7 @@
   check_mode: True
 
 - name: get owner of folder of set owner defaults check
-  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\folder').Owner"
+  win_shell: (Get-Acl -LiteralPath '{{test_win_owner_path}}\\folder').Owner
   register: actual_defaults_check
 
 - name: assert set owner defaults check
@@ -71,7 +71,7 @@
   register: defaults
 
 - name: get owner of folder of set owner defaults
-  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\folder').Owner"
+  win_shell: (Get-Acl -LiteralPath '{{test_win_owner_path}}\\folder').Owner
   register: actual_defaults
 
 - name: assert set owner defaults
@@ -86,15 +86,10 @@
     user: SYSTEM
   register: defaults_again
 
-- name: get owner of folder of set owner defaults again
-  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\folder').Owner"
-  register: actual_defaults_again
-
 - name: assert set owner defaults again
   assert:
     that:
     - defaults_again is not changed
-    - actual_defaults_again.stdout_lines[0] == 'NT AUTHORITY\SYSTEM'
 
 - name: set owner recurse check
   win_owner:
@@ -105,7 +100,7 @@
   check_mode: True
 
 - name: get owner of folder of set owner recurse check
-  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\{{item.path}}').Owner"
+  win_shell: (Get-Acl -LiteralPath '{{test_win_owner_path}}\\{{item.path}}').Owner
   register: actual_recurse_check
   failed_when: actual_recurse_check.stdout_lines[0] != item.owner
   with_items:
@@ -129,7 +124,7 @@
   register: recurse
 
 - name: get owner of folder of set owner recurse
-  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\{{item}}').Owner"
+  win_shell: (Get-Acl -LiteralPath '{{test_win_owner_path}}\\{{item}}').Owner
   register: actual_recurse
   failed_when: actual_recurse.stdout_lines[0] != 'NT AUTHORITY\SYSTEM'
   with_items:
@@ -152,18 +147,6 @@
     recurse: True
   register: recurse_again
 
-- name: get owner of folder of set owner recurse again
-  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\{{item}}').Owner"
-  register: actual_recurse_again
-  failed_when: actual_recurse_again.stdout_lines[0] != 'NT AUTHORITY\SYSTEM'
-  with_items:
-  - folder
-  - folder\file.txt
-  - folder\folder1
-  - folder\folder1\file.txt
-  - folder\folder2
-  - folder\folder2\file.txt
-
 - name: assert set owner recurse again
   assert:
     that:
@@ -173,6 +156,7 @@
   win_user:
     name: test win owner
     password: E1K0-O8b1-c8M9-c6D5
+  register: test_user
 
 - name: set owner with space recurse
   win_owner:
@@ -182,9 +166,12 @@
   register: recurse_space
 
 - name: get owner of folder of set owner with space recurse
-  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\{{item}}').Owner"
+  win_shell: |
+    $owner = (Get-Acl -LiteralPath '{{ test_win_owner_path }}\{{ item }}').Owner
+    $account = New-Object -TypeName System.Security.Principal.NTAccount -ArgumentList $owner
+    $account.Translate([System.Security.Principal.SecurityIdentifier]).Value
   register: actual_recurse_space
-  failed_when: actual_recurse_space.stdout_lines[0]|upper != ansible_hostname|upper + '\\TEST WIN OWNER'
+  failed_when: actual_recurse_space.stdout_lines[0] != test_user.sid
   with_items:
   - folder with space
   - folder with space\file.txt
@@ -204,18 +191,6 @@
     user: test win owner
     recurse: True
   register: recurse_space_again
-
-- name: get owner of folder of set owner with space recurse again
-  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\{{item}}').Owner"
-  register: actual_recurse_space_again
-  failed_when: actual_recurse_space_again.stdout_lines[0]|upper != ansible_hostname|upper + '\\TEST WIN OWNER'
-  with_items:
-  - folder with space
-  - folder with space\file.txt
-  - folder with space\folder1
-  - folder with space\folder1\file.txt
-  - folder with space\folder2
-  - folder with space\folder2\file.txt
 
 - name: assert set owner with space recurse again
   assert:

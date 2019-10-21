@@ -63,6 +63,7 @@ namespace Ansible.Basic
             { "selinux_special_fs", null },
             { "shell_executable", null },
             { "socket", null },
+            { "string_conversion_action", null },
             { "syslog_facility", null },
             { "tmpdir", "tmpdir" },
             { "verbosity", "Verbosity" },
@@ -83,6 +84,7 @@ namespace Ansible.Basic
             { "options", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
             { "removed_in_version", new List<object>() { null, typeof(string) } },
             { "required", new List<object>() { false, typeof(bool) } },
+            { "required_by", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
             { "required_if", new List<object>() { typeof(List<List<object>>), null } },
             { "required_one_of", new List<object>() { typeof(List<List<string>>), null } },
             { "required_together", new List<object>() { typeof(List<List<string>>), null } },
@@ -302,7 +304,8 @@ namespace Ansible.Basic
                 }
                 catch (System.Security.SecurityException)
                 {
-                    Warn(String.Format("Access error when creating EventLog source {0}, logging to the Application source instead", logSource));
+                    // Cannot call Warn as that calls LogEvent and we get stuck in a loop
+                    warnings.Add(String.Format("Access error when creating EventLog source {0}, logging to the Application source instead", logSource));
                     logSource = "Application";
                 }
             }
@@ -313,7 +316,16 @@ namespace Ansible.Basic
             using (EventLog eventLog = new EventLog("Application"))
             {
                 eventLog.Source = logSource;
-                eventLog.WriteEntry(message, logEntryType, 0);
+                try
+                {
+                    eventLog.WriteEntry(message, logEntryType, 0);
+                }
+                catch (System.InvalidOperationException) { }  // Ignore permission errors on the Application event log
+                catch (System.Exception e)
+                {
+                    // Cannot call Warn as that calls LogEvent and we get stuck in a loop
+                    warnings.Add(String.Format("Unknown error when creating event log entry: {0}", e.Message));
+                }
             }
         }
 
@@ -323,7 +335,7 @@ namespace Ansible.Basic
             LogEvent(String.Format("[WARNING] {0}", message), EventLogEntryType.Warning);
         }
 
-        public static Dictionary<string, object> FromJson(string json) { return FromJson<Dictionary<string, object>>(json); }
+        public static object FromJson(string json) { return FromJson<object>(json); }
         public static T FromJson<T>(string json)
         {
 #if CORECLR
@@ -364,7 +376,7 @@ namespace Ansible.Basic
             if (args.Length > 0)
             {
                 string inputJson = File.ReadAllText(args[0]);
-                Dictionary<string, object> rawParams = FromJson(inputJson);
+                Dictionary<string, object> rawParams = FromJson<Dictionary<string, object>>(inputJson);
                 if (!rawParams.ContainsKey("ANSIBLE_MODULE_ARGS"))
                     throw new ArgumentException("Module was unable to get ANSIBLE_MODULE_ARGS value from the argument path json");
                 return (IDictionary)rawParams["ANSIBLE_MODULE_ARGS"];
@@ -688,8 +700,9 @@ namespace Ansible.Basic
                 if ((bool)v["no_log"])
                 {
                     object noLogObject = parameters.Contains(k) ? parameters[k] : null;
-                    if (noLogObject != null)
-                        noLogValues.Add(noLogObject.ToString());
+                    string noLogString = noLogObject == null ? "" : noLogObject.ToString();
+                    if (!String.IsNullOrEmpty(noLogString))
+                        noLogValues.Add(noLogString);
                 }
 
                 object removedInVersion = v["removed_in_version"];
@@ -775,6 +788,8 @@ namespace Ansible.Basic
                                                        k, choiceMsg, String.Join(", ", choices), String.Join(", ", diffList));
                             FailJson(FormatOptionsContext(msg));
                         }
+                        /*
+                        For now we will just silently accept case insensitive choices, uncomment this if we want to add it back in
                         else if (caseDiffList.Count > 0)
                         {
                             // For backwards compatibility with Legacy.psm1 we need to be matching choices that are not case sensitive.
@@ -784,7 +799,7 @@ namespace Ansible.Basic
                                 k, choiceMsg, String.Join(", ", choices), String.Join(", ", caseDiffList.Select(x => RemoveNoLogValues(x, noLogValues)))
                             );
                             Warn(FormatOptionsContext(msg));
-                        }
+                        }*/
                     }
                 }
             }
@@ -792,6 +807,7 @@ namespace Ansible.Basic
             CheckRequiredTogether(param, (IList)spec["required_together"]);
             CheckRequiredOneOf(param, (IList)spec["required_one_of"]);
             CheckRequiredIf(param, (IList)spec["required_if"]);
+            CheckRequiredBy(param, (IDictionary)spec["required_by"]);
 
             // finally ensure all missing parameters are set to null and handle sub options
             foreach (DictionaryEntry entry in optionSpec)
@@ -858,6 +874,8 @@ namespace Ansible.Basic
                 FailJson(msg);
             }
 
+            /*
+            // Uncomment when we want to start warning users around options that are not a case sensitive match to the spec
             if (caseUnsupportedParameters.Count > 0)
             {
                 legalInputs.RemoveAll(x => passVars.Keys.Contains(x.Replace("_ansible_", "")));
@@ -865,7 +883,7 @@ namespace Ansible.Basic
                 msg = String.Format("{0}. Module options will become case sensitive in a future Ansible release. Supported parameters include: {1}",
                     FormatOptionsContext(msg), String.Join(", ", legalInputs));
                 Warn(msg);
-            }
+            }*/
 
             // Make sure we convert all the incorrect case params to the ones set by the module spec
             foreach (string key in caseUnsupportedParameters)
@@ -1012,15 +1030,50 @@ namespace Ansible.Basic
             }
         }
 
+        private void CheckRequiredBy(IDictionary param, IDictionary requiredBy)
+        {
+            foreach (DictionaryEntry entry in requiredBy)
+            {
+                string key = (string)entry.Key;
+                if (!param.Contains(key))
+                    continue;
+
+                List<string> missing = new List<string>();
+                List<string> requires = ParseList(entry.Value).Cast<string>().ToList();
+                foreach (string required in requires)
+                    if (!param.Contains(required))
+                        missing.Add(required);
+
+                if (missing.Count > 0)
+                {
+                    string msg =  String.Format("missing parameter(s) required by '{0}': {1}", key, String.Join(", ", missing));
+                    FailJson(FormatOptionsContext(msg));
+                }
+            }
+        }
+
         private void CheckSubOption(IDictionary param, string key, IDictionary spec)
         {
+            object value = param[key];
+
             string type;
             if (spec["type"].GetType() == typeof(string))
                 type = (string)spec["type"];
             else
                 type = "delegate";
-            string elements = (string)spec["elements"];
-            object value = param[key];
+
+            string elements = null;
+            Delegate typeConverter = null;
+            if (spec["elements"] != null && spec["elements"].GetType() == typeof(string))
+            {
+                elements = (string)spec["elements"];
+                typeConverter = optionTypes[elements];
+            }
+            else if (spec["elements"] != null)
+            {
+                elements = "delegate";
+                typeConverter = (Delegate)spec["elements"];
+            }
 
             if (!(type == "dict" || (type == "list" && elements != null)))
                 // either not a dict, or list with the elements set, so continue
@@ -1032,7 +1085,6 @@ namespace Ansible.Basic
                     return;
 
                 List<object> newValue = new List<object>();
-                Delegate typeConverter = optionTypes[elements];
                 foreach (object element in (List<object>)value)
                 {
                     if (elements == "dict")
@@ -1208,7 +1260,7 @@ namespace Ansible.Basic
                     return "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER";
                 foreach (string omitMe in noLogStrings)
                     if (stringValue.Contains(omitMe))
-                        return (stringValue).Replace(omitMe, new String('*', omitMe.Length));
+                        return (stringValue).Replace(omitMe, "********");
                 value = stringValue;
             }
             return value;

@@ -515,11 +515,11 @@ def main():
 
         if mode == 'access' and state == 'present' and not access_vlan:
             msg = 'access_vlan param required for mode=access && state=present'
-            module.fail_json(msg)
+            module.fail_json(msg=msg)
 
         if mode == 'trunk' and access_vlan:
             msg = 'access_vlan param not supported when using mode=trunk'
-            module.fail_json(msg)
+            module.fail_json(msg=msg)
 
         if not is_switchport(name, module):
             module.fail_json(msg='Ensure interface is configured to be a L2'
@@ -538,7 +538,7 @@ def main():
         # If there isn't an existing, something is wrong per previous comment
         if not existing:
             msg = 'Make sure you are using the FULL interface name'
-            module.fail_json(msg)
+            module.fail_json(msg=msg)
 
         if trunk_vlans or trunk_allowed_vlans:
             if trunk_vlans:

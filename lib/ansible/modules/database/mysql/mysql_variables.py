@@ -1,49 +1,66 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Balazs Pocze <banyek@gawker.com>
+# Copyright: (c) 2013, Balazs Pocze <banyek@gawker.com>
 # Certain parts are taken from Mark Theunissen's mysqldb module
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: mysql_variables
 
 short_description: Manage MySQL global variables
 description:
-    - Query / Set MySQL variables
+- Query / Set MySQL variables.
 version_added: 1.3
-author: "Balazs Pocze (@banyek)"
+author:
+- Balazs Pocze (@banyek)
 options:
-    variable:
-        description:
-            - Variable name to operate
-        required: True
-    value:
-        description:
-            - If set, then sets variable value to this
-        required: False
-extends_documentation_fragment: mysql
+  variable:
+    description:
+    - Variable name to operate
+    type: str
+    required: yes
+  value:
+    description:
+    - If set, then sets variable value to this
+    type: str
+
+seealso:
+- module: mysql_info
+- name: MySQL SET command reference
+  description: Complete reference of the MySQL SET command documentation.
+  link: https://dev.mysql.com/doc/refman/8.0/en/set-statement.html
+
+extends_documentation_fragment:
+- mysql
 '''
-EXAMPLES = '''
-# Check for sync_binlog setting
-- mysql_variables:
+
+EXAMPLES = r'''
+- name: Check for sync_binlog setting
+  mysql_variables:
     variable: sync_binlog
 
-# Set read_only variable to 1
-- mysql_variables:
+- name: Set read_only variable to 1
+  mysql_variables:
     variable: read_only
     value: 1
+'''
+
+RETURN = r'''
+queries:
+  description: List of executed queries which modified DB's state.
+  returned: if executed
+  type: list
+  sample: ["SET GLOBAL `read_only` = 1"]
+  version_added: '2.10'
 '''
 
 import os
@@ -54,6 +71,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, mysql_quote_identifier
 from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
+
+executed_queries = []
 
 
 def typedvalue(value):
@@ -102,6 +121,7 @@ def setvariable(cursor, mysqlvar, value):
     query = "SET GLOBAL %s = " % mysql_quote_identifier(mysqlvar, 'vars')
     try:
         cursor.execute(query + "%s", (value,))
+        executed_queries.append(query + "%s" % value)
         cursor.fetchall()
         result = True
     except Exception as e:
@@ -112,26 +132,26 @@ def setvariable(cursor, mysqlvar, value):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            login_user=dict(default=None),
-            login_password=dict(default=None, no_log=True),
-            login_host=dict(default="localhost"),
-            login_port=dict(default=3306, type='int'),
-            login_unix_socket=dict(default=None),
-            variable=dict(default=None),
-            value=dict(default=None),
-            ssl_cert=dict(default=None),
-            ssl_key=dict(default=None),
-            ssl_ca=dict(default=None),
-            connect_timeout=dict(default=30, type='int'),
-            config_file=dict(default="~/.my.cnf", type="path")
-        )
+            login_user=dict(type='str'),
+            login_password=dict(type='str', no_log=True),
+            login_host=dict(type='str', default='localhost'),
+            login_port=dict(type='int', default=3306),
+            login_unix_socket=dict(type='str'),
+            variable=dict(type='str'),
+            value=dict(type='str'),
+            client_cert=dict(type='path', aliases=['ssl_cert']),
+            client_key=dict(type='path', aliases=['ssl_key']),
+            ca_cert=dict(type='path', aliases=['ssl_ca']),
+            connect_timeout=dict(type='int', default=30),
+            config_file=dict(type='path', default='~/.my.cnf'),
+        ),
     )
     user = module.params["login_user"]
     password = module.params["login_password"]
-    ssl_cert = module.params["ssl_cert"]
-    ssl_key = module.params["ssl_key"]
-    ssl_ca = module.params["ssl_ca"]
     connect_timeout = module.params['connect_timeout']
+    ssl_cert = module.params["client_cert"]
+    ssl_key = module.params["client_key"]
+    ssl_ca = module.params["ca_cert"]
     config_file = module.params['config_file']
     db = 'mysql'
 
@@ -151,8 +171,9 @@ def main():
                                connect_timeout=connect_timeout)
     except Exception as e:
         if os.path.exists(config_file):
-            module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
-                                 "Exception message: %s" % (config_file, to_native(e)))
+            module.fail_json(msg=("unable to connect to database, check login_user and "
+                                  "login_password are correct or %s has the credentials. "
+                                  "Exception message: %s" % (config_file, to_native(e))))
         else:
             module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, to_native(e)))
 
@@ -173,7 +194,8 @@ def main():
             result = to_native(e)
 
         if result is True:
-            module.exit_json(msg="Variable change succeeded prev_value=%s" % value_actual, changed=True)
+            module.exit_json(msg="Variable change succeeded prev_value=%s" % value_actual,
+                             changed=True, queries=executed_queries)
         else:
             module.fail_json(msg=result, changed=False)
 

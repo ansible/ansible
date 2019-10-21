@@ -1,0 +1,56 @@
+---
+- debug:
+    msg: "Start nxos_vlans merged integration tests connection={{ ansible_connection }}"
+
+- name: setup
+  cli_config: &cleanup
+    config: |
+      no vlan 5
+      no vlan 6
+
+- block:
+  - name: Merged
+    nxos_vlans: &merged
+      config:
+        - vlan_id: 5
+          name: vlan5
+        - vlan_id: 6
+          name: vlan6
+          state: suspend
+      state:  merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "result.before|length == 0"
+        - "'vlan 5' in result.commands"
+        - "'name vlan5' in result.commands"
+        - "'vlan 6' in result.commands"
+        - "'name vlan6' in result.commands"
+        - "'state suspend' in result.commands"
+        - "result.commands|length == 5"
+
+  - name: Gather vlans facts
+    nxos_facts:
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: vlans
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.vlans|symmetric_difference(result.after)|length == 0"
+
+  - name: Idempotence - Merged
+    nxos_vlans: *merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *cleanup

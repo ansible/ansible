@@ -27,12 +27,12 @@ from ansible.cli.console import ConsoleCLI
 
 class TestConsoleCLI(unittest.TestCase):
     def test_parse(self):
-        cli = ConsoleCLI([])
+        cli = ConsoleCLI(['ansible test'])
         cli.parse()
         self.assertTrue(cli.parser is not None)
 
     def test_module_args(self):
-        cli = ConsoleCLI([])
+        cli = ConsoleCLI(['ansible test'])
         cli.parse()
         res = cli.module_args('copy')
         self.assertTrue(cli.parser is not None)
@@ -42,7 +42,7 @@ class TestConsoleCLI(unittest.TestCase):
 
     @patch('ansible.utils.display.Display.display')
     def test_helpdefault(self, mock_display):
-        cli = ConsoleCLI([])
+        cli = ConsoleCLI(['ansible test'])
         cli.parse()
         cli.modules = set(['copy'])
         cli.helpdefault('copy')

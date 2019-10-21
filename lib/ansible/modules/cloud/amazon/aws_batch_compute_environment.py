@@ -34,7 +34,6 @@ options:
   state:
     description:
       - Describes the desired state.
-    required: true
     default: "present"
     choices: ["present", "absent"]
 

@@ -39,6 +39,7 @@ DOCUMENTATION = """
 """
 
 import distutils.spawn
+import fcntl
 import os
 import os.path
 import subprocess
@@ -47,6 +48,7 @@ import re
 from distutils.version import LooseVersion
 
 import ansible.constants as C
+from ansible.compat import selectors
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -82,7 +84,9 @@ class Connection(ConnectionBase):
                 raise AnsibleError("docker command not found in PATH")
 
         docker_version = self._get_docker_version()
-        if LooseVersion(docker_version) < LooseVersion(u'1.3'):
+        if docker_version == u'dev':
+            display.warning(u'Docker version number is "dev". Will assume latest version.')
+        if docker_version != u'dev' and LooseVersion(docker_version) < LooseVersion(u'1.3'):
             raise AnsibleError('docker connection type requires docker 1.3 or higher')
 
         # The remote user we will request from docker (if supported)
@@ -91,7 +95,7 @@ class Connection(ConnectionBase):
         self.actual_user = None
 
         if self._play_context.remote_user is not None:
-            if LooseVersion(docker_version) >= LooseVersion(u'1.7'):
+            if docker_version == u'dev' or LooseVersion(docker_version) >= LooseVersion(u'1.7'):
                 # Support for specifying the exec user was added in docker 1.7
                 self.remote_user = self._play_context.remote_user
                 self.actual_user = self.remote_user
@@ -203,12 +207,57 @@ class Connection(ConnectionBase):
 
         local_cmd = self._build_exec_cmd([self._play_context.executable, '-c', cmd])
 
-        display.vvv("EXEC %s" % (local_cmd,), host=self._play_context.remote_addr)
-        local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
-        p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        display.vvv(u"EXEC {0}".format(to_text(local_cmd)), host=self._play_context.remote_addr)
+        display.debug("opening command with Popen()")
 
+        local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
+
+        p = subprocess.Popen(
+            local_cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        display.debug("done running command with Popen()")
+
+        if self.become and self.become.expect_prompt() and sudoable:
+            fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
+            fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
+            selector = selectors.DefaultSelector()
+            selector.register(p.stdout, selectors.EVENT_READ)
+            selector.register(p.stderr, selectors.EVENT_READ)
+
+            become_output = b''
+            try:
+                while not self.become.check_success(become_output) and not self.become.check_password_prompt(become_output):
+                    events = selector.select(self._play_context.timeout)
+                    if not events:
+                        stdout, stderr = p.communicate()
+                        raise AnsibleError('timeout waiting for privilege escalation password prompt:\n' + to_native(become_output))
+
+                    for key, event in events:
+                        if key.fileobj == p.stdout:
+                            chunk = p.stdout.read()
+                        elif key.fileobj == p.stderr:
+                            chunk = p.stderr.read()
+
+                    if not chunk:
+                        stdout, stderr = p.communicate()
+                        raise AnsibleError('privilege output closed while waiting for password prompt:\n' + to_native(become_output))
+                    become_output += chunk
+            finally:
+                selector.close()
+
+            if not self.become.check_success(become_output):
+                p.stdin.write(to_bytes(self._play_context.become_pass, errors='surrogate_or_strict') + b'\n')
+            fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
+            fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
+
+        display.debug("getting output with communicate()")
         stdout, stderr = p.communicate(in_data)
+        display.debug("done communicating")
+
+        display.debug("done with docker.exec_command()")
         return (p.returncode, stdout, stderr)
 
     def _prefix_login_path(self, remote_path):

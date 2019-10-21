@@ -1,0 +1,3 @@
+bugfixes:
+- purefa_info - Add support for Cloud Block Store (https://github.com/ansible/ansible/pull/62068)
+- purefa_host - Add support for Cloud Block Store (https://github.com/ansible/ansible/pull/62068)

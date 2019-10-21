@@ -27,14 +27,17 @@ options:
         BIG-IQ does not require this, this module does. If you do not do this,
         the behavior of the module is undefined and you may end up putting
         licenses in the wrong registration key pool.
+    type: str
     required: True
   license_key:
     description:
       - The license key to put in the pool.
+    type: str
     required: True
   description:
     description:
       - Description of the license.
+    type: str
   accept_eula:
     description:
       - A key that signifies that you accept the F5 EULA for this license.
@@ -46,10 +49,11 @@ options:
       - The state of the regkey license in the pool on the system.
       - When C(present), guarantees that the license exists in the pool.
       - When C(absent), removes the license from the pool.
-    default: present
+    type: str
     choices:
       - absent
       - present
+    default: present
 requirements:
   - BIG-IQ >= 5.3.0
 extends_documentation_fragment: f5
@@ -98,17 +102,11 @@ try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
 except ImportError:
     from ansible.module_utils.network.f5.bigiq import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -222,7 +220,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(client=self.client, params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -472,16 +470,12 @@ def main():
         required_if=spec.required_if,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

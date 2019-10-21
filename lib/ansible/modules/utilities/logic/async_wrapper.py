@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
+# Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -148,7 +148,8 @@ def _run_module(wrapped_cmd, jid, job_path):
         interpreter = _get_interpreter(cmd[0])
         if interpreter:
             cmd = interpreter + cmd
-        script = subprocess.Popen(cmd, shell=False, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        script = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
 
         (outdata, stderr) = script.communicate()
         if PY3:
@@ -198,8 +199,7 @@ def _run_module(wrapped_cmd, jid, job_path):
     os.rename(tmp_job_path, job_path)
 
 
-if __name__ == '__main__':
-
+def main():
     if len(sys.argv) < 5:
         print(json.dumps({
             "failed": True,
@@ -333,3 +333,7 @@ if __name__ == '__main__':
             "msg": "FATAL ERROR: %s" % e
         }))
         sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

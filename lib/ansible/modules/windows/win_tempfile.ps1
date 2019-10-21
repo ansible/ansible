@@ -8,6 +8,7 @@
 Function New-TempFile {
     Param ([string]$path, [string]$prefix, [string]$suffix, [string]$type, [bool]$checkmode)
     $temppath = $null
+    $curerror = $null
     $attempt = 0
 
     # Since we don't know if the file already exists, we try 5 times with a random name
@@ -16,16 +17,23 @@ Function New-TempFile {
         $randomname = [System.IO.Path]::GetRandomFileName()
         $temppath = (Join-Path -Path $path -ChildPath "$prefix$randomname$suffix")
         Try {
-            New-Item -Path $temppath -ItemType $type -WhatIf:$checkmode | Out-Null
+            $file = New-Item -Path $temppath -ItemType $type -WhatIf:$checkmode
+            # Makes sure we get the full absolute path of the created temp file and not a relative or DOS 8.3 dir
+            if (-not $checkmode) {
+                $temppath = $file.FullName
+            } else {
+                # Just rely on GetFulLpath for check mode
+                $temppath = [System.IO.Path]::GetFullPath($temppath)
+            }
         } Catch {
             $temppath = $null
-            $error = $_
+            $curerror = $_
         }
     } until (($null -ne $temppath) -or ($attempt -ge 5))
 
     # If it fails 5 times, something is wrong and we have to report the details
     if ($null -eq $temppath) {
-        $module.FailJson("No random temporary file worked in $attempt attempts. Error: $($error.Exception.Message)", $error)
+        $module.FailJson("No random temporary file worked in $attempt attempts. Error: $($curerror.Exception.Message)", $curerror)
     }
 
     return $temppath.ToString()

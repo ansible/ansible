@@ -48,7 +48,8 @@ class TestNsoQuery(nso_module.TestNsoModule):
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc',
             'xpath': xpath,
-            'fields': fields
+            'fields': fields,
+            'validate_certs': False
         })
         self.execute_module(changed=False, output=[["test", "1.0"]])
 

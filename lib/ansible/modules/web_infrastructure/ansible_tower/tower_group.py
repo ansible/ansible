@@ -166,7 +166,7 @@ def main():
                 result = group.delete(**params)
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update the group, inventory not found: {0}'.format(excinfo), changed=False)
-        except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.NotFound, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update the group: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']

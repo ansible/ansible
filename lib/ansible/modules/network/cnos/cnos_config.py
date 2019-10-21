@@ -37,48 +37,8 @@ description:
     an implementation for working with CNOS configuration sections in
     a deterministic way.
 notes:
-  - Tested against CNOS 10.8.1
+  - Tested against CNOS 10.9.1
 options:
-  provider:
-    version_added: "2.6"
-    description:
-      - A dict object containing connection details.
-    suboptions:
-      host:
-        description:
-          - Specifies the DNS host name or address for connecting to the remote
-            device over the specified transport.  The value of host is used as
-            the destination address for the transport.
-        required: true
-      port:
-        description:
-          - Specifies the port to use when building the connection to the remote device.
-        default: 22
-      username:
-        description:
-          - Configures the username to use to authenticate the connection to
-            the remote device.  This value is used to authenticate
-            the SSH session. If the value is not specified in the task, the
-            value of environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
-      password:
-        description:
-          - Specifies the password to use to authenticate the connection to
-            the remote device.   This value is used to authenticate
-            the SSH session. If the value is not specified in the task, the
-            value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
-      timeout:
-        description:
-          - Specifies the timeout in seconds for communicating with the network device
-            for either connecting or sending commands.  If the timeout is
-            exceeded before the operation is completed, the module will error.
-        default: 10
-      ssh_keyfile:
-        description:
-          - Specifies the SSH key to use to authenticate the connection to
-            the remote device.   This value is the path to the
-            key used to authenticate the SSH session. If the value is not specified
-            in the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
-            will be used instead.
   lines:
     description:
       - The ordered set of commands that should be configured in the
@@ -231,7 +191,6 @@ backup_path:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cnos.cnos import load_config, get_config
-from ansible.module_utils.network.cnos.cnos import cnos_argument_spec
 from ansible.module_utils.network.cnos.cnos import check_args
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
@@ -319,8 +278,6 @@ def main():
         comment=dict(default=DEFAULT_COMMIT_COMMENT),
         admin=dict(type='bool', default=False)
     )
-
-    argument_spec.update(cnos_argument_spec)
 
     mutually_exclusive = [('lines', 'src'),
                           ('parents', 'src')]

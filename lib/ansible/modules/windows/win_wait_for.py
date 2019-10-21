@@ -61,7 +61,7 @@ options:
     description:
     - The port number to poll on C(host).
     type: int
-  search_regex:
+  regex:
     description:
     - Can be used to match a string in a file.
     - If C(state) is present or started then it will wait until the regex
@@ -69,6 +69,7 @@ options:
     - If C(state) is absent then it will wait until the regex does not match.
     - Defaults to a multiline regex.
     type: str
+    aliases: [ "search_regex", "regexp" ]
   sleep:
     description:
     - Number of seconds to sleep between checks.
@@ -124,7 +125,7 @@ EXAMPLES = r'''
 - name: Wait until process complete is in the file before continuing
   win_wait_for:
     path: C:\temp\log.txt
-    search_regex: process complete
+    regex: process complete
 
 - name: Wait until file is removed
   win_wait_for:

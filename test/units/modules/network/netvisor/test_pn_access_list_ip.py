@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_access_list_ip
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestAccessListIpModule(TestNvosModule):
@@ -50,12 +48,12 @@ class TestAccessListIpModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_ip': '172.16.3.1', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 access-list-ip-add name foo  ip 172.16.3.1'
+        expected_cmd = ' switch sw01 access-list-ip-add name foo  ip 172.16.3.1'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_access_list_ip_remove(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_ip': '172.16.3.1', 'state': 'absent'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 access-list-ip-remove name foo  ip 172.16.3.1'
+        expected_cmd = ' switch sw01 access-list-ip-remove name foo  ip 172.16.3.1'
         self.assertEqual(result['cli_cmd'], expected_cmd)

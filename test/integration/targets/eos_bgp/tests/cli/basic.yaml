@@ -1,0 +1,395 @@
+- debug: msg="START eos cli/eos_bgp.yaml on connection={{ ansible_connection }}"
+
+- name: Clear existing BGP config
+  eos_bgp: &rm
+    operation: delete
+  become: yes
+  ignore_errors: yes
+
+- name: Configure BGP with AS 64496 and a router-id
+  eos_bgp: &config
+    operation: merge
+    config:
+      bgp_as: 64496
+      router_id: 192.0.2.2
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'router bgp 64496' in result.commands"
+      - "'router-id 192.0.2.2' in result.commands"
+
+- name: Configure BGP with AS 64496 and a router-id (idempotent)
+  eos_bgp: *config
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Configure BGP neighbors
+  eos_bgp: &nbr
+    operation: merge
+    config:
+      bgp_as: 64496
+      neighbors:
+        - neighbor: 192.0.2.10
+          remote_as: 64496
+          description: IBGP_NBR_1
+          ebgp_multihop: 100
+          timers:
+            keepalive: 300
+            holdtime: 360
+
+        - neighbor: 192.0.2.15
+          remote_as: 64496
+          description: IBGP_NBR_2
+          ebgp_multihop: 150
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'router bgp 64496' in result.commands"
+      - "'neighbor 192.0.2.10 remote-as 64496' in result.commands"
+      - "'neighbor 192.0.2.10 description IBGP_NBR_1' in result.commands"
+      - "'neighbor 192.0.2.10 ebgp-multihop 100' in result.commands"
+      - "'neighbor 192.0.2.10 timers 300 360' in result.commands"
+      - "'neighbor 192.0.2.15 remote-as 64496' in result.commands"
+      - "'neighbor 192.0.2.15 description IBGP_NBR_2' in result.commands"
+      - "'neighbor 192.0.2.15 ebgp-multihop 150' in result.commands"
+
+- name: Configure BGP neighbors (idempotent)
+  eos_bgp: *nbr
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Configure BGP neighbors with operation replace
+  eos_bgp: &nbr_rplc
+    operation: replace
+    config:
+      bgp_as: 64496
+      neighbors:
+        - neighbor: 192.0.2.15
+          remote_as: 64496
+          description: IBGP_NBR_2
+          ebgp_multihop: 150
+
+        - neighbor: 203.0.113.10
+          remote_as: 64511
+          description: EBGP_NBR_1
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'neighbor 203.0.113.10 remote-as 64511' in result.commands"
+      - "'neighbor 203.0.113.10 description EBGP_NBR_1' in result.commands"
+      - "'no neighbor 192.0.2.10' in result.commands"
+
+- name: Configure BGP neighbors with operation replace (idempotent)
+  eos_bgp: *nbr_rplc
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Configure root-level networks for BGP
+  eos_bgp: &net
+    operation: merge
+    config:
+      bgp_as: 64496
+      networks:
+        - prefix: 203.0.113.0
+          masklen: 27
+          route_map: RMAP_1
+
+        - prefix: 203.0.113.32
+          masklen: 27
+          route_map: RMAP_2
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == True'
+      - "'router bgp 64496' in result.commands"
+      - "'network 203.0.113.0/27 route-map RMAP_1' in result.commands"
+      - "'network 203.0.113.32/27 route-map RMAP_2' in result.commands"
+
+- name: Configure root-level networks for BGP (idempotent)
+  eos_bgp: *net
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Configure root-level networks for BGP with operation replace
+  eos_bgp: &net_rplc
+    operation: replace
+    config:
+      bgp_as: 64496
+      networks:
+        - prefix: 203.0.113.0
+          masklen: 27
+          route_map: RMAP_1
+
+        - prefix: 198.51.100.16
+          masklen: 28
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == True'
+      - "'router bgp 64496' in result.commands"
+      - "'network 198.51.100.16/28' in result.commands"
+      - "'no network 203.0.113.32/27' in result.commands"
+
+- name: Configure root-level networks for BGP with operation replace (idempotent)
+  eos_bgp: *net_rplc
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Configure BGP route redistribute information
+  eos_bgp: &rdr
+    operation: merge
+    config:
+      bgp_as: 64496
+      redistribute:
+        - protocol: ospf
+          route_map: RMAP_1
+
+        - protocol: rip
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'router bgp 64496' in result.commands"
+      - "'redistribute ospf route-map RMAP_1' in result.commands"
+      - "'redistribute rip' in result.commands"
+
+- name: Configure BGP route redistribute information (idempotent)
+  eos_bgp: *rdr
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Configure BGP route redistribute information with operation replace
+  eos_bgp: &rdr_rplc
+    operation: replace
+    config:
+      bgp_as: 64496
+      redistribute:
+        - protocol: ospf
+          route_map: RMAP_1
+
+        - protocol: static
+          route_map: RMAP_2
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'redistribute static route-map RMAP_2' in result.commands"
+      - "'no redistribute rip' in result.commands"
+
+- name: Configure BGP route redistribute information with operation replace (idempotent)
+  eos_bgp: *rdr_rplc
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Configure BGP neighbors under address family mode
+  eos_bgp: &af_nbr
+    operation: merge
+    config:
+      bgp_as: 64496
+      address_family:
+        - afi: ipv4
+          neighbors:
+            - neighbor: 203.0.113.10
+              activate: yes
+              default_originate: True
+
+            - neighbor: 192.0.2.15
+              activate: yes
+              graceful_restart: True
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'router bgp 64496' in result.commands"
+      - "'address-family ipv4' in result.commands"
+      - "'neighbor 203.0.113.10 activate' in result.commands"
+      - "'neighbor 203.0.113.10 default-originate' in result.commands"
+      - "'neighbor 192.0.2.15 activate' in result.commands"
+      - "'neighbor 192.0.2.15 graceful-restart' in result.commands"
+
+- name: Configure BGP neighbors under address family mode (idempotent)
+  eos_bgp: *af_nbr
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Configure networks under address family
+  eos_bgp: &af_net
+    operation: merge
+    config:
+      bgp_as: 64496
+      address_family:
+        - afi: ipv4
+          networks:
+            - prefix: 198.51.100.48
+              masklen: 28
+              route_map: RMAP_1
+
+            - prefix: 192.0.2.64
+              masklen: 27
+
+            - prefix: 203.0.113.160
+              masklen: 27
+              route_map: RMAP_2
+
+        - afi: ipv6
+          networks:
+            - prefix: "2001:db8::"
+              masklen: 33
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'router bgp 64496' in result.commands"
+      - "'address-family ipv4' in result.commands"
+      - "'network 198.51.100.48/28 route-map RMAP_1' in result.commands"
+      - "'network 192.0.2.64/27' in result.commands"
+      - "'network 203.0.113.160/27 route-map RMAP_2' in result.commands"
+      - "'address-family ipv6' in result.commands"
+      - "'network 2001:db8::/33' in result.commands"
+
+- name: Configure networks under address family (idempotent)
+  eos_bgp: *af_net
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Configure networks under address family with operation replace
+  eos_bgp: &af_net_rplc
+    operation: replace
+    config:
+      bgp_as: 64496
+      address_family:
+        - afi: ipv4
+          networks:
+            - prefix: 198.51.100.80
+              masklen: 28
+
+            - prefix: 192.0.2.64
+              masklen: 27
+
+            - prefix: 203.0.113.192
+              masklen: 27
+
+        - afi: ipv6
+          networks:
+            - prefix: "2001:db8:1000::"
+              masklen: 37
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"router bgp 64496" in result.commands'
+      - '"address-family ipv4" in result.commands'
+      - '"network 198.51.100.80/28" in result.commands'
+      - '"network 203.0.113.192/27" in result.commands'
+      - '"no network 198.51.100.48/28" in result.commands'
+      - '"no network 203.0.113.160/27" in result.commands'
+      - '"address-family ipv6" in result.commands'
+      - '"network 2001:db8:1000::/37" in result.commands'
+      - '"no network 2001:db8::/33" in result.commands'
+
+- name: Configure networks under address family with operation replace (idempotent)
+  eos_bgp: *af_net_rplc
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Override all the exisiting BGP config
+  eos_bgp:
+    operation: override
+    config:
+      bgp_as: 64497
+      router_id: 192.0.2.10
+      log_neighbor_changes: True
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'no router bgp 64496' in result.commands"
+      - "'router bgp 64497' in result.commands"
+      - "'router-id 192.0.2.10' in result.commands"
+      - "'bgp log-neighbor-changes' in result.commands"
+
+- name: Teardown
+  eos_bgp: *rm
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'no router bgp 64497' in result.commands"
+
+- name: Teardown again (idempotent)
+  eos_bgp: *rm
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- debug: msg="END eos cli/eos_bgp.yaml on connection={{ ansible_connection }}"

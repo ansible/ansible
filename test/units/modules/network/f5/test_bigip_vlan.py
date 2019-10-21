@@ -25,7 +25,6 @@ try:
     # In Ansible 2.8, Ansible changed import paths.
     from test.units.compat import unittest
     from test.units.compat.mock import Mock
-    from test.units.compat.mock import patch
 
     from test.units.modules.utils import set_module_args
 except ImportError:
@@ -37,7 +36,6 @@ except ImportError:
     # Ansible 2.8 imports
     from units.compat import unittest
     from units.compat.mock import Mock
-    from units.compat.mock import patch
 
     from units.modules.utils import set_module_args
 
@@ -107,15 +105,18 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='somevlan',
             description='fakevlan',
-            server='localhost',
-            password='password',
-            user='admin',
-            partition='Common'
+            partition='Common',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -133,15 +134,18 @@ class TestManager(unittest.TestCase):
             name='somevlan',
             tagged_interface=['2.1'],
             tag=213,
-            server='localhost',
-            password='password',
-            user='admin',
-            partition='Common'
+            partition='Common',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -159,15 +163,18 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='somevlan',
             untagged_interface=['2.1'],
-            server='localhost',
-            password='password',
-            user='admin',
-            partition='Common'
+            partition='Common',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -185,15 +192,18 @@ class TestManager(unittest.TestCase):
             name='somevlan',
             tagged_interface=['2.1', '1.1'],
             tag=213,
-            server='localhost',
-            password='password',
-            user='admin',
-            partition='Common'
+            partition='Common',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -211,15 +221,18 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='somevlan',
             untagged_interface=['2.1', '1.1'],
-            server='localhost',
-            password='password',
-            user='admin',
             partition='Common',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -236,15 +249,18 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='somevlan',
             untagged_interface=['2.1'],
-            server='localhost',
-            password='password',
-            user='admin',
             partition='Common',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -267,15 +283,18 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='somevlan',
             tagged_interface=['2.1'],
-            server='localhost',
-            password='password',
-            user='admin',
             partition='Common',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -296,15 +315,18 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='somevlan',
             description='changed_that',
-            server='localhost',
-            password='password',
-            user='admin',
             partition='Common',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen

@@ -1,0 +1,494 @@
+# Test code for the Meraki Organization module
+# Copyright: (c) 2018, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  - name: Test an API key is provided
+    fail:
+      msg: Please define an API key
+    when: auth_key is not defined
+    
+  - name: Create network
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      type: appliance
+
+  - name: Query firewall rules
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: query
+    register: query
+
+  - debug:
+      var: query
+
+  - assert:
+      that:
+        - query.data is defined
+
+  - name: Query firewall application categories
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: query
+      categories: yes
+    register: query_categories
+
+  - assert:
+      that:
+        - query_categories.data is defined
+
+  - name: Create firewall rule for IP range in check mode
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: ip_range
+          ip_range: 10.11.12.0/24
+    register: create_ip_range_check
+    check_mode: yes
+
+  - debug:
+      var: create_ip_range_check
+
+  - assert:
+      that:
+        - create_ip_range_check is changed
+
+  - name: Create firewall rule for IP range
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: ip_range
+          ip_range: 10.11.12.0/24 
+    register: create_ip_range
+
+  - debug:
+      var: create_ip_range
+
+  - assert:
+      that:
+        - create_ip_range is changed
+        - create_ip_range.data.rules | length == 1
+
+  - name: Create firewall rule for IP range with idempotency with check mode
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: ip_range
+          ip_range: 10.11.12.0/24
+    register: create_ip_range_idempotent_check
+    check_mode: yes
+
+  - assert:
+      that:
+        - create_ip_range_idempotent_check is not changed
+
+  - name: Create firewall rule for IP range with idempotency
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: ip_range
+          ip_range: 10.11.12.0/24
+    register: create_ip_range_idempotent
+
+  - assert:
+      that:
+        - create_ip_range_idempotent is not changed
+
+  - name: Create firewall rule for IP and port
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: ip_range
+          ip_range: 10.11.12.1:23
+    register: create_ip_range_port
+
+  - debug:
+      var: create_ip_range_port
+
+  - assert:
+      that:
+        - create_ip_range_port is changed
+
+  - name: Create firewall rule for IP range
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: ip_range
+          ip_range: 10.11.12.0/24 
+    register: create_ip_range
+
+  - debug:
+      var: create_ip_range
+
+  - assert:
+      that:
+        - create_ip_range is changed
+        - create_ip_range.data.rules | length == 1
+
+  - name: Create firewall rule for IP range with idempotency with check mode
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: ip_range
+          ip_range: 10.11.12.0/24
+    register: create_ip_range_idempotent_check
+    check_mode: yes
+
+  - assert:
+      that:
+        - create_ip_range_idempotent_check is not changed
+
+  - name: Create firewall rule for IP range with idempotency
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: ip_range
+          ip_range: 10.11.12.0/24
+    register: create_ip_range_idempotent
+
+  - assert:
+      that:
+        - create_ip_range_idempotent is not changed
+
+  - name: Create firewall rule for application
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: application
+          application:
+            name: facebook
+    register: application_rule
+
+  - assert:
+      that:
+        - application_rule is changed
+        - application_rule.data.rules is defined
+
+  - name: Create firewall rule for application via ID
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: application
+          application:
+            id: meraki:layer7/application/205
+    register: application_rule_id
+
+  - assert:
+      that:
+        - application_rule_id is changed
+
+  - name: Create firewall rule for invalid application
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: application
+          application:
+            name: ansible
+    register: application_rule_invalid
+    ignore_errors: yes
+
+  - name: Create firewall rule for application category
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: application_category
+          application:
+            name: Advertising
+    register: application_category_rule
+
+  - debug:
+      var: application_category_rule
+
+  - assert:
+      that:
+        - application_category_rule is changed
+
+  - name: Create firewall rule for application category with ID and conflict
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: application_category
+          application:
+            id: meraki:layer7/category/27
+    register: application_category_rule_id_conflict
+
+  - assert:
+      that:
+        - application_category_rule_id_conflict is not changed
+
+  - name: Create firewall rule for application category with ID
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: application_category
+          application:
+            id: meraki:layer7/category/24
+    register: application_category_rule_id
+
+  - assert:
+      that:
+        - application_category_rule_id is changed
+
+  - name: Create firewall rule for host
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: host
+          host: asdf.com
+    register: host_rule
+
+  - assert:
+      that:
+        - host_rule is changed
+
+  - name: Create firewall rule for port
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: port
+          port: 1234
+    register: port_rule
+
+  - assert:
+      that:
+        - port_rule is changed
+
+  - name: Create firewall rule for blacklisted countries
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: blacklisted_countries
+          countries:
+            - CA
+            - AX
+    register: blacklist_countries
+
+  - assert:
+      that:
+        - blacklist_countries is changed
+
+  - name: Create firewall rule for whitelisted countries
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: whitelisted_countries
+          countries:
+            - US
+            - FR
+    register: whitelist_countries
+
+  - assert:
+      that:
+        - whitelist_countries is changed
+
+  - name: Create firewall rule for whitelisted countries with idempotency
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: whitelisted_countries
+          countries:
+            - US
+            - FR
+    register: whitelist_countries_idempotent
+
+  - assert:
+      that:
+        - whitelist_countries_idempotent is not changed
+
+  - name: Create multiple firewall rules
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: application_category
+          application:
+            id: meraki:layer7/category/27
+        - type: blacklisted_countries
+          countries:
+            - CN
+        - policy: deny
+          type: port
+          port: 8080
+    register: multiple_rules
+
+  - debug:
+      var: multiple_rules
+
+  - assert:
+      that:
+        - multiple_rules.data.rules | length == 3
+        - multiple_rules is changed
+
+  #########################################
+  ##  Tests for argument completeness    ##
+  #########################################
+
+  - name: Test whitelisted_countries incomplete arguments
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: whitelisted_countries
+    register: error_whitelist
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - 'error_whitelist.msg == "countries argument is required when type is whitelisted_countries."'
+
+  - name: Test blacklisted_countries incomplete arguments
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: blacklisted_countries
+    register: error_blacklist
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - 'error_blacklist.msg == "countries argument is required when type is blacklisted_countries."'
+
+  - name: Test application_category incomplete arguments
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: application_category
+    register: error_app_cat
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - 'error_app_cat.msg == "application argument is required when type is application_category."'
+
+  - name: Test application incomplete arguments
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: application
+    register: error_app_cat
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - 'error_app_cat.msg == "application argument is required when type is application."'
+
+  - name: Test host incomplete arguments
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: host
+    register: error_app_cat
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - 'error_app_cat.msg == "host argument is required when type is host."'
+
+  - name: Test port incomplete arguments
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: port
+    register: error_app_cat
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - 'error_app_cat.msg == "port argument is required when type is port."'
+
+  #################
+  ##  Cleanup    ##
+  #################
+
+  # always:
+  # - name: Delete network
+  #   meraki_network:
+  #     auth_key: '{{ auth_key }}'
+  #     org_name: '{{test_org_name}}'
+  #     net_name: TestNetAppliance
+  #     state: absent
+  #   delegate_to: localhost

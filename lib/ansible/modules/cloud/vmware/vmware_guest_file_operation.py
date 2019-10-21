@@ -34,10 +34,12 @@ options:
         description:
             - The datacenter hosting the virtual machine.
             - If set, it will help to speed up virtual machine search.
+        type: str
     cluster:
         description:
             - The cluster hosting the virtual machine.
             - If set, it will help to speed up virtual machine search.
+        type: str
     folder:
         description:
             - Destination folder, absolute path to find an existing guest or create the new guest.
@@ -55,27 +57,33 @@ options:
             - '   folder: /folder1/datacenter1/vm/folder2'
             - '   folder: vm/folder2'
             - '   folder: folder2'
+        type: str
     vm_id:
         description:
             - Name of the virtual machine to work with.
         required: True
+        type: str
     vm_id_type:
         description:
             - The VMware identification method by which the virtual machine will be identified.
         default: vm_name
         choices:
             - 'uuid'
+            - 'instance_uuid'
             - 'dns_name'
             - 'inventory_path'
             - 'vm_name'
+        type: str
     vm_username:
         description:
             - The user to login in to the virtual machine.
         required: True
+        type: str
     vm_password:
         description:
             - The password used to login-in to the virtual machine.
         required: True
+        type: str
     directory:
         description:
             - Create or delete a directory.
@@ -89,6 +97,7 @@ options:
             - '  suffix (str): temporary directory suffix (required for mktemp)'
             - '  recurse (boolean): Not required, default (false)'
         required: False
+        type: dict
     copy:
         description:
             - Copy file to vm without requiring network.
@@ -97,6 +106,7 @@ options:
             - '  dest: file destination, path must be exist'
             - '  overwrite: False or True (not required, default False)'
         required: False
+        type: dict
     fetch:
         description:
             - Get file from virtual machine without requiring network.
@@ -104,6 +114,7 @@ options:
             - '  src: The file on the remote system to fetch. This I(must) be a file, not a directory'
             - '  dest: file destination on localhost, path must be exist'
         required: False
+        type: dict
         version_added: 2.5
 
 extends_documentation_fragment: vmware.documentation
@@ -194,8 +205,11 @@ class VmwareGuestFileManager(PyVmomi):
         if module.params['vm_id_type'] == 'inventory_path':
             vm = find_vm_by_id(self.content, vm_id=module.params['vm_id'], vm_id_type="inventory_path", folder=folder)
         else:
-            vm = find_vm_by_id(self.content, vm_id=module.params['vm_id'], vm_id_type=module.params['vm_id_type'],
-                               datacenter=datacenter, cluster=cluster)
+            vm = find_vm_by_id(self.content,
+                               vm_id=module.params['vm_id'],
+                               vm_id_type=module.params['vm_id_type'],
+                               datacenter=datacenter,
+                               cluster=cluster)
 
         if not vm:
             module.fail_json(msg='Unable to find virtual machine.')
@@ -342,7 +356,7 @@ class VmwareGuestFileManager(PyVmomi):
             self.module.fail_json(msg="copy does not support copy of directory: %s" % src)
 
         data = None
-        with open(b_src, "r") as local_file:
+        with open(b_src, "rb") as local_file:
             data = local_file.read()
         file_size = os.path.getsize(b_src)
 
@@ -391,7 +405,7 @@ def main():
         vm_id_type=dict(
             default='vm_name',
             type='str',
-            choices=['inventory_path', 'uuid', 'dns_name', 'vm_name']),
+            choices=['inventory_path', 'uuid', 'instance_uuid', 'dns_name', 'vm_name']),
         vm_username=dict(type='str', required=True),
         vm_password=dict(type='str', no_log=True, required=True),
         directory=dict(

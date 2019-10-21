@@ -31,14 +31,17 @@ options:
         description:
             - VMkernel interface name
         required: True
+        type: str
     ip_address:
         description:
             - IP address to assign to VMkernel interface
         required: True
+        type: str
     subnet_mask:
         description:
             - Subnet Mask to assign to VMkernel interface
         required: True
+        type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -104,7 +107,7 @@ def main():
         host = get_all_objs(content, [vim.HostSystem])
         if not host:
             module.fail_json(msg="Unable to locate Physical Host.")
-        host_system = host.keys()[0]
+        host_system = list(host)[0]
         changed = configure_vmkernel_ip_address(host_system, vmk_name, ip_address, subnet_mask)
         module.exit_json(changed=changed)
     except vmodl.RuntimeFault as runtime_fault:

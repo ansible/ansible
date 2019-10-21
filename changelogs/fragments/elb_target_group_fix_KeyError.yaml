@@ -1,3 +1,0 @@
----
-bugfixes:
-- elb_target_group - cast target ports to integers before making API calls after the key 'Targets' is in params.

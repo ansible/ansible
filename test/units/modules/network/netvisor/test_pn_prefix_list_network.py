@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_prefix_list_network
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestPrefixListNetworkModule(TestNvosModule):
@@ -51,12 +49,12 @@ class TestPrefixListNetworkModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_network': '172.16.3.1', 'pn_netmask': '24', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 prefix-list-network-add  name foo network 172.16.3.1 netmask 24'
+        expected_cmd = ' switch sw01 prefix-list-network-add  name foo network 172.16.3.1 netmask 24'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_prefix_list_network_remove(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_network': '172.16.3.1', 'pn_netmask': '24', 'state': 'absent'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 prefix-list-network-remove  name foo network 172.16.3.1 netmask 24'
+        expected_cmd = ' switch sw01 prefix-list-network-remove  name foo network 172.16.3.1 netmask 24'
         self.assertEqual(result['cli_cmd'], expected_cmd)

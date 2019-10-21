@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_vrouter_pim_config
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestVrouterPimConfigModule(TestNvosModule):
@@ -44,7 +42,7 @@ class TestVrouterPimConfigModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_query_interval': '10',
                          'pn_querier_timeout': '30', 'pn_vrouter_name': 'foo-vrouter', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 vrouter-pim-config-modify vrouter-name foo-vrouter  '
+        expected_cmd = ' switch sw01 vrouter-pim-config-modify vrouter-name foo-vrouter  '
         expected_cmd += 'querier-timeout 30 query-interval 10'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
@@ -52,6 +50,6 @@ class TestVrouterPimConfigModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_query_interval': '30',
                          'pn_hello_interval': '120', 'pn_vrouter_name': 'foo-vrouter', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 vrouter-pim-config-modify vrouter-name foo-vrouter  '
+        expected_cmd = ' switch sw01 vrouter-pim-config-modify vrouter-name foo-vrouter  '
         expected_cmd += 'hello-interval 120 query-interval 30'
         self.assertEqual(result['cli_cmd'], expected_cmd)

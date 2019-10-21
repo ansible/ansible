@@ -84,18 +84,7 @@ EXAMPLES = """
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
 
-    - name: Associate hosts/paths with the subsystem
-      na_ontap_nvme_subsystem:
-        state: absent
-        subsystem: test_sub
-        vserver: test_dest
-        skip_host_check: True
-        skip_mapped_check: True
-        hostname: "{{ netapp_hostname }}"
-        username: "{{ netapp_username }}"
-        password: "{{ netapp_password }}"
-
-    - name: Add NVME Subsystem host/map (Idempotency)
+    - name: Associate NVME Subsystem host/map
       na_ontap_nvme_subsystem:
         state: present
         subsystem: "{{ subsystem }}"
@@ -106,6 +95,19 @@ EXAMPLES = """
         hostname: "{{ hostname }}"
         username: "{{ username }}"
         password: "{{ password }}"
+
+    - name: Modify NVME subsystem map
+      na_ontap_nvme_subsystem:
+        state: present
+        subsystem: test_sub
+        vserver: test_dest
+        skip_host_check: True
+        skip_mapped_check: True
+        paths: /vol/ansible/test
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+
 """
 
 RETURN = """

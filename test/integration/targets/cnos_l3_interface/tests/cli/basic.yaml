@@ -19,6 +19,8 @@
   cnos_config:
     lines:
       - no shutdown
+      - no switchport
+      - no logging monitor
     parents:
       - "interface {{ item }}"
     provider: "{{ cli }}"
