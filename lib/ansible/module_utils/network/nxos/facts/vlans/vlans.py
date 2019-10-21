@@ -155,7 +155,7 @@ class VlansFacts(object):
             vlan.update(v)
             vlan.update(mtuinfo[index])
 
-            run_cfg = [ i for i in run_cfg_list if "%s\n" %v['vlan_id'] in i ] or ['']
+            run_cfg = [i for i in run_cfg_list if "%s\n" % v['vlan_id'] in i] or ['']
             vlan['run_cfg'] = run_cfg.pop()
             vlans.append(vlan)
         return vlans

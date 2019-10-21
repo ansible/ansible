@@ -93,45 +93,45 @@ class TestNxosVlansModule(TestNxosModule):
         ])
 
         merged = [
-          # Update existing device states with any differences in the playbook.
-          'vlan 5', 'vn-segment 555', 'mode ce',
-          'vlan 7', 'vn-segment 777', 'name test-vlan7', 'shutdown'
+            # Update existing device states with any differences in the playbook.
+            'vlan 5', 'vn-segment 555', 'mode ce',
+            'vlan 7', 'vn-segment 777', 'name test-vlan7', 'shutdown'
         ]
         playbook['state'] = 'merged'
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=True, commands=merged)
 
         deleted = [
-          # Reset existing device state to default values. Scope is limited to
-          # objects in the play.For vlans this means deleting each vlan listed
-          # in the playbook. Ignores any play attrs other than 'vlan_id'.
-          'no vlan 4',
-          'no vlan 5',
-          'no vlan 8'
+            # Reset existing device state to default values. Scope is limited to
+            # objects in the play.For vlans this means deleting each vlan listed
+            # in the playbook. Ignores any play attrs other than 'vlan_id'.
+            'no vlan 4',
+            'no vlan 5',
+            'no vlan 8'
         ]
         playbook['state'] = 'deleted'
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=True, commands=deleted)
 
         overridden = [
-          # The play is the source of truth. Similar to replaced but the scope
-          # includes all objects on the device; i.e. it will also reset state
-          # on objects not found in the play.
-          'no vlan 3',
-          'vlan 5', 'mode ce', 'vn-segment 555', 'no state', 'no shutdown', 'no name',
-          'vlan 8', 'no shutdown',
-          'vlan 7', 'name test-vlan7', 'shutdown', 'vn-segment 777'
+            # The play is the source of truth. Similar to replaced but the scope
+            # includes all objects on the device; i.e. it will also reset state
+            # on objects not found in the play.
+            'no vlan 3',
+            'vlan 5', 'mode ce', 'vn-segment 555', 'no state', 'no shutdown', 'no name',
+            'vlan 8', 'no shutdown',
+            'vlan 7', 'name test-vlan7', 'shutdown', 'vn-segment 777'
         ]
         playbook['state'] = 'overridden'
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=True, commands=overridden)
 
         replaced = [
-          # Scope is limited to objects in the play.
-          # replaced should ignore existing vlan 3.
-          'vlan 5', 'vn-segment 555', 'no name', 'no state', 'no shutdown', 'mode ce',
-          'vlan 7', 'shutdown', 'name test-vlan7', 'vn-segment 777',
-          'vlan 8', 'no shutdown'
+            # Scope is limited to objects in the play.
+            # replaced should ignore existing vlan 3.
+            'vlan 5', 'vn-segment 555', 'no name', 'no state', 'no shutdown', 'mode ce',
+            'vlan 7', 'shutdown', 'name test-vlan7', 'vn-segment 777',
+            'vlan 8', 'no shutdown'
         ]
         playbook['state'] = 'replaced'
         set_module_args(playbook, ignore_provider_arg)
