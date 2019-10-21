@@ -132,10 +132,11 @@ class PgSubscription():
         exists (bool): Flag indicates the subscription exists or not.
     """
 
-    def __init__(self, module, cursor, name):
+    def __init__(self, module, cursor, name, db):
         self.module = module
         self.cursor = cursor
         self.name = name
+        self.db = db
         self.executed_queries = []
         self.attrs = {
             'owner': '',
@@ -168,6 +169,16 @@ class PgSubscription():
         if not subscr_info:
             # The subcrtiption does not exist:
             return False
+
+        self.attrs['owner'] = subscr_info.get('rolname')
+        self.attrs['enabled'] = subscr_info.get('subenabled')
+        self.attrs['synccommit'] = subscr_info.get('subenabled')
+        self.attrs['slotname'] = subscr_info.get('subslotname')
+        self.attrs['publications'] = subscr_info.get('subpublications')
+        if subscr_info.get('subconninfo'):
+            for param in subscr_info['subconninfo'].split(' '):
+                    tmp = param.split('=')
+                    self.attrs['conninfo'][tmp[0]] = tmp[1]
 
         return True
 
@@ -217,7 +228,20 @@ class PgSubscription():
         Returns:
             Dict with subscription information if successful, False otherwise.
         """
-        return {}
+        query = ("SELECT d.datname, r.rolname, s.subenabled, "
+                 "s.subconninfo, s.subslotname, s.subsynccommit, "
+                 "s.subpublications FROM pg_catalog.pg_subscription s "
+                 "JOIN pg_catalog.pg_database d "
+                 "ON s.subdbid = d.oid "
+                 "JOIN pg_catalog.pg_roles AS r "
+                 "ON s.subowner = r.oid "
+                 "WHERE s.subname = '%s' AND d.datname = '%s'" % (self.name, self.db))
+
+        result = exec_sql(self, query, add_to_executed=False)
+        if result:
+            return result[0]
+        else:
+            return False
 
     def __exec_sql(self, query, check_mode=False):
         """Execute SQL query.
@@ -260,6 +284,7 @@ def main():
     )
 
     # Parameters handling:
+    db = module.params['db']
     name = module.params['name']
     state = module.params['state']
 
@@ -280,7 +305,7 @@ def main():
 
     ###################################
     # Create object and do rock'n'roll:
-    subscription = PgSubscription(module, cursor, name)
+    subscription = PgSubscription(module, cursor, name, db)
 
     if subscription.exists:
         initial_state = subscription.attrs

@@ -31,7 +31,7 @@
   - assert:
       that:
       - result is not changed
-      - result.initial_state == {}
+      - result.initial_state != {}
       - result.final_state == result.initial_state
 
   - name: Stat mode
@@ -45,5 +45,5 @@
   - assert:
       that:
       - result is not changed
-      - result.initial_state == {}
+      - result.initial_state != {}
       - result.final_state == result.initial_state
