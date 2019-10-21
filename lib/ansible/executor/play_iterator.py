@@ -68,12 +68,12 @@ class HostState:
             states = {1: "FAILED_SETUP", 2: "FAILED_TASKS", 4: "FAILED_RESCUE", 8: "FAILED_ALWAYS"}
             if n == 0:
                 return "FAILED_NONE"
-            else:
-                ret = []
-                for i in (1, 2, 4, 8):
-                    if n & i:
-                        ret.append(states[i])
-                return "|".join(ret)
+
+            ret = []
+            for i in (1, 2, 4, 8):
+                if n & i:
+                    ret.append(states[i])
+            return "|".join(ret)
 
         return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? (%s), "
                 "rescue child state? (%s), always child state? (%s), did rescue? %s, did start at task? %s" % (
@@ -98,10 +98,8 @@ class HostState:
         for attr in ('_blocks', 'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
                      'run_state', 'fail_state', 'pending_setup', 'cur_dep_chain',
                      'tasks_child_state', 'rescue_child_state', 'always_child_state'):
-            if getattr(self, attr) != getattr(other, attr):
-                return False
 
-        return True
+            return getattr(self, attr) == getattr(other, attr)
 
     def get_current_block(self):
         return self._blocks[self.cur_block]
@@ -117,14 +115,19 @@ class HostState:
         new_state.pending_setup = self.pending_setup
         new_state.did_rescue = self.did_rescue
         new_state.did_start_at_task = self.did_start_at_task
+
         if self.cur_dep_chain is not None:
             new_state.cur_dep_chain = self.cur_dep_chain[:]
+
         if self.tasks_child_state is not None:
             new_state.tasks_child_state = self.tasks_child_state.copy()
+
         if self.rescue_child_state is not None:
             new_state.rescue_child_state = self.rescue_child_state.copy()
+
         if self.always_child_state is not None:
             new_state.always_child_state = self.always_child_state.copy()
+
         return new_state
 
 
@@ -172,14 +175,16 @@ class PlayIterator:
 
         if gather_timeout:
             setup_task.args['gather_timeout'] = gather_timeout
+
         if fact_path:
             setup_task.args['fact_path'] = fact_path
+
         setup_task.set_loader(self._play._loader)
         # short circuit fact gathering if the entire playbook is conditional
         if self._play._included_conditional is not None:
             setup_task.when = self._play._included_conditional[:]
-        setup_block.block = [setup_task]
 
+        setup_block.block = [setup_task]
         setup_block = setup_block.filter_tagged_tasks(all_vars)
         self._blocks.append(setup_block)
 
@@ -192,6 +197,7 @@ class PlayIterator:
         start_at_matched = False
         batch = inventory.get_hosts(self._play.hosts, order=self._play.order)
         self.batch_size = len(batch)
+
         for host in batch:
             self._host_states[host.name] = HostState(blocks=self._blocks)
             # if we're looking to start at a specific task, iterate through
