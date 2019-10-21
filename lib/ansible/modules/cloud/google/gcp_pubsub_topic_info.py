@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_pubsub_topic_info
 description:
 - Gather info for GCP Topic
-- This module was called C(gcp_pubsub_topic_facts) before Ansible 2.9. The usage has
-  not changed.
 short_description: Gather info for GCP Topic
 version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
@@ -157,9 +155,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict())
-
-    if module._name == 'gcp_pubsub_topic_facts':
-        module.deprecate("The 'gcp_pubsub_topic_facts' module has been renamed to 'gcp_pubsub_topic_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/pubsub']
