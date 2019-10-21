@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 ---
 module: ce_multicast_interface
 version_added: "2.10"
-author:  (@CloudEngine-Ansible)
+author: xuxiaowei0512 (@CloudEngine-Ansible)
 short_description: Manages multicast interface resources and attributes on Huawei CloudEngine switches.
 description:
   - Manages multicast interface configurations on Huawei CloudEngine switches.
@@ -45,13 +45,19 @@ options:
    description:
      - pim mode, sm or dm.
    type: str
+   choices: ['sm', 'dm']
   bsr_boundary:
     description:
       - Specify pim bsr-boundary, Both or incoming,default is None.
     type: str
+    choices: ['Incoming', 'Both']
   timer_hello:
     description:
       - Specify pim timer hello interval,value of interval is from 1 to 1800.
+    type: int
+  graft_retry:
+    description:
+      - Specify pim timer graft-retry.
     type: int
   hello_opt_holdtime:
     description:
@@ -131,6 +137,90 @@ options:
     default: present
     choices: ['present','absent']
 '''
+
+EXAMPLES = '''
+---
+  - name: "pim test1"
+    ce_multicast_interface:
+      vrf_name: _public_
+      interface:  10GE2/0/9
+      pim: sm
+      bsr_boundary: Incoming
+      timer_hello: 345
+      hello_opt_holdtime: 345
+      neighbor_policy: a
+      require_genid: true
+      dr_priority: 232
+      dr_switch_delay: 232
+      timer_join_prune: 232
+      holdtime_join_prune: 232
+      hello_lan_delay: 232
+      override_interval: 232
+      join_policy: asm a,ssm a2
+      holdtime_assert: 232
+      bfd: true
+      bfd_min_rx: 232
+      bfd_min_tx: 232
+      bfd_detect_multiplier: 34
+      igmp: true
+      graft_retry: 1111
+      state: present
+
+  - name: "pim test2"
+    ce_multicast_interface:
+      vrf_name: _public_
+      interface: 10GE2/0/9
+      pim: sm
+      bsr_boundary: Incoming
+      timer_hello: 345
+      hello_opt_holdtime: 345
+      neighbor_policy: a
+      require_genid: true
+      dr_priority: 232
+      dr_switch_delay: 232
+      timer_join_prune: 232
+      holdtime_join_prune: 232
+      hello_lan_delay: 232
+      override_interval: 232
+      join_policy: asm a,ssm a2
+      holdtime_assert: 232
+      bfd: true
+      bfd_min_rx: 232
+      bfd_min_tx: 232
+      bfd_detect_multiplier: 34
+      igmp: true
+      graft_retry: 1111
+      state: absent
+'''
+
+RETURN = '''
+proposed:
+    description: k/v pairs of parameters passed into module
+    returned: always
+    type: dict
+    sample: {"addressFamily": "ipv4unicast", "state": "present", "vrfName": "_public_"}
+existing:
+    description: k/v pairs of existing switchport
+    returned: always
+    type: dict
+    sample: null
+end_state:
+    description: k/v pairs of switchport after module execution
+    returned: always
+    type: dict
+    sample: {"addressFamily": "ipv4unicast", "state": "present", "vrfName": "_public_"}
+updates:
+    description: command list sent to the device
+    returned: always
+    type: list
+    sample: ["pim sm"]
+changed:
+    description: check to see if a change was made on the device
+    returned: always
+    type: bool
+    sample: true
+'''
+
 import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, execute_nc_action
@@ -208,106 +298,6 @@ INTERFACE_IGMP_GET = '''
       </dgmp>
     </filter>
 '''
-
-EXAMPLES = '''
----
-
-- name: sample playbook
-  gather_facts: no
-  connection: local
-  hosts: device1
-  vars:
-    cli:
-      host: "{{ inventory_hostname }}"
-      port: "{{ ansible_ssh_port }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      transport: cli
-  tasks:
-
-  - name: "pim test1"
-    ce_multicast_interface:
-      vrf_name: _public_
-      interface:  10GE2/0/9
-      pim: sm
-      bsr_boundary: Incoming
-      timer_hello: 345
-      hello_opt_holdtime: 345
-      neighbor_policy: a
-      require_genid: true
-      dr_priority: 232
-      dr_switch_delay: 232
-      timer_join_prune: 232
-      holdtime_join_prune: 232
-      hello_lan_delay: 232
-      override_interval: 232
-      join_policy: asm a,ssm a2
-      holdtime_assert: 232
-      bfd: true
-      bfd_min_rx: 232
-      bfd_min_tx: 232
-      bfd_detect_multiplier: 34
-      igmp: true
-      graft_retry: 1111
-      provider: "{{ cli }}"
-      state: present
-
-  - name: "pim test2"
-    ce_multicast_interface:
-      vrf_name: _public_
-      interface: 10GE2/0/9
-      pim: sm
-      bsr_boundary: Incoming
-      timer_hello: 345
-      hello_opt_holdtime: 345
-      neighbor_policy: a
-      require_genid: true
-      dr_priority: 232
-      dr_switch_delay: 232
-      timer_join_prune: 232
-      holdtime_join_prune: 232
-      hello_lan_delay: 232
-      override_interval: 232
-      join_policy: asm a,ssm a2
-      holdtime_assert: 232
-      bfd: true
-      bfd_min_rx: 232
-      bfd_min_tx: 232
-      bfd_detect_multiplier: 34
-      igmp: true
-      graft_retry: 1111
-      provider: "{{ cli }}"
-      state: absent
-'''
-
-RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"addressFamily": "ipv4unicast", "state": "present", "vrfName": "_public_"}
-existing:
-    description: k/v pairs of existing switchport
-    returned: always
-    type: dict
-    sample: null
-end_state:
-    description: k/v pairs of switchport after module execution
-    returned: always
-    type: dict
-    sample: {"addressFamily": "ipv4unicast", "state": "present", "vrfName": "_public_"}
-updates:
-    description: command list sent to the device
-    returned: always
-    type: list
-    sample: ["pim sm"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
-'''
-
 
 def repr_acl(arg):
     """check acl number or acl-name"""
@@ -522,7 +512,7 @@ class MulticastInterface(object):
         self.existing = dict()
         self.end_state = dict()
         # interface config info
-        self.init_module()
+        self.module = AnsibleModule(argument_spec=self.spec, supports_check_mode=True)
         self.intf_name = self.module.params['interface']
         self.xml_dict = dict(addressFamily='ipv4unicast')
         self.state = self.module.params['state']
@@ -531,17 +521,6 @@ class MulticastInterface(object):
         self.results = dict()
         self.updates_cmd = []
         self.changed = False
-
-    def init_module(self):
-        """
-        init ansilbe NetworkModule.
-        """
-
-        required_one_of = [["interface"]]
-        self.module = AnsibleModule(
-            argument_spec=self.spec,
-            required_one_of=required_one_of,
-            supports_check_mode=True)
 
     def _check_arg_int(self, name, int_range=(), tag=''):
         arg = self.module.params.get(name)
