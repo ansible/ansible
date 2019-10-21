@@ -119,19 +119,18 @@ options:
         version_added: "2.6"
     owner:
         description:
-            - Find the list of files whose owner matches the owner specified 
+            - Find the list of files whose owner matches the owner specified
             - Owner must exist in the system otherwise the task will fail
             - Default is any owner
         type: str
         version_added: "2.10"
     group:
         description:
-            - Find the list of files whose group matches the group specified 
+            - Find the list of files whose group matches the group specified
             - Group must exist in the system otherwise the task will fail
             - Default is any group
         type: str
-        version_added: "2.10"
-        
+        version_added: "2.10"   
 seealso:
 - module: win_find
 '''
@@ -370,6 +369,7 @@ def statinfo(st):
         'isgid': bool(st.st_mode & stat.S_ISGID),
     }
 
+
 def filterbyownerandgroup(path, uid, gid):
     path_stat = os.stat(path)
     if uid is not None and path_stat.st_uid == uid:
@@ -380,6 +380,7 @@ def filterbyownerandgroup(path, uid, gid):
         return True
     else:
         return False
+
 
 def main():
     module = AnsibleModule(
