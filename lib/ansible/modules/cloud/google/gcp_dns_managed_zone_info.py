@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_dns_managed_zone_info
 description:
 - Gather info for GCP ManagedZone
-- This module was called C(gcp_dns_managed_zone_facts) before Ansible 2.9. The usage
-  has not changed.
 short_description: Gather info for GCP ManagedZone
 version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
@@ -254,9 +252,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(dns_name=dict(type='list', elements='str')))
-
-    if module._name == 'gcp_dns_managed_zone_facts':
-        module.deprecate("The 'gcp_dns_managed_zone_facts' module has been renamed to 'gcp_dns_managed_zone_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/ndev.clouddns.readwrite']
