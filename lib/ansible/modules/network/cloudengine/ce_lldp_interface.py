@@ -52,7 +52,7 @@ options:
     description:
       - Used to distinguish between command line functions.
     type: str
-  choices: ['dot1_tlv','dcbx']
+    choices: ['dot1_tlv','dcbx']
   lldpadminstatus:
     description:
       - Set interface lldp enable state.
@@ -1334,11 +1334,11 @@ def main():
     """Main function"""
 
     argument_spec = dict(
-        lldpenable=dict(required=False, choices=['enabled', 'disabled']),
+        lldpenable=dict(choices=['enabled', 'disabled']),
         function_lldp_interface_flag=dict(choices=['disableINTERFACE', 'tlvdisableINTERFACE', 'tlvenableINTERFACE', 'intervalINTERFACE'], type='str'),
         type_tlv_disable=dict(choices=['basic_tlv', 'dot3_tlv'], type='str'),
         type_tlv_enable=dict(choices=['dot1_tlv', 'dcbx'], type='str'),
-        ifname=dict(required=False, type='str'),
+        ifname=dict( type='str'),
         lldpadminstatus=dict(choices=['txOnly', 'rxOnly', 'txAndRx', 'disabled'], type='str'),
         manaddrtxenable=dict(type='bool'),
         portdesctxenable=dict(type='bool'),
@@ -1347,17 +1347,17 @@ def main():
         sysnametxenable=dict(type='bool'),
         portvlantxenable=dict(type='bool'),
         protovlantxenable=dict(type='bool'),
-        txprotocolvlanid=dict(required=False, type='int'),
+        txprotocolvlanid=dict(type='int'),
         vlannametxenable=dict(type='bool'),
-        txvlannameid=dict(required=False, type='int'),
-        txinterval=dict(required=False, type='int'),
+        txvlannameid=dict(type='int'),
+        txinterval=dict(type='int'),
         protoidtxenable=dict(type='bool'),
         macphytxenable=dict(type='bool'),
         linkaggretxenable=dict(type='bool'),
         maxframetxenable=dict(type='bool'),
         eee=dict(type='bool'),
         dcbx=dict(type='bool'),
-        state=dict(required=False, choices=['absent', 'present'], default='present'),
+        state=dict(type='str', choices=['absent', 'present'], default='present'),
     )
 
     lldp_interface_obj = Lldp_interface(argument_spec)
