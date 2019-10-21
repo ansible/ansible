@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_compute_vpn_tunnel_info
 description:
 - Gather info for GCP VpnTunnel
-- This module was called C(gcp_compute_vpn_tunnel_facts) before Ansible 2.9. The usage
-  has not changed.
 short_description: Gather info for GCP VpnTunnel
 version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
@@ -214,9 +212,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str'), region=dict(required=True, type='str')))
-
-    if module._name == 'gcp_compute_vpn_tunnel_facts':
-        module.deprecate("The 'gcp_compute_vpn_tunnel_facts' module has been renamed to 'gcp_compute_vpn_tunnel_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
