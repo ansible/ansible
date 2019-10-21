@@ -126,7 +126,7 @@
   lineinfile:
     dest: "{{ output_dir }}/test.txt"
     state: present
-    line: "New line after line 5"
+    line: "New line before line 5"
     insertbefore: "^This is line 5$"
   register: result
 
@@ -144,7 +144,7 @@
 - name: assert test checksum matches after the insert before the last line
   assert:
     that:
-      - "result.stat.checksum == 'e1cae425403507feea4b55bb30a74decfdd4a23e'"
+      - "result.stat.checksum == '2e9e460ff68929e4453eb765761fd99814f6e286'"
 
 - name: Replace a line with backrefs
   lineinfile:
@@ -180,7 +180,7 @@
 - name: assert test checksum matches after backref line was replaced
   assert:
     that:
-      - "result.stat.checksum == '2ccdf45d20298f9eaece73b713648e5489a52444'"
+      - "result.stat.checksum == '72f60239a735ae06e769d823f5c2b4232c634d9c'"
 
 - name: remove the middle line
   lineinfile:
@@ -203,7 +203,7 @@
 - name: assert test checksum matches after the middle line was removed
   assert:
     that:
-      - "result.stat.checksum == 'a6ba6865547c19d4c203c38a35e728d6d1942c75'"
+      - "result.stat.checksum == 'd4eeb07bdebab2d1cdb3ec4a3635afa2618ad4ea'"
 
 - name: run a validation script that succeeds
   lineinfile:
@@ -227,7 +227,7 @@
 - name: assert test checksum matches after the validation succeeded
   assert:
     that:
-      - "result.stat.checksum == '76955a4516a00a38aad8427afc9ee3e361024ba5'"
+      - "result.stat.checksum == 'ab56c210ea82839a54487464800fed4878cb2608'"
 
 - name: run a validation script that fails
   lineinfile:
@@ -251,7 +251,7 @@
 - name: assert test checksum matches the previous after the validation failed
   assert:
     that:
-      - "result.stat.checksum == '76955a4516a00a38aad8427afc9ee3e361024ba5'"
+      - "result.stat.checksum == 'ab56c210ea82839a54487464800fed4878cb2608'"
 
 - name: use create=yes
   lineinfile:
@@ -362,7 +362,7 @@
 - name: assert test checksum matches after inserting multiple lines
   assert:
     that:
-      - "result.stat.checksum == 'bf5b711f8f0509355aaeb9d0d61e3e82337c1365'"
+      - "result.stat.checksum == 'fde683229429a4f05d670e6c10afc875e1d5c489'"
 
 - name: replace a line with backrefs included in the line
   lineinfile:
@@ -387,7 +387,7 @@
 - name: assert test checksum matches after backref line was replaced
   assert:
     that:
-      - "result.stat.checksum == '04b7a54d0fb233a4e26c9e625325bb4874841b3c'"
+      - "result.stat.checksum == '981ad35c4b30b03bc3a1beedce0d1e72c491898e'"
 
 ###################################################################
 # issue 8535
