@@ -58,7 +58,7 @@ options:
             type: float
     upload_url:
         description:
-          - upload local log files to remote host (ftp, scp, sftp, tftp)
+          - upload local log files to remote host (ftp, scp, sftp, tftp) with format protocol://username[:password]@server/path
         type: str
     upload_file:
         description:
@@ -136,12 +136,12 @@ class OnyxSyslogFilesModule(BaseOnyxModule):
     def validate_rotation(self, rotation):
         size_pct = rotation.get('size_pct', None)
         max_num = rotation.get('max_num', None)
-        if size_pct and (float(size_pct) < 0 or float(size_pct) > 100):
+        if size_pct is not None and (float(size_pct) < 0 or float(size_pct) > 100):
             self._module.fail_json(
                 msg='logging size_pct must be in range 0-100')
-        elif max_num and (int(max_num) < 0 or int(max_num) > self.MAX_FILES):
+        elif max_num is not None and (int(max_num) < 0 or int(max_num) > self.MAX_FILES):
             self._module.fail_json(
-                msg='logging max_num must positive number less than {0}'.format(self.MAX_FILES))
+                msg='logging max_num must be positive number less than {0}'.format(self.MAX_FILES))
 
     def validate_upload_url(self, upload_url):
         check = self.URL_REGEX.match(upload_url)
@@ -164,13 +164,14 @@ class OnyxSyslogFilesModule(BaseOnyxModule):
     def load_current_config(self):
         self._current_config = dict()
         current_config = self.show_logging()[0]
-        if 'Log rotation frequency' in current_config:
-            freq = current_config.get('Log rotation frequency')  # daily (Once per day at midnight)
+        freq = current_config.get('Log rotation frequency')  # daily (Once per day at midnight)
+        size = current_config.get('Log rotation size threshold')  # 19.07 megabytes or 10.000% of partition (987.84 megabytes)
+        max_num = current_config.get('Number of archived log files to keep')
+        if freq is not None:
             freq_str = freq.split()[0]
             self._current_config['frequency'] = freq_str
 
-        if 'Log rotation size threshold' in current_config:  # 19.07 megabytes or 10.000% of partition (987.84 megabytes)
-            size = current_config.get('Log rotation size threshold')
+        if size is not None:
             size_arr = size.split(' ')
             if '%' in size:
                 size_pct_value = size_arr[0].replace('%', '')
@@ -181,19 +182,18 @@ class OnyxSyslogFilesModule(BaseOnyxModule):
                 size_value = size_arr[0]
                 self._current_config['size'] = float(size_value)
 
-        if 'Number of archived log files to keep' in current_config:
-            max_num = current_config.get('Number of archived log files to keep')
+        if max_num is not None:
             self._current_config['max_num'] = int(max_num)
 
         '''debug params'''
         for line in current_config['debug']:
             if 'size' in line:
                 self._current_config['debug_size'] = float(line.split(' ')[-1])
-            if 'frequency' in line:
+            elif 'frequency' in line:
                 self._current_config['debug_frequency'] = line.split(' ')[-1]
-            if 'size-pct' in line:
+            elif 'size-pct' in line:
                 self._current_config['debug_size_pct'] = float(line.split(' ')[-1])
-            if 'max-num' in line:
+            elif 'max-num' in line:
                 self._current_config['debug_max_num'] = int(line.split(' ')[-1])
 
     def get_required_config(self):
