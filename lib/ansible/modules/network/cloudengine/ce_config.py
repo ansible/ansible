@@ -232,6 +232,7 @@ import re
 def check_args(module, warnings):
     ce_check_args(module, warnings)
 
+
 def not_user_view(prompt):
     return prompt is not None and prompt.strip().startswith("[")
 
@@ -287,7 +288,7 @@ def get_running_config(module):
         command = "display current-configuration "
         if module.params['defaults']:
             command += 'include-default'
-        resp = run_commands(module, commands)
+        resp = run_commands(module, command)
         contents = resp[0]
     return NetworkConfig(indent=1, contents=contents)
 
