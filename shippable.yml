@@ -28,13 +28,6 @@ matrix:
     - env: T=units/3.7/2
     - env: T=units/3.8/2
 
-    - env: T=units/2.6/3
-    - env: T=units/2.7/3
-    - env: T=units/3.5/3
-    - env: T=units/3.6/3
-    - env: T=units/3.7/3
-    - env: T=units/3.8/3
-
 branches:
   except:
     - "*-patch-*"
