@@ -24,10 +24,20 @@ from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 
 class ActionModule(ActionNetworkModule):
 
+    EXOS_NETWORK_CLI_MODULES = (
+        'exos_facts',
+        'exos_config',
+        'exos_command')
+
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        if self._play_context.connection != 'httpapi':
+        self._config_module = True if self._task.action == 'exos_config' else False
+
+        if self._play_context.connection not in ('network_cli', 'httpapi'):
+            return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
+
+        if self._play_context.connection == 'network_cli' and self._task.action not in self.EXOS_NETWORK_CLI_MODULES:
             return {'failed': True, 'msg': "Connection type %s is not valid for this module" % self._play_context.connection}
 
         return super(ActionModule, self).run(task_vars=task_vars)
