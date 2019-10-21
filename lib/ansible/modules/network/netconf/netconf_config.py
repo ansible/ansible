@@ -169,12 +169,12 @@ options:
         type: path
     type: dict
     version_added: "2.8"
-  filter:
+  get_filter:
     description:
       - This argument specifies the XML string which acts as a filter to restrict the portions of
         the data retrieved from the remote device when comparing the before and after state of the
         device following calls to edit_config. When not specified, the entire configuration or
-        state data is returned for comparison depending on the value of C(source) option. The C(filter)
+        state data is returned for comparison depending on the value of C(source) option. The C(get_filter)
         value can be either XML string or XPath, if the filter is in XPath format the NETCONF server
         running on remote host should support xpath capability else it will result in an error.
     version_added: "2.10"
@@ -308,7 +308,7 @@ def main():
         delete=dict(type='bool', default=False),
         commit=dict(type='bool', default=True),
         validate=dict(type='bool', default=False),
-        filter=dict(),
+        get_filter=dict(),
     )
 
     # deprecated options
@@ -346,7 +346,7 @@ def main():
     confirm = module.params['confirm']
     validate = module.params['validate']
     save = module.params['save']
-    filter = module.params['filter']
+    filter = module.params['get_filter']
     filter_type = get_filter_type(filter)
 
     conn = Connection(module._socket_path)

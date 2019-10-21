@@ -1,0 +1,26 @@
+---
+- debug: msg="START nxos_netconf cli/basic.yaml"
+
+- block:
+  - name: Configure loopback interface ip address
+    netconf_config:
+      datastore: running
+      get_filter: <System xmlns="http://cisco.com/ns/yang/cisco-nx-os-device"><ipv4-items><inst-items><dom-items></dom-items></inst-items></ipv4-items></System>
+      content: "{{ lookup('file', './payload.xml') }}"
+
+  - name: Query Running Config
+    netconf_get:
+      source: running
+      filter: <System xmlns="http://cisco.com/ns/yang/cisco-nx-os-device"><ipv4-items><inst-items><dom-items></dom-items></inst-items></ipv4-items></System>
+    register: result
+
+  - assert:
+      that:
+        - "'192.168.55.55' in result.stdout"
+
+  vars:
+    ansible_connection: netconf
+    ansible_port: 830
+
+  always:
+  - debug: msg="END nxos_netconf cli/basic.yaml"
