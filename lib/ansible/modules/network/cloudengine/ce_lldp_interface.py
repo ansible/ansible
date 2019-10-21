@@ -110,10 +110,10 @@ options:
     description:
       - Enable the identity TLV.
     type: bool
-    dcbx:
-      description:
-        - Enable the ability to send DCBX TLV.
-      type: bool
+  dcbx:
+    description:
+      - Enable the ability to send DCBX TLV.
+    type: bool
   state:
     description:
       - Manage the state of the resource.
@@ -210,52 +210,52 @@ EXAMPLES = '''
 
 RETURN = '''
 proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {
-                "lldpenable": "enabled",
-                "lldpadminstatus": "rxOnly",
-                "function_lldp_interface_flag": "tlvenableINTERFACE",
-                "type_tlv_enable": "dot1_tlv",
-                "ifname": "10GE1/0/1",
-                "state": "present"
-            }
+  description: k/v pairs of parameters passed into module
+  returned: always
+  type: dict
+  sample: {
+          "lldpenable": "enabled",
+          "lldpadminstatus": "rxOnly",
+          "function_lldp_interface_flag": "tlvenableINTERFACE",
+          "type_tlv_enable": "dot1_tlv",
+          "ifname": "10GE1/0/1",
+          "state": "present"
+          }
 existing:
-    description: k/v pairs of existing global LLDP configration
-    returned: always
-    type: dict
-    sample: {
-                "lldpenable": "disabled",
-                "ifname": "10GE1/0/1",
-                "lldpadminstatus": "txAndRx"
-            }
+  description: k/v pairs of existing global LLDP configration
+  returned: always
+  type: dict
+  sample: {
+           "lldpenable": "disabled",
+           "ifname": "10GE1/0/1",
+           "lldpadminstatus": "txAndRx"
+          }
 end_state:
-    description: k/v pairs of global DLDP configration after module execution
-    returned: always
-    type: dict
-    sample: {
-                "lldpenable": "enabled",
-                "lldpadminstatus": "rxOnly",
-                "function_lldp_interface_flag": "tlvenableINTERFACE",
-                "type_tlv_enable": "dot1_tlv",
-                "ifname": "10GE1/0/1"
-            }
+  description: k/v pairs of global DLDP configration after module execution
+  returned: always
+  type: dict
+  sample: {
+           "lldpenable": "enabled",
+           "lldpadminstatus": "rxOnly",
+           "function_lldp_interface_flag": "tlvenableINTERFACE",
+           "type_tlv_enable": "dot1_tlv",
+           "ifname": "10GE1/0/1"
+          }
 updates:
-    description: command sent to the device
-    returned: always
-    type: list
-    sample: [
-                "lldp enable",
-                "interface 10ge 1/0/1",
-                "undo lldp disable",
-                "lldp tlv-enable dot1-tlv vlan-name 4",
-            ]
+  description: command sent to the device
+  returned: always
+  type: list
+  sample: [
+           "lldp enable",
+           "interface 10ge 1/0/1",
+           "undo lldp disable",
+           "lldp tlv-enable dot1-tlv vlan-name 4",
+           ]
 changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: bool
-    sample: true
+  description: check to see if a change was made on the device
+  returned: always
+  type: bool
+  sample: true
 '''
 
 import copy
@@ -475,17 +475,15 @@ def get_interface_type(interface):
         iftype = 'null'
     else:
         return None
-
     return iftype.lower()
 
 
 class Lldp_interface(object):
-    """Manage global lldp enable configration"""
+    """Manage global lldp enable configuration"""
 
     def __init__(self, argument_spec):
         self.spec = argument_spec
-        self.module = None
-        self.init_module()
+        self.module = AnsibleModule(argument_spec=self.spec, supports_check_mode=True)
 
         self.lldpenable = self.module.params['lldpenable'] or None
         self.function_lldp_interface_flag = self.module.params['function_lldp_interface_flag']
@@ -590,12 +588,6 @@ class Lldp_interface(object):
                     if (len(self.ifname) < 1) or (len(self.ifname) > 63):
                         self.module.fail_json(
                             msg='Error: Ifname length is beetween 1 and 63.')
-
-    def init_module(self):
-        """Init module object"""
-
-        self.module = AnsibleModule(
-            argument_spec=self.spec, supports_check_mode=True)
 
     def check_response(self, xml_str, xml_name):
         """Check if response message is already succeed"""
@@ -1078,6 +1070,7 @@ class Lldp_interface(object):
             self.existing['intervalINTERFACE'] = self.get_interface_interval_config()
 
     def get_proposed(self):
+        """get proposed"""
         if self.lldpenable:
             self.proposed = dict(lldpenable=self.lldpenable)
         if self.function_lldp_interface_flag == 'disableINTERFACE':
@@ -1123,6 +1116,7 @@ class Lldp_interface(object):
                 self.proposed = dict(ifname=self.ifname, txinterval=self.txinterval)
 
     def config_lldp_interface(self):
+        """config lldp interface"""
         if self.lldpenable:
             self.config_global_lldp_enable()
         if self.function_lldp_interface_flag == 'disableINTERFACE':
@@ -1326,7 +1320,7 @@ class Lldp_interface(object):
         self.updates_cmd = cli_str.strip().split('\n')
 
     def work(self):
-        """Excute task"""
+        """Execute task"""
         self.check_params()
         self.get_existing()
         self.get_proposed()
@@ -1337,23 +1331,15 @@ class Lldp_interface(object):
 
 
 def main():
-    """Main function entry"""
+    """Main function"""
 
     argument_spec = dict(
         lldpenable=dict(required=False, choices=['enabled', 'disabled']),
-        function_lldp_interface_flag=dict(required=False,
-                                          choices=['disableINTERFACE', 'tlvdisableINTERFACE', 'tlvenableINTERFACE', 'intervalINTERFACE'],
-                                          type='str'),
-        type_tlv_disable=dict(required=False,
-                              choices=['basic_tlv', 'dot3_tlv'],
-                              type='str'),
-        type_tlv_enable=dict(required=False,
-                             choices=['dot1_tlv', 'dcbx'],
-                             type='str'),
+        function_lldp_interface_flag=dict(choices=['disableINTERFACE', 'tlvdisableINTERFACE', 'tlvenableINTERFACE', 'intervalINTERFACE'], type='str'),
+        type_tlv_disable=dict(choices=['basic_tlv', 'dot3_tlv'], type='str'),
+        type_tlv_enable=dict(choices=['dot1_tlv', 'dcbx'],type='str'),
         ifname=dict(required=False, type='str'),
-        lldpadminstatus=dict(required=False,
-                             choices=['txOnly', 'rxOnly', 'txAndRx', 'disabled'],
-                             type='str'),
+        lldpadminstatus=dict(choices=['txOnly', 'rxOnly', 'txAndRx', 'disabled'],type='str'),
         manaddrtxenable=dict(type='bool'),
         portdesctxenable=dict(type='bool'),
         syscaptxenable=dict(type='bool'),
