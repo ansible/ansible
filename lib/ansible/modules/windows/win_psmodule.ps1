@@ -69,14 +69,15 @@ Function Install-PrereqModule {
             }
             else {
                 try {
-                    Install-Module -Name $Name -MinimumVersion $PrereqModules[$Name] -Force -WhatIf:$CheckMode | Out-Null
-
                     if ( $Name -eq 'PowerShellGet' ) {
-                        # An order has to be reverted due to dependency
-                        Remove-Module -Name PowerShellGet, PackageManagement -Force
-                        Import-Module -Name PowerShellGet, PackageManagement -Force
+                        
+                        if ($null -ne (Get-InstalledModule | Where-Object {$_.Name -eq $Name})) {
+                            Update-Module -Name $Name -Force
+                        } 
+                        else {
+                            Install-Module -Name $Name -Force
+                        }
                     }
-
                     $result.changed = $true
                 }
                 catch [ System.Exception ] {
