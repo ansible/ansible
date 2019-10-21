@@ -44,18 +44,19 @@ options:
     - interface name, like vmnic0
     type: str
     required: True
-  sriov_on:
-    description:
-    - Desired SR-IOV state on interface.
-    type: bool
-    required: True
   num_virt_func:
     description:
     - number of functions to activate on interface.
-    - if sriov_on false should be equal 0
-    - if sriov_on true should be more then 0
+    - 0 means SR-IOV disabled.
+    - number greater than 0 means SR-IOV enabled.
     type: int
     required: True
+  sriov_on:
+    description:
+    - optional parameter, related to num_virt_func.
+    - SR-IOV can be enabled only if num_virt_func > 0.
+    type: bool
+    required: False
 extends_documentation_fragment: vmware.documentation
 """
 
@@ -267,6 +268,13 @@ class VmwareAdapterConfigManager(PyVmomi):
                 change_list.append(False)
                 self.results["changes"][host.name] = params_to_change["changes"]
                 self.results["after"][host.name] = self._check_sriov(host)
+                self.results["changes"][host.name].update(
+                    {
+                        "rebootRequired": self.results["after"][host.name][
+                            "rebootRequired"
+                        ]
+                    }
+                )
                 continue
 
             success = self._update_sriov(host, **params_to_change)
@@ -276,9 +284,9 @@ class VmwareAdapterConfigManager(PyVmomi):
                 change_list.append(False)
 
             self.results["after"][host.name] = self._check_sriov(host)
-            self.results["changes"][host.name]["rebootRequired"] = self.results[
-                "after"
-            ][host.name]["rebootRequired"]
+            self.results["changes"][host.name].update(
+                {"rebootRequired": self.results["after"][host.name]["rebootRequired"]}
+            )
 
         if any(change_list):
             changed = True
@@ -350,10 +358,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=[
-            ["cluster_name", "esxi_hostname"],
-            ["sriov_on", "num_virt_func"],
-        ],
+        required_one_of=[["cluster_name", "esxi_hostname"]],
         supports_check_mode=True,
     )
 
