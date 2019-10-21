@@ -81,7 +81,7 @@
 
 - name: remove the VPC
   ec2_vpc_net:
-    name: "{{ resource_prefix }}-vpc"
+    name: "{{ vpc_name }}"
     cidr_block: "{{ vpc_cidr }}"
     state: absent
     tags:
