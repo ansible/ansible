@@ -15,13 +15,21 @@ $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $tru
 $source = Get-AnsibleParam -obj $params -name "source" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent"
 $installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" -type "str" -validateset "trusted", "untrusted"
+$overwrite = Get-AnsibleParam -obj $params -name "rename_repository" -type "bool" -default $false
 
 $result = @{"changed" = $false}
 
-Function Update-NuGetPackageProvider {
+function Update-NuGetPackageProvider {
     $PackageProvider = Get-PackageProvider -ListAvailable | Where-Object { ($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201") }
     if ($null -eq $PackageProvider) {
-        Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies -Force | Out-Null
+        try {
+            Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies -Force
+            $result.changed = $true
+        }
+        catch
+        {
+            Fail-Json $result $_.Exception.Message
+        }
     }
 }
 
@@ -32,8 +40,14 @@ if ($state -eq "present") {
             $installationpolicy = "trusted"
         }
         if (-not $check_mode) {
-            Update-NuGetPackageProvider
-            Register-PSRepository -Name $name -SourceLocation $source -InstallationPolicy $installationpolicy
+            try {
+                Update-NuGetPackageProvider
+                Register-PSRepository -Name $name -SourceLocation $source -InstallationPolicy $installationpolicy
+            }
+            catch 
+            {
+                Fail-Json $result $_.Exception.Message
+            }
         }
         $result.changed = $true
     }
@@ -50,8 +64,14 @@ if ($state -eq "present") {
 
         if ($changed_properties.Count -gt 0) {
             if (-not $check_mode) {
-                Update-NuGetPackageProvider
-                Set-PSRepository -Name $name @changed_properties
+                try {
+                    Update-NuGetPackageProvider
+                    Set-PSRepository -Name $name @changed_properties
+                }
+                catch 
+                {
+                    Fail-Json $result $_.Exception.Message
+                }
             }
             $result.changed = $true
         }
