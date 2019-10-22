@@ -265,7 +265,7 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         cmd.append("--host=%s" % shlex_quote(host))
         cmd.append("--port=%i" % port)
     if not all_databases:
-        cmd.append("-D")
+        cmd.append("--one-database")
         cmd.append(shlex_quote(''.join(db_name)))
 
     comp_prog_path = None
