@@ -409,8 +409,14 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
     elif insertafter and index[1] != -1:
 
-        # Don't insert the line if it already matches at the index
-        if b_line != b_lines[index[1]].rstrip(b'\n\r'):
+        # Don't insert the line if it already matches at the index.
+        # If the line to insert after is at the end of the file use the appropriate index value.
+        if len(b_lines) == index[1]:
+            if b_lines[index[1] - 1].rstrip(b'\r\n') != b_line:
+                b_lines.append(b_line + b_linesep)
+                msg = 'line added'
+                changed = True
+        elif b_line != b_lines[index[1]].rstrip(b'\n\r'):
             b_lines.insert(index[1], b_line + b_linesep)
             msg = 'line added'
             changed = True
