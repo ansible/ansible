@@ -181,7 +181,7 @@ configuration:
     type: dict
     sample:
       {
-        'code_sha256': 'SHA256 hash',
+        'code_sha256': 'zOAGfF5JLFuzZoSNirUtOrQp+S341IOA3BcoXXoaIaU=',
         'code_size': 123,
         'description': 'My function',
         'environment': {
@@ -194,6 +194,7 @@ configuration:
         'handler': 'index.handler',
         'last_modified': '2017-08-01T00:00:00.000+0000',
         'memory_size': 128,
+        'revision_id': 'a2x9886d-d48a-4a0c-ab64-82abc005x80c',
         'role': 'arn:aws:iam::123456789012:role/lambda_basic_execution',
         'runtime': 'nodejs6.10',
         'tracing_config': { 'mode': 'Active' },
@@ -201,7 +202,8 @@ configuration:
         'version': '1',
         'vpc_config': {
           'security_group_ids': [],
-          'subnet_ids': []
+          'subnet_ids': [],
+          'vpc_id': '123'
         }
       }
 '''
