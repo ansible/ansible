@@ -108,12 +108,20 @@ EXAMPLES = r'''
 - name: Run command if /path/to/database does not exist (without 'args')
   command: /usr/bin/make_database.sh db_user db_name creates=/path/to/database
 
+- name: Disable warnings
+  command: touch /tmp/yet_another_file warn=False
+
 # free-form (string) arguments, some arguments on separate lines with the 'args' keyword
 # 'args' is a task keyword, passed at the same level as the module
 - name: Run command if /path/to/database does not exist (with 'args' keyword)
   command: /usr/bin/make_database.sh db_user db_name
   args:
     creates: /path/to/database
+
+- name: Disable warnings using args
+  command: touch /tmp/yet_another_file
+  args:
+    warn: False
 
 # 'cmd' is module parameter
 - name: Run command if /path/to/database does not exist (with 'cmd' parameter)
@@ -225,9 +233,9 @@ def check_command(module, commandline):
         command = commandline.split()[0]
     command = os.path.basename(command)
 
-    disable_suffix = "If you need to use command because {mod} is insufficient you can add" \
-                     " 'warn: false' to this command task or set 'command_warnings=False' in" \
-                     " ansible.cfg to get rid of this message."
+    disable_suffix = "If you need to use {cmd} because {mod} is insufficient you can add" \
+                     " 'warn: no' to this tasks's args: or set 'command_warnings=False'" \
+                     " in the defaults section of ansible.cfg to get rid of this message."
     substitutions = {'mod': None, 'cmd': command}
 
     if command in arguments:

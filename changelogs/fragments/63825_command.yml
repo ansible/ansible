@@ -1,0 +1,2 @@
+minor_changes:
+- command - improve warning message about command_warnings configuration (https://github.com/ansible/ansible/pull/63825).
