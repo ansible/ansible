@@ -47,7 +47,6 @@
 
   - name: delete the provided configuration with the exisiting running configuration
     ce_is_is_instance: *delete
-      state: absent
     register: result
 
   - name: change ansible_connection to network_cli
