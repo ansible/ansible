@@ -33,7 +33,7 @@
       login_port: '{{ replica_port }}'
       name: '{{ test_subscription }}'
       state: present
-      pubname: '{{ test_pub }}'
+      publications: '{{ test_pub }}'
       connparams:
         host: 127.0.0.1
         port: '{{ master_port }}'
@@ -55,7 +55,7 @@
       - result.final_state.slotname == '{{ test_subscription }}'
       - result.final_state.conninfo.dbname == '{{ test_db }}'
       - result.final_state.conninfo.host == '127.0.0.1'
-      - result.final_state.conninfo.port == '{{ master_port }}'
+      - result.final_state.conninfo.port == {{ master_port }}
       - result.final_state.conninfo.user == '{{ replication_role }}'
       - result.final_state.conninfo.password == '{{ replication_pass }}'
 
@@ -85,7 +85,7 @@
       - result.final_state.slotname == '{{ test_subscription }}'
       - result.final_state.conninfo.dbname == '{{ test_db }}'
       - result.final_state.conninfo.host == '127.0.0.1'
-      - result.final_state.conninfo.port == '{{ master_port }}'
+      - result.final_state.conninfo.port == {{ master_port }}
       - result.final_state.conninfo.user == '{{ replication_role }}'
       - result.final_state.conninfo.password == '{{ replication_pass }}'
 
@@ -110,7 +110,7 @@
       - result.final_state.slotname == '{{ test_subscription }}'
       - result.final_state.conninfo.dbname == '{{ test_db }}'
       - result.final_state.conninfo.host == '127.0.0.1'
-      - result.final_state.conninfo.port == '{{ master_port }}'
+      - result.final_state.conninfo.port == {{ master_port }}
       - result.final_state.conninfo.user == '{{ replication_role }}'
       - result.final_state.conninfo.password == '{{ replication_pass }}'
 
@@ -186,7 +186,7 @@
       login_port: '{{ replica_port }}'
       name: '{{ test_subscription }}'
       state: present
-      pubname: '{{ test_pub }}'
+      publications: '{{ test_pub }}'
       owner: '{{ test_role1 }}'
       connparams:
         host: 127.0.0.1
@@ -207,7 +207,7 @@
       login_port: '{{ replica_port }}'
       name: '{{ test_subscription }}'
       state: present
-      pubname: '{{ test_pub }}'
+      publications: '{{ test_pub }}'
       owner: '{{ test_role1 }}'
 
   - assert:
@@ -238,7 +238,7 @@
       login_port: '{{ replica_port }}'
       name: '{{ test_subscription }}'
       state: present
-      pubname: '{{ test_pub }}'
+      publications: '{{ test_pub }}'
       owner: '{{ test_role2 }}'
     check_mode: yes
 
@@ -271,7 +271,7 @@
       login_port: '{{ replica_port }}'
       name: '{{ test_subscription }}'
       state: present
-      pubname: '{{ test_pub }}'
+      publications: '{{ test_pub }}'
       owner: '{{ test_role2 }}'
 
   - assert:
@@ -358,3 +358,276 @@
       - result is not changed
       - result.name == '{{ test_subscription }}'
       - result.exists == false
+
+  ###########################
+  # Test subsparams parameter
+  ###########################
+
+  - name: Create subscription with subsparams
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: present
+      publications: '{{ test_pub }}'
+      connparams:
+        host: 127.0.0.1
+        port: '{{ master_port }}'
+        user: '{{ replication_role }}'
+        password: '{{ replication_pass }}'
+        dbname: '{{ test_db }}'
+      subsparams:
+        enabled: no
+        synchronous_commit: no
+
+  - assert:
+      that:
+      - result is changed
+      - result.name == '{{ test_subscription }}'
+      - result.queries == ["CREATE SUBSCRIPTION test CONNECTION 'host=127.0.0.1 port={{ master_port }} user={{ replication_role }} password={{ replication_pass }} dbname={{ test_db }}' PUBLICATION {{ test_pub }} WITH (enabled = false, synchronous_commit = false)"]
+      - result.exists == true
+      - result.final_state.enabled == false
+      - result.final_state.synccommit == false
+
+  - name: Stat mode
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: stat
+
+  - assert:
+      that:
+      - result.name == '{{ test_subscription }}'
+      - result.final_state.enabled == false
+      - result.final_state.synccommit == false
+
+  - name: Enable changed params
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      publications: '{{ test_pub }}'
+      subsparams:
+        enabled: yes
+        synchronous_commit: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.name == '{{ test_subscription }}'
+      - result.queries == ["ALTER SUBSCRIPTION {{ test_subscription }} ENABLE", "ALTER SUBSCRIPTION {{ test_subscription }} SET (synchronous_commit = true)"]
+      - result.exists == true
+      - result.final_state.enabled == true
+      - result.final_state.synccommit == true
+
+  - name: Stat mode
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: stat
+
+  - assert:
+      that:
+      - result.name == '{{ test_subscription }}'
+      - result.final_state.enabled == true
+      - result.final_state.synccommit == true
+
+  - name: Enable the same params again
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      publications: '{{ test_pub }}'
+      subsparams:
+        enabled: yes
+        synchronous_commit: yes
+
+  - assert:
+      that:
+      - result is not changed
+      - result.name == '{{ test_subscription }}'
+      - result.queries == []
+      - result.exists == true
+      - result.final_state == result.initial_state
+      - result.final_state.enabled == true
+      - result.final_state.synccommit == true
+
+  ##########################
+  # Test change publications
+  ##########################
+
+  - name: Change publications in check mode
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: present
+      publications:
+      - '{{ test_pub }}'
+      - '{{ test_pub2 }}'
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.name == '{{ test_subscription }}'
+      - result.final_state.publications == result.initial_state.publications
+      - result.final_state.publications == ['{{ test_pub }}']
+      - result.queries == ['ALTER SUBSCRIPTION {{ test_subscription }} SET PUBLICATION {{ test_pub }}, {{ test_pub2 }}']
+
+  - name: Check publications
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: stat
+
+  - assert:
+      that:
+      - result.name == '{{ test_subscription }}'
+      - result.final_state.publications == ['{{ test_pub }}']
+
+  - name: Change publications
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: present
+      publications:
+      - '{{ test_pub }}'
+      - '{{ test_pub2 }}'
+
+  - assert:
+      that:
+      - result is changed
+      - result.name == '{{ test_subscription }}'
+      - result.final_state.publications != result.initial_state.publications
+      - result.final_state.publications == ['{{ test_pub }}', '{{ test_pub2 }}']
+      - result.queries == ['ALTER SUBSCRIPTION {{ test_subscription }} SET PUBLICATION {{ test_pub }}, {{ test_pub2 }}']
+
+  - name: Check publications
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: stat
+
+  - assert:
+      that:
+      - result.name == '{{ test_subscription }}'
+      - result.final_state.publications == ['{{ test_pub }}', '{{ test_pub2 }}']
+
+  - name: Change publications with the same values again
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: present
+      publications:
+      - '{{ test_pub }}'
+      - '{{ test_pub2 }}'
+
+  - assert:
+      that:
+      - result is not changed
+      - result.name == '{{ test_subscription }}'
+      - result.final_state.publications == result.initial_state.publications
+      - result.final_state.publications == ['{{ test_pub }}', '{{ test_pub2 }}']
+      - result.queries == []
+
+  ######################
+  # Test update conninfo
+  ######################
+
+  - name: Change conninfo in check mode
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: present
+      connparams:
+        host: 127.0.0.1
+        port: '{{ master_port }}'
+        user: '{{ replication_role }}'
+        password: '{{ replication_pass }}'
+        dbname: '{{ test_db }}'
+        connect_timeout: '{{ conn_timeout }}'
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.name == '{{ test_subscription }}'
+      - result.queries == ["ALTER SUBSCRIPTION {{ test_subscription }} CONNECTION 'host=127.0.0.1 port={{ master_port }} user={{ replication_role }} password={{ replication_pass }} dbname={{ test_db }} connect_timeout={{ conn_timeout }}'"]
+      - result.initial_state.conninfo == result.final_state.conninfo
+
+  - name: Change conninfo
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: present
+      connparams:
+        host: 127.0.0.1
+        port: '{{ master_port }}'
+        user: '{{ replication_role }}'
+        password: '{{ replication_pass }}'
+        dbname: '{{ test_db }}'
+        connect_timeout: '{{ conn_timeout }}'
+
+  - assert:
+      that:
+      - result is changed
+      - result.name == '{{ test_subscription }}'
+      - result.queries == ["ALTER SUBSCRIPTION {{ test_subscription }} CONNECTION 'host=127.0.0.1 port={{ master_port }} user={{ replication_role }} password={{ replication_pass }} dbname={{ test_db }} connect_timeout={{ conn_timeout }}'"]
+      - result.initial_state.conninfo != result.final_state.conninfo
+
+  - name: Check publications
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: stat
+
+  - assert:
+      that:
+      - result.name == '{{ test_subscription }}'
+      - result.final_state.conninfo.connect_timeout == {{ conn_timeout }}
+
+  - name: Try to change conninfo again with the same values
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: present
+      connparams:
+        host: 127.0.0.1
+        port: '{{ master_port }}'
+        user: '{{ replication_role }}'
+        password: '{{ replication_pass }}'
+        dbname: '{{ test_db }}'
+        connect_timeout: '{{ conn_timeout }}'
+
+  - assert:
+      that:
+      - result is not changed
+      - result.name == '{{ test_subscription }}'
+      - result.queries == []
+      - result.initial_state.conninfo == result.final_state.conninfo
+      - result.final_state.conninfo.connect_timeout == {{ conn_timeout }}

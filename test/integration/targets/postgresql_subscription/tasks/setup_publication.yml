@@ -63,6 +63,13 @@
       - result.tables == []
       - result.parameters.publish != {}
 
+  - name: postgresql_publication - create one more publication
+    <<: *task_parameters
+    postgresql_publication: 
+      <<: *pg_parameters
+      login_port: '{{ master_port }}'
+      name: '{{ test_pub2 }}'
+
   - name: postgresql_publication - check the publication was created
     <<: *task_parameters
     postgresql_query:
