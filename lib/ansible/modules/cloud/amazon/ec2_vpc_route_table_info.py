@@ -31,6 +31,7 @@ options:
       - Get details of a specific route tables. This value should be provided as a list.
     required: false
     type: list
+    default: []
     version_added: "2.10"
 extends_documentation_fragment:
     - aws
@@ -91,6 +92,11 @@ route_tables:
               returned: when route table has subnet associated
               type: str
               sample: subnet-db73c0ac
+      id:
+        description: The ID of the route table. (Returned for backward compatibility. Use route_table_id instead.)
+        returned: always
+        type: str
+        sample: rtb-05641160
       propagating_vgws:
         description: Any virtual private gateway (VGW) propagating routes.
         returned: always
@@ -102,10 +108,10 @@ route_tables:
             type: str
             sample: local
       route_table_id:
-          description: The ID of the route table.
-          returned: always
-          type: str
-          sample: rtb-05641160
+        description: The ID of the route table.
+        returned: always
+        type: str
+        sample: rtb-05641160
       routes:
         description: The routes in the route table.
         returned: always
