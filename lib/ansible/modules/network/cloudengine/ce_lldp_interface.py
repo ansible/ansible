@@ -47,7 +47,7 @@ options:
     description:
       - Used to distinguish between command line functions.
     type: str
-    choices: ['basic_tlv','dot1_tlv','dot3_tlv']
+    choices: ['basic_tlv', 'dot3_tlv']
   type_tlv_enable:
     description:
       - Used to distinguish between command line functions.
@@ -105,10 +105,6 @@ options:
   protovlantxenable:
     description:
       - Enable protocol vlan tx.
-    type: bool
-  identity:
-    description:
-      - Enable  the ability to identity TLV.
     type: bool
   protoidtxenable:
      description:
@@ -1297,7 +1293,7 @@ class Lldp_interface(object):
                                     if self.linkaggretxenable == "false":
                                         cmds.append("lldp tlv-disable dot3-tlv link-aggregation")
                                     if self.linkaggretxenable == "true":
-                                        cmds.append( "undo lldp tlv-disable dot3-tlv link-aggregation")
+                                        cmds.append("undo lldp tlv-disable dot3-tlv link-aggregation")
                                 if self.macphytxenable:
                                     if self.macphytxenable == "false":
                                         cmds.append("lldp tlv-disable dot3-tlv mac-physic")
