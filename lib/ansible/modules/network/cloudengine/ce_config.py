@@ -346,11 +346,29 @@ def run(module, result):
         if match != "none":
             after = get_running_config(module)
             path = module.params["parents"]
-            configobjs = after.difference(before, match=match, replace=replace, path=path)
-            if len(configobjs) > 0:
-                result["changed"] = True
-            else:
-                result["changed"] = False
+            if path is not None and match != 'line':
+                before_objs = before.get_block(path)
+                after_objs = aftre.get_bock(path)
+                update = []
+                if len(before_objs) == len(after_objs):
+                    for b_item, a_item in zip(before_objs, after_objs):
+                        if b_item != a_item:
+                            update.append(a_item.text)
+                else:
+                    update = [item.text for item in after_objs]:
+                if len(update) == 0:
+                    result["changed"] = False
+                    result['updates'] = []
+                else:
+                    result["changed"] = True
+                    result['updates'] = update
+         else:
+              configobjs = after.difference(before, match=match, replace=replace, path=path)
+              if len(configobjs) > 0:
+                  result["changed"] = True
+              else:
+                  result["changed"] = False
+                  result['updates'] = []
         else:
             result['changed'] = True
 
