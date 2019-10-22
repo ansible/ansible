@@ -152,7 +152,7 @@
           - update_result.configuration.runtime == 'nodejs10.x'
           - update_result.configuration.tracing_config.mode == 'Active'
 
-  - name: test no changes are made with the same parameters
+    - name: test no changes are made with the same parameters
       lambda:
         name: "{{lambda_function_name}}"
         runtime: "nodejs10.x"
