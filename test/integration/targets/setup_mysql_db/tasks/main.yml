@@ -32,11 +32,11 @@
   vars:
     params:
       files:
-        - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}{{ python_suffix }}.yml'
-        - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml'
-        - '{{ ansible_os_family }}-{{ ansible_distribution_major_version }}{{ python_suffix }}.yml'
-        - '{{ ansible_distribution }}{{ python_suffix }}.yml'
-        - '{{ ansible_os_family }}{{ python_suffix }}.yml'
+        - '{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}{{ python_suffix }}.yml'
+        - '{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml'
+        - '{{ ansible_facts.os_family }}-{{ ansible_facts.distribution_major_version }}{{ python_suffix }}.yml'
+        - '{{ ansible_facts.distribution }}{{ python_suffix }}.yml'
+        - '{{ ansible_facts.os_family }}{{ python_suffix }}.yml'
         - 'default{{ python_suffix }}.yml'
       paths: '../vars'
 
