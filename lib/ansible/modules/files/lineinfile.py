@@ -286,7 +286,8 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     # index[0] is the line num where regexp has been found
     # index[1] is the line num where insertafter/insertbefore has been found
     index = [-1, -1]
-    m = None
+    match = None
+    exact_line_match = False
     b_line = to_bytes(line, errors='surrogate_or_strict')
 
     # The module's doc says
@@ -303,18 +304,17 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             match_found = bre_m.search(b_cur_line)
             if match_found:
                 index[0] = lineno
-                m = match_found
+                match = match_found
                 if firstmatch:
                     break
 
     # 2. When no match found on the previous step,
     # parse for searching insertafter/insertbefore:
-    if not m:
+    if not match:
         for lineno, b_cur_line in enumerate(b_lines):
-            match_found = b_line == b_cur_line.rstrip(b'\r\n')
-            if match_found:
+            if b_line == b_cur_line.rstrip(b'\r\n'):
                 index[0] = lineno
-                m = match_found
+                exact_line_match = True
 
             elif bre_ins is not None and bre_ins.search(b_cur_line):
                 if insertafter:
@@ -334,8 +334,8 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     b_linesep = to_bytes(os.linesep, errors='surrogate_or_strict')
     # Exact line or Regexp matched a line in the file
     if index[0] != -1:
-        if backrefs:
-            b_new_line = m.expand(b_line)
+        if backrefs and match:
+            b_new_line = match.expand(b_line)
         else:
             # Don't do backref expansion if not asked.
             b_new_line = b_line
@@ -345,7 +345,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
         # If no regexp was given and no line match is found anywhere in the file,
         # insert the line appropriately if using insertbefore or insertafter
-        if regexp is None and m is None:
+        if regexp is None and match is None and not exact_line_match:
 
             # Insert lines
             if insertafter and insertafter != 'EOF':
