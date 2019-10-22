@@ -30,15 +30,15 @@ options:
           - Specifies the name of the user.
         required: true
         type: str
-      state:
+      enabled:
         description:
           - Enables/Disables SNMP v3 access for the user.
         type: bool
-      set_access_state:
+      set_access_enabled:
         description:
           - Enables/Disables SNMP SET requests for the user.
         type: bool
-      require_privacy_state:
+      require_privacy:
         description:
              - Enables/Disables the Require privacy (encryption) for requests from this user
         type: bool
@@ -63,19 +63,19 @@ EXAMPLES = """
   onyx_snmp_users:
     users:
        - name: sara
-         state: true
+         enabled: true
 
 - name: enables snmp set requests
   onyx_snmp_users:
     users:
        - name: sara
-         set_access_state: yes
+         set_access_enabled: yes
 
 - name: enables user require privacy
   onyx_snmp_users:
     users:
        - name: sara
-         require_privacy_state: true
+         require_privacy: true
 
 - name: configures user hash type
   onyx_snmp_users:
@@ -120,9 +120,9 @@ class OnyxSNMPUsersModule(BaseOnyxModule):
         """ initialize module
         """
         user_spec = dict(name=dict(required=True),
-                         state=dict(type='bool'),
-                         set_access_state=dict(type='bool'),
-                         require_privacy_state=dict(type='bool'),
+                         enabled=dict(type='bool'),
+                         set_access_enabled=dict(type='bool'),
+                         require_privacy=dict(type='bool'),
                          auth_type=dict(type='str', choices=['md5', 'sha', 'sha224', 'sha256', 'sha384', 'sha512']),
                          auth_password=dict(type='str'),
                          capability_level=dict(type='str', choices=['admin', 'monitor', 'unpriv', 'v_admin']),
@@ -141,15 +141,15 @@ class OnyxSNMPUsersModule(BaseOnyxModule):
         self._required_config = dict(module_params)
         self.validate_param_values(self._required_config)
 
-    def _set_igmp_config(self, users_config):
+    def _set_snmp_config(self, users_config):
         if users_config[0]:
             if users_config[0].get('Lines'):
                 return
         current_users = []
         count = 0
-        state = True
-        set_access_state = True
-        require_privacy_state = True
+        enabled = True
+        set_access_enabled = True
+        require_privacy = True
         auth_type = ''
         capability_level = ''
         name = ''
@@ -161,28 +161,28 @@ class OnyxSNMPUsersModule(BaseOnyxModule):
                 name = entry.split()[2]
                 if user.get(entry):
                     if user.get(entry)[0]:
-                        state = user.get(entry)[0].get('Enabled overall')
-                        if state == 'no':
-                            state = False
+                        enabled = user.get(entry)[0].get('Enabled overall')
+                        if enabled == 'no':
+                            enabled = False
                         else:
-                            state = True
-                        set_access_state = user.get(entry)[1].get('SET access')[0].get('Enabled')
-                        if set_access_state == 'no':
-                            set_access_state = False
+                            enabled = True
+                        set_access_enabled = user.get(entry)[1].get('SET access')[0].get('Enabled')
+                        if set_access_enabled == 'no':
+                            set_access_enabled = False
                         else:
-                            set_access_state = True
-                        require_privacy_state = user.get(entry)[0].get('Require privacy')
-                        if require_privacy_state == 'yes':
-                            require_privacy_state = True
+                            set_access_enabled = True
+                        require_privacy = user.get(entry)[0].get('Require privacy')
+                        if require_privacy == 'yes':
+                            require_privacy = True
                         else:
-                            require_privacy_state = False
+                            require_privacy = False
                         capability_level = user.get(entry)[1].get('SET access')[0].get('Capability level')
                         auth_type = user.get(entry)[0].get('Authentication type')
-                        user_dict['enabled'] = state
-                        user_dict['set_access_enabled'] = set_access_state
+                        user_dict['enabled'] = enabled
+                        user_dict['set_access_enabled'] = set_access_enabled
                         user_dict['auth_type'] = auth_type
                         user_dict['capability_level'] = capability_level
-                        user_dict['require_privacy_state'] = require_privacy_state
+                        user_dict['require_privacy'] = require_privacy
                         entry_dict[name] = user_dict
                         all_users_names.append(name)
             current_users.append(entry_dict)
@@ -197,7 +197,7 @@ class OnyxSNMPUsersModule(BaseOnyxModule):
         self._current_config = dict()
         users_config = self._show_users()
         if users_config:
-            self._set_igmp_config(users_config)
+            self._set_snmp_config(users_config)
 
     def generate_commands(self):
         req_uers = self._required_config.get("users")
@@ -205,57 +205,67 @@ class OnyxSNMPUsersModule(BaseOnyxModule):
         current_names = self._current_config.get("current_names")
         if req_uers:
             for user in req_uers:
-                if user.get("name"):
-                    if current_names and (user.get("name") in current_names):
+                user_id = user.get('name')
+                if user_id:
+                    if current_names and (user_id in current_names):
                         for user_entry in current_users:
                             for user_name in user_entry:
-                                if user_name == user.get("name"):
-                                    if user.get("state") is not None:
-                                        if user.get("state") != user_entry.get(user_name).get("enabled"):
-                                            if user.get("state") is True:
-                                                self._commands.append('snmp-server user {0} v3 enable' .format(user.get('name')))
+                                if user_name == user_id:
+                                    user_state = user.get("enabled")
+                                    user_entry_name = user_entry.get(user_name)
+                                    if user_state is not None:
+                                        if user_state != user_entry_name.get("enabled"):
+                                            if user_state is True:
+                                                self._commands.append('snmp-server user {0} v3 enable' .format(user_id))
                                             else:
-                                                self._commands.append('no snmp-server user {0} v3 enable' .format(user.get('name')))
-                                    if user.get("set_access_state") is not None:
-                                        if user.get("set_access_state") != user_entry.get(user_name).get("set_access_enabled"):
-                                            if user.get("set_access_state") is True:
-                                                self._commands.append('snmp-server user {0} v3 enable sets' .format(user.get('name')))
+                                                self._commands.append('no snmp-server user {0} v3 enable' .format(user_id))
+                                    set_state = user.get("set_access_enabled")
+                                    if set_state is not None:
+                                        if set_state != user_entry_name.get("set_access_enabled"):
+                                            if set_state is True:
+                                                self._commands.append('snmp-server user {0} v3 enable sets' .format(user_id))
                                             else:
-                                                self._commands.append('no snmp-server user {0} v3 enable sets' .format(user.get('name')))
-                                    if user.get("auth_type") is not None:
+                                                self._commands.append('no snmp-server user {0} v3 enable sets' .format(user_id))
+                                    auth_type = user.get("auth_type")
+                                    if auth_type is not None:
                                         if user.get("auth_password") is not None:
-                                            if user.get("auth_type") != user_entry.get(user_name).get("auth_type"):
+                                            if auth_type != user_entry_name.get("auth_type"):
                                                 self._commands.append('snmp-server user {0} v3 auth {1} {2}'
-                                                                      .format(user.get('name'), user.get('auth_type'), user.get('auth_password')))
-                                    if user.get("capability_level") is not None:
-                                        if user.get("capability_level") != user_entry.get(user_name).get("capability_level"):
+                                                                      .format(user_id, user.get('auth_type'), user.get('auth_password')))
+                                    cap_level = user.get("capability_level")
+                                    if cap_level is not None:
+                                        if cap_level != user_entry_name.get("capability_level"):
                                             self._commands.append('snmp-server user {0} v3 capability {1}'
-                                                                  .format(user.get('name'), user.get('capability_level')))
-                                    if user.get("require_privacy_state") is not None:
-                                        if user.get("require_privacy_state") != user_entry.get(user_name).get("require_privacy_state"):
-                                            if user.get("require_privacy_state") is True:
-                                                self._commands.append('snmp-server user {0} v3 require-privacy' .format(user.get('name')))
+                                                                  .format(user_id, user.get('capability_level')))
+                                    req_priv = user.get("require_privacy")
+                                    if req_priv is not None:
+                                        if req_priv != user_entry_name.get("require_privacy"):
+                                            if req_priv is True:
+                                                self._commands.append('snmp-server user {0} v3 require-privacy' .format(user_id))
                                             else:
-                                                self._commands.append('no snmp-server user {0} v3 require-privacy' .format(user.get('name')))
+                                                self._commands.append('no snmp-server user {0} v3 require-privacy' .format(user_id))
 
                     else:
-                        if user.get("state") is not None:
-                            if user.get("state") is True:
-                                self._commands.append('snmp-server user {0} v3 enable' .format(user.get('name')))
+                        user_state = user.get("enabled")
+                        if user_state is not None:
+                            if user_state is True:
+                                self._commands.append('snmp-server user {0} v3 enable' .format(user_id))
                             else:
-                                self._commands.append('no snmp-server user {0} v3 enable' .format(user.get('name')))
-                        if user.get("set_access_state") is not None:
-                            if user.get("set_access_state") is True:
-                                self._commands.append('snmp-server user {0} v3 enable sets' .format(user.get('name')))
+                                self._commands.append('no snmp-server user {0} v3 enable' .format(user_id))
+                        set_state  = user.get("set_access_enabled")
+                        if set_state is not None:
+                            if set_state is True:
+                                self._commands.append('snmp-server user {0} v3 enable sets' .format(user_id))
                             else:
-                                self._commands.append('no snmp-server user {0} v3 enable sets' .format(user.get('name')))
+                                self._commands.append('no snmp-server user {0} v3 enable sets' .format(user_id))
                         if user.get("capability_level") is not None:
-                            self._commands.append('snmp-server user {0} v3 capability {1}' .format(user.get('name'), user.get('capability_level')))
-                        if user.get("require_privacy_state") is not None:
-                            if user.get("require_privacy_state") is True:
-                                self._commands.append('snmp-server user {0} v3 require-privacy' .format(user.get('name')))
+                            self._commands.append('snmp-server user {0} v3 capability {1}' .format(user_id, user.get('capability_level')))
+                        req_priv = user.get("require_privacy")
+                        if req_priv is not None:
+                            if req_priv is True:
+                                self._commands.append('snmp-server user {0} v3 require-privacy' .format(user_id))
                             else:
-                                self._commands.append('no snmp-server user {0} v3 require-privacy' .format(user.get('name')))
+                                self._commands.append('no snmp-server user {0} v3 require-privacy' .format(user_id))
 
 
 def main():

@@ -39,34 +39,34 @@ class TestOnyxSNMPUsersModule(TestOnyxModule):
 
     def test_snmp_user_state_no_change(self):
         set_module_args(dict(users=[dict(name='sara',
-                                         state='true')]))
+                                         enabled='true')]))
         self.execute_module(changed=False)
 
     def test_snmp_user_state_with_change(self):
         set_module_args(dict(users=[dict(name='sara',
-                                         state='false')]))
+                                         enabled='false')]))
         commands = ['no snmp-server user sara v3 enable']
         self.execute_module(changed=True, commands=commands)
 
     def test_snmp_user_set_access_state_no_change(self):
         set_module_args(dict(users=[dict(name='sara',
-                                         set_access_state='true')]))
+                                         set_access_enabled='true')]))
         self.execute_module(changed=False)
 
     def test_snmp_user_set_access_state_with_change(self):
         set_module_args(dict(users=[dict(name='sara',
-                                         set_access_state='false')]))
+                                         set_access_enabled='false')]))
         commands = ['no snmp-server user sara v3 enable sets']
         self.execute_module(changed=True, commands=commands)
 
     def test_snmp_user_require_privacy_state_no_change(self):
         set_module_args(dict(users=[dict(name='sara',
-                                         require_privacy_state='false')]))
+                                         require_privacy='false')]))
         self.execute_module(changed=False)
 
     def test_snmp_user_require_privacy_state_with_change(self):
         set_module_args(dict(users=[dict(name='sara',
-                                         require_privacy_state='yes')]))
+                                         require_privacy='yes')]))
         commands = ['snmp-server user sara v3 require-privacy']
         self.execute_module(changed=True, commands=commands)
 
