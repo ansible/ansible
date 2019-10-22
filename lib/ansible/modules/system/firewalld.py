@@ -195,7 +195,7 @@ EXAMPLES = r'''
     permanent: yes
     icmp_block: echo-request
 
-- name: Redirect port 443 to 8443 with Rich Rule
+- name: Redirect port 443 to 8443 with Rich Rule for ipv4 and ipv6
   firewalld:
     rich_rule: rule family=ipv4 forward-port port=443 protocol=tcp to-port=8443
     zone: public
@@ -203,14 +203,16 @@ EXAMPLES = r'''
     immediate: yes
     state: enabled
 
-- firewalld:
+- name: Ensures a chain named 'sshg' exists on table 'filter'
+  firewalld:
     chain: sshg
     fw_family: ipv4
     table: filter
     permanent: true
     state: enabled
 
-- firewalld:
+- name: Ensures there is a direct rule on chain 'sshg' and table 'filter' to accept packets on TCP port 332
+  firewalld:
     chain: sshg
     fw_family: ipv4
     table: filter
@@ -218,7 +220,8 @@ EXAMPLES = r'''
     permanent: true
     state: enabled
 
-- firewalld:
+- name: Ensures there is NO direct rule on chain 'sshg' and table 'filter' to accept packets on TCP port 332
+  firewalld:
     chain: sshg
     fw_family: ipv4
     table: filter
@@ -226,7 +229,8 @@ EXAMPLES = r'''
     permanent: true
     state: disabled
 
-- firewalld:
+- name: Ensures there is NO chain named 'sshg' exists on table 'filter'
+  firewalld:
     chain: sshg
     fw_family: ipv4
     table: filter
