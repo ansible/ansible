@@ -16,53 +16,57 @@ $source = Get-AnsibleParam -obj $params -name "source" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent"
 $installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" -type "str" -validateset "trusted", "untrusted"
 
-$result = @{"changed" = $false}
+$result = New-Object -TypeName PSObject -Property @{"changed" = $false}
+$repositoryProperties = New-Object -TypeName PSObject -Property @{"name" = $name; "source" = $source; "installationPolicy" = $installationpolicy }
 
-Function Update-NuGetPackageProvider {
+function Update-NuGetPackageProvider {
     $PackageProvider = Get-PackageProvider -ListAvailable | Where-Object { ($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201") }
     if ($null -eq $PackageProvider) {
         Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies -Force | Out-Null
     }
 }
 
-$Repo = Get-PSRepository -Name $name -ErrorAction Ignore
-if ($state -eq "present") {
-    if ($null -eq $Repo) {
-        if ($null -eq $installationpolicy) {
-            $installationpolicy = "trusted"
-        }
-        if (-not $check_mode) {
-            Update-NuGetPackageProvider
-            Register-PSRepository -Name $name -SourceLocation $source -InstallationPolicy $installationpolicy
-        }
-        $result.changed = $true
-    }
-    else {
-        $changed_properties = @{}
+$repository = Get-PSRepository -Name $repositoryProperties.Name -ErrorAction Ignore -WarningAction Ignore
 
-        if ($Repo.SourceLocation -ne $source) {
-            $changed_properties.SourceLocation = $source
-        }
-
-        if ($null -ne $installationpolicy -and $Repo.InstallationPolicy -ne $installationpolicy) {
-            $changed_properties.InstallationPolicy = $installationpolicy
-        }
-
-        if ($changed_properties.Count -gt 0) {
-            if (-not $check_mode) {
-                Update-NuGetPackageProvider
-                Set-PSRepository -Name $name @changed_properties
-            }
+if($null -eq $repository -and (-not $check_mode)) {
+    if($state -eq "present") {
+        try
+        {
+            Register-PSRepository -Name $repositoryProperties.Name -SourceLocation $repositoryProperties.source -InstallationPolicy $repositoryProperties.installationPolicy
             $result.changed = $true
+        }
+        catch
+        {
+            Fail-Json $result $_.Exception.Message
         }
     }
 }
-elseif ($state -eq "absent" -and $null -ne $Repo) {
-    if (-not $check_mode) {
-        Update-NuGetPackageProvider
-        Unregister-PSRepository -Name $name
+
+if($null -ne $repository -and (-not $check_mode)) {
+    if($state -eq "absent") {
+        try
+        {
+            Unregister-PSRepository -Name $repositoryProperties.Name
+            $result.changed = $true
+        }
+        catch
+        {
+            Fail-Json $result $_.Exception.Message
+        }
     }
-    $result.changed = $true
+    else {
+
+        if($repository.SourceLocation -ne $repositoryProperties.source -and $null -ne $repositoryProperties.source) {
+            Set-PSRepository -Name $repositoryProperties.Name -SourceLocation $repositoryProperties.source
+            $result.changed = $true
+        }
+
+        if($repository.InstallationPolicy -ne $repositoryProperties.installationPolicy -and $null -ne $repositoryProperties.installationPolicy) {
+            Set-PSRepository -Name $repositoryProperties.Name -InstallationPolicy $repositoryProperties.installationPolicy
+            $result.changed = $true
+        }
+
+    }
 }
 
 Exit-Json -obj $result
