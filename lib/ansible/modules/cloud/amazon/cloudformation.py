@@ -291,6 +291,11 @@ log:
   returned: always
   type: list
   sample: ["updating stack"]
+change_set_id:
+  description: The ID of the stack change set if one was created
+  returned:  I(state=present) and I(create_changeset=true)
+  type: str
+  sample: "arn:aws:cloudformation:us-east-1:012345678901:changeSet/Ansible-StackName-f4496805bd1b2be824d1e315c6884247ede41eb0"
 stack_resources:
   description: AWS stack resources and their status. List of dictionaries, one dict per resource.
   returned: state == present
@@ -449,6 +454,7 @@ def create_changeset(module, stack_params, cfn, events_limit):
                 # Lets not hog the cpu/spam the AWS API
                 time.sleep(1)
             result = stack_operation(cfn, stack_params['StackName'], 'CREATE_CHANGESET', events_limit)
+            result['change_set_id'] = cs['Id']
             result['warnings'] = ['Created changeset named %s for stack %s' % (changeset_name, stack_params['StackName']),
                                   'You can execute it using: aws cloudformation execute-change-set --change-set-name %s' % cs['Id'],
                                   'NOTE that dependencies on this stack might fail due to pending changes!']

@@ -1,0 +1,2 @@
+minor_changes:
+  - cloudformation - Return change_set_id in the cloudformation output if a change set was created.
