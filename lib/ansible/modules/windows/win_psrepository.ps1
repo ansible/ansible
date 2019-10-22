@@ -44,11 +44,7 @@ if ($state -eq "present") {
                 Update-NuGetPackageProvider
                 Register-PSRepository -Name $name -SourceLocation $source -InstallationPolicy $installationpolicy
             }
-<<<<<<< HEAD
-            catch
-=======
             catch 
->>>>>>> Added error output forwin_psrepository module
             {
                 Fail-Json $result $_.Exception.Message
             }
