@@ -20,7 +20,7 @@
     # ============================================================
     - name: test with no parameters except state absent
       lambda:
-        state=absent
+        state: absent
       register: result
       ignore_errors: true
 
@@ -33,8 +33,8 @@
     # ============================================================
     - name: test with no role or handler
       lambda:
-        name=ansible-testing-fake-should-not-be-created
-        runtime="python2.7"
+        name: ansible-testing-fake-should-not-be-created
+        runtime: "python2.7"
       register: result
       ignore_errors: true
 
@@ -47,10 +47,10 @@
     # ============================================================
     - name: test with all module required variables but no region
       lambda:
-        name=ansible-testing-fake-should-not-be-created
-        runtime="python2.7"
-        handler="no-handler"
-        role=arn:fake-role-doesnt-exist
+        name: ansible-testing-fake-should-not-be-created
+        runtime: "python2.7"
+        handler: "no-handler"
+        role: "arn:fake-role-doesnt-exist"
       register: result
       ignore_errors: true
 
@@ -139,6 +139,8 @@
         name: "{{lambda_function_name}}"
         runtime: "nodejs10.x"
         tracing_mode: 'Active'
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
         ec2_region: '{{ec2_region}}'
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
@@ -157,6 +159,8 @@
         name: "{{lambda_function_name}}"
         runtime: "python2.7"
         tracing_mode: 'PassThrough'
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
         ec2_region: '{{ec2_region}}'
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
@@ -282,12 +286,12 @@
     # ============================================================
     - name: test state=absent (expect changed=False)
       lambda:
-        name="{{lambda_function_name}}"
-        ec2_region='{{ec2_region}}'
-        ec2_access_key='{{ec2_access_key}}'
-        ec2_secret_key='{{ec2_secret_key}}'
-        security_token='{{security_token}}'
-        state=absent
+        name: "{{lambda_function_name}}"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: absent
       register: result
 
     - name: assert state=absent
@@ -458,19 +462,11 @@
 
   always:
 
-    # ============================================================
-    - name: test state=absent (expect changed=False)
+    - name: ensure function is absent at end of test
       lambda:
-        name="{{lambda_function_name}}"
-        ec2_region='{{ec2_region}}'
-        ec2_access_key='{{ec2_access_key}}'
-        ec2_secret_key='{{ec2_secret_key}}'
-        security_token='{{security_token}}'
-        state=absent
-      register: result
-
-    - name: assert state=absent
-      assert:
-        that:
-           - 'result is not failed'
-           - 'result.changed == False'
+        name: "{{lambda_function_name}}"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: absent
