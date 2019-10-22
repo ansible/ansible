@@ -35,7 +35,11 @@ options:
         configured provider. The resulting output from the command
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
-        the number of retries has expired.
+        the number of retries has expired. If a command sent to the
+        device requires answering a prompt, it is possible to pass
+        a dict containing I(command), I(answer) and I(prompt).
+        Common answers are 'yes' or "\\r" (carriage return, must be
+        double quotes). See examples.
     type: list
     required: true
   wait_for:
@@ -43,7 +47,7 @@ options:
       - List of conditions to evaluate against the output of the
         command. The task will wait for each condition to be true
         before moving forward. If the conditional is not true
-        within the configured number of I(retries), the task fails.
+        within the configured number of retries, the task fails.
         See examples.
     type: list
     version_added: "2.2"
@@ -57,7 +61,7 @@ options:
         satisfied.
     type: str
     default: all
-    choices: [ all, any ]
+    choices: [ 'all', 'any' ]
     version_added: "2.5"
   retries:
     description:
@@ -102,6 +106,13 @@ tasks:
       wait_for:
         - result[0] contains OS10
         - result[1] contains Ethernet
+
+  - name: run commands that require answering a prompt
+    dellos10_command:
+      commands:
+        - command: 'reload'
+          prompt: '[confirm yes/no]: ?$'
+          answer: 'no'
 """
 
 RETURN = """
@@ -128,39 +139,26 @@ warnings:
 """
 import time
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import transform_commands, to_lines
 from ansible.module_utils.network.dellos10.dellos10 import run_commands
 from ansible.module_utils.network.dellos10.dellos10 import dellos10_argument_spec, check_args
-from ansible.module_utils.network.common.utils import ComplexList
-from ansible.module_utils.network.common.parsing import Conditional
-from ansible.module_utils.six import string_types
-
-
-def to_lines(stdout):
-    for item in stdout:
-        if isinstance(item, string_types):
-            item = str(item).split('\n')
-        yield item
 
 
 def parse_commands(module, warnings):
-    command = ComplexList(dict(
-        command=dict(key=True),
-        prompt=dict(),
-        answer=dict()
-    ), module)
-    commands = command(module.params['commands'])
-    for index, item in enumerate(commands):
-        if module.check_mode and not item['command'].startswith('show'):
-            warnings.append(
-                'only show commands are supported when using check mode, not '
-                'executing `%s`' % item['command']
-            )
-        elif item['command'].startswith('conf'):
-            module.fail_json(
-                msg='dellos10_command does not support running config mode '
-                    'commands.  Please use dellos10_config instead'
-            )
+    commands = transform_commands(module)
+
+    if module.check_mode:
+        for item in list(commands):
+            if not item['command'].startswith('show'):
+                warnings.append(
+                    'Only show commands are supported when using check mode, not '
+                    'executing %s' % item['command']
+                )
+                commands.remove(item)
+
     return commands
 
 
@@ -191,8 +189,11 @@ def main():
     result['warnings'] = warnings
 
     wait_for = module.params['wait_for'] or list()
-    conditionals = [Conditional(c) for c in wait_for]
 
+    try:
+        conditionals = [Conditional(c) for c in wait_for]
+    except AttributeError as exc:
+        module.fail_json(msg=to_text(exc))
     retries = module.params['retries']
     interval = module.params['interval']
     match = module.params['match']
@@ -219,7 +220,6 @@ def main():
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result.update({
-        'changed': False,
         'stdout': responses,
         'stdout_lines': list(to_lines(responses))
     })
