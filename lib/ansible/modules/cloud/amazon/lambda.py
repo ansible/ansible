@@ -100,7 +100,7 @@ options:
     description:
       - Set mode to 'Active' to sample and trace incoming requests with AWS X-Ray. Turned off (set to 'PassThrough') by default.
     choices: ['Active', 'PassThrough']
-    version_added: "2.9"
+    version_added: "2.10"
 
   tags:
     description:
