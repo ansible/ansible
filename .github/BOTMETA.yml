@@ -169,6 +169,8 @@ files:
     labels: [ cloud, vmware ]
     maintainers: $team_vmware
     notified: lparkes
+  $modules/cloud/vmware/vmware_deploy_ovf.py:
+    ignored: sivel
   $modules/cloud/vmware_httpapi/: &vmware_httpapi
     keywords: [ esx, vcenter, vcsa, vcsim, vsphere ]
     labels: [ cloud, vmware_httpapi ]
