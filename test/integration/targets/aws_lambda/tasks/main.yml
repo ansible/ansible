@@ -76,7 +76,6 @@
         vpc_security_group_ids:
         environment_variables:
         dead_letter_arn:
-        tracing_mode:
       register: result
       ignore_errors: true
 
@@ -180,7 +179,6 @@
         vpc_security_group_ids: sg-FA6E
         environment_variables:
         dead_letter_arn:
-        tracing_mode:
       register: result
       ignore_errors: true
 
@@ -213,7 +211,6 @@
         vpc_security_group_ids:
         environment_variables:
         dead_letter_arn:
-        tracing_mode:
       register: result
 
     - name: assert lambda remains as before
@@ -221,8 +218,6 @@
         that:
            - 'result is not failed'
            - 'result.changed == False'
-
-
 
     # ============================================================
     - name: test putting an environment variable changes lambda
