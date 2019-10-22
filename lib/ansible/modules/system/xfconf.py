@@ -21,7 +21,7 @@ short_description: Edit XFCE4 Configurations
 description:
   - This module allows for the manipulation of Xfce 4 Configuration via xfconf-query.
   - Please see the xfconf-query(1) man pages for more details.
-  - "TO-DO: unit tests, list state to retrieve properties, recursive reset."
+  - "TO-DO: unit tests"
 version_added: "2.8"
 options:
   channel:
@@ -53,9 +53,16 @@ options:
     description:
     - Force array even if only one element
     type: bool
-    default: 'no'
+    default: no
     aliases:
     - array
+    version_added: "2.10"
+  recursive:
+    description:
+    - When used with state 'absent', deletes recursively.
+    - If used with state 'get', returns the '--list' of properties, without values.
+    type: bool
+    default: no
     version_added: "2.10"
 seealso:
   - name: XFCE documentation on xfconf-query
@@ -127,22 +134,25 @@ class XfConfProperty(object):
     RESET = "absent"
     VALID_STATES = (SET, GET, RESET)
     VALID_VALUE_TYPES = ('int', 'bool', 'float', 'string')
-    previous_value = None
     is_array = None
 
-    def __init__(self, module):
+    def __init__(self, name, module):
+        self.name = name
         self.module = module
         self.channel = module.params['channel']
         self.property = module.params['property']
         self.value_type = module.params['value_type']
         self.value = module.params['value']
+        self.state = module.params['state']
         self.force_array = module.params['force_array']
+        self.recursive = module.params['recursive']
+        self._previous_value_set = False
+        self._previous_value = None
 
-        self.cmd = "{0} --channel {1} --property {2}".format(
-            module.get_bin_path('xfconf-query', True),
-            shlex_quote(self.channel),
-            shlex_quote(self.property)
-        )
+        self.cmd = "{0} --channel {1}".format(module.get_bin_path('xfconf-query', True), shlex_quote(self.channel))
+        if self.property:
+            self.cmd = "{0} --property {1}".format(self.cmd, shlex_quote(self.property))
+
         self.method_map = dict(zip((self.SET, self.GET, self.RESET),
                                    (self.set, self.get, self.reset)))
 
@@ -154,13 +164,22 @@ class XfConfProperty(object):
             return module.run_command(cmd, check_rc=False)
         self._run = run
 
-    def _execute_xfconf_query(self, args=None):
+    @property
+    def previous_value(self):
+        if not self._previous_value_set:
+            self._previous_value, _ = self.get()
+        return self._previous_value
+
+    def _execute_xfconf_query(self, args=None, check_mode_aware=True, **kwargs):
         try:
             cmd = self.cmd
             if args:
                 cmd = "{0} {1}".format(cmd, args)
 
             self.module.debug("Running cmd={0}".format(cmd))
+            if check_mode_aware and self.module.check_mode:
+                return 'Would have executed: {}'.format(cmd)
+
             rc, out, err = self._run(cmd)
             if err.rstrip() == self.does_not:
                 return None
@@ -172,21 +191,38 @@ class XfConfProperty(object):
         except OSError as exception:
             XfConfException('xfconf-query failed with exception: {0}'.format(exception))
 
-    def get(self):
+    def get_prop(self):
         previous_value = self._execute_xfconf_query()
-        if previous_value is None:
+        if not previous_value:
             return
 
         if "Value is an array with" in previous_value:
+            if " 0 items:" in previous_value:
+                return []
             previous_value = previous_value.split("\n")
             previous_value.pop(0)
             previous_value.pop(0)
 
         return previous_value
 
-    def reset(self):
-        self._execute_xfconf_query("--reset")
-        return None
+    def get_list(self):
+        value = self._execute_xfconf_query("--list")
+        return value.split('\n')
+
+    def get(self, check_mode_aware=True, **kwargs):
+        if self.recursive:
+            return self.get_list(), False
+        else:
+            return self.get_prop(), False
+
+    def reset(self, check_mode_aware=True, **kwargs):
+        if not self.previous_value:
+            return None, False
+
+        rec = "--recursive" if self.recursive else ""
+
+        self._execute_xfconf_query("--reset {}".format(rec), check_mode_aware=check_mode_aware)
+        return None, True
 
     @staticmethod
     def _fix_bool(value):
@@ -199,7 +235,10 @@ class XfConfProperty(object):
             value = self._fix_bool(value)
         return " --type '{1}' --set '{0}'".format(shlex_quote(value), shlex_quote(value_type))
 
-    def set(self):
+    def set(self, check_mode_aware=True, **kwargs):
+        if self.previous_value and set(self.previous_value) == set(self.value):
+            return self.value, False
+
         args = "--create"
         if self.is_array:
             args += " --force-array"
@@ -207,15 +246,13 @@ class XfConfProperty(object):
                 args += self._make_value_args(*v)
         else:
             args += self._make_value_args(self.value, self.value_type)
-        self._execute_xfconf_query(args)
-        return self.value
+        self._execute_xfconf_query(args, check_mode_aware=check_mode_aware)
+        return self.value, True
 
     def call(self, state):
-        return self.method_map[state]()
+        return self.method_map[state](check_mode_aware=self.module.check_mode)
 
     def sanitize(self):
-        self.previous_value = self.get()
-
         if self.value is None and self.value_type is None:
             return
         if (self.value is None) ^ (self.value_type is None):
@@ -249,6 +286,21 @@ class XfConfProperty(object):
             self.value = self.value[0]
             self.value_type = self.value_type[0]
 
+    def make_facts(self, channel=None, property=None, value_type=None,
+                   value=None, state=None, force_array=None, recursive=None):
+        return {
+            self.name: dict(
+                channel=channel if channel else self.channel,
+                property=property if property else self.property,
+                value_type=value_type if value_type else self.value_type,
+                value=value if value else self.value,
+                state=state if state else self.state,
+                force_array=force_array if force_array else self.force_array,
+                recursive=recursive if recursive else self.recursive,
+                previous_value=self.previous_value,
+            )
+        }
+
 
 def main():
     module_name = "xfconf"
@@ -256,13 +308,14 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             channel=dict(required=True, type='str'),
-            property=dict(required=True, type='str'),
+            property=dict(required=False, type='str'),
             value_type=dict(required=False, type='list'),
             value=dict(required=False, type='list'),
             state=dict(default=XfConfProperty.SET,
                        choices=XfConfProperty.VALID_STATES,
                        type='str'),
             force_array=dict(default=False, type='bool', aliases=['array']),
+            recursive=dict(default=False, type=bool),
         ),
         supports_check_mode=True
     )
@@ -275,33 +328,17 @@ def main():
         elif not module.params.get('value_type'):
             module.fail_json(msg='State {0} requires "value_type" to be set'.format(state))
 
+    # In case we are listing all properties in a channel
+    if not module.params.get('property') and (state != XfConfProperty.GET or not module.params.get('recursive')):
+        module.fail_json(msg='Property name must be set unless doing a recursive get')
+
     try:
         # Create a Xfconf preference
-        xfconf = XfConfProperty(module)
+        xfconf = XfConfProperty(module_name, module)
         xfconf.sanitize()
+        new_value, changed = xfconf.call(state)
 
-        previous_value = xfconf.get()
-        facts = {
-            module_name: dict(
-                channel=xfconf.channel,
-                property=xfconf.property,
-                value_type=xfconf.value_type,
-                value=previous_value,)}
-
-        if state == XfConfProperty.GET \
-                or (previous_value is not None
-                    and (state, set(previous_value)) == (XfConfProperty.SET, set(xfconf.value))):
-            module.exit_json(changed=False, ansible_facts=facts)
-            return
-
-        # If check mode, we know a change would have occurred.
-        if module.check_mode:
-            new_value = xfconf.value
-        else:
-            new_value = xfconf.call(state)
-
-        facts[module_name].update(value=new_value, previous_value=previous_value)
-        module.exit_json(changed=True, ansible_facts=facts)
+        module.exit_json(changed=changed, ansible_facts=xfconf.make_facts(value=new_value))
 
     except Exception as e:
         module.fail_json(msg="Failed with exception: {0}".format(e))
