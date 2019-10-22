@@ -17,8 +17,8 @@
   - name: change ansible_connection to network_cli
     ce_netconf:
       rpc: get
-      cfg_xml: """<filter type="subtree">
-                  <isiscomm xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+      cfg_xml: "<filter type=\"subtree\">
+                  <isiscomm xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
                     <isSites>
                       <isSite>
                         <instanceId></instanceId>
@@ -26,7 +26,7 @@
                       </isSite>
                     </isSites>
                   </isiscomm>
-                </filter>"""
+                </filter>"
     register: result_xml
  
   - name: Assert the configuration is reflected on host
