@@ -56,6 +56,7 @@ options:
     description:
     - If C(yes), which will replace the remote file when contents are different than the source.
     - If C(no), the file will only be extracted and copied if the destination does not already exist.
+    - Alias C(thirsty) has been deprecated and will be removed in 2.13.
     type: bool
     default: yes
     aliases: [ thirsty ]
@@ -116,6 +117,9 @@ def main():
     files = module.params['files']
     force = module.params['force']
     executable = module.params['executable']
+
+    if module.params.get('thirsty'):
+        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
 
     result = dict(
         changed=False,

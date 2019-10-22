@@ -182,8 +182,8 @@ def main():
     argument_spec.update(
         lldp_policy=dict(type='str', aliases=['name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
-        receive_state=dict(type='raw'),  # Turn into a boolean in v2.9
-        transmit_state=dict(type='raw'),  # Turn into a boolean in v2.9
+        receive_state=dict(type='bool'),
+        transmit_state=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 

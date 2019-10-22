@@ -68,7 +68,7 @@ requirements:
 EXAMPLES = '''
 - name: Create virtual machine replica set 'myvmir'
   kubevirt_rs:
-      state: presnet
+      state: present
       name: myvmir
       namespace: vms
       wait: true
@@ -173,9 +173,12 @@ class KubeVirtVMIRS(KubeVirtRawModule):
         if replicas is not None:
             definition['spec']['replicas'] = replicas
 
+        # defaults for template
+        defaults = {'disks': [], 'volumes': [], 'interfaces': [], 'networks': []}
+
         # Execute the CURD of VM:
         template = definition['spec']['template']
-        dummy, definition = self.construct_vm_definition(KIND, definition, template)
+        dummy, definition = self.construct_vm_definition(KIND, definition, template, defaults)
         result_crud = self.execute_crud(KIND, definition)
         changed = result_crud['changed']
         result = result_crud.pop('result')

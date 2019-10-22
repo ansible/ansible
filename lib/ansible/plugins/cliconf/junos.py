@@ -109,7 +109,7 @@ class Cliconf(CliconfBase):
         requests = []
 
         if replace:
-            candidate = 'load replace {0}'.format(replace)
+            candidate = 'load override {0}'.format(replace)
 
         for line in to_list(candidate):
             if not isinstance(line, Mapping):
@@ -133,17 +133,17 @@ class Cliconf(CliconfBase):
                 self.discard_changes()
 
         else:
-            for cmd in ['top', 'exit']:
-                self.send_command(cmd)
+            self.send_command('top')
+            self.discard_changes()
 
         resp['request'] = requests
         resp['response'] = results
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
+    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, newline=True, check_all=False):
         if output:
             command = self._get_command_with_output(command, output)
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     @configure
     def commit(self, comment=None, confirmed=False, at_time=None, synchronize=False):
@@ -193,7 +193,7 @@ class Cliconf(CliconfBase):
         resp = self.send_command(command)
 
         r = resp.splitlines()
-        if len(r) == 1 and '[edit]' in r[0]:
+        if len(r) == 1 and '[edit]' in r[0] or len(r) == 4 and r[1].startswith('- version'):
             resp = ''
 
         return resp

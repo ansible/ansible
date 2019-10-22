@@ -126,7 +126,7 @@ EXAMPLES = '''
 '''
 RETURN = '''
 task:
-    description: details about the tast that was started
+    description: details about the task that was started
     returned: success
     type: complex
     contains:
@@ -149,7 +149,8 @@ task:
         overrides:
             description: The container overrides set for this task.
             returned: only when details is true
-            type: list of complex
+            type: list
+            elements: dict
         lastStatus:
             description: The last recorded status of the task.
             returned: only when details is true
@@ -161,7 +162,8 @@ task:
         containers:
             description: The container details.
             returned: only when details is true
-            type: list of complex
+            type: list
+            elements: dict
         startedBy:
             description: The used who started the task.
             returned: only when details is true

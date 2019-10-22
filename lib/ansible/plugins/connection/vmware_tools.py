@@ -10,7 +10,6 @@ from os.path import exists, getsize
 from socket import gaierror
 from ssl import SSLError
 from time import sleep
-import urllib3
 import traceback
 
 REQUESTS_IMP_ERR = None
@@ -20,6 +19,16 @@ try:
 except ImportError:
     REQUESTS_IMP_ERR = traceback.format_exc()
     HAS_REQUESTS = False
+
+try:
+    from requests.packages import urllib3
+    HAS_URLLIB3 = True
+except ImportError:
+    try:
+        import urllib3
+        HAS_URLLIB3 = True
+    except ImportError:
+        HAS_URLLIB3 = False
 
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_native
@@ -102,13 +111,6 @@ DOCUMENTATION = """
           - name: ansible_vmware_validate_certs
         default: True
         type: bool
-      silence_tls_warnings:
-        description:
-          - Don't output warnings about insecure connections.
-        vars:
-          - name: ansible_vmware_silence_tls_warnings
-        default: True
-        type: bool
       vm_path:
         description:
           - VM path absolute to the connection.
@@ -173,7 +175,6 @@ ansible_vmware_host: vcenter.example.com
 ansible_vmware_user: administrator@vsphere.local
 ansible_vmware_password: Secr3tP4ssw0rd!12
 ansible_vmware_validate_certs: no  # default is yes
-ansible_vmware_silence_tls_warnings: yes # default is yes
 
 # vCenter Connection VM Path Example
 ansible_vmware_guest_path: DATACENTER/vm/FOLDER/{{ inventory_hostname }}
@@ -276,7 +277,7 @@ class Connection(ConnectionBase):
             self.module_implementation_preferences = (".ps1", ".exe", "")
             self.become_methods = ["runas"]
             self.allow_executable = False
-            self.has_pipelining = True
+            self.has_pipelining = False
             self.allow_extras = True
 
     def _establish_connection(self):
@@ -290,7 +291,7 @@ class Connection(ConnectionBase):
         if self.validate_certs:
             connect = SmartConnect
         else:
-            if self.get_option("silence_tls_warnings"):
+            if HAS_URLLIB3:
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             connect = SmartConnectNoSSL
 
@@ -367,10 +368,13 @@ class Connection(ConnectionBase):
 
     def _get_program_spec_program_path_and_arguments(self, cmd):
         if self.windowsGuest:
-            cmd_parts = self._shell._encode_script(cmd, as_list=False, strict_mode=False, preserve_rc=False)
-
+            '''
+            we need to warp the execution of powershell into a cmd /c because
+            the call otherwise fails with "Authentication or permission failure"
+            #FIXME: Fix the unecessary invocation of cmd and run the command directly
+            '''
             program_path = "cmd.exe"
-            arguments = "/c %s" % cmd_parts
+            arguments = "/c %s" % cmd
         else:
             program_path = self.get_option("executable")
             arguments = re.sub(r"^%s\s*" % program_path, "", cmd)

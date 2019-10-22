@@ -158,6 +158,20 @@ options:
             mount_options:
                 description:
                     - Option which will be passed when mounting storage.
+    managed_block_storage:
+        description:
+            - "Dictionary with values for managed block storage type"
+            - "Note: available from ovirt 4.3"
+        suboptions:
+            driver_options:
+                description:
+                    - "The options to be passed when creating a storage domain using a cinder driver."
+                    - "List of dictionary containing C(name) and C(value) of driver option"
+            driver_sensitive_options:
+                description:
+                    - "Parameters containing sensitive information, to be passed when creating a storage domain using a cinder driver."
+                    - "List of dictionary containing C(name) and C(value) of driver sensitive option"
+        version_added: "2.9"
     fcp:
         description:
             - "Dictionary with values for fibre channel storage type:"
@@ -325,6 +339,26 @@ EXAMPLES = '''
       address: 10.34.63.199
       path: /path/iso
 
+# Create managed storage domain
+# Available from ovirt 4.3 and ansible 2.9
+- ovirt_storage_domain:
+    name: my_managed_domain
+    host: myhost
+    data_center: mydatacenter
+    managed_block_storage:
+      driver_options:
+        - name: rbd_pool
+          value: pool1
+        - name: rbd_user
+          value: admin
+        - name: volume_driver
+          value: cinder.volume.drivers.rbd.RBDDriver
+        - name: rbd_keyring_conf
+          value: /etc/ceph/keyring
+      driver_sensitive_options:
+        - name: secret_password
+          value: password
+
 # Remove storage domain
 - ovirt_storage_domain:
     state: absent
@@ -375,12 +409,12 @@ from ansible.module_utils.ovirt import (
 class StorageDomainModule(BaseModule):
 
     def _get_storage_type(self):
-        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs']:
+        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs', 'managed_block_storage']:
             if self.param(sd_type) is not None:
                 return sd_type
 
     def _get_storage(self):
-        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs']:
+        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs', 'managed_block_storage']:
             if self.param(sd_type) is not None:
                 return self.param(sd_type)
 
@@ -433,10 +467,22 @@ class StorageDomainModule(BaseModule):
             warning_low_space_indicator=self.param('warning_low_space'),
             import_=True if self.param('state') == 'imported' else None,
             id=self.param('id') if self.param('state') == 'imported' else None,
-            type=otypes.StorageDomainType(self.param('domain_function')),
+            type=otypes.StorageDomainType(storage_type if storage_type == 'managed_block_storage' else self.param('domain_function')),
             host=otypes.Host(name=self.param('host')),
             discard_after_delete=self.param('discard_after_delete'),
             storage=otypes.HostStorage(
+                driver_options=[
+                    otypes.Property(
+                        name=do.get('name'),
+                        value=do.get('value')
+                    ) for do in storage.get('driver_options')
+                ] if storage.get('driver_options') else None,
+                driver_sensitive_options=[
+                    otypes.Property(
+                        name=dso.get('name'),
+                        value=dso.get('value')
+                    ) for dso in storage.get('driver_sensitive_options')
+                ] if storage.get('driver_sensitive_options') else None,
                 type=otypes.StorageType(storage_type),
                 logical_units=[
                     otypes.LogicalUnit(
@@ -594,8 +640,8 @@ class StorageDomainModule(BaseModule):
         if not dc_name:
             # Find the DC, where the storage resides:
             dc_name = self._find_attached_datacenter_name(storage_domain.name)
-        self._service = self._attached_sds_service(storage_domain, dc_name)
-        self._maintenance(self._service, storage_domain)
+        self._service = self._attached_sds_service(dc_name)
+        self._maintenance(storage_domain)
 
     def update_check(self, entity):
         return (
@@ -621,7 +667,7 @@ def control_state(sd_module):
     sd_service = sd_module._service.service(sd.id)
 
     # In the case of no status returned, it's an attached storage domain.
-    # Redetermine the corresponding serivce and entity:
+    # Redetermine the corresponding service and entity:
     if sd.status is None:
         sd_service = sd_module._attached_sd_service(sd)
         sd = get_entity(sd_service)
@@ -671,6 +717,9 @@ def main():
         localfs=dict(default=None, type='dict'),
         nfs=dict(default=None, type='dict'),
         iscsi=dict(default=None, type='dict'),
+        managed_block_storage=dict(default=None, type='dict', options=dict(
+            driver_options=dict(type='list'),
+            driver_sensitive_options=dict(type='list', no_log=True))),
         posixfs=dict(default=None, type='dict'),
         glusterfs=dict(default=None, type='dict'),
         fcp=dict(default=None, type='dict'),

@@ -1,0 +1,3 @@
+minor_changes:
+- iam_role - Add support for removing the related instance profile when we delete the role
+- iam_role - Add support for managing the maximum session duration

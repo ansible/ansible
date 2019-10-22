@@ -35,14 +35,17 @@ options:
     - Set the Power Management Policy of the host system.
     choices: [ 'high-performance', 'balanced', 'low-power', 'custom' ]
     default: 'balanced'
+    type: str
   esxi_hostname:
     description:
     - Name of the host system to work with.
     - This is required parameter if C(cluster_name) is not specified.
+    type: str
   cluster_name:
     description:
     - Name of the cluster from which all host systems will be used.
     - This is required parameter if C(esxi_hostname) is not specified.
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

@@ -179,7 +179,7 @@ vpc_id:
   type: str
   sample: "vpc-12345"
 nat_gateway_addresses:
-  description: List of dictionairies containing the public_ip, network_interface_id, private_ip, and allocation_id.
+  description: List of dictionaries containing the public_ip, network_interface_id, private_ip, and allocation_id.
   returned: In all cases.
   type: str
   sample: [

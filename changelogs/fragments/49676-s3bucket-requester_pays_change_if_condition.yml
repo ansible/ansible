@@ -1,2 +1,0 @@
-bugfixes:
-- replaced if condition requester_pays is None with True or False instead

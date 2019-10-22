@@ -116,7 +116,7 @@ options:
   disks:
     description:
     - A list of disks to add to VM.
-    - All parameters are case sensetive.
+    - All parameters are case sensitive.
     - Removing or detaching existing disks of VM is not supported.
     - 'Required parameters per entry:'
     - ' - C(size_[tb,gb,mb,kb,b]) (integer): Disk storage size in specified unit. VM needs to be shut down to reconfigure this parameter.'
@@ -139,7 +139,7 @@ options:
   networks:
     description:
     - A list of networks (in the order of the NICs).
-    - All parameters are case sensetive.
+    - All parameters are case sensitive.
     - 'Required parameters per entry:'
     - ' - C(name) (string): Name of a XenServer network to attach the network interface to. You can also use C(name_label) as an alias.'
     - 'Optional parameters per entry (used for VM hardware):'
@@ -169,7 +169,7 @@ options:
     type: list
   wait_for_ip_address:
     description:
-    - Wait until XenServer detects an IP address for the VM.
+    - Wait until XenServer detects an IP address for the VM. If C(state) is set to C(absent), this parameter is ignored.
     - This requires XenServer Tools to be preinstalled on the VM to work properly.
     type: bool
     default: no
@@ -438,10 +438,11 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.network import is_mac
 from ansible.module_utils import six
 from ansible.module_utils.xenserver import (xenserver_common_argument_spec, XAPI, XenServerObject, get_object_ref,
                                             gather_vm_params, gather_vm_facts, set_vm_power_state, wait_for_vm_ip_address,
-                                            is_valid_mac_addr, is_valid_ip_addr, is_valid_ip_netmask, is_valid_ip_prefix,
+                                            is_valid_ip_addr, is_valid_ip_netmask, is_valid_ip_prefix,
                                             ip_prefix_to_netmask, ip_netmask_to_prefix,
                                             is_valid_ip6_addr, is_valid_ip6_prefix)
 
@@ -597,15 +598,15 @@ class XenServerVM(XenServerObject):
 
         vm_power_state_save = self.vm_params['power_state'].lower()
 
-        if "need_poweredoff" in config_changes and vm_power_state_save != 'halted':
-            if self.module.params['force']:
-                self.set_power_state("shutdownguest")
-            else:
-                self.module.fail_json(msg="VM reconfigure: VM has to be in powered off state to reconfigure but force was not specified!")
+        if "need_poweredoff" in config_changes and vm_power_state_save != 'halted' and not self.module.params['force']:
+            self.module.fail_json(msg="VM reconfigure: VM has to be in powered off state to reconfigure but force was not specified!")
 
         # Support for Ansible check mode.
         if self.module.check_mode:
             return config_changes
+
+        if "need_poweredoff" in config_changes and vm_power_state_save != 'halted' and self.module.params['force']:
+            self.set_power_state("shutdownguest")
 
         try:
             for change in config_changes:
@@ -707,7 +708,11 @@ class XenServerVM(XenServerObject):
                             }
 
                             new_disk_vbd['VDI'] = self.xapi_session.xenapi.VDI.create(new_disk_vdi)
-                            self.xapi_session.xenapi.VBD.create(new_disk_vbd)
+                            vbd_ref_new = self.xapi_session.xenapi.VBD.create(new_disk_vbd)
+
+                            if self.vm_params['power_state'].lower() == "running":
+                                self.xapi_session.xenapi.VBD.plug(vbd_ref_new)
+
                     elif change.get('cdrom'):
                         vm_cdrom_params_list = [cdrom_params for cdrom_params in self.vm_params['VBDs'] if cdrom_params['type'] == "CD"]
 
@@ -1406,7 +1411,7 @@ class XenServerVM(XenServerObject):
                     if network_mac is not None:
                         network_mac = network_mac.lower()
 
-                        if not is_valid_mac_addr(network_mac):
+                        if not is_mac(network_mac):
                             self.module.fail_json(msg="VM check networks[%s]: specified MAC address '%s' is not valid!" % (position, network_mac))
 
                     # IPv4 reconfiguration.
@@ -1632,6 +1637,7 @@ class XenServerVM(XenServerObject):
                         if vif_device not in vif_devices_allowed:
                             self.module.fail_json(msg="VM check networks[%s]: new network interface position %s is out of bounds!" % (position, vif_device))
 
+                        vif_devices_allowed.remove(vif_device)
                         vif_device_highest = vif_device
 
                         # For new VIFs we only track their position.
@@ -1911,7 +1917,7 @@ def main():
         vm.deploy()
         result['changed'] = True
 
-    if module.params['wait_for_ip_address']:
+    if module.params['wait_for_ip_address'] and module.params['state'] != "absent":
         vm.wait_for_ip_address()
 
     result['instance'] = vm.gather_facts()

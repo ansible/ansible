@@ -79,7 +79,7 @@ if [ -x "$(command -v setsid)" ]; then
     echo "rc was $WRONG_RC (0 is expected)"
     [ $WRONG_RC -eq 0 ]
 
-    setsid sh -c 'tty; ansible-vault --ask-vault-pass -vvvvv view test_vault.yml' < /dev/null > log 2>&1 && :
+    setsid sh -c 'tty; ansible-vault view --ask-vault-pass -vvvvv test_vault.yml' < /dev/null > log 2>&1 && :
     WRONG_RC=$?
     echo "rc was $WRONG_RC (1 is expected)"
     [ $WRONG_RC -eq 1 ]
@@ -103,7 +103,7 @@ if [ -x "$(command -v setsid)" ]; then
     echo $?
     cat log
 
-    setsid sh -c 'tty; echo test-vault-password|ansible-vault --ask-vault-pass -vvvvv view vaulted.inventory' < /dev/null > log 2>&1
+    setsid sh -c 'tty; echo test-vault-password|ansible-vault view --ask-vault-pass -vvvvv vaulted.inventory' < /dev/null > log 2>&1
     echo $?
     cat log
 fi
@@ -316,6 +316,10 @@ echo "rc was $WRONG_RC (1 is expected)"
 
 
 ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" "a test string"
+
+# Test with multiple vault password files
+# https://github.com/ansible/ansible/issues/57172
+env ANSIBLE_VAULT_PASSWORD_FILE=vault-password ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --encrypt-vault-id default "a test string"
 
 ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "blippy" "a test string names blippy"
 

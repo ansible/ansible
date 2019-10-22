@@ -1,2 +1,0 @@
-bugfixes:
-  - "mysql_user: fix the working but incorrect regex used to check the user privileges."

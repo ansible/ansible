@@ -149,7 +149,7 @@ EXAMPLES = r'''
 
 - name: Set logging
   ufw:
-    logging: on
+    logging: 'on'
 
 # Sometimes it is desirable to let the sender know when traffic is
 # being denied, rather than simply ignoring it. In these cases, use
@@ -185,7 +185,7 @@ EXAMPLES = r'''
 - name: Deny all access to port 53
   ufw:
     rule: deny
-    port: 53
+    port: '53'
 
 - name: Allow port range 60000-61000
   ufw:
@@ -196,7 +196,7 @@ EXAMPLES = r'''
 - name: Allow all access to tcp port 80
   ufw:
     rule: allow
-    port: 80
+    port: '80'
     proto: tcp
 
 - name: Allow all access from RFC1918 networks to this host
@@ -213,7 +213,7 @@ EXAMPLES = r'''
     rule: deny
     proto: udp
     src: 1.2.3.4
-    port: 514
+    port: '514'
     comment: Block syslog
 
 - name: Allow incoming access to eth0 from 1.2.3.5 port 5469 to 1.2.3.4 port 5469
@@ -223,9 +223,9 @@ EXAMPLES = r'''
     direction: in
     proto: udp
     src: 1.2.3.5
-    from_port: 5469
+    from_port: '5469'
     dest: 1.2.3.4
-    to_port: 5469
+    to_port: '5469'
 
 # Note that IPv6 must be enabled in /etc/default/ufw for IPv6 firewalling to work.
 - name: Deny all traffic from the IPv6 2001:db8::/32 to tcp port 25 on this host
@@ -233,14 +233,14 @@ EXAMPLES = r'''
     rule: deny
     proto: tcp
     src: 2001:db8::/32
-    port: 25
+    port: '25'
 
 - name: Deny all IPv6 traffic to tcp port 20 on this host
   # this should be the first IPv6 rule
   ufw:
     rule: deny
     proto: tcp
-    port: 20
+    port: '20'
     to_ip: "::"
     insert: 0
     insert_relative_to: first-ipv6
@@ -254,7 +254,7 @@ EXAMPLES = r'''
   ufw:
     rule: deny
     proto: tcp
-    port: 20
+    port: '20'
     to_ip: "::"
     insert: -1
     insert_relative_to: last-ipv4
@@ -321,12 +321,12 @@ def main():
             to_ip=dict(type='str', default='any', aliases=['dest', 'to']),
             to_port=dict(type='str', aliases=['port']),
             proto=dict(type='str', aliases=['protocol'], choices=['ah', 'any', 'esp', 'ipv6', 'tcp', 'udp', 'gre', 'igmp']),
-            app=dict(type='str', aliases=['name']),
+            name=dict(type='str', aliases=['app']),
             comment=dict(type='str'),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
-            ['app', 'proto', 'logging'],
+            ['name', 'proto', 'logging'],
         ],
         required_one_of=([command_keys]),
         required_by=dict(
@@ -445,12 +445,14 @@ def main():
                 execute(cmd + [['-f'], [states[value]]])
 
         elif command == 'logging':
-            extract = re.search(r'Logging: (on|off) \(([a-z]+)\)', pre_state)
+            extract = re.search(r'Logging: (on|off)(?: \(([a-z]+)\))?', pre_state)
             if extract:
                 current_level = extract.group(2)
                 current_on_off_value = extract.group(1)
                 if value != "off":
-                    if value != "on" and (value != current_level or current_on_off_value == "off"):
+                    if current_on_off_value == "off":
+                        changed = True
+                    elif value != "on" and value != current_level:
                         changed = True
                 elif current_on_off_value != "off":
                     changed = True
@@ -494,7 +496,7 @@ def main():
                 if relative_to_cmd == 'zero':
                     insert_to = params['insert']
                 else:
-                    (_, numbered_state, _) = module.run_command([ufw_bin, 'status', 'numbered'])
+                    (dummy, numbered_state, dummy) = module.run_command([ufw_bin, 'status', 'numbered'])
                     numbered_line_re = re.compile(R'^\[ *([0-9]+)\] ')
                     lines = [(numbered_line_re.match(line), '(v6)' in line) for line in numbered_state.splitlines()]
                     lines = [(int(matcher.group(1)), ipv6) for (matcher, ipv6) in lines if matcher]
@@ -522,11 +524,11 @@ def main():
 
             for (key, template) in [('from_ip', "from %s"), ('from_port', "port %s"),
                                     ('to_ip', "to %s"), ('to_port', "port %s"),
-                                    ('proto', "proto %s"), ('app', "app '%s'")]:
+                                    ('proto', "proto %s"), ('name', "app '%s'")]:
                 value = params[key]
                 cmd.append([value, template % (value)])
 
-            ufw_major, ufw_minor, _ = ufw_version()
+            ufw_major, ufw_minor, dummy = ufw_version()
             # comment is supported only in ufw version after 0.35
             if (ufw_major == 0 and ufw_minor >= 35) or ufw_major > 0:
                 cmd.append([params['comment'], "comment '%s'" % params['comment']])

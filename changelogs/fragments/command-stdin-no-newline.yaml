@@ -1,5 +1,0 @@
----
-minor_changes:
-- command/shell - new `stdin_add_newline` arg allows suppression of
-  automatically-added newline `\n` character to the specified in the `stdin`
-  arg.

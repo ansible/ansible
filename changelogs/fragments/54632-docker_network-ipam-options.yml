@@ -1,2 +1,0 @@
-minor_changes:
-- "docker_network - add new option ``ipam_driver_options``."

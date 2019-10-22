@@ -32,6 +32,11 @@ options:
             - The amount of time in seconds the module should wait for the resource to get into desired state.
         type: int
         default: 120
+    wait_sleep:
+        description:
+            - Number of seconds to sleep between checks.
+        default: 5
+        version_added: '2.10'
     memory:
         description:
             - The amount of memory to be requested by virtual machine.
@@ -106,6 +111,17 @@ options:
         description:
             - "Specify tablets to be used as input devices"
         type: list
+    hostname:
+        description:
+            - "Specifies the hostname of the virtual machine. The hostname will be set either by dhcp, cloud-init if configured or virtual machine
+               name will be used."
+        version_added: 2.9
+    subdomain:
+        description:
+            - "If specified, the fully qualified virtual machine hostname will be hostname.subdomain.namespace.svc.cluster_domain. If not specified,
+               the virtual machine will not have a domain name at all. The DNS entry will resolve to the virtual machine, no matter if the virtual machine
+               itself can pick up a hostname."
+        version_added: 2.9
 requirements:
     - python >= 2.7
     - openshift >= 0.8.2

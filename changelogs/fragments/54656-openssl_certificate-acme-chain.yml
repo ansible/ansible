@@ -1,5 +1,0 @@
-minor_changes:
-- "openssl_certificate - change default value for ``acme_chain`` from ``yes`` to ``no``. Current versions
-   of `acme-tiny <https://github.com/diafygi/acme-tiny/>`_ do not support the ``--chain`` command anymore.
-   This default setting caused the module not to work with such versions of acme-tiny until
-   ``acme_chain: no`` was explicitly set."

@@ -119,10 +119,10 @@ def main():
     try:
         session = client.auth.login(user, password)
     except Exception as e:
-        module.fail_json(msg="Unable to establish session with Sattelite server: %s " % to_text(e))
+        module.fail_json(msg="Unable to establish session with Satellite server: %s " % to_text(e))
 
     if not session:
-        module.fail_json(msg="Failed to establish session with Sattelite server.")
+        module.fail_json(msg="Failed to establish session with Satellite server.")
 
     # get systemid
     try:
@@ -154,7 +154,7 @@ def main():
                 unsubscribe_channels(channelname, client, session, systname, sys_id)
                 module.exit_json(changed=True, msg="Channel %s removed" % channelname)
     except Exception as e:
-        module.fail_json('Unable to %s channel (%s): %s' % ('add' if state == 'present' else 'remove', channelname, to_text(e)))
+        module.fail_json(msg='Unable to %s channel (%s): %s' % ('add' if state == 'present' else 'remove', channelname, to_text(e)))
     finally:
         client.auth.logout(session)
 

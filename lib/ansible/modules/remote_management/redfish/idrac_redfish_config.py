@@ -30,28 +30,34 @@ options:
     required: true
     description:
       - List of commands to execute on iDRAC
+    type: list
   baseuri:
     required: true
     description:
       - Base URI of iDRAC
+    type: str
   username:
     required: true
     description:
       - User for authentication with iDRAC
+    type: str
   password:
     required: true
     description:
       - Password for authentication with iDRAC
+    type: str
   manager_attribute_name:
     required: false
     description:
       - name of iDRAC attribute to update
     default: 'null'
+    type: str
   manager_attribute_value:
     required: false
     description:
       - value of iDRAC attribute to update
     default: 'null'
+    type: str
   timeout:
     description:
       - Timeout in seconds for URL requests to iDRAC controller
@@ -100,9 +106,8 @@ msg:
 '''
 
 import json
-import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.redfish_utils import RedfishUtils, HEADERS
+from ansible.module_utils.redfish_utils import RedfishUtils
 from ansible.module_utils._text import to_native
 
 
@@ -141,7 +146,7 @@ class IdracRedfishUtils(RedfishUtils):
             return {'ret': True, 'changed': False, 'msg': "Manager attribute already set"}
 
         payload = {"Attributes": json.loads(manager_attr)}
-        response = self.patch_request(self.root_uri + self.manager_uri + "/" + key, payload, HEADERS)
+        response = self.patch_request(self.root_uri + self.manager_uri + "/" + key, payload)
         if response['ret'] is False:
             return response
         return {'ret': True, 'changed': True, 'msg': "Modified Manager attribute %s" % attr['mgr_attr_name']}
@@ -184,8 +189,7 @@ def main():
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_uri = "/redfish/v1/"
-    rf_utils = IdracRedfishUtils(creds, root_uri, timeout)
+    rf_utils = IdracRedfishUtils(creds, root_uri, timeout, module)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
@@ -201,7 +205,7 @@ def main():
 
     if category == "Manager":
         # execute only if we find a Manager resource
-        result = rf_utils._find_managers_resource(rf_uri)
+        result = rf_utils._find_managers_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 

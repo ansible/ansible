@@ -1,0 +1,39 @@
+# Test code for the vmware_local_role_info module
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+- name: Set list of Roles in fact
+  set_fact:
+    role_list:
+      - Admin
+      - NoCryptoAdmin
+      - NoAccess
+      - Anonymous
+      - ReadOnly
+
+- &role_data
+  name: Gather Role info
+  vmware_local_role_info:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+  register: role_details
+
+- &role_test
+  name: Test if role id is present for role
+  assert:
+    that: "{{ role_details.local_role_info | json_query(s_query) != [] }}"
+  vars:
+    s_query: "[?role_name == '{{ item }}'].role_id"
+  with_items: "{{ role_list }}"
+
+- <<: *role_data
+  name: Gather Role info in check mode
+  check_mode: yes
+
+- <<: *role_test
+  name: Test if role id is present for role in check mode

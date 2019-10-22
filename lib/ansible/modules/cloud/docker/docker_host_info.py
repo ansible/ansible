@@ -155,6 +155,7 @@ volumes:
         See description for I(verbose_output).
     returned: When I(volumes) is C(yes)
     type: list
+    elements: dict
 networks:
     description:
       - List of dict objects containing the basic information about each network.
@@ -162,6 +163,7 @@ networks:
         See description for I(verbose_output).
     returned: When I(networks) is C(yes)
     type: list
+    elements: dict
 containers:
     description:
       - List of dict objects containing the basic information about each container.
@@ -169,6 +171,7 @@ containers:
         See description for I(verbose_output).
     returned: When I(containers) is C(yes)
     type: list
+    elements: dict
 images:
     description:
       - List of dict objects containing the basic information about each image.
@@ -176,6 +179,7 @@ images:
         See description for I(verbose_output).
     returned: When I(images) is C(yes)
     type: list
+    elements: dict
 disk_usage:
     description:
       - Information on summary disk usage by images, containers and volumes on docker host
@@ -185,11 +189,17 @@ disk_usage:
 
 '''
 
-from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass
+import traceback
+
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    DockerBaseClass,
+    RequestException,
+)
 from ansible.module_utils._text import to_native
 
 try:
-    from docker.errors import APIError
+    from docker.errors import DockerException, APIError
 except ImportError:
     # Missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
@@ -245,15 +255,18 @@ class DockerHostManager(DockerBaseClass):
         header_images = ['Id', 'RepoTags', 'Created', 'Size']
         header_networks = ['Id', 'Driver', 'Name', 'Scope']
 
+        filter_arg = dict()
+        if filters:
+            filter_arg['filters'] = filters
         try:
             if docker_object == 'containers':
-                items = self.client.containers(filters=filters)
+                items = self.client.containers(**filter_arg)
             elif docker_object == 'networks':
-                items = self.client.networks(filters=filters)
+                items = self.client.networks(**filter_arg)
             elif docker_object == 'images':
-                items = self.client.images(filters=filters)
+                items = self.client.images(**filter_arg)
             elif docker_object == 'volumes':
-                items = self.client.volumes(filters=filters)
+                items = self.client.volumes(**filter_arg)
         except APIError as exc:
             self.client.fail("Error inspecting docker host for object '%s': %s" %
                              (docker_object, to_native(exc)))
@@ -301,23 +314,34 @@ def main():
         verbose_output=dict(type='bool', default=False),
     )
 
+    option_minimal_versions = dict(
+        network_filters=dict(docker_py_version='2.0.2'),
+        disk_usage=dict(docker_py_version='2.2.0'),
+    )
+
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
         min_docker_version='1.10.0',
         min_docker_api_version='1.21',
+        option_minimal_versions=option_minimal_versions,
         fail_results=dict(
             can_talk_to_docker=False,
         ),
     )
     client.fail_results['can_talk_to_docker'] = True
 
-    results = dict(
-        changed=False,
-    )
+    try:
+        results = dict(
+            changed=False,
+        )
 
-    DockerHostManager(client, results)
-    client.module.exit_json(**results)
+        DockerHostManager(client, results)
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

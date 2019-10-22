@@ -34,12 +34,6 @@ options:
   origin:
     description:
       - Snapshot from which to create a clone.
-  key_value:
-    description:
-      - (**DEPRECATED**) This will be removed in Ansible-2.9.  Set these values in the
-      - C(extra_zfs_properties) option instead.
-      - The C(zfs) module takes key=value pairs for zfs properties to be set.
-      - See the zfs(8) man page for more information.
   extra_zfs_properties:
     description:
       - A dictionary of zfs properties to be set.
@@ -227,14 +221,9 @@ def main():
             name=dict(type='str', required=True),
             state=dict(type='str', required=True, choices=['absent', 'present']),
             origin=dict(type='str', default=None),
-            # createparent is meaningless after 2.3, but this shouldn't
-            # be removed until check_invalid_arguments is.
-            createparent=dict(type='bool', default=None),
             extra_zfs_properties=dict(type='dict', default={}),
         ),
         supports_check_mode=True,
-        # Remove this in Ansible 2.9
-        check_invalid_arguments=False,
     )
 
     state = module.params.get('state')
@@ -242,31 +231,6 @@ def main():
 
     if module.params.get('origin') and '@' in name:
         module.fail_json(msg='cannot specify origin when operating on a snapshot')
-
-    # The following is deprecated.  Remove in Ansible 2.9
-    # Get all valid zfs-properties
-    properties = dict()
-    for prop, value in module.params.items():
-        # All freestyle params are zfs properties
-        if prop not in module.argument_spec:
-            if isinstance(value, bool):
-                if value is True:
-                    properties[prop] = 'on'
-                else:
-                    properties[prop] = 'off'
-            else:
-                properties[prop] = value
-
-    if properties:
-        module.deprecate('Passing zfs properties as arbitrary parameters to the zfs module is'
-                         ' deprecated.  Send them as a dictionary in the extra_zfs_properties'
-                         ' parameter instead.', version='2.9')
-        # Merge, giving the module_params precedence
-        for prop, value in module.params['extra_zfs_properties'].items():
-            properties[prop] = value
-
-        module.params['extra_zfs_properties'] = properties
-    # End deprecated section
 
     # Reverse the boolification of zfs properties
     for prop, value in module.params['extra_zfs_properties'].items():

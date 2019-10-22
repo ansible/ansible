@@ -1,2 +1,0 @@
-bugfixes:
-  - "docker_swarm_service - Don't recreate service when ``networks`` parameter changes when running Docker API >= 1.29."

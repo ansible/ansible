@@ -35,7 +35,7 @@
     register: create_route
 
   - set_fact:
-      route_ids: "{{ route_ids }} + [ '{{ create_route.data.id }}' ]"
+      route_ids: "{{ route_ids + [create_route.data.id] }}"
 
   - name: Create second static_route
     meraki_static_route:
@@ -50,7 +50,7 @@
     register: second_create
 
   - set_fact:
-      route_ids: "{{ route_ids }} + [ '{{ second_create.data.id }}' ]"
+      route_ids: "{{ route_ids + [second_create.data.id] }}"
 
   - assert:
       that:
@@ -106,6 +106,7 @@
   - assert:
       that:
         - update_idempotent.changed == False
+        - update_idempotent.data is defined
 
   - name: Update static route with fixed IP assignment and reservation
     meraki_static_route:

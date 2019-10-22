@@ -4,41 +4,37 @@
 
 # TODO: vcsim does not support customizationspecmanager related functionalities
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
+- when: vcsim is not defined
+  block:
+  - import_role:
+      name: prepare_vmware_tests
+    vars:
+      setup_attach_host: true
+      setup_datastore: true
+      setup_virtualmachines: true
 
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
+  - &vm_guest_facts
+    name: Gather facts about given customization spec
+    vmware_guest_customization_facts:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+    register: vm_custom_spec_facts
 
-- name: start vcsim with no folders
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=1
-  register: vcsim_instance
+  - debug:
+      var: vm_custom_spec_facts
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
+  - assert:
+      that:
+        - "not vm_custom_spec_facts.changed"
 
-- debug: var=vcsim_instance
-- debug: var=vmlist
+  - <<: *vm_guest_facts
+    name: Gather facts about given customization spec in check module
 
-- name: Gather facts about given customization spec
-  vmware_guest_customization_facts:
-    validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    spec_name: sample_spec
-  register: vm_custom_spec_facts
+  - debug:
+      var: vm_custom_spec_facts
 
-- debug: var=vm_custom_spec_facts
-
-- assert:
-    that:
-      - "not vm_custom_spec_facts.changed"
+  - assert:
+      that:
+        - "not vm_custom_spec_facts.changed"

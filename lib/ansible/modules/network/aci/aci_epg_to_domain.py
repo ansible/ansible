@@ -54,10 +54,18 @@ options:
     type: int
   encap_mode:
     description:
-    - The ecapsulataion method to be used.
+    - The encapsulation method to be used.
     - The APIC defaults to C(auto) when unset during creation.
+    - If vxlan is selected, switching_mode must be "AVE".
     type: str
     choices: [ auto, vlan, vxlan ]
+  switching_mode:
+    description:
+    - Switching Mode used by the switch
+    type: str
+    choices: [ AVE, native ]
+    default: native
+    version_added: '2.9'
   epg:
     description:
     - Name of the end point group.
@@ -296,8 +304,9 @@ def main():
         domain_type=dict(type='str', choices=['l2dom', 'phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         encap=dict(type='int'),
         encap_mode=dict(type='str', choices=['auto', 'vlan', 'vxlan']),
+        switching_mode=dict(type='str', default='native', choices=['AVE', 'native']),
         epg=dict(type='str', aliases=['name', 'epg_name']),  # Not required for querying all objects
-        netflow=dict(type='raw'),  # Turn into a boolean in v2.9
+        netflow=dict(type='bool'),
         primary_encap=dict(type='int'),
         resolution_immediacy=dict(type='str', choices=['immediate', 'lazy', 'pre-provision']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -328,8 +337,9 @@ def main():
         if encap in range(1, 4097):
             encap = 'vlan-{0}'.format(encap)
         else:
-            module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
+            module.fail_json(msg='Valid VLAN assignments are from 1 to 4096')
     encap_mode = module.params['encap_mode']
+    switching_mode = module.params['switching_mode']
     epg = module.params['epg']
     netflow = aci.boolean(module.params['netflow'], 'enabled', 'disabled')
     primary_encap = module.params['primary_encap']
@@ -337,7 +347,7 @@ def main():
         if primary_encap in range(1, 4097):
             primary_encap = 'vlan-{0}'.format(primary_encap)
         else:
-            module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
+            module.fail_json(msg='Valid VLAN assignments are from 1 to 4096')
     resolution_immediacy = module.params['resolution_immediacy']
     state = module.params['state']
     tenant = module.params['tenant']
@@ -391,6 +401,7 @@ def main():
                 classPref=allow_useg,
                 encap=encap,
                 encapMode=encap_mode,
+                switchingMode=switching_mode,
                 instrImedcy=deploy_immediacy,
                 netflowPref=netflow,
                 primaryEncap=primary_encap,

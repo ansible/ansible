@@ -1,4 +1,7 @@
 ---
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
 - template:
     src: test
     dest: "{{ output_dir }}/templated_test"

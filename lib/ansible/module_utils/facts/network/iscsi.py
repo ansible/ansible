@@ -21,6 +21,7 @@ __metaclass__ = type
 import sys
 import subprocess
 
+from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.network.base import NetworkCollector
 
@@ -79,24 +80,26 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                     iscsi_facts['iscsi_iqn'] = line.split('=', 1)[1]
                     break
         elif sys.platform.startswith('aix'):
-            if module is not None:
-                rc, out, err = module.run_command('/usr/sbin/lsattr -E -l iscsi0 | grep initiator_name')
-                if out:
-                    iscsi_facts['iscsi_iqn'] = out.split()[1].rstrip()
-            else:
-                aixcmd = '/usr/sbin/lsattr -E -l iscsi0 | grep initiator_name'
-                aixret = subprocess.check_output(aixcmd, shell=True)
-                if aixret[0].isalpha():
-                    iscsi_facts['iscsi_iqn'] = aixret.split()[1].rstrip()
+            cmd = get_bin_path('lsattr')
+            if cmd:
+                cmd += " -E -l iscsi0"
+                rc, out, err = module.run_command(cmd)
+                if rc == 0 and out:
+                    line = self.findstr(out, 'initiator_name')
+                    iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
         elif sys.platform.startswith('hp-ux'):
-            if module is not None:
-                rc, out, err = module.run_command("/opt/iscsi/bin/iscsiutil -l | grep 'Initiator Name'",
-                                                  use_unsafe_shell=True)
+            # try to find it in the default PATH and opt_dirs
+            cmd = get_bin_path('iscsiutil', opt_dirs=['/opt/iscsi/bin'])
+            if cmd:
+                cmd += " -l"
+                rc, out, err = module.run_command(cmd)
                 if out:
-                    iscsi_facts['iscsi_iqn'] = out.split(":", 1)[1].rstrip()
-            else:
-                hpuxcmd = "/opt/iscsi/bin/iscsiutil -l | grep 'Initiator Name'"
-                hpuxret = subprocess.check_output(hpuxcmd, shell=True)
-                if hpuxret[0].isalpha():
-                    iscsi_facts['iscsi_iqn'] = hpuxret.split(":", 1)[1].rstrip()
+                    line = self.findstr(out, 'Initiator Name')
+                    iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].rstrip()
         return iscsi_facts
+
+    def findstr(self, text, match):
+        for line in text.splitlines():
+            if match in line:
+                found = line
+        return found

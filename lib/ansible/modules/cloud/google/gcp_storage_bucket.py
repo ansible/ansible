@@ -38,7 +38,7 @@ description:
   manipulation of an existing bucket's access controls.
 - A bucket is always owned by the project team owners group.
 short_description: Creates a GCP Bucket
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -52,10 +52,12 @@ options:
     - present
     - absent
     default: present
+    type: str
   acl:
     description:
     - Access controls on the bucket.
     required: false
+    type: list
     suboptions:
       bucket:
         description:
@@ -66,6 +68,7 @@ options:
           to a gcp_storage_bucket task and then set this bucket field to "{{ name-of-resource
           }}"'
         required: true
+        type: dict
       entity:
         description:
         - 'The entity holding the permission, in one of the following forms: user-userId
@@ -76,66 +79,72 @@ options:
         - To refer to all members of the Google Apps for Business domain example.com,
           the entity would be domain-example.com.
         required: true
+        type: str
       entity_id:
         description:
         - The ID for the entity.
         required: false
+        type: str
       project_team:
         description:
         - The project team associated with the entity.
         required: false
+        type: dict
         suboptions:
           project_number:
             description:
             - The project team associated with the entity.
             required: false
+            type: str
           team:
             description:
             - The team.
+            - 'Some valid choices include: "editors", "owners", "viewers"'
             required: false
-            choices:
-            - editors
-            - owners
-            - viewers
+            type: str
       role:
         description:
         - The access permission for the entity.
+        - 'Some valid choices include: "OWNER", "READER", "WRITER"'
         required: false
-        choices:
-        - OWNER
-        - READER
-        - WRITER
+        type: str
   cors:
     description:
     - The bucket's Cross-Origin Resource Sharing (CORS) configuration.
     required: false
+    type: list
     suboptions:
       max_age_seconds:
         description:
         - The value, in seconds, to return in the Access-Control-Max-Age header used
           in preflight responses.
         required: false
+        type: int
       method:
         description:
         - 'The list of HTTP methods on which to include CORS response headers, (GET,
           OPTIONS, POST, etc) Note: "*" is permitted in the list of methods, and means
           "any method".'
         required: false
+        type: list
       origin:
         description:
         - The list of Origins eligible to receive CORS response headers.
         - 'Note: "*" is permitted in the list of origins, and means "any Origin".'
         required: false
+        type: list
       response_header:
         description:
         - The list of HTTP headers other than the simple response headers to give
           permission for the user-agent to share across domains.
         required: false
+        type: list
   default_object_acl:
     description:
     - Default access controls to apply to new objects when no ACL is provided.
     required: false
-    version_added: 2.7
+    type: list
+    version_added: '2.7'
     suboptions:
       bucket:
         description:
@@ -146,6 +155,7 @@ options:
           to a gcp_storage_bucket task and then set this bucket field to "{{ name-of-resource
           }}"'
         required: true
+        type: dict
       entity:
         description:
         - 'The entity holding the permission, in one of the following forms: * user-{{userId}}
@@ -154,62 +164,69 @@ options:
           (such as "domain-example.com") * project-team-{{projectId}} * allUsers *
           allAuthenticatedUsers .'
         required: true
+        type: str
       object:
         description:
         - The name of the object, if applied to an object.
         required: false
+        type: str
       role:
         description:
         - The access permission for the entity.
+        - 'Some valid choices include: "OWNER", "READER"'
         required: true
-        choices:
-        - OWNER
-        - READER
+        type: str
   lifecycle:
     description:
     - The bucket's lifecycle configuration.
     - See U(https://developers.google.com/storage/docs/lifecycle) for more information.
     required: false
+    type: dict
     suboptions:
       rule:
         description:
         - A lifecycle management rule, which is made of an action to take and the
           condition(s) under which the action will be taken.
         required: false
+        type: list
         suboptions:
           action:
             description:
             - The action to take.
             required: false
+            type: dict
             suboptions:
               storage_class:
                 description:
                 - Target storage class. Required iff the type of the action is SetStorageClass.
                 required: false
+                type: str
               type:
                 description:
                 - Type of the action. Currently, only Delete and SetStorageClass are
                   supported.
+                - 'Some valid choices include: "Delete", "SetStorageClass"'
                 required: false
-                choices:
-                - Delete
-                - SetStorageClass
+                type: str
           condition:
             description:
             - The condition(s) under which the action will be taken.
             required: false
+            type: dict
             suboptions:
               age_days:
                 description:
                 - Age of an object (in days). This condition is satisfied when an
                   object reaches the specified age.
                 required: false
+                type: int
               created_before:
                 description:
                 - A date in RFC 3339 format with only the date part (for instance,
                   "2013-01-15"). This condition is satisfied when an object is created
                   before midnight of the specified date in UTC.
                 required: false
+                type: str
               is_live:
                 description:
                 - Relevant only for versioned objects. If the value is true, this
@@ -223,49 +240,59 @@ options:
                   will be matched. Values include MULTI_REGIONAL, REGIONAL, NEARLINE,
                   COLDLINE, STANDARD, and DURABLE_REDUCED_AVAILABILITY.
                 required: false
+                type: list
               num_newer_versions:
                 description:
                 - Relevant only for versioned objects. If the value is N, this condition
                   is satisfied when there are at least N versions (including the live
                   version) newer than this version of the object.
                 required: false
+                type: int
   location:
     description:
     - The location of the bucket. Object data for objects in the bucket resides in
       physical storage within this region. Defaults to US. See the developer's guide
       for the authoritative list.
     required: false
+    type: str
   logging:
     description:
     - The bucket's logging configuration, which defines the destination bucket and
       optional name prefix for the current bucket's logs.
     required: false
+    type: dict
     suboptions:
       log_bucket:
         description:
         - The destination bucket where the current bucket's logs should be placed.
         required: false
+        type: str
       log_object_prefix:
         description:
         - A prefix for log object names.
         required: false
+        type: str
   metageneration:
     description:
     - The metadata generation of this bucket.
     required: false
+    type: int
   name:
     description:
     - The name of the bucket.
     required: false
+    type: str
   owner:
     description:
     - The owner of the bucket. This is always the project team's owner group.
     required: false
+    type: dict
     suboptions:
       entity:
         description:
         - The entity, in the form project-owner-projectId.
         required: false
+        type: str
   storage_class:
     description:
     - The bucket's default storage class, used whenever no storageClass is specified
@@ -274,18 +301,15 @@ options:
     - Values include MULTI_REGIONAL, REGIONAL, STANDARD, NEARLINE, COLDLINE, and DURABLE_REDUCED_AVAILABILITY.
       If this value is not specified when the bucket is created, it will default to
       STANDARD. For more information, see storage classes.
+    - 'Some valid choices include: "MULTI_REGIONAL", "REGIONAL", "STANDARD", "NEARLINE",
+      "COLDLINE", "DURABLE_REDUCED_AVAILABILITY"'
     required: false
-    choices:
-    - MULTI_REGIONAL
-    - REGIONAL
-    - STANDARD
-    - NEARLINE
-    - COLDLINE
-    - DURABLE_REDUCED_AVAILABILITY
+    type: str
   versioning:
     description:
     - The bucket's versioning configuration.
     required: false
+    type: dict
     suboptions:
       enabled:
         description:
@@ -298,6 +322,7 @@ options:
       accessing bucket contents as a web site. See the Static Website Examples for
       more information.
     required: false
+    type: dict
     suboptions:
       main_page_suffix:
         description:
@@ -306,16 +331,18 @@ options:
           object. This allows the creation of index.html objects to represent directory
           pages.
         required: false
+        type: str
       not_found_page:
         description:
         - If the requested object path is missing, and any mainPageSuffix object is
           missing, if applicable, the service will return the named object from this
           bucket as the content for a 404 Not Found result.
         required: false
+        type: str
   project:
     description:
-    - A valid API project identifier.
-    required: false
+    - The Google Cloud Platform project to use.
+    type: str
   predefined_default_object_acl:
     description:
     - Apply a predefined set of default object access controls to this bucket.
@@ -329,15 +356,43 @@ options:
     - '- "projectPrivate": Object owner gets OWNER access, and project team members
       get access according to their roles.'
     - '- "publicRead": Object owner gets OWNER access, and allUsers get READER access.'
+    - 'Some valid choices include: "authenticatedRead", "bucketOwnerFullControl",
+      "bucketOwnerRead", "private", "projectPrivate", "publicRead"'
     required: false
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
     choices:
-    - authenticatedRead
-    - bucketOwnerFullControl
-    - bucketOwnerRead
-    - private
-    - projectPrivate
-    - publicRead
-extends_documentation_fragment: gcp
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -745,10 +800,8 @@ def main():
                     bucket=dict(required=True, type='dict'),
                     entity=dict(required=True, type='str'),
                     entity_id=dict(type='str'),
-                    project_team=dict(
-                        type='dict', options=dict(project_number=dict(type='str'), team=dict(type='str', choices=['editors', 'owners', 'viewers']))
-                    ),
-                    role=dict(type='str', choices=['OWNER', 'READER', 'WRITER']),
+                    project_team=dict(type='dict', options=dict(project_number=dict(type='str'), team=dict(type='str'))),
+                    role=dict(type='str'),
                 ),
             ),
             cors=dict(
@@ -768,7 +821,7 @@ def main():
                     bucket=dict(required=True, type='dict'),
                     entity=dict(required=True, type='str'),
                     object=dict(type='str'),
-                    role=dict(required=True, type='str', choices=['OWNER', 'READER']),
+                    role=dict(required=True, type='str'),
                 ),
             ),
             lifecycle=dict(
@@ -778,9 +831,7 @@ def main():
                         type='list',
                         elements='dict',
                         options=dict(
-                            action=dict(
-                                type='dict', options=dict(storage_class=dict(type='str'), type=dict(type='str', choices=['Delete', 'SetStorageClass']))
-                            ),
+                            action=dict(type='dict', options=dict(storage_class=dict(type='str'), type=dict(type='str'))),
                             condition=dict(
                                 type='dict',
                                 options=dict(
@@ -800,13 +851,11 @@ def main():
             metageneration=dict(type='int'),
             name=dict(type='str'),
             owner=dict(type='dict', options=dict(entity=dict(type='str'))),
-            storage_class=dict(type='str', choices=['MULTI_REGIONAL', 'REGIONAL', 'STANDARD', 'NEARLINE', 'COLDLINE', 'DURABLE_REDUCED_AVAILABILITY']),
+            storage_class=dict(type='str'),
             versioning=dict(type='dict', options=dict(enabled=dict(type='bool'))),
             website=dict(type='dict', options=dict(main_page_suffix=dict(type='str'), not_found_page=dict(type='str'))),
             project=dict(type='str'),
-            predefined_default_object_acl=dict(
-                type='str', choices=['authenticatedRead', 'bucketOwnerFullControl', 'bucketOwnerRead', 'private', 'projectPrivate', 'publicRead']
-            ),
+            predefined_default_object_acl=dict(type='str'),
         )
     )
 

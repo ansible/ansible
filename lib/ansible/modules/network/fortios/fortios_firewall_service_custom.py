@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_firewall_service_custom
 short_description: Configure custom services in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure firewall_service feature and custom category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify firewall_service feature and custom category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,51 +41,80 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip adress.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     firewall_service_custom:
         description:
             - Configure custom services.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            app-category:
+            app_category:
                 description:
                     - Application category ID.
+                type: list
                 suboptions:
                     id:
                         description:
                             - Application category id.
                         required: true
-            app-service-type:
+                        type: int
+            app_service_type:
                 description:
                     - Application service type.
+                type: str
                 choices:
                     - disable
                     - app-id
@@ -96,17 +122,21 @@ options:
             application:
                 description:
                     - Application ID.
+                type: list
                 suboptions:
                     id:
                         description:
                             - Application id.
                         required: true
+                        type: int
             category:
                 description:
                     - Service category. Source firewall.service.category.name.
-            check-reset-range:
+                type: str
+            check_reset_range:
                 description:
                     - Configure the type of ICMP error message verification.
+                type: str
                 choices:
                     - disable
                     - strict
@@ -114,15 +144,19 @@ options:
             color:
                 description:
                     - Color of icon on the GUI.
+                type: int
             comment:
                 description:
                     - Comment.
+                type: str
             fqdn:
                 description:
                     - Fully qualified domain name.
+                type: str
             helper:
                 description:
                     - Helper name.
+                type: str
                 choices:
                     - auto
                     - disable
@@ -147,19 +181,24 @@ options:
             icmpcode:
                 description:
                     - ICMP code.
+                type: int
             icmptype:
                 description:
                     - ICMP type.
+                type: int
             iprange:
                 description:
                     - Start and end of the IP range associated with service.
+                type: str
             name:
                 description:
                     - Custom service name.
                 required: true
+                type: str
             protocol:
                 description:
                     - Protocol type based on IANA numbers.
+                type: str
                 choices:
                     - TCP/UDP/SCTP
                     - ICMP
@@ -171,42 +210,53 @@ options:
                     - SOCKS-TCP
                     - SOCKS-UDP
                     - ALL
-            protocol-number:
+            protocol_number:
                 description:
                     - IP protocol number.
+                type: int
             proxy:
                 description:
                     - Enable/disable web proxy service.
+                type: str
                 choices:
                     - enable
                     - disable
-            sctp-portrange:
+            sctp_portrange:
                 description:
                     - Multiple SCTP port ranges.
-            session-ttl:
+                type: str
+            session_ttl:
                 description:
                     - Session TTL (300 - 604800, 0 = default).
-            tcp-halfclose-timer:
+                type: int
+            tcp_halfclose_timer:
                 description:
                     - Wait time to close a TCP session waiting for an unanswered FIN packet (1 - 86400 sec, 0 = default).
-            tcp-halfopen-timer:
+                type: int
+            tcp_halfopen_timer:
                 description:
                     - Wait time to close a TCP session waiting for an unanswered open session packet (1 - 86400 sec, 0 = default).
-            tcp-portrange:
+                type: int
+            tcp_portrange:
                 description:
                     - Multiple TCP port ranges.
-            tcp-timewait-timer:
+                type: str
+            tcp_timewait_timer:
                 description:
                     - Set the length of the TCP TIME-WAIT state in seconds (1 - 300 sec, 0 = default).
-            udp-idle-timer:
+                type: int
+            udp_idle_timer:
                 description:
                     - UDP half close timeout (0 - 86400 sec, 0 = default).
-            udp-portrange:
+                type: int
+            udp_portrange:
                 description:
                     - Multiple UDP port ranges.
+                type: str
             visibility:
                 description:
                     - Enable/disable the visibility of the service on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -219,6 +269,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure custom services.
     fortios_firewall_service_custom:
@@ -227,17 +278,17 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       firewall_service_custom:
-        state: "present"
-        app-category:
+        app_category:
          -
             id:  "4"
-        app-service-type: "disable"
+        app_service_type: "disable"
         application:
          -
             id:  "7"
         category: "<your_own_value> (source firewall.service.category.name)"
-        check-reset-range: "disable"
+        check_reset_range: "disable"
         color: "10"
         comment: "Comment."
         fqdn: "<your_own_value>"
@@ -247,16 +298,16 @@ EXAMPLES = '''
         iprange: "<your_own_value>"
         name: "default_name_17"
         protocol: "TCP/UDP/SCTP"
-        protocol-number: "19"
+        protocol_number: "19"
         proxy: "enable"
-        sctp-portrange: "<your_own_value>"
-        session-ttl: "22"
-        tcp-halfclose-timer: "23"
-        tcp-halfopen-timer: "24"
-        tcp-portrange: "<your_own_value>"
-        tcp-timewait-timer: "26"
-        udp-idle-timer: "27"
-        udp-portrange: "<your_own_value>"
+        sctp_portrange: "<your_own_value>"
+        session_ttl: "22"
+        tcp_halfclose_timer: "23"
+        tcp_halfopen_timer: "24"
+        tcp_portrange: "<your_own_value>"
+        tcp_timewait_timer: "26"
+        udp_idle_timer: "27"
+        udp_portrange: "<your_own_value>"
         visibility: "enable"
 '''
 
@@ -320,14 +371,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -335,18 +388,18 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_firewall_service_custom_data(json):
-    option_list = ['app-category', 'app-service-type', 'application',
-                   'category', 'check-reset-range', 'color',
+    option_list = ['app_category', 'app_service_type', 'application',
+                   'category', 'check_reset_range', 'color',
                    'comment', 'fqdn', 'helper',
                    'icmpcode', 'icmptype', 'iprange',
-                   'name', 'protocol', 'protocol-number',
-                   'proxy', 'sctp-portrange', 'session-ttl',
-                   'tcp-halfclose-timer', 'tcp-halfopen-timer', 'tcp-portrange',
-                   'tcp-timewait-timer', 'udp-idle-timer', 'udp-portrange',
+                   'name', 'protocol', 'protocol_number',
+                   'proxy', 'sctp_portrange', 'session_ttl',
+                   'tcp_halfclose_timer', 'tcp_halfopen_timer', 'tcp_portrange',
+                   'tcp_timewait_timer', 'udp_idle_timer', 'udp_portrange',
                    'visibility']
     dictionary = {}
 
@@ -357,60 +410,85 @@ def filter_firewall_service_custom_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def firewall_service_custom(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_service_custom'] and data['firewall_service_custom']:
+        state = data['firewall_service_custom']['state']
+    else:
+        state = True
     firewall_service_custom_data = data['firewall_service_custom']
-    filtered_data = filter_firewall_service_custom_data(firewall_service_custom_data)
-    if firewall_service_custom_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_firewall_service_custom_data(firewall_service_custom_data))
+
+    if state == "present":
         return fos.set('firewall.service',
                        'custom',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif firewall_service_custom_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('firewall.service',
                           'custom',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_firewall_service(data, fos):
-    login(data)
 
-    methodlist = ['firewall_service_custom']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['firewall_service_custom']:
+        resp = firewall_service_custom(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "firewall_service_custom": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "app-category": {"required": False, "type": "list",
+                "app_category": {"required": False, "type": "list",
                                  "options": {
                                      "id": {"required": True, "type": "int"}
                                  }},
-                "app-service-type": {"required": False, "type": "str",
+                "app_service_type": {"required": False, "type": "str",
                                      "choices": ["disable", "app-id", "app-category"]},
                 "application": {"required": False, "type": "list",
                                 "options": {
                                     "id": {"required": True, "type": "int"}
                                 }},
                 "category": {"required": False, "type": "str"},
-                "check-reset-range": {"required": False, "type": "str",
+                "check_reset_range": {"required": False, "type": "str",
                                       "choices": ["disable", "strict", "default"]},
                 "color": {"required": False, "type": "int"},
                 "comment": {"required": False, "type": "str"},
@@ -432,17 +510,17 @@ def main():
                                          "IP", "HTTP", "FTP",
                                          "CONNECT", "SOCKS-TCP", "SOCKS-UDP",
                                          "ALL"]},
-                "protocol-number": {"required": False, "type": "int"},
+                "protocol_number": {"required": False, "type": "int"},
                 "proxy": {"required": False, "type": "str",
                           "choices": ["enable", "disable"]},
-                "sctp-portrange": {"required": False, "type": "str"},
-                "session-ttl": {"required": False, "type": "int"},
-                "tcp-halfclose-timer": {"required": False, "type": "int"},
-                "tcp-halfopen-timer": {"required": False, "type": "int"},
-                "tcp-portrange": {"required": False, "type": "str"},
-                "tcp-timewait-timer": {"required": False, "type": "int"},
-                "udp-idle-timer": {"required": False, "type": "int"},
-                "udp-portrange": {"required": False, "type": "str"},
+                "sctp_portrange": {"required": False, "type": "str"},
+                "session_ttl": {"required": False, "type": "int"},
+                "tcp_halfclose_timer": {"required": False, "type": "int"},
+                "tcp_halfopen_timer": {"required": False, "type": "int"},
+                "tcp_portrange": {"required": False, "type": "str"},
+                "tcp_timewait_timer": {"required": False, "type": "int"},
+                "udp_idle_timer": {"required": False, "type": "int"},
+                "udp_portrange": {"required": False, "type": "str"},
                 "visibility": {"required": False, "type": "str",
                                "choices": ["enable", "disable"]}
 
@@ -452,15 +530,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_firewall_service(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_firewall_service(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_firewall_service(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

@@ -18,7 +18,7 @@
 import yaml
 
 from units.compat import unittest, mock
-from oneview_module_loader import EthernetNetworkModule, OneViewModuleResourceNotFound
+from oneview_module_loader import EthernetNetworkModule
 from hpe_test_utils import OneViewBaseTestCase
 
 FAKE_MSG_ERROR = 'Fake message error'

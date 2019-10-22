@@ -1,0 +1,79 @@
+---
+- debug:
+    msg: "Start nxos_lacp_interfaces merged integration tests connection={{ ansible_connection }}"
+
+- set_fact:
+    mode: delay
+  when: platform is not search('N5K|N6K|N7K') and ((imagetag != 'I2'))
+
+- name: setup1
+  cli_config: &cleanup
+    config: |
+      no interface port-channel5
+      no interface port-channel10
+      no feature lacp
+
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        feature lacp
+
+  - name: setup3 - L2 for mode command
+    cli_config:
+      config: |
+        interface port-channel5
+          switchport
+    when: mode is defined
+
+  - name: Merged
+    nxos_lacp_interfaces: &merged
+      config:
+        - name: port-channel10
+          links:
+            min: 5
+        - name: port-channel5
+          mode: "{{ mode | default(omit) }}"
+          links:
+            max: 10
+      state:  merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "result.before|length == 0"
+        - "'interface port-channel10' in result.commands"
+        - "'lacp min-links 5' in result.commands"
+        - "'interface port-channel5' in result.commands"
+        - "'lacp max-bundle 10' in result.commands"
+
+  - assert:
+      that:
+        - "'lacp mode delay' in result.commands"
+        - "result.commands|length == 5"
+    when: mode is defined
+
+  - name: Gather lacp_interfaces facts
+    nxos_facts:
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: lacp_interfaces
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.lacp_interfaces|symmetric_difference(result.after)|length == 0"
+
+  - name: Idempotence - Merged
+    nxos_lacp_interfaces: *merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *cleanup
