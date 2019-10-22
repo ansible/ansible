@@ -37,8 +37,18 @@ options:
   state:
     description:
     - The subscription state.
+    - C(present) implies that if I(name) subscription doesn't exist, it will be created.
+    - C(absent) implies that if I(name) subscription exists, it will be removed.
+    - C(stat) implies that if I(name) subscription exists, returns current configuration.
+    - C(refresh) implies that if I(name) subscription exists, it will be refreshed.
+      Fetch missing table information from publisher.
+      This will start replication of tables that were added to the subscribed-to publications
+      since the last invocation of REFRESH PUBLICATION or since CREATE SUBSCRIPTION.
+      The existing data in the publications that are being subscribed to
+      should be copied once the replication starts.
+    - For more information about C(refresh) see U(https://www.postgresql.org/docs/current/sql-altersubscription.html).
     type: str
-    choices: [ absent, present, stat ]
+    choices: [ absent, present, refresh, stat ]
     default: present
   owner:
     description:
@@ -106,6 +116,23 @@ EXAMPLES = r'''
       user: repl
       password: replpass
       dbname: mydb
+
+- name: Assuming that acme subscription exists, try to change conn parameters
+  postgresql_subscription:
+    db: mydb
+    name: acme
+    connparams:
+      host: 127.0.0.1
+      port: 5432
+      user: repl
+      password: replpass
+      connect_timeout: 100
+
+- name: Refresh acme publication
+  postgresql_subscription:
+    db: mydb
+    name: acme
+    state: refresh
 
 - name: Return the configuration of subscription acme if exists in mydb database
   postgresql_subscription:
@@ -397,7 +424,7 @@ class PgSubscription():
 
             return self.__exec_sql(' '.join(query_fragments), check_mode=check_mode)
 
-    def set_owner(self, role, check_mode=False):
+    def set_owner(self, role, check_mode=True):
         """Set a subscription owner.
 
         Args:
@@ -411,6 +438,21 @@ class PgSubscription():
             True if successful, False otherwise.
         """
         query = 'ALTER SUBSCRIPTION %s OWNER TO "%s"' % (self.name, role)
+        return self.__exec_sql(query, check_mode=check_mode)
+
+    def refresh(self, check_mode=True):
+        """Refresh publication.
+
+        Fetches missing table info from publisher.
+
+        Kwargs:
+            check_mode (bool): If True, don't actually change anything,
+                just make SQL, add it to ``self.executed_queries`` and return True.
+
+        Returns:
+            True if successful, False otherwise.
+        """
+        query = 'ALTER SUBSCRIPTION %s REFRESH PUBLICATION' % self.name
         return self.__exec_sql(query, check_mode=check_mode)
 
     def __set_params(self, params_to_update, check_mode=True):
@@ -534,7 +576,7 @@ def main():
     argument_spec.update(
         name=dict(required=True),
         db=dict(type='str', aliases=['login_db']),
-        state=dict(type='str', default='present', choices=['absent', 'present', 'stat']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'refresh', 'stat']),
         publications=dict(type='list'),
         connparams=dict(type='dict'),
         cascade=dict(type='bool', default=False),
@@ -611,6 +653,13 @@ def main():
 
     elif state == 'absent':
         changed = subscription.drop(cascade, check_mode=module.check_mode)
+
+    elif state == 'refresh':
+        if not subscription.exists:
+            module.fail_json(msg="Refresh failed: subscription '%s' does not exist" % name)
+
+        # Always returns True:
+        changed = subscription.refresh(check_mode=module.check_mode)
 
     # Get final subscription info if needed:
     final_state = subscription.get_info()

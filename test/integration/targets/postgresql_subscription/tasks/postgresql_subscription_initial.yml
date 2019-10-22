@@ -631,3 +631,37 @@
       - result.queries == []
       - result.initial_state.conninfo == result.final_state.conninfo
       - result.final_state.conninfo.connect_timeout == {{ conn_timeout }}
+
+  ####################
+  # Test state refresh
+  ####################
+
+  - name: Refresh in check mode
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: refresh
+    check_mode:
+
+  - assert:
+      that:
+      - result is changed
+      - result.name == '{{ test_subscription }}'
+      - result.queries == ["ALTER SUBSCRIPTION {{ test_subscription }} REFRESH PUBLICATION"]
+
+  - name: Refresh
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: refresh
+    check_mode:
+
+  - assert:
+      that:
+      - result is changed
+      - result.name == '{{ test_subscription }}'
+      - result.queries == ["ALTER SUBSCRIPTION {{ test_subscription }} REFRESH PUBLICATION"]
