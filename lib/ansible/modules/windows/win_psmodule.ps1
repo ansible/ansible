@@ -79,15 +79,17 @@ Function Install-PrereqModule {
                         $install_params.SkipPublisherCheck = $true
                     }
 
-                    Install-Module @install_params > $null
+                    $moduleInstalled = Get-InstalledModule -Name $install_params.Name -MinimumVersion $install_params.MinimumVersion -ErrorAction Ignore
 
-                    if ( $Name -eq 'PowerShellGet' ) {
-                        # An order has to be reverted due to dependency
-                        Remove-Module -Name PowerShellGet, PackageManagement -Force
-                        Import-Module -Name PowerShellGet, PackageManagement -Force
+                    if($null -ne $moduleInstalled) {
+                        Install-Module @install_params > $null
+                    }
+                    else {
+                        Update-Module @install_params > null
                     }
 
                     $result.changed = $true
+
                 }
                 catch [ System.Exception ] {
                     $ErrorMessage = "Problems adding a prerequisite module $Name $($_.Exception.Message)"
