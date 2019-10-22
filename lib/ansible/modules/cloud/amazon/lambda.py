@@ -96,6 +96,12 @@ options:
     description:
       - The parent object that contains the target Amazon Resource Name (ARN) of an Amazon SQS queue or Amazon SNS topic.
     version_added: "2.3"
+  tracing_mode:
+    description:
+      - Set mode to 'Active' to sample and trace incoming requests with AWS X-Ray. Turned off (set to 'PassThrough') by default.
+    choices: ['Active', 'PassThrough']
+    version_added: "2.10"
+
   tags:
     description:
       - tag dict to apply to the function (requires botocore 1.5.40 or above).
@@ -175,7 +181,7 @@ configuration:
     type: dict
     sample:
       {
-        'code_sha256': 'SHA256 hash',
+        'code_sha256': 'zOAGfF5JLFuzZoSNirUtOrQp+S341IOA3BcoXXoaIaU=',
         'code_size': 123,
         'description': 'My function',
         'environment': {
@@ -188,13 +194,16 @@ configuration:
         'handler': 'index.handler',
         'last_modified': '2017-08-01T00:00:00.000+0000',
         'memory_size': 128,
+        'revision_id': 'a2x9886d-d48a-4a0c-ab64-82abc005x80c',
         'role': 'arn:aws:iam::123456789012:role/lambda_basic_execution',
         'runtime': 'nodejs6.10',
+        'tracing_config': { 'mode': 'Active' },
         'timeout': 3,
         'version': '1',
         'vpc_config': {
           'security_group_ids': [],
-          'subnet_ids': []
+          'subnet_ids': [],
+          'vpc_id': '123'
         }
       }
 '''
@@ -336,6 +345,7 @@ def main():
         vpc_security_group_ids=dict(type='list'),
         environment_variables=dict(type='dict'),
         dead_letter_arn=dict(),
+        tracing_mode=dict(choices=['Active', 'PassThrough']),
         tags=dict(type='dict'),
     )
 
@@ -370,6 +380,7 @@ def main():
     vpc_security_group_ids = module.params.get('vpc_security_group_ids')
     environment_variables = module.params.get('environment_variables')
     dead_letter_arn = module.params.get('dead_letter_arn')
+    tracing_mode = module.params.get('tracing_mode')
     tags = module.params.get('tags')
 
     check_mode = module.check_mode
@@ -417,6 +428,8 @@ def main():
             func_kwargs.update({'Timeout': timeout})
         if memory_size and current_config['MemorySize'] != memory_size:
             func_kwargs.update({'MemorySize': memory_size})
+        if runtime and current_config['Runtime'] != runtime:
+            func_kwargs.update({'Runtime': runtime})
         if (environment_variables is not None) and (current_config.get(
                 'Environment', {}).get('Variables', {}) != environment_variables):
             func_kwargs.update({'Environment': {'Variables': environment_variables}})
@@ -427,10 +440,8 @@ def main():
             else:
                 if dead_letter_arn != "":
                     func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
-
-        # Check for unsupported mutation
-        if current_config['Runtime'] != runtime:
-            module.fail_json(msg='Cannot change runtime. Please recreate the function')
+        if tracing_mode and (current_config.get('TracingConfig', {}).get('Mode', 'PassThrough') != tracing_mode):
+            func_kwargs.update({'TracingConfig': {'Mode': tracing_mode}})
 
         # If VPC configuration is desired
         if vpc_subnet_ids or vpc_security_group_ids:
@@ -554,6 +565,9 @@ def main():
 
         if dead_letter_arn:
             func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
+
+        if tracing_mode:
+            func_kwargs.update({'TracingConfig': {'Mode': tracing_mode}})
 
         # If VPC configuration is given
         if vpc_subnet_ids or vpc_security_group_ids:
