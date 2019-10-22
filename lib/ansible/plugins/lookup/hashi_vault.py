@@ -3,6 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+import subprocess
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -179,9 +180,20 @@ class HashiVault:
                     os.environ.get('HOME'),
                     '.vault-token'
                 )
+                vault_conf_file = os.path.join(
+                    os.environ.get('HOME'),
+                    '.vault'
+                )
                 if os.path.exists(token_filename):
                     with open(token_filename) as token_file:
                         self.token = token_file.read().strip()
+                elif os.path.exists(vault_conf_file):
+                    with open(vault_conf_file) as vault_conf:
+                        for line in vault_conf:
+                            if 'token-helper' in line:
+                                tokenhelper_path = line.split('=')[1].strip().strip('"')
+                    if os.path.exists(tokenhelper_path):
+                        self.token = subprocess.check_output([tokenhelper_path, "get"])
 
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
