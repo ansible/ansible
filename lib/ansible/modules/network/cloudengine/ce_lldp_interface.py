@@ -58,11 +58,6 @@ options:
       - Set interface lldp enable state.
     type: str
     choices: ['txOnly', 'rxOnly', 'txAndRx', 'disabled']
-  type_tlv_disable:
-    description:
-      - Select tlv type to configure.
-    type: str
-    choices: ['basic_tlv', 'dot3_tlv']
   ifname:
     description:
       - Interface name.
@@ -134,10 +129,6 @@ options:
   eee:
     description:
       - Enable the ability to send EEE TLV.
-    type: bool
-  identity:
-    description:
-      - Enable the identity TLV.
     type: bool
   dcbx:
     description:
