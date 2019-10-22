@@ -1,0 +1,6 @@
+- hosts: all
+  gather_facts: no
+  strategy: free
+  serial: 10
+  roles:
+    - ec2_instance

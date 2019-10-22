@@ -7,7 +7,7 @@
     virtualenv_interpreter: "{{ virtualenv }}/bin/python"
 
 - pip:
-    name: virtualenv
+    name: "virtualenv"
 
 - pip:
     name:
@@ -23,5 +23,5 @@
     ansible_python_interpreter: "{{ virtualenv_interpreter }}"
 
 - file:
-    path: "{{ virtualenv }}"
     state: absent
+    path: "{{ virtualenv }}"

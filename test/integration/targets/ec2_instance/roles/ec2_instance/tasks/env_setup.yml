@@ -1,17 +1,18 @@
-- name: fetch AZ availability
+- name: "fetch AZ availability"
   aws_az_info:
   register: az_info
-- name: Assert that we have multiple AZs available to us
+- name: "Assert that we have multiple AZs available to us"
   assert:
     that: az_info.availability_zones | length >= 2
 
-- name: pick AZs
+- name: "pick AZs"
   set_fact:
     subnet_a_az: '{{ az_info.availability_zones[0].zone_name }}'
     subnet_b_az: '{{ az_info.availability_zones[1].zone_name }}'
 
-- name: Create VPC for use in testing
+- name: "Create VPC for use in testing"
   ec2_vpc_net:
+    state: present
     name: "{{ vpc_name }}"
     cidr_block: "{{ vpc_cidr }}"
     tags:
@@ -19,13 +20,13 @@
     tenancy: default
   register: testing_vpc
 
-- name: Create internet gateway for use in testing
+- name: "Create internet gateway for use in testing"
   ec2_vpc_igw:
-    vpc_id: "{{ testing_vpc.vpc.id }}"
     state: present
+    vpc_id: "{{ testing_vpc.vpc.id }}"
   register: igw
 
-- name: Create default subnet in zone A
+- name: "Create default subnet in zone A"
   ec2_vpc_subnet:
     state: present
     vpc_id: "{{ testing_vpc.vpc.id }}"
@@ -35,7 +36,7 @@
       Name: "{{ resource_prefix }}-subnet-a"
   register: testing_subnet_a
 
-- name: Create secondary subnet in zone B
+- name: "Create secondary subnet in zone B"
   ec2_vpc_subnet:
     state: present
     vpc_id: "{{ testing_vpc.vpc.id }}"
@@ -45,8 +46,9 @@
       Name: "{{ resource_prefix }}-subnet-b"
   register: testing_subnet_b
 
-- name: create routing rules
+- name: "create routing rules"
   ec2_vpc_route_table:
+    state: present
     vpc_id: "{{ testing_vpc.vpc.id }}"
     tags:
       created: "{{ resource_prefix }}-route"
@@ -57,8 +59,9 @@
       - "{{ testing_subnet_a.subnet.id }}"
       - "{{ testing_subnet_b.subnet.id }}"
 
-- name: create a security group with the vpc
+- name: "create a security group with the vpc"
   ec2_group:
+    state: present
     name: "{{ resource_prefix }}-sg"
     description: a security group for ansible tests
     vpc_id: "{{ testing_vpc.vpc.id }}"

@@ -13,7 +13,7 @@
 #  - EC2_REGION -> AWS_REGION
 #
 
-- name: Wrap up all tests and setup AWS credentials
+- name: "Wrap up all tests and setup AWS credentials"
   module_defaults:
     group/aws:
       aws_access_key: "{{ aws_access_key }}"
@@ -21,33 +21,24 @@
       security_token: "{{ security_token | default(omit) }}"
       region: "{{ aws_region }}"
   block:
-
-    - name: Find AMI to use
+    - name: "Find AMI to use"
       ec2_ami_info:
         owners: 'amazon'
         filters:
           name: '{{ ec2_ami_name }}'
       register: ec2_amis
-    - name: Set fact with latest AMI
+    - name: "Set fact with latest AMI"
       vars:
         latest_ami: '{{ ec2_amis.images | sort(attribute="creation_date") | last }}'
       set_fact:
         ec2_ami_image: '{{ latest_ami.image_id }}'
 
-    - include_tasks: version_fail_wrapper.yml
-
     - include_tasks: env_setup.yml
-
-    - include_tasks: cpu_options.yml
-    - include_tasks: termination_protection.yml
-    - include_tasks: tags_and_vpc_settings.yml
-    - include_tasks: external_resource_attach.yml
-    - include_tasks: block_devices.yml
-    - include_tasks: default_vpc_tests.yml
-    - include_tasks: iam_instance_role.yml
-    - include_tasks: checkmode_tests.yml
-    - include_tasks: ebs_optimized.yml
-    - include_tasks: instance_no_wait.yml
+    - debug:
+        msg: "{{ inventory_hostname }} start: {{ lookup('pipe','date') }}"
+    - include_tasks: '{{ inventory_hostname }}.yml'
+    - debug:
+        msg: "{{ inventory_hostname }} finish: {{ lookup('pipe','date') }}"
 
   always:
     - include_tasks: env_cleanup.yml
