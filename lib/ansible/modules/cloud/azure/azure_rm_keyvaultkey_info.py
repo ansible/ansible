@@ -435,7 +435,7 @@ class AzureRMKeyVaultKeyInfo(AzureRMModuleBase):
 
         results = []
         try:
-            response = self._client.get_deleted_keys(vault_base_url=self.vault)
+            response = self._client.get_deleted_keys(vault_base_url=self.vault_uri)
             self.log("Response : {0}".format(response))
 
             if response:
