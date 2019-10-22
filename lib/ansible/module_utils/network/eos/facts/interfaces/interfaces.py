@@ -40,7 +40,6 @@ class InterfacesFacts(object):
     def get_device_data(self, connection):
         return connection.get('show running-config | section ^interface')
 
-
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for interfaces
 
