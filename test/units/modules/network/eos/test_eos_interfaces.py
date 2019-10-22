@@ -162,7 +162,7 @@ class TestEosInterfacesModule(TestEosModule):
     #        description="Ethernet 1"
     #        )], state="overridden"
     #    ))
-    #    commands = ['interface Ethernet3', 'description Ethernet_3', 'mtu 1000', 'interface Ethernet1', 
+    #    commands = ['interface Ethernet3', 'description Ethernet_3', 'mtu 1000', 'interface Ethernet1',
     #                  'description Ethernet 1', 'interface Management1', 'no description', 'no ip address']
     #    self.execute_module(changed=True, commands=[])
 
