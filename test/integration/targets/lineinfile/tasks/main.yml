@@ -1107,3 +1107,33 @@
       - insertbefore_test4_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
       - insertbefore_test5 is not changed
       - insertbefore_test5_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
+
+
+# Test inserting a line at the end of the file using regexp with insertafter
+# https://github.com/ansible/ansible/issues/63684
+- name: Create a file by inserting a line
+  lineinfile:
+    path: "{{ output_dir }}/testend.txt"
+    create: yes
+    line: testline
+  register: testend1
+
+- name: Insert a line at the end of the file
+  lineinfile:
+    path: "{{ output_dir }}/testend.txt"
+    insertafter: testline
+    regexp: line at the end
+    line: line at the end
+  register: testend2
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir }}/testend.txt"
+  register: testend_file
+
+- name: Assert inserting at the end gave the expected results.
+  assert:
+    that:
+      - testend1 is changed
+      - testend2 is changed
+      - testend_file.stat.checksum == 'ef36116966836ce04f6b249fd1837706acae4e19'
