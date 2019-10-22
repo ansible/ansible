@@ -252,7 +252,7 @@ class OnyxSNMPUsersModule(BaseOnyxModule):
                                 self._commands.append('snmp-server user {0} v3 enable' .format(user_id))
                             else:
                                 self._commands.append('no snmp-server user {0} v3 enable' .format(user_id))
-                        set_state  = user.get("set_access_enabled")
+                        set_state = user.get("set_access_enabled")
                         if set_state is not None:
                             if set_state is True:
                                 self._commands.append('snmp-server user {0} v3 enable sets' .format(user_id))
