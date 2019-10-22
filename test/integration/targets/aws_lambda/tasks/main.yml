@@ -152,6 +152,23 @@
           - update_result.configuration.runtime == 'nodejs10.x'
           - update_result.configuration.tracing_config.mode == 'Active'
 
+  - name: test no changes are made with the same parameters
+      lambda:
+        name: "{{lambda_function_name}}"
+        runtime: "nodejs10.x"
+        tracing_mode: 'Active'
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+      register: update_result
+
+    - name: assert that update succeeded
+      assert:
+        that:
+          - update_result is not failed
+          - update_result.changed == False
+          - update_result.configuration.runtime == 'nodejs10.x'
+          - update_result.configuration.tracing_config.mode == 'Active'
+
     - name: reset config updates for the following tests
       lambda:
         name: "{{lambda_function_name}}"
