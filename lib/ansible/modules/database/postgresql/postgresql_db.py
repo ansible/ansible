@@ -391,6 +391,10 @@ def db_restore(module, target, target_opts="",
     elif os.path.splitext(target)[-1] == '.tar':
         flags.append(' --format=Tar')
         cmd = module.get_bin_path('pg_restore', True)
+        
+    elif os.path.splitext(target)[-1] == '.pgc':
+        flags.append(' --format=Custom')
+        cmd = module.get_bin_path('pg_restore', True)
 
     elif os.path.splitext(target)[-1] == '.gz':
         comp_prog_path = module.get_bin_path('zcat', True)
