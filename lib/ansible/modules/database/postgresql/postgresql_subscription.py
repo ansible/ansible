@@ -40,6 +40,11 @@ options:
     type: str
     choices: [ absent, present, stat ]
     default: present
+  owner:
+    description:
+    - Subscription owner.
+    - If I(owner) is not defined, the owner will be set as I(login_user) or I(session_role).
+    type: str
   pubname:
     description:
     - The publication name on the publisher.
@@ -80,12 +85,14 @@ extends_documentation_fragment:
 EXAMPLES = r'''
 - name: >
     Create acme subscription in mydb database using acme_publication and
-    the following connection parameters to connect to the publisher
+    the following connection parameters to connect to the publisher.
+    Set the subscription owner as alice.
   postgresql_subscription:
     db: mydb
     name: acme
     state: present
     pubname: acme_publication
+    owner: alice
     connparams:
       host: 127.0.0.1
       port: 5432
@@ -302,6 +309,22 @@ class PgSubscription():
 
             return self.__exec_sql(' '.join(query_fragments), check_mode=check_mode)
 
+    def set_owner(self, role, check_mode=False):
+        """Set a subscription owner.
+
+        Args:
+            role (str): Role (user) name that needs to be set as a subscription owner.
+
+        Kwargs:
+            check_mode (bool): If True, don't actually change anything,
+                just make SQL, add it to ``self.executed_queries`` and return True.
+
+        Returns:
+            True if successful, False otherwise.
+        """
+        query = ('ALTER SUBSCRIPTION %s OWNER TO "%s"' % (self.name, role))
+        return self.__exec_sql(query, check_mode=check_mode)
+
     def __get_general_subscr_info(self):
         """Get and return general subscription information.
 
@@ -360,6 +383,7 @@ def main():
         pubname=dict(type='str'),
         connparams=dict(type='dict'),
         cascade=dict(type='bool', default=False),
+        owner=dict(type='str'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -372,6 +396,7 @@ def main():
     state = module.params['state']
     pubname = module.params['pubname']
     cascade = module.params['cascade']
+    owner = module.params['owner']
     if module.params.get('connparams'):
         connparams = convert_conn_params(module.params['connparams'])
     else:
@@ -400,7 +425,7 @@ def main():
     subscription = PgSubscription(module, cursor, name, db)
 
     if subscription.exists:
-        initial_state = subscription.attrs
+        initial_state = deepcopy(subscription.attrs)
         final_state = deepcopy(initial_state)
 
     # If module.check_mode=True, nothing will be changed:
@@ -414,6 +439,9 @@ def main():
 
         else:
             changed = subscription.update(check_mode=module.check_mode)
+
+        if owner and subscription.attrs['owner'] != owner:
+            changed = subscription.set_owner(owner, check_mode=module.check_mode)
 
     elif state == 'absent':
         changed = subscription.drop(cascade, check_mode=module.check_mode)

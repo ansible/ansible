@@ -12,6 +12,17 @@
 
   block:
 
+  - name: Create roles to test owner parameter
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ item }}'
+      role_attr_flags: SUPERUSER,LOGIN
+    loop:
+    - '{{ test_role1 }}'
+    - '{{ test_role2 }}'
+
   ####################
   # Test mode: present
   ####################
@@ -164,11 +175,11 @@
       - result.name == '{{ test_subscription }}'
       - result.exists == false
 
-  ####################
-  # Test cascade param
-  ####################
+  ##################
+  # Test owner param
+  ##################
 
-  - name: Create subscription for further tests
+  - name: Create with owner
     <<: *task_parameters
     postgresql_subscription:
       <<: *pg_parameters
@@ -176,6 +187,7 @@
       name: '{{ test_subscription }}'
       state: present
       pubname: '{{ test_pub }}'
+      owner: '{{ test_role1 }}'
       connparams:
         host: 127.0.0.1
         port: '{{ master_port }}'
@@ -183,6 +195,110 @@
         password: '{{ replication_pass }}'
         dbname: '{{ test_db }}'
 
+  - assert:
+      that:
+      - result.final_state.owner == '{{ test_role1 }}'
+      - result.queries[1] == 'ALTER SUBSCRIPTION {{ test_subscription }} OWNER TO "{{ test_role1 }}"'
+
+  - name: Try to set this owner again
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: present
+      pubname: '{{ test_pub }}'
+      owner: '{{ test_role1 }}'
+
+  - assert:
+      that:
+      - result is not changed
+      - result.initial_state == result.final_state
+      - result.final_state.owner == '{{ test_role1 }}'
+
+  - name: Check owner
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: stat
+
+  - assert:
+      that:
+      - result is not changed
+      - result.name == '{{ test_subscription }}'
+      - result.exists == true
+      - result.initial_state.owner == '{{ test_role1 }}'
+
+  - name: Set another owner in check mode
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: present
+      pubname: '{{ test_pub }}'
+      owner: '{{ test_role2 }}'
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.initial_state == result.final_state
+      - result.final_state.owner == '{{ test_role1 }}'
+      - result.queries == ['ALTER SUBSCRIPTION {{ test_subscription }} OWNER TO "{{ test_role2 }}"']
+
+  - name: Check owner
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: stat
+
+  - assert:
+      that:
+      - result is not changed
+      - result.name == '{{ test_subscription }}'
+      - result.exists == true
+      - result.initial_state.owner == '{{ test_role1 }}'
+
+  - name: Set another owner
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: present
+      pubname: '{{ test_pub }}'
+      owner: '{{ test_role2 }}'
+
+  - assert:
+      that:
+      - result is changed
+      - result.initial_state != result.final_state
+      - result.final_state.owner == '{{ test_role2 }}'
+      - result.queries == ['ALTER SUBSCRIPTION {{ test_subscription }} OWNER TO "{{ test_role2 }}"']
+
+  - name: Check owner
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: stat
+
+  - assert:
+      that:
+      - result is not changed
+      - result.name == '{{ test_subscription }}'
+      - result.exists == true
+      - result.initial_state.owner == '{{ test_role2 }}'
+
+  ##############################
+  # Test cascade and owner param
+  ##############################
 
   - name: Drop subscription cascade in check mode
     <<: *task_parameters
