@@ -1,7 +1,14 @@
 ---
-#
-#  Author: Michael De La Rue
-#  based on ec2_key.yml + lambda.py
+# tasks file for aws_lambda test
+
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      ec2_region: '{{ec2_region}}'
+      ec2_access_key: '{{ec2_access_key}}'
+      ec2_secret_key: '{{ec2_secret_key}}'
+      security_token: '{{security_token}}'
+  no_log: yes
 
 - block:
 
@@ -105,11 +112,8 @@
         runtime: "python2.7"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
+        <<: *aws_connection_info
       register: result
 
     - name: assert lambda upload succeeded
@@ -122,10 +126,7 @@
         name: "{{lambda_function_name}}"
         payload:
           name: "Mr Ansible Tests"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: assert lambda manages to respond as expected
@@ -141,10 +142,7 @@
         tracing_mode: 'Active'
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: update_result
 
     - name: assert that update succeeded
@@ -161,10 +159,7 @@
         tracing_mode: 'PassThrough'
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
 
     # ============================================================
     - name: test state=present with security group but no vpc
@@ -172,10 +167,6 @@
         name: "{{lambda_function_name}}"
         runtime: "python2.7"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
         handler:
         description:
@@ -183,6 +174,7 @@
         vpc_security_group_ids: sg-FA6E
         environment_variables:
         dead_letter_arn:
+        <<: *aws_connection_info
       register: result
       ignore_errors: true
 
@@ -200,10 +192,6 @@
         name: "{{lambda_function_name}}"
         runtime: "python2.7"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
         handler: "mini_lambda.handler"
 # These are not allowed because of mutually exclusive.
@@ -215,6 +203,7 @@
         vpc_security_group_ids:
         environment_variables:
         dead_letter_arn:
+        <<: *aws_connection_info
       register: result
 
     - name: assert lambda remains as before
@@ -230,13 +219,10 @@
         runtime: "python2.7"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
         environment_variables:
             EXTRA_MESSAGE: "I think you are great!!"
+        <<: *aws_connection_info
       register: result
 
     - name: assert lambda upload succeeded
@@ -250,10 +236,8 @@
         name: "{{lambda_function_name}}"
         payload:
           name: "Mr Ansible Tests"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: assert lambda manages to respond as expected
@@ -287,10 +271,7 @@
     - name: test state=absent (expect changed=False)
       lambda:
         name: "{{lambda_function_name}}"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: absent
       register: result
 
@@ -309,11 +290,8 @@
         runtime: "python2.7"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
+        <<: *aws_connection_info
       async: 1000
       register: async_1
 
@@ -323,11 +301,8 @@
         runtime: "python2.7"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
+        <<: *aws_connection_info
       async: 1000
       register: async_2
 
@@ -337,11 +312,8 @@
         runtime: "python2.7"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
+        <<: *aws_connection_info
       async: 1000
       register: async_3
 
@@ -351,11 +323,8 @@
         runtime: "python2.7"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
+        <<: *aws_connection_info
       register: result
 
     - name: assert lambda manages to respond as expected
@@ -386,11 +355,8 @@
       lambda:
         name: "{{lambda_function_name}}_1"
         state: absent
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
+        <<: *aws_connection_info
       async: 1000
       register: async_1
 
@@ -398,11 +364,8 @@
       lambda:
         name: "{{lambda_function_name}}_2"
         state: absent
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
+        <<: *aws_connection_info
       async: 1000
       register: async_2
 
@@ -410,11 +373,8 @@
       lambda:
         name: "{{lambda_function_name}}_3"
         state: absent
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
+        <<: *aws_connection_info
       async: 1000
       register: async_3
 
@@ -422,11 +382,8 @@
       lambda:
         name: "{{lambda_function_name}}_4"
         state: absent
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
+        <<: *aws_connection_info
       register: result
 
     - name: assert lambda creation has succeeded
@@ -452,21 +409,12 @@
       until: job_result is finished
       retries: 30
 
-
-    # ============================================================
-    # upload via s3 bucket - multi function
-
-    # ============================================================
-    # update already existing function
-
-
+  # ============================================================
   always:
 
     - name: ensure function is absent at end of test
       lambda:
         name: "{{lambda_function_name}}"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: absent
+      ignore_errors: true
