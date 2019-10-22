@@ -1,0 +1,2 @@
+bugfixes:
+  - zabbix_* modules - modules will now properly disconnect existing sessions from Zabbix server (see https://github.com/ansible/ansible/pull/58525)
