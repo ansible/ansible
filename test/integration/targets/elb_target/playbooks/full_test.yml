@@ -3,4 +3,5 @@
   environment: "{{ ansible_test.environment }}"
 
   roles:
+    - elb_lambda_target
     - elb_target

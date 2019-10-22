@@ -11,35 +11,44 @@ Arista EOS supports multiple connections. This page offers details on how each c
 Connections Available
 ================================================================================
 
-+---------------------------+-----------------------------------------------+---------------------------------------------+
-|..                         | CLI                                           | eAPI                                        |
-+===========================+===============================================+=============================================+
-| **Protocol**              |  SSH                                          | HTTP(S)                                     |
-+---------------------------+-----------------------------------------------+---------------------------------------------+
-| | **Credentials**         | | uses SSH keys / SSH-agent if present        | | uses HTTPS certificates if present        |
-| |                         | | accepts ``-u myuser -k`` if using password  | |                                           |
-+---------------------------+-----------------------------------------------+---------------------------------------------+
-| **Indirect Access**       | via a bastion (jump host)                     | via a web proxy                             |
-+---------------------------+-----------------------------------------------+---------------------------------------------+
-| | **Connection Settings** | | ``ansible_connection: network_cli``         | | * ``ansible_connection: httpapi``         |
-| |                         | |                                             | | OR                                        |
-| |                         | |                                             | |                                           |
-| |                         | |                                             | | * ``ansible_connection: local``           |
-| |                         | |                                             | |    with ``transport: eapi``               |
-| |                         | |                                             | |    in the ``provider`` dictionary         |
-+---------------------------+-----------------------------------------------+---------------------------------------------+
-| | **Enable Mode**         | | supported - use ``ansible_become: yes``     | | supported:                                |
-| | (Privilege Escalation)  | | with ``ansible_become_method: enable``      | | * ``httpapi``                             |
-| |                         | |                                             | |    uses ``ansible_become: yes``           |
-| |                         | |                                             | |    with ``ansible_become_method: enable`` |
-| |                         | |                                             | |                                           |
-| |                         | |                                             | | * ``local``                               |
-| |                         | |                                             | |    uses ``authorize: yes``                |
-| |                         | |                                             | |    and ``auth_pass:``                     |
-| |                         | |                                             | |    in the ``provider`` dictionary         |
-+---------------------------+-----------------------------------------------+---------------------------------------------+
-| **Returned Data Format**  | ``stdout[0].``                                | ``stdout[0].messages[0].``                  |
-+---------------------------+-----------------------------------------------+---------------------------------------------+
+.. table::
+    :class: documentation-table
+
+    ====================  ==========================================  =========================
+    ..                    CLI                                         eAPI
+    ====================  ==========================================  =========================
+    Protocol              SSH                                         HTTP(S)
+
+    Credentials           uses SSH keys / SSH-agent if present        uses HTTPS certificates if
+                                                                      present
+                          accepts ``-u myuser -k`` if using password
+
+    Indirect Access       via a bastion (jump host)                   via a web proxy
+
+    Connection Settings   ``ansible_connection: network_cli``         ``ansible_connection: httpapi``
+
+                                                                      OR
+
+                                                                      ``ansible_connection: local``
+                                                                      with ``transport: eapi``
+                                                                      in the ``provider`` dictionary
+
+    |enable_mode|         supported: |br|                             supported: |br|
+
+                          * use ``ansible_become: yes``               * ``httpapi``
+                            with ``ansible_become_method: enable``      uses ``ansible_become: yes``
+                                                                        with ``ansible_become_method: enable``
+
+                                                                      * ``local``
+                                                                        uses ``authorize: yes``
+                                                                        and ``auth_pass:``
+                                                                        in the ``provider`` dictionary
+
+    Returned Data Format  ``stdout[0].``                              ``stdout[0].messages[0].``
+    ====================  ==========================================  =========================
+
+.. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
+
 
 For legacy playbooks, EOS still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` or ``ansible_connection: httpapi`` as soon as possible.
 

@@ -101,7 +101,7 @@ cloud_front_origin_access_identity:
       returned: always
       type: str
     s3_canonical_user_id:
-      description: the cannonical user id of the user who created the oai
+      description: the canonical user id of the user who created the oai
       returned: always
       type: str
 e_tag:

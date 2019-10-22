@@ -210,7 +210,8 @@ step_scaling_policy_configuration:
         step_adjustments:
             description: A set of adjustments that enable you to scale based on the size of the alarm breach
             returned: when state present and the policy type is StepScaling
-            type: list of complex
+            type: list
+            elements: dict
 target_tracking_scaling_policy_configuration:
     description: The target tracking policy.
     returned: when state present and the policy type is TargetTrackingScaling

@@ -46,6 +46,7 @@ options:
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
 notes:
   - Due to ID685681 it is not possible to execute ng_* tools via REST api on v12.x and 13.x, once this is fixed

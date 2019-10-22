@@ -1,0 +1,19 @@
+---
+- name: setup global coverage directory for Windows test targets
+  hosts: windows
+  gather_facts: no
+  tasks:
+  - name: create temp directory
+    win_file:
+      path: '{{ remote_temp_path }}'
+      state: directory
+
+  - name: allow everyone to write to coverage test dir
+    win_acl:
+      path: '{{ remote_temp_path }}'
+      user: Everyone
+      rights: Modify
+      inherit: ContainerInherit, ObjectInherit
+      propagation: 'None'
+      type: allow
+      state: present

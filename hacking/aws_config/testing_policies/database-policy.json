@@ -2,67 +2,102 @@
     "Version": "2012-10-17",
     "Statement": [
         {
+            "Action": "iam:CreateServiceLinkedRole",
+            "Effect": "Allow",
+            "Resource": "arn:aws:iam::*:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS",
+            "Condition": {
+                "StringLike": {
+                    "iam:AWSServiceName":"rds.amazonaws.com"
+                }
+            }
+        },
+        {
+            "Sid": "AllowRDSReadEverywhere",
+            "Effect": "Allow",
+            "Action": [
+                "rds:ListTagsForResource",
+                "rds:DescribeDBInstances",
+                "rds:DescribeDBParameterGroups",
+                "rds:DescribeDBParameters",
+                "rds:DescribeDBSnapshots"
+            ],
+            "Resource": ["*"]
+        },
+        {
             "Sid": "AllowRDSModuleTests",
             "Effect": "Allow",
             "Action": [
-                "rds:DescribeDBInstances",
+                "rds:AddTagsToResource",
                 "rds:CreateDBInstance",
+                "rds:DeleteDBInstance",
                 "rds:ModifyDBInstance",
-                "rds:ListTagsForResource",
-                "rds:DeleteDBInstance"
+                "rds:PromoteReadReplica",
+                "rds:RebootDBInstance",
+                "rds:RemoveTagsFromResource",
+                "rds:RestoreDBInstanceToPointInTime",
+                "rds:StartDBInstance",
+                "rds:StopDBInstance"
             ],
             "Resource": [
-                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:ansible-testing*"
-            ]
-        },
-        {
-            "Sid": "AllowRDSInstanceManageOwnInstance",
-            "Effect": "Allow",
-            "Action": [
-                "rds:CreateDBInstance",
-                "rds:ModifyDBInstance",
-                "rds:ListTagsForResource",
-                "rds:DescribeDBInstances"
-            ],
-            "Resource": [
-                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:rds-*"
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:ansible-test*"
             ]
         },
         {
             "Sid": "AllowRDSSnapshotManageSnapshots",
             "Effect": "Allow",
             "Action": [
-                "rds:DescribeDBSnapshots",
-                "rds:DescribeDBInstances",
-                "rds:DescribeDBSnapshots",
-                "rds:DeleteDBInstance",
+                "rds:AddTagsToResource",
                 "rds:CreateDBSnapshot",
+                "rds:DeleteDBInstance",
                 "rds:DeleteDBSnapshot",
+                "rds:RemoveTagsFromResource",
                 "rds:RestoreDBInstanceFromDBSnapshot",
                 "rds:CreateDBInstanceReadReplica"
             ],
             "Resource": [
-                "arn:aws:rds:{{aws_region}}:{{aws_account}}:snapshot:snapshot-*",
-                "arn:aws:rds:{{aws_region}}:{{aws_account}}:snapshot:rds-*",
-                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:rds-*"
-            ]
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:snapshot:ansible-test*",
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:ansible-test*"
+           ]
         },
         {
             "Sid": "AllowRDSParameterGroupManagement",
             "Effect": "Allow",
             "Action": [
-                "rds:DescribeDBParameterGroups",
-                "rds:DescribeDBParameters",
                 "rds:CreateDBParameterGroup",
                 "rds:DeleteDBParameterGroup",
                 "rds:ModifyDBParameterGroup",
-                "rds:ListTagsForResource",
                 "rds:AddTagsToResource",
                 "rds:RemoveTagsFromResource"
             ],
             "Resource": [
                 "arn:aws:rds:{{aws_region}}:{{aws_account}}:pg:*"
             ]
+        },
+        {
+          "Sid": "AllowRedshiftManagment",
+          "Action": [
+              "redshift:CreateCluster",
+              "redshift:CreateTags",
+              "redshift:DeleteCluster",
+              "redshift:DeleteTags",
+              "redshift:DescribeClusters",
+              "redshift:DescribeTags",
+              "redshift:ModifyCluster",
+              "redshift:RebootCluster"
+          ],
+          "Effect": "Allow",
+          "Resource": "*"
+        },
+        {
+          "Sid": "DMSEndpoints",
+          "Effect": "Allow",
+          "Action": [
+            "dms:CreateEndpoint",
+            "dms:DeleteEndpoint",
+            "dms:DescribeEndpoints",
+            "dms:ModifyEndpoint"
+          ],
+          "Resource": ["*"]
         }
     ]
 }

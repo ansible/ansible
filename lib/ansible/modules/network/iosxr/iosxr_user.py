@@ -29,7 +29,8 @@ description:
     configuration that are not explicitly defined.
 extends_documentation_fragment: iosxr
 notes:
-  - Tested against IOS XRv 6.1.2
+  - This module works with connection C(network_cli) and C(netconf). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
+  - Tested against IOS XRv 6.1.3
 options:
   aggregate:
     description:
@@ -73,7 +74,7 @@ options:
       - Configures the groups for the username in the device running
         configuration. The argument accepts a list of group names.
         This argument does not check if the group has been configured
-        on the device. It is similar to the aggregrate command for
+        on the device. It is similar to the aggregate command for
         usernames, but lets you configure multiple groups for the user(s).
   purge:
     description:
@@ -121,6 +122,8 @@ options:
         public_key.If used with multiple users in aggregates, then the
         same key file is used for all users.
 requirements:
+  - ncclient >= 0.5.3 when using netconf
+  - lxml >= 4.1.1 when using netconf
   - base64 when using I(public_key_contents) or I(public_key)
   - paramiko when using I(public_key_contents) or I(public_key)
 """
@@ -700,8 +703,9 @@ def main():
 
     config_object = None
     if is_cliconf(module):
-        module.deprecate(msg="cli support for 'iosxr_user' is deprecated. Use transport netconf instead",
-                         version="2.9")
+        # Commenting the below cliconf deprecation support call for Ansible 2.9 as it'll be continued to be supported
+        # module.deprecate("cli support for 'iosxr_interface' is deprecated. Use transport netconf instead",
+        #                  version='2.9')
         config_object = CliConfiguration(module, result)
     elif is_netconf(module):
         config_object = NCConfiguration(module, result)

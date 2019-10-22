@@ -51,7 +51,7 @@ EXAMPLES = """
 
 RETURN = """
 images:
-    description: info from all or specificed images
+    description: info from all or specified images
     returned: always
     type: dict
     sample: [
@@ -154,26 +154,55 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 
 
-def get_image_info(module, executable, name):
-
-    if not isinstance(name, list):
-        name = [name]
-
-    command = [executable, 'image', 'inspect']
-    command.extend(name)
-
+def image_exists(module, executable, name):
+    command = [executable, 'image', 'exists', name]
     rc, out, err = module.run_command(command)
+    if rc == 1:
+        return False
+    elif 'Command "exists" not found' in err:
+        # The 'exists' test is available in podman >= 0.12.1
+        command = [executable, 'image', 'ls', '-q', name]
+        rc2, out2, err2 = module.run_command(command)
+        if rc2 != 0:
+            return False
+    return True
 
-    if rc != 0:
-        module.fail_json(msg="Unable to gather info for '{0}': {1}".format(', '.join(name), err))
 
-    return out
+def filter_invalid_names(module, executable, name):
+    valid_names = []
+    names = name
+    if not isinstance(name, list):
+        names = [name]
+
+    for name in names:
+        if image_exists(module, executable, name):
+            valid_names.append(name)
+
+    return valid_names
+
+
+def get_image_info(module, executable, name):
+    names = name
+    if not isinstance(name, list):
+        names = [name]
+
+    if len(names) > 0:
+        command = [executable, 'image', 'inspect']
+        command.extend(names)
+        rc, out, err = module.run_command(command)
+
+        if rc != 0:
+            module.fail_json(msg="Unable to gather info for '{0}': {1}".format(', '.join(names), err))
+        return out
+
+    else:
+        return json.dumps([])
 
 
 def get_all_image_info(module, executable):
     command = [executable, 'image', 'ls', '-q']
     rc, out, err = module.run_command(command)
-    name = out.split('\n')
+    name = out.strip().split('\n')
     out = get_image_info(module, executable, name)
 
     return out
@@ -193,7 +222,8 @@ def main():
     executable = module.get_bin_path(executable, required=True)
 
     if name:
-        results = json.loads(get_image_info(module, executable, name))
+        valid_names = filter_invalid_names(module, executable, name)
+        results = json.loads(get_image_info(module, executable, valid_names))
     else:
         results = json.loads(get_all_image_info(module, executable))
 

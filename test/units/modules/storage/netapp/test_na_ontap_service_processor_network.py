@@ -4,7 +4,6 @@ from __future__ import print_function
 import json
 import pytest
 
-import time
 from units.compat import unittest
 from units.compat.mock import patch, Mock
 from ansible.module_utils import basic

@@ -1,0 +1,44 @@
+# Copyright (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# Copyright (c) 2019, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: test get vultr ssh key info - empty resources
+  vultr_ssh_key_info:
+  register: result
+
+- name: verify test get vultr ssh key infos in check mode
+  assert:
+    that:
+    - result.vultr_ssh_key_info|selectattr('name','equalto','{{ ssh_key_name }}') | list | count == 0
+    - result.vultr_ssh_key_info|selectattr('ssh_key','equalto','{{ ssh_key_content }}') | list | count == 0
+
+- name: Upload an ssh key
+  vultr_ssh_key:
+    name: '{{ ssh_key_name }}'
+    ssh_key: '{{ ssh_key_content }}'
+
+- name: test get vultr ssh key infos in check mode
+  vultr_ssh_key_info:
+  check_mode: yes
+  register: result
+
+- name: verify test get vultr ssh key infos in check mode
+  assert:
+    that:
+    - result.vultr_ssh_key_info|selectattr('name','equalto','{{ ssh_key_name }}') | list | count == 1
+    - result.vultr_ssh_key_info|selectattr('ssh_key','equalto','{{ ssh_key_content }}') | list | count == 1
+
+- name: test get vultr ssh key info
+  vultr_ssh_key_info:
+  register: result
+
+- name: verify test get vultr ssh key infos
+  assert:
+    that:
+    - result.vultr_ssh_key_info|selectattr('name','equalto','{{ ssh_key_name }}') | list | count == 1
+    - result.vultr_ssh_key_info|selectattr('ssh_key','equalto','{{ ssh_key_content }}') | list | count == 1
+
+- name: Destroy the ssh key
+  vultr_ssh_key:
+    name: '{{ ssh_key_name }}'
+    state: absent

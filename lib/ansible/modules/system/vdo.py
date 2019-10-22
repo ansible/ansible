@@ -606,14 +606,16 @@ def run_module():
         modtrans = {}
 
         for statfield in statusparamkeys:
-            currentvdoparams[statfield] = processedvdos[desiredvdo][statfield]
+            if statfield in processedvdos[desiredvdo]:
+                currentvdoparams[statfield] = processedvdos[desiredvdo][statfield]
+
             modtrans[statfield] = vdokeytrans[statfield]
 
         # Build a dictionary of current parameters formatted with the
         # same keys as the AnsibleModule parameters.
         currentparams = {}
-        for paramkey in currentvdoparams.keys():
-            currentparams[modtrans[paramkey]] = currentvdoparams[paramkey]
+        for paramkey in modtrans.keys():
+            currentparams[modtrans[paramkey]] = modtrans[paramkey]
 
         diffparams = {}
 

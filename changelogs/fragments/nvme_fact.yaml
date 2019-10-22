@@ -1,3 +1,0 @@
----
-minor_changes:
-  - Gather NVMe NQN fact (https://github.com/ansible/ansible/pull/50164)

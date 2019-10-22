@@ -23,7 +23,7 @@ __metaclass__ = type
 Compat distro library.
 '''
 # The following makes it easier for us to script updates of the bundled code
-_BUNDLED_METADATA = {"pypi_name": "distro", "version": "1.3.0"}
+_BUNDLED_METADATA = {"pypi_name": "distro", "version": "1.4.0"}
 
 # The following additional changes have been made:
 # * The import of argparse has been moved to __main__ (py2.6 compat)

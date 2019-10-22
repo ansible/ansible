@@ -49,7 +49,7 @@ options:
     default: 1
   count_group:
     description:
-      - Required when exact_count is specified.  The Server Group use to determine how many severs to deploy.
+      - Required when exact_count is specified.  The Server Group use to determine how many servers to deploy.
   cpu:
     description:
       - How many CPUs to provision on the server

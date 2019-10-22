@@ -1,2 +1,0 @@
-bugfixes:
-- win_certificate_store - Fix exception handling typo

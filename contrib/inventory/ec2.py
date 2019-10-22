@@ -160,6 +160,7 @@ import argparse
 import re
 from time import time
 from copy import deepcopy
+from datetime import date, datetime
 import boto
 from boto import ec2
 from boto import rds
@@ -241,6 +242,13 @@ class Ec2Inventory(object):
 
     def _empty_inventory(self):
         return {"_meta": {"hostvars": {}}}
+
+    def _json_serial(self, obj):
+        """JSON serializer for objects not serializable by default json code"""
+
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        raise TypeError("Type %s not serializable" % type(obj))
 
     def __init__(self):
         ''' Main execution path '''
@@ -728,13 +736,6 @@ class Ec2Inventory(object):
         account_id = boto.connect_iam().get_user().arn.split(':')[4]
         c_dict = {}
         for c in clusters:
-            # remove these datetime objects as there is no serialisation to json
-            # currently in place and we don't need the data yet
-            if 'EarliestRestorableTime' in c:
-                del c['EarliestRestorableTime']
-            if 'LatestRestorableTime' in c:
-                del c['LatestRestorableTime']
-
             if not self.ec2_instance_filters:
                 matches_filter = True
             else:
@@ -1701,9 +1702,9 @@ class Ec2Inventory(object):
         string '''
 
         if pretty:
-            return json.dumps(data, sort_keys=True, indent=2)
+            return json.dumps(data, sort_keys=True, indent=2, default=self._json_serial)
         else:
-            return json.dumps(data)
+            return json.dumps(data, default=self._json_serial)
 
 
 if __name__ == '__main__':

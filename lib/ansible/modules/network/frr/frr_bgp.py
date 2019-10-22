@@ -18,7 +18,7 @@ DOCUMENTATION = """
 ---
 module: frr_bgp
 version_added: "2.8"
-author: "Nilashish Chakraborty (@nilashishc)"
+author: "Nilashish Chakraborty (@NilashishC)"
 short_description: Configure global BGP settings on Free Range Routing(FRR).
 description:
   - This module provides configuration management of global BGP parameters

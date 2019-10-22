@@ -1,0 +1,2 @@
+# Initial CI tests of postgresql_schema module
+- import_tasks: postgresql_schema_initial.yml

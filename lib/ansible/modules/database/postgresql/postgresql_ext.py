@@ -38,50 +38,6 @@ options:
     - Name of the schema to add the extension to.
     version_added: '2.8'
     type: str
-  login_user:
-    description:
-    - The username used to authenticate with.
-    type: str
-    default: postgres
-  login_password:
-    description:
-    - The password used to authenticate with.
-    type: str
-  login_host:
-    description:
-    - Host running the database.
-    type: str
-  login_unix_socket:
-    description:
-    - Path to a Unix domain socket for local connections.
-    type: str
-    version_added: '2.8'
-  ssl_mode:
-    description:
-    - Determines whether or with what priority a secure SSL TCP/IP connection
-      will be negotiated with the server.
-    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-      more information on the modes.
-    - Default of C(prefer) matches libpq default.
-    default: prefer
-    choices: [allow, disable, prefer, require, verify-ca, verify-full]
-    type: str
-    version_added: '2.8'
-  ca_cert:
-    description:
-    - Specifies the name of a file containing SSL certificate authority (CA)
-      certificate(s). If the file exists, the server's certificate will be
-      verified to be signed by one of these authorities.
-    type: str
-    version_added: '2.8'
-    aliases: [ ssl_rootcert ]
-  port:
-    description:
-    - Database port to connect to.
-    default: 5432
-    type: int
-    aliases:
-    - login_port
   session_role:
     description:
     - Switch to session_role after connecting.
@@ -102,6 +58,49 @@ options:
     type: bool
     default: no
     version_added: '2.8'
+  login_unix_socket:
+    description:
+      - Path to a Unix domain socket for local connections.
+    type: str
+    version_added: '2.8'
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
+    type: str
+    default: prefer
+    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
+    version_added: '2.8'
+  ca_cert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+      - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+    type: str
+    aliases: [ ssl_rootcert ]
+    version_added: '2.8'
+  version:
+    description:
+      - Extension version to add or update to. Has effect with I(state=present) only.
+      - If not specified, the latest extension version will be created.
+      - It can't downgrade an extension version.
+        When version downgrade is needed, remove the extension and create new one with appropriate version.
+      - Set I(version=latest) to update the extension to the latest available version.
+    type: str
+    version_added: '2.9'
+seealso:
+- name: PostgreSQL extensions
+  description: General information about PostgreSQL extensions.
+  link: https://www.postgresql.org/docs/current/external-extensions.html
+- name: CREATE EXTENSION reference
+  description: Complete reference of the CREATE EXTENSION command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createextension.html
+- name: ALTER EXTENSION reference
+  description: Complete reference of the ALTER EXTENSION command documentation.
+  link: https://www.postgresql.org/docs/current/sql-alterextension.html
+- name: DROP EXTENSION reference
+  description: Complete reference of the DROP EXTENSION command documentation.
+  link: https://www.postgresql.org/docs/current/sql-droppublication.html
 notes:
 - The default authentication assumes that you are either logging in as
   or sudo'ing to the C(postgres) account on the host.
@@ -115,6 +114,9 @@ requirements: [ psycopg2 ]
 author:
 - Daniel Schep (@dschep)
 - Thomas O'Donnell (@andytom)
+- Sandro Santilli (@strk)
+- Andrew Klychkov (@Andersson007)
+extends_documentation_fragment: postgres
 '''
 
 EXAMPLES = r'''
@@ -144,6 +146,18 @@ EXAMPLES = r'''
     db: acme
     cascade: yes
     state: absent
+
+- name: Create extension foo of version 1.2 or update it if it's already created
+  postgresql_ext:
+    db: acme
+    name: foo
+    version: 1.2
+
+- name: Assuming extension foo is created, update it to the latest version
+  postgresql_ext:
+    db: acme
+    name: foo
+    version: latest
 '''
 
 RETURN = r'''
@@ -157,20 +171,22 @@ query:
 
 import traceback
 
-PSYCOPG2_IMP_ERR = None
-try:
-    import psycopg2
-    import psycopg2.extras
-    HAS_PSYCOPG2 = True
-except ImportError:
-    PSYCOPG2_IMP_ERR = traceback.format_exc()
-    HAS_PSYCOPG2 = False
+from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.postgres import postgres_common_argument_spec
-from ansible.module_utils.six import iteritems
+try:
+    from psycopg2.extras import DictCursor
+except ImportError:
+    # psycopg2 is checked by connect_to_db()
+    # from ansible.module_utils.postgres
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    get_conn_params,
+    postgres_common_argument_spec,
+)
 from ansible.module_utils._text import to_native
-from ansible.module_utils.database import pg_quote_identifier
 
 executed_queries = []
 
@@ -201,18 +217,81 @@ def ext_delete(cursor, ext, cascade):
         return False
 
 
-def ext_create(cursor, ext, schema, cascade):
-    if not ext_exists(cursor, ext):
-        query = "CREATE EXTENSION \"%s\"" % ext
-        if schema:
-            query += " WITH SCHEMA \"%s\"" % schema
-        if cascade:
-            query += " CASCADE"
-        cursor.execute(query)
-        executed_queries.append(query)
-        return True
+def ext_update_version(cursor, ext, version):
+    """Update extension version.
+
+    Return True if success.
+
+    Args:
+      cursor (cursor) -- cursor object of psycopg2 library
+      ext (str) -- extension name
+      version (str) -- extension version
+    """
+    if version != 'latest':
+        query = ("ALTER EXTENSION \"%s\" UPDATE TO '%s'" % (ext, version))
     else:
-        return False
+        query = ("ALTER EXTENSION \"%s\" UPDATE" % ext)
+    cursor.execute(query)
+    executed_queries.append(query)
+    return True
+
+
+def ext_create(cursor, ext, schema, cascade, version):
+    query = "CREATE EXTENSION \"%s\"" % ext
+    if schema:
+        query += " WITH SCHEMA \"%s\"" % schema
+    if version:
+        query += " VERSION '%s'" % version
+    if cascade:
+        query += " CASCADE"
+    cursor.execute(query)
+    executed_queries.append(query)
+    return True
+
+
+def ext_get_versions(cursor, ext):
+    """
+    Get the current created extension version and available versions.
+
+    Return tuple (current_version, [list of available versions]).
+
+    Note: the list of available versions contains only versions
+          that higher than the current created version.
+          If the extension is not created, this list will contain all
+          available versions.
+
+    Args:
+      cursor (cursor) -- cursor object of psycopg2 library
+      ext (str) -- extension name
+    """
+
+    # 1. Get the current extension version:
+    query = ("SELECT extversion FROM pg_catalog.pg_extension "
+             "WHERE extname = '%s'" % ext)
+
+    current_version = '0'
+    cursor.execute(query)
+    res = cursor.fetchone()
+    if res:
+        current_version = res[0]
+
+    # 2. Get available versions:
+    query = ("SELECT version FROM pg_available_extension_versions "
+             "WHERE name = '%s'" % ext)
+    cursor.execute(query)
+    res = cursor.fetchall()
+
+    available_versions = []
+    if res:
+        # Make the list of available versions:
+        for line in res:
+            if LooseVersion(line[0]) > LooseVersion(current_version):
+                available_versions.append(line['version'])
+
+    if current_version == '0':
+        current_version = False
+
+    return (current_version, available_versions)
 
 # ===========================================
 # Module execution.
@@ -228,6 +307,7 @@ def main():
         state=dict(type="str", default="present", choices=["absent", "present"]),
         cascade=dict(type="bool", default=False),
         session_role=dict(type="str"),
+        version=dict(type="str"),
     )
 
     module = AnsibleModule(
@@ -235,85 +315,93 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
-
-    db = module.params["db"]
     ext = module.params["ext"]
     schema = module.params["schema"]
     state = module.params["state"]
     cascade = module.params["cascade"]
-    sslrootcert = module.params["ca_cert"]
-    session_role = module.params["session_role"]
+    version = module.params["version"]
     changed = False
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "db": "database",
-        "ssl_mode": "sslmode",
-        "ca_cert": "sslrootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != "" and v is not None)
+    if version and state == 'absent':
+        module.warn("Parameter version is ignored when state=absent")
 
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
+    conn_params = get_conn_params(module, module.params)
+    db_connection = connect_to_db(module, conn_params, autocommit=True)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     try:
-        db_connection = psycopg2.connect(**kw)
-        # Enable autocommit so we can create databases
-        if psycopg2.__version__ >= '2.4.2':
-            db_connection.autocommit = True
-        else:
-            db_connection.set_isolation_level(psycopg2
-                                              .extensions
-                                              .ISOLATION_LEVEL_AUTOCOMMIT)
-        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        # Get extension info and available versions:
+        curr_version, available_versions = ext_get_versions(cursor, ext)
 
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(
-                msg='Postgresql server must be at least version 8.4 to support sslrootcert')
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+        if state == "present":
+            if version == 'latest':
+                if available_versions:
+                    version = available_versions[-1]
+                else:
+                    version = ''
+
+            if version:
+                # If the specific version is passed and it is not available for update:
+                if version not in available_versions:
+                    if not curr_version:
+                        module.fail_json(msg="Passed version '%s' is not available" % version)
+
+                    elif LooseVersion(curr_version) == LooseVersion(version):
+                        changed = False
+
+                    else:
+                        module.fail_json(msg="Passed version '%s' is lower than "
+                                             "the current created version '%s' or "
+                                             "the passed version is not available" % (version, curr_version))
+
+                # If the specific version is passed and it is higher that the current version:
+                if curr_version and version:
+                    if LooseVersion(curr_version) < LooseVersion(version):
+                        if module.check_mode:
+                            changed = True
+                        else:
+                            changed = ext_update_version(cursor, ext, version)
+
+                    # If the specific version is passed and it is created now:
+                    if curr_version == version:
+                        changed = False
+
+                # If the ext doesn't exist and installed:
+                elif not curr_version and available_versions:
+                    if module.check_mode:
+                        changed = True
+                    else:
+                        changed = ext_create(cursor, ext, schema, cascade, version)
+
+            # If version is not passed:
+            else:
+                if not curr_version:
+                    # If the ext doesn't exist and it's installed:
+                    if available_versions:
+                        if module.check_mode:
+                            changed = True
+                        else:
+                            changed = ext_create(cursor, ext, schema, cascade, version)
+
+                    # If the ext doesn't exist and not installed:
+                    else:
+                        module.fail_json(msg="Extension %s is not installed" % ext)
+
+        elif state == "absent":
+            if curr_version:
+                if module.check_mode:
+                    changed = True
+                else:
+                    changed = ext_delete(cursor, ext, cascade)
+            else:
+                changed = False
 
     except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
-
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
-
-    try:
-        if module.check_mode:
-            if state == "present":
-                changed = not ext_exists(cursor, ext)
-            elif state == "absent":
-                changed = ext_exists(cursor, ext)
-        else:
-            if state == "absent":
-                changed = ext_delete(cursor, ext, cascade)
-
-            elif state == "present":
-                changed = ext_create(cursor, ext, schema, cascade)
-    except NotSupportedError as e:
-        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
-    except Exception as e:
+        db_connection.close()
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
-    module.exit_json(changed=changed, db=db, ext=ext, queries=executed_queries)
+    db_connection.close()
+    module.exit_json(changed=changed, db=module.params["db"], ext=ext, queries=executed_queries)
 
 
 if __name__ == '__main__':

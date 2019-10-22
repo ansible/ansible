@@ -25,8 +25,9 @@ description:
     a deterministic way.
 extends_documentation_fragment: iosxr
 notes:
-  - Tested against IOS XRv 6.1.2
-  - This module does not support netconf connection
+  - This module works with connection C(network_cli). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
+  - Tested against IOS XRv 6.1.3.
+  - This module does not support C(netconf) connection
   - Abbreviated commands are NOT idempotent, see
     L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
   - Avoid service disrupting changes (viz. Management IP) from config replace.
@@ -165,6 +166,13 @@ options:
         type: path
     type: dict
     version_added: "2.8"
+  exclusive:
+    description:
+      - Enters into exclusive configuration mode that locks out all users from committing
+        configuration changes until the exclusive session ends.
+    type: bool
+    default: false
+    version_added: "2.9"
 """
 
 EXAMPLES = """
@@ -236,7 +244,7 @@ time:
 """
 import re
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.iosxr.iosxr import load_config, get_config, get_connection
@@ -251,7 +259,7 @@ def copy_file_to_node(module):
     """
     src = '/tmp/ansible_config.txt'
     file = open(src, 'wb')
-    file.write(module.params['src'])
+    file.write(to_bytes(module.params['src'], errors='surrogate_or_strict'))
     file.close()
 
     dst = '/harddisk:/ansible_config.txt'
@@ -308,6 +316,7 @@ def run(module, result):
     path = module.params['parents']
     comment = module.params['comment']
     admin = module.params['admin']
+    exclusive = module.params['exclusive']
     check_mode = module.check_mode
     label = module.params['label']
 
@@ -350,7 +359,7 @@ def run(module, result):
         commit = not check_mode
         diff = load_config(
             module, commands, commit=commit,
-            replace=replace_file_path, comment=comment, admin=admin,
+            replace=replace_file_path, comment=comment, admin=admin, exclusive=exclusive,
             label=label
         )
         if diff:
@@ -387,6 +396,7 @@ def main():
         backup_options=dict(type='dict', options=backup_spec),
         comment=dict(default=DEFAULT_COMMIT_COMMENT),
         admin=dict(type='bool', default=False),
+        exclusive=dict(type='bool', default=False),
         label=dict()
     )
 

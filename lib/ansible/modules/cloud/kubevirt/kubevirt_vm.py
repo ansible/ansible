@@ -52,7 +52,7 @@ options:
         type: str
     ephemeral:
         description:
-            - If (true) ephemeral vitual machine will be created. When destroyed it won't be accessible again.
+            - If (true) ephemeral virtual machine will be created. When destroyed it won't be accessible again.
             - Works only with C(state) I(present) and I(absent).
         type: bool
         default: false
@@ -194,6 +194,38 @@ EXAMPLES = '''
               path: /disk/fedora.qcow2
           disk:
             bus: virtio
+      node_affinity:
+        soft:
+          - weight: 1
+            term:
+              match_expressions:
+                - key: security
+                  operator: In
+                  values:
+                    - S2
+
+- name: Create virtual machine with datavolume and specify node affinity
+  kubevirt_vm:
+    name: myvm
+    namespace: default
+    memory: 1024Mi
+    datavolumes:
+      - name: mydv
+        source:
+          http:
+            url: https://url/disk.qcow2
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          storage: 5Gi
+    node_affinity:
+      hard:
+        - term:
+            match_expressions:
+              - key: security
+                operator: In
+                values:
+                  - S1
 
 - name: Remove virtual machine 'myvm'
   kubevirt_vm:
@@ -216,8 +248,6 @@ kubevirt_vm:
 
 import copy
 import traceback
-
-from ansible.module_utils.k8s.common import AUTH_ARG_SPEC
 
 from ansible.module_utils.k8s.common import AUTH_ARG_SPEC
 from ansible.module_utils.kubevirt import (
@@ -317,11 +347,31 @@ class KubeVirtVM(KubeVirtRawModule):
 
         return changed, k8s_obj
 
+    def _process_template_defaults(self, proccess_template, processedtemplate, defaults):
+        def set_template_default(default_name, default_name_index, definition_spec):
+            default_value = proccess_template['metadata']['annotations'][default_name]
+            if default_value:
+                values = definition_spec[default_name_index]
+                default_values = [d for d in values if d.get('name') == default_value]
+                defaults[default_name_index] = default_values
+                if definition_spec[default_name_index] is None:
+                    definition_spec[default_name_index] = []
+                definition_spec[default_name_index].extend([d for d in values if d.get('name') != default_value])
+
+        devices = processedtemplate['spec']['template']['spec']['domain']['devices']
+        spec = processedtemplate['spec']['template']['spec']
+
+        set_template_default('defaults.template.cnv.io/disk', 'disks', devices)
+        set_template_default('defaults.template.cnv.io/volume', 'volumes', spec)
+        set_template_default('defaults.template.cnv.io/nic', 'interfaces', devices)
+        set_template_default('defaults.template.cnv.io/network', 'networks', spec)
+
     def construct_definition(self, kind, our_state, ephemeral):
         definition = virtdict()
         processedtemplate = {}
 
         # Construct the API object definition:
+        defaults = {'disks': [], 'volumes': [], 'interfaces': [], 'networks': []}
         vm_template = self.params.get('template')
         if vm_template:
             # Find the template the VM should be created from:
@@ -338,14 +388,16 @@ class KubeVirtVM(KubeVirtRawModule):
             processedtemplates_res = self.client.resources.get(api_version='template.openshift.io/v1', kind='Template', name='processedtemplates')
             processedtemplate = processedtemplates_res.create(proccess_template.to_dict()).to_dict()['objects'][0]
 
+            # Process defaults of the template:
+            self._process_template_defaults(proccess_template, processedtemplate, defaults)
+
         if not ephemeral:
             definition['spec']['running'] = our_state == 'running'
         template = definition if ephemeral else definition['spec']['template']
         template['metadata']['labels']['vm.cnv.io/name'] = self.params.get('name')
-        dummy, definition = self.construct_vm_definition(kind, definition, template)
-        definition = dict(self.merge_dicts(processedtemplate, definition))
+        dummy, definition = self.construct_vm_definition(kind, definition, template, defaults)
 
-        return definition
+        return self.merge_dicts(definition, processedtemplate)
 
     def execute_module(self):
         # Parse parameters specific to this module:
@@ -370,16 +422,18 @@ class KubeVirtVM(KubeVirtRawModule):
             if our_state != 'absent':
                 self.params['state'] = k8s_state = 'present'
 
+        # Start with fetching the current object to make sure it exists
+        # If it does, but we end up not performing any operations on it, at least we'll be able to return
+        # its current contents as part of the final json
         self.client = self.get_api_client()
         self._kind_resource = self.find_supported_resource(kind)
         k8s_obj = self.get_resource(self._kind_resource)
         if not self.check_mode and not vm_spec_change and k8s_state != 'absent' and not k8s_obj:
             self.fail("It's impossible to create an empty VM or change state of a non-existent VM.")
 
-        # Changes in VM's spec or any changes to VMIs warrant a full CRUD, the latter because
-        # VMIs don't really have states to manage; they're either present or don't exist
+        # If there are (potential) changes to `spec:` or we want to delete the object, that warrants a full CRUD
         # Also check_mode always warrants a CRUD, as that'll produce a sane result
-        if vm_spec_change or ephemeral or k8s_state == 'absent' or self.check_mode:
+        if vm_spec_change or k8s_state == 'absent' or self.check_mode:
             definition = self.construct_definition(kind, our_state, ephemeral)
             result = self.execute_crud(kind, definition)
             changed = result['changed']

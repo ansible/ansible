@@ -32,6 +32,7 @@ options:
     description:
       - List of container names or container IDs to connect to a network.
     type: list
+    elements: str
     aliases:
       - containers
 
@@ -48,19 +49,19 @@ options:
 
   force:
     description:
-      - With state I(absent) forces disconnecting all containers from the
-        network prior to deleting the network. With state I(present) will
+      - With state C(absent) forces disconnecting all containers from the
+        network prior to deleting the network. With state C(present) will
         disconnect all containers, delete the network and re-create the
-        network.  This option is required if you have changed the IPAM or
-        driver options and want an existing network to be updated to use the
-        new options.
+        network.
+      - This option is required if you have changed the IPAM or driver options
+        and want an existing network to be updated to use the new options.
     type: bool
     default: no
 
   appends:
     description:
       - By default the connected list is canonical, meaning containers not on the list are removed from the network.
-        Use C(appends) to leave existing containers connected.
+      - Use I(appends) to leave existing containers connected.
     type: bool
     default: no
     aliases:
@@ -86,7 +87,7 @@ options:
   ipam_options:
     description:
       - Dictionary of IPAM options.
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(ipam_config) instead. In Docker 1.10.0, IPAM
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter I(ipam_config) instead. In Docker 1.10.0, IPAM
         options were introduced (see L(here,https://github.com/moby/moby/pull/17316)). This module parameter addresses
         the IPAM config not the newly introduced IPAM options. For the IPAM options, see the I(ipam_driver_options)
         parameter.
@@ -115,6 +116,7 @@ options:
         L(Docker docs,https://docs.docker.com/compose/compose-file/compose-file-v2/#ipam) for valid options and values.
         Note that I(iprange) is spelled differently here (we use the notation from the Docker SDK for Python).
     type: list
+    elements: dict
     suboptions:
       subnet:
         description:
@@ -136,14 +138,14 @@ options:
 
   state:
     description:
-      - I(absent) deletes the network. If a network has connected containers, it
-        cannot be deleted. Use the C(force) option to disconnect all containers
+      - C(absent) deletes the network. If a network has connected containers, it
+        cannot be deleted. Use the I(force) option to disconnect all containers
         and delete the network.
-      - I(present) creates the network, if it does not already exist with the
+      - C(present) creates the network, if it does not already exist with the
         specified parameters, and connects the list of containers provided via
         the connected parameter. Containers not on the list will be disconnected.
         An empty list will leave no containers connected to the network. Use the
-        C(appends) option to leave existing containers connected. Use the C(force)
+        I(appends) option to leave existing containers connected. Use the I(force)
         options to force re-creation of the network.
     type: str
     default: present
@@ -276,6 +278,7 @@ network:
 '''
 
 import re
+import traceback
 
 from distutils.version import LooseVersion
 
@@ -285,10 +288,12 @@ from ansible.module_utils.docker.common import (
     docker_version,
     DifferenceTracker,
     clean_dict_booleans_for_docker_api,
+    RequestException,
 )
 
 try:
     from docker import utils
+    from docker.errors import DockerException
     if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         from docker.types import IPAMPool, IPAMConfig
 except Exception:
@@ -301,7 +306,7 @@ class TaskParameters(DockerBaseClass):
         super(TaskParameters, self).__init__()
         self.client = client
 
-        self.network_name = None
+        self.name = None
         self.connected = None
         self.driver = None
         self.driver_options = None
@@ -346,6 +351,20 @@ def get_ip_version(cidr):
     raise ValueError('"{0}" is not a valid CIDR'.format(cidr))
 
 
+def normalize_ipam_config_key(key):
+    """Normalizes IPAM config keys returned by Docker API to match Ansible keys
+
+    :param key: Docker API key
+    :type key: str
+    :return Ansible module key
+    :rtype str
+    """
+    special_cases = {
+        'AuxiliaryAddresses': 'aux_addresses'
+    }
+    return special_cases.get(key, key.lower())
+
+
 class DockerNetworkManager(object):
 
     def __init__(self, client):
@@ -384,7 +403,7 @@ class DockerNetworkManager(object):
             self.results['diff'] = self.diff_result
 
     def get_existing_network(self):
-        return self.client.get_network(name=self.parameters.network_name)
+        return self.client.get_network(name=self.parameters.name)
 
     def has_different_config(self, net):
         '''
@@ -447,7 +466,7 @@ class DockerNetworkManager(object):
                             continue
                         camelkey = None
                         for net_key in net_config:
-                            if key == net_key.lower():
+                            if key == normalize_ipam_config_key(net_key):
                                 camelkey = net_key
                                 break
                         if not camelkey or net_config.get(camelkey) != value:
@@ -528,18 +547,18 @@ class DockerNetworkManager(object):
                 params['labels'] = self.parameters.labels
 
             if not self.check_mode:
-                resp = self.client.create_network(self.parameters.network_name, **params)
+                resp = self.client.create_network(self.parameters.name, **params)
                 self.client.report_warnings(resp, ['Warning'])
-                self.existing_network = self.client.get_network(id=resp['Id'])
-            self.results['actions'].append("Created network %s with driver %s" % (self.parameters.network_name, self.parameters.driver))
+                self.existing_network = self.client.get_network(network_id=resp['Id'])
+            self.results['actions'].append("Created network %s with driver %s" % (self.parameters.name, self.parameters.driver))
             self.results['changed'] = True
 
     def remove_network(self):
         if self.existing_network:
             self.disconnect_all_containers()
             if not self.check_mode:
-                self.client.remove_network(self.parameters.network_name)
-            self.results['actions'].append("Removed network %s" % (self.parameters.network_name,))
+                self.client.remove_network(self.parameters.name)
+            self.results['actions'].append("Removed network %s" % (self.parameters.name,))
             self.results['changed'] = True
 
     def is_container_connected(self, container_name):
@@ -549,7 +568,7 @@ class DockerNetworkManager(object):
         for name in self.parameters.connected:
             if not self.is_container_connected(name):
                 if not self.check_mode:
-                    self.client.connect_container_to_network(name, self.parameters.network_name)
+                    self.client.connect_container_to_network(name, self.parameters.name)
                 self.results['actions'].append("Connected container %s" % (name,))
                 self.results['changed'] = True
                 self.diff_tracker.add('connected.{0}'.format(name),
@@ -568,7 +587,7 @@ class DockerNetworkManager(object):
                 self.disconnect_container(name)
 
     def disconnect_all_containers(self):
-        containers = self.client.get_network(name=self.parameters.network_name)['Containers']
+        containers = self.client.get_network(name=self.parameters.name)['Containers']
         if not containers:
             return
         for cont in containers.values():
@@ -576,7 +595,7 @@ class DockerNetworkManager(object):
 
     def disconnect_container(self, container_name):
         if not self.check_mode:
-            self.client.disconnect_container_from_network(container_name, self.parameters.network_name)
+            self.client.disconnect_container_from_network(container_name, self.parameters.name)
         self.results['actions'].append("Disconnected container %s" % (container_name,))
         self.results['changed'] = True
         self.diff_tracker.add('connected.{0}'.format(container_name),
@@ -617,7 +636,7 @@ class DockerNetworkManager(object):
 
 def main():
     argument_spec = dict(
-        network_name=dict(type='str', required=True, aliases=['name']),
+        name=dict(type='str', required=True, aliases=['network_name']),
         connected=dict(type='list', default=[], elements='str', aliases=['containers']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         driver=dict(type='str', default='bridge'),
@@ -667,8 +686,13 @@ def main():
         option_minimal_versions=option_minimal_versions,
     )
 
-    cm = DockerNetworkManager(client)
-    client.module.exit_json(**cm.results)
+    try:
+        cm = DockerNetworkManager(client)
+        client.module.exit_json(**cm.results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

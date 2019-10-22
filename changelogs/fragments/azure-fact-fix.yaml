@@ -1,0 +1,3 @@
+bugfixes:
+- azure_rm_securitygroup_info - Fix up instances when ``ansible_facts`` is returned for the older ``_facts`` alias.
+- azure_rm_networkinterface_info - Fix up instances when ``ansible_facts`` is returned for the older ``_facts`` alias.

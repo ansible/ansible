@@ -186,7 +186,7 @@ from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for quering all objects
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         rtp=dict(type='str', aliases=['name', 'rtp_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         tag=dict(type='int'),

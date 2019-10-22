@@ -49,7 +49,7 @@
     port: 0
     search_regex: a
   register: fail_port_search_regex
-  failed_when: fail_port_search_regex.msg != 'search_regex should by used when checking a string in a file in the win_wait_for module'
+  failed_when: fail_port_search_regex.msg != 'regex should by used when checking a string in a file in the win_wait_for module'
 
 - name: fail to set exclude_hosts with port whens tate is not drained
   win_wait_for:

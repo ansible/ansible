@@ -1,2 +1,0 @@
-minor_changes:
-  - Add stats on rescued/ignored tasks to play recap (https://github.com/ansible/ansible/pull/48418)

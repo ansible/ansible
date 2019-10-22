@@ -121,7 +121,7 @@ class NetAppOntapVlan(object):
     def does_vlan_exist(self):
         """
         Checks to see if a vlan already exists or not
-        :return: Returns True if the vlan exists, false if it dosn't
+        :return: Returns True if the vlan exists, false if it doesn't
         """
         vlan_obj = netapp_utils.zapi.NaElement("net-vlan-get")
         vlan_obj.add_new_child("interface-name", self.interface_name)

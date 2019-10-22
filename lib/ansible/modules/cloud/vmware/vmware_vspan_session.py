@@ -23,7 +23,7 @@ description:
    - This module can be used to create, delete or edit different kind of port mirroring sessions.
 version_added: '2.8'
 author:
-- Peter Gyorgy (@gyorgypeter) <gyorgy.peter1996@gmail.com>
+- Peter Gyorgy (@gyorgypeter)
 notes:
     - Tested on vSphere 6.7
 requirements:
@@ -35,10 +35,12 @@ options:
             - The name of the distributed vSwitch on which to add or remove the mirroring session.
         required: True
         aliases: [ 'switch_name' ]
+        type: str
     name:
         description:
             - Name of the session.
         required: True
+        type: str
     state:
         choices:
             - 'present'
@@ -46,6 +48,7 @@ options:
         description:
             - Create or remove the session.
         required: True
+        type: str
     session_type:
         default: 'dvPortMirror'
         choices:
@@ -64,6 +67,7 @@ options:
             - '- C(dvPortMirror) (str): In dvPortMirror session, Distributed Ports can be used as both source and
             destination entities.'
         required: False
+        type: str
     enabled:
         type: bool
         default: True
@@ -73,23 +77,28 @@ options:
         description:
             - The description for the session.
         required: False
+        type: str
     source_port_transmitted:
         description:
             - Source port for which transmitted packets are mirrored.
         required: False
+        type: str
     source_port_received:
         description:
             - Source port for which received packets are mirrored.
         required: False
+        type: str
     destination_port:
         description:
             - Destination port that received the mirrored packets. Also any port designated in the value of this
              property can not match the source port in any of the Distributed Port Mirroring session.
         required: False
+        type: str
     encapsulation_vlan_id:
         description:
             - VLAN ID used to encapsulate the mirrored traffic.
         required: False
+        type: int
     strip_original_vlan:
         description:
             - Whether to strip the original VLAN tag. if false, the original VLAN tag will be preserved on the mirrored
@@ -103,6 +112,7 @@ options:
              Setting this property to a smaller value is useful when the consumer will look only at the headers.
              The value cannot be less than 60.
         required: False
+        type: int
     normal_traffic_allowed:
         description:
             - Whether or not destination ports can send and receive "normal" traffic. Setting this to false will make
@@ -121,12 +131,14 @@ options:
             - 'Valid attributes are:'
             - '- C(name) (str): Name of the VM'
             - '- C(nic_label) (bool): Label of the Network Interface Card to use.'
+        type: dict
     source_vm_received:
         description:
             - With this parameter it is possible, to add a NIC of a VM to a port mirroring session.
             - 'Valid attributes are:'
             - '- C(name) (str): Name of the VM'
             - '- C(nic_label) (bool): Label of the Network Interface Card to use.'
+        type: dict
     destination_vm:
         description:
             - With this parameter it is possible, to add a NIC of a VM to a port mirroring session.
@@ -134,6 +146,7 @@ options:
             - '- C(name) (str): Name of the VM'
             - '- C(nic_label) (bool): Label of the Network Interface Card to use.'
         required: False
+        type: dict
 extends_documentation_fragment: vmware.documentation
 '''
 

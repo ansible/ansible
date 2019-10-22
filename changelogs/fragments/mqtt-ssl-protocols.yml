@@ -1,0 +1,2 @@
+bugfixes:
+    - Fix SSL protcol references in the ``mqtt`` module to prevent failures on Python 2.6.

@@ -1,6 +1,6 @@
 .. _command_line_tools:
 
-Working with Command Line Tools
+Working with command line tools
 ===============================
 
 Most users are familiar with `ansible` and `ansible-playbook`, but those are not the only utilities Ansible provides.

@@ -14,6 +14,7 @@ requirements:
   - botocore>=1.10.0
 extends_documentation_fragment:
   - aws_credentials
+  - aws_region
 short_description: Look up secrets stored in AWS Secrets Manager.
 description:
   - Look up secrets stored in AWS Secrets Manager provided the caller

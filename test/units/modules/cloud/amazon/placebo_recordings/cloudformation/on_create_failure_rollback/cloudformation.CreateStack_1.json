@@ -1,0 +1,17 @@
+{
+    "status_code": 200,
+    "data": {
+        "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-rollback/914046e0-3a0f-11e9-94bf-0a9edf17d014",
+        "ResponseMetadata": {
+            "RequestId": "9139de54-3a0f-11e9-b938-97983b40cabe",
+            "HTTPStatusCode": 200,
+            "HTTPHeaders": {
+                "x-amzn-requestid": "9139de54-3a0f-11e9-b938-97983b40cabe",
+                "content-type": "text/xml",
+                "content-length": "409",
+                "date": "Tue, 26 Feb 2019 21:43:34 GMT"
+            },
+            "RetryAttempts": 0
+        }
+    }
+}

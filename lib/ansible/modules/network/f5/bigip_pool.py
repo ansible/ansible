@@ -162,6 +162,11 @@ options:
   aggregate:
     description:
       - List of pool definitions to be created, modified or removed.
+      - When using C(aggregates) if one of the aggregate definitions is invalid, the aggregate run will fail,
+        indicating the error it last encountered.
+      - The module will C(NOT) rollback any changes it has made prior to encountering the error.
+      - The module also will not indicate what changes were made prior to failure, therefore it is strongly advised
+        to run the module in check mode to make basic validation, prior to module execution.
     type: list
     aliases:
       - pools
@@ -283,7 +288,7 @@ EXAMPLES = r'''
 
 - name: Add metadata to pool
   bigip_pool:
-    state: absent
+    state: present
     name: my-pool
     partition: Common
     metadata:
@@ -814,8 +819,8 @@ class ModuleManager(object):
         self.want = None
         self.have = None
         self.changes = None
-        self.replace_all_with = False
-        self.purge_links = None
+        self.replace_all_with = None
+        self.purge_links = list()
 
     def exec_module(self):
         wants = None
@@ -874,7 +879,7 @@ class ModuleManager(object):
 
         if diff:
             to_purge = [item['selfLink'] for item in on_device if item['name'] in diff]
-            self.purge_links = to_purge
+            self.purge_links.extend(to_purge)
 
     def execute(self, params=None):
         self.want = ModuleParameters(params=params)

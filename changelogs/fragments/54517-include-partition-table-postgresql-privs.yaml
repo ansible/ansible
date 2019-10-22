@@ -1,2 +1,0 @@
-bugfixes:
-- "Include partition tables in the ALL_IN_SCHEMA option for postgresql-privs (https://github.com/ansible/ansible/issues/54516)"

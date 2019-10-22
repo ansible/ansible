@@ -1,3 +1,0 @@
-- name: install python-requests to avoid install via pip later
-  package:
-    name: python-requests

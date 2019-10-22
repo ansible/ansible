@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mariadbconfiguration
 version_added: "2.8"
-short_description: Manage Configuration instance.
+short_description: Manage Configuration instance
 description:
     - Create, update and delete instance of Configuration.
 
@@ -40,8 +40,7 @@ options:
             - Value of the configuration.
     state:
         description:
-            - Assert the state of the MariaDB configuration. Use C(present) to update setting, or
-              C(absent) to reset to default value.
+            - Assert the state of the MariaDB configuration. Use C(present) to update setting, or C(absent) to reset to default value.
         default: present
         choices:
             - absent
@@ -51,8 +50,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
-    - "Matti Ranta (@techknowlogick)"
+    - Zim Kalinowski (@zikalino)
+    - Matti Ranta (@techknowlogick)
 '''
 
 EXAMPLES = '''
@@ -67,7 +66,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Resource ID
+        - Resource ID.
     returned: always
     type: str
     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMariaDB/servers/myServer/confi

@@ -4,6 +4,9 @@
 # (c) 2015, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
@@ -27,7 +30,6 @@ options:
     description:
       - Type of the affinity group. If not specified, first found affinity type is used.
     type: str
-    aliases: [ affinty_type ]
   description:
     description:
       - Description of the affinity group.
@@ -143,7 +145,7 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
         return self.affinity_group
 
     def get_affinity_type(self):
-        affinity_type = self.module.params.get('affinity_type') or self.module.params.get('affinty_type')
+        affinity_type = self.module.params.get('affinity_type')
 
         affinity_types = self.query_api('listAffinityGroupTypes', )
         if affinity_types:
@@ -200,7 +202,6 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
-        affinty_type=dict(removed_in_version='2.9'),
         affinity_type=dict(),
         description=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
@@ -213,9 +214,6 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_together=cs_required_together(),
-        mutually_exclusive=(
-            ['affinity_type', 'affinty_type'],
-        ),
         supports_check_mode=True
     )
 

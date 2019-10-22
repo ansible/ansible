@@ -26,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_wireless_controller_wtp
 short_description: Configure Wireless Termination Points (WTPs), that is, FortiAPs or APs to be managed by FortiGate in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify wireless_controller feature and wtp category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -41,43 +41,70 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     wireless_controller_wtp:
         description:
             - Configure Wireless Termination Points (WTPs), that is, FortiAPs or APs to be managed by FortiGate.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
             admin:
                 description:
                     - Configure how the FortiGate operating as a wireless controller discovers and manages this WTP, AP or FortiAP.
+                type: str
                 choices:
                     - discovered
                     - disable
@@ -85,173 +112,207 @@ options:
             allowaccess:
                 description:
                     - Control management access to the managed WTP, FortiAP, or AP. Separate entries with a space.
+                type: str
                 choices:
                     - telnet
                     - http
                     - https
                     - ssh
-            bonjour-profile:
+            bonjour_profile:
                 description:
                     - Bonjour profile name. Source wireless-controller.bonjour-profile.name.
-            coordinate-enable:
+                type: str
+            coordinate_enable:
                 description:
                     - Enable/disable WTP coordinates (X,Y axis).
+                type: str
                 choices:
                     - enable
                     - disable
-            coordinate-latitude:
+            coordinate_latitude:
                 description:
                     - WTP latitude coordinate.
-            coordinate-longitude:
+                type: str
+            coordinate_longitude:
                 description:
                     - WTP longitude coordinate.
-            coordinate-x:
+                type: str
+            coordinate_x:
                 description:
                     - X axis coordinate.
-            coordinate-y:
+                type: str
+            coordinate_y:
                 description:
                     - Y axis coordinate.
-            image-download:
+                type: str
+            image_download:
                 description:
                     - Enable/disable WTP image download.
+                type: str
                 choices:
                     - enable
                     - disable
             index:
                 description:
                     - Index (0 - 4294967295).
-            ip-fragment-preventing:
+                type: int
+            ip_fragment_preventing:
                 description:
-                    - Method by which IP fragmentation is prevented for CAPWAP tunneled control and data packets (default = tcp-mss-adjust).
+                    - Method by which IP fragmentation is prevented for CAPWAP tunneled control and data packets .
+                type: str
                 choices:
                     - tcp-mss-adjust
                     - icmp-unreachable
             lan:
                 description:
                     - WTP LAN port mapping.
+                type: dict
                 suboptions:
-                    port-mode:
+                    port_mode:
                         description:
                             - LAN port mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port-ssid:
+                    port_ssid:
                         description:
                             - Bridge LAN port to SSID. Source wireless-controller.vap.name.
-                    port1-mode:
+                        type: str
+                    port1_mode:
                         description:
                             - LAN port 1 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port1-ssid:
+                    port1_ssid:
                         description:
                             - Bridge LAN port 1 to SSID. Source wireless-controller.vap.name.
-                    port2-mode:
+                        type: str
+                    port2_mode:
                         description:
                             - LAN port 2 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port2-ssid:
+                    port2_ssid:
                         description:
                             - Bridge LAN port 2 to SSID. Source wireless-controller.vap.name.
-                    port3-mode:
+                        type: str
+                    port3_mode:
                         description:
                             - LAN port 3 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port3-ssid:
+                    port3_ssid:
                         description:
                             - Bridge LAN port 3 to SSID. Source wireless-controller.vap.name.
-                    port4-mode:
+                        type: str
+                    port4_mode:
                         description:
                             - LAN port 4 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port4-ssid:
+                    port4_ssid:
                         description:
                             - Bridge LAN port 4 to SSID. Source wireless-controller.vap.name.
-                    port5-mode:
+                        type: str
+                    port5_mode:
                         description:
                             - LAN port 5 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port5-ssid:
+                    port5_ssid:
                         description:
                             - Bridge LAN port 5 to SSID. Source wireless-controller.vap.name.
-                    port6-mode:
+                        type: str
+                    port6_mode:
                         description:
                             - LAN port 6 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port6-ssid:
+                    port6_ssid:
                         description:
                             - Bridge LAN port 6 to SSID. Source wireless-controller.vap.name.
-                    port7-mode:
+                        type: str
+                    port7_mode:
                         description:
                             - LAN port 7 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port7-ssid:
+                    port7_ssid:
                         description:
                             - Bridge LAN port 7 to SSID. Source wireless-controller.vap.name.
-                    port8-mode:
+                        type: str
+                    port8_mode:
                         description:
                             - LAN port 8 mode.
+                        type: str
                         choices:
                             - offline
                             - nat-to-wan
                             - bridge-to-wan
                             - bridge-to-ssid
-                    port8-ssid:
+                    port8_ssid:
                         description:
                             - Bridge LAN port 8 to SSID. Source wireless-controller.vap.name.
-            led-state:
+                        type: str
+            led_state:
                 description:
                     - Enable to allow the FortiAPs LEDs to light. Disable to keep the LEDs off. You may want to keep the LEDs off so they are not distracting
                        in low light areas etc.
+                type: str
                 choices:
                     - enable
                     - disable
             location:
                 description:
                     - Field for describing the physical location of the WTP, AP or FortiAP.
-            login-passwd:
+                type: str
+            login_passwd:
                 description:
                     - Set the managed WTP, FortiAP, or AP's administrator password.
-            login-passwd-change:
+                type: str
+            login_passwd_change:
                 description:
-                    - Change or reset the administrator password of a managed WTP, FortiAP or AP (yes, default, or no, default = no).
+                    - Change or reset the administrator password of a managed WTP, FortiAP or AP (yes, default, or no).
+                type: str
                 choices:
                     - yes
                     - default
                     - no
-            mesh-bridge-enable:
+            mesh_bridge_enable:
                 description:
                     - Enable/disable mesh Ethernet bridge when WTP is configured as a mesh branch/leaf AP.
+                type: str
                 choices:
                     - default
                     - enable
@@ -259,69 +320,82 @@ options:
             name:
                 description:
                     - WTP, AP or FortiAP configuration name.
-            override-allowaccess:
+                type: str
+            override_allowaccess:
                 description:
                     - Enable to override the WTP profile management access configuration.
+                type: str
                 choices:
                     - enable
                     - disable
-            override-ip-fragment:
+            override_ip_fragment:
                 description:
                     - Enable/disable overriding the WTP profile IP fragment prevention setting.
+                type: str
                 choices:
                     - enable
                     - disable
-            override-lan:
+            override_lan:
                 description:
                     - Enable to override the WTP profile LAN port setting.
+                type: str
                 choices:
                     - enable
                     - disable
-            override-led-state:
+            override_led_state:
                 description:
                     - Enable to override the profile LED state setting for this FortiAP. You must enable this option to use the led-state command to turn off
                        the FortiAP's LEDs.
+                type: str
                 choices:
                     - enable
                     - disable
-            override-login-passwd-change:
+            override_login_passwd_change:
                 description:
                     - Enable to override the WTP profile login-password (administrator password) setting.
+                type: str
                 choices:
                     - enable
                     - disable
-            override-split-tunnel:
+            override_split_tunnel:
                 description:
                     - Enable/disable overriding the WTP profile split tunneling setting.
+                type: str
                 choices:
                     - enable
                     - disable
-            override-wan-port-mode:
+            override_wan_port_mode:
                 description:
                     - Enable/disable overriding the wan-port-mode in the WTP profile.
+                type: str
                 choices:
                     - enable
                     - disable
-            radio-1:
+            radio_1:
                 description:
                     - Configuration options for radio 1.
+                type: dict
                 suboptions:
-                    auto-power-high:
+                    auto_power_high:
                         description:
                             - Automatic transmission power high limit in decibels (dB) of the measured power referenced to one milliwatt (mW), or dBm (10 - 17
-                               dBm, default = 17).
-                    auto-power-level:
+                               dBm).
+                        type: int
+                    auto_power_level:
                         description:
-                            - Enable/disable automatic power-level adjustment to prevent co-channel interference (default = enable).
+                            - Enable/disable automatic power-level adjustment to prevent co-channel interference .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    auto-power-low:
+                    auto_power_low:
                         description:
                             - Automatic transmission power low limit in dBm (the actual range of transmit power depends on the AP platform type).
+                        type: int
                     band:
                         description:
                             - WiFi band that Radio 1 operates on.
+                        type: str
                         choices:
                             - 802.11a
                             - 802.11b
@@ -338,87 +412,105 @@ options:
                     channel:
                         description:
                             - Selected list of wireless radio channels.
+                        type: list
                         suboptions:
                             chan:
                                 description:
                                     - Channel number.
                                 required: true
-                    override-analysis:
+                                type: str
+                    override_analysis:
                         description:
                             - Enable to override the WTP profile spectrum analysis configuration.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    override-band:
+                    override_band:
                         description:
                             - Enable to override the WTP profile band setting.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    override-channel:
+                    override_channel:
                         description:
                             - Enable to override WTP profile channel settings.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    override-txpower:
+                    override_txpower:
                         description:
                             - Enable to override the WTP profile power level configuration.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    override-vaps:
+                    override_vaps:
                         description:
                             - Enable to override WTP profile Virtual Access Point (VAP) settings.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    power-level:
+                    power_level:
                         description:
-                            - Radio power level as a percentage of the maximum transmit power (0 - 100, default = 100).
-                    radio-id:
+                            - Radio power level as a percentage of the maximum transmit power (0 - 100).
+                        type: int
+                    radio_id:
                         description:
                             - radio-id
-                    spectrum-analysis:
+                        type: int
+                    spectrum_analysis:
                         description:
                             - Enable/disable spectrum analysis to find interference that would negatively impact wireless performance.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    vap-all:
+                    vap_all:
                         description:
-                            - Enable/disable the automatic inheritance of all Virtual Access Points (VAPs) (default = enable).
+                            - Enable/disable the automatic inheritance of all Virtual Access Points (VAPs) .
+                        type: str
                         choices:
                             - enable
                             - disable
                     vaps:
                         description:
                             - Manually selected list of Virtual Access Points (VAPs).
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Virtual Access Point (VAP) name. Source wireless-controller.vap-group.name wireless-controller.vap.name.
                                 required: true
-            radio-2:
+                                type: str
+            radio_2:
                 description:
                     - Configuration options for radio 2.
+                type: dict
                 suboptions:
-                    auto-power-high:
+                    auto_power_high:
                         description:
                             - Automatic transmission power high limit in decibels (dB) of the measured power referenced to one milliwatt (mW), or dBm (10 - 17
-                               dBm, default = 17).
-                    auto-power-level:
+                               dBm).
+                        type: int
+                    auto_power_level:
                         description:
-                            - Enable/disable automatic power-level adjustment to prevent co-channel interference (default = enable).
+                            - Enable/disable automatic power-level adjustment to prevent co-channel interference .
+                        type: str
                         choices:
                             - enable
                             - disable
-                    auto-power-low:
+                    auto_power_low:
                         description:
                             - Automatic transmission power low limit in dBm (the actual range of transmit power depends on the AP platform type).
+                        type: int
                     band:
                         description:
                             - WiFi band that Radio 1 operates on.
+                        type: str
                         choices:
                             - 802.11a
                             - 802.11b
@@ -435,116 +527,139 @@ options:
                     channel:
                         description:
                             - Selected list of wireless radio channels.
+                        type: list
                         suboptions:
                             chan:
                                 description:
                                     - Channel number.
                                 required: true
-                    override-analysis:
+                                type: str
+                    override_analysis:
                         description:
                             - Enable to override the WTP profile spectrum analysis configuration.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    override-band:
+                    override_band:
                         description:
                             - Enable to override the WTP profile band setting.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    override-channel:
+                    override_channel:
                         description:
                             - Enable to override WTP profile channel settings.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    override-txpower:
+                    override_txpower:
                         description:
                             - Enable to override the WTP profile power level configuration.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    override-vaps:
+                    override_vaps:
                         description:
                             - Enable to override WTP profile Virtual Access Point (VAP) settings.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    power-level:
+                    power_level:
                         description:
-                            - Radio power level as a percentage of the maximum transmit power (0 - 100, default = 100).
-                    radio-id:
+                            - Radio power level as a percentage of the maximum transmit power (0 - 100).
+                        type: int
+                    radio_id:
                         description:
                             - radio-id
-                    spectrum-analysis:
+                        type: int
+                    spectrum_analysis:
                         description:
                             - Enable/disable spectrum analysis to find interference that would negatively impact wireless performance.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    vap-all:
+                    vap_all:
                         description:
-                            - Enable/disable the automatic inheritance of all Virtual Access Points (VAPs) (default = enable).
+                            - Enable/disable the automatic inheritance of all Virtual Access Points (VAPs) .
+                        type: str
                         choices:
                             - enable
                             - disable
                     vaps:
                         description:
                             - Manually selected list of Virtual Access Points (VAPs).
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Virtual Access Point (VAP) name. Source wireless-controller.vap-group.name wireless-controller.vap.name.
                                 required: true
-            split-tunneling-acl:
+                                type: str
+            split_tunneling_acl:
                 description:
                     - Split tunneling ACL filter list.
+                type: list
                 suboptions:
-                    dest-ip:
+                    dest_ip:
                         description:
                             - Destination IP and mask for the split-tunneling subnet.
+                        type: str
                     id:
                         description:
                             - ID.
                         required: true
-            split-tunneling-acl-local-ap-subnet:
+                        type: int
+            split_tunneling_acl_local_ap_subnet:
                 description:
-                    - Enable/disable automatically adding local subnetwork of FortiAP to split-tunneling ACL (default = disable).
+                    - Enable/disable automatically adding local subnetwork of FortiAP to split-tunneling ACL .
+                type: str
                 choices:
                     - enable
                     - disable
-            split-tunneling-acl-path:
+            split_tunneling_acl_path:
                 description:
                     - Split tunneling ACL path is local/tunnel.
+                type: str
                 choices:
                     - tunnel
                     - local
-            tun-mtu-downlink:
+            tun_mtu_downlink:
                 description:
                     - Downlink tunnel MTU in octets. Set the value to either 0 (by default), 576, or 1500.
-            tun-mtu-uplink:
+                type: int
+            tun_mtu_uplink:
                 description:
                     - Uplink tunnel maximum transmission unit (MTU) in octets (eight-bit bytes). Set the value to either 0 (by default), 576, or 1500.
-            wan-port-mode:
+                type: int
+            wan_port_mode:
                 description:
                     - Enable/disable using the FortiAP WAN port as a LAN port.
+                type: str
                 choices:
                     - wan-lan
                     - wan-only
-            wtp-id:
+            wtp_id:
                 description:
                     - WTP ID.
-                required: true
-            wtp-mode:
+                type: str
+            wtp_mode:
                 description:
                     - WTP, AP, or FortiAP operating mode; normal (by default) or remote. A tunnel mode SSID can be assigned to an AP in normal mode but not
                        remote mode, while a local-bridge mode SSID can be assigned to an AP in either normal mode or remote mode.
+                type: str
                 choices:
                     - normal
                     - remote
-            wtp-profile:
+            wtp_profile:
                 description:
                     - WTP profile name to apply to this WTP, AP or FortiAP. Source wireless-controller.wtp-profile.name.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -554,6 +669,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure Wireless Termination Points (WTPs), that is, FortiAPs or APs to be managed by FortiGate.
     fortios_wireless_controller_wtp:
@@ -562,103 +678,103 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       wireless_controller_wtp:
-        state: "present"
         admin: "discovered"
         allowaccess: "telnet"
-        bonjour-profile: "<your_own_value> (source wireless-controller.bonjour-profile.name)"
-        coordinate-enable: "enable"
-        coordinate-latitude: "<your_own_value>"
-        coordinate-longitude: "<your_own_value>"
-        coordinate-x: "<your_own_value>"
-        coordinate-y: "<your_own_value>"
-        image-download: "enable"
+        bonjour_profile: "<your_own_value> (source wireless-controller.bonjour-profile.name)"
+        coordinate_enable: "enable"
+        coordinate_latitude: "<your_own_value>"
+        coordinate_longitude: "<your_own_value>"
+        coordinate_x: "<your_own_value>"
+        coordinate_y: "<your_own_value>"
+        image_download: "enable"
         index: "12"
-        ip-fragment-preventing: "tcp-mss-adjust"
+        ip_fragment_preventing: "tcp-mss-adjust"
         lan:
-            port-mode: "offline"
-            port-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port1-mode: "offline"
-            port1-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port2-mode: "offline"
-            port2-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port3-mode: "offline"
-            port3-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port4-mode: "offline"
-            port4-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port5-mode: "offline"
-            port5-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port6-mode: "offline"
-            port6-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port7-mode: "offline"
-            port7-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-            port8-mode: "offline"
-            port8-ssid: "<your_own_value> (source wireless-controller.vap.name)"
-        led-state: "enable"
+            port_mode: "offline"
+            port_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port1_mode: "offline"
+            port1_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port2_mode: "offline"
+            port2_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port3_mode: "offline"
+            port3_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port4_mode: "offline"
+            port4_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port5_mode: "offline"
+            port5_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port6_mode: "offline"
+            port6_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port7_mode: "offline"
+            port7_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+            port8_mode: "offline"
+            port8_ssid: "<your_own_value> (source wireless-controller.vap.name)"
+        led_state: "enable"
         location: "<your_own_value>"
-        login-passwd: "<your_own_value>"
-        login-passwd-change: "yes"
-        mesh-bridge-enable: "default"
+        login_passwd: "<your_own_value>"
+        login_passwd_change: "yes"
+        mesh_bridge_enable: "default"
         name: "default_name_38"
-        override-allowaccess: "enable"
-        override-ip-fragment: "enable"
-        override-lan: "enable"
-        override-led-state: "enable"
-        override-login-passwd-change: "enable"
-        override-split-tunnel: "enable"
-        override-wan-port-mode: "enable"
-        radio-1:
-            auto-power-high: "47"
-            auto-power-level: "enable"
-            auto-power-low: "49"
+        override_allowaccess: "enable"
+        override_ip_fragment: "enable"
+        override_lan: "enable"
+        override_led_state: "enable"
+        override_login_passwd_change: "enable"
+        override_split_tunnel: "enable"
+        override_wan_port_mode: "enable"
+        radio_1:
+            auto_power_high: "47"
+            auto_power_level: "enable"
+            auto_power_low: "49"
             band: "802.11a"
             channel:
              -
                 chan: "<your_own_value>"
-            override-analysis: "enable"
-            override-band: "enable"
-            override-channel: "enable"
-            override-txpower: "enable"
-            override-vaps: "enable"
-            power-level: "58"
-            radio-id: "59"
-            spectrum-analysis: "enable"
-            vap-all: "enable"
+            override_analysis: "enable"
+            override_band: "enable"
+            override_channel: "enable"
+            override_txpower: "enable"
+            override_vaps: "enable"
+            power_level: "58"
+            radio_id: "59"
+            spectrum_analysis: "enable"
+            vap_all: "enable"
             vaps:
              -
                 name: "default_name_63 (source wireless-controller.vap-group.name wireless-controller.vap.name)"
-        radio-2:
-            auto-power-high: "65"
-            auto-power-level: "enable"
-            auto-power-low: "67"
+        radio_2:
+            auto_power_high: "65"
+            auto_power_level: "enable"
+            auto_power_low: "67"
             band: "802.11a"
             channel:
              -
                 chan: "<your_own_value>"
-            override-analysis: "enable"
-            override-band: "enable"
-            override-channel: "enable"
-            override-txpower: "enable"
-            override-vaps: "enable"
-            power-level: "76"
-            radio-id: "77"
-            spectrum-analysis: "enable"
-            vap-all: "enable"
+            override_analysis: "enable"
+            override_band: "enable"
+            override_channel: "enable"
+            override_txpower: "enable"
+            override_vaps: "enable"
+            power_level: "76"
+            radio_id: "77"
+            spectrum_analysis: "enable"
+            vap_all: "enable"
             vaps:
              -
                 name: "default_name_81 (source wireless-controller.vap-group.name wireless-controller.vap.name)"
-        split-tunneling-acl:
+        split_tunneling_acl:
          -
-            dest-ip: "<your_own_value>"
+            dest_ip: "<your_own_value>"
             id:  "84"
-        split-tunneling-acl-local-ap-subnet: "enable"
-        split-tunneling-acl-path: "tunnel"
-        tun-mtu-downlink: "87"
-        tun-mtu-uplink: "88"
-        wan-port-mode: "wan-lan"
-        wtp-id: "<your_own_value>"
-        wtp-mode: "normal"
-        wtp-profile: "<your_own_value> (source wireless-controller.wtp-profile.name)"
+        split_tunneling_acl_local_ap_subnet: "enable"
+        split_tunneling_acl_path: "tunnel"
+        tun_mtu_downlink: "87"
+        tun_mtu_uplink: "88"
+        wan_port_mode: "wan-lan"
+        wtp_id: "<your_own_value>"
+        wtp_mode: "normal"
+        wtp_profile: "<your_own_value> (source wireless-controller.wtp-profile.name)"
 '''
 
 RETURN = '''
@@ -721,12 +837,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
 
 def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -734,22 +854,22 @@ def login(data, fos):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_wireless_controller_wtp_data(json):
-    option_list = ['admin', 'allowaccess', 'bonjour-profile',
-                   'coordinate-enable', 'coordinate-latitude', 'coordinate-longitude',
-                   'coordinate-x', 'coordinate-y', 'image-download',
-                   'index', 'ip-fragment-preventing', 'lan',
-                   'led-state', 'location', 'login-passwd',
-                   'login-passwd-change', 'mesh-bridge-enable', 'name',
-                   'override-allowaccess', 'override-ip-fragment', 'override-lan',
-                   'override-led-state', 'override-login-passwd-change', 'override-split-tunnel',
-                   'override-wan-port-mode', 'radio-1', 'radio-2',
-                   'split-tunneling-acl', 'split-tunneling-acl-local-ap-subnet', 'split-tunneling-acl-path',
-                   'tun-mtu-downlink', 'tun-mtu-uplink', 'wan-port-mode',
-                   'wtp-id', 'wtp-mode', 'wtp-profile']
+    option_list = ['admin', 'allowaccess', 'bonjour_profile',
+                   'coordinate_enable', 'coordinate_latitude', 'coordinate_longitude',
+                   'coordinate_x', 'coordinate_y', 'image_download',
+                   'index', 'ip_fragment_preventing', 'lan',
+                   'led_state', 'location', 'login_passwd',
+                   'login_passwd_change', 'mesh_bridge_enable', 'name',
+                   'override_allowaccess', 'override_ip_fragment', 'override_lan',
+                   'override_led_state', 'override_login_passwd_change', 'override_split_tunnel',
+                   'override_wan_port_mode', 'radio_1', 'radio_2',
+                   'split_tunneling_acl', 'split_tunneling_acl_local_ap_subnet', 'split_tunneling_acl_path',
+                   'tun_mtu_downlink', 'tun_mtu_uplink', 'wan_port_mode',
+                   'wtp_id', 'wtp_mode', 'wtp_profile']
     dictionary = {}
 
     for attribute in option_list:
@@ -759,146 +879,158 @@ def filter_wireless_controller_wtp_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
 
 def wireless_controller_wtp(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['wireless_controller_wtp'] and data['wireless_controller_wtp']:
+        state = data['wireless_controller_wtp']['state']
+    else:
+        state = True
     wireless_controller_wtp_data = data['wireless_controller_wtp']
-    flattened_data = flatten_multilists_attributes(wireless_controller_wtp_data)
-    filtered_data = filter_wireless_controller_wtp_data(flattened_data)
-    if wireless_controller_wtp_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_wireless_controller_wtp_data(wireless_controller_wtp_data))
+
+    if state == "present":
         return fos.set('wireless-controller',
                        'wtp',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif wireless_controller_wtp_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('wireless-controller',
                           'wtp',
                           mkey=filtered_data['wtp-id'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_wireless_controller(data, fos):
-    login(data, fos)
 
     if data['wireless_controller_wtp']:
         resp = wireless_controller_wtp(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "wireless_controller_wtp": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "admin": {"required": False, "type": "str",
                           "choices": ["discovered", "disable", "enable"]},
                 "allowaccess": {"required": False, "type": "str",
                                 "choices": ["telnet", "http", "https",
                                             "ssh"]},
-                "bonjour-profile": {"required": False, "type": "str"},
-                "coordinate-enable": {"required": False, "type": "str",
+                "bonjour_profile": {"required": False, "type": "str"},
+                "coordinate_enable": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "coordinate-latitude": {"required": False, "type": "str"},
-                "coordinate-longitude": {"required": False, "type": "str"},
-                "coordinate-x": {"required": False, "type": "str"},
-                "coordinate-y": {"required": False, "type": "str"},
-                "image-download": {"required": False, "type": "str",
+                "coordinate_latitude": {"required": False, "type": "str"},
+                "coordinate_longitude": {"required": False, "type": "str"},
+                "coordinate_x": {"required": False, "type": "str"},
+                "coordinate_y": {"required": False, "type": "str"},
+                "image_download": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
                 "index": {"required": False, "type": "int"},
-                "ip-fragment-preventing": {"required": False, "type": "str",
+                "ip_fragment_preventing": {"required": False, "type": "str",
                                            "choices": ["tcp-mss-adjust", "icmp-unreachable"]},
                 "lan": {"required": False, "type": "dict",
                         "options": {
-                            "port-mode": {"required": False, "type": "str",
+                            "port_mode": {"required": False, "type": "str",
                                           "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                       "bridge-to-ssid"]},
-                            "port-ssid": {"required": False, "type": "str"},
-                            "port1-mode": {"required": False, "type": "str",
+                            "port_ssid": {"required": False, "type": "str"},
+                            "port1_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port1-ssid": {"required": False, "type": "str"},
-                            "port2-mode": {"required": False, "type": "str",
+                            "port1_ssid": {"required": False, "type": "str"},
+                            "port2_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port2-ssid": {"required": False, "type": "str"},
-                            "port3-mode": {"required": False, "type": "str",
+                            "port2_ssid": {"required": False, "type": "str"},
+                            "port3_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port3-ssid": {"required": False, "type": "str"},
-                            "port4-mode": {"required": False, "type": "str",
+                            "port3_ssid": {"required": False, "type": "str"},
+                            "port4_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port4-ssid": {"required": False, "type": "str"},
-                            "port5-mode": {"required": False, "type": "str",
+                            "port4_ssid": {"required": False, "type": "str"},
+                            "port5_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port5-ssid": {"required": False, "type": "str"},
-                            "port6-mode": {"required": False, "type": "str",
+                            "port5_ssid": {"required": False, "type": "str"},
+                            "port6_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port6-ssid": {"required": False, "type": "str"},
-                            "port7-mode": {"required": False, "type": "str",
+                            "port6_ssid": {"required": False, "type": "str"},
+                            "port7_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port7-ssid": {"required": False, "type": "str"},
-                            "port8-mode": {"required": False, "type": "str",
+                            "port7_ssid": {"required": False, "type": "str"},
+                            "port8_mode": {"required": False, "type": "str",
                                            "choices": ["offline", "nat-to-wan", "bridge-to-wan",
                                                        "bridge-to-ssid"]},
-                            "port8-ssid": {"required": False, "type": "str"}
+                            "port8_ssid": {"required": False, "type": "str"}
                         }},
-                "led-state": {"required": False, "type": "str",
+                "led_state": {"required": False, "type": "str",
                               "choices": ["enable", "disable"]},
                 "location": {"required": False, "type": "str"},
-                "login-passwd": {"required": False, "type": "str"},
-                "login-passwd-change": {"required": False, "type": "str",
+                "login_passwd": {"required": False, "type": "str"},
+                "login_passwd_change": {"required": False, "type": "str",
                                         "choices": ["yes", "default", "no"]},
-                "mesh-bridge-enable": {"required": False, "type": "str",
+                "mesh_bridge_enable": {"required": False, "type": "str",
                                        "choices": ["default", "enable", "disable"]},
                 "name": {"required": False, "type": "str"},
-                "override-allowaccess": {"required": False, "type": "str",
+                "override_allowaccess": {"required": False, "type": "str",
                                          "choices": ["enable", "disable"]},
-                "override-ip-fragment": {"required": False, "type": "str",
+                "override_ip_fragment": {"required": False, "type": "str",
                                          "choices": ["enable", "disable"]},
-                "override-lan": {"required": False, "type": "str",
+                "override_lan": {"required": False, "type": "str",
                                  "choices": ["enable", "disable"]},
-                "override-led-state": {"required": False, "type": "str",
+                "override_led_state": {"required": False, "type": "str",
                                        "choices": ["enable", "disable"]},
-                "override-login-passwd-change": {"required": False, "type": "str",
+                "override_login_passwd_change": {"required": False, "type": "str",
                                                  "choices": ["enable", "disable"]},
-                "override-split-tunnel": {"required": False, "type": "str",
+                "override_split_tunnel": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                "override-wan-port-mode": {"required": False, "type": "str",
+                "override_wan_port_mode": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
-                "radio-1": {"required": False, "type": "dict",
+                "radio_1": {"required": False, "type": "dict",
                             "options": {
-                                "auto-power-high": {"required": False, "type": "int"},
-                                "auto-power-level": {"required": False, "type": "str",
+                                "auto_power_high": {"required": False, "type": "int"},
+                                "auto_power_level": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]},
-                                "auto-power-low": {"required": False, "type": "int"},
+                                "auto_power_low": {"required": False, "type": "int"},
                                 "band": {"required": False, "type": "str",
                                          "choices": ["802.11a", "802.11b", "802.11g",
                                                      "802.11n", "802.11n-5G", "802.11n,g-only",
@@ -908,33 +1040,33 @@ def main():
                                             "options": {
                                                 "chan": {"required": True, "type": "str"}
                                             }},
-                                "override-analysis": {"required": False, "type": "str",
+                                "override_analysis": {"required": False, "type": "str",
                                                       "choices": ["enable", "disable"]},
-                                "override-band": {"required": False, "type": "str",
+                                "override_band": {"required": False, "type": "str",
                                                   "choices": ["enable", "disable"]},
-                                "override-channel": {"required": False, "type": "str",
+                                "override_channel": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]},
-                                "override-txpower": {"required": False, "type": "str",
+                                "override_txpower": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]},
-                                "override-vaps": {"required": False, "type": "str",
+                                "override_vaps": {"required": False, "type": "str",
                                                   "choices": ["enable", "disable"]},
-                                "power-level": {"required": False, "type": "int"},
-                                "radio-id": {"required": False, "type": "int"},
-                                "spectrum-analysis": {"required": False, "type": "str",
+                                "power_level": {"required": False, "type": "int"},
+                                "radio_id": {"required": False, "type": "int"},
+                                "spectrum_analysis": {"required": False, "type": "str",
                                                       "choices": ["enable", "disable"]},
-                                "vap-all": {"required": False, "type": "str",
+                                "vap_all": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
                                 "vaps": {"required": False, "type": "list",
                                          "options": {
                                              "name": {"required": True, "type": "str"}
                                          }}
                             }},
-                "radio-2": {"required": False, "type": "dict",
+                "radio_2": {"required": False, "type": "dict",
                             "options": {
-                                "auto-power-high": {"required": False, "type": "int"},
-                                "auto-power-level": {"required": False, "type": "str",
+                                "auto_power_high": {"required": False, "type": "int"},
+                                "auto_power_level": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]},
-                                "auto-power-low": {"required": False, "type": "int"},
+                                "auto_power_low": {"required": False, "type": "int"},
                                 "band": {"required": False, "type": "str",
                                          "choices": ["802.11a", "802.11b", "802.11g",
                                                      "802.11n", "802.11n-5G", "802.11n,g-only",
@@ -944,44 +1076,44 @@ def main():
                                             "options": {
                                                 "chan": {"required": True, "type": "str"}
                                             }},
-                                "override-analysis": {"required": False, "type": "str",
+                                "override_analysis": {"required": False, "type": "str",
                                                       "choices": ["enable", "disable"]},
-                                "override-band": {"required": False, "type": "str",
+                                "override_band": {"required": False, "type": "str",
                                                   "choices": ["enable", "disable"]},
-                                "override-channel": {"required": False, "type": "str",
+                                "override_channel": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]},
-                                "override-txpower": {"required": False, "type": "str",
+                                "override_txpower": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]},
-                                "override-vaps": {"required": False, "type": "str",
+                                "override_vaps": {"required": False, "type": "str",
                                                   "choices": ["enable", "disable"]},
-                                "power-level": {"required": False, "type": "int"},
-                                "radio-id": {"required": False, "type": "int"},
-                                "spectrum-analysis": {"required": False, "type": "str",
+                                "power_level": {"required": False, "type": "int"},
+                                "radio_id": {"required": False, "type": "int"},
+                                "spectrum_analysis": {"required": False, "type": "str",
                                                       "choices": ["enable", "disable"]},
-                                "vap-all": {"required": False, "type": "str",
+                                "vap_all": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
                                 "vaps": {"required": False, "type": "list",
                                          "options": {
                                              "name": {"required": True, "type": "str"}
                                          }}
                             }},
-                "split-tunneling-acl": {"required": False, "type": "list",
+                "split_tunneling_acl": {"required": False, "type": "list",
                                         "options": {
-                                            "dest-ip": {"required": False, "type": "str"},
+                                            "dest_ip": {"required": False, "type": "str"},
                                             "id": {"required": True, "type": "int"}
                                         }},
-                "split-tunneling-acl-local-ap-subnet": {"required": False, "type": "str",
+                "split_tunneling_acl_local_ap_subnet": {"required": False, "type": "str",
                                                         "choices": ["enable", "disable"]},
-                "split-tunneling-acl-path": {"required": False, "type": "str",
+                "split_tunneling_acl_path": {"required": False, "type": "str",
                                              "choices": ["tunnel", "local"]},
-                "tun-mtu-downlink": {"required": False, "type": "int"},
-                "tun-mtu-uplink": {"required": False, "type": "int"},
-                "wan-port-mode": {"required": False, "type": "str",
+                "tun_mtu_downlink": {"required": False, "type": "int"},
+                "tun_mtu_uplink": {"required": False, "type": "int"},
+                "wan_port_mode": {"required": False, "type": "str",
                                   "choices": ["wan-lan", "wan-only"]},
-                "wtp-id": {"required": True, "type": "str"},
-                "wtp-mode": {"required": False, "type": "str",
+                "wtp_id": {"required": False, "type": "str"},
+                "wtp_mode": {"required": False, "type": "str",
                              "choices": ["normal", "remote"]},
-                "wtp-profile": {"required": False, "type": "str"}
+                "wtp_profile": {"required": False, "type": "str"}
 
             }
         }
@@ -989,14 +1121,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_wireless_controller(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_wireless_controller(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_wireless_controller(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

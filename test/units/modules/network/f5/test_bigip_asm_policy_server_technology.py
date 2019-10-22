@@ -17,7 +17,6 @@ if sys.version_info < (2, 7):
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.modules.bigip_asm_policy_server_technology import ApiParameters
     from library.modules.bigip_asm_policy_server_technology import ModuleParameters
     from library.modules.bigip_asm_policy_server_technology import ModuleManager
     from library.modules.bigip_asm_policy_server_technology import ArgumentSpec
@@ -29,7 +28,6 @@ try:
 
     from test.units.modules.utils import set_module_args
 except ImportError:
-    from ansible.modules.network.f5.bigip_asm_policy_server_technology import ApiParameters
     from ansible.modules.network.f5.bigip_asm_policy_server_technology import ModuleParameters
     from ansible.modules.network.f5.bigip_asm_policy_server_technology import ModuleManager
     from ansible.modules.network.f5.bigip_asm_policy_server_technology import ArgumentSpec

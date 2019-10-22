@@ -78,7 +78,7 @@ class TestAbstractFtdPlatform(object):
     def test_parse_rommon_file_location_should_fail_for_non_tftp_protocol(self):
         with pytest.raises(ValueError) as ex:
             AbstractFtdPlatform.parse_rommon_file_location('http://1.2.3.4/boot/rommon-boot.foo')
-        assert 'The ROMMON image must be downloaded from TFTP server' in str(ex)
+        assert 'The ROMMON image must be downloaded from TFTP server' in str(ex.value)
 
 
 class TestFtd2100Platform(object):

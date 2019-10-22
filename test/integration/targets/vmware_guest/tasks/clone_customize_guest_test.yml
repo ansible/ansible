@@ -1,0 +1,47 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2019, Pavan Bidkar <pbidkar@vmware.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: clone vm from template and customize GOS
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    template: "{{ virtual_machines[0].name }}"
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    folder: "{{ virtual_machines[0].folder }}"
+    convert: thin
+  register: clone_customize
+
+- debug:
+    var: clone_customize
+
+- name: assert that changes were made
+  assert:
+    that:
+        - clone_customize is changed
+
+- name: clone vm from template and customize GOS again
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    template: "{{ virtual_machines[0].name }}"
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    folder: "{{ virtual_machines[0].folder }}"
+    convert: thin
+  register: clone_customize_again
+
+- debug:
+    var: clone_customize_again
+
+- name: assert that changes were not made
+  assert:
+    that:
+        - not (clone_customize_again is changed)

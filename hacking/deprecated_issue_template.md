@@ -2,7 +2,7 @@
 %(component)s contains call to Display.deprecated or AnsibleModule.deprecate and is scheduled for removal
 
 ```
-%(path)s:%(line)s:%(column)s: %(msg)s
+%(line)s
 ```
 
 ##### ISSUE TYPE

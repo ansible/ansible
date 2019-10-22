@@ -42,6 +42,17 @@ options:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+    cloud_config_cksum:
+        description:
+            - Checksum of application profiles.
+            - Internally set by cloud connector.
+            - Field introduced in 17.2.14, 18.1.5, 18.2.1.
+        version_added: "2.9"
+    created_by:
+        description:
+            - Name of the application profile creator.
+            - Field introduced in 17.2.14, 18.1.5, 18.2.1.
+        version_added: "2.9"
     description:
         description:
             - User defined description for the object.
@@ -66,11 +77,16 @@ options:
         type: bool
     preserve_client_port:
         description:
-            - Specifies if we need to preserve client port while preseving client ip for backend connections.
+            - Specifies if we need to preserve client port while preserving client ip for backend connections.
             - Field introduced in 17.2.7.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.6"
         type: bool
+    sip_service_profile:
+        description:
+            - Specifies various sip service related controls for virtual service.
+            - Field introduced in 17.2.8, 18.1.3, 18.2.1.
+        version_added: "2.9"
     tcp_app_profile:
         description:
             - Specifies the tcp application proxy profile parameters.
@@ -81,7 +97,7 @@ options:
         description:
             - Specifies which application layer proxy is enabled for the virtual service.
             - Enum options - APPLICATION_PROFILE_TYPE_L4, APPLICATION_PROFILE_TYPE_HTTP, APPLICATION_PROFILE_TYPE_SYSLOG, APPLICATION_PROFILE_TYPE_DNS,
-            - APPLICATION_PROFILE_TYPE_SSL.
+            - APPLICATION_PROFILE_TYPE_SSL, APPLICATION_PROFILE_TYPE_SIP.
         required: true
     url:
         description:
@@ -165,7 +181,7 @@ obj:
 from ansible.module_utils.basic import AnsibleModule
 try:
     from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
+        avi_common_argument_spec, avi_ansible_api, HAS_AVI)
 except ImportError:
     HAS_AVI = False
 
@@ -177,6 +193,8 @@ def main():
         avi_api_update_method=dict(default='put',
                                    choices=['put', 'patch']),
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
+        cloud_config_cksum=dict(type='str',),
+        created_by=dict(type='str',),
         description=dict(type='str',),
         dns_service_profile=dict(type='dict',),
         dos_rl_profile=dict(type='dict',),
@@ -184,6 +202,7 @@ def main():
         name=dict(type='str', required=True),
         preserve_client_ip=dict(type='bool',),
         preserve_client_port=dict(type='bool',),
+        sip_service_profile=dict(type='dict',),
         tcp_app_profile=dict(type='dict',),
         tenant_ref=dict(type='str',),
         type=dict(type='str', required=True),
@@ -195,7 +214,7 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=17.1) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) or requests is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'applicationprofile',
                            set([]))
