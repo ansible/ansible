@@ -74,6 +74,7 @@ Function Install-PrereqModule {
                         MinimumVersion = $PrereqModules[$Name]
                         Force = $true
                         WhatIf = $CheckMode
+                        AllowClobber = $true
                     }
                     if ((Get-Command -Name Install-Module).Parameters.ContainsKey('SkipPublisherCheck')) {
                         $install_params.SkipPublisherCheck = $true
