@@ -1,1 +1,0 @@
-vmware_host_dns.py
