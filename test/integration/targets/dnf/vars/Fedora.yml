@@ -1,1 +1,2 @@
 astream_name: '@ripgrep:master/default'
+astream_name_no_stream: '@ripgrep/default'
