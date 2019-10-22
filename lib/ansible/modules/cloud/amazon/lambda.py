@@ -196,6 +196,7 @@ configuration:
         'memory_size': 128,
         'role': 'arn:aws:iam::123456789012:role/lambda_basic_execution',
         'runtime': 'nodejs6.10',
+        'tracing_config': { 'mode': 'Active' },
         'timeout': 3,
         'version': '1',
         'vpc_config': {

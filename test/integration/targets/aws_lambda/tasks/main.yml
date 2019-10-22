@@ -76,6 +76,7 @@
         vpc_security_group_ids:
         environment_variables:
         dead_letter_arn:
+        tracing_mode:
       register: result
       ignore_errors: true
 
@@ -101,15 +102,15 @@
 
     - name: test state=present - upload the lambda
       lambda:
-        name="{{lambda_function_name}}"
-        runtime="python2.7"
-        handler="mini_lambda.handler"
-        role="ansible_lambda_role"
-        ec2_region='{{ec2_region}}'
-        ec2_access_key='{{ec2_access_key}}'
-        ec2_secret_key='{{ec2_secret_key}}'
-        security_token='{{security_token}}'
-        zip_file="{{zip_res.dest}}"
+        name: "{{lambda_function_name}}"
+        runtime: "python2.7"
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
       register: result
 
     - name: assert lambda upload succeeded
@@ -134,6 +135,34 @@
            - 'result is not failed'
            - 'result.result.output.message == "hello Mr Ansible Tests"'
 
+    - name: test lambda config updates
+      lambda:
+        name: "{{lambda_function_name}}"
+        runtime: "nodejs10.x"
+        tracing_mode: 'Active'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: update_result
+
+    - name: assert that update succeeded
+      assert:
+        that:
+          - update_result is not failed
+          - update_result is updated
+          - update_result.configuration.runtime == 'nodejs10.x'
+
+    - name: reset config updates for the following tests
+      lambda:
+        name: "{{lambda_function_name}}"
+        runtime: "python2.7"
+        tracing_mode: 'PassThrough'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+
     # ============================================================
     - name: test state=present with security group but no vpc
       lambda:
@@ -151,6 +180,7 @@
         vpc_security_group_ids: sg-FA6E
         environment_variables:
         dead_letter_arn:
+        tracing_mode:
       register: result
       ignore_errors: true
 
@@ -183,6 +213,7 @@
         vpc_security_group_ids:
         environment_variables:
         dead_letter_arn:
+        tracing_mode:
       register: result
 
     - name: assert lambda remains as before
