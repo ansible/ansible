@@ -27,7 +27,8 @@
     python_suffix: "-py3"
   when: ansible_python_version is version('3', '>=')
 
-- include_vars: "{{ lookup('first_found', params) }}"
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
   vars:
     params:
       files:
@@ -89,7 +90,7 @@
 
 - name: apply work-around for OverlayFS issue
   # https://github.com/docker/for-linux/issues/72#issuecomment-319904698
-  command: find /var/lib/mysql -type f -exec touch {} ;
+  command: find {{ mysql_data_dirs[0] }} -type f -exec touch {} ;
   # find will fail if mysql has never been started, as the directory won't exist
   ignore_errors: yes
 
