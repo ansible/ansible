@@ -6,7 +6,8 @@ mysql_packages:
     - bzip2
 
 mysql_cleanup_packages:
-  - mysql-client
+  - mysql-client*
+  - mysql-server*
   - mysql-common
   - mysql-sandbox
 
