@@ -33,6 +33,7 @@ debian_packages_py36:
   - python3.6-dev
   - python3-setuptools
   - python3-pip
+  - ca-certificates
 
 redhat_packages_py2:
   - python-devel
@@ -48,3 +49,4 @@ pip_packages:
   - psutil
   - pymongo
   - PyOpenSSL
+  - certifi
