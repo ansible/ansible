@@ -54,19 +54,23 @@ options:
     description:
     - Subscription owner.
     - If I(owner) is not defined, the owner will be set as I(login_user) or I(session_role).
+    - Ignored when I(state) is not C(present).
     type: str
   publications:
     description:
     - The publication names on the publisher to use for the subscription.
+    - Ignored when I(state) is not C(present).
     type: list
   connparams:
     description:
     - The connection dict param-value to connect to the publisher.
     - For more information see U(https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING).
+    - Ignored when I(state) is not C(present).
     type: dict
   cascade:
     description:
     - Drop subscription dependencies. Has effect with I(state=absent) only.
+    - Ignored when I(state) is not C(absent).
     type: bool
     default: false
   subsparams:
@@ -75,6 +79,7 @@ options:
     - For update the subscription allowed keys are C(enabled), C(slot_name), C(synchronous_commit), C(publication_name).
     - See available parameters to create a new subscription
       on U(https://www.postgresql.org/docs/current/sql-createsubscription.html).
+    - Ignored when I(state) is not C(present).
     type: dict
 
 notes:
@@ -196,7 +201,6 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-# from ansible.module_utils.database import pg_quote_identifier
 from ansible.module_utils.postgres import (
     connect_to_db,
     exec_sql,
@@ -600,6 +604,16 @@ def main():
 
     if state == 'present' and cascade:
         module.warm('parameter "cascade" is ignored when state is not absent')
+
+    if state != 'present':
+        if owner:
+            module.warm("parameter 'owner' is ignored when state is not 'present'")
+        if publications:
+            module.warm("parameter 'publications' is ignored when state is not 'present'")
+        if connparams:
+            module.warm("parameter 'connparams' is ignored when state is not 'present'")
+        if subsparams:
+            module.warm("parameter 'subsparams' is ignored when state is not 'present'")
 
     # Connect to DB and make cursor object:
     pg_conn_params = get_conn_params(module, module.params)
