@@ -71,6 +71,7 @@
   args:
     chdir: "{{remote_tmp_dir}}"
   with_items:
+    - ca
     - mongo
     - mongo-client
   when: mongo_ssl == True
