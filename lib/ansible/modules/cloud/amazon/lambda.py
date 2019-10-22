@@ -425,6 +425,8 @@ def main():
             func_kwargs.update({'Timeout': timeout})
         if memory_size and current_config['MemorySize'] != memory_size:
             func_kwargs.update({'MemorySize': memory_size})
+        if runtime and current_config['Runtime'] != runtime:
+            func_kwargs.update({'Runtime': runtime})
         if (environment_variables is not None) and (current_config.get(
                 'Environment', {}).get('Variables', {}) != environment_variables):
             func_kwargs.update({'Environment': {'Variables': environment_variables}})
@@ -437,10 +439,6 @@ def main():
                     func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
         if tracing_mode:
             func_kwargs.update({'TracingConfig': {'Mode': tracing_mode}})
-
-        # Check for unsupported mutation
-        if current_config['Runtime'] != runtime:
-            module.fail_json(msg='Cannot change runtime. Please recreate the function')
 
         # If VPC configuration is desired
         if vpc_subnet_ids or vpc_security_group_ids:
