@@ -167,7 +167,7 @@ class XfConfProperty(object):
     @property
     def previous_value(self):
         if not self._previous_value_set:
-            self._previous_value, _ = self.get()
+            self._previous_value, changed = self.get()
         return self._previous_value
 
     def _execute_xfconf_query(self, args=None, check_mode_aware=True, **kwargs):
@@ -178,7 +178,7 @@ class XfConfProperty(object):
 
             self.module.debug("Running cmd={0}".format(cmd))
             if check_mode_aware and self.module.check_mode:
-                return 'Would have executed: {}'.format(cmd)
+                return 'Would have executed: {0}'.format(cmd)
 
             rc, out, err = self._run(cmd)
             if err.rstrip() == self.does_not:
@@ -221,7 +221,7 @@ class XfConfProperty(object):
 
         rec = "--recursive" if self.recursive else ""
 
-        self._execute_xfconf_query("--reset {}".format(rec), check_mode_aware=check_mode_aware)
+        self._execute_xfconf_query("--reset {0}".format(rec), check_mode_aware=check_mode_aware)
         return None, True
 
     @staticmethod
@@ -315,7 +315,7 @@ def main():
                        choices=XfConfProperty.VALID_STATES,
                        type='str'),
             force_array=dict(default=False, type='bool', aliases=['array']),
-            recursive=dict(default=False, type=bool),
+            recursive=dict(default=False, type='bool'),
         ),
         supports_check_mode=True
     )
