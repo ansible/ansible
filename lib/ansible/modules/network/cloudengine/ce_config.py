@@ -355,7 +355,7 @@ def run(module, result):
                         if b_item != a_item:
                             update.append(a_item.text)
                 else:
-                    update = [item.text for item in after_objs]:
+                    update = [item.text for item in after_objs]
                 if len(update) == 0:
                     result["changed"] = False
                     result['updates'] = []
