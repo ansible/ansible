@@ -1349,15 +1349,18 @@ TESTSETS = [
             "5.2",
             ""
         ],
+        "platform.system": "DragonFly",
         "input": {},
+        "command_output": "DragonFly v5.6.2-RELEASE #3: Sat Aug 10 10:28:36 EDT 2019\n"
+            "root@www.shiningsilence.com:/usr/obj/home/justin/release/5_6/sys/X86_64_GENERIC",
         "result": {
-            "distribution_release": "5.2-RELEASE",
+            "distribution_release": "5.6.2-RELEASE",
             "distribution": "DragonFly",
-            "distribution_major_version": "N/A",
+            "distribution_major_version": "5",
             "os_family": "DragonFly",
-            "distribution_version": "DragonFly v5.2.0-RELEASE #1: Mo"
+            "distribution_version": "5.6.2"
         },
-        "name": "DragonFly DragonFly v5.2.0-RELEASE #1: Mo",
+        "name": "DragonFly v5.6.2-RELEASE #3",
         "distro": {
             "codename": "",
             "version": "5.2",
@@ -1402,6 +1405,10 @@ def test_distribution_version(am, mocker, testcase):
             return testcase.get('uname_r', None)
         else:
             return None
+
+    def mock_module_run_command(am, command):
+        result = (0, testcase.get('command_output', None), '')
+        return result
 
     def mock_file_exists(fname, allow_empty=False):
         if fname not in testcase['input']:
@@ -1454,6 +1461,7 @@ def test_distribution_version(am, mocker, testcase):
     mocker.patch('ansible.module_utils.distro.id', mock_distro_id)
     mocker.patch('ansible.module_utils.distro.version', mock_distro_version)
     mocker.patch('ansible.module_utils.distro.codename', mock_distro_codename)
+    mocker.patch('ansible.module_utils.basic.AnsibleModule.run_command', mock_module_run_command)
     mocker.patch('os.path.isfile', mock_os_path_is_file)
     mocker.patch('platform.system', mock_platform_system)
     mocker.patch('platform.release', mock_platform_release)

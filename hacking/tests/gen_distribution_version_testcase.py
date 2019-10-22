@@ -13,6 +13,7 @@ This assumes a working ansible version in the path.
 import os.path
 import subprocess
 import json
+import platform
 import sys
 
 from ansible.module_utils import distro
@@ -85,5 +86,9 @@ output = {
     'platform.dist': dist,
     'result': ansible_facts,
 }
+
+system = platform.system()
+if system != 'Linux':
+    output['platform.system'] = system
 
 print(json.dumps(output, indent=4))

@@ -584,10 +584,12 @@ class Distribution(object):
         dragonfly_facts = {}
         dragonfly_facts['distribution_version'] = platform.release()
         rc, out, err = self.module.run_command("/sbin/sysctl -n kern.version")
-        match = re.match(r'(\d+)\.(\d+)\.(\d+)-(RELEASE|STABLE|CURRENT).*', out)
+        match = re.search(r'v(\d+)\.(\d+)\.(\d+)-(RELEASE|STABLE|CURRENT).*', out)
         if match:
-            dragonfly_facts['distribution_release'] = '%s.%s' % (match.group(1), match.group(2))
-        return {}
+            dragonfly_facts['distribution_major_version'] = match.group(1)
+            dragonfly_facts['distribution_version'] = '%s.%s.%s' % match.groups()[:3]
+            dragonfly_facts['distribution_release'] = '%s.%s.%s-%s' % match.groups()[:4]
+        return dragonfly_facts
 
     def get_distribution_NetBSD(self):
         netbsd_facts = {}
