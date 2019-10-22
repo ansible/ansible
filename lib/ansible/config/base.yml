@@ -1315,6 +1315,10 @@ CONNECTION_FACTS_MODULES:
     junos: junos_facts
     nxos: nxos_facts
     vyos: vyos_facts
+    exos: exos_facts
+    slxos: slxos_facts
+    voss: voss_facts
+    ironware: ironware_facts
   description: "Which modules to run during a play's fact gathering stage based on connection"
   env: [{name: ANSIBLE_CONNECTION_FACTS_MODULES}]
   ini:
