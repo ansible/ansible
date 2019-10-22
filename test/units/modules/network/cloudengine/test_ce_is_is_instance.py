@@ -25,6 +25,7 @@ from ansible.modules.network.cloudengine import ce_is_is_instance
 from units.modules.network.cloudengine.ce_module import TestCloudEngineModule, load_fixture
 from units.modules.utils import set_module_args
 
+
 class TestCloudEngineLacpModule(TestCloudEngineModule):
     module = ce_is_is_instance
 
@@ -68,4 +69,3 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
         set_module_args(config)
         result = self.execute_module(changed=True)
         self.assertEquals(sorted(result['updates']), sorted(update))
-
