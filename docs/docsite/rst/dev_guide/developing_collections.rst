@@ -60,7 +60,7 @@ See :ref:`collections_galaxy_meta` for details.
 docs directory
 ---------------
 
-Keep general documentation for the collection here. Plugins and modules still keep their specific documentation embedded as Python docstrings. Use the ``docs`` folder to describe how to use the roles and plugins the collection provides, role requirements, and so on. Currently we are looking at Markdown as the standard format for documentation files, but this is subject to change.
+Keep general documentation for the collection here. Plugins and modules still keep their specific documentation embedded as Python docstrings. Use the ``docs`` folder to describe how to use the roles and plugins the collection provides, role requirements, and so on. Markdown is the standard format for documentation files in the ``docs`` folder. No subfolders will be supported on Galaxy.
 
 Use ``ansible-doc`` to view documentation for plugins inside a collection:
 
