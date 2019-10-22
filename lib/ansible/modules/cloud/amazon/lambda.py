@@ -440,7 +440,7 @@ def main():
             else:
                 if dead_letter_arn != "":
                     func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
-        if tracing_mode:
+        if tracing_mode and (current_config.get('TracingConfig', {}).get('Mode', 'PassThrough') != tracing_mode):
             func_kwargs.update({'TracingConfig': {'Mode': tracing_mode}})
 
         # If VPC configuration is desired
