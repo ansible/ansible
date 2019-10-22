@@ -116,6 +116,29 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
 
         return mod
 
+    def get_source(self, fullname):
+        mod = sys.modules.get(fullname)
+        if not mod:
+            mod = self.load_module(fullname)
+
+        with open(to_bytes(mod.__file__), 'rb') as fd:
+            source = fd.read()
+
+        return source
+
+    def get_code(self, fullname):
+        return compile(source=self.get_source(fullname), filename=self.get_filename(fullname), mode='exec', flags=0, dont_inherit=True)
+
+    def is_package(self, fullname):
+        return self.get_filename(fullname).endswith('__init__.py')
+
+    def get_filename(self, fullname):
+        mod = sys.modules.get(fullname)
+        if not mod:
+            mod = self.load_module(fullname)
+
+        return mod.__file__
+
     def _find_module(self, fullname, path, load):
         # this loader is only concerned with items under the Ansible Collections namespace hierarchy, ignore others
         if not fullname.startswith('ansible_collections.') and fullname != 'ansible_collections':
@@ -319,12 +342,6 @@ class AnsibleFlatMapLoader(object):
 
         with open(found_file, 'rb') as fd:
             return fd.read()
-
-
-# TODO: implement these for easier inline debugging?
-#    def get_source(self, fullname):
-#    def get_code(self, fullname):
-#    def is_package(self, fullname):
 
 
 class AnsibleCollectionRef:
