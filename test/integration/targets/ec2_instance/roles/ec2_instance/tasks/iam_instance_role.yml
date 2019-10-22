@@ -32,6 +32,7 @@
       security_groups: "{{ sg.group_id }}"
       instance_type: "{{ ec2_instance_type }}"
       instance_role: "ansible-test-sts-{{ resource_prefix }}-test-policy"
+      vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
       tags:
         TestId: "{{ ec2_instance_tag_TestId }}"
     register: instance_with_role
@@ -48,6 +49,7 @@
       security_groups: "{{ sg.group_id }}"
       instance_type: "{{ ec2_instance_type }}"
       instance_role: "{{ iam_role.arn.replace(':role/', ':instance-profile/') }}"
+      vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
       tags:
         TestId: "{{ ec2_instance_tag_TestId }}"
     check_mode: yes
@@ -78,6 +80,7 @@
       security_groups: "{{ sg.group_id }}"
       instance_type: "{{ ec2_instance_type }}"
       instance_role: "{{ iam_role_2.arn.replace(':role/', ':instance-profile/') }}"
+      vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
       tags:
         TestId: "{{ ec2_instance_tag_TestId }}"
     register: instance_with_updated_role
