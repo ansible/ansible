@@ -7,8 +7,6 @@
       security_token: "{{ security_token | default(omit) }}"
       region: "{{ aws_region }}"
   block:
-
-  # TODO https://github.com/tremble/ansible/commit/5b766cfca170c5b6cdd5b74a205a7c931ffd3010
   - name: ensure improper usage of parameters fails gracefully
     iam_user_info:
       path: '{{ test_path }}'
@@ -411,9 +409,9 @@
         - iam_group.changed
         - iam_group
 
-  - name: re-remove ansible (idempotency)
+  - name: Test remove group again (idempotency)
     iam_user:
-      name: AnsibleTestUser
+      name: "{{ test_group }}"
       state: absent
     register: iam_group
 
@@ -422,14 +420,46 @@
       that:
         - not iam_group.changed
 
+  - name: Remove user with attached policy
+    iam_user:
+      name: "{{ test_user }}"
+      state: absent
+    register: iam_user
+
+  - name: get info on IAM user(s) after deleting
+    iam_user_info:
+      group: '{{ test_user }}'
+    ignore_errors: yes
+    register: iam_user_info
+
+  - name: Assert user was removed
+    assert:
+      that:
+        - iam_user.changed
+        - "'cannot be found' in iam_user_info.msg"
+
+  - name: Remove user with attached policy (idempotent)
+    iam_user:
+      name: "{{ test_user }}"
+      state: absent
+    ignore_errors: yes
+    register: iam_user
+
+  - name: Assert user was removed
+    assert:
+      that:
+        - not iam_user.changed
+
   always:
   - name: remove group
     iam_group:
       name: '{{ test_group }}'
       state: absent
+    ignore_errors: yes
 
   - name: remove ansible users
     iam_user:
       name: '{{ item }}'
       state: absent
     with_items: '{{ test_users }}'
+    ignore_errors: yes
