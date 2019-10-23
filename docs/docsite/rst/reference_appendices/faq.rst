@@ -153,7 +153,7 @@ While installing Ansible, sometimes you may encounter errors such as `No package
 These errors are generally caused by the missing packages, which are dependencies of the packages required by Ansible.
 For example, `libffi` package is dependency of `pynacl` and `paramiko` (Ansible -> paramiko -> pynacl -> libffi).
 
-In order to solve these kinds of dependency issues, you maight need to install required packages using the OS native package managers, like `yum`, `dnf`, or `apt`, or as mentioned in the package installation guide.
+In order to solve these kinds of dependency issues, you might need to install required packages using the OS native package managers, such as `yum`, `dnf`, or `apt`, or as mentioned in the package installation guide.
 
 Refer to the documentation of the respective package for such dependencies and their installation methods.
 
