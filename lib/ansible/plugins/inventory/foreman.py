@@ -128,15 +128,15 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
 
     def _get_all_hosts(self):
 
-        if self.cache:
-            inventory = self.cache.get_inventory()
+        if self.use_cache:
+            inventory = self._cache[self.cache_key]
 
             if inventory is not None:
                 return inventory
 
         params = {'page': 1, 'per_page': 250}
 
-        if self.want_params:
+        if self.get_option('want_params'):
             params['include'] = 'all_parameters'
 
         results = []
@@ -173,7 +173,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
                 params['page'] += 1
 
         if self.use_cache:
-            self.cache.set(self.cache_key, results)
+            self._cache[self.cache_key] = results
 
         return results
 
@@ -206,6 +206,16 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
 
             self.inventory.set_variable(host['name'], key, value)
 
+    def _get_facts_by_id(self, host):
+
+        s = self._get_session()
+
+        ret = s.get("%s/api/v2/hosts/%s/facts" % (self.foreman_url, host))
+        ret.raise_for_status()
+        
+        return ret.json()
+
+
     def parse(self, inventory, loader, path, cache=True):
 
         super(InventoryModule, self).parse(inventory, loader, path)
@@ -216,6 +226,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
         # get connection host
         self.foreman_url = self.get_option('url')
         self.use_cache = cache and self.get_option('cache')
+        self.cache_key = self.get_option('cache_key')
 
         hosts = self._get_all_hosts()
 
@@ -246,4 +257,4 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
 
                 # set host vars from facts
                 if self.get_option('want_facts'):
-                    self.inventory.set_variable(host['name'], 'ansible_facts', self._get_facts(host))
+                    self.inventory.set_variable(host['name'], 'ansible_facts', self._get_facts_by_id(host))
