@@ -4,7 +4,7 @@ Thank you very much for your submission to Ansible. It sincerely means a lot to 
 
 Unfortunately, we're not sure if we want this feature in the program.
 
-However, we recommend looking into providing this functionality through Ansible Galaxy via Ansible Collections. You can find more information about collections at https://docs.ansible.com/ansible/devel/dev_guide/collections_tech_preview.html.
+However, we recommend looking into providing this functionality through Ansible Galaxy via Ansible Collections. You can find more information about collections at https://docs.ansible.com/ansible/devel/dev_guide/developing_collections.html.
 
 Thank you once again for this and your interest in Ansible!
 
