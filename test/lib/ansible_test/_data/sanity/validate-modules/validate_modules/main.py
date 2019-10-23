@@ -747,7 +747,7 @@ class ModuleValidator(Validator):
             if len(module_list) > 1:
                 self.reporter.error(
                     path=self.object_path,
-                    code='multiple-c#-utils-per-requires',
+                    code='multiple-csharp-utils-per-requires',
                     msg='Ansible C# util requirements do not support multiple utils per statement: "%s"' % req_stmt.group(0)
                 )
                 continue
@@ -765,7 +765,7 @@ class ModuleValidator(Validator):
         if not found_requires and REPLACER_WINDOWS not in self.text:
             self.reporter.error(
                 path=self.object_path,
-                code='missing-module-utils-import-c#-requirements',
+                code='missing-module-utils-import-csharp-requirements',
                 msg='No Ansible.ModuleUtils or C# Ansible util requirements/imports found'
             )
 

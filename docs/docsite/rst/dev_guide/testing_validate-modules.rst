@@ -99,7 +99,7 @@ Codes
   missing-main-call                                            Syntax               Error                  Did not find a call to ``main()`` (or ``removed_module()`` in the case of deprecated & docs only modules)
   missing-metadata                                             Documentation        Error                  No ``ANSIBLE_METADATA`` provided
   missing-module-utils-basic-import                            Imports              Warning                Did not find ``ansible.module_utils.basic`` import
-  missing-module-utils-import-c#                               Imports              Error                  No ``Ansible.ModuleUtils`` or C# Ansible util requirements/imports found
+  missing-module-utils-import-csharp-requirements              Imports              Error                  No ``Ansible.ModuleUtils`` or C# Ansible util requirements/imports found
   missing-powershell-interpreter                               Syntax               Error                  Interpreter line is not ``#!powershell``
   missing-python-doc                                           Naming               Error                  Missing python documentation file
   missing-python-interpreter                                   Syntax               Error                  Interpreter line is not ``#!/usr/bin/python``
@@ -110,7 +110,7 @@ Codes
   module-invalid-version-added                                 Documentation        Error                  Module level ``version_added`` is not a valid version number
   module-utils-specific-import                                 Imports              Error                  ``module_utils`` imports should import specific components, not ``*``
   multiple-utils-per-requires                                  Imports              Error                  ``Ansible.ModuleUtils`` requirements do not support multiple modules per statement
-  multiple-c#-utils-per-requires                               Imports              Error                  Ansible C# util requirements do not support multiple utils per statement
+  multiple-csharp-utils-per-requires                           Imports              Error                  Ansible C# util requirements do not support multiple utils per statement
   no-default-for-required-parameter                            Documentation        Error                  Option is marked as required but specifies a default. Arguments with a default should not be marked as required
   nonexistent-parameter-documented                             Documentation        Error                  Argument is listed in DOCUMENTATION.options, but not accepted by the module
   option-incorrect-version-added                               Documentation        Error                  ``version_added`` for new option is incorrect
