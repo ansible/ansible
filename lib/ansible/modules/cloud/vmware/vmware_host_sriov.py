@@ -187,7 +187,7 @@ class VmwareAdapterConfigManager(PyVmomi):
         :before     : dict, of params on target interface before changing
         :hostname   : str, hosthame
         :vmnic      : srt, target nic
-        :return     : dict, of params forwarded to vCenter, or raise fail in case iconsistancy 
+        :return     : dict, of params forwarded to vCenter, or raise fail in case iconsistancy
         """
         params_to_change = {
             "sriovEnabled": None,
@@ -201,14 +201,14 @@ class VmwareAdapterConfigManager(PyVmomi):
             self.module.fail_json(msg="allowed value for num_virt_func >= 0")
 
         if self.num_virt_func == 0:
-            if self.sriov_on == True:
+            if self.sriov_on is True:
                 self.module.fail_json(
                     msg="with sriov_on == true,  alowed value for num_virt_func > 0"
                 )
             params_to_change.update({"sriovEnabled": False, "numVirtualFunction": 0})
 
         if self.num_virt_func > 0:
-            if self.sriov_on == False:
+            if self.sriov_on is False:
                 self.module.fail_json(
                     msg="with sriov_on == false,  alowed value for num_virt_func is 0"
                 )
@@ -218,7 +218,8 @@ class VmwareAdapterConfigManager(PyVmomi):
 
             # check compatability
             if not before["sriovCapable"]:
-                self.module.fail_json(msg="sriov not supported on host= %s, nic= %s" % (hostname, vmnic)
+                self.module.fail_json(
+                    msg="sriov not supported on host= %s, nic= %s" % (hostname, vmnic)
                 )
 
             if (
@@ -237,7 +238,10 @@ class VmwareAdapterConfigManager(PyVmomi):
             ]
             params_to_change["change"] = True
         if before["numVirtualFunction"] != params_to_change["numVirtualFunction"]:
-            if before["numVirtualFunctionRequested"] != params_to_change["numVirtualFunction"]:
+            if (
+                before["numVirtualFunctionRequested"]
+                != params_to_change["numVirtualFunction"]
+            ):
                 params_to_change["changes"]["numVirtualFunction"] = params_to_change[
                     "numVirtualFunction"
                 ]
@@ -246,7 +250,10 @@ class VmwareAdapterConfigManager(PyVmomi):
                 params_to_change["changes"]["msg"] = "Not active (looks not rebooted) "
 
         if not params_to_change["change"]:
-            msg = params_to_change["changes"].get("msg", "") + "No any changes, already configured "
+            msg = (
+                params_to_change["changes"].get("msg", "")
+                + "No any changes, already configured "
+            )
             params_to_change["changes"]["msg"] = msg
         return params_to_change
 

@@ -25,10 +25,11 @@ def gen_mock_attrs(user_input):
     mock_attrs["hosts"] = [mock_host]
     return mock_attrs
 
+
 class AnsibleFailJson(Exception):
     """Exception class to be raised by module.fail_json and caught by the test case"""
     pass
- 
+
 
 def set_module_args(args):
     """prepare arguments so that they will be picked up during module creation"""
