@@ -6,19 +6,12 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
-
 DOCUMENTATION = '''
-
 module: uptimerobot
-short_description: Pause and start Uptime Robot monitoring
+short_description: Create, remove, pause and start monitors in Uptimerobot
 description:
-    - This module will let you start and pause Uptime Robot Monitoring
-author: "Nate Kingsley (@nate-kingsley)"
+    - This module lets you create, remove, pause and start monitors in Uptimerobot
+author: "Ninjiner (@Ninjiner)"
 version_added: "1.9"
 requirements:
     - Valid Uptime Robot API Key
@@ -27,46 +20,57 @@ options:
         description:
             - Define whether or not the monitor should be running or paused.
         required: true
-        choices: [ "started", "paused" ]
+        choices: [ "started", "paused", "created", "absent" ]
+    url:
+        description:
+            - Url to be checked
+        required: true
+    name:
+        description:
+            - The friendly name of the monitor
+        required: true
+    check_type:
+        description:
+            - The kind of check, that will be performed on the url.
+        choices: [ "http", "dns" ]
     monitorid:
         description:
             - ID of the monitor to check.
-        required: true
     apikey:
         description:
             - Uptime Robot API key.
         required: true
 notes:
-    - Support for adding and removing monitors and alert contacts has not yet been implemented.
+    - Support for further functionalities, which the api provides has not yet been implemented.
 '''
 
 EXAMPLES = '''
 # Pause the monitor with an ID of 12345.
 - uptimerobot:
-    monitorid: 12345
+    name: My domain
+    url: https://www.my-domain.com
     apikey: 12345-1234512345
     state: paused
 
-# Start the monitor with an ID of 12345.
+# Create an http checking monitor for https://www.my-domain.com
 - uptimerobot:
-    monitorid: 12345
+    state: created
+    url: https://www.my-domain.com
+    name: My domain
+    check_type: http
     apikey: 12345-1234512345
-    state: started
 '''
 
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 import json
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves.urllib.parse import urlencode
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import Request
 
-
-API_BASE = "https://api.uptimerobot.com/"
-
-API_ACTIONS = dict(
-    status='getMonitors?',
-    editMonitor='editMonitor?'
-)
+API_BASE = "https://api.uptimerobot.com/v2/"
 
 API_FORMAT = 'json'
 API_NOJSONCALLBACK = 1
@@ -74,77 +78,107 @@ CHANGED_STATE = False
 SUPPORTS_CHECK_MODE = False
 
 
-def checkID(module, params):
+class UptimeRobot:
+    def __init__(self, params, api_methods):
+        self.headers = {}
+        self.headers['Content-Type'] = "application/json"
+        self.uri = ''
+        self.api_methods = api_methods
+        self.params = params
+        self.params = self.check_dict(self.params)
+        for k, v in self.params.items():
+            if k == 'type':
+                if v == 'dns':
+                    self.params[k] = 2
+                else:
+                    self.params[k] = 1
+        self.body = json.dumps(self.params)
+        for state, method in self.api_methods.items():
+            if state == self.params['status']:
+                self.api_method = method
 
-    data = urlencode(params)
-    full_uri = API_BASE + API_ACTIONS['status'] + data
-    req, info = fetch_url(module, full_uri)
-    result = req.read()
-    jsonresult = json.loads(result)
-    req.close()
-    return jsonresult
+    def get_monitor_id(self, fname):
+        monitors = self.get_monitors()
+        for m_dict in monitors['monitors']:
+            if m_dict['friendly_name'] == fname:
+                mid = m_dict['id']
+                return mid
 
+    def get_monitors(self):
+        data = {}
+        data['api_key'] = self.params['api_key']
+        data = json.dumps(data)
+        self.uri = API_BASE + "getMonitors"
+        req = Request()
+        state = req.post(url=self.uri, data=data, headers=self.headers)
+        state = state.read()
+        state = json.loads(state)
+        return state #.decode('utf8')
 
-def startMonitor(module, params):
+    def api_request(self):
+        self.uri = API_BASE + self.api_method
+        req = Request()
+        state = req.post(url=self.uri, data=self.body, headers=self.headers)
+        state = state.read()
+        state = json.loads(state)
+        return state, self.api_method
 
-    params['monitorStatus'] = 1
-    data = urlencode(params)
-    full_uri = API_BASE + API_ACTIONS['editMonitor'] + data
-    req, info = fetch_url(module, full_uri)
-    result = req.read()
-    jsonresult = json.loads(result)
-    req.close()
-    return jsonresult['stat']
-
-
-def pauseMonitor(module, params):
-
-    params['monitorStatus'] = 0
-    data = urlencode(params)
-    full_uri = API_BASE + API_ACTIONS['editMonitor'] + data
-    req, info = fetch_url(module, full_uri)
-    result = req.read()
-    jsonresult = json.loads(result)
-    req.close()
-    return jsonresult['stat']
+    def check_dict(self, dictionary):
+        tmp = {}
+        for k, v in dictionary.items():
+            if v != '':
+                tmp[k] = v
+        if dictionary['status'] != 'created':
+            tmp['id'] = self.get_monitor_id(dictionary['friendly_name'])
+        dictionary.clear()
+        return tmp
 
 
 def main():
+    result = dict(
+        changed=False,
+        original_message='',
+        message=''
+    )
+
+    api_methods = dict(
+        started='editMonitor',
+        paused='editMonitor',
+        absent='deleteMonitor',
+        created='newMonitor'
+    )
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=True, choices=['started', 'paused']),
+            name=dict(required=True),
+            url=dict(required=True),
+            check_type=dict(required=False, choices=['http', 'dns']),
+            state=dict(required=True, choices=['started', 'paused', 'absent', 'created']),
             apikey=dict(required=True, no_log=True),
-            monitorid=dict(required=True)
+            monitorid=dict(required=False)
         ),
         supports_check_mode=SUPPORTS_CHECK_MODE
     )
 
     params = dict(
-        apiKey=module.params['apikey'],
-        monitors=module.params['monitorid'],
+        api_key=module.params['apikey'],
         monitorID=module.params['monitorid'],
+        friendly_name=module.params['name'],
+        url=module.params['url'],
+        type=module.params['check_type'],
+        status=module.params['state'],
         format=API_FORMAT,
         noJsonCallback=API_NOJSONCALLBACK
     )
 
-    check_result = checkID(module, params)
+    uprobot = UptimeRobot(params, api_methods)
+    state, api_method = uprobot.api_request()
+    result['message'] = state['stat']
+    result['original_message'] = state
+    if result['message'] != 'ok':
+        module.fail_json(msg='Could not perform action {0}'.format(api_method))
 
-    if check_result['stat'] != "ok":
-        module.fail_json(
-            msg="failed",
-            result=check_result['message']
-        )
-
-    if module.params['state'] == 'started':
-        monitor_result = startMonitor(module, params)
-    else:
-        monitor_result = pauseMonitor(module, params)
-
-    module.exit_json(
-        msg="success",
-        result=monitor_result
-    )
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
