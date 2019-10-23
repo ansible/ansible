@@ -113,7 +113,7 @@ and run Ansible from there.
 
 .. _python_interpreters:
 
-How do I handle Python not having a Python interpreter at /usr/bin/python on a remote machine?
+How do I handle not having a Python interpreter at /usr/bin/python on a remote machine?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 While you can write Ansible modules in any language, most Ansible modules are written in Python,
