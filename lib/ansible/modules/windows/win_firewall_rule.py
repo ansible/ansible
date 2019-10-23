@@ -144,4 +144,13 @@ EXAMPLES = r'''
     protocol: tcp
     state: present
     enabled: yes
+- name: Firewall rule to allow port range
+  win_firewall_rule:
+    name: Sample port range
+    localport: 5000-5010
+    action: allow
+    direction: in
+    protocol: tcp
+    state: present
+    enabled: yes
 '''
