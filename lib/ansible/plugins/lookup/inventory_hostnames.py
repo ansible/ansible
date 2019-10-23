@@ -37,7 +37,7 @@ RETURN = """
 from ansible.inventory.manager import split_host_pattern, order_patterns
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.helpers import deduplicate_list
-
+from re import match
 
 class LookupModule(LookupBase):
 
@@ -52,6 +52,10 @@ class LookupModule(LookupBase):
             hosts = variables['groups'][obj]
         elif obj in variables['groups']['all']:
             hosts = [obj]
+        elif "*" in obj:
+            obj = obj.replace("*", ".*")
+            matched_hosts = filter(lambda p_host: match(obj, p_host), variables['groups']['all'])
+            hosts.extend(matched_hosts)
         return hosts
 
     def run(self, terms, variables=None, **kwargs):
