@@ -5,6 +5,26 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.0rc5
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2019-10-23
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Fix SSL protcol references in the ``mqtt`` module to prevent failures on Python 2.6.
+- The ansible-galaxy publish command was using an incorrect URL for v3 servers. The configuration for v3 servers includes part of the path fragment that was added in the new test.
+- ansible-test import sanity test now consistently reports errors against the file being tested.
+- ansible-test import sanity test now consistently reports warnings as errors.
+- ansible-test import sanity test now properly handles relative imports.
+- ansible-test import sanity test now properly invokes Ansible modules as scripts.
+
 v2.9.0rc4
 =========
 

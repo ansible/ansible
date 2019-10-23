@@ -1295,3 +1295,11 @@ releases:
     - no-log-sub-options-invalid-parameter.yaml
     - v2.9.0rc4_summary.yaml
     release_date: '2019-10-17'
+  2.9.0rc5:
+    codename: Immigrant Song
+    fragments:
+    - ansible-test-fix-import-sanity-test.yml
+    - fix-ansible-galaxy-server.yml
+    - mqtt-ssl-protocols.yml
+    - v2.9.0rc5_summary.yaml
+    release_date: '2019-10-23'
