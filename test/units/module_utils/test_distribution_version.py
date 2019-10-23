@@ -1373,7 +1373,11 @@ TESTSETS = [
 ]
 
 
-@pytest.mark.parametrize("stdin, testcase", product([{}], TESTSETS), ids=lambda x: x.get('name'), indirect=['stdin'])
+def get_test_name(obj):
+    return obj.get('name')
+
+
+@pytest.mark.parametrize("stdin, testcase", product([{}], TESTSETS), ids=get_test_name, indirect=['stdin'])
 def test_distribution_version(am, mocker, testcase):
     """tests the distribution parsing code of the Facts class
 
