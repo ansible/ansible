@@ -184,7 +184,6 @@ def main():
 
     lines = module.params['lines']
 
-
     result = {'changed': False}
     if len(lines) > 0:
         candidate = NetworkConfig(indent=1)
