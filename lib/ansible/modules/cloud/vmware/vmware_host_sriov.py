@@ -218,8 +218,7 @@ class VmwareAdapterConfigManager(PyVmomi):
 
             # check compatability
             if not before["sriovCapable"]:
-                self.module.fail_json(
-                    "sriov not supported on host= %s, nic= %s" % (hostname, vmnic)
+                self.module.fail_json(msg="sriov not supported on host= %s, nic= %s" % (hostname, vmnic)
                 )
 
             if (
@@ -238,14 +237,17 @@ class VmwareAdapterConfigManager(PyVmomi):
             ]
             params_to_change["change"] = True
         if before["numVirtualFunction"] != params_to_change["numVirtualFunction"]:
-            params_to_change["changes"]["numVirtualFunction"] = params_to_change[
-                "numVirtualFunction"
-            ]
-            params_to_change["change"] = True
+            if before["numVirtualFunctionRequested"] != params_to_change["numVirtualFunction"]:
+                params_to_change["changes"]["numVirtualFunction"] = params_to_change[
+                    "numVirtualFunction"
+                ]
+                params_to_change["change"] = True
+            else:
+                params_to_change["changes"]["msg"] = "Not active (looks not rebooted) "
 
         if not params_to_change["change"]:
-            params_to_change["changes"]["msg"] = "No any changes, already configured"
-
+            msg = params_to_change["changes"].get("msg", "") + "No any changes, already configured "
+            params_to_change["changes"]["msg"] = msg
         return params_to_change
 
     def set_host_state(self):
