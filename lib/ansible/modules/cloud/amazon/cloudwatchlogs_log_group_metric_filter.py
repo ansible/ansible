@@ -27,6 +27,7 @@ options:
         - Whether the rule is present, absent or get
       choices: ["present", "absent"]
       required: true
+      type: str
     log_group_name:
       description:
         - The name of the log group where the metric filter is applied on.
