@@ -97,9 +97,8 @@ def main():
     output = output + str(cnos.run_cnos_commands(module, cmd))
 
     # Save it into the file
-    file = open(outputfile, "a")
-    file.write(output)
-    file.close()
+    with open(outputfile, "a") as fh:
+        fh.write(output)
 
     errorMsg = cnos.checkOutputForError(output)
     if(errorMsg in "Device Response Timed out"):

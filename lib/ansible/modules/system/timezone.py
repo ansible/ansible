@@ -617,11 +617,11 @@ class SmartOSTimezone(Timezone):
         """
         if key == 'name':
             try:
-                f = open('/etc/default/init', 'r')
-                for line in f:
-                    m = re.match('^TZ=(.*)$', line.strip())
-                    if m:
-                        return m.groups()[0]
+                with open('/etc/default/init', 'r') as f:
+                    for line in f:
+                        m = re.match('^TZ=(.*)$', line.strip())
+                        if m:
+                            return m.groups()[0]
             except Exception:
                 self.module.fail_json(msg='Failed to read /etc/default/init')
         else:
@@ -800,9 +800,8 @@ class AIXTimezone(Timezone):
     def __get_timezone(self):
         """ Return the current value of TZ= in /etc/environment """
         try:
-            f = open('/etc/environment', 'r')
-            etcenvironment = f.read()
-            f.close()
+            with open('/etc/environment', 'r') as f:
+                etcenvironment = f.read()
         except Exception:
             self.module.fail_json(msg='Issue reading contents of /etc/environment')
 

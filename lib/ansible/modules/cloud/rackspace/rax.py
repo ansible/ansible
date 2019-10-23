@@ -288,9 +288,8 @@ def create(module, names=None, flavor=None, image=None, meta=None, key_name=None
     if user_data and os.path.isfile(os.path.expanduser(user_data)):
         try:
             user_data = os.path.expanduser(user_data)
-            f = open(user_data)
-            user_data = f.read()
-            f.close()
+            with open(user_data) as f:
+                user_data = f.read()
         except Exception as e:
             module.fail_json(msg='Failed to load %s' % user_data)
 
@@ -298,9 +297,8 @@ def create(module, names=None, flavor=None, image=None, meta=None, key_name=None
     for rpath in files.keys():
         lpath = os.path.expanduser(files[rpath])
         try:
-            fileobj = open(lpath, 'r')
-            files[rpath] = fileobj.read()
-            fileobj.close()
+            with open(lpath, 'r') as fileobj:
+                files[rpath] = fileobj.read()
         except Exception as e:
             module.fail_json(msg='Failed to load %s' % lpath)
     try:

@@ -283,9 +283,8 @@ def write_on_file(content, filename, module):
         path += '/'
     filepath = '{0}{1}'.format(path, filename)
     try:
-        report = open(filepath, 'w')
-        report.write(content)
-        report.close()
+        with open(filepath, 'w') as report:
+            report.write(content)
     except Exception:
         module.fail_json(msg="Error while writing on file.")
 

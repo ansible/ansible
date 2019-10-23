@@ -115,15 +115,13 @@ def not_in_host_file(self, host):
             continue
 
         try:
-            host_fh = open(hf)
+            with open(hf) as host_fh:
+                data = host_fh.readlines()
         except IOError:
             hfiles_not_found += 1
             continue
-        else:
-            data = host_fh.read()
-            host_fh.close()
 
-        for line in data.split("\n"):
+        for line in data:
             if line is None or " " not in line:
                 continue
             tokens = line.split()

@@ -1,0 +1,2 @@
+bugfixes:
+  - use a context manager for file handling in many places.

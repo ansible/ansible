@@ -253,10 +253,9 @@ class CronTab(object):
         if self.cron_file:
             # read the cronfile
             try:
-                f = open(self.cron_file, 'r')
-                self.existing = f.read()
-                self.lines = self.existing.splitlines()
-                f.close()
+                with open(self.cron_file, 'r') as f:
+                    self.existing = f.read()
+                    self.lines = self.existing.splitlines()
             except IOError:
                 # cron file does not exist
                 return

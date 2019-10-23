@@ -259,9 +259,8 @@ def main():
     # cnos.debugOutput(path[0])
     if not os.path.exists(path[0]):
         os.makedirs(path[0])
-    file = open(outputfile, "a")
-    file.write(output)
-    file.close()
+    with open(outputfile, "a") as fh:
+        fh.write(output)
 
     # Logic to check when changes occur or not
     errorMsg = cnos.checkOutputForError(output)

@@ -223,7 +223,8 @@ def backup(module, running_config):
     else:
         filename = '%s/%s_config.%s' % (backup_path, module.params['host'], tstamp)
     try:
-        open(filename, 'w').write(running_config)
+        with open(filename, 'w') as f:
+            f.write(running_config)
     except Exception:
         module.fail_json(msg="Can't create backup file {0} Permission denied ?".format(filename))
 
@@ -262,9 +263,8 @@ class AnsibleFortios(object):
         # load in file_mode
         if self.module.params['file_mode']:
             try:
-                f = open(self.module.params['config_file'], 'r')
-                running = f.read()
-                f.close()
+                with open(self.module.params['config_file'], 'r') as f:
+                    running = f.read()
             except IOError as e:
                 self.module.fail_json(msg='Error reading configuration file. %s' % to_text(e),
                                       exception=traceback.format_exc())
@@ -297,9 +297,8 @@ class AnsibleFortios(object):
         if change_string and not self.module.check_mode:
             if self.module.params['file_mode']:
                 try:
-                    f = open(self.module.params['config_file'], 'w')
-                    f.write(self.candidate_config.to_text())
-                    f.close()
+                    with open(self.module.params['config_file'], 'w') as f:
+                        f.write(self.candidate_config.to_text())
                 except IOError as e:
                     self.module.fail_json(msg='Error writing configuration file. %s' %
                                           to_text(e), exception=traceback.format_exc())

@@ -73,9 +73,8 @@ class RegistrationBase(object):
             else:
                 cfg.set('main', 'enabled', 0)
 
-            fd = open(tmpfile, 'w+')
-            cfg.write(fd)
-            fd.close()
+            with open(tmpfile, 'w+') as fd:
+                cfg.write(fd)
             self.module.atomic_move(tmpfile, plugin_conf)
 
     def subscribe(self, **kwargs):

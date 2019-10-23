@@ -184,13 +184,13 @@ class SystemctlScanService(BaseService):
     def systemd_enabled(self):
         # Check if init is the systemd command, using comm as cmdline could be symlink
         try:
-            f = open('/proc/1/comm', 'r')
+            with open('/proc/1/comm', 'r') as f:
+                for line in f:
+                    if 'systemd' in line:
+                        return True
         except IOError:
             # If comm doesn't exist, old kernel, no systemd
             return False
-        for line in f:
-            if 'systemd' in line:
-                return True
         return False
 
     def gather_services(self):

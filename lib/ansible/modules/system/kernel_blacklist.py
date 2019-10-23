@@ -69,9 +69,8 @@ class Blacklist(object):
         return r'^blacklist\s*' + self.module + '$'
 
     def readlines(self):
-        f = open(self.filename, 'r')
-        lines = f.readlines()
-        f.close()
+        with open(self.filename, 'r') as f:
+            lines = f.readlines()
         return lines
 
     def module_listed(self):

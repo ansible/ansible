@@ -167,11 +167,11 @@ works on both versions:
     from ansible.module_utils._text import to_bytes
 
     filename = u'/var/tmp/くらとみ.txt'
-    f = open(to_bytes(filename), 'wb')
-    mtime = os.path.getmtime(to_bytes(filename))
-    b_filename = os.path.expandvars(to_bytes(filename))
-    if os.path.exists(to_bytes(filename)):
-        pass
+    with open(to_bytes(filename), 'wb') as f:
+        mtime = os.path.getmtime(to_bytes(filename))
+        b_filename = os.path.expandvars(to_bytes(filename))
+        if os.path.exists(to_bytes(filename)):
+            pass
 
 When you are only manipulating a filename as a string without talking to the
 filesystem (or a C library which talks to the filesystem) you can often get

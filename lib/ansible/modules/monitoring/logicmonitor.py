@@ -504,7 +504,6 @@ import os
 import platform
 import socket
 import sys
-import types
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
@@ -550,9 +549,9 @@ class LogicMonitor(object):
             headers = {"X-LM-User-Agent": self.__version__}
 
             # Set headers
-            f = open_url(url, headers=headers)
+            with open_url(url, headers=headers) as f:
 
-            raw = f.read()
+                raw = f.read()
             resp = json.loads(raw)
             if resp["status"] == 403:
                 self.module.debug("Authentication failed.")

@@ -76,12 +76,11 @@ def is_available(name, ubuntuMode):
         __locales_available = '/etc/locale.gen'
 
     re_compiled = re.compile(__regexp)
-    fd = open(__locales_available, 'r')
-    for line in fd:
-        result = re_compiled.match(line)
-        if result and result.group('locale') == name:
-            return True
-    fd.close()
+    with open(__locales_available, 'r') as fd:
+        for line in fd:
+            result = re_compiled.match(line)
+            if result and result.group('locale') == name:
+                return True
     return False
 
 
@@ -103,15 +102,16 @@ def fix_case(name):
 def replace_line(existing_line, new_line):
     """Replaces lines in /etc/locale.gen"""
     try:
-        f = open("/etc/locale.gen", "r")
-        lines = [line.replace(existing_line, new_line) for line in f]
-    finally:
-        f.close()
+        with open("/etc/locale.gen", "r") as f:
+            lines = [line.replace(existing_line, new_line) for line in f.readlines()]
+    except IOError:
+        pass
+
     try:
-        f = open("/etc/locale.gen", "w")
-        f.write("".join(lines))
-    finally:
-        f.close()
+        with open("/etc/locale.gen", "w") as f:
+            f.write("".join(lines))
+    except IOError:
+        pass
 
 
 def set_locale(name, enabled=True):
@@ -122,15 +122,13 @@ def set_locale(name, enabled=True):
     else:
         new_string = r'# %s \g<charset>' % (name)
     try:
-        f = open("/etc/locale.gen", "r")
-        lines = [re.sub(search_string, new_string, line) for line in f]
-    finally:
-        f.close()
-    try:
-        f = open("/etc/locale.gen", "w")
-        f.write("".join(lines))
-    finally:
-        f.close()
+        with open("/etc/locale.gen", "r") as f:
+            lines = [re.sub(search_string, new_string, line) for line in f]
+
+        with open("/etc/locale.gen", "w") as f:
+            f.write("".join(lines))
+    except IOError:
+        pass
 
 
 def apply_change(targetState, name):
@@ -165,19 +163,13 @@ def apply_change_ubuntu(targetState, name):
         localeGenExitValue = call(["locale-gen", name])
     else:
         # Delete locale involves discarding the locale from /var/lib/locales/supported.d/local and regenerating all locales.
-        try:
-            f = open("/var/lib/locales/supported.d/local", "r")
+        with open("/var/lib/locales/supported.d/local", "r") as f:
             content = f.readlines()
-        finally:
-            f.close()
-        try:
-            f = open("/var/lib/locales/supported.d/local", "w")
+        with open("/var/lib/locales/supported.d/local", "w") as f:
             for line in content:
                 locale, charset = line.split(' ')
                 if locale != name:
                     f.write(line)
-        finally:
-            f.close()
         # Purge locales and regenerate.
         # Please provide a patch if you know how to avoid regenerating the locales to keep!
         localeGenExitValue = call(["locale-gen", "--purge"])

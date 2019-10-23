@@ -286,10 +286,10 @@ class SourcesList(object):
 
     def load(self, file):
         group = []
-        f = open(file, 'r')
-        for n, line in enumerate(f):
-            valid, enabled, source, comment = self._parse(line)
-            group.append((n, valid, enabled, source, comment))
+        with open(file, 'r') as f:
+            for n, line in enumerate(f):
+                valid, enabled, source, comment = self._parse(line)
+                group.append((n, valid, enabled, source, comment))
         self.files[file] = group
 
     def save(self):

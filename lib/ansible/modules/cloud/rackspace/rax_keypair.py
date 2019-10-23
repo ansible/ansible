@@ -108,9 +108,8 @@ def rax_keypair(module, name, public_key, state):
     if state == 'present':
         if public_key and os.path.isfile(public_key):
             try:
-                f = open(public_key)
-                public_key = f.read()
-                f.close()
+                with open(public_key) as f:
+                    public_key = f.read()
             except Exception as e:
                 module.fail_json(msg='Failed to load %s' % public_key)
 

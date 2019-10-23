@@ -619,9 +619,8 @@ class InventoryManager(object):
             # allow Unix style @filename data
             for x in subset_patterns:
                 if x[0] == "@":
-                    fd = open(x[1:])
-                    results.extend([to_text(l.strip()) for l in fd.read().split("\n")])
-                    fd.close()
+                    with open(x[1:]) as fd:
+                        results.extend([to_text(l.strip()) for l in fd.readlines()])
                 else:
                     results.append(to_text(x))
             self._subset = results

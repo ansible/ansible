@@ -413,8 +413,8 @@ class AzureRMStorageBlob(AzureRMModuleBase):
         if not os.path.isfile(self.src):
             self.fail("The source path must be a file.")
         try:
-            fp = open(self.src, 'r')
-            fp.close()
+            with open(self.src, 'r') as fp:
+                pass
         except IOError:
             self.fail("Failed to access {0}. Make sure the file exists and that you have "
                       "read access.".format(self.src))

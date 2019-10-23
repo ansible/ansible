@@ -343,14 +343,13 @@ def checkOutputForError(output):
 
     errorFile = "dictionary/ErrorCodes.lvo"
     try:
-        # with open(errorFile, 'r') as f:
-        f = open(errorFile, 'r')
-        for line in f:
-            if('=' in line):
-                data = line.split('=')
-                if(data[0].strip() == errorCode):
-                    errorString = data[1].strip()
-                    return errorString
+        with open(errorFile, 'r') as f:
+            for line in f:
+                if('=' in line):
+                    data = line.split('=')
+                    if(data[0].strip() == errorCode):
+                        errorString = data[1].strip()
+                        return errorString
     except Exception:
         errorString = cnos_errorcodes.getErrorString(errorCode)
         errorString = errorString.strip()
@@ -372,14 +371,14 @@ def getRuleStringForVariable(deviceType, ruleFile, variableId):
     retVal = ""
     try:
         # with open(ruleFile, 'r') as f:
-        f = open(ruleFile, 'r')
-        for line in f:
-            # debugOutput(line)
-            if(':' in line):
-                data = line.split(':')
-                # debugOutput(data[0])
-                if(data[0].strip() == variableId):
-                    retVal = line
+        with open(ruleFile, 'r') as f:
+            for line in f:
+                # debugOutput(line)
+                if(':' in line):
+                    data = line.split(':')
+                    # debugOutput(data[0])
+                    if(data[0].strip() == variableId):
+                        retVal = line
     except Exception:
         ruleString = cnos_devicerules.getRuleString(deviceType, variableId)
         retVal = ruleString.strip()
@@ -654,7 +653,6 @@ def checkLong(s):
 
 
 def debugOutput(command):
-    f = open('debugOutput.txt', 'a')
-    f.write(str(command))  # python will convert \n to os.linesep
-    f.close()  # you can omit in most cases as the destructor will call it
+    with open('debugOutput.txt', 'a') as f:
+        f.write(str(command))  # python will convert \n to os.linesep
 # EOM

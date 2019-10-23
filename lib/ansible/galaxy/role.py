@@ -98,13 +98,11 @@ class GalaxyRole(object):
                 meta_path = os.path.join(self.path, meta_main)
                 if os.path.isfile(meta_path):
                     try:
-                        f = open(meta_path, 'r')
-                        self._metadata = yaml.safe_load(f)
+                        with open(meta_path, 'r') as f:
+                            self._metadata = yaml.safe_load(f)
                     except Exception:
                         display.vvvvv("Unable to load metadata for %s" % self.name)
                         return False
-                    finally:
-                        f.close()
 
         return self._metadata
 
@@ -118,13 +116,11 @@ class GalaxyRole(object):
             info_path = os.path.join(self.path, self.META_INSTALL)
             if os.path.isfile(info_path):
                 try:
-                    f = open(info_path, 'r')
-                    self._install_info = yaml.safe_load(f)
+                    with open(info_path, 'r') as f:
+                        self._install_info = yaml.safe_load(f)
                 except Exception:
                     display.vvvvv("Unable to load Galaxy install info for %s" % self.name)
                     return False
-                finally:
-                    f.close()
         return self._install_info
 
     def _write_galaxy_install_info(self):

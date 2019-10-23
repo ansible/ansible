@@ -156,11 +156,8 @@ def main():
             changed, reason = existing_line.opts.remove(opts)
 
     if changed and not module.check_mode:
-        try:
-            f = open(path, 'wb')
+        with open(path, 'wb') as f:
             f.write(to_bytes(crypttab, errors='surrogate_or_strict'))
-        finally:
-            f.close()
 
     module.exit_json(changed=changed, msg=reason, **module.params)
 
@@ -175,12 +172,9 @@ class Crypttab(object):
                 os.makedirs(os.path.dirname(path))
             open(path, 'a').close()
 
-        try:
-            f = open(path, 'r')
+        with open(path, 'r') as f:
             for line in f.readlines():
                 self._lines.append(Line(line))
-        finally:
-            f.close()
 
     def add(self, line):
         self._lines.append(line)

@@ -188,18 +188,17 @@ class Zone(object):
             self.module.fail_json(msg='Missing required argument: path')
 
         if not self.module.check_mode:
-            t = tempfile.NamedTemporaryFile(delete=False)
+            with tempfile.NamedTemporaryFile(delete=False) as t:
 
-            if self.sparse:
-                t.write('create %s\n' % self.create_options)
-                self.msg.append('creating sparse-root zone')
-            else:
-                t.write('create -b %s\n' % self.create_options)
-                self.msg.append('creating whole-root zone')
+                if self.sparse:
+                    t.write('create %s\n' % self.create_options)
+                    self.msg.append('creating sparse-root zone')
+                else:
+                    t.write('create -b %s\n' % self.create_options)
+                    self.msg.append('creating whole-root zone')
 
-            t.write('set zonepath=%s\n' % self.path)
-            t.write('%s\n' % self.config)
-            t.close()
+                t.write('set zonepath=%s\n' % self.path)
+                t.write('%s\n' % self.config)
 
             cmd = '%s -z %s -f %s' % (self.zonecfg_cmd, self.name, t.name)
             (rc, out, err) = self.module.run_command(cmd)
@@ -237,26 +236,25 @@ class Zone(object):
         if os.path.isfile('%s/root/etc/.UNCONFIGURED' % self.path):
             os.unlink('%s/root/etc/.UNCONFIGURED' % self.path)
 
-        open('%s/root/noautoshutdown' % self.path, 'w').close()
+        with open('%s/root/noautoshutdown' % self.path, 'w') as f:
+            pass  # just to close it after opening it
 
-        node = open('%s/root/etc/nodename' % self.path, 'w')
-        node.write(self.name)
-        node.close()
+        with open('%s/root/etc/nodename' % self.path, 'w') as node:
+            node.write(self.name)
 
-        id = open('%s/root/etc/.sysIDtool.state' % self.path, 'w')
-        id.write('1       # System previously configured?\n')
-        id.write('1       # Bootparams succeeded?\n')
-        id.write('1       # System is on a network?\n')
-        id.write('1       # Extended network information gathered?\n')
-        id.write('0       # Autobinder succeeded?\n')
-        id.write('1       # Network has subnets?\n')
-        id.write('1       # root password prompted for?\n')
-        id.write('1       # locale and term prompted for?\n')
-        id.write('1       # security policy in place\n')
-        id.write('1       # NFSv4 domain configured\n')
-        id.write('0       # Auto Registration Configured\n')
-        id.write('vt100')
-        id.close()
+        with open('%s/root/etc/.sysIDtool.state' % self.path, 'w') as fh:
+            fh.write('1       # System previously configured?\n')
+            fh.write('1       # Bootparams succeeded?\n')
+            fh.write('1       # System is on a network?\n')
+            fh.write('1       # Extended network information gathered?\n')
+            fh.write('0       # Autobinder succeeded?\n')
+            fh.write('1       # Network has subnets?\n')
+            fh.write('1       # root password prompted for?\n')
+            fh.write('1       # locale and term prompted for?\n')
+            fh.write('1       # security policy in place\n')
+            fh.write('1       # NFSv4 domain configured\n')
+            fh.write('0       # Auto Registration Configured\n')
+            fh.write('vt100')
 
     def configure_ssh_keys(self):
         rsa_key_file = '%s/root/etc/ssh/ssh_host_rsa_key' % self.path
@@ -277,9 +275,8 @@ class Zone(object):
     def configure_password(self):
         shadow = '%s/root/etc/shadow' % self.path
         if self.root_password:
-            f = open(shadow, 'r')
-            lines = f.readlines()
-            f.close()
+            with open(shadow, 'r') as f:
+                lines = f.readlines()
 
             for i in range(0, len(lines)):
                 fields = lines[i].split(':')
@@ -287,10 +284,8 @@ class Zone(object):
                     fields[1] = self.root_password
                     lines[i] = ':'.join(fields)
 
-            f = open(shadow, 'w')
-            for line in lines:
-                f.write(line)
-            f.close()
+            with open(shadow, 'w') as f:
+                f.writelines(lines)
 
     def boot(self):
         if not self.module.check_mode:

@@ -166,9 +166,8 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
     print("* including generated source, if any, saving to: %s" % modfile2_path)
     if module_style not in ('ansiballz', 'old'):
         print("* this may offset any line numbers in tracebacks/debuggers!")
-    modfile2 = open(modfile2_path, 'wb')
-    modfile2.write(module_data)
-    modfile2.close()
+    with open(modfile2_path, 'wb') as modfile2:
+        modfile2.write(module_data)
     modfile = modfile2_path
 
     return (modfile2_path, modname, module_style)

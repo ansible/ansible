@@ -151,11 +151,8 @@ def do_ini(module, filename, section=None, option=None, value=None,
             os.makedirs(destpath)
         ini_lines = []
     else:
-        ini_file = open(filename, 'r')
-        try:
+        with open(filename, 'r') as ini_file:
             ini_lines = ini_file.readlines()
-        finally:
-            ini_file.close()
 
     if module._diff:
         diff['before'] = ''.join(ini_lines)

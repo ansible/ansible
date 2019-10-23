@@ -521,14 +521,8 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
     """Gather mount information"""
 
     try:
-        f = open(mntinfo_file)
-    except IOError:
-        return
-
-    lines = map(str.strip, f.readlines())
-
-    try:
-        f.close()
+        with open(mntinfo_file) as f:
+            lines = map(str.strip, f.readlines())
     except IOError:
         module.fail_json(msg="Cannot close file %s" % mntinfo_file)
 

@@ -306,13 +306,12 @@ def compute_diff(path, found_line, replace_or_add, state, key):
         'after': '',
     }
     try:
-        inf = open(path, "r")
+        with open(path, "r") as inf:
+            diff['before'] = inf.read()
     except IOError as e:
         if e.errno == errno.ENOENT:
             diff['before_header'] = '/dev/null'
-    else:
-        diff['before'] = inf.read()
-        inf.close()
+
     lines = diff['before'].splitlines(1)
     if (replace_or_add or state == 'absent') and found_line is not None and 1 <= found_line <= len(lines):
         del lines[found_line - 1]

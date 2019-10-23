@@ -173,9 +173,8 @@ def rax_asg(module, cooldown=300, disk_config=None, files=None, flavor=None,
 
     if user_data and os.path.isfile(user_data):
         try:
-            f = open(user_data)
-            user_data = f.read()
-            f.close()
+            with open(user_data) as f:
+                user_data = f.read()
         except Exception as e:
             module.fail_json(msg='Failed to load %s' % user_data)
 
@@ -212,12 +211,11 @@ def rax_asg(module, cooldown=300, disk_config=None, files=None, flavor=None,
             for rpath in files.keys():
                 lpath = os.path.expanduser(files[rpath])
                 try:
-                    f = open(lpath, 'r')
-                    personality.append({
-                        'path': rpath,
-                        'contents': f.read()
-                    })
-                    f.close()
+                    with open(lpath, 'r') as f:
+                        personality.append({
+                            'path': rpath,
+                            'contents': f.read()
+                        })
                 except Exception as e:
                     module.fail_json(msg='Failed to load %s' % lpath)
 

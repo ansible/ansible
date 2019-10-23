@@ -111,7 +111,8 @@ class IntersightModule():
             self.module.fail_json(msg='cryptography is required for this module')
         self.host = self.module.params['api_uri']
         self.public_key = self.module.params['api_key_id']
-        self.private_key = open(self.module.params['api_private_key'], 'r').read()
+        with open(self.module.params['api_private_key'], 'r') as f:
+            self.private_key = f.read()
         self.digest_algorithm = 'rsa-sha256'
         self.response_list = []
 
