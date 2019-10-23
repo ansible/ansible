@@ -1350,15 +1350,16 @@ TESTSETS = [
             ""
         ],
         "platform.system": "DragonFly",
+        "platform.release": "5.6-RELEASE",
         "input": {},
         "command_output": "DragonFly v5.6.2-RELEASE #3: Sat Aug 10 10:28:36 EDT 2019\n"
             "root@www.shiningsilence.com:/usr/obj/home/justin/release/5_6/sys/X86_64_GENERIC",
         "result": {
-            "distribution_release": "5.6.2-RELEASE",
+            "distribution_release": "5.6-RELEASE",
             "distribution": "DragonFly",
             "distribution_major_version": "5",
-            "os_family": "DragonFly",
-            "distribution_version": "5.6.2"
+            "distribution_version": "5.6.2",
+            "os_family": "DragonFly"
         },
         "name": "DragonFly v5.6.2-RELEASE #3",
         "distro": {

@@ -50,7 +50,6 @@ for f in filelist:
             with open(f) as fh:
                 fcont[f] = fh.read()
 
-dist = distro.linux_distribution(full_distribution_name=False)
 
 facts = ['distribution', 'distribution_version', 'distribution_release', 'distribution_major_version', 'os_family']
 
@@ -72,6 +71,7 @@ for fact in facts:
         ansible_facts[fact] = "N/A"
 
 nicename = ansible_facts['distribution'] + ' ' + ansible_facts['distribution_version']
+dist = distro.linux_distribution(full_distribution_name=False)
 
 output = {
     'name': nicename,
@@ -90,5 +90,9 @@ output = {
 system = platform.system()
 if system != 'Linux':
     output['platform.system'] = system
+
+release = platform.release()
+if release:
+    output['platform.release'] = release
 
 print(json.dumps(output, indent=4))

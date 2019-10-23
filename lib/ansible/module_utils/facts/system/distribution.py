@@ -588,7 +588,6 @@ class Distribution(object):
         if match:
             dragonfly_facts['distribution_major_version'] = match.group(1)
             dragonfly_facts['distribution_version'] = '%s.%s.%s' % match.groups()[:3]
-            dragonfly_facts['distribution_release'] = '%s.%s.%s-%s' % match.groups()[:4]
         return dragonfly_facts
 
     def get_distribution_NetBSD(self):
