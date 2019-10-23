@@ -74,6 +74,6 @@ def ansible_native_concat(nodes, preserve_quotes=True):
     # Without this, "'{{ a }}', '{{ b }}'" results in "a, b", but should
     # be ('a', 'b').
     if preserve_quotes and isinstance(literal, string_types):
-        return "{quote}{}{quote}".format(literal, quote=raw[0])
+        return "{quote}{0}{quote}".format(literal, quote=raw[0])
 
     return literal
