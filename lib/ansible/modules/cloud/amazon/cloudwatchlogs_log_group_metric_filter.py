@@ -26,7 +26,7 @@ options:
       description:
         - Whether the rule is present, absent or get
       choices: ["present", "absent"]
-      default: present
+      required: true
     log_group_name:
       description:
         - The name of the log group where the metric filter is applied on.
@@ -149,7 +149,7 @@ def metricTransformationHandler(metricTransformations, originMetricTransformatio
 def main():
 
     arg_spec = dict(
-        state=dict(choices=['present', 'absent'], default='present'),
+        state=dict(type='str', required=True, choices=['present', 'absent']),
         log_group_name=dict(type='str', required=True),
         filter_name=dict(type='str', required=True),
         filter_pattern=dict(type='str', required=True),
