@@ -216,6 +216,7 @@ class VMWareInventory(object):
             'cache_path': '~/.ansible/tmp',
             'cache_max_age': 3600,
             'max_object_level': 1,
+            # minimum of 4 required for 'use_hw_if_as_host' to work. It will default to 4 in that case if set lower.
             'skip_keys': 'declaredalarmstate,'
                          'disabledmethod,'
                          'dynamicproperty,'
@@ -227,6 +228,10 @@ class VMWareInventory(object):
                          'resourceconfig',
             'alias_pattern': '{{ config.name + "_" + config.uuid }}',
             'host_pattern': '{{ guest.ipaddress }}',
+            'use_hw_if_as_host': 'False',
+            # requires 'max_object_level': 4 (minimum) will check and set automatically if this is enabled.
+            'hw_if_ip_filter': '',
+            # filter string to filter (start of) ip addresses for 'use_hw_if_as_host'
             'host_filters': '{{ runtime.powerstate == "poweredOn" }}',
             'groupby_patterns': '{{ guest.guestid }},{{ "templates" if config.template else "guests"}}',
             'lower_var_keys': True,
@@ -279,6 +284,9 @@ class VMWareInventory(object):
 
         # behavior control
         self.maxlevel = int(config.get('vmware', 'max_object_level'))
+        # maxlevel >= 4 required for 'use_hw_if_as_host' to work
+        if config.get('vmware', 'use_hw_if_as_host').lower() == 'true' and self.maxlevel < 4:
+            self.maxlevel = 4
         self.debugl('max object level is %s' % self.maxlevel)
         self.lowerkeys = config.get('vmware', 'lower_var_keys')
         if type(self.lowerkeys) != bool:
@@ -449,9 +457,11 @@ class VMWareInventory(object):
         )
 
         # Make a map of the uuid to the ssh hostname the user wants
-        host_mapping = self.create_template_mapping(
+        host_mapping = self.create_host_mapping(
             inventory,
-            self.config.get('vmware', 'host_pattern')
+            self.config.get('vmware', 'host_pattern'),
+            self.config.get('vmware', 'use_hw_if_as_host'),
+            self.config.get('vmware', 'hw_if_ip_filter')
         )
 
         # Reset the inventory keys
@@ -559,6 +569,65 @@ class VMWareInventory(object):
             elif dtype == 'string':
                 pass
             mapping[k] = newkey
+        return mapping
+
+    def create_host_mapping(self, inventory, pattern, use_hw_if='False', ip_filter="", dtype='string'):
+        ''' Return a hash of uuid to templated string from pattern '''
+        if use_hw_if.lower() == 'true':
+            mapping = {}
+            test = inventory['_meta']['hostvars'].items()
+            for k, v in inventory['_meta']['hostvars'].items():
+
+                patt = pattern
+                patt_set = False
+
+                for device in v['config']['hardware']['device']:
+                    if patt_set:
+                        break
+                    if 'macaddress' in device:
+                        if patt_set:
+                            break
+                        mac = device['macaddress']
+                        for netdev in v['guest']['net']:
+                            if patt_set:
+                                break
+                            if 'macaddress' in netdev and netdev['macaddress'] == mac and 'ipaddress' in netdev:
+                                for ipaddr in netdev['ipaddress']:
+                                    if ipaddr.startswith(ip_filter):
+                                        patt = (
+                                            '{{ guest.net.' +
+                                            str(v['guest']['net'].index(netdev)) +
+                                            '.ipaddress.' +
+                                            str(netdev['ipaddress'].index(ipaddr)) +
+                                            ' }}'
+                                        )
+                                        patt_set = True
+                                        break
+
+                t = self.env.from_string(patt)
+                newkey = None
+                try:
+                    newkey = t.render(v)
+                    newkey = newkey.strip()
+                except Exception as e:
+                    self.debugl(e)
+                if not newkey:
+                    continue
+                elif dtype == 'integer':
+                    newkey = int(newkey)
+                elif dtype == 'boolean':
+                    if newkey.lower() == 'false':
+                        newkey = False
+                    elif newkey.lower() == 'true':
+                        newkey = True
+                elif dtype == 'string':
+                    pass
+                mapping[k] = newkey
+        else:
+            mapping = self.create_template_mapping(
+                inventory,
+                pattern
+            )
         return mapping
 
     def facts_from_proplist(self, vm):
