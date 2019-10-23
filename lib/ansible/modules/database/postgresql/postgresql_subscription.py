@@ -417,8 +417,8 @@ class PgSubscription():
                         params_to_update.append("%s = %s" % (param, value))
 
                 else:
-                    self.module.warn("Parameter '%s' not in params supported "
-                                     "for update '%s'" % SUBSPARAMS_KEYS_FOR_UPDATE)
+                    self.module.warn("Parameter '%s' is not in params supported "
+                                     "for update '%s', ignored..." % (param, SUBSPARAMS_KEYS_FOR_UPDATE))
 
             if params_to_update:
                 changed = self.__set_params(params_to_update, check_mode=check_mode)
@@ -435,7 +435,7 @@ class PgSubscription():
                 just make SQL, add it to ``self.executed_queries`` and return True.
 
         Returns:
-            changed (bool): True if publication has been updated, otherwise False.
+            changed (bool): True if the subscription has been removed, otherwise False.
         """
         if self.exists:
             query_fragments = ["DROP SUBSCRIPTION %s" % self.name]
