@@ -53,81 +53,56 @@ options:
   next_hop:
     description:
       - Next hop address of static route.
-    required: false
-    default: null
     type: str
   nhp_interface:
     description:
       - Next hop interface full name of static route.
-    required: false
-    default: null
     type: str
   vrf:
     description:
       - VPN instance of destination ip address.
-    required: false
-    default: null
     type: str
   destvrf:
     description:
       - VPN instance of next hop ip address.
-    required: false
-    default: null
     type: str
   tag:
     description:
       - Route tag value (numeric).
-    required: false
-    default: null
     type: int
   description:
     description:
       - Name of the route. Used with the name parameter on the CLI.
-    required: false
-    default: null
     type: str
   pref:
     description:
       - Preference or administrative difference of route (range 1-255).
-    required: false
-    default: null
     type: int
   function_flag:
     description:
       - Used to distinguish between command line functions.
     required: true
     choices: ['globalBFD','singleBFD','dynamicBFD','staticBFD']
-    default: null
     type: str
   min_tx_interval:
     description:
       - Set the minimum BFD session sending interval (range 50-1000).
-    required: false
-    default: null
     type: int
   min_rx_interval:
     description:
       - Set the minimum BFD receive interval (range 50-1000).
-    required: false
-    default: null
     type: int
   detect_multiplier:
     description:
       - Configure the BFD multiplier (range 3-50).
-    required: false
-    default: null
     type: int
   bfd_session_name:
     description:
       - bfd name (range 1-15).
-    required: false
-    default: null
     type: str
   commands:
     description:
       - Incoming command line is used to send sys,undo ip route-static default-bfd,commit.
-    required: false
-    default: null
     type: list
   state:
     description:
@@ -203,7 +178,9 @@ existing:
     description: k/v pairs of existing switchport
     returned: always
     type: dict
-    sample: {}
+    sample: {"function_flag": "", "next_hop": "", "pref": "101",
+            "prefix": "192.168.20.0", "mask": "24", "description": "testing",
+            "tag" : "null", "bfd_session_name": "btoa"}
 end_state:
     description: k/v pairs of switchport after module execution
     returned: always
@@ -692,7 +669,6 @@ class StaticRouteBFD(object):
             else:
                 if self.prefix.find(':') == -1:
                     return False
-
         else:
             if self.aftype == "v4":
                 if self.prefix.find('.') == -1:
@@ -1252,29 +1228,28 @@ class StaticRouteBFD(object):
         """check all input params"""
         if self.function_flag == 'singleBFD':
             if not self.next_hop:
-                self.module.fail_json(msg='Error: missing required arguments: next_hop.')
+                self.module.fail_json(msg='Error: missing required argument: next_hop.')
             if self.state != 'absent':
                 if self.nhp_interface == "Invalid0" and (not self.prefix or self.prefix == '0.0.0.0'):
-                    self.module.fail_json(msg='Error: If an nhp_interface is not configured, '
+                    self.module.fail_json(msg='Error: If a nhp_interface is not configured, '
                                               'the prefix must be configured.')
 
         if self.function_flag != 'globalBFD':
             if self.function_flag == 'dynamicBFD' or self.function_flag == 'staticBFD':
                 if not self.mask:
-                    self.module.fail_json(msg='Error: missing required arguments: mask.')
+                    self.module.fail_json(msg='Error: missing required argument: mask.')
                 # check prefix and mask
                 if not self.mask.isdigit():
                     self.module.fail_json(msg='Error: Mask is invalid.')
-                # self._convertlentomask_(self.mask)
             if self.function_flag != 'singleBFD' or (self.function_flag == 'singleBFD' and self.destvrf != "_public_"):
                 if not self.prefix:
-                    self.module.fail_json(msg='Error: missing required arguments: prefix.')
+                    self.module.fail_json(msg='Error: missing required argument: prefix.')
                 # convert prefix
                 if not self._convertipprefix_():
                     self.module.fail_json(msg='Error: The %s is not a valid address' % self.prefix)
 
             if self.nhp_interface != "Invalid0" and self.destvrf != "_public_":
-                self.module.fail_json(msg='Error: Destination vrf dose no support next hop is interface.')
+                self.module.fail_json(msg='Error: Destination vrf dose not support next hop is interface.')
 
             if not self.next_hop and self.nhp_interface == "Invalid0":
                 self.module.fail_json(msg='Error: one of the following is required: next_hop,nhp_interface.')
@@ -1350,7 +1325,7 @@ class StaticRouteBFD(object):
                 else:
                     if not self.commands:
                         self.module.fail_json(
-                            msg='Error: missing required arguments: command.')
+                            msg='Error: missing required argument: command.')
                     if compare_command(self.commands):
                         self.module.fail_json(
                             msg='Error: The command %s line is incorrect.' % (',').join(self.commands))
@@ -1592,27 +1567,25 @@ def main():
     """main"""
 
     argument_spec = dict(
-        prefix=dict(required=False, type='str'),
-        mask=dict(required=False, type='str'),
+        prefix=dict(type='str'),
+        mask=dict(type='str'),
         aftype=dict(choices=['v4', 'v6'], required=True),
-        next_hop=dict(required=False, type='str'),
-        nhp_interface=dict(required=False, type='str'),
-        vrf=dict(required=False, type='str'),
-        destvrf=dict(required=False, type='str'),
-        tag=dict(required=False, type='int'),
-        description=dict(required=False, type='str'),
-        pref=dict(required=False, type='int'),
+        next_hop=dict(type='str'),
+        nhp_interface=dict(type='str'),
+        vrf=dict(type='str'),
+        destvrf=dict(type='str'),
+        tag=dict(type='int'),
+        description=dict(type='str'),
+        pref=dict(type='int'),
         # bfd
-        function_flag=dict(required=True,
-                           choices=['globalBFD', 'singleBFD', 'dynamicBFD', 'staticBFD']),
-        min_tx_interval=dict(required=False, type='int'),
-        min_rx_interval=dict(required=False, type='int'),
-        detect_multiplier=dict(required=False, type='int'),
+        function_flag=dict(required=True, choices=['globalBFD', 'singleBFD', 'dynamicBFD', 'staticBFD']),
+        min_tx_interval=dict(type='int'),
+        min_rx_interval=dict(type='int'),
+        detect_multiplier=dict(type='int'),
         # bfd session name
-        bfd_session_name=dict(required=False, type='str'),
+        bfd_session_name=dict(type='str'),
         commands=dict(type='list', required=False),
-        state=dict(choices=['absent', 'present'],
-                   default='present', required=False),
+        state=dict(choices=['absent', 'present'], default='present', required=False),
     )
     interface = StaticRouteBFD(argument_spec)
     interface.work()
