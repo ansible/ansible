@@ -111,13 +111,13 @@ class LinuxVirtual(Virtual):
             virtual_facts['virtualization_type'] = 'virtualbox'
             return virtual_facts
 
-        if bios_vendor in ('Amazon EC2', 'Hetzner'):
+        if bios_vendor in ('Amazon EC2', 'DigitalOcean', 'Hetzner'):
             virtual_facts['virtualization_type'] = 'kvm'
             return virtual_facts
 
         sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
 
-        KVM_SYS_VENDORS = ('QEMU', 'oVirt', 'Amazon EC2', 'Google', 'Scaleway')
+        KVM_SYS_VENDORS = ('QEMU', 'oVirt', 'Amazon EC2', 'DigitalOcean', 'Google', 'Scaleway')
         if sys_vendor in KVM_SYS_VENDORS:
             virtual_facts['virtualization_type'] = 'kvm'
             return virtual_facts
