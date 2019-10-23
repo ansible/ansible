@@ -84,8 +84,8 @@ class Interfaces(ConfigBase):
         want_config = self._module.params['config']
         for want_dict in want_config:
             # Default value of "enabled" is True
-            if "enabled" not in want_dict.keys(): 
-                want_dict.update({"enabled":True}) 
+            if "enabled" not in want_dict.keys():
+                want_dict.update({"enabled": True})
             want.append(want_dict)
         have = existing_interfaces_facts
         resp = self.set_state(want, have)
