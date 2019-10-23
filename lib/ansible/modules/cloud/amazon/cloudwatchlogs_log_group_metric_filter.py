@@ -11,8 +11,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cloudwatchlogs_log_group_metric_filter
-version_added: "2.9"
-author: "Markus Bergholz (@markuman)
+version_added: "2.10"
+author:
+    - "Markus Bergholz (@markuman)
 short_description: Manage CloudWatch log group metric filter
 description:
     - Create, modify and delete Cloudwatch log group metric filter.
@@ -22,44 +23,52 @@ requirements:
     - botocore
 options:
     state:
-        description:
-            - Whether the rule is present, absent or get
-        choices: ["present", "absent"]
-        default: present
+      description:
+        - Whether the rule is present, absent or get
+      choices: ["present", "absent"]
+      default: present
     log_group_name:
-        description:
-            - The name of the log group where the metric filter is applied on.
-        required: true
+      description:
+        - The name of the log group where the metric filter is applied on.
+      required: true
+      type: str
     filter_name:
-        description:
-            - A name for the metric filter you create.
-        required: true
+      description:
+        - A name for the metric filter you create.
+      required: true
+      type: str
     filter_patten:
-        description:
-            - A filter pattern for extracting metric data out of ingested log events.
-        required: true
+      description:
+        - A filter pattern for extracting metric data out of ingested log events.
+      required: true
+      type: str
     metric_transformation:
-        description:
-            - A collection of information that defines how metric data gets emitted.
-        suboptions:
-            metric_name:
-                description: 
-                    - The name of the cloudwatch metric.
-                required: true
-            metric_namespace:
-                description:
-                    - The namespace of the cloudwatch metric.
-                required: true
-            matric_value:
-                description:
-                    - The value to publish to the cloudwatch metric when a filter pattern matches a log event.
-                required: true
-            default_value:
-                description:
-                    - The value to emit when a filter pattern does not match a log event.
-                required: false
+      description:
+        - A collection of information that defines how metric data gets emitted.
+      suboptions:
+        metric_name:
+          description:
+            - The name of the cloudwatch metric.
+          required: true
+          type: str
+        metric_namespace:
+          description:
+            - The namespace of the cloudwatch metric.
+          required: true
+          type: str
+        matric_value:
+          description:
+            - The value to publish to the cloudwatch metric when a filter pattern matches a log event.
+          required: true
+          type: str
+        default_value:
+          description:
+            - The value to emit when a filter pattern does not match a log event.
+          required: false
+          type: str
 extends_documentation_fragment:
-  - aws
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -114,13 +123,14 @@ def metricTransformationHandler(metricTransformations, originMetricTransformatio
     else:
         change = True
 
-    if metricTransformations.get("default_value"):
+    defaulValue = metricTransformations.get("defaultValue")
+    if isinstance(defaulValue, int) or isinstance(defaulValue, float):
         retval = [
             {
                 'metricName': metricTransformations.get("metric_name"),
                 'metricNamespace': metricTransformations.get("metric_namespace"),
                 'metricValue': metricTransformations.get("metric_value"),
-                'defaultValue': metricTransformations.get("default_value")
+                'defaultValue': defaultValue
             }
         ]
     else:
@@ -138,12 +148,12 @@ def metricTransformationHandler(metricTransformations, originMetricTransformatio
 def main():
 
     arg_spec = dict(
-        state=dict(choices=['present', 'absent'], default='present'),
+        state=dict(choices=['present', 'absent'], required=True),
         log_group_name=dict(type='str', required=True),
         filter_name=dict(type='str', required=True),
         filter_pattern=dict(type='str', required=True),
         metric_transformation=dict(
-            type='dict', default=dict(), required=True),
+            type='dict', required=True),
     )
 
     module = AnsibleAWSModule(
