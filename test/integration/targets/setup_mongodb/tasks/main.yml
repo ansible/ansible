@@ -185,3 +185,9 @@
     name: "{{ pip_packages }}"
     state: present
   notify: remove mongodb pip packages
+
+- name: Fix 3.6 certificates
+  shell: export SSL_CERT_FILE=$(python3.6 -c "import certifi; print(certifi.where())")
+  when:
+    - ansible_distribution_version == "18.04"
+    - ansible_distribution == 'Ubuntu'  
