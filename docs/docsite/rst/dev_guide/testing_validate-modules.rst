@@ -99,7 +99,6 @@ Codes
   missing-main-call                                            Syntax               Error                  Did not find a call to ``main()`` (or ``removed_module()`` in the case of deprecated & docs only modules)
   missing-metadata                                             Documentation        Error                  No ``ANSIBLE_METADATA`` provided
   missing-module-utils-basic-import                            Imports              Warning                Did not find ``ansible.module_utils.basic`` import
-  missing-module-utils-import                                  Imports              Error                  Did not find a ``module_utils`` import
   missing-module-utils-import-c#                               Imports              Error                  No ``Ansible.ModuleUtils`` or C# Ansible util requirements/imports found
   missing-powershell-interpreter                               Syntax               Error                  Interpreter line is not ``#!powershell``
   missing-python-doc                                           Naming               Error                  Missing python documentation file

@@ -519,13 +519,7 @@ class ModuleValidator(Validator):
                                 name.name == 'basic'):
                             found_basic = True
 
-        if not linenos:
-            self.reporter.error(
-                path=self.object_path,
-                code='missing-module-utils-import',
-                msg='Did not find a module_utils import'
-            )
-        elif not found_basic:
+        if not found_basic:
             self.reporter.warning(
                 path=self.object_path,
                 code='missing-module-utils-basic-import',
