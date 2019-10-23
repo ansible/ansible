@@ -24,7 +24,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ce_lldp_interface
 version_added: "2.10"
@@ -135,7 +135,7 @@ options:
       - Manage the state of the resource.
     type: str
     default: present
-    choices: ['present','absent']
+    choices: ['present', 'absent']
 '''
 
 EXAMPLES = '''
@@ -606,7 +606,7 @@ class Lldp_interface(object):
                             msg='Error: Ifname length is beetween 1 and 63.')
 
     def check_response(self, xml_str, xml_name):
-        """Check if response message is already succeed"""
+        """Check if response message is already OK"""
 
         if "<ok/>" not in xml_str:
             self.module.fail_json(msg='Error: %s failed.' % xml_name)
@@ -701,9 +701,9 @@ class Lldp_interface(object):
             conf_obj = get_nc_config(self.module, conf_str)
             if "<data/>" in conf_obj:
                 return lldp_config
-            xml_str = conf_obj.replace('\r', '').replace('\n', '').\
-                replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
-                replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
+            xml_str = conf_obj.replace('\r', '').replace('\n', '')
+            xml_str = xml_str.replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "")
+            xml_str = xml_str.replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
             root = ElementTree.fromstring(xml_str)
             lldp_tlvdisable_ifname = root.findall("lldp/lldpInterfaces/lldpInterface")
             for ele in lldp_tlvdisable_ifname:
@@ -834,10 +834,9 @@ class Lldp_interface(object):
             conf_obj = get_nc_config(self.module, conf_str)
             if "<data/>" in conf_obj:
                 return lldp_config
-            xml_str = conf_obj.replace('\r', '').replace('\n', '').\
-                replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
-                replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
-
+            xml_str = conf_obj.replace('\r', '').replace('\n', '')
+            xml_str = xml_str.replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "")
+            xml_str = xml_str.replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
             root = ElementTree.fromstring(xml_str)
             lldpenablesite = root.findall("lldp/lldpInterfaces/lldpInterface")
             for ele in lldpenablesite:
@@ -909,9 +908,9 @@ class Lldp_interface(object):
                 conf_obj = get_nc_config(self.module, conf_str)
                 if "<data/>" in conf_obj:
                     return lldp_config
-                xml_str = conf_obj.replace('\r', '').replace('\n', '').\
-                    replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
-                    replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
+                xml_str = conf_obj.replace('\r', '').replace('\n', '')
+                xml_str = xml_str.replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "")
+                xml_str = xml_str.replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
                 root = ElementTree.fromstring(xml_str)
                 txintervalsite = root.findall("lldp/lldpInterfaces/lldpInterface")
                 for ele in txintervalsite:
