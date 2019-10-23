@@ -212,9 +212,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
 
         ret = s.get("%s/api/v2/hosts/%s/facts" % (self.foreman_url, host))
         ret.raise_for_status()
-        
-        return ret.json()
 
+        return ret.json()
 
     def parse(self, inventory, loader, path, cache=True):
 
