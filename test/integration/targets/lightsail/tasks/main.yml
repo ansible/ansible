@@ -25,6 +25,7 @@
         that:
           - result.changed == True
           - "'instance' in result and result.instance.name == instance_name"
+          - "result.instance.state.name in ['pending', 'running']"
 
     - name: Make sure create is idempotent
       lightsail:
