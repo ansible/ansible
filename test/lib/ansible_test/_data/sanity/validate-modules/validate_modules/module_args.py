@@ -113,7 +113,8 @@ def get_py_argument_spec(filename, collection):
                 runpy.run_module(name, run_name='__main__')
         except AnsibleModuleCallError:
             pass
-        except Exception as e:
+        except BaseException as e:
+            # we want to catch all exceptions here, including sys.exit
             reraise(AnsibleModuleImportError, AnsibleModuleImportError('%s' % e), sys.exc_info()[2])
 
     try:
