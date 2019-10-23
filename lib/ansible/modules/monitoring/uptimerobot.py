@@ -25,14 +25,17 @@ options:
         description:
             - Url to be checked
         required: true
+        version_added: '2.10'
     name:
         description:
             - The friendly name of the monitor
         required: true
+        version_added: '2.10'
     check_type:
         description:
             - The kind of check, that will be performed on the url.
         choices: [ "http", "dns" ]
+        version_added: '2.10'
     monitorid:
         description:
             - ID of the monitor to check.
@@ -113,7 +116,7 @@ class UptimeRobot:
         state = req.post(url=self.uri, data=data, headers=self.headers)
         state = state.read()
         state = json.loads(state)
-        return state #.decode('utf8')
+        return state
 
     def api_request(self):
         self.uri = API_BASE + self.api_method
