@@ -222,10 +222,10 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
         # read config from file, this sets 'options'
         self._read_config_data(path)
 
-        # get connection host
+        # set config variables
         self.foreman_url = self.get_option('url')
         self.use_cache = cache and self.get_option('cache')
-        self.cache_key = self.get_option('cache_key')
+        self.cache_key = self.get_cache_key(path)
 
         hosts = self._get_all_hosts()
 
