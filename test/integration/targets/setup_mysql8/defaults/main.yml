@@ -1,9 +1,9 @@
-mysql_service: mysqld
-
+repo_link: https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm
+repo_name: mysql-community
+my_cnf: /etc/my.cnf
 mysql_packages:
-    - mysql-server
-    - MySQL-python
-    - bzip2
+  - mysql-community-server
+  - MySQL-python
 
 mysql_cleanup_packages:
   - mysql-community-client
@@ -12,7 +12,3 @@ mysql_cleanup_packages:
   - mysql-community-libs-compat
   - mysql-community-server
   - mysql80-community-release
-
-mysql_data_dirs:
-  - /var/lib/mysql
-  - /usr/mysql
