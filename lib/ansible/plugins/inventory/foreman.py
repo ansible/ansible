@@ -246,4 +246,4 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
 
                 # set host vars from facts
                 if self.get_option('want_facts'):
-                    self.inventory.set_variable(host['name'], 'ansible_facts', self._get_facts(host))    
+                    self.inventory.set_variable(host['name'], 'ansible_facts', self._get_facts(host))
