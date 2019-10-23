@@ -6,19 +6,13 @@
 
 - name: Remove MariaDB related packages
   yum:
-    name: "{{ item }}"
+    name: "{{ packages_to_cleanup }}"
     state: absent
-  loop: "{{ packages_to_cleanup }}"
   listen: cleanup mariadb
 
 - name: Remove related FS objects
   file:
     state: absent
     path: "{{ item }}"
-  loop:
-  - "{{ master_datadir }}"
-  - "{{ standby_datadir }}"
-  - "{{ standby_logdir }}"
-  - "{{ default_logdir }}"
-  - "{{ mysql_safe_err_log }}"
+  loop: "{{ fs_objects_to_clean_up }}"
   listen: cleanup mariadb
