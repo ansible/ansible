@@ -13,14 +13,14 @@ DOCUMENTATION = '''
 module: cloudwatchlogs_log_group_metric_filter
 version_added: "2.10"
 author:
-    - "Markus Bergholz (@markuman)
+  - "Markus Bergholz (@markuman)"
 short_description: Manage CloudWatch log group metric filter
 description:
-    - Create, modify and delete Cloudwatch log group metric filter.
-    - Cloudwatch log group metric filter can be use with I(ec2_metric_alarm).
+  - Create, modify and delete Cloudwatch log group metric filter.
+  - Cloudwatch log group metric filter can be use with I(ec2_metric_alarm).
 requirements:
-    - boto3
-    - botocore
+  - boto3
+  - botocore
 options:
     state:
       description:
@@ -37,7 +37,7 @@ options:
         - A name for the metric filter you create.
       required: true
       type: str
-    filter_patten:
+    filter_pattern:
       description:
         - A filter pattern for extracting metric data out of ingested log events.
       required: true
@@ -45,6 +45,7 @@ options:
     metric_transformation:
       description:
         - A collection of information that defines how metric data gets emitted.
+      type: dict
       suboptions:
         metric_name:
           description:
@@ -73,7 +74,7 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 - name: set metric filter on log group /fluentd/testcase
-    cloudwatchlogs_log_group_metric_filter:
+  cloudwatchlogs_log_group_metric_filter:
     log_group_name: /fluentd/testcase
     filter_name: BoxFreeStorage
     filter_pattern: '{($.value = *) && ($.hostname = "box")}'
@@ -84,7 +85,7 @@ EXAMPLES = '''
         metric_value: "$.value"
 
 - name: delete metric filter on log group /fluentd/testcase
-    cloudwatchlogs_log_group_metric_filter:
+  cloudwatchlogs_log_group_metric_filter:
     log_group_name: /fluentd/testcase
     filter_name: BoxFreeStorage
     state: absent
@@ -123,8 +124,8 @@ def metricTransformationHandler(metricTransformations, originMetricTransformatio
     else:
         change = True
 
-    defaulValue = metricTransformations.get("defaultValue")
-    if isinstance(defaulValue, int) or isinstance(defaulValue, float):
+    defaultValue = metricTransformations.get("defaultValue")
+    if isinstance(defaultValue, int) or isinstance(defaultValue, float):
         retval = [
             {
                 'metricName': metricTransformations.get("metric_name"),
@@ -148,7 +149,7 @@ def metricTransformationHandler(metricTransformations, originMetricTransformatio
 def main():
 
     arg_spec = dict(
-        state=dict(choices=['present', 'absent'], required=True),
+        state=dict(choices=['present', 'absent'], default='present'),
         log_group_name=dict(type='str', required=True),
         filter_name=dict(type='str', required=True),
         filter_pattern=dict(type='str', required=True),
