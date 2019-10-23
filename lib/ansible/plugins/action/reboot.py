@@ -368,7 +368,7 @@ class ActionModule(ActionBase):
 
         # If running with local connection, fail so we don't reboot ourself
         if self._connection.transport == 'local':
-            msg = 'Running {0} with local connection would reboot the control node.'.format(self._task.action)
+            msg = 'Running {0} with local connection would {0} the control node.'.format(self._task.action)
             return {'changed': False, 'elapsed': 0, 'rebooted': False, 'failed': True, 'msg': msg}
 
         if self._play_context.check_mode:
