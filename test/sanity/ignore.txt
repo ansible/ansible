@@ -718,7 +718,6 @@ lib/ansible/modules/cloud/azure/azure_rm_webapp_info.py validate-modules:paramet
 lib/ansible/modules/cloud/azure/azure_rm_webappslot.py validate-modules:doc-required-mismatch
 lib/ansible/modules/cloud/azure/azure_rm_webappslot.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/centurylink/clc_aa_policy.py validate-modules:doc-missing-type
-lib/ansible/modules/cloud/centurylink/clc_aa_policy.py validate-modules:implied-parameter-type-mismatch
 lib/ansible/modules/cloud/centurylink/clc_aa_policy.py yamllint:unparsable-with-libyaml
 lib/ansible/modules/cloud/centurylink/clc_alert_policy.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/centurylink/clc_alert_policy.py validate-modules:no-default-for-required-parameter
