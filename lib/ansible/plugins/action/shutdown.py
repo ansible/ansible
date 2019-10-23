@@ -15,10 +15,10 @@
 #
 # Shutdown a *nix host
 
-from . import reboot
-
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from . import reboot
 
 class ActionModule(reboot.ActionModule):
     DEFAULT_REBOOT_MESSAGE = 'Shutdown initiated by Ansible'

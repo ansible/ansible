@@ -15,9 +15,10 @@
 #
 # Shutdown a *nix host
 
-from . import win_reboot
-
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+from . import win_reboot
 
 
 class ActionModule(win_reboot.ActionModule):
