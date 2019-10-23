@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2016 Guido Günther <agx@sigxcpu.org>, Daniel Lobato Garcia <dlobatog@redhat.com>
+# Copyright (C) 2019 Martin Angermeier <martin.angermeier@futuretec-systems.de>
 # Copyright (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
@@ -70,6 +71,10 @@ password: secure
 validate_certs: False
 '''
 
+import re
+import json
+import yaml
+
 from distutils.version import LooseVersion
 
 from ansible.errors import AnsibleError
@@ -121,24 +126,28 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
             self.session.verify = self.get_option('validate_certs')
         return self.session
 
-    def _get_json(self, url, ignore_errors=None):
+    def _get_all_hosts(self):
 
-        if not self.use_cache or url not in self._cache.get(self.cache_key, {}):
+        if self.cache:
+            inventory = self.cache.get_inventory()
 
-            if self.cache_key not in self._cache:
-                self._cache[self.cache_key] = {url: ''}
+            if inventory is not None:
+                return inventory
 
-            results = []
-            s = self._get_session()
-            params = {'page': 1, 'per_page': 250}
-            while True:
-                ret = s.get(url, params=params)
-                if ignore_errors and ret.status_code in ignore_errors:
-                    break
-                ret.raise_for_status()
-                json = ret.json()
+        params = {'page': 1, 'per_page': 250}
 
-                # process results
+        if self.want_params:
+            params['include'] = 'all_parameters'
+
+        results = []
+        s = self._get_session()
+
+        while True:
+            ret = s.get("%s/api/v2/hosts" % self.foreman_url, params=params)
+            ret.raise_for_status()
+            json = ret.json()
+
+            # process results
                 # FIXME: This assumes 'return type' matches a specific query,
                 #        it will break if we expand the queries and they dont have different types
                 if 'results' not in json:
@@ -163,80 +172,39 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
                     # get next page
                     params['page'] += 1
 
-            self._cache[self.cache_key][url] = results
+        if self.use_cache:
+            self.cache.set(self.cache_key, results)
 
-        return self._cache[self.cache_key][url]
+        return results
 
-    def _get_hosts(self):
-        return self._get_json("%s/api/v2/hosts" % self.foreman_url)
+    def to_safe(self, word):
+        '''Converts 'bad' characters in a string to underscores so they can be used as Ansible groups
+        #> ForemanInventory.to_safe("foo-bar baz")
+        'foo_barbaz'
+        '''
+        regex = r"[^A-Za-z0-9\_]"
+        return re.sub(regex, "_", word.replace(" ", ""))
 
-    def _get_all_params_by_id(self, hid):
-        url = "%s/api/v2/hosts/%s" % (self.foreman_url, hid)
-        ret = self._get_json(url, [404])
-        if not ret or not isinstance(ret, MutableMapping) or not ret.get('all_parameters', False):
-            return {}
-        return ret.get('all_parameters')
+    def _resolve_params(self, host):
+        '''
+        Fetch host params and convert to dict, then add to inventory
+        '''
+        for param in host['all_parameters']:
+            key = param['name']
 
-    def _get_facts_by_id(self, hid):
-        url = "%s/api/v2/hosts/%s/facts" % (self.foreman_url, hid)
-        return self._get_json(url)
+            # Try json
+            try:
+                value = json.loads(param['value'])
+            except json.JSONDecodeError:
+                # Not JSON, try YAML
+                pass
+            try:
+                value = yaml.load(param['value'])
+            except ValueError:
+                # Not YAML or JSON, return plain string
+                key = value
 
-    def _get_facts(self, host):
-        """Fetch all host facts of the host"""
-
-        ret = self._get_facts_by_id(host['id'])
-        if len(ret.values()) == 0:
-            facts = {}
-        elif len(ret.values()) == 1:
-            facts = list(ret.values())[0]
-        else:
-            raise ValueError("More than one set of facts returned for '%s'" % host)
-        return facts
-
-    def _populate(self):
-
-        for host in self._get_hosts():
-
-            if host.get('name'):
-                host_name = self.inventory.add_host(host['name'])
-
-                # create directly mapped groups
-                group_name = host.get('hostgroup_title', host.get('hostgroup_name'))
-                if group_name:
-                    group_name = to_safe_group_name('%s%s' % (self.get_option('group_prefix'), group_name.lower().replace(" ", "")))
-                    group_name = self.inventory.add_group(group_name)
-                    self.inventory.add_child(group_name, host_name)
-
-                # set host vars from host info
-                try:
-                    for k, v in host.items():
-                        if k not in ('name', 'hostgroup_title', 'hostgroup_name'):
-                            try:
-                                self.inventory.set_variable(host_name, self.get_option('vars_prefix') + k, v)
-                            except ValueError as e:
-                                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (host, k, to_text(e)))
-                except ValueError as e:
-                    self.display.warning("Could not get host info for %s, skipping: %s" % (host_name, to_text(e)))
-
-                # set host vars from params
-                if self.get_option('want_params'):
-                    for p in self._get_all_params_by_id(host['id']):
-                        try:
-                            self.inventory.set_variable(host_name, p['name'], p['value'])
-                        except ValueError as e:
-                            self.display.warning("Could not set hostvar %s to '%s' for the '%s' host, skipping:  %s" %
-                                                 (p['name'], to_native(p['value']), host, to_native(e)))
-
-                # set host vars from facts
-                if self.get_option('want_facts'):
-                    self.inventory.set_variable(host_name, 'ansible_facts', self._get_facts(host))
-
-                strict = self.get_option('strict')
-
-                hostvars = self.inventory.get_host(host_name).get_vars()
-                self._set_composite_vars(self.get_option('compose'), hostvars, host_name, strict)
-                self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host_name, strict)
-                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host_name, strict)
+            self.inventory.set_variable(host['name'], key, value)
 
     def parse(self, inventory, loader, path, cache=True):
 
@@ -247,8 +215,35 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
 
         # get connection host
         self.foreman_url = self.get_option('url')
-        self.cache_key = self.get_cache_key(path)
         self.use_cache = cache and self.get_option('cache')
 
-        # actually populate inventory
-        self._populate()
+        hosts = self._get_all_hosts()
+
+        for host in hosts:
+            if host.get('name'):
+                self.inventory.add_host(host['name'])
+
+                # create directly mapped groups
+                group_name = host.get('hostgroup_title', host.get('hostgroup_name'))
+                if group_name:
+                    group_name = self.to_safe('%s%s' % (self.get_option('group_prefix'), group_name.lower()))
+                    self.inventory.add_group(group_name)
+                    self.inventory.add_child(group_name, host['name'])
+
+                # set host vars from host info
+                try:
+                    for k, v in host.items():
+                        if k not in ('name', 'hostgroup_title', 'hostgroup_name'):
+                            try:
+                                if k != 'all_parameters':
+                                    self.inventory.set_variable(host['name'], self.get_option('vars_prefix') + k, v)
+                                else:
+                                    self._resolve_params(host)
+                            except ValueError as e:
+                                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (host, k, to_native(e)))
+                except ValueError as e:
+                    self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (host, k, to_native(e)))
+
+                # set host vars from facts
+                if self.get_option('want_facts'):
+                    self.inventory.set_variable(host['name'], 'ansible_facts', self._get_facts(host))    
