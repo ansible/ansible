@@ -43,7 +43,7 @@ from ansible.plugins.loader import fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 
-from .module_args import AnsibleModuleImportError, get_argument_spec
+from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
 
 from .schema import ansible_module_kwargs_schema, doc_schema, metadata_1_1_schema, return_schema
 
@@ -1136,6 +1136,13 @@ class ModuleValidator(Validator):
     def _validate_ansible_module_call(self, docs):
         try:
             spec, args, kwargs = get_argument_spec(self.path, self.collection)
+        except AnsibleModuleNotInitialized:
+            self.reporter.error(
+                path=self.object_path,
+                code='ansible-module-not-initialized',
+                msg="Execution of the module did not result in initialization of AnsibleModule",
+            )
+            return
         except AnsibleModuleImportError as e:
             self.reporter.error(
                 path=self.object_path,

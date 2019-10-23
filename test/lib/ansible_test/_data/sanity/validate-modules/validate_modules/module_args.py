@@ -39,6 +39,10 @@ class AnsibleModuleImportError(ImportError):
     pass
 
 
+class AnsibleModuleNotInitialized(Exception):
+    pass
+
+
 class _FakeAnsibleModuleInit:
     def __init__(self):
         self.args = tuple()
@@ -116,6 +120,9 @@ def get_py_argument_spec(filename, collection):
         except BaseException as e:
             # we want to catch all exceptions here, including sys.exit
             reraise(AnsibleModuleImportError, AnsibleModuleImportError('%s' % e), sys.exc_info()[2])
+
+        if not fake.called:
+            raise AnsibleModuleNotInitialized()
 
     try:
         try:

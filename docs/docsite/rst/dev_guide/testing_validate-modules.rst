@@ -61,6 +61,7 @@ Codes
 ============================================================   ==================   ====================   =========================================================================================
   **Error Code**                                                 **Type**             **Level**            **Sample Message**
 ------------------------------------------------------------   ------------------   --------------------   -----------------------------------------------------------------------------------------
+  ansible-module-not-initialized                               Syntax               Error                  Execution of the module did not result in initialization of AnsibleModule
   deprecation-mismatch                                         Documentation        Error                  Module marked as deprecated or removed in at least one of the filename, its metadata, or in DOCUMENTATION (setting DOCUMENTATION.deprecated for deprecation or removing all Documentation for removed) but not in all three places.
   doc-choices-do-not-match-spec                                Documentation        Error                  Value for "choices" from the argument_spec does not match the documentation
   doc-choices-incompatible-type                                Documentation        Error                  Choices value from the documentation is not compatible with type defined in the argument_spec
