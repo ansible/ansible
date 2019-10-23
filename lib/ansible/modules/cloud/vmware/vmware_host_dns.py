@@ -18,12 +18,13 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: vmware_host_dns
-short_description: Manage DNS configuration of an ESXI host system
+short_description: Manage DNS configuration of an ESXi host system
 description:
 - This module can be used to configure DNS for the default TCP/IP stack on an ESXi host system.
-version_added: 2.8
+version_added: 2.10
 author:
 - Christian Kotte (@ckotte)
+- Mario Lenz (@mariolenz)
 notes:
 - This module is a replacement for the module C(vmware_dns_config)
 - Tested on vSphere 6.5
@@ -184,11 +185,6 @@ class VmwareHostDNS(PyVmomi):
         dns_servers = self.params.get('dns_servers')
         search_domains = self.params.get('search_domains', None)
         verbose = self.module.params.get('verbose', False)
-        # NOTE: The below block is also deprecated starting from Ansible v2.11
-        if self.params.get('domainname'):
-            domain = self.params.get('domainname')
-        if self.params.get('change_hostname_to') and not cluster_name:
-            host_name = self.params.get('change_hostname_to')
         host_change_list = []
         for host in self.hosts:
             changed = False
@@ -425,8 +421,6 @@ def main():
         device=dict(type='str'),
         host_name=dict(required=False, type='str'),
         domain=dict(required=False, type='str', aliases=['domain_name']),
-        domainname=dict(required=False, type='str', removed_in_version=2.11),
-        change_hostname_to=dict(required=False, type='str', removed_in_version=2.11),
         dns_servers=dict(required=False, type='list'),
         search_domains=dict(required=False, type='list'),
         esxi_hostname=dict(required=False, type='str'),
