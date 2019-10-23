@@ -155,7 +155,7 @@ For example, `libffi` package is dependency of `pynacl` and `paramiko` (Ansible 
 
 In order to solve these kinds of dependency issues, you maight need to install required packages using the OS native package managers, like `yum`, `dnf`, or `apt`, or as mentioned in the package installation guide.
 
-Refer the documentation of the respective package for such dependencies and their installation methods.
+Refer to the documentation of the respective package for such dependencies and their installation methods.
 
 Common Platform Issues
 ++++++++++++++++++++++
