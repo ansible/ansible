@@ -1,0 +1,5 @@
+bugfixes:
+    - ansible-test import sanity test now properly handles relative imports.
+    - ansible-test import sanity test now properly invokes Ansible modules as scripts.
+    - ansible-test import sanity test now consistently reports warnings as errors.
+    - ansible-test import sanity test now consistently reports errors against the file being tested.
