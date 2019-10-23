@@ -44,10 +44,8 @@ options:
     default: latest
   state:
     description:
-    - Whether the launch template should exist or not. To delete only a
-      specific version of a launch template, combine I(state=absent) with
-      the I(version) option. By default, I(state=absent) will remove all
-      versions of the template.
+    - Whether the launch template should exist or not.
+    - Deleting specific versions of a launch template is not supported at this time.
     choices: [present, absent]
     default: present
   block_device_mappings:
