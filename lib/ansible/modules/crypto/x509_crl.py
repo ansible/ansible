@@ -122,12 +122,12 @@ options:
                 description:
                     - Path to a certificate in PEM format.
                     - The serial number and issuer will be extracted from the certificate.
-                    - If specified, I(serial_number) and I(issuer) must not be specified.
+                    - Mutually exclusive with I(serial_number). One of these two options must be specified.
                 type: path
             serial_number:
                 description:
                     - Serial number of the certificate.
-                    - Must be specified if I(path) is not specified.
+                    - Mutually exclusive with I(path). One of these two options must be specified.
                 type: int
             revocation_date:
                 description:
@@ -143,7 +143,6 @@ options:
                 description:
                     - The certificate's issuer.
                     - "Example: C(DNS:ca.example.org)"
-                    - Can only be specified if I(path) is not specified.
                 type: list
                 elements: str
             issuer_critical:
@@ -430,10 +429,6 @@ class CRL(crypto_utils.OpenSSLObject):
                     module.fail_json(
                         msg='{0}serial_number must not be specified if {0}path is specified'.format(path_prefix)
                     )
-                if rc['issuer'] is not None:
-                    module.fail_json(
-                        msg='{0}issuer must not be specified if {0}path is specified'.format(path_prefix)
-                    )
                 try:
                     cert = crypto_utils.load_certificate(rc['path'], backend='cryptography')
                     try:
@@ -441,13 +436,6 @@ class CRL(crypto_utils.OpenSSLObject):
                     except AttributeError:
                         # The property was called "serial" before cryptography 1.4
                         result['serial_number'] = cert.serial
-                    try:
-                        ext = cert.extensions.get_extension_for_class(x509.AuthorityKeyIdentifier)
-                        if ext.value.authority_cert_issuer is not None:
-                            result['issuer'] = list(ext.value.authority_cert_issuer)
-                            result['issuer_critical'] = rc['issuer_critical']
-                    except x509.ExtensionNotFound:
-                        pass
                 except crypto_utils.OpenSSLObjectError as e:
                     module.fail_json(
                         msg='Cannot read certificate "{1}" from {0}path: {2}'.format(path_prefix, rc['path'], to_native(e))
@@ -459,10 +447,10 @@ class CRL(crypto_utils.OpenSSLObject):
                         msg='{0}serial_number must be specified if {0}path is not specified'.format(path_prefix)
                     )
                 result['serial_number'] = rc['serial_number']
-                if rc['issuer']:
-                    result['issuer'] = [crypto_utils.cryptography_get_name(issuer) for issuer in rc['issuer']]
-                    result['issuer_critical'] = rc['issuer_critical']
             # All other options
+            if rc['issuer']:
+                result['issuer'] = [crypto_utils.cryptography_get_name(issuer) for issuer in rc['issuer']]
+                result['issuer_critical'] = rc['issuer_critical']
             result['revocation_date'] = self.get_relative_time_option(
                 rc['revocation_date'],
                 path_prefix + 'revocation_date'
