@@ -101,7 +101,7 @@ class ProxmoxAPI(object):
             'password': self.options.password,
         })
 
-        data = json.load(open_url(request_path, data=request_params))
+        data = json.load(open_url(request_path, data=request_params, validate_certs = self.options.validate_certs))
 
         self.credentials = {
             'ticket': data['data']['ticket'],
@@ -112,7 +112,7 @@ class ProxmoxAPI(object):
         request_path = '{0}{1}'.format(self.options.url, url)
 
         headers = {'Cookie': 'PVEAuthCookie={0}'.format(self.credentials['ticket'])}
-        request = open_url(request_path, data=data, headers=headers)
+        request = open_url(request_path, data=data, headers=headers, validate_certs = self.options.validate_certs)
 
         response = json.load(request)
         return response['data']
@@ -227,7 +227,14 @@ def main():
     parser.add_option('--username', default=os.environ.get('PROXMOX_USERNAME'), dest='username')
     parser.add_option('--password', default=os.environ.get('PROXMOX_PASSWORD'), dest='password')
     parser.add_option('--pretty', action="store_true", default=False, dest='pretty')
+    parser.add_option('--validate-certs', default=os.environ.get('PROXMOX_VALIDATE_CERTS'), dest='validate_certs')
     (options, args) = parser.parse_args()
+
+
+    if options.validate_certs in ['no', 'false', 'False', False]:
+        options.validate_certs = False
+    else:
+        options.validate_certs = True
 
     if options.list:
         data = main_list(options)
