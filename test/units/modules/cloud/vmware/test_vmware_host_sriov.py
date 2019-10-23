@@ -1,8 +1,16 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import json
 from units.compat import mock
 from units.compat import unittest
+
+# just for quick local test
+# import unittest
+# from unittest import mock
+
+from ansible.module_utils import basic
+from ansible.module_utils._text import to_bytes
 
 from ansible.modules.cloud.vmware import vmware_host_sriov
 from ansible.module_utils.basic import AnsibleModule
@@ -10,143 +18,300 @@ from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi
 from ansible.module_utils._text import to_native
 
 
-mock_host = mock.Mock()
-mock_host.name = "test_host"
-tests = [
-    # 1. normal activate
+def gen_mock_attrs(user_input):
+    mock_attrs = dict(user_input)
+    mock_attrs["results"] = {"before": {}, "after": {}, "changes": {}}
+    mock_host = mock.Mock()
+    mock_attrs["hosts"] = [mock_host]
+    return mock_attrs
+
+class AnsibleFailJson(Exception):
+    """Exception class to be raised by module.fail_json and caught by the test case"""
+    pass
+ 
+
+def set_module_args(args):
+    """prepare arguments so that they will be picked up during module creation"""
+    args = json.dumps({"ANSIBLE_MODULE_ARGS": args})
+    basic._ANSIBLE_ARGS = to_bytes(args)
+
+
+class AnsibleExitJson(Exception):
+    """Exception class to be raised by module.exit_json and caught by the test case"""
+    pass
+
+
+def exit_json(*args, **kwargs):
+    """function to patch over exit_json; package return data into an exception"""
+    if "changed" not in kwargs:
+        kwargs["changed"] = False
+    raise AnsibleExitJson(kwargs)
+
+
+def fail_json(*args, **kwargs):
+    """function to patch over fail_json; package return data into an exception"""
+    kwargs["failed"] = True
+    raise AnsibleFailJson(kwargs)
+
+
+def get_bin_path(self, arg, required=False):
+    """Mock AnsibleModule.get_bin_path"""
+    if arg.endswith("my_command"):
+        return "/usr/bin/my_command"
+    else:
+        if required:
+            fail_json(msg="%r not found !" % arg)
+
+
+test_data = [
     {
-        "pnic_info": {
-            "sriovCapable": True,
-            "sriovEnabled": False,
+        "user_input": {
+            "hostname": "test_vCenter",
+            "esxi_host_name": "test_host",
+            "sriov_on": True,
+            "num_virt_func": -4,
+            "vmnic": "vmnic0",
+        },
+        "before": {
             "sriovActive": False,
+            "sriovEnabled": False,
+            "maxVirtualFunctionSupported": 63,
             "numVirtualFunction": 0,
             "numVirtualFunctionRequested": 0,
-            "maxVirtualFunctionSupported": 64,
-            "rebootRequired": True,
+            "rebootRequired": False,
+            "sriovCapable": True,
         },
-        "mock_attrs": {
+        "expected": AnsibleFailJson(
+            {"msg": "allowed value for num_virt_func >= 0", "failed": True}
+        ),
+    },
+    # 1. num_virt_func == 0, sriov_on == True
+    {
+        "user_input": {
             "hostname": "test_vCenter",
             "esxi_host_name": "test_host",
             "sriov_on": True,
-            "num_virt_func": 8,
-            "vmnic": "vmnic7",
-            "results": {"before": {}, "after": {}, "changes": {}},
-            "hosts": [mock_host],
+            "num_virt_func": 0,
+            "vmnic": "vmnic0",
         },
-        "changes": {
-            "test_host": {
-                "rebootRequired": True,
-                "sriovEnabled": True,
-                "numVirtualFunction": 8,
-            }
-        },
-    },
-    # 2. already eanabled
-    {
-        "pnic_info": {
-            "sriovCapable": True,
-            "sriovEnabled": True,
+        "before": {
             "sriovActive": False,
-            "numVirtualFunction": 8,
-            "numVirtualFunctionRequested": 8,
-            "maxVirtualFunctionSupported": 64,
-            "rebootRequired": True,
-        },
-        "mock_attrs": {
-            "hostname": "test_vCenter",
-            "esxi_host_name": "test_host",
-            "sriov_on": True,
-            "num_virt_func": 8,
-            "vmnic": "vmnic7",
-            "results": {"before": {}, "after": {}, "changes": {}},
-            "hosts": [mock_host],
-        },
-        "changes": {
-            "test_host": {
-                "rebootRequired": True,
-                "msg": "No any changes, already configured",
-            }
-        },
-    },
-    # 3. already active
-    {
-        "pnic_info": {
-            "sriovCapable": True,
-            "sriovEnabled": True,
-            "sriovActive": True,
-            "numVirtualFunction": 8,
-            "numVirtualFunctionRequested": 8,
-            "maxVirtualFunctionSupported": 64,
-            "rebootRequired": False,
-        },
-        "mock_attrs": {
-            "hostname": "test_vCenter",
-            "esxi_host_name": "test_host",
-            "sriov_on": True,
-            "num_virt_func": 8,
-            "vmnic": "vmnic7",
-            "results": {"before": {}, "after": {}, "changes": {}},
-            "hosts": [mock_host],
-        },
-        "changes": {
-            "test_host": {
-                "rebootRequired": False,
-                "msg": "No any changes, already configured",
-            }
-        },
-    },
-    # 4. not suported num_virt_func
-    {
-        "pnic_info": {
-            "sriovCapable": True,
-            "sriovEnabled": True,
-            "sriovActive": True,
-            "numVirtualFunction": 8,
-            "numVirtualFunctionRequested": 8,
-            "maxVirtualFunctionSupported": 64,
-            "rebootRequired": False,
-        },
-        "mock_attrs": {
-            "hostname": "test_vCenter",
-            "esxi_host_name": "test_host",
-            "sriov_on": True,
-            "num_virt_func": 100,
-            "vmnic": "vmnic7",
-            "results": {"before": {}, "after": {}, "changes": {}},
-            "hosts": [mock_host],
-        },
-        "changes": {
-            "test_host": {
-                "rebootRequired": False,
-                "msg": "maxVirtualFunctionSupported= 64 on vmnic7",
-            }
-        },
-    },
-    # 5. not supported sriov
-    {
-        "pnic_info": {
-            "sriovCapable": False,
             "sriovEnabled": False,
-            "sriovActive": False,
+            "maxVirtualFunctionSupported": 63,
             "numVirtualFunction": 0,
             "numVirtualFunctionRequested": 0,
+            "rebootRequired": False,
+            "sriovCapable": True,
+        },
+        "expected": AnsibleFailJson(
+            {
+                "msg": "with sriov_on == true,  alowed value for num_virt_func > 0",
+                "failed": True,
+            }
+        ),
+    },
+    # 2. num_virt_func > 0, sriov_on == False
+    {
+        "user_input": {
+            "hostname": "test_vCenter",
+            "esxi_host_name": "test_host",
+            "sriov_on": False,
+            "num_virt_func": 5,
+            "vmnic": "vmnic0",
+        },
+        "before": {
+            "sriovActive": False,
+            "sriovEnabled": False,
+            "maxVirtualFunctionSupported": 63,
+            "numVirtualFunction": 0,
+            "numVirtualFunctionRequested": 0,
+            "rebootRequired": False,
+            "sriovCapable": True,
+        },
+        "expected": AnsibleFailJson(
+            {
+                "msg": "with sriov_on == false,  alowed value for num_virt_func is 0",
+                "failed": True,
+            }
+        ),
+    },
+    # 3.  not supported sriov
+    {
+        "user_input": {
+            "hostname": "test_vCenter",
+            "esxi_host_name": "test_host",
+            "sriov_on": True,
+            "num_virt_func": 8,
+            "vmnic": "vmnic0",
+        },
+        "before": {
+            "sriovActive": False,
+            "sriovEnabled": False,
             "maxVirtualFunctionSupported": 0,
+            "numVirtualFunction": 0,
+            "numVirtualFunctionRequested": 0,
             "rebootRequired": False,
+            "sriovCapable": False,
         },
-        "mock_attrs": {
+        "expected": AnsibleFailJson(
+            {
+                "msg": "sriov not supported on host= test_host, nic= vmnic0",
+                "failed": True,
+            }
+        ),
+    },
+    # 4.  not suported num_virt_func
+    {
+        "user_input": {
             "hostname": "test_vCenter",
             "esxi_host_name": "test_host",
             "sriov_on": True,
             "num_virt_func": 8,
-            "vmnic": "vmnic7",
-            "results": {"before": {}, "after": {}, "changes": {}},
-            "hosts": [mock_host],
+            "vmnic": "vmnic0",
         },
-        "changes": {
-            "test_host": {
-                "rebootRequired": False,
-                "msg": "sriov not supported on host= test_host, nic= vmnic7",
-            }
+        "before": {
+            "sriovActive": False,
+            "sriovEnabled": False,
+            "maxVirtualFunctionSupported": 4,
+            "numVirtualFunction": 0,
+            "numVirtualFunctionRequested": 0,
+            "rebootRequired": False,
+            "sriovCapable": True,
+        },
+        "expected": AnsibleFailJson(
+            {"msg": "maxVirtualFunctionSupported= 4 on vmnic0", "failed": True}
+        ),
+    },
+    # 5. normal enabling
+    {
+        "user_input": {
+            "hostname": "test_vCenter",
+            "esxi_host_name": "test_host",
+            "sriov_on": True,
+            "num_virt_func": 8,
+            "vmnic": "vmnic0",
+        },
+        "before": {
+            "sriovActive": False,
+            "sriovEnabled": False,
+            "maxVirtualFunctionSupported": 63,
+            "numVirtualFunction": 0,
+            "numVirtualFunctionRequested": 0,
+            "rebootRequired": False,
+            "sriovCapable": True,
+        },
+        "expected": {
+            "sriovEnabled": True,
+            "numVirtualFunction": 8,
+            "msg": "",
+            "change": True,
+            "changes": {"numVirtualFunction": 8, "sriovEnabled": True},
+        },
+    },
+    # 6. already eanabled, not active
+    {
+        "user_input": {
+            "hostname": "test_vCenter",
+            "esxi_host_name": "test_host",
+            "sriov_on": True,
+            "num_virt_func": 8,
+            "vmnic": "vmnic0",
+        },
+        "before": {
+            "sriovActive": False,
+            "sriovEnabled": True,
+            "maxVirtualFunctionSupported": 63,
+            "numVirtualFunction": 0,
+            "numVirtualFunctionRequested": 8,
+            "rebootRequired": True,
+            "sriovCapable": True,
+        },
+        "expected": {
+            "sriovEnabled": True,
+            "numVirtualFunction": 8,
+            "msg": "",
+            "change": False,
+            "changes": {
+                "msg": "Not active (looks not rebooted) No any changes, already configured "
+            },
+        },
+    },
+    # 7. already eanabled and active
+    {
+        "user_input": {
+            "hostname": "test_vCenter",
+            "esxi_host_name": "test_host",
+            "sriov_on": True,
+            "num_virt_func": 8,
+            "vmnic": "vmnic0",
+        },
+        "before": {
+            "sriovActive": True,
+            "sriovEnabled": True,
+            "maxVirtualFunctionSupported": 63,
+            "numVirtualFunction": 8,
+            "numVirtualFunctionRequested": 8,
+            "rebootRequired": False,
+            "sriovCapable": True,
+        },
+        "expected": {
+            "sriovEnabled": True,
+            "numVirtualFunction": 8,
+            "msg": "",
+            "change": False,
+            "changes": {"msg": "No any changes, already configured "},
+        },
+    },
+    # 8. already eanabled diff numVirtualFunction
+    {
+        "user_input": {
+            "hostname": "test_vCenter",
+            "esxi_host_name": "test_host",
+            "sriov_on": True,
+            "num_virt_func": 8,
+            "vmnic": "vmnic0",
+        },
+        "before": {
+            "sriovActive": True,
+            "sriovEnabled": True,
+            "maxVirtualFunctionSupported": 63,
+            "numVirtualFunction": 4,
+            "numVirtualFunctionRequested": 4,
+            "rebootRequired": False,
+            "sriovCapable": True,
+        },
+        "expected": {
+            "sriovEnabled": True,
+            "numVirtualFunction": 8,
+            "msg": "",
+            "change": True,
+            "changes": {"numVirtualFunction": 8},
+        },
+    },
+    # 9.  disable sriov
+    {
+        "user_input": {
+            "hostname": "test_vCenter",
+            "esxi_host_name": "test_host",
+            "sriov_on": False,
+            "num_virt_func": 0,
+            "vmnic": "vmnic0",
+        },
+        "before": {
+            "sriovActive": True,
+            "sriovEnabled": True,
+            "maxVirtualFunctionSupported": 63,
+            "numVirtualFunction": 8,
+            "numVirtualFunctionRequested": 8,
+            "rebootRequired": False,
+            "sriovCapable": True,
+        },
+        "expected": {
+            "sriovEnabled": False,
+            "numVirtualFunction": 0,
+            "msg": "",
+            "change": True,
+            "changes": {"sriovEnabled": False, "numVirtualFunction": 0},
         },
     },
 ]
@@ -160,38 +325,32 @@ class TestAdapterMethods(unittest.TestCase):
         pass
 
     @mock.patch.object(
-        vmware_host_sriov.VmwareAdapterConfigManager,
-        "_getPciId",
-        return_value="0000:87:00.1",
-    )
-    @mock.patch.object(
-        vmware_host_sriov.VmwareAdapterConfigManager,
-        "_check_sriov",
-        # there is 2 call _check_sriov in test, need duplicate
-        side_effect=[i["pnic_info"] for i in tests for ii in range(2)],
-    )
-    @mock.patch.object(
         vmware_host_sriov.VmwareAdapterConfigManager, "__init__", return_value=None
     )
-    def test_check_host_state(self, mock__init__, mock__check_sriov, mock__getPciId):
-        check_sriov_count = 0
-        for case in tests:
+    def test_sanitize_params(self, mock__init__):
+        for num, case in enumerate(test_data):
             config = vmware_host_sriov.VmwareAdapterConfigManager()
             config.module = mock.Mock()
             config.module.check_mode = False
-            config.__dict__.update(case["mock_attrs"])
-            config.set_host_state()
-            self.assertEqual(
-                config.results["changes"],
-                case["changes"],
-                'wrong "changes" in "result"',
-            )
-            check_sriov_count += 2
-            self.assertEqual(
-                mock__check_sriov.call_count,
-                check_sriov_count,
-                "mock__check_sriov called mor or less 2 times",
-            )
+            config.module.fail_json.side_effect = fail_json
+
+            config.__dict__.update(gen_mock_attrs(case["user_input"]))
+            print("config=", config.__dict__)
+
+            try:
+                result = config.sanitize_params(
+                    case["before"],
+                    case["user_input"]["esxi_host_name"],
+                    case["user_input"]["vmnic"],
+                )
+                # print(">>>" + "test=" + str(num), result)
+                self.assertIsInstance(result, type(case["expected"]), "test=" + str(num))
+                self.assertEqual(result, case["expected"], "test=" + str(num))
+
+            except Exception as e:
+                # print(">>>" + "test=" + str(num), e)
+                self.assertIsInstance(e, type(case["expected"]), "test=" + str(num))
+                self.assertEqual(e.args[0], case["expected"].args[0], "test=" + str(num))
 
 
 if __name__ == "__main__":
