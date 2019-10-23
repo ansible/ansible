@@ -12,9 +12,8 @@
 
 - name: Install MariaDB packages on RedHat family OS
   yum:
-    name: "{{ item }}"
+    name: "{{ mariadb_packages }}"
     enablerepo: epel
-  loop: "{{ mariadb_packages }}"
   when: ansible_os_family == 'RedHat'
   notify: cleanup mariadb
 
