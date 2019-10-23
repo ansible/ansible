@@ -68,6 +68,13 @@ options:
     default: 10
     type: int
     version_added: "2.8"
+  boot_order:
+    required: false
+    description:
+      - list of BootOptionReference strings specifying the BootOrder
+    default: []
+    type: list
+    version_added: "2.9"
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -111,6 +118,28 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       timeout: 20
+
+  - name: Set boot order
+    redfish_config:
+      category: Systems
+      command: SetBootOrder
+      boot_order:
+        - Boot0002
+        - Boot0001
+        - Boot0000
+        - Boot0003
+        - Boot0004
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Set boot order to the default
+    redfish_config:
+      category: Systems
+      command: SetDefaultBootOrder
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
 '''
 
 RETURN = '''
@@ -128,7 +157,8 @@ from ansible.module_utils._text import to_native
 
 # More will be added as module features are expanded
 CATEGORY_COMMANDS_ALL = {
-    "Systems": ["SetBiosDefaultSettings", "SetBiosAttributes"]
+    "Systems": ["SetBiosDefaultSettings", "SetBiosAttributes", "SetBootOrder",
+                "SetDefaultBootOrder"]
 }
 
 
@@ -143,7 +173,8 @@ def main():
             password=dict(required=True, no_log=True),
             bios_attribute_name=dict(default='null'),
             bios_attribute_value=dict(default='null'),
-            timeout=dict(type='int', default=10)
+            timeout=dict(type='int', default=10),
+            boot_order=dict(type='list', elements='str', default=[])
         ),
         supports_check_mode=False
     )
@@ -161,6 +192,9 @@ def main():
     # BIOS attributes to update
     bios_attributes = {'bios_attr_name': module.params['bios_attribute_name'],
                        'bios_attr_value': module.params['bios_attribute_value']}
+
+    # boot order
+    boot_order = module.params['boot_order']
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
@@ -188,6 +222,10 @@ def main():
                 result = rf_utils.set_bios_default_settings()
             elif command == "SetBiosAttributes":
                 result = rf_utils.set_bios_attributes(bios_attributes)
+            elif command == "SetBootOrder":
+                result = rf_utils.set_boot_order(boot_order)
+            elif command == "SetDefaultBootOrder":
+                result = rf_utils.set_default_boot_order()
 
     # Return data back or fail with proper message
     if result['ret'] is True:
