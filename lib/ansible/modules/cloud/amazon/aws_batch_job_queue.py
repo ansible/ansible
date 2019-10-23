@@ -67,7 +67,7 @@ EXAMPLES = '''
     state: present
   tasks:
   - name: My Batch Job Queue
-    batch_job_queue:
+    aws_batch_job_queue:
       job_queue_name: jobQueueName
       state: present
       region: us-east-1
@@ -78,9 +78,11 @@ EXAMPLES = '''
           compute_environment: my_compute_env1
         - order: 2
           compute_environment: my_compute_env2
+    register: batch_job_queue_action
 
   - name: show results
-    debug: var=batch_job_queue_action
+    debug:
+      var: batch_job_queue_action
 '''
 
 RETURN = '''
