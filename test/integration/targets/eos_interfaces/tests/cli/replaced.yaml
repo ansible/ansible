@@ -10,6 +10,8 @@
         description: 'Configured by Ansible'
         duplex: auto
         enabled: False
+      - name: Vlan22
+        description: 'VirtualInterface22'
 
 - eos_facts:
     gather_network_resources: interfaces
@@ -25,6 +27,20 @@
 - assert:
     that:
       - "ansible_facts.network_resources.interfaces|symmetric_difference(result.before)|length == 0"
+      - result is changed
+
+- name: Replaces device configuration of listed interfaces with provided configuration
+  eos_interfaces:
+    config: "{{ config }}"
+    state: replaced
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.interfaces|symmetric_difference(result.before)|length == 0"
+      - result is not changed
+
 
 - eos_facts:
     gather_network_resources: interfaces
