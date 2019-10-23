@@ -455,6 +455,8 @@ groupings:
   - aws
   iam_policy:
   - aws
+  iam_policy_info:
+  - aws
   iam_role:
   - aws
   iam_role_facts:
