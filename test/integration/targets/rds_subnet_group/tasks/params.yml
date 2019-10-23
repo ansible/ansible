@@ -1,0 +1,62 @@
+---
+# Try creating without a description
+- name: 'Create a subnet group (no description)'
+  rds_subnet_group:
+    state: present
+    name: '{{ resource_prefix }}'
+    subnets:
+    - '{{ subnet_ids[0] }}'
+    - '{{ subnet_ids[1] }}'
+  ignore_errors: yes
+  register: create_missing_param
+- assert:
+    that:
+    - create_missing_param is failed
+    - "'description' in create_missing_param.msg"
+    - "\"required for state='present'\" in create_missing_param.msg"
+
+# Try creating without subnets
+- name: 'Create a subnet group (no subnets)'
+  rds_subnet_group:
+    state: present
+    name: '{{ resource_prefix }}'
+    description: '{{ group_description }}'
+  ignore_errors: yes
+  register: create_missing_param
+- assert:
+    that:
+    - create_missing_param is failed
+    - "'subnets' in create_missing_param.msg"
+    - "\"required for state='present'\" in create_missing_param.msg"
+
+# XXX This feels like a bad pattern
+# Try deleting with subnets
+- name: 'Delete a subnet group (with subnets)'
+  rds_subnet_group:
+    state: absent
+    name: '{{ resource_prefix }}'
+    subnets:
+    - '{{ subnet_ids[0] }}'
+    - '{{ subnet_ids[1] }}'
+  ignore_errors: yes
+  register: delete_extra_param
+- assert:
+    that:
+    - delete_extra_param is failed
+    - "'subnets' in delete_extra_param.msg"
+    - "\"not allowed for state='absent'\" in delete_extra_param.msg"
+
+# XXX This feels like a bad pattern
+# Try deleting with a description
+- name: 'Create a subnet group (with description)'
+  rds_subnet_group:
+    state: absent
+    name: '{{ resource_prefix }}'
+    description: '{{ group_description }}'
+  ignore_errors: yes
+  register: delete_extra_param
+- assert:
+    that:
+    - delete_extra_param is failed
+    - "'description' in delete_extra_param.msg"
+    - "\"not allowed for state='absent'\" in delete_extra_param.msg"

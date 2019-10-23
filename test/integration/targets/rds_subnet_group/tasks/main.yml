@@ -1,0 +1,113 @@
+---
+# Tests for rds_subnet_group
+#
+# Note: (From Amazon's documentation)
+# https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/rds.html#RDS.Client.modify_db_subnet_group
+# DB subnet groups must contain at least one subnet in at least two AZs in the
+# AWS Region.
+
+- module_defaults:
+    group/aws:
+      aws_access_key: '{{ aws_access_key }}'
+      aws_secret_key: '{{ aws_secret_key }}'
+      security_token: '{{ security_token | default(omit) }}'
+      region: '{{ aws_region }}'
+  block:
+
+  # ============================================================
+
+  - name: 'Fetch AZ availability'
+    aws_az_info:
+    register: az_info
+
+  - name: 'Assert that we have multiple AZs available to us'
+    assert:
+      that: az_info.availability_zones | length >= 2
+
+  - name: 'Pick AZs'
+    set_fact:
+      az_one: '{{ az_info.availability_zones[0].zone_name }}'
+      az_two: '{{ az_info.availability_zones[1].zone_name }}'
+
+  # ============================================================
+
+  - name: 'Create a VPC'
+    ec2_vpc_net:
+      state: present
+      cidr_block: '{{ vpc_cidr }}'
+      name: '{{ resource_prefix }}'
+    register: vpc
+
+  - name: 'Create subnets'
+    ec2_vpc_subnet:
+      state: present
+      cidr: '{{ item.cidr }}'
+      az: '{{ item.az }}'
+      vpc_id: '{{ vpc.vpc.id }}'
+      tags:
+        Name: '{{ item.name }}'
+    with_items:
+    - cidr: '{{ subnet_a }}'
+      az: '{{ az_one }}'
+      name: '{{ resource_prefix }}-subnet-a'
+    - cidr: '{{ subnet_b }}'
+      az: '{{ az_two }}'
+      name: '{{ resource_prefix }}-subnet-b'
+    - cidr: '{{ subnet_c }}'
+      az: '{{ az_one }}'
+      name: '{{ resource_prefix }}-subnet-c'
+    - cidr: '{{ subnet_d }}'
+      az: '{{ az_two }}'
+      name: '{{ resource_prefix }}-subnet-d'
+    register: subnets
+
+  - set_fact:
+      subnet_ids: '{{ subnets | json_query("results[].subnet.id") | list }}'
+
+  # ============================================================
+
+  - include_tasks: 'params.yml'
+
+  - include_tasks: 'tests.yml'
+
+  # ============================================================
+
+  always:
+  - name: 'Remove subnet group'
+    rds_subnet_group:
+      state: absent
+      name: '{{ resource_prefix }}'
+    ignore_errors: yes
+
+  - name: 'Remove subnets'
+    ec2_vpc_subnet:
+      state: absent
+      cidr: '{{ item.cidr }}'
+      vpc_id: '{{ vpc.vpc.id }}'
+    with_items:
+    - cidr: '{{ subnet_a }}'
+      name: '{{ resource_prefix }}-subnet-a'
+    - cidr: '{{ subnet_b }}'
+      name: '{{ resource_prefix }}-subnet-b'
+    - cidr: '{{ subnet_c }}'
+      name: '{{ resource_prefix }}-subnet-c'
+    - cidr: '{{ subnet_d }}'
+      name: '{{ resource_prefix }}-subnet-d'
+    ignore_errors: yes
+    register: removed_subnets
+    until: removed_subnets is succeeded
+    retries: 5
+    delay: 5
+
+  - name: 'Remove the VPC'
+    ec2_vpc_net:
+      state: absent
+      cidr_block: '{{ vpc_cidr }}'
+      name: '{{ resource_prefix }}'
+    ignore_errors: yes
+    register: removed_vpc
+    until: removed_vpc is success
+    retries: 5
+    delay: 5
+
+  # ============================================================
