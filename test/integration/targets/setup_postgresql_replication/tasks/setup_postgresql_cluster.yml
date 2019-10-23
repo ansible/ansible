@@ -3,8 +3,7 @@
 
 - name: Install packages
   apt:
-    name: '{{ item }}'
-  loop: '{{ pg_package_list }}'
+    name: '{{ pg_package_list }}'
   notify: cleanup postgresql
 
 - name: Create root dirs

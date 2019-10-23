@@ -581,6 +581,7 @@
       login_port: '{{ replica_port }}'
       name: '{{ test_subscription }}'
       state: present
+      relinfo: yes
       connparams:
         host: 127.0.0.1
         port: '{{ master_port }}'
@@ -665,3 +666,33 @@
       - result is changed
       - result.name == '{{ test_subscription }}'
       - result.queries == ["ALTER SUBSCRIPTION {{ test_subscription }} REFRESH PUBLICATION"]
+
+  ####################
+  # Test relinfo param
+  ####################
+
+  - name: Get relinfo
+    <<: *task_parameters
+    postgresql_subscription: 
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: stat
+      relinfo: yes
+
+  - assert:
+      that:
+      - result.name == '{{ test_subscription }}'
+      - result.final_state.relinfo[0].relname == '{{ test_table1 }}'
+      - result.final_state == result.initial_state
+
+  ##########
+  # Clean up
+  ##########
+  - name: Drop subscription
+    <<: *task_parameters
+    postgresql_subscription:
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      name: '{{ test_subscription }}'
+      state: absent

@@ -41,7 +41,7 @@ options:
     - C(absent) implies that if I(name) subscription exists, it will be removed.
     - C(stat) implies that if I(name) subscription exists, returns current configuration.
     - C(refresh) implies that if I(name) subscription exists, it will be refreshed.
-      Fetch missing table information from publisher.
+      Fetch missing table information from publisher. Always returns ``changed`` is ``True``.
       This will start replication of tables that were added to the subscribed-to publications
       since the last invocation of REFRESH PUBLICATION or since CREATE SUBSCRIPTION.
       The existing data in the publications that are being subscribed to
@@ -50,6 +50,11 @@ options:
     type: str
     choices: [ absent, present, refresh, stat ]
     default: present
+  relinfo:
+    description:
+    - Get information of the state for each replicated relation in the subscription.
+    type: bool
+    default: false
   owner:
     description:
     - Subscription owner.
@@ -139,11 +144,14 @@ EXAMPLES = r'''
     name: acme
     state: refresh
 
-- name: Return the configuration of subscription acme if exists in mydb database
+- name: >
+    Return the configuration of subscription acme if exists in mydb database.
+    Also return state of replicated relations.
   postgresql_subscription:
     db: mydb
     name: acme
     state: stat
+    relinfo: yes
 
 - name: Drop acme subscription from mydb with dependencies (cascade=yes)
   postgresql_subscription:
@@ -241,7 +249,7 @@ def convert_subscr_params(params_dict):
         params_dict (list): Dictionary which needs to be converted.
 
     Returns:
-        Rarameters string.
+        Parameters string.
     """
     params_list = []
     for (param, val) in iteritems(params_dict):
@@ -264,6 +272,9 @@ class PgSubscription():
         name (str): The name of the subscription.
         db (str): The database name the subscription will be associated with.
 
+    Kwargs:
+        relinfo (bool): Flag indicates the relation information is needed.
+
     Attributes:
         module (AnsibleModule): Object of AnsibleModule class.
         cursor (cursor): Cursor object of psycopg2 library to work with PostgreSQL.
@@ -273,11 +284,12 @@ class PgSubscription():
         exists (bool): Flag indicates the subscription exists or not.
     """
 
-    def __init__(self, module, cursor, name, db):
+    def __init__(self, module, cursor, name, db, relinfo):
         self.module = module
         self.cursor = cursor
         self.name = name
         self.db = db
+        self.relinfo = relinfo
         self.executed_queries = []
         self.attrs = {
             'owner': None,
@@ -286,6 +298,7 @@ class PgSubscription():
             'conninfo': {},
             'slotname': None,
             'publications': [],
+            'relinfo': None,
         }
         self.empty_attrs = deepcopy(self.attrs)
         self.exists = self.check_subscr()
@@ -309,7 +322,7 @@ class PgSubscription():
         subscr_info = self.__get_general_subscr_info()
 
         if not subscr_info:
-            # The subcrtiption does not exist:
+            # The subscription does not exist:
             self.attrs = deepcopy(self.empty_attrs)
             return False
 
@@ -326,13 +339,16 @@ class PgSubscription():
                 except ValueError:
                     self.attrs['conninfo'][tmp[0]] = tmp[1]
 
+        if self.relinfo:
+            self.attrs['relinfo'] = self.__get_rel_info()
+
         return True
 
     def create(self, connparams, publications, subsparams, check_mode=True):
         """Create the subscription.
 
         Args:
-            connparams (str): Connection string in ligpq style.
+            connparams (str): Connection string in libpq style.
             publications (list): Publications on the master to use.
             subsparams (str): Parameters string in WITH () clause style.
 
@@ -358,7 +374,7 @@ class PgSubscription():
         """Update the subscription.
 
         Args:
-            connparams (str): Connection string in ligpq style.
+            connparams (str): Connection string in libpq style.
             publications (list): Publications on the master to use.
             subsparams (dict): Dictionary of optional parameters.
 
@@ -479,7 +495,7 @@ class PgSubscription():
         """Update connection parameters.
 
         Args:
-            connparams (str): Connection string in ligpq style.
+            connparams (str): Connection string in libpq style.
 
         Kwargs:
             check_mode (bool): If True, don't actually change anything,
@@ -547,6 +563,24 @@ class PgSubscription():
         else:
             return False
 
+    def __get_rel_info(self):
+        """Get and return state of relations replicated by the subscription.
+
+        Returns:
+            List of dicts containing relations state if successful, False otherwise.
+        """
+        query = ("SELECT c.relname, r.srsubstate, r.srsublsn "
+                 "FROM pg_catalog.pg_subscription_rel r "
+                 "JOIN pg_catalog.pg_subscription s ON s.oid = r.srsubid "
+                 "JOIN pg_catalog.pg_class c ON c.oid = r.srrelid "
+                 "WHERE s.subname = '%s'" % self.name)
+
+        result = exec_sql(self, query, add_to_executed=False)
+        if result:
+            return [dict(row) for row in result]
+        else:
+            return False
+
     def __exec_sql(self, query, check_mode=False):
         """Execute SQL query.
 
@@ -586,6 +620,7 @@ def main():
         cascade=dict(type='bool', default=False),
         owner=dict(type='str'),
         subsparams=dict(type='dict'),
+        relinfo=dict(type='bool', default=False),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -601,6 +636,7 @@ def main():
     owner = module.params['owner']
     subsparams = module.params['subsparams']
     connparams = module.params['connparams']
+    relinfo = module.params['relinfo']
 
     if state == 'present' and cascade:
         module.warm('parameter "cascade" is ignored when state is not absent')
@@ -632,7 +668,7 @@ def main():
 
     ###################################
     # Create object and do rock'n'roll:
-    subscription = PgSubscription(module, cursor, name, db)
+    subscription = PgSubscription(module, cursor, name, db, relinfo)
 
     if subscription.exists:
         initial_state = deepcopy(subscription.attrs)

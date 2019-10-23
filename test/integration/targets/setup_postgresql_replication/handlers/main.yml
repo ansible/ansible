@@ -9,9 +9,8 @@
 
 - name: Remove packages
   apt:
-    name: '{{ item }}'
+    name: '{{ packages_to_remove }}'
     state: absent
-  loop: '{{ packages_to_remove }}'
   listen: cleanup postgresql
 
 - name: Remove FS objects
