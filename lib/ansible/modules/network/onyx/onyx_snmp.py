@@ -209,7 +209,7 @@ class OnyxSNMPModule(BaseOnyxModule):
             notify_community=dict(type='str'),
             notify_send_test=dict(type='str', choices=['yes', 'no']),
             notify_event=dict(type='str', choices=event_choices),
-            engine_id_reset=dict(choices=['yes', 'no']),
+            engine_id_reset=dict(type='bool'),
             snmp_permissions=dict(type='list', elements='dict', options=snmp_permission_spec)
         )
         argument_spec = dict()
@@ -365,7 +365,7 @@ class OnyxSNMPModule(BaseOnyxModule):
 
         engine_id_reset = self._required_config.get("engine_id_reset")
         if engine_id_reset is not None:
-            if engine_id_reset == 'yes':
+            if engine_id_reset == True:
                 self._commands.append('snmp-server engineID reset')
 
         current_multi_comm_state = self._current_config.get("multi_comm_enabled")
