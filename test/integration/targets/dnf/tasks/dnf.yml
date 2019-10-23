@@ -197,9 +197,7 @@
 
 - name: install non-existent rpm
   dnf:
-    name: "{{ item }}"
-  with_items:
-    - does-not-exist
+    name: does-not-exist
   register: non_existent_rpm
   ignore_errors: True
 

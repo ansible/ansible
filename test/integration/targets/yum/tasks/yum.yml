@@ -301,9 +301,8 @@
   yum: name=sos,bc state=removed
 
 - name: install non-existent rpm
-  yum: name="{{ item }}"
-  with_items:
-  - does-not-exist
+  yum:
+    name: does-not-exist
   register: non_existent_rpm
   ignore_errors: True
 

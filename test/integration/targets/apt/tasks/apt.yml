@@ -283,11 +283,12 @@
 
 - name: Clean up
   apt:
-    name: "{{ item }}"
+    name: "{{ pkgs }}"
     state: absent
-  with_items:
-    - libcaca-dev
-    - libslang2-dev
+  vars:
+    pkgs:
+      - libcaca-dev
+      - libslang2-dev
 
 # https://github.com/ansible/ansible/issues/38995
 - name: build-dep for a package
