@@ -6,8 +6,6 @@ mariadb_packages:
 - MariaDB-client
 
 packages_to_cleanup:
-- MariaDB-server
-- MariaDB-client
 - MariaDB-common
 - boost-program-options
 - galera

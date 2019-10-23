@@ -1,4 +1,4 @@
-[mysqld1]
+[mysqld@master]
 server_id           = 1
 port                = {{ master_port }}
 datadir             = {{ master_datadir }}
@@ -9,11 +9,11 @@ sync_binlog         = 1
 binlog-format       = ROW
 innodb_flush_log_at_trx_commit  = 1
 
-[mysqld2]
+[mysqld@standby]
 server_id           = 2
 port                = {{ standby_port }}
-socket              = /var/run/mysqld/mysqld_slave.sock
-pid-file            = /var/run/mysqld/mysqld_slave.pid
+socket              = {{ standby_datadir }}/var/lib/mysql_standby/mysqld_replica.sock
+pid-file            = {{ standby_datadir }}/var/lib/mysql_standby//mysqld_replica.pid
 datadir             = {{ standby_datadir }}
 log_bin             = {{ standby_logdir }}/mysql-bin.log
 relay-log           = {{ standby_logdir }}/relay-bin

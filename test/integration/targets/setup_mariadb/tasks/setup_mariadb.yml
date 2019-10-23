@@ -1,6 +1,19 @@
 # We run two servers listening different ports
 # to be able to check replication (one server for master, another for standby).
 
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_version }}.yml"
+        - "{{ ansible_facts.os_family }}-{{ ansible_facts.distribution_major_version }}.yml"
+        - "{{ ansible_facts.distribution }}.yml"
+        - "{{ ansible_facts.os_family }}.yml"
+        - default.yml
+      paths:
+        - vars
+
 - name: Install MariaDB repo
   yum_repository:
     name: MariaDB
@@ -13,7 +26,7 @@
 - name: Install MariaDB packages on RedHat family OS
   yum:
     name: "{{ mariadb_packages }}"
-    enablerepo: epel
+    enablerepo: "{{ mariadb_enable_repo | default(omit) }}"
   when: ansible_os_family == 'RedHat'
   notify: cleanup mariadb
 
@@ -45,7 +58,10 @@
   - '{{ standby_datadir }}'
 
 - name: Start services
-  shell: 'mysqld_multi --log=/var/log/mariadb/mariadb.log start 1,2'
+  service:
+    name: mariadb
+    state: started
+  # shell: 'mysqld_multi --log=/var/log/mariadb/mariadb.log start 1,2'
 
 - name: Pause
   pause: seconds=3

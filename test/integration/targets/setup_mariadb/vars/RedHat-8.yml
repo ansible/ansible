@@ -1,0 +1,2 @@
+mariadb_packages:
+  - mariadb-server

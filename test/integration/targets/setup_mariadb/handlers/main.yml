@@ -6,7 +6,7 @@
 
 - name: Remove MariaDB related packages
   yum:
-    name: "{{ packages_to_cleanup }}"
+    name: "{{ packages_to_cleanup | union(mariadb_packages)}}"
     state: absent
   listen: cleanup mariadb
 
