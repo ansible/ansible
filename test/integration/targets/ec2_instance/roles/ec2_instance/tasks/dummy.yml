@@ -1,0 +1,5 @@
+#
+# This is a dummy play to ensure at least one of the hosts is still valid
+#
+- debug:
+    msg: 'Dummy host successfully ran'

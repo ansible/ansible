@@ -1,6 +1,27 @@
+# Prepare the VPC and figure out which AMI to use
+- hosts: all
+  gather_facts: no
+  tasks:
+  - module_defaults:
+      group/aws:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token | default(omit) }}"
+        region: "{{ aws_region }}"
+    vars:
+      setup_run_once: yes
+    block:
+      - include_role:
+          name: 'ec2_instance'
+          tasks_from: find_ami.yml
+      - include_role:
+          name: 'ec2_instance'
+          tasks_from: env_setup.yml
+
+# VPC should get cleaned up once all hosts have run
 - hosts: all
   gather_facts: no
   strategy: free
-  serial: 10
+  #serial: 10
   roles:
     - ec2_instance

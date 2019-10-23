@@ -21,19 +21,6 @@
       security_token: "{{ security_token | default(omit) }}"
       region: "{{ aws_region }}"
   block:
-    - name: "Find AMI to use"
-      ec2_ami_info:
-        owners: 'amazon'
-        filters:
-          name: '{{ ec2_ami_name }}'
-      register: ec2_amis
-    - name: "Set fact with latest AMI"
-      vars:
-        latest_ami: '{{ ec2_amis.images | sort(attribute="creation_date") | last }}'
-      set_fact:
-        ec2_ami_image: '{{ latest_ami.image_id }}'
-
-    - include_tasks: env_setup.yml
     - debug:
         msg: "{{ inventory_hostname }} start: {{ lookup('pipe','date') }}"
     - include_tasks: '{{ inventory_hostname }}.yml'
@@ -41,5 +28,17 @@
         msg: "{{ inventory_hostname }} finish: {{ lookup('pipe','date') }}"
 
   always:
+    - set_fact:
+        _role_complete: True
+    - vars:
+        completed_hosts: '{{ ansible_play_hosts_all | map("extract", hostvars, "_role_complete") | list | select("defined") | list | length }}'
+        hosts_in_play: '{{ ansible_play_hosts_all | length }}'
+      debug:
+        msg: "{{ completed_hosts }} of {{ hosts_in_play }} complete"
     - include_tasks: env_cleanup.yml
-      when: aws_cleanup
+      vars:
+        completed_hosts: '{{ ansible_play_hosts_all | map("extract", hostvars, "_role_complete") | list | select("defined") | list | length }}'
+        hosts_in_play: '{{ ansible_play_hosts_all | length }}'
+      when:
+      - aws_cleanup
+      - completed_hosts == hosts_in_play
