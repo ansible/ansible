@@ -83,7 +83,7 @@ class L2_InterfacesFacts(object):
         if get_interface_type(intf) == 'unknown':
             return {}
 
-        if intf.upper()[:2] in ('ET', 'GI', 'FA', 'TE', 'FO', 'HU', 'TWE', 'TW', 'PO'):
+        if intf.upper()[:2] in ('HU', 'FO', 'TW', 'TE', 'GI', 'FA', 'ET', 'PO'):
             # populate the facts from the configuration
             config['name'] = normalize_interface(intf)
 
