@@ -1266,7 +1266,7 @@ files:
     support: core
   $plugins/lookup/first_found.py:
     support: core
-  $plugin/lookup/grafana_dashboard.py:
+  $plugins/lookup/grafana_dashboard.py:
     maintainers: $team_grafana
     labels: monitoring grafana
   $plugins/lookup/indexed_items.py:
