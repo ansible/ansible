@@ -250,6 +250,9 @@ files:
     ignored: bpennypacker
   $modules/monitoring/datadog_event.py:
     ignored: arturaz
+  $modules/monitoring/grafana:
+    labels: grafana
+    maintainers: $team_grafana
   $modules/monitoring/logentries.py:
     ignored: ivanvanderbyl
   $modules/monitoring/monit.py: brian-brazil
@@ -1014,7 +1017,8 @@ files:
   $plugins/callback/default:
     support: core
   $plugins/callback/grafana_annotations.py:
-    maintainers: rrey
+    maintainers: $team_grafana
+    labels: monitoring grafana
   $plugins/callback/foreman.py:
     maintainers: $team_foreman
   $plugins/callback/junit:
@@ -1262,6 +1266,9 @@ files:
     support: core
   $plugins/lookup/first_found.py:
     support: core
+  $plugin/lookup/grafana_dashboard.py:
+    maintainers: $team_grafana
+    labels: monitoring grafana
   $plugins/lookup/indexed_items.py:
     support: core
   $plugins/lookup/inventory_hostnames.py:
@@ -1584,6 +1591,7 @@ macros:
   team_ftd: annikulin
   team_gitlab: dj-wasabi Lunik marwatk Shaps waheedi
   team_google: rambleraptor erjohnso
+  team_grafana: rrey seuf
   team_hcloud: cschmitt-hcloud LKaemmerling
   team_hpux: bcoca dagwieers davx8342
   team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang QijunPan xuxiaowei0512 hwDCN
