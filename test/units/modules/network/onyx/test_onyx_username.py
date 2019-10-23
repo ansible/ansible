@@ -72,6 +72,11 @@ class TestOnyxUsernameModule(TestOnyxModule):
         commands = ['username anass capability monitor']
         self.execute_module(changed=True, commands=commands)
 
+    def test_disconnect_username(self):
+        set_module_args(dict(username='anass', disconnected=True))
+        commands = ['username anass disconnect']
+        self.execute_module(changed=True, commands=commands)
+
     def test_no_change_username_capability(self):
         set_module_args(dict(username='anass', capability="admin"))
         self.execute_module(changed=False)

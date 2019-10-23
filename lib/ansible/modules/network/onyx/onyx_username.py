@@ -54,6 +54,11 @@ options:
             - Reset capability to this user account
         type: bool
         default: False
+    disconnected:
+        description:
+            - Disconnect all sessions of this user
+        type: bool
+        default: False
     disabled:
         description:
             - Disable means of logging into this account
@@ -140,7 +145,8 @@ class OnyxUsernameModule(BaseOnyxModule):
                              nopassword=dict(type='bool', default=False),
                              password=dict(type='str'),
                              encrypted_password=dict(type='bool', default=False),
-                             reset_capability=dict(type="bool", default=False))
+                             reset_capability=dict(type="bool", default=False),
+                             disconnected=dict(type='bool', default=False))
         argument_spec.update(element_spec)
         self._module = AnsibleModule(
             argument_spec=argument_spec,
@@ -243,6 +249,10 @@ class OnyxUsernameModule(BaseOnyxModule):
             nopassword = required_config.get('nopassword')
             if nopassword != current_user.get('nopassword', False):
                 self._commands.append("username {0} nopassword".format(username))
+
+            disconnected = required_config.get('disconnected')
+            if disconnected:
+                self._commands.append("username {0} disconnect".format(username))
         else:
             '''create new account if we have valid inforamtion, just check for username, capability, full_name, password'''
 
