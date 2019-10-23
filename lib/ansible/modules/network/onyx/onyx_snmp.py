@@ -97,8 +97,7 @@ options:
   engine_id_reset:
     description:
       - Sets SNMPv3 engineID to node unique value.
-    choices: ['yes', 'no']
-    type: str
+    type: bool
   snmp_permissions:
     type: list
     description:
