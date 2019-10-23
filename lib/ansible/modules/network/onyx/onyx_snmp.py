@@ -365,7 +365,7 @@ class OnyxSNMPModule(BaseOnyxModule):
 
         engine_id_reset = self._required_config.get("engine_id_reset")
         if engine_id_reset is not None:
-            if engine_id_reset == True:
+            if engine_id_reset:
                 self._commands.append('snmp-server engineID reset')
 
         current_multi_comm_state = self._current_config.get("multi_comm_enabled")
