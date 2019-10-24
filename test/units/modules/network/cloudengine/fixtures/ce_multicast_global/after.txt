@@ -1,0 +1,10 @@
+  <data>
+    <mcastbase>
+      <mcastAfsEnables>
+        <mcastAfsEnable>
+          <vrfName>vpna</vrfName>
+          <addressFamily>ipv4unicast</addressFamily>
+        </mcastAfsEnable>
+      </mcastAfsEnables>
+    </mcastbase>
+  </data>

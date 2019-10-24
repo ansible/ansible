@@ -45,12 +45,10 @@ options:
   vrf:
     description:
       - VPN instance of destination ip address.
-    required: false
     type: str
   state:
     description:
       - Specify desired state of the resource.
-    required: false
     type: str
     default: present
     choices: ['present','absent']
@@ -292,8 +290,7 @@ def main():
     argument_spec = dict(
         aftype=dict(choices=['v4', 'v6'], required=True),
         vrf=dict(required=False, type='str'),
-        state=dict(choices=['absent', 'present'],
-                   default='present', required=False),
+        state=dict(choices=['absent', 'present'], default='present', required=False),
     )
     interface = MulticastGlobal(argument_spec)
     interface.work()
