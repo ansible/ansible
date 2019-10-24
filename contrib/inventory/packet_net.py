@@ -208,7 +208,6 @@ class PacketInventory(object):
 
         # Projects
         self.projects = []
-        # TODO: Allow override from ENV Var
         configProjects = config.get(ini_section, 'projects')
         configProjects_exclude = config.get(ini_section, 'projects_exclude')
         if (configProjects == 'all'):
@@ -352,7 +351,6 @@ class PacketInventory(object):
 
         # Inventory: Group by OS
         if self.group_by_operating_system:
-            #import pdb; pdb.set_trace()
             self.push(self.inventory, device.operating_system['slug'], dest)
             if self.nested_groups:
                 self.push_group(self.inventory, 'operating_systems', device.operating_system.slug)
