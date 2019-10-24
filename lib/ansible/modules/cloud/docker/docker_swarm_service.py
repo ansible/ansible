@@ -1244,7 +1244,7 @@ def has_dict_changed(new_dict, old_dict):
     return False
 
 
-def has_list_changed(new_list, old_list, sort=True):
+def has_list_changed(new_list, old_list, sort_lists=True):
     """
     Check two lists have differences. Sort lists by default.
     """
@@ -1254,7 +1254,7 @@ def has_list_changed(new_list, old_list, sort=True):
     if len(new_list) != len(old_list):
         return True
 
-    if sort:
+    if sort_lists:
         zip_data = zip(sort(new_list), sort(old_list))
     else:
         zip_data = zip(new_list, old_list)
@@ -1784,9 +1784,9 @@ class DockerService(DockerBaseClass):
             needs_rebuild = not self.can_update_networks
         if self.replicas != os.replicas:
             differences.add('replicas', parameter=self.replicas, active=os.replicas)
-        if has_list_changed(self.command, os.command, sort=False):
+        if has_list_changed(self.command, os.command, sort_lists=False):
             differences.add('command', parameter=self.command, active=os.command)
-        if has_list_changed(self.args, os.args, sort=False):
+        if has_list_changed(self.args, os.args, sort_lists=False):
             differences.add('args', parameter=self.args, active=os.args)
         if has_list_changed(self.constraints, os.constraints):
             differences.add('constraints', parameter=self.constraints, active=os.constraints)
