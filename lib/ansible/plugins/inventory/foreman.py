@@ -129,7 +129,11 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
     def _get_all_hosts(self):
 
         if self.use_cache:
-            inventory = self._cache[self.cache_key]
+            try:
+                inventory = self._cache[self.cache_key]
+            except KeyError:
+                # The cache key expired or does not exist yet
+                inventory = None
 
             if inventory is not None:
                 return inventory
