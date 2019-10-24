@@ -161,6 +161,7 @@ bucket:
 ################################################################################
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 import json
 import os
 import mimetypes
@@ -264,9 +265,9 @@ def fetch_resource(module, link, allow_not_found=True):
 
 def self_link(module):
     if module.params['action'] == 'download':
-        return "https://www.googleapis.com/storage/v1/b/{bucket}/o/{src}".format(**module.params)
+        return urlencode("https://www.googleapis.com/storage/v1/b/{bucket}/o/{src}".format(**module.params))
     else:
-        return "https://www.googleapis.com/storage/v1/b/{bucket}/o/{dest}".format(**module.params)
+        return urlencode("https://www.googleapis.com/storage/v1/b/{bucket}/o/{dest}".format(**module.params))
 
 
 def local_file_path(module):
@@ -278,13 +279,13 @@ def local_file_path(module):
 
 def media_link(module):
     if module.params['action'] == 'download':
-        return "https://www.googleapis.com/storage/v1/b/{bucket}/o/{src}?alt=media".format(**module.params)
+        return urlencode("https://www.googleapis.com/storage/v1/b/{bucket}/o/{src}?alt=media".format(**module.params))
     else:
-        return "https://www.googleapis.com/storage/v1/b/{bucket}/o/{dest}?alt=media".format(**module.params)
+        return urlencode("https://www.googleapis.com/storage/v1/b/{bucket}/o/{dest}?alt=media".format(**module.params))
 
 
 def upload_link(module):
-    return "https://www.googleapis.com/upload/storage/v1/b/{bucket}/o?uploadType=media&name={dest}".format(**module.params)
+    return urlencode("https://www.googleapis.com/upload/storage/v1/b/{bucket}/o?uploadType=media&name={dest}".format(**module.params))
 
 
 def return_if_object(module, response, allow_not_found=False):

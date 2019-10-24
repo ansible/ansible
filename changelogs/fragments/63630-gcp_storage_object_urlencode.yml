@@ -1,0 +1,2 @@
+bugfixes:
+- gcp_storage_object - encode the url for objects (https://github.com/ansible/ansible/issues/58830).
