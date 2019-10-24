@@ -1111,11 +1111,6 @@ class ISIS_View(object):
         self.bfd_multiplier_num = self.module.params['bfd_multiplier_num']
         self.state = self.module.params['state']
 
-        # host info
-        self.host = self.module.params['host']
-        self.username = self.module.params['username']
-        self.port = self.module.params['port']
-
         # state
         self.changed = False
         self.isis_dict = dict()
