@@ -1,0 +1,2 @@
+bugfixes:
+  - hostvars use AnsibleUndefined() and not Undefined() from Jinja. Issue in Github https://github.com/ansible/ansible/issues/63129
