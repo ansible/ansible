@@ -39,6 +39,8 @@ options:
     description:
       - The path to the properly json formatted policy file.
       - Mutually exclusive with I(policy_json).
+      - This option has been deprecated and will be removed in 2.14.  The existing behaviour can be
+        reproduced by using a file lookup.
     type: str
   policy_json:
     description:
@@ -296,6 +298,12 @@ def main():
     mutually_exclusive = [['policy_document', 'policy_json']]
 
     module = AnsibleAWSModule(argument_spec=argument_spec, mutually_exclusive=mutually_exclusive, supports_check_mode=True)
+
+
+    if module.params.get('policy_document'):
+        module.deprecate('The policy_document option has been deprecated and'
+                         ' will be removed in Ansible 2.14',
+                         version='2.14')
 
     args = dict(
         client=module.client('iam'),
