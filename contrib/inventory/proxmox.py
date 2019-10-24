@@ -42,6 +42,7 @@ from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 from ansible.module_utils.urls import open_url
 
+
 class ProxmoxNodeList(list):
     def get_names(self):
         return [node['node'] for node in self]
