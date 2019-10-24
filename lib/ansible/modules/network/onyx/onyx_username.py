@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: onyx_username
-version_added: "2.9"
+version_added: "2.10"
 author: "Anas Shami (@anass)"
 short_description: Configure username module
 description:
@@ -62,42 +62,44 @@ options:
     disabled:
         description:
             - Disable means of logging into this account
+        type: str
         choices: ['none', 'login', 'password', 'all']
     state:
         description:
             - Set state of the given account
         default: present
+        type: str
         choices: ['present', 'absent']
 """
 
 EXAMPLES = """
 - name: create new user
-    onyx_username:
+  onyx_username:
       username: anass
 
 - name: set the user full-name
-    onyx_username:
+  onyx_username:
       username: anass
       full_name: anasshami
 
 - name: set the user encrypted password
-    onyx_username:
+  onyx_username:
       username: anass
       password: 12345
       encrypted_password: True
 
 - name: set the user capability
-    onyx_username:
+  onyx_username:
       username: anass
       capability: monitor
 
 - name: reset the user capability
-    onyx_username:
+  onyx_username:
       username: anass
       reset_capability: True
 
 - name: remove the user configuration
-    onyx_username:
+  onyx_username:
       username: anass
       state: absent
 """
