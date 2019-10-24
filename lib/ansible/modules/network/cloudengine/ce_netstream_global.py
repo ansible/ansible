@@ -75,7 +75,9 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       transport: cli
+
   tasks:
+
   - name: Configure a netstream sampler at interface 10ge1/0/2, direction is outbound,interval is 30.
     ce_netstream_global:
       interface: 10ge1/0/2
