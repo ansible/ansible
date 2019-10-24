@@ -3,38 +3,39 @@
   nxos_feature:
     feature: netconf
     state: enabled
-  vars:
+  vars: &ssh_credentials
     ansible_connection: network_cli
     ansible_ssh_port: 22
-
-- name: Setup - Remove loopback
-  nxos_config:
-    lines:
-      - no interface loopback55
+  register: result
   ignore_errors: yes
 
-- name: Setup - Configure test loopback interface
+- debug: msg='Netconf feature is not supported on this platform!'
+  when: result.failed
+
+- name: Setup - Remove Vlan
   nxos_config:
     lines:
-      - interface loopback55
+      - no vlan 42
+  ignore_errors: yes
+  when: not result.failed
 
 - block:
-  - { include: netconf.yaml, tags: ['netconf'] }
+  - name: Run netconf tests
+    include: netconf.yaml
+    when: not result.failed
 
   always:
   - name: Disable feature netconf
     nxos_feature:
       feature: netconf
       state: disabled
-    vars:
-      ansible_connection: network_cli
-      ansible_ssh_port: 22
+    vars: *ssh_credentials
+    when: not result.failed
 
-  - name: Cleanup - Remove loopback
+  - name: Cleanup - Remove vlan
     nxos_config:
       lines:
-        - no interface loopback55
-    vars:
-      ansible_connection: network_cli
-      ansible_ssh_port: 22
+        - no vlan 42
+    vars: *ssh_credentials
     ignore_errors: yes
+    when: not result.failed

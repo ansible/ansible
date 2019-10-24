@@ -2,21 +2,35 @@
 - debug: msg="START nxos_netconf cli/basic.yaml"
 
 - block:
-  - name: Configure loopback interface ip address
-    netconf_config:
+  - name: Configure vlan
+    netconf_config: &config_vlan
       datastore: running
-      get_filter: <System xmlns="http://cisco.com/ns/yang/cisco-nx-os-device"><ipv4-items><inst-items><dom-items></dom-items></inst-items></ipv4-items></System>
-      content: "{{ lookup('file', './payload.xml') }}"
+      commit: false
+      get_filter: <System xmlns="http://cisco.com/ns/yang/cisco-nx-os-device"><bd-items><bd-items><BD-list></BD-list></bd-items></bd-items></System>
+      content: "{{ lookup('file', './configure_vlan.xml') }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Configure vlan - idempotence check
+    netconf_config: *config_vlan
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
 
   - name: Query Running Config
     netconf_get:
       source: running
-      filter: <System xmlns="http://cisco.com/ns/yang/cisco-nx-os-device"><ipv4-items><inst-items><dom-items></dom-items></inst-items></ipv4-items></System>
+      filter: <System xmlns="http://cisco.com/ns/yang/cisco-nx-os-device"><bd-items><bd-items><BD-list></BD-list></bd-items></bd-items></System>
     register: result
 
   - assert:
       that:
-        - "'192.168.55.55' in result.stdout"
+        - "'vlan-42' in result.stdout"
 
   vars:
     ansible_connection: netconf
