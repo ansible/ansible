@@ -1244,16 +1244,21 @@ def has_dict_changed(new_dict, old_dict):
     return False
 
 
-def has_list_changed(new_list, old_list):
+def has_list_changed(new_list, old_list, sort=True):
     """
-    Check two lists has differences.
+    Check two lists have differences. Sort lists by default.
     """
     if new_list is None:
         return False
     old_list = old_list or []
     if len(new_list) != len(old_list):
         return True
-    for new_item, old_item in zip(new_list, old_list):
+
+    if sort:
+        zip_data = zip(sort(new_list), sort(old_list))
+    else:
+        zip__data = zip(new_list, old_list)
+    for new_item, old_item in zip_data:
         is_same_type = type(new_item) == type(old_item)
         if not is_same_type:
             return True
@@ -1759,7 +1764,7 @@ class DockerService(DockerBaseClass):
         force_update = False
         if self.endpoint_mode is not None and self.endpoint_mode != os.endpoint_mode:
             differences.add('endpoint_mode', parameter=self.endpoint_mode, active=os.endpoint_mode)
-        if self.env is not None and self.env != (os.env or []):
+        if has_list_changed(self.env, os.env):
             differences.add('env', parameter=self.env, active=os.env)
         if self.log_driver is not None and self.log_driver != os.log_driver:
             differences.add('log_driver', parameter=self.log_driver, active=os.log_driver)
@@ -1779,15 +1784,15 @@ class DockerService(DockerBaseClass):
             needs_rebuild = not self.can_update_networks
         if self.replicas != os.replicas:
             differences.add('replicas', parameter=self.replicas, active=os.replicas)
-        if self.command is not None and self.command != (os.command or []):
+        if has_list_changed(self.command, os.command, sort=False):
             differences.add('command', parameter=self.command, active=os.command)
-        if self.args is not None and self.args != (os.args or []):
+        if has_list_changed(self.args, os.args, sort=False):
             differences.add('args', parameter=self.args, active=os.args)
-        if self.constraints is not None and self.constraints != (os.constraints or []):
+        if has_list_changed(self.constraints, os.constraints):
             differences.add('constraints', parameter=self.constraints, active=os.constraints)
-        if self.placement_preferences is not None and self.placement_preferences != (os.placement_preferences or []):
+        if has_list_changed(self.placement_preferences, os.placement_preferences):
             differences.add('placement_preferences', parameter=self.placement_preferences, active=os.placement_preferences)
-        if self.groups is not None and self.groups != (os.groups or []):
+        if has_list_changed(self.groups, os.groups):
             differences.add('groups', parameter=self.groups, active=os.groups)
         if self.labels is not None and self.labels != (os.labels or {}):
             differences.add('labels', parameter=self.labels, active=os.labels)
@@ -1836,11 +1841,11 @@ class DockerService(DockerBaseClass):
             differences.add('image', parameter=self.image, active=change)
         if self.user and self.user != os.user:
             differences.add('user', parameter=self.user, active=os.user)
-        if self.dns is not None and self.dns != (os.dns or []):
+        if has_list_changed(self.dns, os.dns):
             differences.add('dns', parameter=self.dns, active=os.dns)
-        if self.dns_search is not None and self.dns_search != (os.dns_search or []):
+        if has_list_changed(self.dns_search, os.dns_search):
             differences.add('dns_search', parameter=self.dns_search, active=os.dns_search)
-        if self.dns_options is not None and self.dns_options != (os.dns_options or []):
+        if has_list_changed(self.dns_options, os.dns_options):
             differences.add('dns_options', parameter=self.dns_options, active=os.dns_options)
         if self.has_healthcheck_changed(os):
             differences.add('healthcheck', parameter=self.healthcheck, active=os.healthcheck)
