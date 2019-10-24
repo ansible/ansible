@@ -74,7 +74,7 @@ options:
       - list of BootOptionReference strings specifying the BootOrder
     default: []
     type: list
-    version_added: "2.9"
+    version_added: "2.10"
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
