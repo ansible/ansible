@@ -42,6 +42,11 @@ class TestOnyxUsernameModule(TestOnyxModule):
         commands = ['username test']
         self.execute_module(changed=True, commands=commands)
 
+    def test_change_full_username(self):
+        set_module_args(dict(username='anass', full_name="anasshami"))
+        commands = ['username anass full-name anasshami']
+        self.execute_module(changed=True, commands=commands)
+
     def test_change_username_password(self):
         set_module_args(dict(username='anass', password="12345"))
         commands = ['username anass password 12345']
@@ -87,4 +92,8 @@ class TestOnyxUsernameModule(TestOnyxModule):
 
     def test_no_change_username_nopass(self):
         set_module_args(dict(username='admin', nopassword=True))
+        self.execute_module(changed=False)
+
+    def test_no_change_full_username(self):
+        set_module_args(dict(username='admin', full_name="System Administrator"))
         self.execute_module(changed=False)

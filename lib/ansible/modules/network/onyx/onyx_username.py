@@ -148,7 +148,8 @@ class OnyxUsernameModule(BaseOnyxModule):
                              password=dict(type='str'),
                              encrypted_password=dict(type='bool', default=False),
                              reset_capability=dict(type="bool", default=False),
-                             disconnected=dict(type='bool', default=False))
+                             disconnected=dict(type='bool', default=False),
+                             full_name=dict(type='str'))
         argument_spec.update(element_spec)
         self._module = AnsibleModule(
             argument_spec=argument_spec,
@@ -249,7 +250,7 @@ class OnyxUsernameModule(BaseOnyxModule):
                     self._commands.append("username {0} password {1}".format(username, password))
 
             nopassword = required_config.get('nopassword')
-            if nopassword != current_user.get('nopassword', False):
+            if nopassword and nopassword != current_user.get('nopassword', False):
                 self._commands.append("username {0} nopassword".format(username))
 
             disconnected = required_config.get('disconnected')
