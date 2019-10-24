@@ -69,6 +69,7 @@ The following functionality will be removed in Ansible 2.14. Please update updat
 The following functionality will change in Ansible 2.14. Please update update your playbooks accordingly.
 
 * The :ref:`docker_container <docker_container_module>` module has a new option, ``container_default_behavior``, whose default value will change from ``compatibility`` to ``no_defaults``. Set to an explicit value to avoid deprecation warnings.
+* :ref:`iam_policy <iam_policy_module>`: the default value for the ``skip_duplicates`` option will change from ``true`` to ``false``.  To maintain the existing behaviour explicitly set it to ``true``
 
 
 

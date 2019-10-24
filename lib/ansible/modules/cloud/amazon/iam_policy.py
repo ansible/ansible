@@ -58,7 +58,7 @@ options:
     description:
       - By default the module looks for any policies that match the document you pass in, if there is a match it will not make a new policy object with
         the same rules. You can override this by specifying false which would allow for two policy objects with different names but same rules.
-    default: true
+      - This behaviour can be confusing and as such the default it will be disabled in 2.14.
     type: bool
 
 author:
@@ -293,12 +293,19 @@ def main():
         policy_name=dict(required=True),
         policy_document=dict(default=None, required=False),
         policy_json=dict(type='json', default=None, required=False),
-        skip_duplicates=dict(type='bool', default=True, required=False)
+        skip_duplicates=dict(type='bool', default=None, required=False)
     )
     mutually_exclusive = [['policy_document', 'policy_json']]
 
     module = AnsibleAWSModule(argument_spec=argument_spec, mutually_exclusive=mutually_exclusive, supports_check_mode=True)
 
+    skip_duplicates = module.params.get('skip_duplicates')
+
+    if (skip_duplicates is None):
+        module.deprecate('The skip_duplicates behaviour has caused confusion and'
+                         ' will be disabled by default in Ansible 2.14',
+                         version='2.14')
+        skip_duplicates = True
 
     if module.params.get('policy_document'):
         module.deprecate('The policy_document option has been deprecated and'
@@ -311,7 +318,7 @@ def main():
         policy_name=module.params.get('policy_name'),
         policy_document=module.params.get('policy_document'),
         policy_json=module.params.get('policy_json'),
-        skip_duplicates=module.params.get('skip_duplicates'),
+        skip_duplicates=skip_duplicates,
         state=module.params.get('state'),
         check_mode=module.check_mode,
     )
