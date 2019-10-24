@@ -260,11 +260,11 @@ class VmwareAdapterConfigManager(PyVmomi):
         return params_to_change
 
     def set_host_state(self):
-        """Checking and applying ESXi host configuration one by one, 
+        """Checking and applying ESXi host configuration one by one,
         from prepared list of hosts in `self.hosts`.
         For every host applied:
-        - user input checking done via calling `sanitize_params` method 
-        - changes applied via calling `_update_sriov` method 
+        - user input checking done via calling `sanitize_params` method
+        - changes applied via calling `_update_sriov` method
         - host state before and after via calling `_check_sriov`
         """
         change_list = []
