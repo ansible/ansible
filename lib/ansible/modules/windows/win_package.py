@@ -28,10 +28,7 @@ options:
       package.
     - If the package is an MSI do not supply the C(/qn), C(/log) or
       C(/norestart) arguments.
-    - As of Ansible 2.5, this parameter can be a list of arguments and the
-      module will escape the arguments as necessary, it is recommended to use a
-      string when dealing with MSI packages due to the unique escaping issues
-      with msiexec.
+    - While multiple arguments may be accepted, they must be formatted as a string and not as a list.
     type: str
   chdir:
     description:
@@ -174,10 +171,7 @@ EXAMPLES = r'''
   win_package:
     path: http://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x64.exe
     product_id: '{CF2BEA3C-26EA-32F8-AA9B-331F7E34BA97}'
-    arguments:
-    - /install
-    - /passive
-    - /norestart
+    arguments: /install /passive /norestart
     log_path: D:\logs\vcredist_x64-exe-{{lookup('pipe', 'date +%Y%m%dT%H%M%S')}}.log
 
 - name: Install Remote Desktop Connection Manager from msi
