@@ -20,6 +20,7 @@ __metaclass__ = type
 
 from . import reboot
 
+
 class ActionModule(reboot.ActionModule):
     DEFAULT_REBOOT_MESSAGE = 'Shutdown initiated by Ansible'
     DEFAULT_SHUTDOWN_COMMAND_ARGS = '-h {delay_min} "{message}"'
