@@ -116,7 +116,7 @@ EXAMPLES = '''
 import json
 
 try:
-    from botocore.exceptions import BotoCoreError, ClientError, ParamValidationError
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass
 
@@ -333,7 +333,7 @@ def main():
             policy = GroupPolicy(**args)
 
         module.exit_json(**(policy.run()))
-    except (BotoCoreError, ClientError, ParamValidationError) as e:
+    except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e)
     except PolicyError as e:
         module.fail_json(msg=str(e))
