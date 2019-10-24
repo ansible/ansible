@@ -170,21 +170,22 @@ class Policy:
         pass
 
     def delete(self):
+        if self.policy_name not in self.list():
+            self.changed = False
+            return
+
         self.changed = True
         if not self.check_mode:
-            try:
-                self._delete(self.name, self.policy_name)
-            except ClientError as e:
-                if e.response['Error']['Code'] == 'NoSuchEntity':
-                    self.changed = False
-                else:
-                    raise
+            self._delete(self.name, self.policy_name)
 
     def get_policy_text(self):
-        if self.policy_document is not None:
-            return self.get_policy_from_document()
-        if self.policy_json is not None:
-            return self.get_policy_from_json()
+        try:
+            if self.policy_document is not None:
+                return self.get_policy_from_document()
+            if self.policy_json is not None:
+                return self.get_policy_from_json()
+        except json.JSONDecodeError as e:
+            raise PolicyError('Failed to decode the policy as valid JSON: %s' % str(e))
         return None
 
     def get_policy_from_document(self):
@@ -195,16 +196,14 @@ class Policy:
         except IOError as e:
             if e.errno == 2:
                 raise PolicyError('policy_document {0:!r} does not exist'.format(self.policy_document))
+            raise
         return pdoc
 
     def get_policy_from_json(self):
-        try:
-            if isinstance(self.policy_json, string_types):
-                pdoc = json.loads(self.policy_json)
-            else:
-                pdoc = self.policy_json
-        except Exception as e:
-            raise PolicyError('Failed to convert the policy into valid JSON: %s' % str(e))
+        if isinstance(self.policy_json, string_types):
+            pdoc = json.loads(self.policy_json)
+        else:
+            pdoc = self.policy_json
         return pdoc
 
     def create(self):
