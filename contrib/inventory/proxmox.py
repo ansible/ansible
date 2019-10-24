@@ -23,6 +23,12 @@
 # section for that VM.  In addition, the "groups" key of this JSON object may be
 # used to specify group membership:
 #
+# Updated 2019 by Marco Gabriel <mgabriel@inett.de>
+# 
+# Added Support for multiple servers in a cluster
+# Added ability to use proxmox.ini config file
+# Added switch to disable validation of (self-signed) certificates
+#
 # { "groups": ["utility", "databases"], "a": false, "b": true }
 
 import json
@@ -31,10 +37,10 @@ import sys
 from optparse import OptionParser
 
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import configparser as ConfigParser
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 from ansible.module_utils.urls import open_url
-
 
 class ProxmoxNodeList(list):
     def get_names(self):
@@ -101,7 +107,7 @@ class ProxmoxAPI(object):
             'password': self.options.password,
         })
 
-        data = json.load(open_url(request_path, data=request_params))
+        data = json.load(open_url(request_path, data=request_params, validate_certs=self.options.validatecerts))
 
         self.credentials = {
             'ticket': data['data']['ticket'],
@@ -112,7 +118,7 @@ class ProxmoxAPI(object):
         request_path = '{0}{1}'.format(self.options.url, url)
 
         headers = {'Cookie': 'PVEAuthCookie={0}'.format(self.credentials['ticket'])}
-        request = open_url(request_path, data=data, headers=headers)
+        request = open_url(request_path, data=data, headers=headers, validate_certs=self.options.validatecerts)
 
         response = json.load(request)
         return response['data']
@@ -166,36 +172,35 @@ def main_list(options):
         results['all']['hosts'] += lxc_list.get_names()
         results['_meta']['hostvars'].update(lxc_list.get_variables())
 
-        for vm in results['_meta']['hostvars']:
-            vmid = results['_meta']['hostvars'][vm]['proxmox_vmid']
-            try:
-                type = results['_meta']['hostvars'][vm]['proxmox_type']
-            except KeyError:
-                type = 'qemu'
-            try:
-                description = proxmox_api.vm_description_by_type(node, vmid, type)['description']
-            except KeyError:
-                description = None
+    for vm in results['_meta']['hostvars']:
+        vmid = results['_meta']['hostvars'][vm]['proxmox_vmid']
+        try:
+            type = results['_meta']['hostvars'][vm]['proxmox_type']
+        except KeyError:
+            type = 'qemu'
+        try:
+            description = proxmox_api.vm_description_by_type(node, vmid, type)['description']
+        except:
+            description = None
+        try:
+            metadata = json.loads(description)
+        except TypeError:
+            metadata = {}
+        except ValueError:
+            metadata = {
+                'notes': description
+            }
 
-            try:
-                metadata = json.loads(description)
-            except TypeError:
-                metadata = {}
-            except ValueError:
-                metadata = {
-                    'notes': description
-                }
+        if 'groups' in metadata:
+            # print metadata
+            for group in metadata['groups']:
+                if group not in results:
+                    results[group] = {
+                        'hosts': []
+                    }
+                results[group]['hosts'] += [vm]
 
-            if 'groups' in metadata:
-                # print metadata
-                for group in metadata['groups']:
-                    if group not in results:
-                        results[group] = {
-                            'hosts': []
-                        }
-                    results[group]['hosts'] += [vm]
-
-            results['_meta']['hostvars'][vm].update(metadata)
+        results['_meta']['hostvars'][vm].update(metadata)
 
     # pools
     for pool in proxmox_api.pools().get_names():
@@ -220,13 +225,27 @@ def main_host(options):
 
 
 def main():
+
+    """ read settings from proxmox.ini file """
+
+    config = ConfigParser.SafeConfigParser()
+    config.read(os.path.dirname(os.path.realpath(__file__)) + '/proxmox.ini')
+
+    proxmox_host = config.get('proxmox', 'host')
+    proxmox_url = 'https://{host}:8006/'.format(host=proxmox_host)
+    proxmox_username = config.get('proxmox', 'username')
+    proxmox_password = config.get('proxmox', 'password')
+    proxmox_validate_certs = config.getboolean('proxmox', 'validate_certs')
+
     parser = OptionParser(usage='%prog [options] --list | --host HOSTNAME')
     parser.add_option('--list', action="store_true", default=False, dest="list")
     parser.add_option('--host', dest="host")
-    parser.add_option('--url', default=os.environ.get('PROXMOX_URL'), dest='url')
-    parser.add_option('--username', default=os.environ.get('PROXMOX_USERNAME'), dest='username')
-    parser.add_option('--password', default=os.environ.get('PROXMOX_PASSWORD'), dest='password')
+    parser.add_option('--url', default=proxmox_url, dest='url')
+    parser.add_option('--username', default=proxmox_username, dest='username')
+    parser.add_option('--password', default=proxmox_password, dest='password')
     parser.add_option('--pretty', action="store_true", default=False, dest='pretty')
+    parser.add_option('--no-validate-certs', default=proxmox_validate_certs, dest='validatecerts')
+
     (options, args) = parser.parse_args()
 
     if options.list:
