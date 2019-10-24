@@ -24,7 +24,7 @@
 # used to specify group membership:
 #
 # Updated 2019 by Marco Gabriel <mgabriel@inett.de>
-# 
+#
 # Added Support for multiple servers in a cluster
 # Added ability to use proxmox.ini config file
 # Added switch to disable validation of (self-signed) certificates
@@ -172,35 +172,37 @@ def main_list(options):
         results['all']['hosts'] += lxc_list.get_names()
         results['_meta']['hostvars'].update(lxc_list.get_variables())
 
-    for vm in results['_meta']['hostvars']:
-        vmid = results['_meta']['hostvars'][vm]['proxmox_vmid']
-        try:
-            type = results['_meta']['hostvars'][vm]['proxmox_type']
-        except KeyError:
-            type = 'qemu'
-        try:
-            description = proxmox_api.vm_description_by_type(node, vmid, type)['description']
-        except:
-            description = None
-        try:
-            metadata = json.loads(description)
-        except TypeError:
-            metadata = {}
-        except ValueError:
-            metadata = {
-                'notes': description
-            }
+        for vm in results['_meta']['hostvars']:
+            vmid = results['_meta']['hostvars'][vm]['proxmox_vmid']
+            try:
+                type = results['_meta']['hostvars'][vm]['proxmox_type']
+            except KeyError:
+                type = 'qemu'
+            try:
+                description = proxmox_api.vm_description_by_type(node, vmid, type)['description']
+            except KeyError:
+                description = None
+            except Exception:
+                pass
+            try:
+                metadata = json.loads(description)
+            except TypeError:
+                metadata = {}
+            except ValueError:
+                metadata = {
+                    'notes': description
+                }
 
-        if 'groups' in metadata:
-            # print metadata
-            for group in metadata['groups']:
-                if group not in results:
-                    results[group] = {
-                        'hosts': []
-                    }
-                results[group]['hosts'] += [vm]
+            if 'groups' in metadata:
+                # print metadata
+                for group in metadata['groups']:
+                    if group not in results:
+                        results[group] = {
+                            'hosts': []
+                        }
+                    results[group]['hosts'] += [vm]
 
-        results['_meta']['hostvars'][vm].update(metadata)
+            results['_meta']['hostvars'][vm].update(metadata)
 
     # pools
     for pool in proxmox_api.pools().get_names():
