@@ -18,9 +18,9 @@ version_added: "2.6"
 author: "Rafael D. Vencioneck (@rdvencioneck)"
 short_description: Run commands on remote devices running Extreme EXOS
 description:
-  - Sends arbitrary commands to an Extreme EXOS device and returns the results
-    read from the device. This module includes an argument that will cause the
-    module to wait for a specific condition before returning or timing out if
+  - Sends arbitrary commands(except configuration commands) to an Extreme EXOS device and
+    returns the results read from the device. This module includes an argument that will
+    cause the module to wait for a specific condition before returning or timing out if
     the condition is not met.
   - This module does not support running configuration commands.
     Please use M(exos_config) to configure EXOS devices.
@@ -187,7 +187,7 @@ def main():
     interval = module.params['interval']
     match = module.params['match']
 
-    while retries > 0:
+    while True:
         responses = run_commands(module, commands)
 
         for item in list(conditionals):
@@ -202,6 +202,9 @@ def main():
 
         time.sleep(interval)
         retries -= 1
+
+        if retries < 0:
+            break
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
