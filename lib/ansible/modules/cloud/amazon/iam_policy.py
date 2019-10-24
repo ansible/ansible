@@ -121,6 +121,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import compare_policies
 from ansible.module_utils.six import string_types
 
 
@@ -155,14 +156,14 @@ class Policy:
         return '{}'
 
     def get(self, policy_name):
-        return json.dumps(self._get(self.name, policy_name)['PolicyDocument'], sort_keys=True)
+        return self._get(self.name, policy_name)['PolicyDocument']
 
     def _put(self, name, policy_name, policy_doc):
         pass
 
     def put(self, policy_doc):
         if not self.check_mode:
-            self._put(self.name, self.policy_name, policy_doc)
+            self._put(self.name, self.policy_name, json.dumps(policy_doc, sort_keys=True))
         self.changed = True
 
     def _delete(self, name, policy_name):
@@ -189,7 +190,7 @@ class Policy:
     def get_policy_from_document(self):
         try:
             with open(self.policy_document, 'r') as json_data:
-                pdoc = json.dumps(json.load(json_data), sort_keys=True)
+                pdoc = json.load(json_data)
                 json_data.close()
         except IOError as e:
             if e.errno == 2:
@@ -199,9 +200,9 @@ class Policy:
     def get_policy_from_json(self):
         try:
             if isinstance(self.policy_json, string_types):
-                pdoc = json.dumps(json.loads(self.policy_json), sort_keys=True)
+                pdoc = json.loads(self.policy_json)
             else:
-                pdoc = json.dumps(self.policy_json, sort_keys=True)
+                pdoc = self.policy_json
         except Exception as e:
             raise PolicyError('Failed to convert the policy into valid JSON: %s' % str(e))
         return pdoc
@@ -209,11 +210,13 @@ class Policy:
     def create(self):
         matching_policies = []
         policy_doc = self.get_policy_text()
+        policy_match = False
         for pol in self.list():
-            if self.get(pol) == policy_doc:
+            if not compare_policies(self.get(pol), policy_doc):
                 matching_policies.append(pol)
+                policy_match = True
 
-        if self.policy_name not in matching_policies or not self.skip_duplicates:
+        if (self.policy_name not in matching_policies) and not (self.skip_duplicates and policy_match):
             self.put(policy_doc)
 
     def run(self):
