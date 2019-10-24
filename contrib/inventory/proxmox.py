@@ -101,7 +101,8 @@ class ProxmoxAPI(object):
             'password': self.options.password,
         })
 
-        data = json.load(open_url(request_path, data=request_params, validate_certs = self.options.validate_certs))
+        data = json.load(
+            open_url(request_path, data=request_params, validate_certs=self.options.validate_certs))
 
         self.credentials = {
             'ticket': data['data']['ticket'],
@@ -112,7 +113,7 @@ class ProxmoxAPI(object):
         request_path = '{0}{1}'.format(self.options.url, url)
 
         headers = {'Cookie': 'PVEAuthCookie={0}'.format(self.credentials['ticket'])}
-        request = open_url(request_path, data=data, headers=headers, validate_certs = self.options.validate_certs)
+        request = open_url(request_path, data=data, headers=headers, validate_certs=self.options.validate_certs)
 
         response = json.load(request)
         return response['data']
@@ -161,12 +162,13 @@ def main_list(options):
     for node in proxmox_api.nodes().get_names():
         qemu_list = proxmox_api.node_qemu(node)
         results['all']['hosts'] += qemu_list.get_names()
-        results['_meta']['hostvars'].update(qemu_list.get_variables())
+        node_vm_hostvars = qemu_list.get_variables()
+        results['_meta']['hostvars'].update(node_vm_hostvars)
         lxc_list = proxmox_api.node_lxc(node)
         results['all']['hosts'] += lxc_list.get_names()
         results['_meta']['hostvars'].update(lxc_list.get_variables())
 
-        for vm in results['_meta']['hostvars']:
+        for vm in node_vm_hostvars:
             vmid = results['_meta']['hostvars'][vm]['proxmox_vmid']
             try:
                 type = results['_meta']['hostvars'][vm]['proxmox_type']
@@ -229,7 +231,6 @@ def main():
     parser.add_option('--pretty', action="store_true", default=False, dest='pretty')
     parser.add_option('--validate-certs', default=os.environ.get('PROXMOX_VALIDATE_CERTS'), dest='validate_certs')
     (options, args) = parser.parse_args()
-
 
     if options.validate_certs in ['no', 'false', 'False', False]:
         options.validate_certs = False
