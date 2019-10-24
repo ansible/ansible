@@ -911,7 +911,7 @@ class User(object):
                 # Python 3.6 raises PermissionError instead of KeyError
                 # Due to absence of PermissionError in python2.7 need to check
                 # errno
-                if e.errno in (errno.EACCES, errno.EPERM):
+                if e.errno in (errno.EACCES, errno.EPERM, errno.ENOENT):
                     return passwd, expires
                 raise
 
