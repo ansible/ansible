@@ -249,10 +249,11 @@ def associate_ip_and_device(ec2, module, address, private_ip_address, device_id,
             try:
                 params = dict(
                     InstanceId=device_id,
-                    PrivateIpAddress=private_ip_address,
                     AllowReassociation=allow_reassociation,
                 )
-                if address.domain == "vpc":
+                if private_ip_address:
+                    params['PrivateIPAddress'] = private_ip_address
+                if address['Domain'] == 'vpc':
                     params['AllocationId'] = address['AllocationId']
                 else:
                     params['PublicIp'] = address['PublicIp']
