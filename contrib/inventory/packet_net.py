@@ -169,6 +169,12 @@ class PacketInventory(object):
         else:
             self.replace_dash_in_groups = True
 
+        # Prepend tags with 'tag_'
+        if config.has_option(ini_section, 'prepend_tags'):
+            self.prepend_tags = config.getboolean(ini_section, 'prepend_tags')
+        else:
+            self.prepend_tags = True
+
         # Configure which groups should be created.
         group_by_options = [
             'group_by_device_id',
@@ -364,10 +370,16 @@ class PacketInventory(object):
         # Inventory: Group by tag keys
         if self.group_by_tags:
             for k in device.tags:
-                key = self.to_safe("tag_" + k)
+                if self.prepend_tags:
+                    key = self.to_safe("tag_" + k)
+                else:
+                    key = self.to_safe(k)
                 self.push(self.inventory, key, dest)
                 if self.nested_groups:
-                    self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
+                    if self.prepend_tags:
+                        self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
+                    else:
+                        self.push_group(self.inventory, 'tags', self.to_safe(k))
 
         # Global Tag: devices without tags
         if self.group_by_tag_none and len(device.tags) == 0:
