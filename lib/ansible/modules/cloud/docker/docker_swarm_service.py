@@ -1257,7 +1257,7 @@ def has_list_changed(new_list, old_list, sort=True):
     if sort:
         zip_data = zip(sort(new_list), sort(old_list))
     else:
-        zip__data = zip(new_list, old_list)
+        zip_data = zip(new_list, old_list)
     for new_item, old_item in zip_data:
         is_same_type = type(new_item) == type(old_item)
         if not is_same_type:
