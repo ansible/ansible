@@ -7,7 +7,7 @@
   ce_netconf:
     rpc: get
     cfg_xml: "<config>
-              <isiscomm xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version="1.0\">
+              <isiscomm xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
                 <isSites>
                   <isSite operation="merge">
                     <instanceId>100</instanceId>
