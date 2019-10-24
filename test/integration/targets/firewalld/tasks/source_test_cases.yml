@@ -82,4 +82,4 @@
   assert:
     that:
     - result is not changed
-    - "result.msg == 'can only operate on port, service, rich_rule, masquerade, icmp_block, icmp_block_inversion, interface or source at once'"
+    - "result.msg == 'can only operate on port, service, rich_rule, masquerade, icmp_block, icmp_block_inversion, interface, source or direct_rule at once'"
