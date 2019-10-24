@@ -25,6 +25,7 @@ from ansible.modules.network.cloudengine import ce_multicast_global
 from units.modules.network.cloudengine.ce_module import TestCloudEngineModule, load_fixture
 from units.modules.utils import set_module_args
 
+
 class TestCloudEngineLacpModule(TestCloudEngineModule):
     module = ce_multicast_global
 
