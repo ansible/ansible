@@ -65,7 +65,7 @@ Ansible releases a new major release of Ansible approximately three to four time
    :caption: Ansible Galaxy
 
    galaxy/user_guide/index
-   galaxy/dev_guide/index
+   galaxy/dev_guide.rst
 
 
 .. toctree::
