@@ -2205,6 +2205,8 @@ lib/ansible/modules/files/archive.py use-argspec-type-path # fix needed
 lib/ansible/modules/files/assemble.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/files/blockinfile.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/files/blockinfile.py validate-modules:doc-choices-do-not-match-spec
+lib/ansible/modules/files/consul_template.py validate-modules:invalid-documentation
+lib/ansible/modules/files/consul_template.py validate-modules:invalid-examples
 lib/ansible/modules/files/copy.py pylint:blacklisted-name
 lib/ansible/modules/files/copy.py validate-modules:undocumented-parameter
 lib/ansible/modules/files/copy.py validate-modules:nonexistent-parameter-documented
