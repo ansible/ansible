@@ -99,24 +99,28 @@ options:
     description:
       - The firewalld iptables direct rule you would like to enable/disable.
     type: str
-    version_added: "2.8"
+    version_added: "2.10"
   chain:
     description:
       - The iptables chain in which to insert the direct_rule, used with the C(direct_rule) option.
     type: str
-    version_added: "2.8"
+    version_added: "2.10"
   table:
     description:
       - 'The iptables table in which to insert the direct_rule, used with the C(direct_rule) option.'
-    version_added: "2.8"
+    version_added: "2.10"
+    type: str
   fw_family:
     description:
       - 'The ip address family for the firewall direct_rule (C(ipv4) or C(ipv6)), used with the C(direct_rule) option.'
-    version_added: "2.8"
+    version_added: "2.10"
+    type: str
+    choices: [ ipv4, ipv6 ]
   rule_priority:
     description:
       - 'The priority of the direct firewalld iptables rule, used with the C(direct_rule) option.'
-    version_added: "2.8"
+    version_added: "2.10"
+    type: int
 notes:
   - Not tested on any Debian based system.
   - Requires the python2 bindings of firewalld, which may not be installed by default.
