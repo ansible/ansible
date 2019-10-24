@@ -33,6 +33,7 @@ options:
     description:
     - Name of the host system to work with.
     - This parameter is required if C(cluster_name) is not specified.
+    - user can specify specific host from cluster.
     type: str
   cluster_name:
     description:
@@ -175,6 +176,7 @@ class VmwareAdapterConfigManager(PyVmomi):
         self.num_virt_func = self.params.get("num_virt_func", None)
         self.sriov_on = self.params.get("sriov_on", None)
 
+        #  prepare list of hosts to work with them
         self.hosts = self.get_all_host_objs(
             cluster_name=cluster_name, esxi_host_name=esxi_host_name
         )
@@ -258,7 +260,13 @@ class VmwareAdapterConfigManager(PyVmomi):
         return params_to_change
 
     def set_host_state(self):
-        """Check ESXi host configuration"""
+        """Checking and applying ESXi host configuration one by one, 
+        from prepared list of hosts in `self.hosts`.
+        For every host applied:
+        - user input checking done via calling `sanitize_params` method 
+        - changes applied via calling `_update_sriov` method 
+        - host state before and after via calling `_check_sriov`
+        """
         change_list = []
         changed = False
         for host in self.hosts:
