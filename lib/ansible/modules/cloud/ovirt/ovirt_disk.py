@@ -284,6 +284,15 @@ EXAMPLES = '''
      bootable: true
      format: raw
      content_type: iso
+
+# Add fiber chanel disk
+- name: Create disk
+  ovirt_disk:
+    name: fcp_disk
+    host: my_host
+    logical_unit:
+        id: 3600a09803830447a4f244c4657597777
+        storage_type: fcp
 '''
 
 
@@ -478,6 +487,7 @@ def upload_disk_image(connection, module):
 class DisksModule(BaseModule):
 
     def build_entity(self):
+        hosts_service = self._connection.system_service().hosts_service()
         logical_unit = self._module.params.get('logical_unit')
         disk = otypes.Disk(
             id=self._module.params.get('id'),
@@ -509,6 +519,9 @@ class DisksModule(BaseModule):
             shareable=self._module.params.get('shareable'),
             wipe_after_delete=self.param('wipe_after_delete'),
             lun_storage=otypes.HostStorage(
+                host=otypes.Host(
+                    id=get_id_by_name(hosts_service, self._module.params.get('host'))
+                ) if self.param('host') else None,
                 type=otypes.StorageType(
                     logical_unit.get('storage_type', 'iscsi')
                 ),
