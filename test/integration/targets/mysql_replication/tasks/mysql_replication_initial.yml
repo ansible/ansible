@@ -33,7 +33,7 @@
     - master_status is not changed
 
 # Test changemaster mode:
-# master_ssl_ca will be set as '_' to check the module's behaviour for #23976,
+# master_ssl_ca will be set as '' to check the module's behaviour for #23976,
 # must be converted to an empty string
 - name: Run replication
   mysql_replication:
@@ -46,7 +46,7 @@
     master_password: "{{ replication_pass }}"
     master_log_file: "{{ master_status.File }}"
     master_log_pos: "{{ master_status.Position }}"
-    master_ssl_ca: _
+    master_ssl_ca: ''
   register: result
 
 - assert:
