@@ -18,6 +18,7 @@
   - dbdata.tar.gz
   - dbdata.tar.bz2
   - dbdata.tar.xz
+  - dbdata.pgc
   loop_control:
     loop_var: loop_item
 

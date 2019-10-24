@@ -71,7 +71,7 @@ options:
       pg_dump returns rc 1 in this case.
     - C(restore) also requires a target definition from which the database will be restored. (Added in Ansible 2.4)
     - The format of the backup will be detected based on the target name.
-    - Supported compression formats for dump and restore include C(.bz2), C(.gz) and C(.xz)
+    - Supported compression formats for dump and restore include C(.pgc), C(.bz2), C(.gz) and C(.xz)
     - Supported formats for dump and restore include C(.sql) and C(.tar)
     type: str
     choices: [ absent, dump, present, restore ]
@@ -346,6 +346,8 @@ def db_dump(module, target, target_opts="",
 
     if os.path.splitext(target)[-1] == '.tar':
         flags.append(' --format=t')
+    elif os.path.splitext(target)[-1] == '.pgc':
+        flags.append(' --format=c')
     if os.path.splitext(target)[-1] == '.gz':
         if module.get_bin_path('pigz'):
             comp_prog_path = module.get_bin_path('pigz', True)
