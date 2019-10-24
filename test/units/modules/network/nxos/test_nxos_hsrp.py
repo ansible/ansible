@@ -55,7 +55,7 @@ class TestNxosHsrpModule(TestNxosModule):
                              priority='150',
                              interface='Ethernet1/2',
                              preempt='enabled',
-                             host='192.0.2.1'))
+                             ))
         result = self.execute_module(changed=True)
         self.assertEqual(sorted(result['commands']), sorted(['config t',
                                                              'interface ethernet1/2',
