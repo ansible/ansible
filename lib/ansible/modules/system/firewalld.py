@@ -796,7 +796,7 @@ def main():
             chain=dict(type='str'),
             table=dict(type='str'),
             direct_rule=dict(type='str'),
-            fw_family=dict(type='str'),
+            fw_family=dict(type='str', choices=['ipv4', 'ipv6']),
             rule_priority=dict(type='int', default=0),
         ),
         supports_check_mode=True,
