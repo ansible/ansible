@@ -431,7 +431,7 @@ def main():
                 conn.lock(target=target)
                 locked = True
             if before is None:
-                before = to_text(conn.get_config(target, filter_spec), errors='surrogate_then_replace').strip()
+                before = to_text(conn.get_config(source=target, filter=filter_spec), errors='surrogate_then_replace').strip()
 
             kwargs = {
                 'config': config,
@@ -444,7 +444,7 @@ def main():
             conn.edit_config(**kwargs)
 
             if supports_commit and module.params['commit']:
-                after = to_text(conn.get_config('candidate', filter_spec), errors='surrogate_then_replace').strip()
+                after = to_text(conn.get_config(source='candidate', filter=filter_spec), errors='surrogate_then_replace').strip()
                 if not module.check_mode:
                     confirm_timeout = confirm if confirm > 0 else None
                     confirmed_commit = True if confirm_timeout else False
@@ -453,7 +453,7 @@ def main():
                     conn.discard_changes()
 
             if after is None:
-                after = to_text(conn.get_config('running', filter_spec), errors='surrogate_then_replace').strip()
+                after = to_text(conn.get_config(source='running', filter=filter_spec), errors='surrogate_then_replace').strip()
 
             sanitized_before = sanitize_xml(before)
             sanitized_after = sanitize_xml(after)
