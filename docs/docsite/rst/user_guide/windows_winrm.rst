@@ -818,7 +818,7 @@ The below Ansible tasks can also be used to enable TLS v1.2:
         data: '{{ item.value }}'
         type: dword
         state: present
-        register: enable_tls12
+      register: enable_tls12
       loop:
       - type: Server
         property: Enabled
