@@ -9,7 +9,7 @@
     cfg_xml: "<config>
               <isiscomm xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
                 <isSites>
-                  <isSite>
+                  <isSite operation=\"merg\">
                     <instanceId>100</instanceId>
                     <vpnName>_public_</vpnName>
                     <description>ISIS</description>
