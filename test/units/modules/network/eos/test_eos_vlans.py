@@ -123,7 +123,6 @@ class TestEosVlansModule(TestEosModule):
         ))
         self.execute_module(changed=False, commands=[])
 
-
     def test_eos_vlan_overridden(self):
         self.execute_show_command.return_value = []
         set_module_args(dict(
