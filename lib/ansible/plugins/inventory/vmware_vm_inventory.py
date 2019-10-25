@@ -32,11 +32,13 @@ DOCUMENTATION = '''
             required: True
             env:
               - name: VMWARE_SERVER
+              - name: VMWARE_HOST
         username:
             description: Name of vSphere admin user.
             required: True
             env:
               - name: VMWARE_USERNAME
+              - name: VMWARE_USER
         password:
             description: Password of vSphere admin user.
             required: True
@@ -52,6 +54,8 @@ DOCUMENTATION = '''
             - Allows connection when SSL certificates are not valid. Set to C(false) when certificates are not trusted.
             default: True
             type: boolean
+            env:
+              - name: VMWARE_VALIDATE_CERTS
         with_tags:
             description:
             - Include tags and associated virtual machines.
@@ -307,13 +311,11 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         Verify plugin configuration file and mark this plugin active
         Args:
             path: Path of configuration YAML file
-
         Returns: True if everything is correct, else False
-
         """
         valid = False
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith(('vmware.yaml', 'vmware.yml')):
+            if path.endswith(('vmware.yaml', 'vmware.yml', 'vmware_vm_inventory.yaml', 'vmware_vm_inventory.yml')):
                 valid = True
 
         return valid
