@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 import tempfile
 import threading
+import time
 
 from collections import deque
 
@@ -64,7 +65,7 @@ _sentinel = StrategySentinel()
 def results_thread_main(tqm):
     while True:
         try:
-            result = tqm._final_q.get()
+            result = tqm._final_q.get(block=False)
             if isinstance(result, StrategySentinel):
                 break
             else:
@@ -73,7 +74,8 @@ def results_thread_main(tqm):
                 tqm._results_lock.release()
         except (IOError, EOFError):
             break
-        except Queue.Empty:
+        except:# multiprocessing.Queue.Empty:
+            time.sleep(0.00001)
             pass
 
 
@@ -98,7 +100,7 @@ class TaskQueueManager:
             pass
 
 
-manager object with shared datastructures/queues for coordinating
+    manager object with shared datastructures/queues for coordinating
     work between all processes.
 
     The queue manager is responsible for loading the play strategy plugin,
@@ -183,9 +185,9 @@ manager object with shared datastructures/queues for coordinating
             proc.start()
 
         # create the result processing thread for reading results in the background
-        self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
-        self._results_thread.daemon = True
-        self._results_thread.start()
+        #self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
+        #self._results_thread.daemon = True
+        #self._results_thread.start()
 
 
     def load_callbacks(self):
@@ -330,7 +332,7 @@ manager object with shared datastructures/queues for coordinating
         display.debug("RUNNING CLEANUP")
         self.terminate()
         self._final_q.put(_sentinel)
-        self._results_thread.join()
+        #self._results_thread.join()
         self._final_q.close()
         self._cleanup_processes()
 

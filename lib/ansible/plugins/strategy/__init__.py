@@ -404,12 +404,16 @@ class StrategyBase:
         cur_pass = 0
         while True:
             try:
-                self._tqm._results_lock.acquire()
-                task_result = self._tqm._results.popleft()
+                task_result = self._tqm._final_q.get(timeout=0.001)
+                #self._tqm._results_lock.acquire()
+                #task_result = self._tqm._results.popleft()
             except IndexError:
                 break
+            except:
+                break
             finally:
-                self._tqm._results_lock.release()
+                #self._tqm._results_lock.release()
+                pass
 
             # get the original host and task. We then assign them to the TaskResult for use in callbacks/etc.
             original_host = get_original_host(task_result._host)
