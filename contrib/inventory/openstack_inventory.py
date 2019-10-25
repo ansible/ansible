@@ -126,6 +126,12 @@ def get_host_groups(inventory, refresh=False, cloud=None):
 
 
 def append_hostvars(hostvars, groups, key, server, namegroup=False):
+    # quick&dirty hack to alway get private tenant ips
+    tenant_net = list(server['addresses'])[0]
+    tenant_net_info = server['addresses'][tenant_net]
+    for i in tenant_net_info:
+        if i['OS-EXT-IPS:type'] == "fixed":
+            server['interface_ip'] = i['addr']
     hostvars[key] = dict(
         ansible_ssh_host=server['interface_ip'],
         ansible_host=server['interface_ip'],
