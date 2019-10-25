@@ -416,9 +416,9 @@ def create_or_update_role(connection, module):
         role['attached_policies'] = get_attached_policy_list(connection, module, params['RoleName'])
 
     # Manage tags
-    tags_changed, tags = update_role_tags(connection, module)
+    tags_changed = update_role_tags(connection, module)
     changed |= tags_changed
-    role['tags'] = tags
+    role['tags'] = get_role_tags(connection, module)
 
     module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role, ignore_list=['tags']), **camel_dict_to_snake_dict(role, ignore_list=['tags']))
 
@@ -519,10 +519,20 @@ def get_attached_policy_list(connection, module, name):
         module.fail_json_aws(e, msg="Unable to list attached policies for role {0}".format(name))
 
 
+def get_role_tags(connection, module):
+    role_name = module.params.get('name')
+    if not hasattr(connection, 'list_role_tags'):
+        return {}
+    try:
+        return boto3_tag_list_to_ansible_dict(connection.list_role_tags(RoleName=role_name)['Tags'])
+    except ClientError:
+        return {}
+
+
 def update_role_tags(connection, module):
     new_tags = module.params.get('tags')
     if new_tags is None:
-        return False, {}
+        return False
 
     if not hasattr(connection, 'list_role_tags'):
         module.fail_json(msg='You need at least boto3 1.9.46 to manage IAM role tags')
@@ -547,7 +557,7 @@ def update_role_tags(connection, module):
             module.fail_json_aws(e, msg='Unable to set tags for role %s' % role_name)
 
     changed = bool(tags_to_add) or bool(tags_to_remove)
-    return changed, new_tags
+    return changed
 
 
 def main():
