@@ -113,3 +113,12 @@ class Cliconf(CliconfBase):
             responses.append(out)
 
         return responses
+
+    @property
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            self._update_cli_prompt_context(config_context=')#')
