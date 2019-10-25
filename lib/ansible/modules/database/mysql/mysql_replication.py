@@ -147,6 +147,9 @@ options:
     type: str
     version_added: '2.10'
 
+notes:
+- If an empty value for the parameter of string type is needed, use an empty string.
+
 extends_documentation_fragment:
 - mysql
 
@@ -454,37 +457,37 @@ def main():
     elif mode in "changemaster":
         chm = []
         result = {}
-        if master_host:
+        if master_host is not None:
             chm.append("MASTER_HOST='%s'" % master_host)
-        if master_user:
+        if master_user is not None:
             chm.append("MASTER_USER='%s'" % master_user)
-        if master_password:
+        if master_password is not None:
             chm.append("MASTER_PASSWORD='%s'" % master_password)
         if master_port is not None:
             chm.append("MASTER_PORT=%s" % master_port)
         if master_connect_retry is not None:
             chm.append("MASTER_CONNECT_RETRY=%s" % master_connect_retry)
-        if master_log_file:
+        if master_log_file is not None:
             chm.append("MASTER_LOG_FILE='%s'" % master_log_file)
         if master_log_pos is not None:
             chm.append("MASTER_LOG_POS=%s" % master_log_pos)
         if master_delay is not None:
             chm.append("MASTER_DELAY=%s" % master_delay)
-        if relay_log_file:
+        if relay_log_file is not None:
             chm.append("RELAY_LOG_FILE='%s'" % relay_log_file)
         if relay_log_pos is not None:
             chm.append("RELAY_LOG_POS=%s" % relay_log_pos)
         if master_ssl:
             chm.append("MASTER_SSL=1")
-        if master_ssl_ca:
+        if master_ssl_ca is not None:
             chm.append("MASTER_SSL_CA='%s'" % master_ssl_ca)
-        if master_ssl_capath:
+        if master_ssl_capath is not None:
             chm.append("MASTER_SSL_CAPATH='%s'" % master_ssl_capath)
-        if master_ssl_cert:
+        if master_ssl_cert is not None:
             chm.append("MASTER_SSL_CERT='%s'" % master_ssl_cert)
-        if master_ssl_key:
+        if master_ssl_key is not None:
             chm.append("MASTER_SSL_KEY='%s'" % master_ssl_key)
-        if master_ssl_cipher:
+        if master_ssl_cipher is not None:
             chm.append("MASTER_SSL_CIPHER='%s'" % master_ssl_cipher)
         if master_auto_position:
             chm.append("MASTER_AUTO_POSITION=1")
