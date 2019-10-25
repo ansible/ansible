@@ -26,14 +26,14 @@ function Update-NuGetPackageProvider {
     }
 }
 
-$repository = Get-PSRepository -Name $repositoryProperties.Name -ErrorAction Ignore -WarningAction Ignore
+$repository = Get-PSRepository -Name $repositoryProperties.name -ErrorAction Ignore -WarningAction Ignore
 
 if($null -eq $repository) {
     if(-not $check_mode){
         if($state -eq "present") {
             try
             {
-                Register-PSRepository -Name $repositoryProperties.Name -SourceLocation $repositoryProperties.source -InstallationPolicy $repositoryProperties.installationPolicy
+                Register-PSRepository -Name $repositoryProperties.name -SourceLocation $repositoryProperties.source -InstallationPolicy $repositoryProperties.installationPolicy
                 $result.changed = $true
             }
             catch
@@ -49,7 +49,7 @@ if($null -ne $repository) {
         if($state -eq "absent") {
             try
             {
-                Unregister-PSRepository -Name $repositoryProperties.Name
+                Unregister-PSRepository -Name $repositoryProperties.name
                 $result.changed = $true
             }
             catch
@@ -60,12 +60,12 @@ if($null -ne $repository) {
         else {
 
             if($repository.SourceLocation -ne $repositoryProperties.source -and $null -ne $repositoryProperties.source) {
-                Set-PSRepository -Name $repositoryProperties.Name -SourceLocation $repositoryProperties.source
+                Set-PSRepository -Name $repositoryProperties.name -SourceLocation $repositoryProperties.source
                 $result.changed = $true
             }
 
-            if($repository.InstallationPolicy -ne $repositoryProperties.installationPolicy -and $null -ne $repositoryProperties.installationPolicy) {
-                Set-PSRepository -Name $repositoryProperties.Name -InstallationPolicy $repositoryProperties.installationPolicy
+            if($repository.installationPolicy -ne $repositoryProperties.installationPolicy -and $null -ne $repositoryProperties.installationPolicy) {
+                Set-PSRepository -Name $repositoryProperties.name -InstallationPolicy $repositoryProperties.installationPolicy
                 $result.changed = $true
             }
 
