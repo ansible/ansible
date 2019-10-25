@@ -4,6 +4,13 @@
 
 - when: vcsim is not defined
   block:
+  - name: create temporary build directory
+    tempfile:
+      state: directory
+      suffix: build
+    register: temp_dir
+  - debug: var=temp_dir
+
   - import_role:
       name: prepare_vmware_tests
     vars:
@@ -28,7 +35,7 @@
       password: "{{ vcenter_password }}"
       name: "{{ virtual_machines_in_cluster[0].name }}"
       datacenter: "{{ dc1 }}"
-      export_dir: "~/test_export/"
+      export_dir: "{{ temp_dir.path }}"
     register: ovf_template
   - debug: var=ovf_template
   - name: assert the ovf template exported
@@ -45,7 +52,7 @@
       password: "{{ vcenter_password }}"
       name: "{{ virtual_machines_in_cluster[0].name }}"
       datacenter: "{{ dc1 }}"
-      export_dir: "/tmp/"
+      export_dir: "{{ temp_dir.path }}"
       download_timeout: 30
     register: ovf_template
   - debug: var=ovf_template
@@ -54,3 +61,9 @@
       that:
         - "ovf_template.changed == true"
         - "ovf_template.instance.device_files | length >= 1"
+  rescue:
+  - name: Clean up the temporary dir
+    file:
+      path: "{{ temp_dir.path }}"
+      state: absent
+    when: temp_dir.path is defined
