@@ -1,0 +1,4 @@
+bugfixes:
+- template lookup - ensure changes to the templar in the lookup, do not
+  affect the templar context outside of the lookup
+  (https://github.com/ansible/ansible/issues/60106)
