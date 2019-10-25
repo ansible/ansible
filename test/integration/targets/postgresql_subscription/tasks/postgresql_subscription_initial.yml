@@ -644,7 +644,7 @@
       login_port: '{{ replica_port }}'
       name: '{{ test_subscription }}'
       state: refresh
-    check_mode:
+    check_mode: yes
 
   - assert:
       that:
@@ -659,7 +659,6 @@
       login_port: '{{ replica_port }}'
       name: '{{ test_subscription }}'
       state: refresh
-    check_mode:
 
   - assert:
       that:
