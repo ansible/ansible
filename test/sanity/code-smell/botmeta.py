@@ -38,6 +38,7 @@ def main():
             'keywords': Any(list_string_types, *string_types),
             'labels': Any(list_string_types, *string_types),
             'maintainers': Any(list_string_types, *string_types),
+            'migrated_to': Any(*string_types),
             'notified': Any(list_string_types, *string_types),
             'supershipit': Any(list_string_types, *string_types),
             'support': Any("core", "network", "community"),
