@@ -57,7 +57,8 @@ EXAMPLES = '''
     names: "alb-name"
     region: "aws-region"
   register: alb_info
-- debug: var=alb_info
+- debug:
+    var: alb_info
 '''
 
 RETURN = '''
