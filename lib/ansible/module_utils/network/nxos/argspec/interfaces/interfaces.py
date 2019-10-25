@@ -47,7 +47,6 @@ class InterfacesArgs(object):  # pylint: disable=R0903
                     'type': 'str'
                 },
                 'enabled': {
-                    'default': True,
                     'type': 'bool'
                 },
                 'fabric_forwarding_anycast_gateway': {

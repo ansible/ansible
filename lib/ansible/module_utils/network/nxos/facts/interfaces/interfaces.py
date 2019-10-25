@@ -50,22 +50,30 @@ class InterfacesFacts(object):
             data = connection.get('show running-config | section ^interface')
 
         config = data.split('interface ')
+        default_interfaces = []
         for conf in config:
             conf = conf.strip()
             if conf:
                 obj = self.render_config(self.generated_spec, conf)
                 if obj and len(obj.keys()) > 1:
                     objs.append(obj)
+                else:
+                    # Existing-but-default interfaces are not included in the
+                    # objs list; however a list of default interfaces is
+                    # necessary to prevent idempotence issues and to help
+                    # with virtual interfaces that haven't been created yet.
+                    default_interfaces.append(obj['name'])
 
         ansible_facts['ansible_network_resources'].pop('interfaces', None)
         facts = {}
+        facts['interfaces'] = []
         if objs:
-            facts['interfaces'] = []
             params = utils.validate_config(self.argument_spec, {'config': objs})
             for cfg in params['config']:
                 facts['interfaces'].append(utils.remove_empties(cfg))
 
         ansible_facts['ansible_network_resources'].update(facts)
+        ansible_facts['ansible_network_resources']['default_interfaces'] = default_interfaces
         return ansible_facts
 
     def render_config(self, spec, conf):
@@ -89,9 +97,17 @@ class InterfacesFacts(object):
         config['mtu'] = utils.parse_conf_arg(conf, 'mtu')
         config['duplex'] = utils.parse_conf_arg(conf, 'duplex')
         config['mode'] = utils.parse_conf_cmd_arg(conf, 'switchport', 'layer2', 'layer3')
-        config['enabled'] = utils.parse_conf_cmd_arg(conf, 'shutdown', False, True)
-        config['fabric_forwarding_anycast_gateway'] = utils.parse_conf_arg(conf, 'fabric forwarding mode anycast-gateway')
-        config['ip_forward'] = utils.parse_conf_arg(conf, 'ip forward')
+
+        # Default 'shutdown' state may be different for different interface types,
+        # therefore, check for both explicit states. The default is normally
+        # 'shutdown' for most interface types, but 'no shutdown' for loopbacks.
+        # Legacy images may be inconsistent.
+        config['enabled'] = utils.parse_conf_cmd_arg(conf, 'no shutdown', True)
+        if config['enabled'] is not True:
+            config['enabled'] = utils.parse_conf_cmd_arg(conf, 'shutdown', False)
+
+        config['fabric_forwarding_anycast_gateway'] = utils.parse_conf_cmd_arg(conf, 'fabric forwarding mode anycast-gateway', True)
+        config['ip_forward'] = utils.parse_conf_cmd_arg(conf, 'ip forward', True)
 
         interfaces_cfg = utils.remove_empties(config)
         return interfaces_cfg

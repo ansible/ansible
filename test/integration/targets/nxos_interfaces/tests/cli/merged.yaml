@@ -21,7 +21,6 @@
   - assert:
       that:
         - "result.changed == true"
-        - "result.before|length == 0"
         - "'interface {{ test_int1 }}' in result.commands"
         - "'description Configured by Ansible' in result.commands"
 

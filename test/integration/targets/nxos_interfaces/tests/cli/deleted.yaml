@@ -5,6 +5,10 @@
 - set_fact: test_int1="{{ nxos_int1 }}"
 - set_fact: test_int2="{{ nxos_int2 }}"
 
+- name: "setup0: clean up (interfaces) attributes on all interfaces"
+  nxos_interfaces:
+    state: deleted
+
 - name: setup1
   cli_config: &cleanup
     config: |
@@ -16,7 +20,7 @@
       config: |
         interface {{ test_int1 }}
           description Test-interface1
-          shutdown
+          no shutdown
 
   - name: Gather interfaces facts
     nxos_facts: &facts
@@ -37,7 +41,7 @@
         - "result.changed == true"
         - "'interface {{ test_int1 }}' in result.commands"
         - "'no description' in result.commands"
-        - "'no shutdown' in result.commands"
+        - "'shutdown' in result.commands"
 
   - name: Idempotence - deleted
     nxos_interfaces: *deleted

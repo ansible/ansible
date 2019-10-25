@@ -2,59 +2,67 @@
 - debug:
     msg: "Start nxos_interfaces replaced integration tests connection={{ ansible_connection }}"
 
-- set_fact: test_int1="{{ nxos_int1 }}"
-
-- name: setup1
-  cli_config: &cleanup
-    config: |
-      default interface {{ test_int1 }}
-
 - block:
-  - name: setup2
-    cli_config:
+  # Skip tests when platform N5K/N6K. These have image issues with shutdown cli.
+  - set_fact: test_int1="{{ nxos_int1 }}"
+  - name: setup1
+    cli_config: &cleanup
       config: |
-        interface {{ test_int1 }}
-          description Configured by Ansible
+        default interface {{ test_int1 }}
 
-  - name: Gather interfaces facts
-    nxos_facts: &facts
-      gather_subset:
-        - '!all'
-        - '!min'
-      gather_network_resources: interfaces
+  - block:
+    - name: setup2
+      cli_config:
+        config: |
+          interface {{ test_int1 }}
+            description Ansible setup
 
-  - name: Replaced
-    nxos_interfaces: &replaced
-      config:
-        - name: "{{ test_int1 }}"
-          mode: layer3
-      state: replaced
-    register: result
+    - name: Gather interfaces facts
+      nxos_facts: &facts
+        gather_subset:
+          - '!all'
+          - '!min'
+        gather_network_resources: interfaces
 
-  - assert:
-      that:
-        - "ansible_facts.network_resources.interfaces|symmetric_difference(result.before)|length == 0"
-        - "result.changed == true"
-        - "'interface {{ test_int1 }}' in result.commands"
-        - "'no description' in result.commands"
-        - "'no switchport' in result.commands"
+    - name: Replaced
+      nxos_interfaces: &replaced
+        config:
+          - name: "{{ test_int1 }}"
+            description: 'Configured by Ansible'
+            enabled: "{{enabled_state|default(omit)}}"
+        state: replaced
+      register: result
 
-  - name: Gather interfaces post facts
-    nxos_facts: *facts
+    - assert:
+        that:
+          - "ansible_facts.network_resources.interfaces|symmetric_difference(result.before)|length == 0"
+          - "result.changed == true"
+          - "'interface {{ test_int1 }}' in result.commands"
+          - "'description Configured by Ansible' in result.commands"
 
-  - assert:
-      that:
-        - "ansible_facts.network_resources.interfaces|symmetric_difference(result.after)|length == 0"
+    - assert:
+        that:
+          - "'no shutdown' in result.commands"
+      when: enabled_state is defined
 
-  - name: Idempotence - Replaced
-    nxos_interfaces: *replaced
-    register: result
+    - name: Gather interfaces post facts
+      nxos_facts: *facts
 
-  - assert:
-      that:
-        - "result.changed == false"
-        - "result.commands|length == 0"
+    - assert:
+        that:
+          - "ansible_facts.network_resources.interfaces|symmetric_difference(result.after)|length == 0"
 
-  always:
-  - name: teardown
-    cli_config: *cleanup
+    - name: Idempotence - Replaced
+      nxos_interfaces: *replaced
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+          - "result.commands|length == 0"
+
+    always:
+    - name: teardown
+      cli_config: *cleanup
+
+  when: platform is not search("N5K|N6K")
