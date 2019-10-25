@@ -67,7 +67,6 @@ class TestEosInterfacesModule(TestEosModule):
                 description="Interface 1"
             )], state="merged"
         ))
-        commands = ['interface Ethernet1', 'description Interface 1', 'no shutdown']
         self.execute_module(changed=False, commands=[])
 
     def test_eos_interfaces_replaced(self):
@@ -89,7 +88,6 @@ class TestEosInterfacesModule(TestEosModule):
     #            description="Interface 1"
     #        )], state="replaced"
     #    ))
-    #    commands = ['interface Ethernet1', 'description Interface 1']
     #    self.execute_module(changed=False, commands=[])
 
     def test_eos_interfaces_delete(self):
@@ -164,7 +162,7 @@ class TestEosInterfacesModule(TestEosModule):
     #    ))
     #    commands = ['interface Ethernet3', 'description Ethernet_3', 'mtu 1000', 'interface Ethernet1',
     #                  'description Ethernet 1', 'interface Management1', 'no description', 'no ip address']
-    #    self.execute_module(changed=True, commands=[])
+    #    self.execute_module(changed=True, commands=commands)
 
     # def test_eos_interfaces_overridden_idempotent(self):
     #    set_module_args(dict(
