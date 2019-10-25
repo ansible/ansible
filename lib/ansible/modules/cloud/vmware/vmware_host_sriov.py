@@ -54,8 +54,8 @@ options:
     required: True
   sriov_on:
     description:
-    - optional parameter, related to num_virt_func.
-    - SR-IOV can be enabled only if num_virt_func > 0.
+    - optional parameter, related to C(num_virt_func).
+    - SR-IOV can be enabled only if C(num_virt_func) > 0.
     type: bool
     required: False
 extends_documentation_fragment: vmware.documentation
@@ -249,7 +249,7 @@ class VmwareAdapterConfigManager(PyVmomi):
                 ]
                 params_to_change["change"] = True
             else:
-                params_to_change["changes"]["msg"] = "Not active (looks not rebooted) "
+                params_to_change["changes"]["msg"] = "Not active (looks like not rebooted) "
 
         if not params_to_change["change"]:
             msg = (
