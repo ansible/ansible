@@ -87,7 +87,7 @@
       register: present
     - debug: var=present
 
-    - name: eanble SR-IOV on vmnic0, check mode
+    - name: disable SR-IOV with num_virt_func == 1, check mode 
       vmware_host_sriov:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
