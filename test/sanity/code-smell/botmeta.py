@@ -39,8 +39,8 @@ def main():
             'labels': Any(list_string_types, *string_types),
             'maintainers': Any(list_string_types, *string_types),
             'migrated_to': All(
-                               Any(*string_types),
-                               Match(r'^https://galaxy.ansible.com/'),
+                Any(*string_types),
+                Match(r'^https://galaxy.ansible.com/'),
             ),
             'notified': Any(list_string_types, *string_types),
             'supershipit': Any(list_string_types, *string_types),
