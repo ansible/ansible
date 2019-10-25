@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 import json
@@ -28,6 +29,7 @@ def gen_mock_attrs(user_input):
 
 class AnsibleFailJson(Exception):
     """Exception class to be raised by module.fail_json and caught by the test case"""
+
     pass
 
 
@@ -39,6 +41,7 @@ def set_module_args(args):
 
 class AnsibleExitJson(Exception):
     """Exception class to be raised by module.exit_json and caught by the test case"""
+
     pass
 
 
@@ -64,7 +67,8 @@ def get_bin_path(self, arg, required=False):
             fail_json(msg="%r not found !" % arg)
 
 
-test_data = [
+data_sanitize_params = [
+    # 0. num_virt_func < 0
     {
         "user_input": {
             "hostname": "test_vCenter",
@@ -136,7 +140,30 @@ test_data = [
             }
         ),
     },
-    # 3.  not supported sriov
+    # 3. input OK
+    {
+        "user_input": {
+            "hostname": "test_vCenter",
+            "esxi_host_name": "test_host",
+            "sriov_on": True,
+            "num_virt_func": 8,
+            "vmnic": "vmnic0",
+        },
+        "before": {
+            "sriovActive": False,
+            "sriovEnabled": False,
+            "maxVirtualFunctionSupported": 63,
+            "numVirtualFunction": 0,
+            "numVirtualFunctionRequested": 0,
+            "rebootRequired": False,
+            "sriovCapable": True,
+        },
+        "expected": None,
+    },
+]
+
+data_check_compatibility = [
+    # 0.  not supported sriov
     {
         "user_input": {
             "hostname": "test_vCenter",
@@ -161,7 +188,7 @@ test_data = [
             }
         ),
     },
-    # 4.  not suported num_virt_func
+    # 1.  not suported num_virt_func
     {
         "user_input": {
             "hostname": "test_vCenter",
@@ -183,7 +210,50 @@ test_data = [
             {"msg": "maxVirtualFunctionSupported= 4 on vmnic0", "failed": True}
         ),
     },
-    # 5. normal enabling
+    # 2. normal enabling
+    {
+        "user_input": {
+            "hostname": "test_vCenter",
+            "esxi_host_name": "test_host",
+            "sriov_on": True,
+            "num_virt_func": 8,
+            "vmnic": "vmnic0",
+        },
+        "before": {
+            "sriovActive": False,
+            "sriovEnabled": False,
+            "maxVirtualFunctionSupported": 63,
+            "numVirtualFunction": 0,
+            "numVirtualFunctionRequested": 0,
+            "rebootRequired": False,
+            "sriovCapable": True,
+        },
+        "expected": None,
+    },
+    # 3.  disable sriov
+    {
+        "user_input": {
+            "hostname": "test_vCenter",
+            "esxi_host_name": "test_host",
+            "sriov_on": False,
+            "num_virt_func": 0,
+            "vmnic": "vmnic0",
+        },
+        "before": {
+            "sriovActive": True,
+            "sriovEnabled": True,
+            "maxVirtualFunctionSupported": 63,
+            "numVirtualFunction": 8,
+            "numVirtualFunctionRequested": 8,
+            "rebootRequired": False,
+            "sriovCapable": True,
+        },
+        "expected": None,
+    },
+]
+
+data_make_diff = [
+    # 0. normal enabling
     {
         "user_input": {
             "hostname": "test_vCenter",
@@ -206,10 +276,9 @@ test_data = [
             "numVirtualFunction": 8,
             "msg": "",
             "change": True,
-            "changes": {"numVirtualFunction": 8, "sriovEnabled": True},
         },
     },
-    # 6. already eanabled, not active
+    # 1. already eanabled, not active
     {
         "user_input": {
             "hostname": "test_vCenter",
@@ -228,16 +297,11 @@ test_data = [
             "sriovCapable": True,
         },
         "expected": {
-            "sriovEnabled": True,
-            "numVirtualFunction": 8,
-            "msg": "",
+            "msg": "Not active (looks like not rebooted) No any changes, already configured ",
             "change": False,
-            "changes": {
-                "msg": "Not active (looks not rebooted) No any changes, already configured "
-            },
         },
     },
-    # 7. already eanabled and active
+    # 2. already eanabled and active
     {
         "user_input": {
             "hostname": "test_vCenter",
@@ -255,15 +319,9 @@ test_data = [
             "rebootRequired": False,
             "sriovCapable": True,
         },
-        "expected": {
-            "sriovEnabled": True,
-            "numVirtualFunction": 8,
-            "msg": "",
-            "change": False,
-            "changes": {"msg": "No any changes, already configured "},
-        },
+        "expected": {"msg": "No any changes, already configured ", "change": False},
     },
-    # 8. already eanabled diff numVirtualFunction
+    # 3. already eanabled diff in numVirtualFunction
     {
         "user_input": {
             "hostname": "test_vCenter",
@@ -281,15 +339,9 @@ test_data = [
             "rebootRequired": False,
             "sriovCapable": True,
         },
-        "expected": {
-            "sriovEnabled": True,
-            "numVirtualFunction": 8,
-            "msg": "",
-            "change": True,
-            "changes": {"numVirtualFunction": 8},
-        },
+        "expected": {"numVirtualFunction": 8, "msg": "", "change": True},
     },
-    # 9.  disable sriov
+    # 4.  disable sriov
     {
         "user_input": {
             "hostname": "test_vCenter",
@@ -312,7 +364,6 @@ test_data = [
             "numVirtualFunction": 0,
             "msg": "",
             "change": True,
-            "changes": {"sriovEnabled": False, "numVirtualFunction": 0},
         },
     },
 ]
@@ -329,29 +380,105 @@ class TestAdapterMethods(unittest.TestCase):
         vmware_host_sriov.VmwareAdapterConfigManager, "__init__", return_value=None
     )
     def test_sanitize_params(self, mock__init__):
-        for num, case in enumerate(test_data):
+        for num, case in enumerate(data_sanitize_params):
             config = vmware_host_sriov.VmwareAdapterConfigManager()
             config.module = mock.Mock()
             config.module.check_mode = False
             config.module.fail_json.side_effect = fail_json
 
             config.__dict__.update(gen_mock_attrs(case["user_input"]))
-            print("config=", config.__dict__)
+            # print("config=", config.__dict__)
 
             try:
-                result = config.sanitize_params(
-                    case["before"],
-                    case["user_input"]["esxi_host_name"],
-                    case["user_input"]["vmnic"],
-                )
+                result = config.sanitize_params()
                 # print(">>>" + "test=" + str(num), result)
-                self.assertIsInstance(result, type(case["expected"]), "test=" + str(num))
+                self.assertIsInstance(
+                    result, type(case["expected"]), "test=" + str(num)
+                )
                 self.assertEqual(result, case["expected"], "test=" + str(num))
 
             except Exception as e:
                 # print(">>>" + "test=" + str(num), e)
                 self.assertIsInstance(e, type(case["expected"]), "test=" + str(num))
-                self.assertEqual(e.args[0], case["expected"].args[0], "test=" + str(num))
+                self.assertEqual(
+                    e.args[0], case["expected"].args[0], "test=" + str(num)
+                )
+
+    @mock.patch.object(
+        vmware_host_sriov.VmwareAdapterConfigManager, "__init__", return_value=None
+    )
+    def test_check_compatibility(self, mock__init__):
+        for num, case in enumerate(data_check_compatibility):
+            config = vmware_host_sriov.VmwareAdapterConfigManager()
+            config.module = mock.Mock()
+            config.module.check_mode = False
+            config.module.fail_json.side_effect = fail_json
+
+            config.__dict__.update(gen_mock_attrs(case["user_input"]))
+            # print("config=", config.__dict__)
+
+            try:
+                result = config.check_compatibility(
+                    case["before"], case["user_input"]["esxi_host_name"]
+                )
+                # print(">>>" + "test=" + str(num), result)
+                self.assertIsInstance(
+                    result, type(case["expected"]), "test=" + str(num)
+                )
+                self.assertEqual(result, case["expected"], "test=" + str(num))
+
+            except Exception as e:
+                # print(">>>" + "test=" + str(num), e)
+                self.assertIsInstance(e, type(case["expected"]), "test=" + str(num))
+                self.assertEqual(
+                    e.args[0], case["expected"].args[0], "test=" + str(num)
+                )
+
+        for num, case in enumerate(data_check_compatibility):
+            config = vmware_host_sriov.VmwareAdapterConfigManager()
+            config.module = mock.Mock()
+            config.module.check_mode = False
+            config.module.fail_json.side_effect = fail_json
+
+            config.__dict__.update(gen_mock_attrs(case["user_input"]))
+            # print("config=", config.__dict__)
+
+            try:
+                result = config.check_compatibility(
+                    case["before"], case["user_input"]["esxi_host_name"]
+                )
+                # print(">>>" + "test=" + str(num), result)
+                self.assertIsInstance(
+                    result, type(case["expected"]), "test=" + str(num)
+                )
+                self.assertEqual(result, case["expected"], "test=" + str(num))
+
+            except Exception as e:
+                # print(">>>" + "test=" + str(num), e)
+                self.assertIsInstance(e, type(case["expected"]), "test=" + str(num))
+                self.assertEqual(
+                    e.args[0], case["expected"].args[0], "test=" + str(num)
+                )
+
+    @mock.patch.object(
+        vmware_host_sriov.VmwareAdapterConfigManager, "__init__", return_value=None
+    )
+    def test_make_diff(self, mock__init__):
+        for num, case in enumerate(data_make_diff):
+            config = vmware_host_sriov.VmwareAdapterConfigManager()
+            config.module = mock.Mock()
+            config.module.check_mode = False
+            config.module.fail_json.side_effect = fail_json
+
+            config.__dict__.update(gen_mock_attrs(case["user_input"]))
+            # print("config=", config.__dict__)
+
+            result = config.make_diff(
+                case["before"], case["user_input"]["esxi_host_name"]
+            )
+            # print(">>>" + "test=" + str(num), result)
+            self.assertIsInstance(result, type(case["expected"]), "test=" + str(num))
+            self.assertEqual(result, case["expected"], "test=" + str(num))
 
 
 if __name__ == "__main__":
