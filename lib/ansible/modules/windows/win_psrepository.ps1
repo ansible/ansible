@@ -42,6 +42,9 @@ if($null -eq $repository) {
             }
         }
     }
+    else {
+        $result.changed = $false
+    }
 }
 
 if($null -ne $repository) {
@@ -70,6 +73,9 @@ if($null -ne $repository) {
             }
 
         }
+    }
+    else {
+        $result.changed = $false
     }
 }
 
