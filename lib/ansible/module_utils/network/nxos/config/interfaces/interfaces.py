@@ -290,10 +290,12 @@ class Interfaces(ConfigBase):
             diff.update({'name': w['name']})
         return diff
 
-    def add_commands(self, d, obj_in_have={}):
+    def add_commands(self, d, obj_in_have=None):
         commands = []
         if not d:
             return commands
+        if obj_in_have is None:
+            obj_in_have = {}
         # mode/switchport changes should occur before other changes
         if 'mode' in d:
             if d['mode'] == 'layer2':
