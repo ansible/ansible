@@ -1,5 +1,39 @@
-# sets up and starts Zabbix with default settings (works on Ubuntu 14.04,
-# possibly more) using a MySQL database.
+# sets up and starts Zabbix with default settings using a MySQL database.
+
+- name: install zabbix repository key
+  apt_key:
+    url: "{{ zabbix_apt_repository_key }}"
+    state: present
+
+- name: install zabbix repository
+  apt_repository:
+    repo: "{{ zabbix_apt_repository }}"
+    filename: zabbix
+    state: present
+
+- name: check if dpkg is set to exclude specific destinations
+  stat:
+    path: /etc/dpkg/dpkg.cfg.d/excludes
+  register: dpkg_excludes
+
+- name: ensure documentation installations are allowed for zabbix
+  lineinfile:
+    path: /etc/dpkg/dpkg.cfg.d/excludes
+    regexp: '^path-include=/usr/share/doc/zabbix*$'
+    line: 'path-include=/usr/share/doc/zabbix*'
+    state: present
+  when: dpkg_excludes.stat.exists
+
+- name: install zabbix apt dependencies
+  apt:
+    name: "{{ zabbix_packages }}"
+    state: latest
+    update_cache: yes
+
+- name: install zabbix-api python package
+  pip:
+    name: zabbix-api
+    state: latest
 
 - name: create mysql user {{ db_user }}
   mysql_user:
@@ -7,17 +41,7 @@
     password: "{{ db_password }}"
     state: present
     priv: "{{ db_name }}.*:ALL"
-
-- name: install zabbix repository
-  apt: deb={{ zabbix_release_deb }} state=present
-
-- name: install zabbix debian dependencies
-  apt: name={{ item }} state=latest update_cache=yes
-  with_items: "{{ zabbix_packages }}"
-
-- name: install zabbix-api python package
-  pip:
-    name: zabbix-api
+    login_unix_socket: '{{ mysql_socket }}'
 
 - name: import initial zabbix database
   mysql_db:
@@ -31,9 +55,9 @@
   template:
     src: zabbix_server.conf.j2
     dest: /etc/zabbix/zabbix_server.conf
-    owner: zabbix
+    owner: root
     group: zabbix
-    mode: 0644
+    mode: 0640
 
 - name: deploy zabbix web frontend configuration
   template:
@@ -41,8 +65,22 @@
     dest: /etc/zabbix/web/zabbix.conf.php
     mode: 0644
 
+- name: Create proper run directory for zabbix-server
+  file:
+    path: /var/run/zabbix
+    state: directory
+    owner: zabbix
+    group: zabbix
+    mode: 0775
+
 - name: restart zabbix-server
-  service: name=zabbix-server state=restarted enabled=yes
+  service:
+    name: zabbix-server
+    state: restarted
+    enabled: yes
 
 - name: restart apache2
-  service: name=apache2 state=restarted enabled=yes
+  service:
+    name: apache2
+    state: restarted
+    enabled: yes

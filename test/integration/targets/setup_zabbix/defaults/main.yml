@@ -3,7 +3,9 @@ db_name: 'zabbix'
 db_user: 'zabbix'
 db_password: 'fLhijUs3PgekNhwJ'
 
-zabbix_release_deb: 'http://repo.zabbix.com/zabbix/3.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_3.4-1+trusty_all.deb'
+zabbix_version: 4.0
+zabbix_apt_repository: 'deb http://repo.zabbix.com/zabbix/{{ zabbix_version }}/{{ ansible_distribution.lower() }}/ {{ ansible_distribution_release }} main'
+zabbix_apt_repository_key: 'http://repo.zabbix.com/zabbix-official-repo.key'
 
 zabbix_packages:
     - zabbix-server-mysql
