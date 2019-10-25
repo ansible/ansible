@@ -184,89 +184,87 @@ class VmwareAdapterConfigManager(PyVmomi):
             self.module.fail_json(msg="Failed to find host system.")
         self.results = {"before": {}, "after": {}, "changes": {}}
 
-    def sanitize_params(self, before, hostname, vmnic):
+    def sanitize_params(self):
+        """checks user input, raise error if input incompatible
+        :return : None
         """
-        :before     : dict, of params on target interface before changing
-        :hostname   : str, hosthame
-        :vmnic      : srt, target nic
-        :return     : dict, of params forwarded to vCenter, or raise fail in case iconsistancy
-        """
-        params_to_change = {
-            "sriovEnabled": None,
-            "numVirtualFunction": None,
-            "msg": "",
-            "change": False,
-            "changes": {},
-        }
-        # change = False
+
         if self.num_virt_func < 0:
             self.module.fail_json(msg="allowed value for num_virt_func >= 0")
-
         if self.num_virt_func == 0:
             if self.sriov_on is True:
                 self.module.fail_json(
                     msg="with sriov_on == true,  alowed value for num_virt_func > 0"
                 )
-            params_to_change.update({"sriovEnabled": False, "numVirtualFunction": 0})
+            self.sriov_on = False  # fill value, if urser not provided
 
         if self.num_virt_func > 0:
             if self.sriov_on is False:
                 self.module.fail_json(
                     msg="with sriov_on == false,  alowed value for num_virt_func is 0"
                 )
-            params_to_change.update(
-                {"sriovEnabled": True, "numVirtualFunction": self.num_virt_func}
-            )
+            self.sriov_on = True  # fill value, if urser not provided
 
-            # check compatability
+    def check_compatibility(self, before, hostname):
+        """
+        checks hardware compatibility with user input, raise error if input incompatible
+        :before     : dict, of params on target interface before changing
+        :hostname   : str, hosthame
+        :return     : None
+        """
+        if self.num_virt_func > 0:
             if not before["sriovCapable"]:
                 self.module.fail_json(
-                    msg="sriov not supported on host= %s, nic= %s" % (hostname, vmnic)
+                    msg="sriov not supported on host= %s, nic= %s"
+                    % (hostname, self.vmnic)
                 )
 
-            if (
-                before["maxVirtualFunctionSupported"]
-                < params_to_change["numVirtualFunction"]
-            ):
-                self.module.fail_json(
-                    msg="maxVirtualFunctionSupported= %d on %s"
-                    % (before["maxVirtualFunctionSupported"], vmnic)
-                )
-
-        # check current settings
-        if before["sriovEnabled"] != params_to_change["sriovEnabled"]:
-            params_to_change["changes"]["sriovEnabled"] = params_to_change[
-                "sriovEnabled"
-            ]
-            params_to_change["change"] = True
-        if before["numVirtualFunction"] != params_to_change["numVirtualFunction"]:
-            if (
-                before["numVirtualFunctionRequested"]
-                != params_to_change["numVirtualFunction"]
-            ):
-                params_to_change["changes"]["numVirtualFunction"] = params_to_change[
-                    "numVirtualFunction"
-                ]
-                params_to_change["change"] = True
-            else:
-                params_to_change["changes"]["msg"] = "Not active (looks like not rebooted) "
-
-        if not params_to_change["change"]:
-            msg = (
-                params_to_change["changes"].get("msg", "")
-                + "No any changes, already configured "
+        if before["maxVirtualFunctionSupported"] < self.num_virt_func:
+            self.module.fail_json(
+                msg="maxVirtualFunctionSupported= %d on %s"
+                % (before["maxVirtualFunctionSupported"], self.vmnic)
             )
-            params_to_change["changes"]["msg"] = msg
-        return params_to_change
+
+    def make_diff(self, before, hostname):
+        """
+        preparing diff - changes which will be applied
+        :before     : dict, of params on target interface before changing
+        :hostname   : str, hosthame
+        :return     : dict, of changes which is going to apply
+        """
+        diff = {}
+        change = False
+        change_msg = ""
+
+        if before["sriovEnabled"] != self.sriov_on:
+            diff["sriovEnabled"] = self.sriov_on
+            change = True
+
+        if before["numVirtualFunction"] != self.num_virt_func:
+            if before["numVirtualFunctionRequested"] != self.num_virt_func:
+                diff["numVirtualFunction"] = self.num_virt_func
+                change = True
+            else:
+                change_msg = "Not active (looks like not rebooted) "
+
+        if not change:
+            change_msg += "No any changes, already configured "
+        diff["msg"] = change_msg
+        diff["change"] = change
+
+        return diff
 
     def set_host_state(self):
         """Checking and applying ESXi host configuration one by one,
         from prepared list of hosts in `self.hosts`.
         For every host applied:
         - user input checking done via calling `sanitize_params` method
+        - checks hardware compatibility with user input `check_compatibility`
+        - conf changes created via `make_diff`
         - changes applied via calling `_update_sriov` method
         - host state before and after via calling `_check_sriov`
         """
+        self.sanitize_params()
         change_list = []
         changed = False
         for host in self.hosts:
@@ -274,27 +272,24 @@ class VmwareAdapterConfigManager(PyVmomi):
             self.results["after"][host.name] = {}
             self.results["changes"][host.name] = {}
             self.results["before"][host.name] = self._check_sriov(host)
-            self.results["changes"][host.name]["rebootRequired"] = self.results[
-                "before"
-            ][host.name]["rebootRequired"]
 
-            params_to_change = self.sanitize_params(
-                self.results["before"][host.name], host.name, self.vmnic
-            )
-            if not params_to_change["change"]:
+            self.check_compatibility(self.results["before"][host.name], host.name)
+            diff = self.make_diff(self.results["before"][host.name], host.name)
+            self.results["changes"][host.name] = diff
+
+            if not diff["change"]:
                 change_list.append(False)
-                self.results["changes"][host.name] = params_to_change["changes"]
                 self.results["after"][host.name] = self._check_sriov(host)
-                self.results["changes"][host.name].update(
-                    {
-                        "rebootRequired": self.results["after"][host.name][
-                            "rebootRequired"
-                        ]
-                    }
-                )
+                if (
+                    self.results["before"][host.name]["rebootRequired"]
+                    != self.results["after"][host.name]["rebootRequired"]
+                ):
+                    self.results["changes"][host.name]["rebootRequired"] = self.results[
+                        "after"
+                    ][host.name]["rebootRequired"]
                 continue
 
-            success = self._update_sriov(host, **params_to_change)
+            success = self._update_sriov(host, self.sriov_on, self.num_virt_func)
             if success:
                 change_list.append(True)
             else:
