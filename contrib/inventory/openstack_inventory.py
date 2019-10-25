@@ -126,7 +126,7 @@ def get_host_groups(inventory, refresh=False, cloud=None):
 
 
 def append_hostvars(hostvars, groups, key, server, namegroup=False):
-    # quick&dirty hack to alway get private tenant ips
+    # quick&dirty hack to always get private tenant ips
     tenant_net = list(server['addresses'])[0]
     tenant_net_info = server['addresses'][tenant_net]
     for i in tenant_net_info:
