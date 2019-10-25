@@ -111,9 +111,11 @@ EXAMPLES = '''
       principal: s3.amazonaws.com
       source_arn: arn:aws:s3:eu-central-1:123456789012:bucketName
       source_account: 123456789012
+    register: lambda_policy_action
 
   - name: show results
-    debug: var=lambda_policy_action
+    debug:
+      var: lambda_policy_action
 
 '''
 
