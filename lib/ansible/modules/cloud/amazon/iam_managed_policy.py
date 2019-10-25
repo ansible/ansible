@@ -287,7 +287,7 @@ def main():
         policy=dict(type='json'),
         make_default=dict(type='bool', default=True),
         only_version=dict(type='bool', default=False),
-        fail_on_delete=dict(type='bool'),
+        fail_on_delete=dict(type='bool', removed_in_version='2.14'),
         state=dict(default='present', choices=['present', 'absent']),
     ))
 

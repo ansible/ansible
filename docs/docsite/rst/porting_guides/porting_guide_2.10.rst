@@ -66,6 +66,7 @@ Noteworthy module changes
 * :ref:`vmware_tag <vmware_tag_module>` now returns ``tag_status`` instead of Ansible internal key ``results``.
 * The deprecated ``recurse`` option in :ref:`pacman <pacman_module>` module has been removed, you should use ``extra_args=--recursive`` instead.
 * :ref:`vmware_guest_custom_attributes <vmware_guest_custom_attributes_module>` module does not require VM name which was a required parameter for releases prior to Ansible 2.10.
+* The ``fail_on_delete`` option in :ref:`iam_managed_policy <iam_managed_policy_module>` has no effect and has been deprecated, you should remove the option.
 
 Plugins
 =======
