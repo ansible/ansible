@@ -16,13 +16,14 @@ $source = Get-AnsibleParam -obj $params -name "source" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent"
 $installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" -type "str" -validateset "trusted", "untrusted"
 
-$result = @{"changed" = $false}
+$result = @{"changed" = $false; "dependency_update" = $false;}
 $repositoryProperties = @{"name" = $name; "source" = $source; "installationPolicy" = $installationpolicy }
 
 function Update-NuGetPackageProvider {
     $PackageProvider = Get-PackageProvider -ListAvailable | Where-Object { ($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201") }
     if ($null -eq $PackageProvider) {
         Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies -Force | Out-Null
+        $result.dependency_update = $true
     }
 }
 
