@@ -52,7 +52,6 @@ class TestEosLoggingModule(TestEosModule):
 
     def test_eos_setup_host_logging_idempotenet(self):
         set_module_args(dict(dest='host', name='175.16.0.10', state='present'))
-        commands = ['logging host 175.16.0.10']
         self.execute_module(changed=False, commands=[])
 
     def test_eos_setup_host_logging(self):
@@ -62,13 +61,11 @@ class TestEosLoggingModule(TestEosModule):
 
     def test_eos_buffer_size_outofrange(self):
         set_module_args(dict(dest='buffered', size=5))
-        commands = ['logging buffered 5']
         result = self.execute_module(failed=True)
         self.assertEqual(result['msg'], "size must be between 10 and 2147483647")
 
     def test_eos_buffer_size_datatype(self):
         set_module_args(dict(dest='buffered', size='ten'))
-        commands = ['logging buffered ten']
         result = self.execute_module(failed=True)
         self.assertIn("we were unable to convert to int", result['msg'])
 
@@ -79,19 +76,17 @@ class TestEosLoggingModule(TestEosModule):
 
     def test_eos_buffer_size_idempotent(self):
         set_module_args(dict(dest='buffered', size=50000, level='informational'))
-        commands = ['logging buffered 50000 informational']
         result = self.execute_module(changed=False, commands=[])
 
     def test_eos_facilty(self):
         set_module_args(dict(facility='local2'))
         commands = ['logging facility local2']
-        result = self.execute_module(changed=True)
+        result = self.execute_module(changed=True, commands=commands)
         # when dest is not passed, 'None' is set to dest
-        self.assertEqual(sorted(result['commands'])[1], commands[0])
+        #self.assertEqual(sorted(result['commands'])[1], commands[0])
 
     def test_eos_facility_idempotent(self):
         set_module_args(dict(facility='local7'))
-        commands = ['logging facility local7']
         result = self.execute_module(changed=False, commands=[])
 
     def test_eos_level(self):
@@ -101,7 +96,6 @@ class TestEosLoggingModule(TestEosModule):
 
     def test_eos_level_idempotent(self):
         set_module_args(dict(dest='console', level='warnings'))
-        commands = ['logging console warnings']
         result = self.execute_module(changed=False, commands=[])
 
     def test_eos_logging_state_absent(self):
