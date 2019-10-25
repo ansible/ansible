@@ -1,3 +1,123 @@
+.. _using_galaxy:
+.. _ansible_galaxy:
+
+*****************
+Galaxy User Guide
+*****************
+
+:dfn:`Ansible Galaxy` refers to the `Galaxy <https://galaxy.ansible.com>`_  website, a free site for finding, downloading, and sharing community developed roles.
+
+Use Galaxy to jump-start your automation project with great content from the Ansible community. Galaxy provides pre-packaged units of work such as `roles <playbooks_reuse_roles>`_, and new in Galaxy 3.2, `collections <collections>`_.
+You can find roles for provisioning infrastructure, deploying applications, and all of the tasks you do everyday. The collection format provides a comprehensive package of automation that may include multiple playbooks, roles, modules, and plugins.
+
+.. contents::
+   :local:
+   :depth: 2
+.. _finding_galaxy_collections:
+
+Finding collections on Galaxy
+=============================
+
+To find collections on Galaxy:
+
+#. Click the :guilabel:`Search` icon in the left-hand navigation.
+#. Set the filter to *collection*.
+#. Set other filters and press :guilabel:`enter`.
+
+Galaxy presents a list of collections that match your search criteria.
+
+.. _installing_galaxy_collections:
+
+Installing collections from Galaxy
+==================================
+
+.. include:: ../shared_snippets/installing_collections.txt
+
+
+Installing an older version of a collection
+-------------------------------------------
+
+.. include:: ../shared_snippets/installing_older_collection.txt
+
+Install multiple collections with a requirements file
+-----------------------------------------------------
+
+.. include:: ../shared_snippets/installing_multiple_collections.txt
+
+Galaxy server configuration list
+--------------------------------
+
+.. include:: ../shared_snippets/galaxy_server_list.txt
+
+
+.. _finding_galaxy_roles:
+
+Finding roles on Galaxy
+=======================
+
+Search the Galaxy database by tags, platforms, author and multiple keywords. For example:
+
+.. code-block:: bash
+
+    $ ansible-galaxy search elasticsearch --author geerlingguy
+
+The search command will return a list of the first 1000 results matching your search:
+
+.. code-block:: text
+
+    Found 2 roles matching your search:
+
+    Name                              Description
+    ----                              -----------
+    geerlingguy.elasticsearch         Elasticsearch for Linux.
+    geerlingguy.elasticsearch-curator Elasticsearch curator for Linux.
+
+
+Get more information about a role
+---------------------------------
+
+Use the ``info`` command to view more detail about a specific role:
+
+.. code-block:: bash
+
+    $ ansible-galaxy info username.role_name
+
+This returns everything found in Galaxy for the role:
+
+.. code-block:: text
+
+    Role: username.role_name
+        description: Installs and configures a thing, a distributed, highly available NoSQL thing.
+        active: True
+        commit: c01947b7bc89ebc0b8a2e298b87ab416aed9dd57
+        commit_message: Adding travis
+        commit_url: https://github.com/username/repo_name/commit/c01947b7bc89ebc0b8a2e298b87ab
+        company: My Company, Inc.
+        created: 2015-12-08T14:17:52.773Z
+        download_count: 1
+        forks_count: 0
+        github_branch:
+        github_repo: repo_name
+        github_user: username
+        id: 6381
+        is_valid: True
+        issue_tracker_url:
+        license: Apache
+        min_ansible_version: 1.4
+        modified: 2015-12-08T18:43:49.085Z
+        namespace: username
+        open_issues_count: 0
+        path: /Users/username/projects/roles
+        scm: None
+        src: username.repo_name
+        stargazers_count: 0
+        travis_status_url: https://travis-ci.org/username/repo_name.svg?branch=master
+        version:
+        watchers_count: 1
+
+
+.. _installing_galaxy_roles:
+
 Installing roles from Galaxy
 ============================
 
@@ -262,3 +382,10 @@ Use ``remove`` to delete a role from *roles_path*:
 .. code-block:: bash
 
     $ ansible-galaxy remove namespace.role_name
+
+
+.. seealso::
+  `collections <collections>`_
+    Sharable collections of modules, playbooks and roles
+  `roles <playbooks_reuse_roles>`_
+    Reusable tasks, handlers, and other files in a known directory structure
