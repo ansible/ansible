@@ -16,8 +16,8 @@ $source = Get-AnsibleParam -obj $params -name "source" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent"
 $installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" -type "str" -validateset "trusted", "untrusted"
 
-$result = New-Object -TypeName PSObject -Property @{"changed" = $false}
-$repositoryProperties = New-Object -TypeName PSObject -Property @{"name" = $name; "source" = $source; "installationPolicy" = $installationpolicy }
+$result = @{"changed" = $false}
+$repositoryProperties = @{"name" = $name; "source" = $source; "installationPolicy" = $installationpolicy }
 
 function Update-NuGetPackageProvider {
     $PackageProvider = Get-PackageProvider -ListAvailable | Where-Object { ($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201") }
