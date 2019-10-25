@@ -1,0 +1,18 @@
+<data>
+    <staticrt xmlns="http://www.huawei.com/netconf/vrp" format-version="1.0" content-version="1.0">
+      <staticrtbase>
+        <srBfdParas>
+          <srBfdPara>
+            <afType>ipv4unicast</afType>
+            <ifName>Ethernet3/0/0</ifName>
+            <destVrfName>_public_</destVrfName>
+            <nexthop>192.168.2.2</nexthop>
+            <localAddress>192.168.2.1</localAddress>
+            <minRxInterval>50</minRxInterval>
+            <minTxInterval>50</minTxInterval>
+            <multiplier>3</multiplier>
+          </srBfdPara>
+        </srBfdParas>
+      </staticrtbase>
+    </staticrt>
+  </data>
