@@ -64,7 +64,7 @@ import json
 import os
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.urls import open_url
+from ansible.module_utils.urls import basic_auth_header, open_url
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.utils.display import Display
@@ -124,8 +124,7 @@ class GrafanaAPI:
         if self.grafana_api_key:
             headers['Authorization'] = "Bearer %s==" % self.grafana_api_key
         else:
-            auth = base64.b64encode(to_bytes('%s:%s' % (self.grafana_user, self.grafana_password)).replace('\n', ''))
-            headers['Authorization'] = 'Basic %s' % auth
+            headers['Authorization'] = basic_auth_header(self.grafana_user, self.grafana_password)
             self.grafana_switch_organisation(headers)
 
         return headers
