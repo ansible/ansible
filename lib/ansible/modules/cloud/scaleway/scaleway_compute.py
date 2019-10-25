@@ -48,7 +48,7 @@ options:
     description:
       - Boot method. The API automatically picks the right option if nothing is specified.
     required: false
-    version_added: 2.9
+    version_added: 2.10
     choices:
       - bootscript
       - local
