@@ -83,7 +83,7 @@ class TestEosLoggingModule(TestEosModule):
         commands = ['logging facility local2']
         result = self.execute_module(changed=True, commands=commands)
         # when dest is not passed, 'None' is set to dest
-        #self.assertEqual(sorted(result['commands'])[1], commands[0])
+        # self.assertEqual(sorted(result['commands'])[1], commands[0])
 
     def test_eos_facility_idempotent(self):
         set_module_args(dict(facility='local7'))
