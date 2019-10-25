@@ -28,44 +28,48 @@ function Update-NuGetPackageProvider {
 
 $repository = Get-PSRepository -Name $repositoryProperties.Name -ErrorAction Ignore -WarningAction Ignore
 
-if($null -eq $repository -and (-not $check_mode)) {
-    if($state -eq "present") {
-        try
-        {
-            Register-PSRepository -Name $repositoryProperties.Name -SourceLocation $repositoryProperties.source -InstallationPolicy $repositoryProperties.installationPolicy
-            $result.changed = $true
-        }
-        catch
-        {
-            Fail-Json $result $_.Exception.Message
+if($null -eq $repository) {
+    if(-not $check_mode){
+        if($state -eq "present") {
+            try
+            {
+                Register-PSRepository -Name $repositoryProperties.Name -SourceLocation $repositoryProperties.source -InstallationPolicy $repositoryProperties.installationPolicy
+                $result.changed = $true
+            }
+            catch
+            {
+                Fail-Json $result $_.Exception.Message
+            }
         }
     }
 }
 
-if($null -ne $repository -and (-not $check_mode)) {
-    if($state -eq "absent") {
-        try
-        {
-            Unregister-PSRepository -Name $repositoryProperties.Name
-            $result.changed = $true
+if($null -ne $repository) {
+    if(-not $check_mode) {
+        if($state -eq "absent") {
+            try
+            {
+                Unregister-PSRepository -Name $repositoryProperties.Name
+                $result.changed = $true
+            }
+            catch
+            {
+                Fail-Json $result $_.Exception.Message
+            }
         }
-        catch
-        {
-            Fail-Json $result $_.Exception.Message
-        }
-    }
-    else {
+        else {
 
-        if($repository.SourceLocation -ne $repositoryProperties.source -and $null -ne $repositoryProperties.source) {
-            Set-PSRepository -Name $repositoryProperties.Name -SourceLocation $repositoryProperties.source
-            $result.changed = $true
-        }
+            if($repository.SourceLocation -ne $repositoryProperties.source -and $null -ne $repositoryProperties.source) {
+                Set-PSRepository -Name $repositoryProperties.Name -SourceLocation $repositoryProperties.source
+                $result.changed = $true
+            }
 
-        if($repository.InstallationPolicy -ne $repositoryProperties.installationPolicy -and $null -ne $repositoryProperties.installationPolicy) {
-            Set-PSRepository -Name $repositoryProperties.Name -InstallationPolicy $repositoryProperties.installationPolicy
-            $result.changed = $true
-        }
+            if($repository.InstallationPolicy -ne $repositoryProperties.installationPolicy -and $null -ne $repositoryProperties.installationPolicy) {
+                Set-PSRepository -Name $repositoryProperties.Name -InstallationPolicy $repositoryProperties.installationPolicy
+                $result.changed = $true
+            }
 
+        }
     }
 }
 
