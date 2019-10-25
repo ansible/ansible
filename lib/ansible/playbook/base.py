@@ -309,6 +309,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             for name in self._valid_attrs.keys():
                 self._attributes[name] = getattr(self, name)
             self._squashed = True
+        return self
 
     def copy(self):
         '''
