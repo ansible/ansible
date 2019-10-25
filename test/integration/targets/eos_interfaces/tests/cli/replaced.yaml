@@ -26,7 +26,6 @@
 
 - assert:
     that:
-      - "ansible_facts.network_resources.interfaces|symmetric_difference(result.before)|length == 0"
       - result is changed
 
 - name: Replaces device configuration of listed interfaces with provided configuration
