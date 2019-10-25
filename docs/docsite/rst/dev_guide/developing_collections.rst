@@ -324,7 +324,7 @@ Collection versions use `Sematic Versioning <https://semver.org/>`_ for version 
 Migrating Ansible content to a collection
 =========================================
 
-You can experiment with migrating existing modules into a collection using the `content_collector tool <https://github.com/ansible/content_collector>`_. The ``content_collector`` is a playbook that helps you migrate content from an Ansible distribution into a collection.
+You can migrate modules, other plugins, and module utilities you maintain to a collection at any time. You can experiment with migrating existing modules into a collection using the `content_collector tool <https://github.com/ansible/content_collector>`_. The ``content_collector`` is a playbook that helps you migrate content from an Ansible distribution into a collection.
 
 .. warning::
 
@@ -335,16 +335,19 @@ See the `content_collector README <https://github.com/ansible/content_collector>
 How to mark migrated content in ansible/ansible
 -----------------------------------------------
 
-You can migrate modules, other plugins, and module utilities you maintain to a collection at any time. The code should remain in the `ansible/ansible GitHub repo <https://github.com/ansible/ansible/>`_ for at least one full Ansible Engine release cycle, though we expect changes to occur only in the collection.
+When you migrate modules or other content out of the `ansible/ansible GitHub repo <https://github.com/ansible/ansible/>`_ to a collection, leave a copy of your code in the ansible/ansible for at least one full Ansible Engine release cycle. You can freeze the code in ansible/ansible, adding bugfixes and features only in the collection, but you should keep a deprecated module in the core repo to give users to have time to adapt.
 
-To migrate a module, plugin, or module utility from `<https://github.com/ansible/ansible/>`_ into a collection:
+#. Create a repository for the code for your collection. This can be on any repository management platform you choose, though official Ansible community collections must be hosted on `GitHub <https://github.com/ansible-collections>`_.
 
-#. Update `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ with the location of the collection.
-   These pointers let us generate module documentation from collections to docs.ansible.com. Find each file or directory you are migrating in the botmeta.yml file. For each file or directory, add a line beginning ``migrated_to`` with the new location of the file within the collection. Use the Galaxy namespace, not the code repository::
+#. Publish your collection to Ansible Galaxy.
 
-      migrated_to: https://galaxy.ansible.com/my_namespace/my_collection/plugin_type/my_plugin
+#. Update the files in `<https://github.com/ansible/ansible/>`_ to document that the modules, plugins, and/or module utilities have migrated to a collection.
 
-#. :ref:`Deprecate <deprecating_modules>` any migrated modules, including additions to the relevant ``CHANGELOG`` and ``porting_guide_x.y.rst``.
+    #. Update `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ with the location of the collection. These pointers let us generate module documentation from collections to docs.ansible.com. Find each file or directory you are migrating in the botmeta.yml file. For each file or directory, add a line beginning ``migrated_to`` with the new location of the file within the collection. Use the Galaxy namespace, not the code repository::
+
+        migrated_to: https://galaxy.ansible.com/my_namespace/my_collection/plugin_type/my_plugin
+
+    #. :ref:`Deprecate <deprecating_modules>` any migrated modules, including additions to the relevant ``CHANGELOG`` and ``porting_guide_x.y.rst``.
 
 For an example of documenting migration, see `the Tower modules PR <https://github.com/ansible/ansible/pull/62924/>`_ that migrates multiple files.
 
