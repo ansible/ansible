@@ -339,12 +339,11 @@ class VmwareAdapterConfigManager(PyVmomi):
                 return pnic.pci
         self.module.fail_json(msg="No nic= %s on host= %s" % (self.vmnic, host.name))
 
-    def _update_sriov(self, host, sriovEnabled=None, numVirtualFunction=None, **kwargs):
+    def _update_sriov(self, host, sriovEnabled, numVirtualFunction):
         nic_sriov = vim.host.SriovConfig()
         nic_sriov.id = self._getPciId(host)
         nic_sriov.sriovEnabled = sriovEnabled
         nic_sriov.numVirtualFunction = numVirtualFunction
-        self.results["changes"][host.name] = kwargs["changes"]
 
         try:
             if not self.module.check_mode:
