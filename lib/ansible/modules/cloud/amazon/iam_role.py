@@ -420,7 +420,7 @@ def create_or_update_role(connection, module):
     changed |= tags_changed
     role['tags'] = tags
 
-    module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role), **camel_dict_to_snake_dict(role))
+    module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role, ignore_list=['tags']), **camel_dict_to_snake_dict(role, ignore_list=['tags']))
 
 
 def destroy_role(connection, module):

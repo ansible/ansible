@@ -158,7 +158,7 @@ except ImportError:
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
 
 
 @AWSRetry.exponential_backoff()
@@ -199,6 +199,11 @@ def describe_iam_role(module, client, role):
         role['InstanceProfiles'] = list_iam_instance_profiles_for_role_with_backoff(client, name)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't get instance profiles for role %s" % name)
+    try:
+        role['tags'] = boto3_tag_list_to_ansible_dict(role['Tags'])
+        del role['Tags']
+    except KeyError:
+        role['tags'] = {}
     return role
 
 
@@ -227,7 +232,7 @@ def describe_iam_roles(module, client):
             roles = list_iam_roles_with_backoff(client, **params)['Roles']
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Couldn't list IAM roles")
-    return [camel_dict_to_snake_dict(describe_iam_role(module, client, role)) for role in roles]
+    return [camel_dict_to_snake_dict(describe_iam_role(module, client, role), ignore_list=['tags']) for role in roles]
 
 
 def main():
