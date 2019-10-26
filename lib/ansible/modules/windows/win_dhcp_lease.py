@@ -12,19 +12,22 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = r'''
 ---
 module: win_dhcp_lease
-version_added: '2.10'
-short_description: Manages IP Addresses on a Windows DHCP Server
+version_added: "2.10"
+short_description: Manage Windows Server DHCP Leases
 author: Joe Zollo (@joezollo)
 requirements:
   - This module requires Windows Server 2012 or Newer
 description:
-  - Manages IP Addresses on a Windows DHCP Server
-  - Adds or Removes DHCP Leases and Reservations
+  - Manage Windows Server DHCP Leases (IPv4 Only)
+  - Adds, Removes and Modifies DHCP Leases and Reservations
   - Task should be delegated to a Windows DHCP Server
 options:
   type:
     description:
       - The type of DHCP address
+      - Leases expire as defined by l(duration)
+      - When l(duration) is not specified, the server default is used
+      - Reservations are permanent
     type: str
     default: reservation
     choices: [ reservation, lease ]
@@ -32,10 +35,11 @@ options:
     description:
       - Specifies the desired state of the DHCP lease or reservation
     type: str
+    default: present
     choices: [ present, absent ]
   ip:
     description:
-      - The IP address of the client server/computer
+      - The IPv4 address of the client server/computer
     type: str
     required: yes
   scope_id:
@@ -48,6 +52,7 @@ options:
       - Specifies the client identifier to be set on the IPv4 address
       - Windows clients use the MAC address as the client ID
       - Linux and other operating systems can use other types of identifiers
+      - Can be used to identify an existing lease/reservation, instead of l(ip)
     type: str
   duration:
     description:
@@ -55,17 +60,22 @@ options:
       - The duration value only applies to l(type=lease)
       - Defaults to the duration specified by the DHCP server
         configuration
+      - Only applicable to l(type=lease)
     type: int
   dns_hostname:
     description:
       - Specifies the DNS hostname of the client for which the IP address
         lease is to be added
+    type: str
   dns_regtype:
     description:
       - Indicates the type of DNS record to be registered by the DHCP
         server service for this lease
-      - Defaults to the type specified by the DHCP server configuration
+      - l(a) results in an A record being registered
+      - l(aptr) results in both A and PTR records to be registered
+      - l(noreg) results in no DNS records being registered
     type: str
+    default: aptr
     choices: [ aptr, a, noreg ]
   reservation_name:
     description:
@@ -120,18 +130,6 @@ RETURN = r'''
 lease:
   description: New/Updated DHCP object parameters
   returned: When l(state=present)
-  type: dict
-  sample:
-    address_state: InactiveReservation
-    client_id: 0a-0b-0c-04-05-aa
-    description: Really Fancy
-    ip_address: 172.16.98.230
-    name: null
-    scope_id: 172.16.98.0
-
-original:
-  description: Original DHCP object parameters
-  returned: When an existing lease is found
   type: dict
   sample:
     address_state: InactiveReservation

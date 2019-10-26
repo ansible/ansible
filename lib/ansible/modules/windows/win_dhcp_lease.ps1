@@ -5,11 +5,39 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #AnsibleRequires -CSharpUtil Ansible.Basic
-#Requires -Module Ansible.ModuleUtils.CamelConversion
-#Requires -Module Ansible.ModuleUtils.FileUtil
-#Requires -Module Ansible.ModuleUtils.Legacy
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
+
+$spec = @{
+    options = @{
+        type = @{ type = "str"; choices = "reservation", "lease"; default = "reservation" }
+        ip = @{ type = "str" }
+        scope_id = @{ type = "str" }
+        mac = @{ type = "str" }
+        duration = @{ type = "int" }
+        dns_hostname = @{ type = "str"; }
+        dns_regtype = @{ type = "str"; choices = "aptr", "a", "noreg"; default = "aptr" }
+        reservation_name = @{ type = "str"; }
+        description = @{ type = "str"; }
+        state = @{ type = "str"; choices = "absent", "present"; default = "present" }
+    }
+    supports_check_mode = $true
+}
+
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+$module.Result.changed = $false
+$check_mode = $module.CheckMode
+
+$type = $module.Params.type
+$ip = $module.Params.ip
+$scope_id = $module.Params.scope_id
+$mac = $module.Params.mac
+$duration = $module.Params.duration
+$dns_hostname = $module.Params.dns_hostname
+$dns_regtype = $module.Params.dns_regtype
+$reservation_name = $module.Params.reservation_name
+$description = $module.Params.description
+$state = $module.Params.state
 
 Function Convert-MacAddress {
     Param(
@@ -54,8 +82,6 @@ Function Convert-ReturnValue {
         $Object
     )
 
-    # TODO: Use camelconversion here instead of manual
-
     $data = @{
         address_state = $Object.AddressState
         client_id     = $Object.ClientId
@@ -67,37 +93,6 @@ Function Convert-ReturnValue {
 
     return $data
 }
-
-$spec = @{
-    options = @{
-        type = @{ type = "str"; choices = "reservation", "lease"; }
-        ip = @{ type = "str" }
-        scope_id = @{ type = "str" }
-        mac = @{ type = "str" }
-        duration = @{ type = "int" }
-        dns_hostname = @{ type = "str"; }
-        dns_regtype = @{ type = "str"; choices = "aptr", "a", "noreg"; default = "aptr" }
-        reservation_name = @{ type = "str"; }
-        description = @{ type = "str"; }
-        state = @{ type = "str"; choices = "absent", "present"; default = "present" }
-    }
-    supports_check_mode = $true
-}
-
-$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
-$module.Result.changed = $false
-$check_mode = $module.CheckMode
-
-$type = $module.Params.type
-$ip = $module.Params.ip
-$scope_id = $module.Params.scope_id
-$mac = $module.Params.mac
-$duration = $module.Params.duration
-$dns_hostname = $module.Params.dns_hostname
-$dns_regtype = $module.Params.dns_regtype
-$reservation_name = $module.Params.reservation_name
-$description = $module.Params.description
-$state = $module.Params.state
 
 # Parse Regtype
 if ($dns_regtype) {
