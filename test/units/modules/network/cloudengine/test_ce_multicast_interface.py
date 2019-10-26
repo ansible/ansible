@@ -78,11 +78,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
 
     def test_igmp_undo_enable(self):
         update = ['undo igmp enable']
-<<<<<<< HEAD
         self.get_nc_config.side_effect = (self.after, self.before)
-=======
-        self.get_nc_config.side_effect = ( self.after, self.before)
->>>>>>> update
         set_module_args(dict(
             vrf_name='vrf2',
             interface='10GE1/0/1',
