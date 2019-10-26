@@ -1,0 +1,34 @@
+ <data>
+    <pim>
+      <pimafspro>
+        <pimAfsSiteCfgs>
+          <pimAfsSiteCfg>
+           <vrfName>vrf2</vrfName>
+            <addressFamily>ipv4unicast</addressFamily>
+            <ifName>10GE1/0/1</ifName>
+            <pimBsrBoundary>Incoming</pimBsrBoundary>
+            <pimMode>Sparse</pimMode>
+            <helloInterval>310</helloInterval>
+            <helloHoldtime>310</helloHoldtime>
+            <nbrPlyName>nbrPlyName</nbrPlyName>
+            <requireGenId>false</requireGenId>
+            <drPriority>11</drPriority>
+            <graftRetry>11</graftRetry>
+            <drSwtDelayInterval>10</drSwtDelayInterval>
+            <jpTimerInterval>10</jpTimerInterval>
+            <jpHoldtime>10</jpHoldtime>
+            <helloLanDelay>110</helloLanDelay>
+            <helloOverride>110</helloOverride>
+            <jpSsmPlyName>jpSsmPlyName</jpSsmPlyName>
+            <assertHoldtime>110</assertHoldtime>
+            <bfdEnable>110</bfdEnable>
+            <isSilent>false</isSilent>
+          <bfdMinRx>8</bfdMinRx>
+          <bfdMinTx>8</bfdMinTx>
+          <bfdMultiplier>8</bfdMultiplier>
+          </pimAfsSiteCfg>
+        </pimAfsSiteCfgs>
+      </pimafspro>
+    </pim>
+
+</data>
