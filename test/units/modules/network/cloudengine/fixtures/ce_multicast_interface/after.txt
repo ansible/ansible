@@ -30,27 +30,4 @@
         </pimAfsSiteCfgs>
       </pimafspro>
     </pim>
-  <dgmp>
-    <dgmpIfCfgs>
-      <dgmpIfCfg>
-          <vrfName>_public_</vrfName>
-          <addrFamily>ipv4unicast</addrFamily>
-          <ifName>10GE1/0/1</ifName>
-          <gmpEnable>false</gmpEnable>
-          <ipSourcePly>false</ipSourcePly>
-          <ipSrcAclName>2008</ipSrcAclName>
-          <ipSrcAclIpv6>2008</ipSrcAclIpv6>
-          <othQuerierPstTime>60</othQuerierPstTime>
-          <immLeaveAclName>2008</immLeaveAclName>
-          <immLeaveAclIpv6>2008</immLeaveAclIpv6>
-          <ssmapEnable>false</ssmapEnable>
-          <groupAclName>8</groupAclName>
-          <groupAclIpv6>8</groupAclIpv6>
-          <groupAclGMPVer>1</groupAclGMPVer>
-          <queryAclName>8</queryAclName>
-          <queryAclIpv6>8</queryAclIpv6>
-          <gmpEnable>true</gmpEnable>
-        </dgmpIfCfg>
-    </dgmpIfCfgs>
-  </dgmp>
 </data>
