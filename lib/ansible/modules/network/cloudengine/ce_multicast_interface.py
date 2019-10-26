@@ -539,7 +539,7 @@ class MulticastInterface(object):
         arg = self.module.params.get(name)
         if arg is None:
             return ''
-        elif arg.strip().lower() in ['true', 'false']:
+        elif str(arg).strip().lower() in ['true', 'false']:
             self.proposed[name] = arg
             self.xml_dict[tag] = arg
             return 'ok'
