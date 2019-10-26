@@ -24,7 +24,7 @@ requirements:
 description:
 - Templates are processed by the L(consul-template,https://github.com/hashicorp/consul-template).
 - Documentation on the template formatting can be found on consul-template GitHub page.
-- Additional variables listed below can be used in templates.
+- Additional arguments listed below can be used in playbooks.
 - C(src) is a path to source Go-syntax template on Ansible controller
 - C(dest) is destination file path on destination machine
 - C(content) can contain inline template
@@ -37,6 +37,7 @@ options:
     description:
     - Path of a Go-formatted template file on the Ansible controller.
     - This can be a relative or an absolute path.
+    - This can be remote path if C(remote_src) is set to C(yes)
     type: path
     required: yes
   dest:
@@ -71,6 +72,12 @@ options:
     type: str
     env:
       - name: VAULT_TOKEN
+  remote_src:
+    description:
+      - Set to C(yes) to indicate the template file is on the remote system and not local to the Ansible controller.
+      - This option is mutually exclusive with C(content).
+    type: bool
+    default: no
 notes:
 - You can use the M(consul_template) module with the C(content:) option if you prefer the template inline,
   as part of the playbook. In this case C(src:) parameter is not permitted
