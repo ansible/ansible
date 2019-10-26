@@ -11,19 +11,19 @@
   when: dhcp_role.reboot_required
 
 - name: Remove DHCP Address by IP
-  win_dhcp:
+  win_dhcp_lease:
     state: absent
     ip: "{{ dhcp_lease_ip }}"
 
 - name: Remove DHCP Address by IP (Idempotentcy Check) - Changed should equal false
-  win_dhcp:
+  win_dhcp_lease:
     state: absent
     ip: "{{ dhcp_lease_ip }}"
   register: remove_reservation_ip
-  failed_when: remove_reservation_ip.changed == true
+  failed_when: remove_reservation_ip.changed != false
 
 - name: Create New DHCP Lease
-  win_dhcp:
+  win_dhcp_lease:
     type: lease
     ip: "{{ dhcp_lease_ip }}"
     scope_id: "{{ dhcp_scope_id }}"
@@ -33,7 +33,7 @@
     description: This is a description!
 
 - name: Create New DHCP Lease (Idempotentcy Check) - Changed should equal false
-  win_dhcp:
+  win_dhcp_lease:
     type: lease
     ip: "{{ dhcp_lease_ip }}"
     scope_id: "{{ dhcp_scope_id }}"
@@ -42,7 +42,7 @@
     dns_regtype: noreg
     description: This is a description!
   register: create_lease
-  failed_when: create_lease.changed == true
+  failed_when: create_lease.changed != false
 
 - name: Validate the Lease
   win_shell: |
@@ -51,16 +51,16 @@
   failed_when: validate_lease_out.stdout == ""
 
 - name: Convert Lease to Reservation
-  win_dhcp:
+  win_dhcp_lease:
     type: reservation
     ip: "{{ dhcp_lease_ip }}"
     
 - name: Convert Lease to Reservation (Idempotentcy Check) - Changed should equal false
-  win_dhcp:
+  win_dhcp_lease:
     type: reservation
     ip: "{{ dhcp_lease_ip }}"
   register: convert_lease_to_reservation
-  failed_when: convert_lease_to_reservation.changed == true
+  failed_when: convert_lease_to_reservation.changed != false
 
 - name: Validate the Reservation
   win_shell: |
@@ -69,18 +69,18 @@
   failed_when: validate_reservation_out.stdout == ""
 
 - name: Update Reservation Description
-  win_dhcp:
+  win_dhcp_lease:
     type: reservation
     mac: "{{ dhcp_lease_mac }}"
     description: Changed Description!
 
 - name: Update Reservation Description (Idempotentcy Check) - Changed should equal false
-  win_dhcp:
+  win_dhcp_lease:
     type: reservation
     mac: "{{ dhcp_lease_mac }}"
     description: Changed Description!
   register: update_reservation_description
-  failed_when: update_reservation_description.changed == true
+  failed_when: update_reservation_description.changed != false
 
 - name: Validate the Description
   win_shell: |
@@ -89,28 +89,28 @@
   failed_when: validate_description_out.stdout == ""
 
 - name: Convert Reservation to Lease
-  win_dhcp:
+  win_dhcp_lease:
     type: lease
     ip: "{{ dhcp_lease_ip }}"
 
 - name: Convert Reservation to Lease (Idempotentcy Check) - Changed should equal false
-  win_dhcp:
+  win_dhcp_lease:
     type: lease
     ip: "{{ dhcp_lease_ip }}"
   register: convert_reservation_to_lease
-  failed_when: convert_reservation_to_lease.changed == true
+  failed_when: convert_reservation_to_lease.changed != false
 
 - name: Remove DHCP Reservation
-  win_dhcp:
+  win_dhcp_lease:
     state: absent
     mac: "{{ dhcp_lease_mac }}"
 
 - name: Remove DHCP Reservation (Idempotentcy Check) - Changed should equal false
-  win_dhcp:
+  win_dhcp_lease:
     state: absent
     mac: "{{ dhcp_lease_mac }}"
   register: remove_reservation
-  failed_when: remove_reservation.changed == true
+  failed_when: remove_reservation.changed != false
 
 - name: Validate the State
   win_shell: |

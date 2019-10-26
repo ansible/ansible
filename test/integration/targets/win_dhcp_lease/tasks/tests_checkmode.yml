@@ -1,0 +1,52 @@
+---
+- name: Check DHCP Service/Role Install State
+  win_feature:
+    name: DHCP
+    state: present
+    include_management_tools: yes
+  register: dhcp_role
+  check_mode: true
+
+- name: Reboot if Necessary
+  win_reboot:
+  when: dhcp_role.reboot_required
+  check_mode: true
+
+- name: Remove DHCP Address by IP
+  win_dhcp_lease:
+    state: absent
+    ip: "{{ dhcp_lease_ip }}"
+  check_mode: true
+
+- name: Create Lease
+  win_dhcp_lease:
+    type: lease
+    ip: "{{ dhcp_lease_ip }}"
+    scope_id: "{{ dhcp_scope_id }}"
+    mac: "{{ dhcp_lease_mac }}"
+    dns_hostname: "{{ dhcp_lease_hostname }}"
+    dns_regtype: noreg
+    description: This is a description!
+  check_mode: true
+
+- name: Create Reservation
+  win_dhcp_lease:
+    type: reservation
+    ip: "{{ dhcp_lease_ip }}"
+    mac: "{{ dhcp_lease_mac }}"
+    scope_id: "{{ dhcp_scope_id }}"
+  check_mode: true
+
+- name: Create Reservation w/Description
+  win_dhcp_lease:
+    type: reservation
+    ip: "{{ dhcp_lease_ip }}"
+    mac: "{{ dhcp_lease_mac }}"
+    scope_id: "{{ dhcp_scope_id }}"
+    description: This is a Description!
+  check_mode: true
+
+- name: Remove DHCP Reservation by MAC
+  win_dhcp_lease:
+    state: absent
+    mac: "{{ dhcp_lease_mac }}"
