@@ -1,15 +1,4 @@
 ---
-- name: Check DHCP Service/Role Install State
-  win_feature:
-    name: DHCP
-    state: present
-    include_management_tools: yes
-  register: dhcp_role
-
-- name: Reboot if Necessary
-  win_reboot:
-  when: dhcp_role.reboot_required
-
 - name: Remove DHCP Address by IP
   win_dhcp_lease:
     state: absent

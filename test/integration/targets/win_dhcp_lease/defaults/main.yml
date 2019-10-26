@@ -1,5 +1,8 @@
 ---
 dhcp_lease_ip: 172.16.98.230
 dhcp_scope_id: 172.16.98.0
+dhcp_scope_start: 172.16.98.1
+dhcp_scope_end: 172.16.98.254
+dhcp_scope_subnet_mask: 255.255.255.0
 dhcp_lease_mac: 0A-0B-0C-04-05-AA
 dhcp_lease_hostname: fancy-reservation

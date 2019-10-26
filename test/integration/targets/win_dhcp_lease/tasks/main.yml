@@ -1,6 +1,27 @@
 ---
-- name: Run tests without check mode
-  include_tasks: tests.yml
+- block:
+  - name: Check DHCP Service/Role Install State
+    win_feature:
+      name: DHCP
+      state: present
+      include_management_tools: yes
+    register: dhcp_role
 
-- name: Run tests in check mode
-  include_tasks: tests_checkmode.yml
+  - name: Reboot if Necessary
+    win_reboot:
+    when: dhcp_role.reboot_required
+
+  - name: Add the DHCP scope
+    win_shell: |
+      Add-DhcpServerv4Scope -Name "TestNetwork" -StartRange {{ dhcp_scope_start }} -EndRange {{dhcp_scope_end }} -SubnetMask {{ dhcp_scope_subnet_mask }}
+
+  - name: Run tests without check mode
+    include_tasks: tests.yml
+
+  - name: Run tests in check mode
+    include_tasks: tests_checkmode.yml
+
+  always:
+  - name: Remove the DHCP scope
+    win_shell: |
+      Remove-DhcpServerv4Scope -ScopeId {{ dhcp_scope_id }} -Force

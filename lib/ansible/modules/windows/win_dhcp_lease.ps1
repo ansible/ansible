@@ -264,8 +264,7 @@ if ($state -eq "present") {
 
         # Nothing needs to be done, already in the desired state
         if ($type -eq "lease") {
-            $module.Result.changed = $true
-            $module.msg = "The lease is already in it's desired state"
+            $module.Result.changed = $false
             $module.ExitJson()
         }
     }
