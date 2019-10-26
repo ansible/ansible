@@ -48,7 +48,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
 
     def test_igmp_enable(self):
         update = ['igmp enable']
-        self.get_nc_config.side_effect = (self.before, self.after, self.before)
+        self.get_nc_config.side_effect = (self.before, self.after)
         set_module_args(dict(
             vrf_name='vrf2',
             interface='10GE1/0/1',
@@ -78,7 +78,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
 
     def test_igmp_undo_enable(self):
         update = ['undo igmp enable']
-        self.get_nc_config.side_effect = (self.after, self.before, self.before)
+        self.get_nc_config.side_effect = (self.after, self.before)
         set_module_args(dict(
             vrf_name='vrf2',
             interface='10GE1/0/1',
