@@ -27,13 +27,15 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: grafana_teams
+module: grafana_team
 author:
   - Rémi REY (@rrey)
 version_added: "2.10"
 short_description: Manage Grafana Teams
 description:
-  - Create/update/delete Grafana Teams through API.
+  - Create/update/delete Grafana Teams through the Teams API.
+  - Also allows to add members in the team (if members exists).
+  - The Teams API is only available starting Grafana 5 and the module will fail if the server version is lower than version 5.
 options:
   url:
     description:
@@ -112,7 +114,7 @@ options:
 EXAMPLES = '''
 ---
 - name: Create a team
-  grafana_teams:
+  grafana_team:
       url: "https://grafana.example.com"
       grafana_api_key: "{{ some_api_token_value }}"
       name: "grafana_working_group"
@@ -120,7 +122,7 @@ EXAMPLES = '''
       state: present
 
 - name: Create a team with members
-  grafana_teams:
+  grafana_team:
       url: "https://grafana.example.com"
       grafana_api_key: "{{ some_api_token_value }}"
       name: "grafana_working_group"
@@ -131,7 +133,7 @@ EXAMPLES = '''
       state: present
 
 - name: Create a team with members and enforce the list of members
-  grafana_teams:
+  grafana_team:
       url: "https://grafana.example.com"
       grafana_api_key: "{{ some_api_token_value }}"
       name: "grafana_working_group"
@@ -143,7 +145,7 @@ EXAMPLES = '''
       state: present
 
 - name: Delete a team
-  grafana_teams:
+  grafana_team:
       url: "https://grafana.example.com"
       grafana_api_key: "{{ some_api_token_value }}"
       name: "grafana_working_group"
@@ -226,7 +228,6 @@ class GrafanaTeamInterface(object):
         if grafana_version["major"] < 5:
             self._module.fail_json(failed=True, msg="Teams API is available starting Grafana v5")
 
-
     def _send_request(self, url, data=None, headers=None, method="GET"):
         if data is not None:
             data = json.dumps(data, sort_keys=True)
@@ -265,7 +266,7 @@ class GrafanaTeamInterface(object):
         url = "/api/teams/search?name={team}".format(team=name)
         response = self._send_request(url, headers=self.headers, method="GET")
         if not response.get("totalCount") <= 1:
-            raise AssertionError("Expected 1 teams, got %d" % response["totalCount"])
+            raise AssertionError("Expected 1 team, got %d" % response["totalCount"])
 
         if len(response.get("teams")) == 0:
             return None

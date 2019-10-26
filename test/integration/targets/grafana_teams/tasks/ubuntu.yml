@@ -1,7 +1,7 @@
 ---
 
 - name: Create a Team without members
-  grafana_teams:
+  grafana_team:
       url: "http://127.0.0.1:3000"
       url_username: admin
       url_password: admin
@@ -19,7 +19,7 @@
       - "result.team.email == 'foo.bar@example.com'"
 
 - name: Check idempotency on team creation
-  grafana_teams:
+  grafana_team:
       url: "http://127.0.0.1:3000"
       url_username: admin
       url_password: admin
@@ -37,7 +37,7 @@
       - "result.team.email == 'foo.bar@example.com'"
 
 - name: Check a team can be deleted
-  grafana_teams:
+  grafana_team:
       url: "http://127.0.0.1:3000"
       url_username: admin
       url_password: admin
@@ -52,7 +52,7 @@
       - "result.message == 'Team deleted'"
 
 - name: Check idempotency on team deletion
-  grafana_teams:
+  grafana_team:
       url: "http://127.0.0.1:3000"
       url_username: admin
       url_password: admin
@@ -70,7 +70,7 @@
   import_tasks: create_user.yml
 
 - name: Create a Team with members
-  grafana_teams:
+  grafana_team:
       url: "http://127.0.0.1:3000"
       url_username: admin
       url_password: admin
@@ -91,7 +91,7 @@
       - "result.team.email == 'foo.bar@example.com'"
 
 - name: Ensure a Team exists with member not enforced
-  grafana_teams:
+  grafana_team:
       url: "http://127.0.0.1:3000"
       url_username: admin
       url_password: admin
@@ -111,7 +111,7 @@
       - "result.team.email == 'foo.bar@example.com'"
 
 - name: Ensure a Team exists with member enforced
-  grafana_teams:
+  grafana_team:
       url: "http://127.0.0.1:3000"
       url_username: admin
       url_password: admin
@@ -132,7 +132,7 @@
       - "result.team.email == 'foo.bar@example.com'"
 
 - name: Ensure a Team exists with members omitted
-  grafana_teams:
+  grafana_team:
       url: "http://127.0.0.1:3000"
       url_username: admin
       url_password: admin
@@ -150,7 +150,7 @@
       - "result.team.email == 'foo.bar@example.com'"
 
 - name: Add new member to existing Team
-  grafana_teams:
+  grafana_team:
       url: "http://127.0.0.1:3000"
       url_username: admin
       url_password: admin
