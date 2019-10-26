@@ -222,6 +222,10 @@ class GrafanaTeamInterface(object):
             self.headers["Authorization"] = basic_auth_header(module.params['url_username'], module.params['url_password'])
         # }}}
         self.grafana_url = module.params.get("url")
+        grafana_version = self.get_version()
+        if grafana_version["major"] < 5:
+            self._module.fail_json(failed=True, msg="Teams API is available starting Grafana v5")
+
 
     def _send_request(self, url, data=None, headers=None, method="GET"):
         if data is not None:
@@ -243,6 +247,13 @@ class GrafanaTeamInterface(object):
         elif status_code == 200:
             return self._module.from_json(resp.read())
         self._module.fail_json(failed=True, msg="Grafana Teams API answered with HTTP %d" % status_code)
+
+    def get_version(self):
+        url = "/api/health"
+        response = self._send_request(url, data=None, headers=self.headers, method="GET")
+        version = response.get("version")
+        major, minor, rev = version.split(".")
+        return {"major": int(major), "minor": int(minor), "rev": int(rev)}
 
     def create_team(self, name, email):
         url = "/api/teams"

@@ -55,6 +55,11 @@ def unauthorized_resp():
 def permission_denied_resp():
     return (None, {"status": 403})
 
+def get_version_resp():
+    return {"major": 6, "minor": 0, "rev": 0}
+
+def get_low_version_resp():
+    return {"major": 4, "minor": 6, "rev": 0}
 
 def team_exists_resp():
     server_response = json.dumps({"totalCount": 1, "teams": [{"name": "MyTestTeam", "email": "email@test.com"}]}, sort_keys=True)
@@ -179,8 +184,26 @@ class GrafanaTeamsTest(unittest.TestCase):
             grafana_teams.main()
         self.assertEqual(result.exception.args[0]['msg'], 'parameters are mutually exclusive: url_username|grafana_api_key')
 
+    @patch('ansible.modules.monitoring.grafana_teams.GrafanaTeamInterface.get_version')
+    def test_module_fails_with_low_grafana_version(self, mock_get_version):
+        set_module_args({
+            'name': 'MyTestTeam',
+            'email': 'email@test.com',
+            'url': 'http://grafana.example.com',
+            'grafana_user': 'admin',
+            'grafana_password': 'admin',
+        })
+
+        module = grafana_teams.setup_module_object()
+        mock_get_version.return_value = get_low_version_resp()
+
+        with self.assertRaises(AnsibleFailJson) as result:
+            grafana_teams.main()
+        self.assertEqual(result.exception.args[0]['msg'], 'Teams API is available starting Grafana v5')
+
+    @patch('ansible.modules.monitoring.grafana_teams.GrafanaTeamInterface.get_version')
     @patch('ansible.modules.monitoring.grafana_teams.fetch_url')
-    def test_module_failure_with_unauthorized_resp(self, mock_fetch_url):
+    def test_module_failure_with_unauthorized_resp(self, mock_fetch_url, mock_get_version):
         set_module_args({
             'name': 'MyTestTeam',
             'email': 'email@test.com',
@@ -188,13 +211,15 @@ class GrafanaTeamsTest(unittest.TestCase):
         })
         module = grafana_teams.setup_module_object()
         mock_fetch_url.return_value = unauthorized_resp()
+        mock_get_version.return_value = get_version_resp()
 
         with self.assertRaises(AnsibleFailJson) as result:
             grafana_teams.main()
         self.assertTrue(result.exception.args[0]['msg'].startswith('Unauthorized to perform action'))
 
+    @patch('ansible.modules.monitoring.grafana_teams.GrafanaTeamInterface.get_version' )
     @patch('ansible.modules.monitoring.grafana_teams.fetch_url')
-    def test_module_failure_with_permission_denied_resp(self, mock_fetch_url):
+    def test_module_failure_with_permission_denied_resp(self, mock_fetch_url, mock_get_version):
         set_module_args({
             'name': 'MyTestTeam',
             'email': 'email@test.com',
@@ -202,13 +227,15 @@ class GrafanaTeamsTest(unittest.TestCase):
         })
         module = grafana_teams.setup_module_object()
         mock_fetch_url.return_value = permission_denied_resp()
+        mock_get_version.return_value = get_version_resp()
 
         with self.assertRaises(AnsibleFailJson) as result:
             grafana_teams.main()
         self.assertTrue(result.exception.args[0]['msg'].startswith('Permission Denied'))
 
+    @patch('ansible.modules.monitoring.grafana_teams.GrafanaTeamInterface.get_version' )
     @patch('ansible.modules.monitoring.grafana_teams.fetch_url')
-    def test_get_team_method_with_existing_team(self, mock_fetch_url):
+    def test_get_team_method_with_existing_team(self, mock_fetch_url, mock_get_version):
         set_module_args({
             'state': 'present',
             'name': 'MyTestTeam',
@@ -217,6 +244,7 @@ class GrafanaTeamsTest(unittest.TestCase):
         })
         module = grafana_teams.setup_module_object()
         mock_fetch_url.return_value = team_exists_resp()
+        mock_get_version.return_value = get_version_resp()
 
         grafana_iface = grafana_teams.GrafanaTeamInterface(module)
         res = grafana_iface.get_team("MyTestTeam")
@@ -227,8 +255,9 @@ class GrafanaTeamsTest(unittest.TestCase):
             method='GET')
         self.assertEquals(res, {"email": "email@test.com", "name": "MyTestTeam"})
 
+    @patch('ansible.modules.monitoring.grafana_teams.GrafanaTeamInterface.get_version')
     @patch('ansible.modules.monitoring.grafana_teams.fetch_url')
-    def test_get_team_method_with_non_existing_team(self, mock_fetch_url):
+    def test_get_team_method_with_non_existing_team(self, mock_fetch_url, mock_get_version):
         set_module_args({
             'state': 'present',
             'name': 'MyTestTeam',
@@ -237,6 +266,7 @@ class GrafanaTeamsTest(unittest.TestCase):
         })
         module = grafana_teams.setup_module_object()
         mock_fetch_url.return_value = team_not_found_resp()
+        mock_get_version.return_value = get_version_resp()
 
         grafana_iface = grafana_teams.GrafanaTeamInterface(module)
         res = grafana_iface.get_team("MyTestTeam")
@@ -247,8 +277,9 @@ class GrafanaTeamsTest(unittest.TestCase):
             method='GET')
         self.assertEquals(res, None)
 
+    @patch('ansible.modules.monitoring.grafana_teams.GrafanaTeamInterface.get_version')
     @patch('ansible.modules.monitoring.grafana_teams.fetch_url')
-    def test_create_team_method(self, mock_fetch_url):
+    def test_create_team_method(self, mock_fetch_url, mock_get_version):
         set_module_args({
             'state': 'present',
             'name': 'MyTestTeam',
@@ -257,6 +288,7 @@ class GrafanaTeamsTest(unittest.TestCase):
         })
         module = grafana_teams.setup_module_object()
         mock_fetch_url.return_value = team_created_resp()
+        mock_get_version.return_value = get_version_resp()
 
         grafana_iface = grafana_teams.GrafanaTeamInterface(module)
 
@@ -268,8 +300,9 @@ class GrafanaTeamsTest(unittest.TestCase):
             method='POST')
         self.assertEquals(res, {"message": "Team created", "teamId": 2})
 
+    @patch('ansible.modules.monitoring.grafana_teams.GrafanaTeamInterface.get_version')
     @patch('ansible.modules.monitoring.grafana_teams.fetch_url')
-    def test_update_team_method(self, mock_fetch_url):
+    def test_update_team_method(self, mock_fetch_url, mock_get_version):
         set_module_args({
             'state': 'present',
             'name': 'MyTestTeam',
@@ -278,6 +311,7 @@ class GrafanaTeamsTest(unittest.TestCase):
         })
         module = grafana_teams.setup_module_object()
         mock_fetch_url.return_value = team_updated_resp()
+        mock_get_version.return_value = get_version_resp()
 
         grafana_iface = grafana_teams.GrafanaTeamInterface(module)
         res = grafana_iface.update_team(2, "MyTestTeam", "email@test.com")
@@ -288,8 +322,9 @@ class GrafanaTeamsTest(unittest.TestCase):
             method='PUT')
         self.assertEquals(res, {"message": "Team updated"})
 
+    @patch('ansible.modules.monitoring.grafana_teams.GrafanaTeamInterface.get_version')
     @patch('ansible.modules.monitoring.grafana_teams.fetch_url')
-    def test_delete_team_method(self, mock_fetch_url):
+    def test_delete_team_method(self, mock_fetch_url, mock_get_version):
         set_module_args({
             'state': 'absent',
             'name': 'MyTestTeam',
@@ -298,6 +333,7 @@ class GrafanaTeamsTest(unittest.TestCase):
         })
         module = grafana_teams.setup_module_object()
         mock_fetch_url.return_value = team_deleted_resp()
+        mock_get_version.return_value = get_version_resp()
 
         grafana_iface = grafana_teams.GrafanaTeamInterface(module)
         res = grafana_iface.delete_team(2)
@@ -308,8 +344,9 @@ class GrafanaTeamsTest(unittest.TestCase):
             method='DELETE')
         self.assertEquals(res, {"message": "Team deleted"})
 
+    @patch('ansible.modules.monitoring.grafana_teams.GrafanaTeamInterface.get_version')
     @patch('ansible.modules.monitoring.grafana_teams.fetch_url')
-    def test_get_team_members_method(self, mock_fetch_url):
+    def test_get_team_members_method(self, mock_fetch_url, mock_get_version):
         set_module_args({
             'state': 'present',
             'name': 'MyTestTeam',
@@ -318,6 +355,7 @@ class GrafanaTeamsTest(unittest.TestCase):
         })
         module = grafana_teams.setup_module_object()
         mock_fetch_url.return_value = team_members_resp()
+        mock_get_version.return_value = get_version_resp()
 
         grafana_iface = grafana_teams.GrafanaTeamInterface(module)
         res = grafana_iface.get_team_members(2)
@@ -328,8 +366,9 @@ class GrafanaTeamsTest(unittest.TestCase):
             method='GET')
         self.assertEquals(res, ["user1@email.com", "user2@email.com"])
 
+    @patch('ansible.modules.monitoring.grafana_teams.GrafanaTeamInterface.get_version')
     @patch('ansible.modules.monitoring.grafana_teams.fetch_url')
-    def test_get_team_members_method_no_members_returned(self, mock_fetch_url):
+    def test_get_team_members_method_no_members_returned(self, mock_fetch_url, mock_get_version):
         set_module_args({
             'state': 'present',
             'name': 'MyTestTeam',
@@ -338,6 +377,7 @@ class GrafanaTeamsTest(unittest.TestCase):
         })
         module = grafana_teams.setup_module_object()
         mock_fetch_url.return_value = team_members_no_members_resp()
+        mock_get_version.return_value = get_version_resp()
 
         grafana_iface = grafana_teams.GrafanaTeamInterface(module)
         res = grafana_iface.get_team_members(2)
@@ -348,8 +388,9 @@ class GrafanaTeamsTest(unittest.TestCase):
             method='GET')
         self.assertEquals(res, [])
 
+    @patch('ansible.modules.monitoring.grafana_teams.GrafanaTeamInterface.get_version')
     @patch('ansible.modules.monitoring.grafana_teams.fetch_url')
-    def test_add_team_member_method(self, mock_fetch_url):
+    def test_add_team_member_method(self, mock_fetch_url, mock_get_version):
         set_module_args({
             'state': 'present',
             'name': 'MyTestTeam',
@@ -358,6 +399,7 @@ class GrafanaTeamsTest(unittest.TestCase):
         })
         module = grafana_teams.setup_module_object()
         mock_fetch_url.return_value = add_team_member_resp()
+        mock_get_version.return_value = get_version_resp()
 
         grafana_iface = grafana_teams.GrafanaTeamInterface(module)
         with patch.object(grafana_teams.GrafanaTeamInterface, 'get_user_id_from_mail') as mock_get_user_id_from_mail:
@@ -370,8 +412,9 @@ class GrafanaTeamsTest(unittest.TestCase):
                 method='POST')
             self.assertEquals(res, None)
 
+    @patch('ansible.modules.monitoring.grafana_teams.GrafanaTeamInterface.get_version')
     @patch('ansible.modules.monitoring.grafana_teams.fetch_url')
-    def test_delete_team_member_method(self, mock_fetch_url):
+    def test_delete_team_member_method(self, mock_fetch_url, mock_get_version):
         set_module_args({
             'state': 'present',
             'name': 'MyTestTeam',
@@ -380,6 +423,7 @@ class GrafanaTeamsTest(unittest.TestCase):
         })
         module = grafana_teams.setup_module_object()
         mock_fetch_url.return_value = delete_team_member_resp()
+        mock_get_version.return_value = get_version_resp()
 
         grafana_iface = grafana_teams.GrafanaTeamInterface(module)
         with patch.object(grafana_teams.GrafanaTeamInterface, 'get_user_id_from_mail') as mock_get_user_id_from_mail:
