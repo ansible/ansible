@@ -65,4 +65,3 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
             ifname='10GE1/0/1')
         )
         self.execute_module(changed=False)
-
