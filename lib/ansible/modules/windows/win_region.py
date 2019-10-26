@@ -81,7 +81,7 @@ EXAMPLES = r'''
 
 # Reboot when format, location or unicode has changed
 - name: Set format, location and unicode to English Australia and copy settings, reboot if required
-- win_region:
+  win_region:
     location: 12
     format: en-AU
     unicode_language: en-AU

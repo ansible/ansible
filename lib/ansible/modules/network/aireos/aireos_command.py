@@ -22,8 +22,8 @@ description:
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
-  - This module does not support running commands in configuration mode.
-    Please use M(aireos_config) to configure WLC devices.
+  - Commands run in configuration mode with this module are not
+    idempotent. Please use M(aireos_config) to configure WLC devices.
 extends_documentation_fragment: aireos
 options:
   commands:
@@ -120,12 +120,13 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
 
 
 def to_lines(stdout):
     for item in stdout:
         if isinstance(item, string_types):
-            item = str(item).split('\n')
+            item = to_text(item, errors='surrogate_then_replace').split('\n')
         yield item
 
 
@@ -143,9 +144,9 @@ def parse_commands(module, warnings):
                 'executing `%s`' % item['command']
             )
         elif item['command'].startswith('conf'):
-            module.fail_json(
-                msg='aireos_command does not support running config mode '
-                    'commands.  Please use aireos_config instead'
+            warnings.append(
+                'commands run in config mode with aireos_command are not '
+                'idempotent.  Please use aireos_config instead'
             )
     return commands
 

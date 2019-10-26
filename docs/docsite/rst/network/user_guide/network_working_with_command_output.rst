@@ -52,7 +52,7 @@ results in an interface.  For instance::
               - show interface Ethernet5 | json
           wait_for:
               - "result[0].interfaces.Ethernet4.interfaceStatus eq connected"
-              - "result[1].interfaces.Ethernet4.interfaceStatus eq connected"
+              - "result[1].interfaces.Ethernet5.interfaceStatus eq connected"
 
 In the above example, two commands are executed on the
 remote device, and the results are evaluated.  By specifying the result

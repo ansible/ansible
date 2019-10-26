@@ -16,22 +16,6 @@ module: aci_epg_to_domain
 short_description: Bind EPGs to Domains (fv:RsDomAtt)
 description:
 - Bind EPGs to Physical and Virtual Domains on Cisco ACI fabrics.
-notes:
-- The C(tenant), C(ap), C(epg), and C(domain) used must exist before using this module in your playbook.
-  The M(aci_tenant) M(aci_ap), M(aci_epg) M(aci_domain) modules can be used for this.
-- OpenStack VMM domains must not be created using this module. The OpenStack VMM domain is created directly
-  by the Cisco APIC Neutron plugin as part of the installation and configuration.
-  This module can be used to query status of an OpenStack VMM domain.
-seealso:
-- module: aci_tenant
-- module: aci_ap
-- module: aci_epg
-- module: aci_domain
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(fv:RsDomAtt).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   allow_useg:
@@ -70,10 +54,18 @@ options:
     type: int
   encap_mode:
     description:
-    - The ecapsulataion method to be used.
+    - The encapsulation method to be used.
     - The APIC defaults to C(auto) when unset during creation.
+    - If vxlan is selected, switching_mode must be "AVE".
     type: str
     choices: [ auto, vlan, vxlan ]
+  switching_mode:
+    description:
+    - Switching Mode used by the switch
+    type: str
+    choices: [ AVE, native ]
+    default: native
+    version_added: '2.9'
   epg:
     description:
     - Name of the end point group.
@@ -115,6 +107,21 @@ options:
     type: str
     choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
 extends_documentation_fragment: aci
+notes:
+- The C(tenant), C(ap), C(epg), and C(domain) used must exist before using this module in your playbook.
+  The M(aci_tenant) M(aci_ap), M(aci_epg) M(aci_domain) modules can be used for this.
+- OpenStack VMM domains must not be created using this module. The OpenStack VMM domain is created directly
+  by the Cisco APIC Neutron plugin as part of the installation and configuration.
+  This module can be used to query status of an OpenStack VMM domain.
+seealso:
+- module: aci_ap
+- module: aci_epg
+- module: aci_domain
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:RsDomAtt).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -273,8 +280,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 VM_PROVIDER_MAPPING = dict(
     cloudfoundry='CloudFoundry',
@@ -297,8 +304,9 @@ def main():
         domain_type=dict(type='str', choices=['l2dom', 'phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         encap=dict(type='int'),
         encap_mode=dict(type='str', choices=['auto', 'vlan', 'vxlan']),
+        switching_mode=dict(type='str', default='native', choices=['AVE', 'native']),
         epg=dict(type='str', aliases=['name', 'epg_name']),  # Not required for querying all objects
-        netflow=dict(type='raw'),  # Turn into a boolean in v2.9
+        netflow=dict(type='bool'),
         primary_encap=dict(type='int'),
         resolution_immediacy=dict(type='str', choices=['immediate', 'lazy', 'pre-provision']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -329,8 +337,9 @@ def main():
         if encap in range(1, 4097):
             encap = 'vlan-{0}'.format(encap)
         else:
-            module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
+            module.fail_json(msg='Valid VLAN assignments are from 1 to 4096')
     encap_mode = module.params['encap_mode']
+    switching_mode = module.params['switching_mode']
     epg = module.params['epg']
     netflow = aci.boolean(module.params['netflow'], 'enabled', 'disabled')
     primary_encap = module.params['primary_encap']
@@ -338,7 +347,7 @@ def main():
         if primary_encap in range(1, 4097):
             primary_encap = 'vlan-{0}'.format(primary_encap)
         else:
-            module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
+            module.fail_json(msg='Valid VLAN assignments are from 1 to 4096')
     resolution_immediacy = module.params['resolution_immediacy']
     state = module.params['state']
     tenant = module.params['tenant']
@@ -392,6 +401,7 @@ def main():
                 classPref=allow_useg,
                 encap=encap,
                 encapMode=encap_mode,
+                switchingMode=switching_mode,
                 instrImedcy=deploy_immediacy,
                 netflowPref=netflow,
                 primaryEncap=primary_encap,

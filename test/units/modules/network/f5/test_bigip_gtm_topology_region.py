@@ -25,7 +25,6 @@ try:
     # In Ansible 2.8, Ansible changed import paths.
     from test.units.compat import unittest
     from test.units.compat.mock import Mock
-    from test.units.compat.mock import patch
 
     from test.units.modules.utils import set_module_args
 except ImportError:
@@ -37,7 +36,6 @@ except ImportError:
     # Ansible 2.8 imports
     from units.compat import unittest
     from units.compat.mock import Mock
-    from units.compat.mock import patch
 
     from units.modules.utils import set_module_args
 
@@ -110,7 +108,7 @@ class TestManager(unittest.TestCase):
     def setUp(self):
         self.spec = ArgumentSpec()
 
-    def test_create_topology_record(self, *args):
+    def test_create_topology_region(self, *args):
         set_module_args(dict(
             name='foobar',
             region_members=[
@@ -122,7 +120,12 @@ class TestManager(unittest.TestCase):
                     datacenter='bazcenter'
                 )
             ],
-            partition='Common'
+            partition='Common',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         )
         )
 
@@ -133,7 +136,7 @@ class TestManager(unittest.TestCase):
 
         # Override methods in the specific type of manager
         mm = ModuleManager(module=module)
-        mm.exists = Mock(side_effect=[False, True])
+        mm.exists = Mock(return_value=False)
         mm.create_on_device = Mock(return_value=True)
 
         results = mm.exec_module()

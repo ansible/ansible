@@ -8,6 +8,7 @@ __metaclass__ = type
 import fcntl
 import os
 import shlex
+
 from abc import abstractmethod, abstractproperty
 from functools import wraps
 
@@ -206,7 +207,7 @@ class ConnectionBase(AnsiblePlugin):
     @ensure_connect
     @abstractmethod
     def fetch_file(self, in_path, out_path):
-        """Fetch a file from remote to local"""
+        """Fetch a file from remote to local; callers are expected to have pre-created the directory chain for out_path"""
         pass
 
     @abstractmethod
@@ -274,6 +275,7 @@ class NetworkConnectionBase(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
         self._messages = []
+        self._conn_closed = False
 
         self._network_os = self._play_context.network_os
 
@@ -334,6 +336,7 @@ class NetworkConnectionBase(ConnectionBase):
         self.queue_message('vvvv', 'reset call on connection instance')
 
     def close(self):
+        self._conn_closed = True
         if self._connected:
             self._connected = False
 

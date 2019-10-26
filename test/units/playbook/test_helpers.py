@@ -43,6 +43,8 @@ class MixinForMocks(object):
         self.mock_tqm = MagicMock(name='MockTaskQueueManager')
 
         self.mock_play = MagicMock(name='MockPlay')
+        self.mock_play._attributes = []
+        self.mock_play.collections = None
 
         self.mock_iterator = MagicMock(name='MockIterator')
         self.mock_iterator._play = self.mock_play
@@ -60,7 +62,8 @@ class MixinForMocks(object):
 
         self.mock_block = MagicMock(name='MockBlock')
 
-        self.fake_role_loader = DictDataLoader({"/etc/ansible/roles/bogus_role/tasks/main.yml": """
+        # On macOS /etc is actually /private/etc, tests fail when performing literal /etc checks
+        self.fake_role_loader = DictDataLoader({os.path.join(os.path.realpath("/etc"), "ansible/roles/bogus_role/tasks/main.yml"): """
                                                 - shell: echo 'hello world'
                                                 """})
 
@@ -97,10 +100,15 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         self.assertRaises(AssertionError, helpers.load_list_of_tasks,
                           ds, self.mock_play, block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None)
 
+    def test_ds_not_dict(self):
+        ds = [[]]
+        self.assertRaises(AssertionError, helpers.load_list_of_tasks,
+                          ds, self.mock_play, block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None)
+
     def test_empty_task(self):
         ds = [{}]
         self.assertRaisesRegexp(errors.AnsibleParserError,
-                                "no action detected in task. This often indicates a misspelled module name, or incorrect module path",
+                                "no module/action detected in task",
                                 helpers.load_list_of_tasks,
                                 ds, play=self.mock_play,
                                 variable_manager=self.mock_variable_manager, loader=self.fake_loader)
@@ -108,7 +116,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
     def test_empty_task_use_handlers(self):
         ds = [{}]
         self.assertRaisesRegexp(errors.AnsibleParserError,
-                                "no action detected in task. This often indicates a misspelled module name, or incorrect module path",
+                                "no module/action detected in task.",
                                 helpers.load_list_of_tasks,
                                 ds,
                                 use_handlers=True,
@@ -376,7 +384,7 @@ class TestLoadListOfBlocks(unittest.TestCase, MixinForMocks):
         ds = [{}]
         mock_play = MagicMock(name='MockPlay')
         self.assertRaisesRegexp(errors.AnsibleParserError,
-                                "no action detected in task. This often indicates a misspelled module name, or incorrect module path",
+                                "no module/action detected in task",
                                 helpers.load_list_of_blocks,
                                 ds, mock_play,
                                 parent_block=None,

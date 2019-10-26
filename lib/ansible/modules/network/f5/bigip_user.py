@@ -28,10 +28,12 @@ options:
   full_name:
     description:
       - Full name of the user.
+    type: str
   username_credential:
     description:
       - Name of the user to create, remove or modify.
       - The C(root) user may not be removed.
+    type: str
     required: True
     aliases:
       - name
@@ -39,9 +41,11 @@ options:
     description:
       - Set the users password to this unencrypted value.
         C(password_credential) is required when creating a new account.
+    type: str
   shell:
     description:
       - Optionally set the users shell.
+    type: str
     choices:
       - bash
       - none
@@ -56,26 +60,30 @@ options:
         C(operator), C(resource-admin), C(user-manager), C(web-application-security-administrator),
         and C(web-application-security-editor).
       - Partition portion of tuple should be an existing partition or the value 'all'.
+    type: list
   state:
     description:
       - Whether the account should exist or not, taking action if the state is
         different from what is stated.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   update_password:
     description:
       - C(always) will allow to update passwords if the user chooses to do so.
         C(on_create) will only set the password for newly created users.
       - When C(username_credential) is C(root), this value will be forced to C(always).
-    default: always
+    type: str
     choices:
       - always
       - on_create
+    default: always
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
 notes:
@@ -215,20 +223,14 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.icontrol import tmos_version
     from library.module_utils.network.f5.icontrol import upload_file
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.icontrol import tmos_version
     from ansible.module_utils.network.f5.icontrol import upload_file
 
@@ -459,7 +461,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.kwargs = kwargs
 
     def exec_module(self):
@@ -503,7 +505,7 @@ class ModuleManager(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -636,7 +638,7 @@ class UnpartitionedManager(BaseManager):
         uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.name
+            self.want.username_credential
         )
         resp = self.client.api.get(uri)
         try:
@@ -649,7 +651,7 @@ class UnpartitionedManager(BaseManager):
 
     def create_on_device(self):
         params = self.changes.api_params()
-        params['name'] = self.want.name
+        params['name'] = self.want.username_credential
         uri = "https://{0}:{1}/mgmt/tm/auth/user/".format(
             self.client.provider['server'],
             self.client.provider['server_port']
@@ -672,7 +674,7 @@ class UnpartitionedManager(BaseManager):
         uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.name
+            self.want.username_credential
         )
         resp = self.client.api.patch(uri, json=params)
         try:
@@ -690,7 +692,7 @@ class UnpartitionedManager(BaseManager):
         uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.name
+            self.want.username_credential
         )
         response = self.client.api.delete(uri)
         if response.status == 200:
@@ -701,7 +703,7 @@ class UnpartitionedManager(BaseManager):
         uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.name
+            self.want.username_credential
         )
         resp = self.client.api.get(uri)
         try:
@@ -721,7 +723,7 @@ class PartitionedManager(BaseManager):
     def exists(self):
         response = self.list_users_on_device()
         if 'items' in response:
-            collection = [x for x in response['items'] if x['name'] == self.want.name]
+            collection = [x for x in response['items'] if x['name'] == self.want.username_credential]
             if len(collection) == 1:
                 return True
             elif len(collection) == 0:
@@ -734,7 +736,7 @@ class PartitionedManager(BaseManager):
 
     def create_on_device(self):
         params = self.changes.api_params()
-        params['name'] = self.want.name
+        params['name'] = self.want.username_credential
         params['partition'] = self.want.partition
         uri = "https://{0}:{1}/mgmt/tm/auth/user/".format(
             self.client.provider['server'],
@@ -745,17 +747,16 @@ class PartitionedManager(BaseManager):
             response = resp.json()
         except ValueError as ex:
             raise F5ModuleError(str(ex))
-
-        if 'code' in response and response['code'] in [400, 404, 409]:
+        if 'code' in response and response['code'] in [400, 404, 409, 403]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
-        return response['selfLink']
+        return True
 
     def read_current_from_device(self):
         response = self.list_users_on_device()
-        collection = [x for x in response['items'] if x['name'] == self.want.name]
+        collection = [x for x in response['items'] if x['name'] == self.want.username_credential]
         if len(collection) == 1:
             user = collection.pop()
             return ApiParameters(params=user)
@@ -773,7 +774,7 @@ class PartitionedManager(BaseManager):
         uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.name
+            self.want.username_credential
         )
         resp = self.client.api.patch(uri, json=params)
         try:
@@ -781,7 +782,7 @@ class PartitionedManager(BaseManager):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] in [400, 404, 409]:
+        if 'code' in response and response['code'] in [400, 404, 409, 403]:
             if 'message' in response:
                 if 'updated successfully' not in response['message']:
                     raise F5ModuleError(response['message'])
@@ -792,7 +793,7 @@ class PartitionedManager(BaseManager):
         uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.name
+            self.want.username_credential
         )
         response = self.client.api.delete(uri)
         if response.status == 200:
@@ -1066,9 +1067,9 @@ class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
         argument_spec = dict(
-            name=dict(
+            username_credential=dict(
                 required=True,
-                aliases=['username_credential']
+                aliases=['name']
             ),
             password_credential=dict(
                 no_log=True,
@@ -1103,16 +1104,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

@@ -1,0 +1,24 @@
+- name: stop mysql service
+  service:
+    name: mysqld
+    state: stopped
+  listen: cleanup mysql8
+
+- name: remove repo
+  yum:
+    name: mysql80-community-release
+    state: absent
+  listen: cleanup mysql8
+
+- name: remove mysql packages
+  yum:
+    name: '{{ mysql_packages | union(mysql_cleanup_packages) }}'
+    state: absent
+  listen: cleanup mysql8
+
+- name: remove mysql data
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ mysql_data_dirs }}"
+  listen: cleanup mysql8

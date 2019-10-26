@@ -1,0 +1,12 @@
+---
+dc1: DC0
+ccr1: DC0_C0
+ds1: LocalDS_0
+ds2: LocalDS_1
+f0: F0
+switch1: switch1
+esxi1: '{{ esxi_hosts[0] }}'
+esxi2: '{{ esxi_hosts[1] }}'
+esxi3: '{{ esxi_hosts[2] }}'
+dvswitch1: DVS0
+esxi_user: root

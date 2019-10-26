@@ -1,7 +1,7 @@
 ---
 # these are extra tests for psrp that aren't covered under test/integration/targets/connection/*
 - name: test out psrp specific tests
-  hosts: winrm
+  hosts: windows
   serial: 1
   gather_facts: no
 
@@ -51,7 +51,7 @@
 
   - name: test out async with psrp
     win_shell: Start-Sleep -Seconds 2; Write-Output abc
-    async: 5
+    async: 10
     poll: 1
     register: async_out
 

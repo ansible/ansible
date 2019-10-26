@@ -21,17 +21,12 @@ author:
 - Dag Wieers (@dagwieers)
 version_added: '2.8'
 options:
-  schema_id:
-    description:
-    - The ID of the schema.
-    type: str
-    required: yes
   schema:
     description:
     - The name of the schema.
     type: str
     required: yes
-    aliases: [ name, schema_name ]
+    aliases: [ name ]
   templates:
     description:
     - A list of templates for this schema.
@@ -116,8 +111,7 @@ from ansible.module_utils.network.aci.mso import MSOModule, mso_argument_spec, i
 def main():
     argument_spec = mso_argument_spec()
     argument_spec.update(
-        schema=dict(type='str', required=False, aliases=['name', 'schema_name']),
-        schema_id=dict(type='str', required=False),
+        schema=dict(type='str', aliases=['name']),
         templates=dict(type='list'),
         sites=dict(type='list'),
         # messages=dict(type='dict'),
@@ -138,32 +132,23 @@ def main():
     )
 
     schema = module.params['schema']
-    schema_id = module.params['schema_id']
     templates = module.params['templates']
     sites = module.params['sites']
     state = module.params['state']
 
     mso = MSOModule(module)
 
+    schema_id = None
     path = 'schemas'
 
     # Query for existing object(s)
-    if schema_id is None and schema is None:
-        mso.existing = mso.query_objs(path)
-    elif schema_id is None:
+    if schema:
         mso.existing = mso.get_obj(path, displayName=schema)
         if mso.existing:
             schema_id = mso.existing['id']
-    elif schema is None:
-        mso.existing = mso.get_obj(path, id=schema_id)
+            path = 'schemas/{id}'.format(id=schema_id)
     else:
-        mso.existing = mso.get_obj(path, id=schema_id)
-        existing_by_name = mso.get_obj(path, displayName=schema)
-        if existing_by_name and schema_id != existing_by_name['id']:
-            mso.fail_json(msg="Provided schema '{1}' with id '{2}' does not match existing id '{3}'.".format(schema, schema_id, existing_by_name['id']))
-
-    if schema_id:
-        path = 'schemas/{id}'.format(id=schema_id)
+        mso.existing = mso.query_objs(path)
 
     if state == 'query':
         pass

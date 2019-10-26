@@ -38,7 +38,7 @@ description:
   must separately verify the status of the individual instances.
 - A managed instance group can have up to 1000 VM instances per group.
 short_description: Creates a GCP InstanceGroupManager
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -52,6 +52,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   base_instance_name:
     description:
     - The base instance name to use for instances in this group. The value must be
@@ -59,114 +60,160 @@ options:
       four-character string to the base instance name.
     - The base instance name must comply with RFC1035.
     required: true
+    type: str
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   instance_template:
     description:
     - The instance template that is specified for this managed instance group. The
       group uses this template to create all new instances in the managed instance
       group.
     - 'This field represents a link to a InstanceTemplate resource in GCP. It can
-      be specified in two ways. First, you can place in the selfLink of the resource
-      here as a string Alternatively, you can add `register: name-of-resource` to
-      a gcp_compute_instance_template task and then set this instance_template field
-      to "{{ name-of-resource }}"'
+      be specified in two ways. First, you can place a dictionary with key ''selfLink''
+      and value of your resource''s selfLink Alternatively, you can add `register:
+      name-of-resource` to a gcp_compute_instance_template task and then set this
+      instance_template field to "{{ name-of-resource }}"'
     required: true
+    type: dict
   name:
     description:
     - The name of the managed instance group. The name must be 1-63 characters long,
       and comply with RFC1035.
     required: true
+    type: str
   named_ports:
     description:
     - Named ports configured for the Instance Groups complementary to this Instance
       Group Manager.
     required: false
+    type: list
     suboptions:
       name:
         description:
         - The name for this named port. The name must be 1-63 characters long, and
           comply with RFC1035.
         required: false
+        type: str
       port:
         description:
         - The port number, which can be a value between 1 and 65535.
         required: false
+        type: int
   target_pools:
     description:
     - TargetPool resources to which instances in the instanceGroup field are added.
       The target pools automatically apply to all of the instances in the managed
       instance group.
     required: false
+    type: list
   target_size:
     description:
     - The target number of running instances for this managed instance group. Deleting
       or abandoning instances reduces this number. Resizing the group changes this
       number.
     required: false
+    type: int
   zone:
     description:
     - The zone the managed instance group resides.
     required: true
-extends_documentation_fragment: gcp
+    type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "network-instancetemplate"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-instancetemplate
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a address
   gcp_compute_address:
-      name: "address-instancetemplate"
-      region: us-west1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: address-instancetemplate
+    region: us-west1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: address
 
 - name: create a instance template
   gcp_compute_instance_template:
-      name: "{{ resource_name }}"
-      properties:
-        disks:
-        - auto_delete: true
-          boot: true
-          initialize_params:
-            source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
-        machine_type: n1-standard-1
-        network_interfaces:
-        - network: "{{ network }}"
-          access_configs:
-          - name: test-config
-            type: ONE_TO_ONE_NAT
-            nat_ip: "{{ address }}"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: "{{ resource_name }}"
+    properties:
+      disks:
+      - auto_delete: 'true'
+        boot: 'true'
+        initialize_params:
+          source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
+      machine_type: n1-standard-1
+      network_interfaces:
+      - network: "{{ network }}"
+        access_configs:
+        - name: test-config
+          type: ONE_TO_ONE_NAT
+          nat_ip: "{{ address }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instancetemplate
 
 - name: create a instance group manager
   gcp_compute_instance_group_manager:
-      name: "test_object"
-      base_instance_name: test1-child
-      instance_template: "{{ instancetemplate }}"
-      target_size: 3
-      zone: us-west1-a
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    base_instance_name: test1-child
+    instance_template: "{{ instancetemplate }}"
+    target_size: 3
+    zone: us-west1-a
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -261,13 +308,13 @@ instanceGroup:
   description:
   - The instance group being managed.
   returned: success
-  type: str
+  type: dict
 instanceTemplate:
   description:
   - The instance template that is specified for this managed instance group. The group
     uses this template to create all new instances in the managed instance group.
   returned: success
-  type: str
+  type: dict
 name:
   description:
   - The name of the managed instance group. The name must be 1-63 characters long,
@@ -339,10 +386,10 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             base_instance_name=dict(required=True, type='str'),
             description=dict(type='str'),
-            instance_template=dict(required=True),
+            instance_template=dict(required=True, type='dict'),
             name=dict(required=True, type='str'),
             named_ports=dict(type='list', elements='dict', options=dict(name=dict(type='str'), port=dict(type='int'))),
-            target_pools=dict(type='list'),
+            target_pools=dict(type='list', elements='dict'),
             target_size=dict(type='int'),
             zone=dict(required=True, type='str'),
         )
@@ -487,7 +534,7 @@ def response_to_hash(module, response):
 def region_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/.*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/regions/%s".format(**params) % name
     return name
@@ -537,32 +584,10 @@ class InstanceGroupManagerCurrentactions(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {
-                u'abandoning': self.request.get('abandoning'),
-                u'creating': self.request.get('creating'),
-                u'creatingWithoutRetries': self.request.get('creating_without_retries'),
-                u'deleting': self.request.get('deleting'),
-                u'none': self.request.get('none'),
-                u'recreating': self.request.get('recreating'),
-                u'refreshing': self.request.get('refreshing'),
-                u'restarting': self.request.get('restarting'),
-            }
-        )
+        return remove_nones_from_dict({})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {
-                u'abandoning': self.request.get(u'abandoning'),
-                u'creating': self.request.get(u'creating'),
-                u'creatingWithoutRetries': self.request.get(u'creatingWithoutRetries'),
-                u'deleting': self.request.get(u'deleting'),
-                u'none': self.request.get(u'none'),
-                u'recreating': self.request.get(u'recreating'),
-                u'refreshing': self.request.get(u'refreshing'),
-                u'restarting': self.request.get(u'restarting'),
-            }
-        )
+        return remove_nones_from_dict({})
 
 
 class InstanceGroupManagerNamedportsArray(object):

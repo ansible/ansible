@@ -31,12 +31,11 @@ import json
 import os
 import time
 
-from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list, ComplexList
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
 
 _DEVICE_CONNECTION = None
@@ -61,45 +60,15 @@ eos_provider_spec = {
 eos_argument_spec = {
     'provider': dict(type='dict', options=eos_provider_spec),
 }
-eos_top_spec = {
-    'host': dict(removed_in_version=2.9),
-    'port': dict(removed_in_version=2.9, type='int'),
-    'username': dict(removed_in_version=2.9),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
-
-    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    'auth_pass': dict(removed_in_version=2.9, no_log=True),
-
-    'use_ssl': dict(removed_in_version=2.9, type='bool'),
-    'validate_certs': dict(removed_in_version=2.9, type='bool'),
-    'timeout': dict(removed_in_version=2.9, type='int'),
-
-    'transport': dict(removed_in_version=2.9, choices=['cli', 'eapi'])
-}
-eos_argument_spec.update(eos_top_spec)
 
 
 def get_provider_argspec():
     return eos_provider_spec
 
 
-def check_args(module, warnings):
-    pass
-
-
-def load_params(module):
-    provider = module.params.get('provider') or dict()
-    for key, value in iteritems(provider):
-        if key in eos_argument_spec:
-            if module.params.get(key) is None and value is not None:
-                module.params[key] = value
-
-
 def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
-        load_params(module)
         if is_local_eapi(module):
             conn = LocalEapi(module)
         else:
@@ -120,6 +89,12 @@ class Cli:
         self._device_configs = {}
         self._session_support = None
         self._connection = None
+
+    @property
+    def supports_sessions(self):
+        if self._session_support is None:
+            self._session_support = self._get_connection().supports_sessions()
+        return self._session_support
 
     def _get_connection(self):
         if self._connection:
@@ -185,6 +160,20 @@ class Cli:
             self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         return diff
 
+    def get_capabilities(self):
+        """Returns platform info of the remove device
+        """
+        if hasattr(self._module, '_capabilities'):
+            return self._module._capabilities
+
+        connection = self._get_connection()
+        try:
+            capabilities = connection.get_capabilities()
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+        self._module._capabilities = json.loads(capabilities)
+        return self._module._capabilities
+
 
 class LocalEapi:
 
@@ -194,32 +183,32 @@ class LocalEapi:
         self._session_support = None
         self._device_configs = {}
 
-        host = module.params['provider']['host']
-        port = module.params['provider']['port']
+        provider = module.params.get("provider") or {}
+        host = provider.get('host')
+        port = provider.get('port')
 
-        self._module.params['url_username'] = self._module.params['username']
-        self._module.params['url_password'] = self._module.params['password']
+        self._module.params['url_username'] = provider.get('username')
+        self._module.params['url_password'] = provider.get('password')
 
-        if module.params['provider']['use_ssl']:
+        if provider.get('use_ssl'):
             proto = 'https'
         else:
             proto = 'http'
 
-        module.params['validate_certs'] = module.params['provider']['validate_certs']
+        module.params['validate_certs'] = provider.get('validate_certs')
 
         self._url = '%s://%s:%s/command-api' % (proto, host, port)
 
-        if module.params['auth_pass']:
-            self._enable = {'cmd': 'enable', 'input': module.params['auth_pass']}
+        if provider.get("auth_pass"):
+            self._enable = {'cmd': 'enable', 'input': provider.get('auth_pass')}
         else:
             self._enable = 'enable'
 
     @property
     def supports_sessions(self):
-        if self._session_support:
-            return self._session_support
-        response = self.send_request(['show configuration sessions'])
-        self._session_support = 'error' not in response
+        if self._session_support is None:
+            response = self.send_request(['show configuration sessions'])
+            self._session_support = 'error' not in response
         return self._session_support
 
     def _request_builder(self, commands, output, reqid=None):
@@ -236,7 +225,7 @@ class LocalEapi:
         data = self._module.jsonify(body)
 
         headers = {'Content-Type': 'application/json-rpc'}
-        timeout = self._module.params['timeout']
+        timeout = self._module.params['provider']['timeout']
         use_proxy = self._module.params['provider']['use_proxy']
 
         response, headers = fetch_url(
@@ -414,6 +403,12 @@ class HttpApi:
 
         return self._connection_obj
 
+    @property
+    def supports_sessions(self):
+        if self._session_support is None:
+            self._session_support = self._connection.supports_sessions()
+        return self._session_support
+
     def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
         """
@@ -424,10 +419,10 @@ class HttpApi:
         def run_queue(queue, output):
             try:
                 response = to_list(self._connection.send_request(queue, output=output))
-            except Exception as exc:
+            except ConnectionError as exc:
                 if check_rc:
                     raise
-                return to_text(exc)
+                return to_list(to_text(exc))
 
             if output == 'json':
                 response = [json.loads(item) for item in response]
@@ -574,9 +569,10 @@ def is_json(cmd):
 
 
 def is_local_eapi(module):
-    transport = module.params['transport']
-    provider_transport = (module.params['provider'] or {}).get('transport')
-    return 'eapi' in (transport, provider_transport)
+    provider = module.params.get('provider')
+    if provider:
+        return provider.get('transport') == 'eapi'
+    return False
 
 
 def to_command(module, commands):
@@ -590,6 +586,7 @@ def to_command(module, commands):
         output=dict(default=default_output),
         prompt=dict(type='list'),
         answer=dict(type='list'),
+        newline=dict(type='bool', default=True),
         sendonly=dict(type='bool', default=False),
         check_all=dict(type='bool', default=False),
     ), module)
@@ -617,3 +614,8 @@ def load_config(module, config, commit=False, replace=False):
 def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
     conn = self.get_connection()
     return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path, diff_replace=diff_replace)
+
+
+def get_capabilities(module):
+    conn = get_connection(module)
+    return conn.get_capabilities()

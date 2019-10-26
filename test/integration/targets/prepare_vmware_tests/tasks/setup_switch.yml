@@ -1,0 +1,7 @@
+---
+- name: Add a VMware vSwitchs
+  vmware_vswitch:
+    esxi_hostname: '{{ item }}'
+    switch_name: "{{ switch1 }}"
+    state: present
+  with_items: "{{ esxi_hosts }}"

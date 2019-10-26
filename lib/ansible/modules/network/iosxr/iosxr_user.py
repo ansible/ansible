@@ -29,7 +29,8 @@ description:
     configuration that are not explicitly defined.
 extends_documentation_fragment: iosxr
 notes:
-  - Tested against IOS XRv 6.1.2
+  - This module works with connection C(network_cli) and C(netconf). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
+  - Tested against IOS XRv 6.1.3
 options:
   aggregate:
     description:
@@ -73,7 +74,7 @@ options:
       - Configures the groups for the username in the device running
         configuration. The argument accepts a list of group names.
         This argument does not check if the group has been configured
-        on the device. It is similar to the aggregrate command for
+        on the device. It is similar to the aggregate command for
         usernames, but lets you configure multiple groups for the user(s).
   purge:
     description:
@@ -121,6 +122,8 @@ options:
         public_key.If used with multiple users in aggregates, then the
         same key file is used for all users.
 requirements:
+  - ncclient >= 0.5.3 when using netconf
+  - lxml >= 4.1.1 when using netconf
   - base64 when using I(public_key_contents) or I(public_key)
   - paramiko when using I(public_key_contents) or I(public_key)
 """
@@ -206,6 +209,7 @@ from copy import deepcopy
 import collections
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.compat.paramiko import paramiko
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config, is_netconf, is_cliconf
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, build_xml, etree_findall
@@ -215,12 +219,6 @@ try:
     HAS_B64 = True
 except ImportError:
     HAS_B64 = False
-
-try:
-    import paramiko
-    HAS_PARAMIKO = True
-except ImportError:
-    HAS_PARAMIKO = False
 
 
 class PublicKeyManager(object):
@@ -253,11 +251,17 @@ class PublicKeyManager(object):
     def copy_key_to_node(self, base64keyfile):
         """ Copy key to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
         """
-        if (self._module.params['host'] is None or self._module.params['provider']['host'] is None):
+        provider = self._module.params.get("provider") or {}
+        node = provider.get('host')
+        if node is None:
             return False
 
-        if (self._module.params['username'] is None or self._module.params['provider']['username'] is None):
+        user = provider.get('username')
+        if user is None:
             return False
+
+        password = provider.get('password')
+        ssh_keyfile = provider.get('ssh_keyfile')
 
         if self._module.params['aggregate']:
             name = 'aggregate'
@@ -266,11 +270,6 @@ class PublicKeyManager(object):
 
         src = base64keyfile
         dst = '/harddisk:/publickey_%s.b64' % (name)
-
-        user = self._module.params['username'] or self._module.params['provider']['username']
-        node = self._module.params['host'] or self._module.params['provider']['host']
-        password = self._module.params['password'] or self._module.params['provider']['password']
-        ssh_keyfile = self._module.params['ssh_keyfile'] or self._module.params['provider']['ssh_keyfile']
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -286,16 +285,17 @@ class PublicKeyManager(object):
     def addremovekey(self, command):
         """ Add or remove key based on command
         """
-        if (self._module.params['host'] is None or self._module.params['provider']['host'] is None):
+        provider = self._module.params.get("provider") or {}
+        node = provider.get('host')
+        if node is None:
             return False
 
-        if (self._module.params['username'] is None or self._module.params['provider']['username'] is None):
+        user = provider.get('username')
+        if user is None:
             return False
 
-        user = self._module.params['username'] or self._module.params['provider']['username']
-        node = self._module.params['host'] or self._module.params['provider']['host']
-        password = self._module.params['password'] or self._module.params['provider']['password']
-        ssh_keyfile = self._module.params['ssh_keyfile'] or self._module.params['provider']['ssh_keyfile']
+        password = provider.get('password')
+        ssh_keyfile = provider.get('ssh_keyfile')
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -690,23 +690,19 @@ def main():
                 msg='library base64 is required but does not appear to be '
                     'installed. It can be installed using `pip install base64`'
             )
-        if not HAS_PARAMIKO:
+        if paramiko is None:
             module.fail_json(
                 msg='library paramiko is required but does not appear to be '
                     'installed. It can be installed using `pip install paramiko`'
             )
 
     result = {'changed': False, 'warnings': []}
-    if module.params['password'] and not module.params['configured_password']:
-        result['warnings'].append(
-            'The "password" argument is used to authenticate the current connection. ' +
-            'To set a user password use "configured_password" instead.'
-        )
 
     config_object = None
     if is_cliconf(module):
-        module.deprecate(msg="cli support for 'iosxr_user' is deprecated. Use transport netconf instead",
-                         version="2.9")
+        # Commenting the below cliconf deprecation support call for Ansible 2.9 as it'll be continued to be supported
+        # module.deprecate("cli support for 'iosxr_interface' is deprecated. Use transport netconf instead",
+        #                  version='2.9')
         config_object = CliConfiguration(module, result)
     elif is_netconf(module):
         config_object = NCConfiguration(module, result)

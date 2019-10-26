@@ -40,7 +40,10 @@ class ActionModule(_ActionModule):
     def run(self, task_vars=None):
         config_module = hasattr(self, '_config_module') and self._config_module
         if config_module and self._task.args.get('src'):
-            self._handle_src_option()
+            try:
+                self._handle_src_option()
+            except AnsibleError as e:
+                return {'failed': True, 'msg': e.message, 'changed': False}
 
         result = super(ActionModule, self).run(task_vars=task_vars)
 
@@ -48,12 +51,6 @@ class ActionModule(_ActionModule):
             self._handle_backup_option(result, task_vars)
 
         return result
-
-    def _handle_src_option(self):
-        try:
-            self._handle_template()
-        except ValueError as exc:
-            return dict(failed=True, msg=to_text(exc))
 
     def _handle_backup_option(self, result, task_vars):
 
@@ -106,7 +103,7 @@ class ActionModule(_ActionModule):
             result['msg'] = copy_result.get('msg')
             return
 
-        result['backup_path'] = copy_result['dest']
+        result['backup_path'] = dest
         if copy_result.get('changed', False):
             result['changed'] = copy_result['changed']
 
@@ -132,7 +129,7 @@ class ActionModule(_ActionModule):
             cwd = self._task._role._role_path
         return cwd
 
-    def _handle_template(self, convert_data=True):
+    def _handle_src_option(self, convert_data=True):
         src = self._task.args.get('src')
         working_path = self._get_working_path()
 
@@ -144,13 +141,13 @@ class ActionModule(_ActionModule):
                 source = self._loader.path_dwim_relative(working_path, src)
 
         if not os.path.exists(source):
-            raise ValueError('path specified in src not found')
+            raise AnsibleError('path specified in src not found')
 
         try:
             with open(source, 'r') as f:
                 template_data = to_text(f.read())
-        except IOError:
-            return dict(failed=True, msg='unable to load src file')
+        except IOError as e:
+            raise AnsibleError("unable to load src file {0}, I/O error({1}): {2}".format(source, e.errno, e.strerror))
 
         # Create a template search path in the following order:
         # [working_path, self_role_path, dependent_role_paths, dirname(source)]
@@ -163,8 +160,8 @@ class ActionModule(_ActionModule):
                     for role in dep_chain:
                         searchpath.append(role._role_path)
         searchpath.append(os.path.dirname(source))
-        self._templar.environment.loader.searchpath = searchpath
-        self._task.args['src'] = self._templar.template(template_data, convert_data=convert_data)
+        with self._templar.set_temporary_context(searchpath=searchpath):
+            self._task.args['src'] = self._templar.template(template_data, convert_data=convert_data)
 
     def _get_network_os(self, task_vars):
         if 'network_os' in self._task.args and self._task.args['network_os']:

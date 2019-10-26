@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_snmp_community
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestSnmpCommunityModule(TestNvosModule):
@@ -58,19 +56,19 @@ class TestSnmpCommunityModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_community_string': 'foo',
                          'pn_community_type': 'read-write', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 snmp-community-create community-string foo  community-type read-write'
+        expected_cmd = ' switch sw01 snmp-community-create community-string foo  community-type read-write'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_snmp_community_delete(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_community_string': 'foo',
                          'state': 'absent'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 snmp-community-delete community-string foo '
+        expected_cmd = ' switch sw01 snmp-community-delete community-string foo '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_snmp_community_update(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_community_string': 'foo',
                          'pn_community_type': 'read-only', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 snmp-community-modify community-string foo  community-type read-only'
+        expected_cmd = ' switch sw01 snmp-community-modify community-string foo  community-type read-only'
         self.assertEqual(result['cli_cmd'], expected_cmd)

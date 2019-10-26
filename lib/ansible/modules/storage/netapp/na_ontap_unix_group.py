@@ -51,6 +51,16 @@ options:
     - Specifies if group name validation is skipped.
     type: bool
 
+  users:
+    description:
+    - Specifies the users associated with this group. Should be comma separated.
+    - It represents the expected state of a list of users at any time.
+    - Add a user into group if it is specified in expected state but not in current state.
+    - Delete a user from group if it is specified in current state but not in expected state.
+    - To delete all current users, use '' as value.
+    type: list
+    version_added: "2.9"
+
 short_description: NetApp ONTAP UNIX Group
 version_added: "2.8"
 
@@ -63,6 +73,17 @@ EXAMPLES = """
         name: SampleGroup
         vserver: ansibleVServer
         id: 2
+        users: user1,user2
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+
+    - name: Delete all users in UNIX group
+      na_ontap_unix_group:
+        state: present
+        name: SampleGroup
+        vserver: ansibleVServer
+        users: ''
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
@@ -103,6 +124,7 @@ class NetAppOntapUnixGroup(object):
             id=dict(required=False, type='int'),
             skip_name_validation=dict(required=False, type='bool'),
             vserver=dict(required=True, type='str'),
+            users=dict(required=False, type='list')
         ))
 
         self.module = AnsibleModule(
@@ -164,6 +186,11 @@ class NetAppOntapUnixGroup(object):
         for item_key, zapi_key in self.na_helper.zapi_int_keys.items():
             group_details[item_key] = self.na_helper.get_value_for_int(from_zapi=True,
                                                                        value=group_info[zapi_key])
+        if group_info.get_child_by_name('users') is not None:
+            group_details['users'] = [user.get_child_content('user-name')
+                                      for user in group_info.get_child_by_name('users').get_children()]
+        else:
+            group_details['users'] = None
         return group_details
 
     def create_unix_group(self):
@@ -195,6 +222,8 @@ class NetAppOntapUnixGroup(object):
         except netapp_utils.zapi.NaApiError as error:
             self.module.fail_json(msg='Error creating UNIX group %s: %s' % (self.parameters['name'], to_native(error)),
                                   exception=traceback.format_exc())
+        if self.parameters.get('users') is not None:
+            self.modify_users_in_group()
 
     def delete_unix_group(self):
         """
@@ -212,6 +241,17 @@ class NetAppOntapUnixGroup(object):
                                   exception=traceback.format_exc())
 
     def modify_unix_group(self, params):
+        """
+        Modify an UNIX group from a vserver
+        :param params: modify parameters
+        :return: None
+        """
+        # modify users requires separate zapi.
+        if 'users' in params:
+            self.modify_users_in_group()
+            if len(params) == 1:
+                return
+
         group_modify = netapp_utils.zapi.NaElement('name-mapping-unix-group-modify')
         group_details = {'group-name': self.parameters['name']}
         for key in params:
@@ -226,6 +266,47 @@ class NetAppOntapUnixGroup(object):
         except netapp_utils.zapi.NaApiError as error:
             self.module.fail_json(msg='Error modifying UNIX group %s: %s' % (self.parameters['name'], to_native(error)),
                                   exception=traceback.format_exc())
+
+    def modify_users_in_group(self):
+        """
+        Add/delete one or many users in a UNIX group
+
+        :return: None
+        """
+        current_users = self.get_unix_group().get('users')
+        expect_users = self.parameters.get('users')
+
+        if current_users is None:
+            current_users = []
+        if expect_users[0] == '' and len(expect_users) == 1:
+            expect_users = []
+
+        users_to_remove = list(set(current_users) - set(expect_users))
+        users_to_add = list(set(expect_users) - set(current_users))
+
+        if len(users_to_add) > 0:
+            for user in users_to_add:
+                add_user = netapp_utils.zapi.NaElement('name-mapping-unix-group-add-user')
+                group_details = {'group-name': self.parameters['name'], 'user-name': user}
+                add_user.translate_struct(group_details)
+                try:
+                    self.server.invoke_successfully(add_user, enable_tunneling=True)
+                except netapp_utils.zapi.NaApiError as error:
+                    self.module.fail_json(
+                        msg='Error adding user %s to UNIX group %s: %s' % (user, self.parameters['name'], to_native(error)),
+                        exception=traceback.format_exc())
+
+        if len(users_to_remove) > 0:
+            for user in users_to_remove:
+                delete_user = netapp_utils.zapi.NaElement('name-mapping-unix-group-delete-user')
+                group_details = {'group-name': self.parameters['name'], 'user-name': user}
+                delete_user.translate_struct(group_details)
+                try:
+                    self.server.invoke_successfully(delete_user, enable_tunneling=True)
+                except netapp_utils.zapi.NaApiError as error:
+                    self.module.fail_json(
+                        msg='Error deleting user %s from UNIX group %s: %s' % (user, self.parameters['name'], to_native(error)),
+                        exception=traceback.format_exc())
 
     def autosupport_log(self):
         """

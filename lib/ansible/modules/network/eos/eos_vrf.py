@@ -126,7 +126,7 @@ from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.eos.eos import load_config, run_commands
-from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import eos_argument_spec
 
 
 def search_obj_in_list(name, lst):
@@ -144,7 +144,6 @@ def map_obj_to_commands(updates, module):
     for w in want:
         name = w['name']
         rd = w['rd']
-        interfaces = w['interfaces']
 
         obj_in_have = search_obj_in_list(name, have)
 
@@ -320,7 +319,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
 

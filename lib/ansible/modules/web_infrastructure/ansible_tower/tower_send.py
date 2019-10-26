@@ -69,7 +69,7 @@ output:
     description: The import messages
     returned: success, fail
     type: list
-    sample: [ 'Message 1', 'Messag 2' ]
+    sample: [ 'Message 1', 'Message 2' ]
 '''
 
 import os
@@ -148,7 +148,7 @@ def main():
             if sender.changed_messages > 0:
                 result['changed'] = True
         except TowerCLIError as e:
-            result['msg'] = e
+            result['msg'] = e.message
             failed = True
         finally:
             if path is not None:

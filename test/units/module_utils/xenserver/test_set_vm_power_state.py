@@ -9,7 +9,7 @@ __metaclass__ = type
 
 import pytest
 
-from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
+from .FakeAnsibleModule import FailJsonException
 from .common import fake_xenapi_ref, testcase_bad_xenapi_refs
 
 
@@ -19,12 +19,12 @@ testcase_set_vm_power_state_bad_transitions = {
         ('restarted', 'Suspended', "Cannot restart VM in state 'suspended'!"),
         ('suspended', 'Halted', "Cannot suspend VM in state 'poweredoff'!"),
         ('suspended', 'Paused', "Cannot suspend VM in state 'paused'!"),
-        ('shutdownguest', 'Halted', "Cannot shutdown guest when VM is in state 'poweredoff'."),
-        ('shutdownguest', 'Suspended', "Cannot shutdown guest when VM is in state 'suspended'."),
-        ('shutdownguest', 'Paused', "Cannot shutdown guest when VM is in state 'paused'."),
-        ('rebootguest', 'Halted', "Cannot reboot guest when VM is in state 'poweredoff'."),
-        ('rebootguest', 'Suspended', "Cannot reboot guest when VM is in state 'suspended'."),
-        ('rebootguest', 'Paused', "Cannot reboot guest when VM is in state 'paused'."),
+        ('shutdownguest', 'Halted', "Cannot shutdown guest when VM is in state 'poweredoff'!"),
+        ('shutdownguest', 'Suspended', "Cannot shutdown guest when VM is in state 'suspended'!"),
+        ('shutdownguest', 'Paused', "Cannot shutdown guest when VM is in state 'paused'!"),
+        ('rebootguest', 'Halted', "Cannot reboot guest when VM is in state 'poweredoff'!"),
+        ('rebootguest', 'Suspended', "Cannot reboot guest when VM is in state 'suspended'!"),
+        ('rebootguest', 'Paused', "Cannot reboot guest when VM is in state 'paused'!"),
     ],
     "ids": [
         "poweredoff->restarted",

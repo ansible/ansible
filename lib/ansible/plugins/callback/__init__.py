@@ -35,7 +35,7 @@ from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
-from ansible.vars.clean import strip_internal_keys
+from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
 if PY3:
     # OrderedDict is needed for a backwards compat shim on Python3.x only
@@ -98,13 +98,17 @@ class CallbackBase(AnsiblePlugin):
         # load from config
         self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
 
+    def _run_is_verbose(self, result, verbosity=0):
+        return ((self._display.verbosity > verbosity or result._result.get('_ansible_verbose_always', False) is True)
+                and result._result.get('_ansible_verbose_override', False) is False)
+
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
 
         if not indent and (result.get('_ansible_verbose_always') or self._display.verbosity > 2):
             indent = 4
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
-        abridged_result = strip_internal_keys(result)
+        abridged_result = strip_internal_keys(module_response_deepcopy(result))
 
         # remove invocation unless specifically wanting it
         if not keep_invocation and self._display.verbosity < 3 and 'invocation' in result:
@@ -180,6 +184,8 @@ class CallbackBase(AnsiblePlugin):
                 for x in ['before', 'after']:
                     if isinstance(diff[x], MutableMapping):
                         diff[x] = self._serialize_diff(diff[x])
+                    elif diff[x] is None:
+                        diff[x] = ''
                 if 'before_header' in diff:
                     before_header = u"before: %s" % diff['before_header']
                 else:

@@ -1,3 +1,0 @@
-minor_changes:
-  - dnf module now supports loading substitution overrides from the installroot
-

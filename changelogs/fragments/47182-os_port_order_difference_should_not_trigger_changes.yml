@@ -1,0 +1,2 @@
+bugfixes:
+  - "os_port - no longer triggers change when ``allowed_address_pairs`` items are in different order."

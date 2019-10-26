@@ -3,6 +3,9 @@
 # Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule, json
 from ansible.module_utils.six import PY3
@@ -97,7 +100,7 @@ def mso_reference_spec():
 
 def mso_subnet_spec():
     return dict(
-        ip=dict(type='str', required=True),
+        subnet=dict(type='str', required=True, aliases=['ip']),
         description=dict(type='str'),
         scope=dict(type='str', choices=['private', 'public']),
         shared=dict(type='bool'),
@@ -393,18 +396,32 @@ class MSOModule(object):
             ids.append(l['id'])
         return ids
 
-    def contract_ref(self, contract):
-        ''' Create contractRef string '''
-        return '/schemas/{schema_id}/templates/{template}/contracts/{name}'.format(**contract)
+    def anp_ref(self, **data):
+        ''' Create anpRef string '''
+        return '/schemas/{schema_id}/templates/{template}/anps/{anp}'.format(**data)
 
-    def filter_ref(self, schema_id, template, filter_name):
+    def epg_ref(self, **data):
+        ''' Create epgRef string '''
+        return '/schemas/{schema_id}/templates/{template}/anps/{anp}/epgs/{epg}'.format(**data)
+
+    def bd_ref(self, **data):
+        ''' Create bdRef string '''
+        return '/schemas/{schema_id}/templates/{template}/bds/{bd}'.format(**data)
+
+    def contract_ref(self, **data):
+        ''' Create contractRef string '''
+        # Support the contract argspec
+        if 'name' in data:
+            data['contract'] = data['name']
+        return '/schemas/{schema_id}/templates/{template}/contracts/{contract}'.format(**data)
+
+    def filter_ref(self, **data):
         ''' Create a filterRef string '''
-        data = dict(
-            schema_id=schema_id,
-            template=template,
-            filter=filter_name,
-        )
         return '/schemas/{schema_id}/templates/{template}/filters/{filter}'.format(**data)
+
+    def vrf_ref(self, **data):
+        ''' Create vrfRef string '''
+        return '/schemas/{schema_id}/templates/{template}/vrfs/{vrf}'.format(**data)
 
     def make_reference(self, data, reftype, schema_id, template):
         ''' Create a reference from a dictionary '''

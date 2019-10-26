@@ -77,6 +77,7 @@ EXAMPLES = '''
 import ast
 import re
 
+from ansible.inventory.group import to_safe_group_name
 from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 from ansible.errors import AnsibleError, AnsibleParserError
@@ -170,6 +171,8 @@ class InventoryModule(BaseFileInventoryPlugin):
             m = self.patterns['section'].match(line)
             if m:
                 (groupname, state) = m.groups()
+
+                groupname = to_safe_group_name(groupname)
 
                 state = state or 'hosts'
                 if state not in ['hosts', 'children', 'vars']:

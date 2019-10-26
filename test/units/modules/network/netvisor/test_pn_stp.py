@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_stp
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestStpModule(TestNvosModule):
@@ -38,7 +36,7 @@ class TestStpModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_hello_time': '3',
                          'pn_stp_mode': 'rstp', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 stp-modify  hello-time 3 root-guard-wait-time 20 mst-max-hops 20 max-age 20 '
+        expected_cmd = ' switch sw01 stp-modify  hello-time 3 root-guard-wait-time 20 mst-max-hops 20 max-age 20 '
         expected_cmd += 'stp-mode rstp forwarding-delay 15 bridge-priority 32768'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
@@ -46,6 +44,6 @@ class TestStpModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_root_guard_wait_time': '50',
                          'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 stp-modify  hello-time 2 root-guard-wait-time 50 mst-max-hops 20 '
+        expected_cmd = ' switch sw01 stp-modify  hello-time 2 root-guard-wait-time 50 mst-max-hops 20 '
         expected_cmd += 'max-age 20 forwarding-delay 15 bridge-priority 32768'
         self.assertEqual(result['cli_cmd'], expected_cmd)

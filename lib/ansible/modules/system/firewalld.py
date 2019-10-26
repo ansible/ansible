@@ -7,18 +7,16 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
 module: firewalld
 short_description: Manage arbitrary ports/services with firewalld
 description:
-  - This module allows for addition or deletion of services and ports either tcp or udp in either running or permanent firewalld rules.
+  - This module allows for addition or deletion of services and ports (either TCP or UDP) in either running or permanent firewalld rules.
 version_added: "1.4"
 options:
   service:
@@ -47,22 +45,21 @@ options:
     version_added: "2.1"
   icmp_block:
     description:
-      - The icmp block you would like to add/remove to/from a zone in firewalld.
+      - The ICMP block you would like to add/remove to/from a zone in firewalld.
     type: str
     version_added: "2.8"
   icmp_block_inversion:
     description:
-      - Enable/Disable inversion of icmp blocks for a zone in firewalld.
+      - Enable/Disable inversion of ICMP blocks for a zone in firewalld.
     type: str
     version_added: "2.8"
   zone:
     description:
-      - >
-        The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream.
-      - Available choices can be extended based on per-system configs, listed here are "out of the box" defaults).
-      - Possible values include C(block), C(dmz), C(drop), C(external), C(home), C(internal), C(public), C(trusted), C(work) ]
+      - The firewalld zone to add/remove to/from.
+      - Note that the default zone can be configured per system but C(public) is default from upstream.
+      - Available choices can be extended based on per-system configs, listed here are "out of the box" defaults.
+      - Possible values include C(block), C(dmz), C(drop), C(external), C(home), C(internal), C(public), C(trusted), C(work).
     type: str
-    default: system-default(public)
   permanent:
     description:
       - Should this configuration be in the running firewalld configuration or persist across reboots.
@@ -78,7 +75,7 @@ options:
   state:
     description:
       - Enable or disable a setting.
-      - 'For ports: Should this port accept(enabled) or reject(disabled) connections.'
+      - 'For ports: Should this port accept (enabled) or reject (disabled) connections.'
       - The states C(present) and C(absent) can only be used in zone level operations (i.e. when no other parameters but zone and state are set).
     type: str
     required: true
@@ -109,8 +106,10 @@ notes:
     The module will not take care of this for you implicitly because that would undo any previously performed immediate actions which were not
     permanent. Therefore, if you require immediate access to a newly created zone it is recommended you reload firewalld immediately after the zone
     creation returns with a changed state and before you perform any other immediate, non-permanent actions on that zone.
-requirements: [ 'firewalld >= 0.2.11' ]
-author: "Adam Miller (@maxamillion)"
+requirements:
+- firewalld >= 0.2.11
+author:
+- Adam Miller (@maxamillion)
 '''
 
 EXAMPLES = r'''
@@ -176,7 +175,7 @@ EXAMPLES = r'''
 
 - name: Redirect port 443 to 8443 with Rich Rule
   firewalld:
-    rich_rule: rule forward-port port=443 protocol=tcp to-port=8443
+    rich_rule: rule family=ipv4 forward-port port=443 protocol=tcp to-port=8443
     zone: public
     permanent: yes
     immediate: yes
@@ -452,7 +451,7 @@ class InterfaceTransaction(FirewallTransaction):
                 # Even it shouldn't happen, it's actually possible that
                 # the same interface is in several zone XML files
                 self.module.fail_json(
-                    msg='ERROR: interface {} is in {} zone XML file, can only be in one'.format(
+                    msg='ERROR: interface {0} is in {1} zone XML file, can only be in one'.format(
                         interface,
                         len(iface_zone_objs)
                     )
@@ -647,7 +646,11 @@ def main():
             masquerade=dict(type='str'),
             offline=dict(type='bool'),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_by=dict(
+            interface=('zone',),
+            source=('permanent',),
+        ),
     )
 
     permanent = module.params['permanent']
@@ -703,10 +706,12 @@ def main():
         modification_count += 1
     if masquerade is not None:
         modification_count += 1
+    if source is not None:
+        modification_count += 1
 
     if modification_count > 1:
         module.fail_json(
-            msg='can only operate on port, service, rich_rule, masquerade, icmp_block, icmp_block_inversion, or interface at once'
+            msg='can only operate on port, service, rich_rule, masquerade, icmp_block, icmp_block_inversion, interface or source at once'
         )
     elif modification_count > 0 and desired_state in ['absent', 'present']:
         module.fail_json(

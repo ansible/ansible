@@ -2,8 +2,6 @@
 - name: Check that SSL is available
   tower_organization:
     name: Default
-  environment:
-    TOWER_HOST: "https://{{ lookup('env', 'TOWER_HOST') }}"
   register: result
 
 - name: Check we haven't changed anything
@@ -14,7 +12,6 @@
   tower_organization:
     name: Default
   environment:
-    TOWER_HOST: "https://{{ lookup('env', 'TOWER_HOST') }}"
     TOWER_CERTIFICATE: /dev/null  # force check failure
   ignore_errors: true
   register: check_ssl_is_used
@@ -24,8 +21,8 @@
     that:
       - check_ssl_is_used is failed
       - >
-          'Could not establish a secure connection' in check_ssl_is_used.module_stderr
-          or 'OpenSSL.SSL.Error' in check_ssl_is_used.module_stderr
+          'Could not establish a secure connection' in (check_ssl_is_used.module_stderr + check_ssl_is_used.module_stdout)
+          or 'OpenSSL.SSL.Error' in (check_ssl_is_used.module_stderr + check_ssl_is_used.module_stdout)
         # 'Could not establish a secure connection': when pyOpenSSL isn't available
         # 'OpenSSL.SSL.Error': with pyOpenSSL, see https://github.com/urllib3/urllib3/pull/1517
 
@@ -42,7 +39,6 @@
       tower_organization:
         name: Default
       environment:
-        TOWER_HOST: "https://{{ lookup('env', 'TOWER_HOST') }}"
         TOWER_CERTIFICATE: /dev/null  # should not fail because verify_ssl is disabled
   always:
     - name: Delete ~/.tower_cli.cfg

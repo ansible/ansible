@@ -25,22 +25,33 @@ options:
     required: true
     description:
       - Category to execute on OOB controller
+    type: str
   command:
     required: true
     description:
       - List of commands to execute on OOB controller
+    type: list
   baseuri:
     required: true
     description:
       - Base URI of OOB controller
+    type: str
   username:
     required: true
     description:
       - User for authentication with OOB controller
+    type: str
   password:
     required: true
     description:
       - Password for authentication with OOB controller
+    type: str
+  timeout:
+    description:
+      - Timeout in seconds for URL requests to OOB controller
+    default: 10
+    type: int
+    version_added: '2.8'
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -65,7 +76,7 @@ msg:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.redfish_utils import RedfishUtils, HEADERS
+from ansible.module_utils.redfish_utils import RedfishUtils
 from ansible.module_utils._text import to_native
 
 
@@ -77,7 +88,7 @@ class IdracRedfishUtils(RedfishUtils):
         jobs = "Jobs"
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + self.systems_uris[0])
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -99,8 +110,7 @@ class IdracRedfishUtils(RedfishUtils):
 
         payload = {"TargetSettingsURI": set_bios_attr_uri}
         response = self.post_request(
-            self.root_uri + self.manager_uri + "/" + jobs,
-            payload, HEADERS)
+            self.root_uri + self.manager_uri + "/" + jobs, payload)
         if response['ret'] is False:
             return response
 
@@ -126,7 +136,8 @@ def main():
             command=dict(required=True, type='list'),
             baseuri=dict(required=True),
             username=dict(required=True),
-            password=dict(required=True, no_log=True)
+            password=dict(required=True, no_log=True),
+            timeout=dict(type='int', default=10)
         ),
         supports_check_mode=False
     )
@@ -138,10 +149,12 @@ def main():
     creds = {'user': module.params['username'],
              'pswd': module.params['password']}
 
+    # timeout
+    timeout = module.params['timeout']
+
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_uri = "/redfish/v1/"
-    rf_utils = IdracRedfishUtils(creds, root_uri)
+    rf_utils = IdracRedfishUtils(creds, root_uri, timeout, module)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
@@ -157,14 +170,14 @@ def main():
 
     if category == "Systems":
         # execute only if we find a System resource
-        result = rf_utils._find_systems_resource(rf_uri)
+        result = rf_utils._find_systems_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
         for command in command_list:
             if command == "CreateBiosConfigJob":
                 # execute only if we find a Managers resource
-                result = rf_utils._find_managers_resource(rf_uri)
+                result = rf_utils._find_managers_resource()
                 if result['ret'] is False:
                     module.fail_json(msg=to_native(result['msg']))
                 result = rf_utils.create_bios_config_job()

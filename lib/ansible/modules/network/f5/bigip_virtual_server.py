@@ -26,12 +26,13 @@ options:
         if it exists. C(present) creates the virtual server and enable it.
         If C(enabled), enable the virtual server if it exists. If C(disabled),
         create the virtual server if needed, and set state to C(disabled).
-    default: present
+    type: str
     choices:
       - present
       - absent
       - enabled
       - disabled
+    default: present
   type:
     description:
       - Specifies the network service provided by this virtual server.
@@ -73,6 +74,7 @@ options:
         profile and adding Request Adapt or Response Adapt profiles to the virtual server.
       - When C(message-routing), specifies a virtual server that uses a SIP application protocol
         and functions in accordance with a SIP session profile and SIP router profile.
+    type: str
     choices:
       - standard
       - forwarding-l2
@@ -89,6 +91,7 @@ options:
   name:
     description:
       - Virtual server name.
+    type: str
     required: True
     aliases:
       - vs
@@ -99,6 +102,7 @@ options:
       - When C(type) is C(internal), this parameter is ignored. For all other types,
         it is required.
       - Destination can also be specified as a name for an existing Virtual Address.
+    type: str
     aliases:
       - address
       - ip
@@ -113,6 +117,7 @@ options:
       - Specify the IP address in Classless Inter-Domain Routing (CIDR) format; address/prefix,
         where the prefix length is in bits. For example, for IPv4, 10.0.0.1/32 or 10.0.0.0/24,
         and for IPv6, ffe1::0020/64 or 2001:ed8:77b5:2:10:10:100:42/64.
+    type: str
     version_added: 2.5
   port:
     description:
@@ -136,6 +141,7 @@ options:
       - The string C(isakmp) may be substituted for for port C(500).
       - The string C(mqtt) may be substituted for for port C(1883).
       - The string C(mqtt-tls) may be substituted for for port C(8883).
+    type: str
   profiles:
     description:
       - List of profiles (HTTP, ClientSSL, ServerSSL, etc) to apply to both sides
@@ -166,14 +172,17 @@ options:
           - If this is not specified, then it is assumed that the profile item is
             only a name of a profile.
           - This must be specified if a context is specified.
+        type: str
       context:
         description:
           - The side of the connection on which the profile should be applied.
+        type: str
         choices:
           - all
           - server-side
           - client-side
         default: all
+    type: list
     aliases:
       - all_profiles
   irules:
@@ -186,22 +195,25 @@ options:
       - When C(type) is C(stateless), this parameter will be ignored.
       - When C(type) is C(reject), this parameter will be ignored.
       - When C(type) is C(internal), this parameter will be ignored.
+    type: list
     aliases:
       - all_rules
   enabled_vlans:
-    version_added: "2.2"
     description:
       - List of VLANs to be enabled. When a VLAN named C(all) is used, all
         VLANs will be allowed. VLANs can be specified with or without the
         leading partition. If the partition is not specified in the VLAN,
         then the C(partition) option of this module will be used.
       - This parameter is mutually exclusive with the C(disabled_vlans) parameter.
+    type: list
+    version_added: 2.2
   disabled_vlans:
-    version_added: 2.5
     description:
       - List of VLANs to be disabled. If the partition is not specified in the VLAN,
         then the C(partition) option of this module will be used.
       - This parameter is mutually exclusive with the C(enabled_vlans) parameters.
+    type: list
+    version_added: 2.5
   pool:
     description:
       - Default pool for the virtual server.
@@ -211,12 +223,14 @@ options:
         is required.
       - If C(type) is C(stateless), the C(pool) that is used must not have any members
         which define a C(rate_limit).
+    type: str
   policies:
     description:
       - Specifies the policies for the virtual server.
       - When C(type) is C(dhcp), this parameter will be ignored.
       - When C(type) is C(reject), this parameter will be ignored.
       - When C(type) is C(internal), this parameter will be ignored.
+    type: list
     aliases:
       - all_policies
   snat:
@@ -229,15 +243,18 @@ options:
         with the specific pool.
       - To remove SNAT, specify the word C(none).
       - To specify automap, use the word C(automap).
+    type: str
   default_persistence_profile:
     description:
       - Default Profile which manages the session persistence.
       - If you want to remove the existing default persistence profile, specify an
         empty value; C(""). See the documentation for an example.
       - When C(type) is C(dhcp), this parameter will be ignored.
+    type: str
   description:
     description:
       - Virtual server description.
+    type: str
   fallback_persistence_profile:
     description:
       - Specifies the persistence profile you want the system to use if it
@@ -245,10 +262,12 @@ options:
       - If you want to remove the existing fallback persistence profile, specify an
         empty value; C(""). See the documentation for an example.
       - When C(type) is C(dhcp), this parameter will be ignored.
+    type: str
     version_added: 2.3
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
   metadata:
@@ -259,6 +278,7 @@ options:
       - Values for all of the keys will be stored as strings; this includes values
         that are numbers.
       - Data will be persisted, not ephemeral.
+    type: raw
     version_added: 2.5
   insert_metadata:
     description:
@@ -293,6 +313,7 @@ options:
     description:
       - Specifies whether the system preserves the source port of the connection.
       - When creating a new virtual server, if this parameter is not specified, the default is C(preserve).
+    type: str
     choices:
       - preserve
       - preserve-strict
@@ -317,6 +338,7 @@ options:
         inferred from C(destination).
       - When C(destination) is provided as Virtual Address name, and C(mask) is not specified,
         the mask will be C(None) allowing device set it with its internal defaults.
+   type: str
    version_added: 2.8
   ip_protocol:
     description:
@@ -329,6 +351,7 @@ options:
       - For a list of valid IP protocol numbers, refer to this page
         https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
       - When C(type) is C(dhcp), this module will force the C(ip_protocol) parameter to be C(17) (UDP).
+    type: str
     choices:
       - ah
       - any
@@ -355,6 +378,7 @@ options:
       - Applies the specify AFM policy to the virtual in an enforcing way.
       - When creating a new virtual, if this parameter is not specified, the enforced
         policy is disabled.
+    type: str
     version_added: 2.6
   firewall_staged_policy:
     description:
@@ -363,6 +387,7 @@ options:
         actually applying the rules to traffic.
       - When creating a new virtual, if this parameter is not specified, the staged
         policy is disabled.
+    type: str
     version_added: 2.6
   security_log_profiles:
     description:
@@ -370,6 +395,7 @@ options:
       - To make use of this feature, the AFM module must be licensed and provisioned.
       - The C(Log all requests) and C(Log illegal requests) are mutually exclusive and
         therefore, this module will raise an error if the two are specified together.
+    type: list
     version_added: 2.6
   security_nat_policy:
     description:
@@ -386,6 +412,7 @@ options:
           - The virtual server NAT policy is the most specific, and overrides a
             route domain and device policy, if specified.
           - To remove the policy, specify an empty string value.
+        type: str
       use_device_policy:
         description:
           - Specify that the virtual server uses the device NAT policy, as specified
@@ -400,11 +427,13 @@ options:
           - When specified, the route domain policy overrides the device policy, and
             is overridden by a virtual server policy.
         type: bool
+    type: dict
   ip_intelligence_policy:
     description:
       - Specifies the IP intelligence policy applied to the virtual server.
       - This parameter requires that a valid BIG-IP security module such as ASM or AFM
         be provisioned.
+    type: str
     version_added: 2.8
   rate_limit:
     description:
@@ -432,6 +461,7 @@ options:
       - Indicates whether the rate limit is applied per virtual object, per source address, per destination address,
         or some combination thereof.
       - The default value is 'object', which does not use the source or destination address as part of the key.
+    type: str
     choices:
       - object
       - object-source
@@ -447,7 +477,6 @@ options:
       - Specifies a pool or list of pools that the virtual server uses to replicate either client-side
         or server-side traffic.
       - Typically this option is used for intrusion detection.
-    version_added: 2.8
     suboptions:
       pool_name:
         description:
@@ -455,13 +484,17 @@ options:
           - Only pools created on Common partition or on the same partition as the virtual server can be used.
           - Referencing pool on common partition needs to be done in the full path format,
             for example, C(/Common/pool_name).
+        type: str
         required: True
       context:
         description:
           - The context option for a clone pool to replicate either client-side or server-side traffic.
+        type: str
         choices:
          - clientside
          - serverside
+    type: list
+    version_added: 2.8
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -837,7 +870,6 @@ clone_pools:
   type: list
   sample: [{'pool_name':'/Common/Pool1', 'context': 'clientside'}]
 '''
-
 import os
 import re
 
@@ -852,17 +884,15 @@ try:
     from library.module_utils.network.f5.common import MANAGED_BY_ANNOTATION_MODIFIED
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import fail_json
-    from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import mark_managed_by
     from library.module_utils.network.f5.common import only_has_managed_metadata
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.compare import cmp_simple_list
     from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.ipaddress import is_valid_ip_interface
     from library.module_utils.network.f5.ipaddress import ip_interface
     from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
     from library.module_utils.network.f5.ipaddress import get_netmask
@@ -874,17 +904,15 @@ except ImportError:
     from ansible.module_utils.network.f5.common import MANAGED_BY_ANNOTATION_MODIFIED
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import fail_json
-    from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import mark_managed_by
     from ansible.module_utils.network.f5.common import only_has_managed_metadata
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.compare import cmp_simple_list
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip_interface
     from ansible.module_utils.network.f5.ipaddress import ip_interface
     from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
     from ansible.module_utils.network.f5.ipaddress import get_netmask
@@ -1082,10 +1110,7 @@ class Parameters(AnsibleF5Parameters):
 
     def _format_port_for_destination(self, ip, port):
         if validate_ip_v6_address(ip):
-            if port == 0:
-                result = '.any'
-            else:
-                result = '.{0}'.format(port)
+            result = '.{0}'.format(port)
         else:
             result = ':{0}'.format(port)
         return result
@@ -1130,19 +1155,6 @@ class Parameters(AnsibleF5Parameters):
         except ValueError:
             raise F5ModuleError(
                 "Specified ip_protocol was neither a number nor in the list of common protocols."
-            )
-
-    @property
-    def source(self):
-        if self._values['source'] is None:
-            return None
-        try:
-            addr = ip_interface(u'{0}'.format(self._values['source']))
-            result = '{0}/{1}'.format(str(addr.ip), addr.network.prefixlen)
-            return result
-        except ValueError:
-            raise F5ModuleError(
-                "The source IP address must be specified in CIDR format: address/prefix"
             )
 
     @property
@@ -1395,7 +1407,6 @@ class ApiParameters(Parameters):
             result = Destination(ip=None, port=None, route_domain=None, mask=None)
             return result
         destination = re.sub(r'^/[a-zA-Z0-9_.-]+/', '', self._values['destination'])
-
         # Covers the following examples
         #
         # /Common/2700:bc00:1f10:101::6%2.80
@@ -1433,11 +1444,12 @@ class ApiParameters(Parameters):
             )
             return result
 
-        pattern = r'(?P<ip>^[a-zA-Z0-9_.-]+):(?P<port>[0-9]+)'
+        # this will match any IPV4 Address and port, no RD
+        pattern = r'^(?P<ip>(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4]' \
+                  r'[0-9]|25[0-5])):(?P<port>[0-9]+)'
+
         matches = re.search(pattern, destination)
         if matches:
-            # this will match any IPv4 address as well as any alphanumeric Virtual Address
-            # that does not look like an IPv6 address.
             result = Destination(
                 ip=matches.group('ip'),
                 port=int(matches.group('port')),
@@ -1445,14 +1457,29 @@ class ApiParameters(Parameters):
                 mask=self.mask
             )
             return result
-        parts = destination.split('.')
-        if len(parts) == 2:
-            # IPv6
-            ip, port = destination.split('.')
+
+        # match standalone IPV6 address, no port
+        pattern = r'^([0-9a-f]{0,4}:){2,7}(:|[0-9a-f]{1,4})$'
+        matches = re.search(pattern, destination)
+        if matches:
+            result = Destination(
+                ip=destination,
+                port=None,
+                route_domain=None,
+                mask=self.mask
+            )
+            return result
+
+        # match IPV6 address with port
+        pattern = r'(?P<ip>([0-9a-f]{0,4}:){2,7}(:|[0-9a-f]{1,4}).(?P<port>[0-9]+|any))'
+        matches = re.search(pattern, destination)
+        if matches:
+            ip = matches.group('ip').split('.')[0]
             try:
-                port = int(port)
+                port = int(matches.group('port'))
             except ValueError:
                 # Can be a port of "any". This only happens with IPv6
+                port = matches.group('port')
                 if port == 'any':
                     port = 0
             result = Destination(
@@ -1462,19 +1489,45 @@ class ApiParameters(Parameters):
                 mask=self.mask
             )
             return result
-        # this check needs to be the last as for some reason IPv6 addr with %2 %2.port were also caught
-        if is_valid_ip(destination):
+
+        # this will match any alphanumeric Virtual Address and port
+        pattern = r'(?P<name>^[a-zA-Z0-9_.-]+):(?P<port>[0-9]+)'
+        matches = re.search(pattern, destination)
+        if matches:
             result = Destination(
-                ip=destination,
+                ip=matches.group('name'),
+                port=int(matches.group('port')),
+                route_domain=None,
+                mask=self.mask
+            )
+            return result
+
+        # this will match any alphanumeric Virtual Address
+        pattern = r'(?P<name>^[a-zA-Z0-9_.-]+)'
+        matches = re.search(pattern, destination)
+        if matches:
+            result = Destination(
+                ip=matches.group('name'),
                 port=None,
                 route_domain=None,
                 mask=self.mask
             )
             return result
 
-        else:
-            result = Destination(ip=None, port=None, route_domain=None, mask=None)
+        # match IPv6 wildcard with port without RD
+        pattern = r'(?P<ip>[^.]+).(?P<port>[0-9]+|any)'
+        matches = re.search(pattern, destination)
+        if matches:
+            result = Destination(
+                ip=matches.group('ip'),
+                port=matches.group('port'),
+                route_domain=None,
+                mask=self.mask
+            )
             return result
+
+        result = Destination(ip=None, port=None, route_domain=None, mask=None)
+        return result
 
     @property
     def port(self):
@@ -1725,14 +1778,64 @@ class ModuleParameters(Parameters):
             )
 
     @property
+    def source(self):
+        if self._values['source'] is None:
+            return None
+        source = self.source_tuple
+        if is_valid_ip_interface(u'{0}/{1}'.format(source.ip, source.cidr)):
+            if source.route_domain:
+                result = '{0}%{1}/{2}'.format(source.ip, source.route_domain, source.cidr)
+            else:
+                result = '{0}/{1}'.format(source.ip, source.cidr)
+            return result
+        raise F5ModuleError(
+            "The source IP address must be a valid CIDR format: address/prefix."
+        )
+
+    @property
+    def source_tuple(self):
+        Source = namedtuple('Source', ['ip', 'route_domain', 'cidr'])
+        if self._values['source'] is None:
+            result = Source(ip=None, route_domain=None, cidr=None)
+            return result
+        # match source with RD
+        pattern = r'(?P<ip>[^%]+)%(?P<route_domain>[0-9]+)/(?P<cidr>[0-9]+)'
+        matches = re.search(pattern, self._values['source'])
+        if matches:
+            result = Source(
+                ip=matches.group('ip'),
+                route_domain=matches.group('route_domain'),
+                cidr=matches.group('cidr')
+            )
+            return result
+        # match source without RD
+        pattern = r'(?P<ip>[^%]+)/(?P<cidr>[0-9]+)'
+        matches = re.search(pattern, self._values['source'])
+        if matches:
+            result = Source(
+                ip=matches.group('ip'),
+                route_domain=None,
+                cidr=matches.group('cidr')
+            )
+            return result
+
+        result = Source(ip=None, route_domain=None, cidr=None)
+        return result
+
+    @property
     def destination(self):
         pattern = r'^[a-zA-Z0-9_.-]+'
-        addr = self._values['destination'].split("%")[0].split('/')[0]
+        if len(self._values['destination'].split('/')) > 1:
+            addr, dud = self._values['destination'].split('/')
+            if '%' in addr:
+                addr = addr.split('%')[0]
+        else:
+            addr = self._values['destination'].split('%')[0]
         if not is_valid_ip(addr):
             matches = re.search(pattern, addr)
             if not matches:
                 raise F5ModuleError(
-                    "The provided destination is not a valid IP address or a Virtual Address name"
+                    "The provided destination is not a valid IP address or a Virtual Address name."
                 )
         result = self._format_destination(addr, self.port, self.route_domain)
         return result
@@ -1741,11 +1844,17 @@ class ModuleParameters(Parameters):
     def route_domain(self):
         if self._values['destination'] is None:
             return None
-        result = self._values['destination'].split("%")
-        if len(result) > 1:
+        result = None
+        if len(self._values['destination'].split('/')) > 1:
+            addr, dud = self._values['destination'].split('/')
+            if '%' in addr:
+                result = addr.split('%')
+        else:
+            result = self._values['destination'].split('%')
+        if result and len(result) > 1:
             pattern = r'^[a-zA-Z0-9_.-]+'
             matches = re.search(pattern, result[0])
-            if matches and not is_valid_ip(matches.group(0)):
+            if matches and not is_valid_ip(result[0]):
                 # we need to strip RD because when using Virtual Address names the RD is not needed.
                 return None
             return int(result[1])
@@ -1767,13 +1876,20 @@ class ModuleParameters(Parameters):
     def mask(self):
         if self._values['destination'] is None:
             return None
-        addr = self._values['destination'].split("%")[0]
+        if len(self._values['destination'].split('/')) > 1:
+            addr, cidr = self._values['destination'].split('/')
+            if '%' in addr:
+                addr = addr.split('%')[0] + '/' + cidr
+            else:
+                addr = self._values['destination']
+        else:
+            addr = self._values['destination'].split('%')[0]
         if addr in ['0.0.0.0', '0.0.0.0/any', '0.0.0.0/0']:
             return 'any'
         if addr in ['::', '::/0', '::/any6']:
             return 'any6'
         if self._values['mask'] is None:
-            if is_valid_ip(addr):
+            if is_valid_ip_interface(addr):
                 return get_netmask(addr)
             else:
                 return None
@@ -1783,7 +1899,7 @@ class ModuleParameters(Parameters):
     def port(self):
         if self._values['port'] is None:
             return None
-        if self._values['port'] in ['*', 'any']:
+        if self._values['port'] in ['*', 'any', '0']:
             return 0
         if self._values['port'] in self.services_map:
             port = self._values['port']
@@ -1893,15 +2009,6 @@ class ModuleParameters(Parameters):
             return None
         elif any(x.lower() for x in self._values['enabled_vlans'] if x.lower() in ['all', '*']):
             result = [fq_name(self.partition, 'all')]
-            if result[0].endswith('/all'):
-                if self._values['__warnings'] is None:
-                    self._values['__warnings'] = []
-                self._values['__warnings'].append(
-                    dict(
-                        msg="Usage of the 'ALL' value for 'enabled_vlans' parameter is deprecated. Use '*' instead",
-                        version='2.9'
-                    )
-                )
             return result
         results = list(set([fq_name(self.partition, x) for x in self._values['enabled_vlans']]))
         results.sort()
@@ -2381,9 +2488,6 @@ class VirtualServerValidator(object):
         self.module = module
 
     def check_update(self):
-        # TODO(Remove in Ansible 2.9)
-        self._override_standard_type_from_profiles()
-
         # Regular checks
         self._override_port_by_type()
         self._override_protocol_by_type()
@@ -2400,9 +2504,6 @@ class VirtualServerValidator(object):
         self._verify_stateless_profile()
 
     def check_create(self):
-        # TODO(Remove in Ansible 2.9)
-        self._override_standard_type_from_profiles()
-
         # Regular checks
         self._set_default_ip_protocol()
         self._set_default_profiles()
@@ -2473,44 +2574,6 @@ class VirtualServerValidator(object):
         if self.want.type in ['stateless']:
             self.want.update({'ip_protocol': 17})
 
-    def _override_standard_type_from_profiles(self):
-        """Overrides a standard virtual server type given the specified profiles
-
-        For legacy purposes, this module will do some basic overriding of the default
-        ``type`` parameter to support cases where changing the ``type`` only requires
-        specifying a different set of profiles.
-
-        Ideally, ``type`` would always be specified, but in the past, this module only
-        supported an implicit "standard" type. Module users would specify some different
-        types of profiles and this would change the type...in some circumstances.
-
-        Now that this module supports a ``type`` param, the implicit ``type`` changing
-        that used to happen is technically deprecated (and will be warned on). Users
-        should always specify a ``type`` now, or, accept the default standard type.
-
-        Returns:
-            void
-        """
-        if self.want.type == 'standard':
-            if self.want.has_fastl4_profiles:
-                self.want.update({'type': 'performance-l4'})
-                self.module.deprecate(
-                    msg="Specifying 'performance-l4' profiles on a 'standard' type is deprecated and will be removed.",
-                    version='2.10'
-                )
-            if self.want.has_fasthttp_profiles:
-                self.want.update({'type': 'performance-http'})
-                self.module.deprecate(
-                    msg="Specifying 'performance-http' profiles on a 'standard' type is deprecated and will be removed.",
-                    version='2.10'
-                )
-            if self.want.has_message_routing_profiles:
-                self.want.update({'type': 'message-routing'})
-                self.module.deprecate(
-                    msg="Specifying 'message-routing' profiles on a 'standard' type is deprecated and will be removed.",
-                    version='2.10'
-                )
-
     def _check_source_and_destination_match(self):
         """Verify that destination and source are of the same IP version
 
@@ -2525,7 +2588,7 @@ class VirtualServerValidator(object):
             F5ModuleError: Raised when the IP versions of source and destination differ.
         """
         if self.want.source and self.want.destination:
-            want = ip_interface(u'{0}'.format(self.want.source))
+            want = ip_interface(u'{0}/{1}'.format(self.want.source_tuple.ip, self.want.source_tuple.cidr))
             have = ip_interface(u'{0}'.format(self.want.destination_tuple.ip))
             if want.version != have.version:
                 raise F5ModuleError(
@@ -2970,11 +3033,10 @@ class Difference(object):
             return
 
         addr_tuple = [self.want.destination, self.want.port, self.want.route_domain]
-        if all(x for x in addr_tuple if x is None):
+        if all(x is None for x in addr_tuple):
             return None
 
         have = self.have.destination_tuple
-
         if self.want.port is None:
             self.want.update({'port': have.port})
         if self.want.route_domain is None:
@@ -2983,7 +3045,6 @@ class Difference(object):
             address = have.ip
         else:
             address = self.want.destination_tuple.ip
-
         want = self.want._format_destination(address, self.want.port, self.want.route_domain)
         if want != self.have.destination:
             return fq_name(self.want.partition, want)
@@ -3250,7 +3311,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = ApiParameters(client=self.client)
         self.want = ModuleParameters(client=self.client, params=self.module.params)
         self.changes = UsableChanges()
@@ -3592,16 +3653,12 @@ def main():
         mutually_exclusive=spec.mutually_exclusive
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        exit_json(module, results, client)
-        cleanup_tokens(client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

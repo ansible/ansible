@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_vflow_table_profile
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestVflowTableProfileModule(TestNvosModule):
@@ -38,12 +36,12 @@ class TestVflowTableProfileModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_profile': 'ipv6',
                          'pn_hw_tbl': 'switch-main', 'pn_enable': True, 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 vflow-table-profile-modify  profile ipv6 hw-tbl switch-main enable '
+        expected_cmd = ' switch sw01 vflow-table-profile-modify  profile ipv6 hw-tbl switch-main enable '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_vflow_table_profile_modify_t2(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_profile': 'qos',
                          'pn_hw_tbl': 'switch-main', 'pn_enable': False, 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 vflow-table-profile-modify  profile qos hw-tbl switch-main disable '
+        expected_cmd = ' switch sw01 vflow-table-profile-modify  profile qos hw-tbl switch-main disable '
         self.assertEqual(result['cli_cmd'], expected_cmd)

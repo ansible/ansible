@@ -16,14 +16,6 @@ module: aci_encap_pool
 short_description: Manage encap pools (fvns:VlanInstP, fvns:VxlanInstP, fvns:VsanInstP)
 description:
 - Manage vlan, vxlan, and vsan pools on Cisco ACI fabrics.
-seealso:
-- module: aci_encap_pool_range
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC classes B(fvns:VlanInstP),
-               B(fvns:VxlanInstP) and B(fvns:VsanInstP)
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.5'
 options:
   description:
@@ -49,7 +41,7 @@ options:
     type: str
     required: yes
     aliases: [ type ]
-    choices: [ vlan, vxlan, vsan]
+    choices: [ vlan, vsan, vxlan ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -58,6 +50,15 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- module: aci_encap_pool_range
+- module: aci_vlan_pool
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(fvns:VlanInstP),
+               B(fvns:VxlanInstP) and B(fvns:VsanInstP)
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -209,10 +210,10 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
-ACI_MAPPING = dict(
+ACI_POOL_MAPPING = dict(
     vlan=dict(
         aci_class='fvnsVlanInstP',
         aci_mo='infra/vlanns-',
@@ -231,10 +232,10 @@ ACI_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
+        pool_type=dict(type='str', required=True, aliases=['type'], choices=['vlan', 'vsan', 'vxlan']),
         description=dict(type='str', aliases=['descr']),
         pool=dict(type='str', aliases=['name', 'pool_name']),  # Not required for querying all objects
         pool_allocation_mode=dict(type='str', aliases=['allocation_mode', 'mode'], choices=['dynamic', 'static']),
-        pool_type=dict(type='str', aliases=['type'], choices=['vlan', 'vxlan', 'vsan'], required=True),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -253,8 +254,8 @@ def main():
     pool_allocation_mode = module.params['pool_allocation_mode']
     state = module.params['state']
 
-    aci_class = ACI_MAPPING[pool_type]["aci_class"]
-    aci_mo = ACI_MAPPING[pool_type]["aci_mo"]
+    aci_class = ACI_POOL_MAPPING[pool_type]['aci_class']
+    aci_mo = ACI_POOL_MAPPING[pool_type]['aci_mo']
     pool_name = pool
 
     # ACI Pool URL requires the pool_allocation mode for vlan and vsan pools (ex: uni/infra/vlanns-[poolname]-static)

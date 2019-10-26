@@ -1,0 +1,81 @@
+---
+
+- name: create user for testing
+  user:
+    name: seuser
+
+- name: attempt to add mapping without 'seuser'
+  selogin:
+    login: seuser
+  register: selogin_error
+  ignore_errors: yes
+
+- name: verify failure
+  assert:
+    that:
+    - selogin_error is failed
+
+- name: map login to SELinux user
+  selogin:
+    login: seuser
+    seuser: staff_u
+  register: selogin_new_mapping
+  check_mode: "{{ item }}"
+  with_items:
+  - yes
+  - no
+  - yes
+  - no
+
+- name: new mapping- verify functionality and check_mode
+  assert:
+    that:
+    - selogin_new_mapping.results[0] is changed
+    - selogin_new_mapping.results[1] is changed
+    - selogin_new_mapping.results[2] is not changed
+    - selogin_new_mapping.results[3] is not changed
+
+- name: change SELinux user login mapping
+  selogin:
+    login: seuser
+    seuser: user_u
+  register: selogin_mod_mapping
+  check_mode: "{{ item }}"
+  with_items:
+  - yes
+  - no
+  - yes
+  - no
+
+- name: changed mapping- verify functionality and check_mode
+  assert:
+    that:
+    - selogin_mod_mapping.results[0] is changed
+    - selogin_mod_mapping.results[1] is changed
+    - selogin_mod_mapping.results[2] is not changed
+    - selogin_mod_mapping.results[3] is not changed
+
+- name: remove SELinux user mapping
+  selogin:
+    login: seuser
+    state: absent
+  register: selogin_del_mapping
+  check_mode: "{{ item }}"
+  with_items:
+  - yes
+  - no
+  - yes
+  - no
+
+- name: delete mapping- verify functionality and check_mode
+  assert:
+    that:
+    - selogin_del_mapping.results[0] is changed
+    - selogin_del_mapping.results[1] is changed
+    - selogin_del_mapping.results[2] is not changed
+    - selogin_del_mapping.results[3] is not changed
+
+- name: remove test user
+  user:
+    name: seuser
+    state: absent

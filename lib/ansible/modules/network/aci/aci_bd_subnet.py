@@ -16,19 +16,6 @@ module: aci_bd_subnet
 short_description: Manage Subnets (fv:Subnet)
 description:
 - Manage Subnets on Cisco ACI fabrics.
-notes:
-- The C(gateway) parameter is the root key used to access the Subnet (not name), so the C(gateway)
-  is required when the state is C(absent) or C(present).
-- The C(tenant) and C(bd) used must exist before using this module in your playbook.
-  The M(aci_tenant) module and M(aci_bd) can be used for these.
-seealso:
-- module: aci_bd
-- module: aci_tenant
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(fv:Subnet).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   bd:
@@ -54,7 +41,7 @@ options:
   mask:
     description:
     - The subnet mask for the Subnet.
-    - This is the number assocated with CIDR notation.
+    - This is the number associated with CIDR notation.
     - For IPv4 addresses, accepted values range between C(0) and C(32).
     - For IPv6 addresses, accepted Values range between C(0) and C(128).
     type: int
@@ -75,7 +62,7 @@ options:
     type: str
   route_profile_l3_out:
     description:
-    - The L3 Out that contains the assocated Route Profile.
+    - The L3 Out that contains the associated Route Profile.
     type: str
   scope:
     description:
@@ -95,7 +82,7 @@ options:
     description:
     - Determines the Subnet's Control State.
     - The C(querier_ip) option is used to treat the gateway_ip as an IGMP querier source IP.
-    - The C(nd_ra) option is used to treate the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
+    - The C(nd_ra) option is used to treat the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
     - The C(no_gw) option is used to remove default gateway functionality from the gateway address.
     - The APIC defaults to C(nd_ra) when unset during creation.
     type: str
@@ -118,6 +105,19 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(gateway) parameter is the root key used to access the Subnet (not name), so the C(gateway)
+  is required when the state is C(absent) or C(present).
+- The C(tenant) and C(bd) used must exist before using this module in your playbook.
+  The M(aci_tenant) module and M(aci_bd) can be used for these.
+seealso:
+- module: aci_bd
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:Subnet).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -333,11 +333,15 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-SUBNET_CONTROL_MAPPING = dict(nd_ra='nd', no_gw='no-default-gateway', querier_ip='querier', unspecified='')
-
-
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
+
+SUBNET_CONTROL_MAPPING = dict(
+    nd_ra='nd',
+    no_gw='no-default-gateway',
+    querier_ip='querier',
+    unspecified='',
+)
 
 
 def main():
@@ -378,7 +382,7 @@ def main():
     gateway = module.params['gateway']
     mask = module.params['mask']
     if mask is not None and mask not in range(0, 129):
-        # TODO: split checkes between IPv4 and IPv6 Addresses
+        # TODO: split checks between IPv4 and IPv6 Addresses
         module.fail_json(msg='Valid Subnet Masks are 0 to 32 for IPv4 Addresses and 0 to 128 for IPv6 addresses')
     if gateway is not None:
         gateway = '{0}/{1}'.format(gateway, str(mask))

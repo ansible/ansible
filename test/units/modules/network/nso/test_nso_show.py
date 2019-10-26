@@ -18,8 +18,6 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.nso import nso_show
 from . import nso_module
@@ -91,7 +89,8 @@ class TestNsoShow(nso_module.TestNsoModule):
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc',
             'path': path,
-            'operational': True
+            'operational': True,
+            'validate_certs': False
         })
         self.execute_module(changed=False, output={"data": {}})
 

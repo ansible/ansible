@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_admin_service
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestAdminServiceModule(TestNvosModule):
@@ -38,19 +36,19 @@ class TestAdminServiceModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn__if': 'mgmt',
                          'pn_web': 'False', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 admin-service-modify  if mgmt no-web '
+        expected_cmd = ' switch sw01 admin-service-modify  if mgmt no-web '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_admin_service_modify_t2(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn__if': 'mgmt',
                          'pn_snmp': 'True', 'pn_net_api': 'True', 'pn_ssh': 'True', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 admin-service-modify  if mgmt snmp  ssh  net-api '
+        expected_cmd = ' switch sw01 admin-service-modify  if mgmt snmp  ssh  net-api '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_admin_service_modify_t3(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn__if': 'data',
                          'pn_web_port': '8080', 'pn_net_api': 'True', 'pn_web_log': 'True', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 admin-service-modify  if data web-port 8080 net-api  web-log '
+        expected_cmd = ' switch sw01 admin-service-modify  if data web-port 8080 net-api  web-log '
         self.assertEqual(result['cli_cmd'], expected_cmd)

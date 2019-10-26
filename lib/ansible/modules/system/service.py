@@ -72,8 +72,8 @@ options:
         aliases: [ args ]
     use:
         description:
-            - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
-            - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
+        - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
+        - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
         type: str
         default: auto
         version_added: 2.2
@@ -320,7 +320,7 @@ class Service(object):
             lines = psout.split("\n")
             for line in lines:
                 if self.pattern in line and "pattern=" not in line:
-                    # so as to not confuse ./hacking/test-module
+                    # so as to not confuse ./hacking/test-module.py
                     self.running = True
                     break
 
@@ -1157,7 +1157,7 @@ class OpenBsdService(Service):
 
     def service_control(self):
         if self.enable_cmd:
-            return self.execute_command("%s -f %s %s" % (self.svc_cmd, self.action, self.name))
+            return self.execute_command("%s -f %s %s" % (self.svc_cmd, self.action, self.name), daemonize=True)
         else:
             return self.execute_command("%s -f %s" % (self.svc_cmd, self.action))
 

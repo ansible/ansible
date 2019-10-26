@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_role
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestRoleModule(TestNvosModule):
@@ -58,19 +56,19 @@ class TestRoleModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_scope': 'local', 'pn_access': 'read-only', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 role-create name foo  scope local access read-only'
+        expected_cmd = ' switch sw01 role-create name foo  scope local access read-only'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_role_delete(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'state': 'absent'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 role-delete name foo '
+        expected_cmd = ' switch sw01 role-delete name foo '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_role_update(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_access': 'read-write', 'pn_sudo': True, 'pn_shell': True, 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 role-modify name foo  access read-write shell  sudo '
+        expected_cmd = ' switch sw01 role-modify name foo  access read-write shell  sudo '
         self.assertEqual(result['cli_cmd'], expected_cmd)

@@ -1,0 +1,61 @@
+# OpenShift Resources
+- name: Create a project
+  k8s:
+    name: testing
+    kind: Project
+    api_version: v1
+    apply: no
+  register: output
+
+- name: show output
+  debug:
+    var: output
+
+- name: Create deployment config
+  k8s:
+    state: present
+    inline: &dc
+      apiVersion: v1
+      kind: DeploymentConfig
+      metadata:
+        name: elastic
+        labels:
+          app: galaxy
+          service: elastic
+        namespace: testing
+      spec:
+        template:
+          metadata:
+            labels:
+              app: galaxy
+              service: elastic
+          spec:
+            containers:
+              - name: elastic
+                volumeMounts:
+                - mountPath: /usr/share/elasticsearch/data
+                  name: elastic-volume
+                command: ['elasticsearch']
+                image: 'ansible/galaxy-elasticsearch:2.4.6'
+            volumes:
+            - name: elastic-volume
+              persistentVolumeClaim:
+                claimName: elastic-volume
+        replicas: 1
+        strategy:
+          type: Rolling
+  register: output
+
+- name: Show output
+  debug:
+    var: output
+
+- name: Create deployment config again
+  k8s:
+    state: present
+    inline: *dc
+  register: output
+
+- name: DC creation should be idempotent
+  assert:
+    that: not output.changed

@@ -31,6 +31,7 @@ options:
     name:
         description:
           - The name of the object. Will be used to identify the entry.
+        type: str
         required: true
     adirectory_groups:
         description:
@@ -39,11 +40,11 @@ options:
     adirectory_groups_sids:
         description:
           - Dictionary of group sids.
-        type: list
+        type: dict
     backend_match:
         description:
           - The backend for the group.
-        default: none
+        type: str
         choices:
           - none
           - adirectory
@@ -51,15 +52,16 @@ options:
           - radius
           - tacacs
           - ldap
+        default: none
     comment:
         description:
             - Comment that describes the AAA group.
-        default: ''
         type: str
-        required: false
+        default: ''
     dynamic:
         description:
           - Group type. Is static if none is selected.
+        type: str
         default: none
         choices:
           - none
@@ -84,18 +86,22 @@ options:
     members:
         description:
           - A list of user ref names (aaa/user).
+        type: list
         default: []
     network:
         description:
           - The network reference name. The objects contains the known ip addresses for the authentication object (network/aaa).
+        type: str
         default: ""
     radius_groups:
         description:
           - A list of radius group strings.
+        type: list
         default: []
     tacacs_groups:
         description:
           - A list of tacacs group strings.
+        type: list
         default: []
 
 extends_documentation_fragment:
@@ -131,55 +137,55 @@ result:
     contains:
         _ref:
             description: The reference name of the object.
-            type: string
+            type: str
         _locked:
             description: Whether or not the object is currently locked.
-            type: boolean
+            type: bool
         _type:
             description: The type of the object.
-            type: string
+            type: str
         name:
             description: The name of the object.
-            type: string
+            type: str
         adirectory_groups:
             description: List of Active Directory Groups.
-            type: string
+            type: str
         adirectory_groups_sids:
             description: List of Active Directory Groups SIDS.
             type: list
         backend_match:
             description: The backend to use.
-            type: string
+            type: str
         comment:
             description: The comment string.
-            type: string
+            type: str
         dynamic:
             description: Whether the group match is ipsec_dn or directory_group.
-            type: string
+            type: str
         edirectory_groups:
             description: List of eDirectory Groups.
-            type: string
+            type: str
         ipsec_dn:
             description: ipsec_dn identifier to match.
-            type: string
+            type: str
         ldap_attribute:
             description: The LDAP Attribute to match against.
-            type: string
+            type: str
         ldap_attribute_value:
             description: The LDAP Attribute Value to match against.
-            type: string
+            type: str
         members:
             description: List of member identifiers of the group.
             type: list
         network:
             description: The identifier of the network (network/aaa).
-            type: string
+            type: str
         radius_group:
             description: The radius group identifier.
-            type: string
+            type: str
         tacacs_group:
             description: The tacacs group identifier.
-            type: string
+            type: str
 """
 
 from ansible.module_utils.utm_utils import UTM, UTMModule

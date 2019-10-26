@@ -26,7 +26,6 @@ try:
     # In Ansible 2.8, Ansible changed import paths.
     from test.units.compat import unittest
     from test.units.compat.mock import Mock
-    from test.units.compat.mock import patch
 
     from test.units.modules.utils import set_module_args
 except ImportError:
@@ -39,7 +38,6 @@ except ImportError:
     # Ansible 2.8 imports
     from units.compat import unittest
     from units.compat.mock import Mock
-    from units.compat.mock import patch
 
     from units.modules.utils import set_module_args
 
@@ -142,9 +140,11 @@ class TestManagerEcho(unittest.TestCase):
             interval=20,
             timeout=30,
             time_until_up=60,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -168,9 +168,11 @@ class TestManagerEcho(unittest.TestCase):
             interval=20,
             timeout=30,
             time_until_up=60,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp_echo.json'))
@@ -192,9 +194,11 @@ class TestManagerEcho(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             interval=10,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp_echo.json'))
@@ -218,9 +222,11 @@ class TestManagerEcho(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             interval=30,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp_echo.json'))
@@ -238,16 +244,18 @@ class TestManagerEcho(unittest.TestCase):
         with pytest.raises(F5ModuleError) as ex:
             mm.exec_module()
 
-        assert "must be less than" in str(ex)
+        assert "must be less than" in str(ex.value)
 
     def test_update_interval_larger_than_new_timeout(self, *args):
         set_module_args(dict(
             name='foo',
             interval=10,
             timeout=5,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp_echo.json'))
@@ -265,15 +273,17 @@ class TestManagerEcho(unittest.TestCase):
         with pytest.raises(F5ModuleError) as ex:
             mm.exec_module()
 
-        assert "must be less than" in str(ex)
+        assert "must be less than" in str(ex.value)
 
     def test_update_timeout(self, *args):
         set_module_args(dict(
             name='foo',
             timeout=300,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp_echo.json'))
@@ -296,9 +306,11 @@ class TestManagerEcho(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             time_until_up=300,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp_echo.json'))

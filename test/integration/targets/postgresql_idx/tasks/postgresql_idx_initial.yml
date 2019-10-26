@@ -1,0 +1,355 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Preparation for tests.
+# To implement the next steps, create the test table:
+- name: postgresql_idx - create test table called test_table
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: psql postgres -U "{{ pg_user }}" -t -c "CREATE TABLE test_table (id int, story text);"
+  ignore_errors: yes
+
+# Create a directory for test tablespace:
+- name: postgresql_idx - drop test tablespace called ssd if exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: psql postgres -U "{{ pg_user }}" -t -c "DROP TABLESPACE IF EXISTS ssd;"
+  ignore_errors: yes
+
+- name: postgresql_idx - drop dir for test tablespace
+  become: yes
+  file:
+    path: /mnt/ssd
+    state: absent
+  ignore_errors: yes
+
+- name: postgresql_idx - create dir for test tablespace
+  become: yes
+  file:
+    path: /mnt/ssd
+    state: directory
+    owner: "{{ pg_user }}"
+    mode: 0755
+  ignore_errors: yes
+
+# Then create a test tablespace:
+- name: postgresql_idx - create test tablespace called ssd
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: psql postgres -U "{{ pg_user }}" -t -c "CREATE TABLESPACE ssd LOCATION '/mnt/ssd';"
+  ignore_errors: yes
+  register: tablespace
+
+# Create a test schema:
+- name: postgresql_idx - create test schema
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: psql postgres -U "{{ pg_user }}" -t -c "CREATE SCHEMA foo;"
+  ignore_errors: yes
+
+# Create a table in schema foo:
+- name: postgresql_idx - create table in non-default schema
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: psql postgres -U "{{ pg_user }}" -t -c "CREATE TABLE foo.foo_table (id int, story text);"
+  ignore_errors: yes
+
+
+###############
+# Do main tests
+#
+
+# Create index in check_mode
+- name: postgresql_idx - create btree index in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_idx:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    table: test_table
+    columns: id, story
+    idxname: test0_idx
+  check_mode: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.tblname == ''
+    - result.name == 'test0_idx'
+    - result.state == 'absent'
+    - result.valid != ''
+    - result.tblspace == ''
+    - result.storage_params == []
+    - result.schema == ''
+    - result.query == ''
+
+# Check that actually nothing changed, rowcount must be 0
+- name: postgresql_idx - check nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_indexes WHERE indexname = 'test0_idx'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
+
+# Create btree index if not exists test_idx concurrently covering id and story columns
+- name: postgresql_idx - create btree index concurrently
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_idx:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    table: test_table
+    columns: id, story
+    idxname: test0_idx
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.tblname == 'test_table'
+    - result.name == 'test0_idx'
+    - result.state == 'present'
+    - result.valid != ''
+    - result.tblspace == ''
+    - result.storage_params == []
+    - result.schema == 'public'
+    - result.query == 'CREATE INDEX CONCURRENTLY test0_idx ON public.test_table USING BTREE (id, story)'
+
+# Check that the index exists after the previous step, rowcount must be 1
+- name: postgresql_idx - check the index exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_indexes WHERE indexname = 'test0_idx'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# Check that if index exists that changes nothing
+- name: postgresql_idx - try to create existing index again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_idx:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    table: test_table
+    columns: id, story
+    idxname: test0_idx
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is not changed
+    - result.tblname == 'test_table'
+    - result.name == 'test0_idx'
+    - result.state == 'present'
+    - result.valid != ''
+    - result.tblspace == ''
+    - result.storage_params == []
+    - result.schema == 'public'
+    - result.query == ''
+
+# Create btree index foo_test_idx concurrently with tablespace called ssd,
+# storage parameter, and non-default schema
+- name: postgresql_idx - create btree index - non-default schema, tablespace, storage parameter
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_idx:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    schema: foo
+    table: foo_table
+    columns:
+    - id
+    - story
+    idxname: foo_test_idx
+    tablespace: ssd
+    storage_params: fillfactor=90
+  register: result
+  ignore_errors: yes
+  when: tablespace.rc == 0
+
+- assert:
+    that:
+    - result is changed
+    - result.tblname == 'foo_table'
+    - result.name == 'foo_test_idx'
+    - result.state == 'present'
+    - result.valid != ''
+    - result.tblspace == 'ssd'
+    - result.storage_params == [ "fillfactor=90" ]
+    - result.schema == 'foo'
+    - result.query == 'CREATE INDEX CONCURRENTLY foo_test_idx ON foo.foo_table USING BTREE (id,story) WITH (fillfactor=90) TABLESPACE ssd'
+  when: tablespace.rc == 0
+
+# Create brin index not in concurrently mode
+- name: postgresql_idx - create brin index not concurrently
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_idx:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    schema: public
+    table: test_table
+    state: present
+    type: brin
+    columns: id
+    idxname: test_brin_idx
+    concurrent: no
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.tblname == 'test_table'
+    - result.name == 'test_brin_idx'
+    - result.state == 'present'
+    - result.valid != ''
+    - result.tblspace == ''
+    - result.storage_params == []
+    - result.schema == 'public'
+    - result.query == 'CREATE INDEX test_brin_idx ON public.test_table USING brin (id)'
+  when: postgres_version_resp.stdout is version('9.5', '>=')
+
+
+# Create index where column id > 1
+- name: postgresql_idx - create index with condition
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_idx:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    table: test_table
+    columns: id
+    idxname: test1_idx
+    cond: 'id > 1 AND id != 10'
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.tblname == 'test_table'
+    - result.name == 'test1_idx'
+    - result.state == 'present'
+    - result.valid != ''
+    - result.tblspace == ''
+    - result.storage_params == []
+    - result.schema == 'public'
+    - result.query == 'CREATE INDEX CONCURRENTLY test1_idx ON public.test_table USING BTREE (id) WHERE id > 1 AND id != 10'
+
+# Drop index from specific schema with cascade in check_mode
+- name: postgresql_idx - drop index from specific schema cascade in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_idx:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    schema: foo
+    name: foo_test_idx
+    cascade: yes
+    state: absent
+    concurrent: no
+  check_mode: yes
+  register: result
+  ignore_errors: yes
+  when: tablespace.rc == 0
+
+- assert:
+    that:
+    - result is changed
+    - result.name == 'foo_test_idx'
+    - result.state == 'present'
+    - result.schema == 'foo'
+    - result.query == ''
+  when: tablespace.rc == 0
+
+# Check that the index exists after the previous step, rowcount must be 1
+- name: postgresql_idx - check the index exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_indexes WHERE indexname = 'foo_test_idx' AND schemaname = 'foo'"
+  register: result
+  when: tablespace.rc == 0
+
+- assert:
+    that:
+    - result.rowcount == 1
+  when: tablespace.rc == 0
+
+# Drop index from specific schema with cascade
+- name: postgresql_idx - drop index from specific schema cascade
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_idx:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    schema: foo
+    name: foo_test_idx
+    cascade: yes
+    state: absent
+    concurrent: no
+  register: result
+  ignore_errors: yes
+  when: tablespace.rc == 0
+
+- assert:
+    that:
+    - result is changed
+    - result.name == 'foo_test_idx'
+    - result.state == 'absent'
+    - result.schema == 'foo'
+    - result.query == 'DROP INDEX foo.foo_test_idx CASCADE'
+  when: tablespace.rc == 0
+
+# Check that the index doesn't exist after the previous step, rowcount must be 0
+- name: postgresql_idx - check the index doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_indexes WHERE indexname = 'foo_test_idx' and schemaname = 'foo'"
+  register: result
+  when: tablespace.rc == 0
+
+- assert:
+    that:
+    - result.rowcount == 0
+  when: tablespace.rc == 0
+
+# Try to drop not existing index
+- name: postgresql_idx - try to drop not existing index
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_idx:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    schema: foo
+    name: foo_test_idx
+    state: absent
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == ''

@@ -24,10 +24,12 @@ options:
   name:
     description:
       - Specifies the name of the data group.
+    type: str
     required: True
   description:
     description:
-      - The description of the monitor.
+      - The description of the data group.
+    type: str
     version_added: 2.8
   type:
     description:
@@ -37,6 +39,7 @@ options:
         to specify a list of records containing IP addresses, but label them as a C(string)
         type.
       - This value cannot be changed once the data group is created.
+    type: str
     choices:
       - address
       - addr
@@ -71,6 +74,7 @@ options:
       - If this value is not provided, it will be given the value specified in C(name) and,
         therefore, match the name of the data group.
       - This value may only contain letters, numbers, underscores, dashes, or a period.
+    type: str
   records:
     description:
       - Specifies the records that you want to add to a data group.
@@ -81,15 +85,21 @@ options:
         RAM.
       - When C(internal) is C(no), at least one record must be specified in either C(records)
         or C(records_content).
+      - "When C(type) is: C(ip), C(address), C(addr) if the addresses use non default route domain,
+        they must be explicit about it that is they must contain a route domain notation C(%) eg. 10.10.1.1%11.
+        This is true regardless if the data group resides in a partition or not."
+    type: list
     suboptions:
       key:
         description:
           - The key describing the record in the data group.
           - Your key will be used for validation of the C(type) parameter to this module.
+        type: str
         required: True
       value:
         description:
           - The value of the key describing the record in the data group.
+        type: raw
   records_src:
     description:
       - Path to a file with records in it.
@@ -108,6 +118,7 @@ options:
         group file.
       - When C(internal) is C(no), at least one record must be specified in either C(records)
         or C(records_content).
+    type: path
   separator:
     description:
       - When specifying C(records_content), this is the string of characters that will
@@ -116,35 +127,43 @@ options:
       - This value cannot be changed once it is set.
       - This parameter is only relevant when C(internal) is C(no). It will be ignored
         otherwise.
+    type: str
     default: ":="
   delete_data_group_file:
     description:
       - When C(yes), will ensure that the remote data group file is deleted.
       - This parameter is only relevant when C(state) is C(absent) and C(internal) is C(no).
-    default: no
     type: bool
+    default: no
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(state) is C(present), ensures the data group exists.
       - When C(state) is C(absent), ensures that the data group is removed.
+      - The use of state in this module refers to the entire data group, not its members.
+    type: str
     choices:
       - present
       - absent
     default: present
+notes:
+  - This module does NOT support atomic updates of data group members in a type C(internal) data group.
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
   - Wojciech Wypior (@wojtek0806)
+  - Greg Crosby (@crosbygw)
 '''
 
 EXAMPLES = r'''
 - name: Create a data group of addresses
   bigip_data_group:
     name: foo
+    internal: yes
     records:
       - key: 0.0.0.0/32
         value: External_NAT
@@ -160,6 +179,7 @@ EXAMPLES = r'''
 - name: Create a data group of strings
   bigip_data_group:
     name: foo
+    internal: yes
     records:
       - key: caddy
         value: ""
@@ -262,17 +282,17 @@ import re
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
-from io import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
-    from library.module_utils.network.f5.common import compare_complex_list
+    from library.module_utils.network.f5.compare import compare_complex_list
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.ipaddress import is_valid_ip_interface
     from library.module_utils.compat.ipaddress import ip_network
@@ -283,11 +303,8 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
-    from ansible.module_utils.network.f5.common import compare_complex_list
+    from ansible.module_utils.network.f5.compare import compare_complex_list
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip_interface
     from ansible.module_utils.compat.ipaddress import ip_network
@@ -334,6 +351,8 @@ class RecordsEncoder(object):
         self._separator = separator
         self._network_pattern = re.compile(r'^network\s+(?P<addr>[^ ]+)\s+prefixlen\s+(?P<prefix>\d+)\s+.*')
         self._host_pattern = re.compile(r'^host\s+(?P<addr>[^ ]+)\s+.*')
+        self._rd_net_pattern = re.compile(r'(?P<addr>[^%]+)%(?P<rd>[0-9]+)/(?P<prefix>[0-9]+)')
+        self._rd_host_pattern = re.compile(r'(?P<addr>[^%]+)%(?P<rd>[0-9]+)')
 
     def encode(self, record):
         if isinstance(record, dict):
@@ -349,7 +368,42 @@ class RecordsEncoder(object):
         else:
             return self.encode_string_from_dict(record)
 
+    def encode_rd_address(self, record, match, host=False):
+        if host:
+            if is_valid_ip_interface(match.group('addr')):
+                key = ip_interface(u"{0}".format(match.group('addr')))
+            else:
+                raise F5ModuleError(
+                    "When specifying an 'address' type, the value to the left of the separator must be an IP."
+                )
+        else:
+            if is_valid_ip_interface(match.group('addr')):
+                key = ip_interface(u"{0}/{1}".format(match.group('addr'), match.group('prefix')))
+            else:
+                raise F5ModuleError(
+                    "When specifying an 'address' type, the value to the left of the separator must be an IP."
+                )
+        if key and 'value' in record:
+            if key.network.prefixlen in [32, 128]:
+                return self.encode_host(str(key.ip) + '%' + match.group('rd'), record['value'])
+            return self.encode_network(
+                str(key.network.network_address) + '%' + match.group('rd'), key.network.prefixlen, record['value']
+            )
+        elif key:
+            if key.network.prefixlen in [32, 128]:
+                return self.encode_host(str(key.ip) + '%' + match.group('rd'), str(key.ip) + '%' + match.group('rd'))
+            return self.encode_network(
+                str(key.network.network_address) + '%' + match.group('rd'), key.network.prefixlen,
+                str(key.network.network_address) + '%' + match.group('rd')
+            )
+
     def encode_address_from_dict(self, record):
+        rd_match = re.match(self._rd_net_pattern, record['key'])
+        if rd_match:
+            return self.encode_rd_address(record, rd_match)
+        rd_match = re.match(self._rd_host_pattern, record['key'])
+        if rd_match:
+            return self.encode_rd_address(record, rd_match, host=True)
         if is_valid_ip_interface(record['key']):
             key = ip_interface(u"{0}".format(str(record['key'])))
         else:
@@ -404,6 +458,12 @@ class RecordsEncoder(object):
         elif self._host_pattern.match(record):
             # host 172.16.1.1/32 := "Host3"
             # host 2001:0db8:85a3:0000:0000:8a2e:0370:7334 := "Host4"
+            return record
+        elif self._rd_net_pattern.match(record) or self._rd_host_pattern.match(record):
+            # 192.168.0.0%11/16 := "Network3",
+            # 2402:9400:1000:0::%11/64 := "Network4",
+            # 192.168.1.1%11/32 := "Host3",
+            # 2001:0db8:85a3:0000:0000:8a2e:0370:7334%11 := "Host4"
             return record
         else:
             # 192.168.0.0/16 := "Network3",
@@ -467,6 +527,8 @@ class RecordsDecoder(object):
         self._separator = separator
         self._network_pattern = re.compile(r'^network\s+(?P<addr>[^ ]+)\s+prefixlen\s+(?P<prefix>\d+)\s+.*')
         self._host_pattern = re.compile(r'^host\s+(?P<addr>[^ ]+)\s+.*')
+        self._rd_net_ptrn = re.compile(r'^network\s+(?P<addr>[^%]+)%(?P<rd>[0-9]+)\s+prefixlen\s+(?P<prefix>\d+)\s+.*')
+        self._rd_host_ptrn = re.compile(r'^host\s+(?P<addr>[^%]+)%(?P<rd>[0-9]+)\s+.*')
 
     def decode(self, record):
         record = record.strip().strip(',')
@@ -476,6 +538,14 @@ class RecordsDecoder(object):
             return self.decode_from_string(record)
 
     def decode_address_from_string(self, record):
+        matches = self._rd_net_ptrn.match(record)
+        if matches:
+            # network 192.168.0.0%11 prefixlen 16 := "Network3",
+            # network 2402:9400:1000:0::%11 prefixlen 64 := "Network4",
+            value = record.split(self._separator)[1].strip().strip('"')
+            addr = "{0}%{1}/{2}".format(matches.group('addr'), matches.group('rd'), matches.group('prefix'))
+            result = dict(name=addr, data=value)
+            return result
         matches = self._network_pattern.match(record)
         if matches:
             # network 192.168.0.0 prefixlen 16 := "Network3",
@@ -484,6 +554,15 @@ class RecordsDecoder(object):
             addr = ip_network(key)
             value = record.split(self._separator)[1].strip().strip('"')
             result = dict(name=str(addr), data=value)
+            return result
+        matches = self._rd_host_ptrn.match(record)
+        if matches:
+            # host 172.16.1.1%11/32 := "Host3"
+            # host 2001:0db8:85a3:0000:0000:8a2e:0370:7334%11 := "Host4"
+            host = ip_interface(u"{0}".format(matches.group('addr')))
+            addr = "{0}%{1}/{2}".format(matches.group('addr'), matches.group('rd'), str(host.network.prefixlen))
+            value = record.split(self._separator)[1].strip().strip('"')
+            result = dict(name=addr, data=value)
             return result
         matches = self._host_pattern.match(record)
         if matches:
@@ -494,6 +573,7 @@ class RecordsDecoder(object):
             value = record.split(self._separator)[1].strip().strip('"')
             result = dict(name=str(addr), data=value)
             return result
+
         raise F5ModuleError(
             'The value "{0}" is not an address'.format(record)
         )
@@ -588,14 +668,8 @@ class ApiParameters(Parameters):
         return result
 
     @property
-    def records(self):
-        if self._values['records'] is None:
-            return None
-        return self._values['records']
-
-    @property
     def records_list(self):
-        return self.records
+        return self._values['records']
 
     @property
     def description(self):
@@ -740,7 +814,7 @@ class Difference(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -1226,7 +1300,6 @@ class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.kwargs = kwargs
         self.module = kwargs.get('module')
-        self.client = kwargs.get('client', None)
 
     def exec_module(self):
         if self.module.params['internal']:
@@ -1283,19 +1356,16 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
+        mutually_exclusive=spec.mutually_exclusive
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

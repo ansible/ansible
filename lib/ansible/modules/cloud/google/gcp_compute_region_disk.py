@@ -43,7 +43,7 @@ description:
 - Add a persistent disk to your instance when you need reliable and affordable storage
   with consistent performance characteristics.
 short_description: Creates a GCP RegionDisk
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -57,19 +57,23 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   labels:
     description:
     - Labels to apply to this disk. A list of key->value pairs.
     required: false
+    type: dict
   licenses:
     description:
     - Any applicable publicly visible licenses.
     required: false
+    type: list
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -79,6 +83,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   size_gb:
     description:
     - Size of the persistent disk, specified in GB. You can specify this field when
@@ -88,19 +93,32 @@ options:
       of sizeGb must not be less than the size of the sourceImage or the size of the
       snapshot.
     required: false
+    type: int
+  physical_block_size_bytes:
+    description:
+    - Physical block size of the persistent disk, in bytes. If not present in a request,
+      a default value is used. Currently supported sizes are 4096 and 16384, other
+      sizes may be added in the future.
+    - If an unsupported value is requested, the error message will list the supported
+      values for the caller's project.
+    required: false
+    type: int
   replica_zones:
     description:
     - URLs of the zones where the disk should be replicated to.
     required: true
+    type: list
   type:
     description:
     - URL of the disk type resource describing which disk type to use to create the
       disk. Provide this when creating the disk.
     required: false
+    type: str
   region:
     description:
     - A reference to the region where the disk resides.
     required: true
+    type: str
   disk_encryption_key:
     description:
     - Encrypts the disk using a customer-supplied encryption key.
@@ -112,63 +130,105 @@ options:
       will be encrypted using an automatically generated key and you do not need to
       provide a key to use the disk later.
     required: false
+    type: dict
     suboptions:
       raw_key:
         description:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
         required: false
-      sha256:
-        description:
-        - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
-          key that protects this resource.
-        required: false
+        type: str
   source_snapshot:
     description:
     - The source snapshot used to create this disk. You can provide this as a partial
       or full URL to the resource.
     - 'This field represents a link to a Snapshot resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_snapshot
-      task and then set this source_snapshot field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_snapshot task and then set this source_snapshot field to "{{
+      name-of-resource }}"'
     required: false
+    type: dict
   source_snapshot_encryption_key:
     description:
     - The customer-supplied encryption key of the source snapshot. Required if the
       source snapshot is protected by a customer-supplied encryption key.
     required: false
+    type: dict
     suboptions:
       raw_key:
         description:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
         required: false
-      sha256:
-        description:
-        - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
-          key that protects this resource.
-        required: false
-extends_documentation_fragment: gcp
+        type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/beta/regionDisks)'
 - 'Adding or Resizing Regional Persistent Disks: U(https://cloud.google.com/compute/docs/disks/regional-persistent-disk)'
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
 - name: create a region disk
   gcp_compute_region_disk:
-      name: "test_object"
-      size_gb: 50
-      disk_encryption_key:
-        raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
-      region: us-central1
-      replica_zones:
-      - https://www.googleapis.com/compute/v1/projects/google.com:graphite-playground/zones/us-central1-a
-      - https://www.googleapis.com/compute/v1/projects/google.com:graphite-playground/zones/us-central1-b
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    size_gb: 500
+    disk_encryption_key:
+      raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
+    region: us-central1
+    replica_zones:
+    - https://www.googleapis.com/compute/v1/projects/google.com:graphite-playground/zones/us-central1-a
+    - https://www.googleapis.com/compute/v1/projects/google.com:graphite-playground/zones/us-central1-b
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -201,7 +261,7 @@ lastAttachTimestamp:
   type: str
 lastDetachTimestamp:
   description:
-  - Last dettach timestamp in RFC3339 text format.
+  - Last detach timestamp in RFC3339 text format.
   returned: success
   type: str
 labels:
@@ -240,6 +300,15 @@ users:
     .'
   returned: success
   type: list
+physicalBlockSizeBytes:
+  description:
+  - Physical block size of the persistent disk, in bytes. If not present in a request,
+    a default value is used. Currently supported sizes are 4096 and 16384, other sizes
+    may be added in the future.
+  - If an unsupported value is requested, the error message will list the supported
+    values for the caller's project.
+  returned: success
+  type: int
 replicaZones:
   description:
   - URLs of the zones where the disk should be replicated to.
@@ -286,7 +355,7 @@ sourceSnapshot:
   - The source snapshot used to create this disk. You can provide this as a partial
     or full URL to the resource.
   returned: success
-  type: str
+  type: dict
 sourceSnapshotEncryptionKey:
   description:
   - The customer-supplied encryption key of the source snapshot. Required if the source
@@ -342,12 +411,13 @@ def main():
             licenses=dict(type='list', elements='str'),
             name=dict(required=True, type='str'),
             size_gb=dict(type='int'),
+            physical_block_size_bytes=dict(type='int'),
             replica_zones=dict(required=True, type='list', elements='str'),
             type=dict(type='str'),
             region=dict(required=True, type='str'),
-            disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'))),
-            source_snapshot=dict(),
-            source_snapshot_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'))),
+            disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'))),
+            source_snapshot=dict(type='dict'),
+            source_snapshot_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'))),
         )
     )
 
@@ -430,6 +500,7 @@ def resource_to_request(module):
         u'licenses': module.params.get('licenses'),
         u'name': module.params.get('name'),
         u'sizeGb': module.params.get('size_gb'),
+        u'physicalBlockSizeBytes': module.params.get('physical_block_size_bytes'),
         u'replicaZones': module.params.get('replica_zones'),
         u'type': region_disk_type_selflink(module.params.get('type'), module.params),
     }
@@ -508,6 +579,7 @@ def response_to_hash(module, response):
         u'name': module.params.get('name'),
         u'sizeGb': response.get(u'sizeGb'),
         u'users': response.get(u'users'),
+        u'physicalBlockSizeBytes': response.get(u'physicalBlockSizeBytes'),
         u'replicaZones': response.get(u'replicaZones'),
         u'type': response.get(u'type'),
     }
@@ -516,7 +588,7 @@ def response_to_hash(module, response):
 def zone_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/.*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/zones/%s".format(**params) % name
     return name
@@ -525,7 +597,7 @@ def zone_selflink(name, params):
 def region_disk_type_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/{region}/diskTypes/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/.*/diskTypes/.*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}/diskTypes/%s".format(**params) % name
     return name
@@ -575,10 +647,10 @@ class RegionDiskDiskencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256')})
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key')})
 
     def from_response(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256')})
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey')})
 
 
 class RegionDiskSourcesnapshotencryptionkey(object):
@@ -590,10 +662,10 @@ class RegionDiskSourcesnapshotencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256')})
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key')})
 
     def from_response(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256')})
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey')})
 
 
 if __name__ == '__main__':

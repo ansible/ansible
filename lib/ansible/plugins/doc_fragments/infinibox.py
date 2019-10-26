@@ -1,30 +1,18 @@
-#
-# (c) 2016, Gregory Shulov <gregory.shulov@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2016, Gregory Shulov <gregory.shulov@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
 
     # Standard Infinibox documentation fragment
-    DOCUMENTATION = '''
+    DOCUMENTATION = r'''
 options:
   system:
     description:
       - Infinibox Hostname or IPv4 Address.
+    type: str
     required: true
   user:
     description:
@@ -33,7 +21,7 @@ options:
   password:
     description:
       - Infinibox User password.
-    required: false
+    type: str
 notes:
   - This module requires infinisdk python library
   - You must set INFINIBOX_USER and INFINIBOX_PASSWORD environment variables

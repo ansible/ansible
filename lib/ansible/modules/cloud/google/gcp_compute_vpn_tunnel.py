@@ -33,7 +33,7 @@ module: gcp_compute_vpn_tunnel
 description:
 - VPN tunnel resource.
 short_description: Creates a GCP VpnTunnel
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - Name of the resource. The name must be 1-63 characters long, and comply with
@@ -55,42 +56,50 @@ options:
       be a lowercase letter, and all following characters must be a dash, lowercase
       letter, or digit, except the last character, which cannot be a dash.
     required: true
+    type: str
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   target_vpn_gateway:
     description:
     - URL of the Target VPN gateway with which this VPN tunnel is associated.
     - 'This field represents a link to a TargetVpnGateway resource in GCP. It can
-      be specified in two ways. First, you can place in the selfLink of the resource
-      here as a string Alternatively, you can add `register: name-of-resource` to
-      a gcp_compute_target_vpn_gateway task and then set this target_vpn_gateway field
-      to "{{ name-of-resource }}"'
-    required: true
+      be specified in two ways. First, you can place a dictionary with key ''selfLink''
+      and value of your resource''s selfLink Alternatively, you can add `register:
+      name-of-resource` to a gcp_compute_target_vpn_gateway task and then set this
+      target_vpn_gateway field to "{{ name-of-resource }}"'
+    required: false
+    type: dict
   router:
     description:
     - URL of router resource to be used for dynamic routing.
     - 'This field represents a link to a Router resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_router
-      task and then set this router field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_router task and then set this router field to "{{ name-of-resource
+      }}"'
     required: false
+    type: dict
   peer_ip:
     description:
     - IP address of the peer VPN gateway. Only IPv4 is supported.
-    required: true
+    required: false
+    type: str
   shared_secret:
     description:
     - Shared secret used to set the secure session between the Cloud VPN gateway and
       the peer VPN gateway.
     required: true
+    type: str
   ike_version:
     description:
     - IKE protocol version to use when establishing the VPN tunnel with peer VPN gateway.
     - Acceptable IKE versions are 1 or 2. Default version is 2.
     required: false
     default: '2'
+    type: int
   local_traffic_selector:
     description:
     - Local traffic selector to use when establishing the VPN tunnel with peer VPN
@@ -98,6 +107,7 @@ options:
       The ranges should be disjoint.
     - Only IPv4 is supported.
     required: false
+    type: list
   remote_traffic_selector:
     description:
     - Remote traffic selector to use when establishing the VPN tunnel with peer VPN
@@ -105,75 +115,124 @@ options:
       The ranges should be disjoint.
     - Only IPv4 is supported.
     required: false
-  labels:
-    description:
-    - Labels to apply to this VpnTunnel.
-    required: false
+    type: list
   region:
     description:
     - The region where the tunnel is located.
     required: true
-extends_documentation_fragment: gcp
+    type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/vpnTunnels)'
 - 'Cloud VPN Overview: U(https://cloud.google.com/vpn/docs/concepts/overview)'
 - 'Networks and Tunnel Routing: U(https://cloud.google.com/vpn/docs/concepts/choosing-networks-routing)'
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "network-vpn-tunnel"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-vpn-tunnel
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a router
   gcp_compute_router:
-      name: "router-vpn-tunnel"
-      network: "{{ network }}"
-      bgp:
-        asn: 64514
-        advertise_mode: CUSTOM
-        advertised_groups:
-        - ALL_SUBNETS
-        advertised_ip_ranges:
-        - range: 1.2.3.4
-        - range: 6.7.0.0/16
-      region: us-central1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: router-vpn-tunnel
+    network: "{{ network }}"
+    bgp:
+      asn: 64514
+      advertise_mode: CUSTOM
+      advertised_groups:
+      - ALL_SUBNETS
+      advertised_ip_ranges:
+      - range: 1.2.3.4
+      - range: 6.7.0.0/16
+    region: us-central1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: router
 
 - name: create a target vpn gateway
   gcp_compute_target_vpn_gateway:
-      name: "gateway-vpn-tunnel"
-      region: us-west1
-      network: "{{ network }}"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: gateway-vpn-tunnel
+    region: us-west1
+    network: "{{ network }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: gateway
 
 - name: create a vpn tunnel
   gcp_compute_vpn_tunnel:
-      name: "test_object"
-      region: us-west1
-      target_vpn_gateway: "{{ gateway }}"
-      router: "{{ router }}"
-      shared_secret: super secret
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    region: us-west1
+    target_vpn_gateway: "{{ gateway }}"
+    router: "{{ router }}"
+    shared_secret: super secret
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
+id:
+  description:
+  - The unique identifier for the resource. This identifier is defined by the server.
+  returned: success
+  type: str
 creationTimestamp:
   description:
   - Creation timestamp in RFC3339 text format.
@@ -197,12 +256,12 @@ targetVpnGateway:
   description:
   - URL of the Target VPN gateway with which this VPN tunnel is associated.
   returned: success
-  type: str
+  type: dict
 router:
   description:
   - URL of router resource to be used for dynamic routing.
   returned: success
-  type: str
+  type: dict
 peerIp:
   description:
   - IP address of the peer VPN gateway. Only IPv4 is supported.
@@ -241,17 +300,6 @@ remoteTrafficSelector:
   - Only IPv4 is supported.
   returned: success
   type: list
-labels:
-  description:
-  - Labels to apply to this VpnTunnel.
-  returned: success
-  type: dict
-labelFingerprint:
-  description:
-  - The fingerprint used for optimistic locking of this resource. Used internally
-    during updates.
-  returned: success
-  type: str
 region:
   description:
   - The region where the tunnel is located.
@@ -280,14 +328,13 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             description=dict(type='str'),
-            target_vpn_gateway=dict(required=True),
-            router=dict(),
-            peer_ip=dict(required=True, type='str'),
+            target_vpn_gateway=dict(type='dict'),
+            router=dict(type='dict'),
+            peer_ip=dict(type='str'),
             shared_secret=dict(required=True, type='str'),
             ike_version=dict(default=2, type='int'),
             local_traffic_selector=dict(type='list', elements='str'),
             remote_traffic_selector=dict(type='list', elements='str'),
-            labels=dict(type='dict'),
             region=dict(required=True, type='str'),
         )
     )
@@ -304,7 +351,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind)
                 fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
@@ -314,7 +361,6 @@ def main():
     else:
         if state == 'present':
             fetch = create(module, collection(module), kind)
-            labels_update(module, module.params, fetch)
             changed = True
         else:
             fetch = {}
@@ -329,22 +375,9 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
-    return fetch_resource(module, self_link(module), kind)
-
-
-def update_fields(module, request, response):
-    if response.get('labels') != request.get('labels'):
-        labels_update(module, request, response)
-
-
-def labels_update(module, request, response):
-    auth = GcpSession(module, 'compute')
-    auth.post(
-        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/regions/{region}/vpnTunnels/{name}/setLabels"]).format(**module.params),
-        {u'labels': module.params.get('labels'), u'labelFingerprint': response.get('labelFingerprint')},
-    )
+def update(module, link, kind):
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):
@@ -364,7 +397,6 @@ def resource_to_request(module):
         u'ikeVersion': module.params.get('ike_version'),
         u'localTrafficSelector': module.params.get('local_traffic_selector'),
         u'remoteTrafficSelector': module.params.get('remote_traffic_selector'),
-        u'labels': module.params.get('labels'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -430,6 +462,7 @@ def is_different(module, response):
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
     return {
+        u'id': response.get(u'id'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
         u'name': response.get(u'name'),
         u'description': module.params.get('description'),
@@ -441,8 +474,6 @@ def response_to_hash(module, response):
         u'ikeVersion': response.get(u'ikeVersion'),
         u'localTrafficSelector': response.get(u'localTrafficSelector'),
         u'remoteTrafficSelector': response.get(u'remoteTrafficSelector'),
-        u'labels': response.get(u'labels'),
-        u'labelFingerprint': response.get(u'labelFingerprint'),
     }
 
 

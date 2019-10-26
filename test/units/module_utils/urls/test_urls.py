@@ -76,6 +76,16 @@ def test_maybe_add_ssl_handler(mocker):
     handler = urls.maybe_add_ssl_handler(url, True)
     assert handler is None
 
+    url = 'https://[2a00:16d8:0:7::205]:4443/'
+    handler = urls.maybe_add_ssl_handler(url, True)
+    assert handler.hostname == '2a00:16d8:0:7::205'
+    assert handler.port == 4443
+
+    url = 'https://[2a00:16d8:0:7::205]/'
+    handler = urls.maybe_add_ssl_handler(url, True)
+    assert handler.hostname == '2a00:16d8:0:7::205'
+    assert handler.port == 443
+
 
 def test_basic_auth_header():
     header = urls.basic_auth_header('user', 'passwd')
@@ -89,3 +99,11 @@ def test_ParseResultDottedDict():
     assert parts[0] == dotted_parts.scheme
 
     assert dotted_parts.as_list() == list(parts)
+
+
+def test_unix_socket_patch_httpconnection_connect(mocker):
+    unix_conn = mocker.patch.object(urls.UnixHTTPConnection, 'connect')
+    conn = urls.httplib.HTTPConnection('ansible.com')
+    with urls.unix_socket_patch_httpconnection_connect():
+        conn.connect()
+    assert unix_conn.call_count == 1

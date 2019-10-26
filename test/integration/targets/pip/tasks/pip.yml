@@ -18,12 +18,6 @@
 
 # FIXME: replace the python test package
 
-- name: install git, needed for repo installs
-  package:
-    name: git
-    state: present
-  when: ansible_distribution != "MacOSX"
-
 # first some tests installed system-wide
 # verify things were not installed to start with
 
@@ -86,16 +80,8 @@
 
 - name: now put it back in case someone wanted it (like us!)
   pip:
-    name: "{{ item }}"
+    name: "{{ pip_test_packages  }}"
     state: present
-  with_items: "{{ pip_test_packages }}"
-  register: squash_param
-
-- name: check that list has been condensed
-  assert:
-    that:
-      - squash_param.results|length == 1
-      - squash_param.results[0].name|sort == pip_test_packages|sort
 
 # Test virtualenv installations
 
@@ -139,7 +125,7 @@
       - "not (req_installed is changed)"
 
 - name: install the same module from url
-  pip: 
+  pip:
     name: "git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601"
     virtualenv: "{{ output_dir }}/pipenv"
     editable: True

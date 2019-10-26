@@ -24,6 +24,7 @@ DOCUMENTATION = '''
             section: defaults
       _prefix:
         description: User defined prefix to use when creating the DB entries
+        default: ansible_facts
         env:
           - name: ANSIBLE_CACHE_PLUGIN_PREFIX
         ini:
@@ -45,12 +46,16 @@ import json
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.plugins.cache import BaseCacheModule
+from ansible.utils.display import Display
 
 try:
     from redis import StrictRedis, VERSION
 except ImportError:
     raise AnsibleError("The 'redis' python module (version 2.4.5 or newer) is required for the redis fact cache, 'pip install redis'")
+
+display = Display()
 
 
 class CacheModule(BaseCacheModule):
@@ -63,13 +68,22 @@ class CacheModule(BaseCacheModule):
     performance.
     """
     def __init__(self, *args, **kwargs):
-        if C.CACHE_PLUGIN_CONNECTION:
-            connection = C.CACHE_PLUGIN_CONNECTION.split(':')
-        else:
-            connection = []
+        connection = []
 
-        self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
-        self._prefix = C.CACHE_PLUGIN_PREFIX
+        try:
+            super(CacheModule, self).__init__(*args, **kwargs)
+            if self.get_option('_uri'):
+                connection = self.get_option('_uri').split(':')
+            self._timeout = float(self.get_option('_timeout'))
+            self._prefix = self.get_option('_prefix')
+        except KeyError:
+            display.deprecated('Rather than importing CacheModules directly, '
+                               'use ansible.plugins.loader.cache_loader', version='2.12')
+            if C.CACHE_PLUGIN_CONNECTION:
+                connection = C.CACHE_PLUGIN_CONNECTION.split(':')
+            self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
+            self._prefix = C.CACHE_PLUGIN_PREFIX
+
         self._cache = {}
         self._db = StrictRedis(*connection)
         self._keys_set = 'ansible_cache_keys'
@@ -87,13 +101,13 @@ class CacheModule(BaseCacheModule):
             if value is None:
                 self.delete(key)
                 raise KeyError
-            self._cache[key] = json.loads(value)
+            self._cache[key] = json.loads(value, cls=AnsibleJSONDecoder)
 
         return self._cache.get(key)
 
     def set(self, key, value):
 
-        value2 = json.dumps(value)
+        value2 = json.dumps(value, cls=AnsibleJSONEncoder, sort_keys=True, indent=4)
         if self._timeout > 0:  # a timeout of 0 is handled as meaning 'never expire'
             self._db.setex(self._make_key(key), int(self._timeout), value2)
         else:

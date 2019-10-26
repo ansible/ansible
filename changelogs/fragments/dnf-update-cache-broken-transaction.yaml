@@ -1,3 +1,0 @@
----
-bugfixes:
-  - "dnf - fix update_cache combined with install operation to not cause dnf transaction failure"

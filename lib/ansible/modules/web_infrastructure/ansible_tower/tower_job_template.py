@@ -140,7 +140,7 @@ options:
       default: 'no'
     ask_inventory:
       description:
-        - Propmt user for inventory on launch.
+        - Prompt user for inventory on launch.
       type: bool
       default: 'no'
     ask_credential:
@@ -326,7 +326,7 @@ def main():
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = jt.delete(**params)
-        except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.NotFound, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update job template: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']

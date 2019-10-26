@@ -12,7 +12,11 @@ service_expected_output:
   endpoint_mode: vip
   env: null
   force_update: null
+  groups: null
+  healthcheck: null
+  healthcheck_disabled: null
   hostname: null
+  hosts: null
   image: busybox
   labels: null
   limit_cpu: null
@@ -22,10 +26,14 @@ service_expected_output:
   mode: global
   mounts: null
   networks: null
+  secrets: null
+  stop_grace_period: null
+  stop_signal: null
   placement_preferences: null
   publish:
     - {mode: null, protocol: tcp, published_port: 60001, target_port: 60001}
     - {mode: null, protocol: udp, published_port: 60001, target_port: 60001}
+  read_only: null
   replicas: null
   reserve_cpu: null
   reserve_memory: null
@@ -33,10 +41,13 @@ service_expected_output:
   restart_policy_attempts: null
   restart_policy_delay: null
   restart_policy_window: null
+  rollback_config: null
   tty: null
-  update_delay: 10
+  update_delay: null
   update_failure_action: null
   update_max_failure_ratio: null
   update_monitor: null
   update_order: null
-  update_parallelism: 1
+  update_parallelism: null
+  user: null
+  working_dir: null

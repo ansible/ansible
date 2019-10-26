@@ -54,8 +54,9 @@ DOCUMENTATION = """
     mount_point:
       description: vault mount point, only required if you have a custom mount point.
       default: ldap
-    cacert:
+    ca_cert:
       description: path to certificate to use for authentication.
+      aliases: [ cacert ]
     validate_certs:
       description: controls verification and validation of SSL certificates, mostly you only want to turn off with self signed ones.
       type: boolean
@@ -63,7 +64,6 @@ DOCUMENTATION = """
     namespace:
       version_added: "2.8"
       description: namespace where secrets reside. requires HVAC 0.7.0+ and Vault 0.11+.
-      default: None
 """
 
 EXAMPLES = """
@@ -97,6 +97,13 @@ EXAMPLES = """
 - name: Return all secrets from a path in a namespace
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200 namespace=teama/admins')}}"
+
+# to work with kv v2 (vault api - for kv v2 -  GET method requires that PATH should be "secret/data/:path")
+- name: Return all kv v2 secrets from a path
+  debug:
+    msg: "{{ lookup('hashi_vault', 'secret=secret/data/hello token=my_vault_token url=http://myvault_url:8200') }}"
+
+
 """
 
 RETURN = """
@@ -219,14 +226,14 @@ class HashiVault:
         if mount_point is None:
             mount_point = 'userpass'
 
-        self.client.auth_userpass(username, password, mount_point)
+        self.client.auth_userpass(username, password, mount_point=mount_point)
 
     def auth_ldap(self, **kwargs):
         username, password, mount_point = self.check_params(**kwargs)
         if mount_point is None:
             mount_point = 'ldap'
 
-        self.client.auth_ldap(username, password, mount_point)
+        self.client.auth_ldap(username, password, mount_point=mount_point)
 
     def boolean_or_cacert(self, validate_certs, cacert):
         validate_certs = boolean(validate_certs, strict=False)
@@ -266,6 +273,10 @@ class LookupModule(LookupBase):
             except ValueError:
                 raise AnsibleError("hashi_vault lookup plugin needs key=value pairs, but received %s" % terms)
             vault_dict[key] = value
+
+        if 'ca_cert' in vault_dict.keys():
+            vault_dict['cacert'] = vault_dict['ca_cert']
+            vault_dict.pop('ca_cert', None)
 
         vault_conn = HashiVault(**vault_dict)
 

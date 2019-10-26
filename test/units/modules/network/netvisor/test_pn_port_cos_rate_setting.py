@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_port_cos_rate_setting
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestPortCosRateSettingModule(TestNvosModule):
@@ -38,7 +36,7 @@ class TestPortCosRateSettingModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_port': 'control-port',
                          'pn_cos1_rate': '4000', 'pn_cos2_rate': '4000', 'pn_cos3_rate': '4000', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 port-cos-rate-setting-modify  cos1-rate 4000 cos2-rate 4000 '
+        expected_cmd = ' switch sw01 port-cos-rate-setting-modify  cos1-rate 4000 cos2-rate 4000 '
         expected_cmd += 'cos3-rate 4000 port control-port'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
@@ -46,6 +44,6 @@ class TestPortCosRateSettingModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_port': 'data-port',
                          'pn_cos1_rate': '2000', 'pn_cos5_rate': '3000', 'pn_cos2_rate': '4000', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 port-cos-rate-setting-modify  cos1-rate 2000 cos5-rate 3000 '
+        expected_cmd = ' switch sw01 port-cos-rate-setting-modify  cos1-rate 2000 cos5-rate 3000 '
         expected_cmd += 'cos2-rate 4000 port data-port'
         self.assertEqual(result['cli_cmd'], expected_cmd)

@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_dscp_map
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestDscpMapModule(TestNvosModule):
@@ -50,12 +48,12 @@ class TestDscpMapModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_scope': 'local', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 dscp-map-create name foo  scope local'
+        expected_cmd = ' switch sw01 dscp-map-create name foo  scope local'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_dscp_map_delete(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'state': 'absent'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 dscp-map-delete name foo '
+        expected_cmd = ' switch sw01 dscp-map-delete name foo '
         self.assertEqual(result['cli_cmd'], expected_cmd)

@@ -35,9 +35,9 @@ description:
   balancing.
 - An HTTP(S) load balancer can direct traffic to specified URLs to a backend bucket
   rather than a backend service. It can send requests for static content to a Cloud
-  Storage bucket and requests for dynamic content a virtual machine instance.
+  Storage bucket and requests for dynamic content to a virtual machine instance.
 short_description: Creates a GCP BackendBucket
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -51,15 +51,37 @@ options:
     - present
     - absent
     default: present
+    type: str
   bucket_name:
     description:
     - Cloud Storage bucket name.
     required: true
+    type: str
+  cdn_policy:
+    description:
+    - Cloud CDN configuration for this Backend Bucket.
+    required: false
+    type: dict
+    version_added: '2.8'
+    suboptions:
+      signed_url_cache_max_age_sec:
+        description:
+        - Maximum number of seconds the response to a signed URL request will be considered
+          fresh. Defaults to 1hr (3600s). After this time period, the response will
+          be revalidated before being served.
+        - 'When serving responses to signed URL requests, Cloud CDN will internally
+          behave as though all responses from this backend had a "Cache-Control: public,
+          max-age=[TTL]" header, regardless of any existing Cache-Control header.
+          The actual headers served in responses will not be altered.'
+        required: false
+        default: '3600'
+        type: int
   description:
     description:
     - An optional textual description of the resource; provided by the client when
       the resource is created.
     required: false
+    type: str
   enable_cdn:
     description:
     - If true, enable Cloud CDN for this BackendBucket.
@@ -74,32 +96,79 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
-extends_documentation_fragment: gcp
+    type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
-- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/backendBuckets)'
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/backendBuckets)'
 - 'Using a Cloud Storage bucket as a load balancer backend: U(https://cloud.google.com/compute/docs/load-balancing/http/backend-bucket)'
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
-      name: "bucket-backendbucket"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: bucket-backendbucket
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: bucket
 
 - name: create a backend bucket
   gcp_compute_backend_bucket:
-      name: "test_object"
-      bucket_name: "{{ bucket.name }}"
-      description: A BackendBucket to connect LNB w/ Storage Bucket
-      enable_cdn: true
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    bucket_name: "{{ bucket.name }}"
+    description: A BackendBucket to connect LNB w/ Storage Bucket
+    enable_cdn: 'true'
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -108,6 +177,23 @@ bucketName:
   - Cloud Storage bucket name.
   returned: success
   type: str
+cdnPolicy:
+  description:
+  - Cloud CDN configuration for this Backend Bucket.
+  returned: success
+  type: complex
+  contains:
+    signedUrlCacheMaxAgeSec:
+      description:
+      - Maximum number of seconds the response to a signed URL request will be considered
+        fresh. Defaults to 1hr (3600s). After this time period, the response will
+        be revalidated before being served.
+      - 'When serving responses to signed URL requests, Cloud CDN will internally
+        behave as though all responses from this backend had a "Cache-Control: public,
+        max-age=[TTL]" header, regardless of any existing Cache-Control header. The
+        actual headers served in responses will not be altered.'
+      returned: success
+      type: int
 creationTimestamp:
   description:
   - Creation timestamp in RFC3339 text format.
@@ -145,7 +231,7 @@ name:
 # Imports
 ################################################################################
 
-from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
+from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
 import time
 
@@ -161,6 +247,7 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             bucket_name=dict(required=True, type='str'),
+            cdn_policy=dict(type='dict', options=dict(signed_url_cache_max_age_sec=dict(default=3600, type='int'))),
             description=dict(type='str'),
             enable_cdn=dict(type='bool'),
             name=dict(required=True, type='str'),
@@ -217,6 +304,7 @@ def resource_to_request(module):
     request = {
         u'kind': 'compute#backendBucket',
         u'bucketName': module.params.get('bucket_name'),
+        u'cdnPolicy': BackendBucketCdnpolicy(module.params.get('cdn_policy', {}), module).to_request(),
         u'description': module.params.get('description'),
         u'enableCdn': module.params.get('enable_cdn'),
         u'name': module.params.get('name'),
@@ -286,6 +374,7 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'bucketName': response.get(u'bucketName'),
+        u'cdnPolicy': BackendBucketCdnpolicy(response.get(u'cdnPolicy', {}), module).from_response(),
         u'creationTimestamp': response.get(u'creationTimestamp'),
         u'description': response.get(u'description'),
         u'enableCdn': response.get(u'enableCdn'),
@@ -327,6 +416,21 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
+
+class BackendBucketCdnpolicy(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'signedUrlCacheMaxAgeSec': self.request.get('signed_url_cache_max_age_sec')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'signedUrlCacheMaxAgeSec': self.request.get(u'signedUrlCacheMaxAgeSec')})
 
 
 if __name__ == '__main__':

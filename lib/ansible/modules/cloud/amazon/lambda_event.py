@@ -393,7 +393,6 @@ def lambda_event_stream(module, aws):
 
 def main():
     """Produce a list of function suffixes which handle lambda events."""
-    this_module = sys.modules[__name__]
     source_choices = ["stream", "sqs"]
 
     argument_spec = ec2_argument_spec()

@@ -29,7 +29,7 @@ options:
   template:
     description:
     - The name of the template.
-    type: list
+    type: str
     required: yes
   filter:
     description:
@@ -116,8 +116,8 @@ extends_documentation_fragment: mso
 '''
 
 EXAMPLES = r'''
-- name: Add a new filter
-  mso_schema_template_filter:
+- name: Add a new filter entry
+  mso_schema_template_filter_entry:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -127,8 +127,8 @@ EXAMPLES = r'''
     state: present
   delegate_to: localhost
 
-- name: Remove a filter
-  mso_schema_template_filter:
+- name: Remove a filter entry
+  mso_schema_template_filter_entry:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -138,8 +138,8 @@ EXAMPLES = r'''
     state: absent
   delegate_to: localhost
 
-- name: Query a specific filters
-  mso_schema_template_filter:
+- name: Query a specific filter entry
+  mso_schema_template_filter_entry:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -150,8 +150,8 @@ EXAMPLES = r'''
   delegate_to: localhost
   register: query_result
 
-- name: Query all filters
-  mso_schema_template_filter:
+- name: Query all filter entries
+  mso_schema_template_filter_entry:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -175,8 +175,8 @@ def main():
         schema=dict(type='str', required=True),
         template=dict(type='str', required=True),
         filter=dict(type='str', required=True),
-        filter_display_name=dict(type='str', aliases=['filter_display_name']),
-        entry=dict(type='str', required=False, aliases=['name']),  # This parameter is not required for querying all objects
+        filter_display_name=dict(type='str'),
+        entry=dict(type='str', aliases=['name']),  # This parameter is not required for querying all objects
         description=dict(type='str', aliases=['entry_description']),
         display_name=dict(type='str', aliases=['entry_display_name']),
         ethertype=dict(type='str', choices=['arp', 'fcoe', 'ip', 'ipv4', 'ipv6', 'mac-security', 'mpls-unicast', 'trill', 'unspecified']),
@@ -285,30 +285,31 @@ def main():
 
     elif state == 'present':
 
-        if display_name is None:
-            display_name = mso.existing.get('displayName', entry)
-        if description is None:
-            description = mso.existing.get('description', '')
-        if ethertype is None:
-            ethertype = mso.existing.get('etherType', 'unspecified')
-        if ip_protocol is None:
-            ip_protocol = mso.existing.get('ipProtocol', 'unspecified')
-        if tcp_session_rules is None:
-            tcp_session_rules = mso.existing.get('tcpSessionRules', ['unspecified'])
-        if source_from is None:
-            source_from = mso.existing.get('sourceFrom', 'unspecified')
-        if source_to is None:
-            source_to = mso.existing.get('sourceTo', 'unspecified')
-        if destination_from is None:
-            destination_from = mso.existing.get('destinationFrom', 'unspecified')
-        if destination_to is None:
-            destination_to = mso.existing.get('destinationTo', 'unspecified')
-        if arp_flag is None:
-            arp_flag = mso.existing.get('arpFlag', 'unspecified')
-        if stateful is None:
-            stateful = mso.existing.get('stateful', False)
-        if fragments_only is None:
-            fragments_only = mso.existing.get('matchOnlyFragments', False)
+        if not mso.existing:
+            if display_name is None:
+                display_name = entry
+            if description is None:
+                description = ''
+            if ethertype is None:
+                ethertype = 'unspecified'
+            if ip_protocol is None:
+                ip_protocol = 'unspecified'
+            if tcp_session_rules is None:
+                tcp_session_rules = ['unspecified']
+            if source_from is None:
+                source_from = 'unspecified'
+            if source_to is None:
+                source_to = 'unspecified'
+            if destination_from is None:
+                destination_from = 'unspecified'
+            if destination_to is None:
+                destination_to = 'unspecified'
+            if arp_flag is None:
+                arp_flag = 'unspecified'
+            if stateful is None:
+                stateful = False
+            if fragments_only is None:
+                fragments_only = False
 
         payload = dict(
             name=entry,
@@ -347,18 +348,8 @@ def main():
 
         else:
             # Entry exists, we have to update it
-            ops.append(dict(op='replace', path=entry_path + '/displayName', value=display_name))
-            ops.append(dict(op='replace', path=entry_path + '/description', value=description))
-            ops.append(dict(op='replace', path=entry_path + '/etherType', value=ethertype))
-            ops.append(dict(op='replace', path=entry_path + '/ipProtocol', value=ip_protocol))
-            ops.append(dict(op='replace', path=entry_path + '/tcpSessionRules', value=tcp_session_rules))
-            ops.append(dict(op='replace', path=entry_path + '/sourceFrom', value=source_from))
-            ops.append(dict(op='replace', path=entry_path + '/sourceTo', value=source_to))
-            ops.append(dict(op='replace', path=entry_path + '/destinationFrom', value=destination_from))
-            ops.append(dict(op='replace', path=entry_path + '/destinationTo', value=destination_to))
-            ops.append(dict(op='replace', path=entry_path + '/arpFlag', value=arp_flag))
-            ops.append(dict(op='replace', path=entry_path + '/stateful', value=stateful))
-            ops.append(dict(op='replace', path=entry_path + '/matchOnlyFragments', value=fragments_only))
+            for (key, value) in mso.sent.items():
+                ops.append(dict(op='replace', path=entry_path + '/' + key, value=value))
 
         mso.existing = mso.proposed
 

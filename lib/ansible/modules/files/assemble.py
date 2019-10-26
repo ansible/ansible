@@ -26,9 +26,6 @@ description:
   together to produce a destination file.
 - Files are assembled in string sorting order.
 - Puppet calls this idea I(fragments).
-- This module is also supported for Windows targets.
-notes:
-- This module is also supported for Windows targets.
 version_added: '0.5'
 options:
   src:
@@ -116,7 +113,7 @@ import re
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import b
+from ansible.module_utils.six import b, indexbytes
 from ansible.module_utils._text import to_native
 
 
@@ -148,7 +145,11 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
                 tmp.write(delimiter)
                 # always make sure there's a newline after the
                 # delimiter, so lines don't run together
-                if delimiter[-1] != b('\n'):
+
+                # byte indexing differs on Python 2 and 3,
+                # use indexbytes for compat
+                # chr(10) == '\n'
+                if indexbytes(delimiter, -1) != 10:
                     tmp.write(b('\n'))
 
         tmp.write(fragment_content)

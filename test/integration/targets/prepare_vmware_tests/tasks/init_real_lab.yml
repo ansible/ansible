@@ -1,0 +1,29 @@
+---
+- name: load vars
+  include_vars:
+    file: real_lab.yml
+
+- include_tasks: teardown.yml
+
+- when: setup_esxi_instance is not defined
+  block:
+    - include_tasks: setup_datacenter.yml
+    - include_tasks: setup_cluster.yml
+    - include_tasks: setup_attach_hosts.yml
+      when: setup_attach_host is defined
+    - include_tasks: setup_datastore.yml
+      when: setup_datastore is defined
+    - include_tasks: setup_virtualmachines.yml
+      when: setup_virtualmachines is defined
+    - include_tasks: setup_switch.yml
+      when: setup_switch is defined
+    - include_tasks: setup_dvswitch.yml
+      when: setup_dvswitch is defined
+    - include_tasks: setup_resource_pool.yml
+      when: setup_resource_pool is defined
+    - include_tasks: setup_category.yml
+      when: setup_category is defined
+    - include_tasks: setup_tag.yml
+      when: setup_tag is defined
+    - include_tasks: setup_content_library.yml
+      when: setup_content_library is defined

@@ -1,0 +1,49 @@
+---
+- debug:
+      msg: "START iosxr_lldp_global merged integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Merge the provided configuration with the exisiting running configuration
+      iosxr_lldp_global: &merged
+        config:
+          holdtime: 100
+          reinit: 2
+          timer: 3000
+          subinterfaces: True
+          tlv_select:
+            management_address: False
+            system_description: False
+        state: merged
+      register: result
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that: "{{ merged['before'] == result['before'] }}"
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that after dicts was correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] == result['after'] }}"
+
+    - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+      iosxr_lldp_global: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] == result['before']}}"
+  always:
+    - include_tasks: _remove_config.yaml

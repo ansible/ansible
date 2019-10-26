@@ -25,14 +25,15 @@ options:
             - The hostname or ID of node as registered in Swarm.
             - If more than one node is registered using the same hostname the ID must be used,
               otherwise module will fail.
-        required: true
         type: str
+        required: yes
     labels:
         description:
             - User-defined key/value metadata that will be assigned as node attribute.
+            - Label operations in this module apply to the docker swarm node specified by I(hostname).
+              Use M(docker_swarm) module to add/modify/remove swarm cluster labels.
             - The actual state of labels assigned to the node when module completes its work depends on
               I(labels_state) and I(labels_to_remove) parameters values. See description below.
-        required: false
         type: dict
     labels_state:
         description:
@@ -43,12 +44,11 @@ options:
               If I(labels) is empty then no changes will be made.
             - Set to C(replace) to replace all assigned labels with provided ones. If I(labels) is empty then
               all labels assigned to the node will be removed.
+        type: str
+        default: 'merge'
         choices:
           - merge
           - replace
-        default: 'merge'
-        required: false
-        type: str
     labels_to_remove:
         description:
             - List of labels that will be removed from the node configuration. The list has to contain only label
@@ -58,28 +58,26 @@ options:
               assigned to the node.
             - If I(labels_state) is C(replace) and I(labels) is not provided or empty then all labels assigned to
               node are removed and I(labels_to_remove) is ignored.
-        required: false
         type: list
+        elements: str
     availability:
         description: Node availability to assign. If not provided then node availability remains unchanged.
         choices:
           - active
           - pause
           - drain
-        required: false
         type: str
     role:
         description: Node role to assign. If not provided then node role remains unchanged.
         choices:
           - manager
           - worker
-        required: false
         type: str
 extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation
 requirements:
-  - "docker-py >= 1.10.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.4.0"
   - Docker API >= 1.25
 author:
   - Piotr Wojciechowski (@WojciechowskiPiotr)
@@ -125,21 +123,24 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-node_facts:
+node:
   description: Information about node after 'update' operation
   returned: success
   type: dict
 
 '''
 
+import traceback
+
 try:
-    from docker.errors import APIError
+    from docker.errors import DockerException, APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils.docker.common import (
     DockerBaseClass,
+    RequestException,
 )
 
 from ansible.module_utils._text import to_native
@@ -234,15 +235,20 @@ class SwarmNodeManager(DockerBaseClass):
 
             if self.parameters.labels_to_remove is not None:
                 for key in self.parameters.labels_to_remove:
-                    if not self.parameters.labels.get(key):
+                    if self.parameters.labels is not None:
+                        if not self.parameters.labels.get(key):
+                            if node_spec['Labels'].get(key):
+                                node_spec['Labels'].pop(key)
+                                changed = True
+                        else:
+                            self.client.module.warn(
+                                "Label '%s' listed both in 'labels' and 'labels_to_remove'. "
+                                "Keeping the assigned label value."
+                                % to_native(key))
+                    else:
                         if node_spec['Labels'].get(key):
                             node_spec['Labels'].pop(key)
                             changed = True
-                    else:
-                        self.client.module.warn(
-                            "Label '%s' listed both in 'labels' and 'labels_to_remove'. "
-                            "Keeping the assigned label value."
-                            % to_native(key))
 
         if changed is True:
             if not self.check_mode:
@@ -251,10 +257,10 @@ class SwarmNodeManager(DockerBaseClass):
                                             node_spec=node_spec)
                 except APIError as exc:
                     self.client.fail("Failed to update node : %s" % to_native(exc))
-            self.results['node_facts'] = self.client.get_node_inspect(node_id=node_info['ID'])
+            self.results['node'] = self.client.get_node_inspect(node_id=node_info['ID'])
             self.results['changed'] = changed
         else:
-            self.results['node_facts'] = node_info
+            self.results['node'] = node_info
             self.results['changed'] = changed
 
 
@@ -262,7 +268,7 @@ def main():
     argument_spec = dict(
         hostname=dict(type='str', required=True),
         labels=dict(type='dict'),
-        labels_state=dict(type='str', choices=['merge', 'replace'], default='merge'),
+        labels_state=dict(type='str', default='merge', choices=['merge', 'replace']),
         labels_to_remove=dict(type='list', elements='str'),
         availability=dict(type='str', choices=['active', 'pause', 'drain']),
         role=dict(type='str', choices=['worker', 'manager']),
@@ -271,16 +277,21 @@ def main():
     client = AnsibleDockerSwarmClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        min_docker_version='1.10.0',
+        min_docker_version='2.4.0',
         min_docker_api_version='1.25',
     )
 
-    results = dict(
-        changed=False,
-    )
+    try:
+        results = dict(
+            changed=False,
+        )
 
-    SwarmNodeManager(client, results)
-    client.module.exit_json(**results)
+        SwarmNodeManager(client, results)
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

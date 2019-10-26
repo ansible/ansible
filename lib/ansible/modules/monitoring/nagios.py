@@ -65,6 +65,7 @@ options:
     description:
       - Minutes to schedule downtime for.
       - Only usable with the C(downtime) action.
+    type: int
     default: 30
   services:
     description:
@@ -193,9 +194,9 @@ EXAMPLES = '''
     command: DISABLE_FAILURE_PREDICTION
 '''
 
-import types
 import time
 import os.path
+import stat
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -260,7 +261,7 @@ def main():
             comment=dict(default='Scheduling downtime'),
             host=dict(required=False, default=None),
             servicegroup=dict(required=False, default=None),
-            minutes=dict(default=30),
+            minutes=dict(default=30, type='int'),
             cmdfile=dict(default=which_cmdfile()),
             services=dict(default=None, aliases=['service']),
             command=dict(required=False, default=None),
@@ -270,7 +271,6 @@ def main():
     action = module.params['action']
     host = module.params['host']
     servicegroup = module.params['servicegroup']
-    minutes = module.params['minutes']
     services = module.params['services']
     cmdfile = module.params['cmdfile']
     command = module.params['command']
@@ -283,7 +283,7 @@ def main():
     # command = command
     #
     # AnsibleModule will verify most stuff, we need to verify
-    # 'minutes' and 'service' manually.
+    # 'service' manually.
 
     ##################################################################
     if action not in ['command', 'silence_nagios', 'unsilence_nagios']:
@@ -294,13 +294,6 @@ def main():
         # Make sure there's an actual service selected
         if not services:
             module.fail_json(msg='no service selected to set downtime for')
-        # Make sure minutes is a number
-        try:
-            m = int(minutes)
-            if not isinstance(m, types.IntType):
-                module.fail_json(msg='minutes must be a number')
-        except Exception:
-            module.fail_json(msg='invalid entry for minutes')
 
     ######################################################################
     if action == 'delete_downtime':
@@ -314,13 +307,6 @@ def main():
         # Make sure there's an actual servicegroup selected
         if not servicegroup:
             module.fail_json(msg='no servicegroup selected to set downtime for')
-        # Make sure minutes is a number
-        try:
-            m = int(minutes)
-            if not isinstance(m, types.IntType):
-                module.fail_json(msg='minutes must be a number')
-        except Exception:
-            module.fail_json(msg='invalid entry for minutes')
 
     ##################################################################
     if action in ['enable_alerts', 'disable_alerts']:
@@ -366,7 +352,7 @@ class Nagios(object):
         self.comment = kwargs['comment']
         self.host = kwargs['host']
         self.servicegroup = kwargs['servicegroup']
-        self.minutes = int(kwargs['minutes'])
+        self.minutes = kwargs['minutes']
         self.cmdfile = kwargs['cmdfile']
         self.command = kwargs['command']
 
@@ -389,6 +375,12 @@ class Nagios(object):
         Write the given command to the Nagios command file
         """
 
+        if not os.path.exists(self.cmdfile):
+            self.module.fail_json(msg='nagios command file does not exist',
+                                  cmdfile=self.cmdfile)
+        if not stat.S_ISFIFO(os.stat(self.cmdfile).st_mode):
+            self.module.fail_json(msg='nagios command file is not a fifo file',
+                                  cmdfile=self.cmdfile)
         try:
             fp = open(self.cmdfile, 'w')
             fp.write(cmd)

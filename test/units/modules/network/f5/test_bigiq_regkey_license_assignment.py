@@ -17,7 +17,6 @@ if sys.version_info < (2, 7):
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.modules.bigiq_regkey_license_assignment import ApiParameters
     from library.modules.bigiq_regkey_license_assignment import ModuleParameters
     from library.modules.bigiq_regkey_license_assignment import ModuleManager
     from library.modules.bigiq_regkey_license_assignment import ArgumentSpec
@@ -29,7 +28,6 @@ try:
 
     from test.units.modules.utils import set_module_args
 except ImportError:
-    from ansible.modules.network.f5.bigiq_regkey_license_assignment import ApiParameters
     from ansible.modules.network.f5.bigiq_regkey_license_assignment import ModuleParameters
     from ansible.modules.network.f5.bigiq_regkey_license_assignment import ModuleManager
     from ansible.modules.network.f5.bigiq_regkey_license_assignment import ArgumentSpec
@@ -119,9 +117,11 @@ class TestManager(unittest.TestCase):
             device_password='secret',
             managed='no',
             state='present',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
