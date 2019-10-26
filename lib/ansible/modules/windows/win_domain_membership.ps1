@@ -160,7 +160,7 @@ Function Join-Workgroup {
 
         # 2012+ call the Workgroup arg WorkgroupName, but seem to accept
         try {
-            Remove-Computer -Workgroup $workgroup_name -Credential $domain_cred -Force
+            $rc_result = Remove-Computer -Workgroup $workgroup_name -Credential $domainJoinCredential -Force
         } catch {
             Fail-Json -obj $result -message "failed to remove computer from domain: $($_.Exception.Message)"
         }
