@@ -834,7 +834,7 @@ class MulticastInterface(object):
 
     def delete_interface_pim(self):
         """delete config """
-        existing = self.get_existing()
+        existing = self.existing
         if existing is None or existing == {}:
             self.results['stdout'] = '<ok/>'
             return
@@ -846,15 +846,11 @@ class MulticastInterface(object):
 
     def get_existing(self):
         """get existing """
-        if self.existing:
-            return self.existing
         self.existing = self.get_interface_pim()
         return self.existing
 
     def get_end_state(self):
         """get end state"""
-        if self.end_state:
-            return self.end_state
         self.end_state = self.get_interface_pim()
         return self.end_state
 
@@ -863,7 +859,7 @@ class MulticastInterface(object):
         self.check_params()
         self.get_existing()
         if self.current_cfg == {}:
-            curr_dict = self.get_interface_pim()
+            curr_dict = self.existing
             if curr_dict is not None:
                 self.current_cfg.update(curr_dict)
 
