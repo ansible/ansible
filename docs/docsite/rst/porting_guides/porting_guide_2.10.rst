@@ -54,6 +54,7 @@ The following functionality will be removed in Ansible 2.14. Please update updat
 * The :ref:`openssl_csr <openssl_csr_module>` module's option ``version`` no longer supports values other than ``1`` (the current only standardized CSR version).
 * :ref:`docker_container <docker_container_module>`: the ``trust_image_content`` option will be removed. It has always been ignored by the module.
 * :ref:`iam_managed_policy <iam_managed_policy_module>`: the ``fail_on_delete`` option wil be removed.  It has always been ignored by the module.
+* :ref:`s3_lifecycle <s3_lifecycle_module>`: the ``requester_pays`` option will be removed. It has always been ignored by the module.
 
 
 Noteworthy module changes

@@ -125,6 +125,10 @@ options:
           I(storage_class)
     version_added: 2.6
     type: list
+  requester_pays:
+    description:
+      - The I(requester_pays) option does nothing and will be removed in Ansible 2.14.
+    type: bool
 extends_documentation_fragment:
     - aws
     - ec2
@@ -450,7 +454,7 @@ def main():
         noncurrent_version_transition_days=dict(type='int'),
         noncurrent_version_transitions=dict(type='list'),
         prefix=dict(),
-        requester_pays=dict(default='no', type='bool'),
+        requester_pays=dict(type='bool', removed_in_version='2.14'),
         rule_id=dict(),
         state=dict(default='present', choices=['present', 'absent']),
         status=dict(default='enabled', choices=['enabled', 'disabled']),
