@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ce_is_is_instance
 version_added: "2.10"
@@ -40,18 +40,16 @@ options:
   vpn_name:
     description:
       - VPN Instance, Associate the VPN instance with the corresponding IS-IS process.
-    required: false
     type: str
   state:
     description:
       - Determines whether the config should be present or not on the device.
-    required: false
     default: present
     type: str
     choices: ['present', 'absent']
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
   - name: Set isis process
     ce_is_is_instance:
       instance_id: 3
@@ -80,7 +78,7 @@ EXAMPLES = '''
       state: present
 '''
 
-RETURN = '''
+RETURN = r'''
 proposed:
   description: k/v pairs of parameters passed into module
   returned: always
