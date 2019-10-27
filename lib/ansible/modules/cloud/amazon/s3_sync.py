@@ -114,6 +114,10 @@ options:
     default: no
     version_added: "2.4"
     type: bool
+  retries:
+    description:
+      - The I(retries) option does nothing and will be removed in Ansible 2.14.
+    type: str
 
 requirements:
   - boto3 >= 1.4.4
@@ -508,7 +512,7 @@ def main():
         file_root=dict(required=True, type='path'),
         permission=dict(required=False, choices=['private', 'public-read', 'public-read-write', 'authenticated-read',
                                                  'aws-exec-read', 'bucket-owner-read', 'bucket-owner-full-control']),
-        retries=dict(required=False),
+        retries=dict(required=False, removed_in_version='2.14'),
         mime_map=dict(required=False, type='dict'),
         exclude=dict(required=False, default=".*"),
         include=dict(required=False, default="*"),

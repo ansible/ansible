@@ -55,6 +55,7 @@ The following functionality will be removed in Ansible 2.14. Please update updat
 * :ref:`docker_container <docker_container_module>`: the ``trust_image_content`` option will be removed. It has always been ignored by the module.
 * :ref:`iam_managed_policy <iam_managed_policy_module>`: the ``fail_on_delete`` option wil be removed.  It has always been ignored by the module.
 * :ref:`s3_lifecycle <s3_lifecycle_module>`: the ``requester_pays`` option will be removed. It has always been ignored by the module.
+* :ref:`s3_sync <s3_sync_module>`: the ``retries`` option will be removed. It has always been ignored by the module.
 
 
 Noteworthy module changes
