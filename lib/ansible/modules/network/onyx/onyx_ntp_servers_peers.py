@@ -64,8 +64,7 @@ options:
       trusted_enable:
         description:
           - Disables/Enables the trusted state for the ntp server.
-        choices: ['yes', 'no']
-        type: str
+        type: bool
       version:
         description:
           - version number for the ntp server
@@ -89,19 +88,19 @@ options:
 EXAMPLES = """
 - name: configure NTP peers and servers
   onyx_ntp_peers_servers:
-    peers:
+    peer:
        - ip_or_name: 1.1.1.1
          enabled: yes
          version: 4
          key_id: 6
-         state: yes
-    serevrs:
+         state: present
+    server:
        - ip_or_name: 2.2.2.2
          enabled: true
          version: 3
          key_id: 8
          trusted_enable: no
-         state: yes
+         state: present
     ntpdate: 192.168.10.10
 """
 
@@ -148,7 +147,7 @@ class OnyxNTPServersPeersModule(BaseOnyxModule):
         server_spec = dict(ip_or_name=dict(required=True),
                            enabled=dict(type='bool'),
                            version=dict(type='int', choices=[3, 4]),
-                           trusted_enable=dict(choices=['yes', 'no']),
+                           trusted_enable=dict(type='bool'),
                            key_id=dict(type='int'),
                            state=dict(choices=['present', 'absent']))
         element_spec = dict(peer=dict(type='list', elements='dict', options=peer_spec),
@@ -181,15 +180,20 @@ class OnyxNTPServersPeersModule(BaseOnyxModule):
                 continue
             else:
                 header_list = peer_server.get("header").split(" ")
-                type = header_list[1]
+                header_type = header_list[1]
                 if peer_server.get("Enabled") == "yes":
                     enabled_state = True
                 else:
                     enabled_state = False
-                if (type == 'server'):
+                if (header_type == 'server'):
+                    trusted_state = peer_server.get("Trusted")
+                    if trusted_state == 'yes':
+                        trusted_state = True
+                    else:
+                        trusted_state = False
                     server_entry = {"version": peer_server.get("NTP version"),
                                     "enabled": enabled_state,
-                                    "trusted_enable": peer_server.get("Trusted"),
+                                    "trusted_enable": trusted_state,
                                     "key_id": peer_server.get("Key ID")}
                     servers[header_list[2]] = server_entry
                 else:
@@ -215,49 +219,57 @@ class OnyxNTPServersPeersModule(BaseOnyxModule):
             req_ntp = self._required_config.get(option)
             if req_ntp is not None:
                 for ntp_peer in req_ntp:
-                    curr_name = self._current_config.get(option).get(ntp_peer.get("ip_or_name"))
+                    peer_name = ntp_peer.get('ip_or_name')
+                    peer_key = ntp_peer.get('key_id')
+                    peer_state = ntp_peer.get("state")
+                    peer_enabled = ntp_peer.get("enabled")
+                    peer_version = ntp_peer.get("version")
+                    peer_key = ntp_peer.get("key_id")
+                    curr_name = self._current_config.get(option).get(peer_name)
+                    peer_version = ntp_peer.get('version')
                     if self._current_config.get(option) and curr_name:
-                        if ntp_peer.get("state"):
-                            if(ntp_peer.get("state") == "absent"):
-                                self._commands.append('no ntp {0} {1}' .format(option, ntp_peer.get('ip_or_name')))
+                        if peer_state:
+                            if(peer_state == "absent"):
+                                self._commands.append('no ntp {0} {1}' .format(option, peer_name))
                                 continue
-                        if ntp_peer.get("enabled") is not None:
-                            if curr_name.get("enabled") != ntp_peer.get("enabled"):
-                                if(ntp_peer.get("enabled") is True):
-                                    self._commands.append('no ntp {0} {1} disable' .format(option, ntp_peer.get('ip_or_name')))
+                        if peer_enabled is not None:
+                            if curr_name.get("enabled") != peer_enabled:
+                                if(peer_enabled is True):
+                                    self._commands.append('no ntp {0} {1} disable' .format(option, peer_name))
                                 else:
-                                    self._commands.append('ntp {0} {1} disable'  .format(option, ntp_peer.get('ip_or_name')))
-                        if ntp_peer.get("version"):
-                            if (int(curr_name.get("version")) != ntp_peer.get("version")):
-                                self._commands.append('ntp {0} {1} version {2}'  .format(option, ntp_peer.get('ip_or_name'), ntp_peer.get('version')))
-                        if ntp_peer.get("key_id"):
+                                    self._commands.append('ntp {0} {1} disable'  .format(option, peer_name))
+                        if peer_version:
+                            if (int(curr_name.get("version")) != peer_version):
+                                self._commands.append('ntp {0} {1} version {2}'  .format(option, peer_name, peer_version))
+                        if peer_key:
                             if curr_name.get("key_id") != "none":
-                                if (int(curr_name.get("key_id")) != ntp_peer.get("key_id")):
-                                    self._commands.append('ntp {0} {1} keyID {2}'  .format(option, ntp_peer.get('ip_or_name'), ntp_peer.get('key_id')))
+                                if (int(curr_name.get("key_id")) != peer_key):
+                                    self._commands.append('ntp {0} {1} keyID {2}'  .format(option, peer_name, peer_key))
                             else:
-                                self._commands.append('ntp {0} {1} keyID {2}'  .format(option, ntp_peer.get('ip_or_name'), ntp_peer.get('key_id')))
+                                self._commands.append('ntp {0} {1} keyID {2}'  .format(option, peer_name, peer_key))
                         if option == "server":
-                            if ntp_peer.get("trusted_enable"):
-                                if (curr_name.get("trusted_enable") != ntp_peer.get("trusted_enable")):
-                                    if ntp_peer.get("trusted_enable") == "yes":
-                                        self._commands.append('ntp {0} {1} trusted-enable'  .format(option, ntp_peer.get('ip_or_name')))
+                            server_trusted = ntp_peer.get("trusted_enable")
+                            if server_trusted is not None:
+                                if (curr_name.get("trusted_enable") != server_trusted):
+                                    if server_trusted is True:
+                                        self._commands.append('ntp {0} {1} trusted-enable'  .format(option, peer_name))
                                     else:
-                                        self._commands.append('no ntp {0} {1} trusted-enable'  .format(option, ntp_peer.get('ip_or_name')))
+                                        self._commands.append('no ntp {0} {1} trusted-enable'  .format(option, peer_name))
                     else:
-                        if ntp_peer.get("state"):
-                            if(ntp_peer.get("state") == "absent"):
+                        if peer_state:
+                            if(peer_state == "absent"):
                                 continue
-                        if ntp_peer.get("enabled") is not None:
-                            if(ntp_peer.get("enabled") is True):
-                                self._commands.append('no ntp {0} {1} disable' .format(option, ntp_peer.get('ip_or_name')))
+                        if peer_enabled is not None:
+                            if(peer_enabled is True):
+                                self._commands.append('no ntp {0} {1} disable' .format(option, peer_name))
                             else:
-                                self._commands.append('ntp {0} {1} disable'  .format(option, ntp_peer.get('ip_or_name')))
+                                self._commands.append('ntp {0} {1} disable'  .format(option, peer_name))
                         else:
-                            self._commands.append('ntp {0} {1} disable'  .format(option, ntp_peer.get('ip_or_name')))
-                        if ntp_peer.get("version"):
-                            self._commands.append('ntp {0} {1} version {2}'  .format(option, ntp_peer.get('ip_or_name'), ntp_peer.get('version')))
-                        if ntp_peer.get("key_id"):
-                            self._commands.append('ntp {0} {1} keyID {2}'  .format(option, ntp_peer.get('ip_or_name'), ntp_peer.get('key_id')))
+                            self._commands.append('ntp {0} {1} disable'  .format(option, peer_name))
+                        if peer_version:
+                            self._commands.append('ntp {0} {1} version {2}'  .format(option, peer_name, peer_version))
+                        if peer_key:
+                            self._commands.append('ntp {0} {1} keyID {2}'  .format(option, peer_name, peer_key))
 
         ntpdate = self._required_config.get("ntpdate")
         if ntpdate is not None:
