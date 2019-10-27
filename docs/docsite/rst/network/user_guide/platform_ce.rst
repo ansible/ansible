@@ -157,7 +157,7 @@ Modules work with connection C(netconf)
 
 .. code-block:: yaml
 
-  ce_aaa_server
+   ce_aaa_server
    ce_aaa_server_host
    ce_acl
    ce_acl_advance
