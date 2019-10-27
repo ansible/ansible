@@ -133,7 +133,7 @@
       - subject_key_identifier_3 is changed
       - subject_key_identifier_4 is changed
       - subject_key_identifier_5 is not changed
-      - subject_key_identifier_6 is not changed
+      - subject_key_identifier_6 is changed
   when: select_crypto_backend != 'pyopenssl'
 
 - name: Verify that authority key identifier handling works
