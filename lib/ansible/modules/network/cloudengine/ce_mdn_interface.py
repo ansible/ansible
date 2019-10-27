@@ -50,7 +50,6 @@ options:
   state:
     description:
       - Manage the state of the resource.
-    required: false
     default: present
     type: str
     choices: ['present','absent']
