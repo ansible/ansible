@@ -493,6 +493,7 @@
     - name: (OwnCA, {{select_crypto_backend}}) Generate CA privatekey
       openssl_privatekey:
         path: '{{ output_dir }}/ca_privatekey_{{ item }}.pem'
+        type: '{{ item }}'
       loop:
         - Ed25519
         - Ed448
