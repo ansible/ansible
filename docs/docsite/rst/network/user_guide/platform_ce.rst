@@ -116,7 +116,6 @@ Example NETCONF Task
      ce_vlan:
        vlan_id: 50
        name: WEB
-     register: backupce_location
      when: ansible_network_os == 'ce'
 
 
