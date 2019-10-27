@@ -1147,10 +1147,15 @@ class SelfSignedCertificateCryptography(Certificate):
             except ValueError as e:
                 raise CertificateError(str(e))
 
-            certificate = cert_builder.sign(
-                private_key=self.privatekey, algorithm=self.digest,
-                backend=default_backend()
-            )
+            try:
+                certificate = cert_builder.sign(
+                    private_key=self.privatekey, algorithm=self.digest,
+                    backend=default_backend()
+                )
+            except TypeError as e:
+                if str(e) == 'Algorithm must be a registered hash algorithm.' and self.digest is None:
+                    module.fail_json(msg='Signing with Ed25519 and Ed448 keys requires cryptography 2.8 or newer.')
+                raise
 
             self.cert = certificate
 
@@ -1383,10 +1388,15 @@ class OwnCACertificateCryptography(Certificate):
                         critical=False
                     )
 
-            certificate = cert_builder.sign(
-                private_key=self.ca_private_key, algorithm=self.digest,
-                backend=default_backend()
-            )
+            try:
+                certificate = cert_builder.sign(
+                    private_key=self.ca_private_key, algorithm=self.digest,
+                    backend=default_backend()
+                )
+            except TypeError as e:
+                if str(e) == 'Algorithm must be a registered hash algorithm.' and self.digest is None:
+                    module.fail_json(msg='Signing with Ed25519 and Ed448 keys requires cryptography 2.8 or newer.')
+                raise
 
             self.cert = certificate
 
