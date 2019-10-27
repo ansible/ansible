@@ -51,28 +51,23 @@ options:
   vlan_id:
     description:
       - Virtual LAN identity.
-    required: false
     type: int
   igmp:
     description:
       - Enable Layer 2 multicast Snooping in a VLAN.
-    required: false
     type: bool
   version:
     description:
       - Specifies the IGMP version that can be processed.
-    required: false
     default: 2
     type: int
   proxy:
     description:
       - Layer 2 multicast snooping proxy is enabled.
-    required: false
     type: bool
   state:
     description:
       - Specify desired state of the resource.
-    required: false
     choices: ['present','absent']
     default: present
     type: str
@@ -80,19 +75,19 @@ options:
 
 EXAMPLES = '''
 
-  - name: config global igmp enable
+  - name: configure global igmp enable
     ce_multicast_igmp_enable:
       aftype: v4
       features: 'global'
       state: present
 
-  - name: config global igmp disable
+  - name: configure global igmp disable
     ce_multicast_igmp_enable:
       features: 'global'
       aftype: v4
       state: absent
 
-  - name: config vlan igmp enable
+  - name: configure vlan igmp enable
     ce_multicast_igmp_enable:
       features: 'vlan'
       aftype: v4
