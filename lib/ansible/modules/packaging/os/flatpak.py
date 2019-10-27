@@ -62,7 +62,8 @@ options:
     default: system
   name:
     description:
-    - The name of the flatpak to manage.
+    - The name of the flatpak to manage. To operate on several packages this
+      can accept a list of packages.
     - When used with I(state=present), I(name) can be specified as an C(http(s)) URL to a
       C(flatpakref) file or the unique reverse DNS name that identifies a flatpak.
     - When supplying a reverse DNS name, you can use the I(remote) option to specify on what remote
@@ -153,34 +154,53 @@ from ansible.module_utils._text import to_native
 OUTDATED_FLATPAK_VERSION_ERROR_MESSAGE = "Unknown option --columns=application"
 
 
-def install_flat(module, binary, remote, name, method):
+def install_flat(module, binary, remote, names, method):
     """Add a new flatpak."""
     global result
-    if name.startswith('http://') or name.startswith('https://'):
-        command = "{0} install --{1} -y {2}".format(binary, method, name)
-    else:
-        command = "{0} install --{1} -y {2} {3}".format(binary, method, remote, name)
-    _flatpak_command(module, module.check_mode, command)
+    uri_names = []
+    id_names = []
+    for name in names:
+        if name.startswith('http://') or name.startswith('https://'):
+            uri_names.append(name)
+        else:
+            id_names.append(name)
+    if uri_names:
+        uri_names = ' '.join(uri_names)
+        command = "{0} install --{1} -y {2}".format(binary, method, uri_names)
+        _flatpak_command(module, module.check_mode, command)
+    if id_names:
+        id_names = ' '.join(id_names)
+        command = "{0} install --{1} -y {2} {3}".format(binary, method, remote, id_names)
+        _flatpak_command(module, module.check_mode, command)
     result['changed'] = True
 
 
-def uninstall_flat(module, binary, name, method):
+def uninstall_flat(module, binary, names, method):
     """Remove an existing flatpak."""
     global result
-    installed_flat_name = _match_installed_flat_name(module, binary, name, method)
-    command = "{0} uninstall -y --{1} {2}".format(binary, method, installed_flat_name)
+    installed_flat_names = [
+        _match_installed_flat_name(module, binary, name, method)
+        for name in names
+    ]
+    installed_flat_names = ' '.join(installed_flat_names)
+    command = "{0} uninstall -y --{1} {2}".format(binary, method, installed_flat_names)
     _flatpak_command(module, module.check_mode, command)
     result['changed'] = True
 
 
-def flatpak_exists(module, binary, name, method):
+def flatpak_exists(module, binary, names, method):
     """Check if the flatpak is installed."""
     command = "{0} list --{1} --app".format(binary, method)
     output = _flatpak_command(module, False, command)
-    name = _parse_flatpak_name(name).lower()
-    if name in output.lower():
-        return True
-    return False
+    installed = []
+    not_installed = []
+    for name in names:
+        name = _parse_flatpak_name(name).lower()
+        if name in output.lower():
+            installed.append(name)
+        else:
+            not_installed.append(name)
+    return installed, not_installed
 
 
 def _match_installed_flat_name(module, binary, name, method):
@@ -261,7 +281,7 @@ def main():
     # This module supports check mode
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str', required=True),
+            name=dict(type='list', required=True),
             remote=dict(type='str', default='flathub'),
             method=dict(type='str', default='system',
                         choices=['user', 'system']),
@@ -272,7 +292,7 @@ def main():
         supports_check_mode=True,
     )
 
-    name = module.params['name']
+    names = [name.strip() for name in module.params['name']]
     state = module.params['state']
     remote = module.params['remote']
     method = module.params['method']
@@ -288,10 +308,11 @@ def main():
     if not binary:
         module.fail_json(msg="Executable '%s' was not found on the system." % executable, **result)
 
-    if state == 'present' and not flatpak_exists(module, binary, name, method):
-        install_flat(module, binary, remote, name, method)
-    elif state == 'absent' and flatpak_exists(module, binary, name, method):
-        uninstall_flat(module, binary, name, method)
+    installed, not_installed = flatpak_exists(module, binary, names, method)
+    if state == 'present' and not_installed:
+        install_flat(module, binary, remote, not_installed, method)
+    elif state == 'absent' and installed:
+        uninstall_flat(module, binary, installed, method)
 
     module.exit_json(**result)
 
