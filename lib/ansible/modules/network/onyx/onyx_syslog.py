@@ -29,7 +29,7 @@ options:
     local_level:
         description:
           - Set minimum severity of log messages saved on the local disk
-        choices: ['alert', 'crit', 'debug', 'emerg', 'err', 'info', 'none', 'notice', 'warning']
+        choices: ['none', 'debug', 'info', 'notice', 'alert', 'warning', 'err', 'emerg', 'crit']
         type: str
     local_override:
         description:
@@ -45,17 +45,17 @@ options:
             override_priority:
                 description:
                 - Specify a priority whose log level to override
-                choices: ['alert', 'crit', 'debug', 'emerg', 'err', 'info', 'none', 'notice', 'warning']
+                choices: ['none', 'debug', 'info', 'notice', 'alert', 'warning', 'err', 'emerg', 'crit']
                 type: str
     cli_level:
         description:
           - Set the severity level of certain CLI log messages
-        choices: ['alert', 'crit', 'debug', 'emerg', 'err', 'info', 'none', 'notice', 'warning']
+        choices: ['none', 'debug', 'info', 'notice', 'alert', 'warning', 'err', 'emerg', 'crit']
         type: str
     audit_level:
         description:
           - Set the severity level of audit messages for configuration changes and actions taken by the user
-        choices: ['alert', 'crit', 'debug', 'emerg', 'err', 'info', 'none', 'notice', 'warning']
+        choices: ['none', 'debug', 'info', 'notice', 'alert', 'warning', 'err', 'emerg', 'crit']
         type: str
     format:
         description:
@@ -73,7 +73,7 @@ options:
     trap:
         description:
            - Set minimum severity of log messages sent to syslog servers
-        choices: ['alert', 'crit', 'debug', 'emerg', 'err', 'info', 'none', 'notice', 'warning']
+        choices: ['none', 'debug', 'info', 'notice', 'alert', 'warning', 'err', 'emerg', 'crit']
         type: str
     trap_enabled:
         description:
@@ -112,7 +112,7 @@ options:
             monitor_level:
                 description:
                 - Set monitor log level
-                choices: ['alert', 'crit', 'debug', 'emerg', 'err', 'info', 'none', 'notice', 'warning']
+                choices: ['none', 'debug', 'info', 'notice', 'alert', 'warning', 'err', 'emerg', 'crit']
                 type: str
 """
 
@@ -180,7 +180,7 @@ from ansible.module_utils.network.onyx.onyx import BaseOnyxModule, show_cmd
 class OnyxSyslogModule(BaseOnyxModule):
 
     FACILITIES = ['mgmt-front', 'mgmt-back', 'mgmt-core', 'events', 'debug-module', 'sx-sdk', 'mlx-daemons', 'protocol-stack']
-    LEVELS = ['alert', 'crit', 'debug', 'emerg', 'err', 'info', 'none', 'notice', 'warning']
+    LEVELS = ['none', 'debug', 'info', 'notice', 'alert', 'warning', 'err', 'emerg', 'crit']
     FORMAT_WELF_RGX = re.compile('^.*logging format welf fw-name (.*)$')
     FRACTINAL_RGX = re.compile('^.*logging fields seconds fractional-digits ([1-9]).*$')
     WHOLE_RGX = re.compile('^.*logging fields seconds whole-digits (1|6|all).*$')
@@ -189,26 +189,26 @@ class OnyxSyslogModule(BaseOnyxModule):
         """
         module initialization
         """
-        override_spec = dict(override_class=dict(type='str', choices=self.FACILITIES, required=True),
-                             override_priority=dict(type='str', choices=self.LEVELS))
+        override_spec = dict(override_class=dict(choices=self.FACILITIES, required=True),
+                             override_priority=dict(choices=self.LEVELS))
 
-        monitor_spec = dict(monitor_facility=dict(type='str', choices=self.FACILITIES, required=True),
-                            monitor_level=dict(type='str', choices=self.LEVELS))
+        monitor_spec = dict(monitor_facility=dict(choices=self.FACILITIES, required=True),
+                            monitor_level=dict(choices=self.LEVELS))
 
-        element_spec = dict(enabled=dict(type="str", choices=['enabled', 'disabled'], default='enabled'),
-                            local_level=dict(type='str', choices=self.LEVELS),
-                            trap=dict(type='str', choices=self.LEVELS),
-                            trap_enabled=dict(type="str", choices=['enabled', 'disabled'], default='enabled'),
-                            cli_level=dict(type='str', choices=self.LEVELS),
-                            audit_level=dict(type='str', choices=self.LEVELS),
+        element_spec = dict(enabled=dict(choices=['enabled', 'disabled'], default='enabled'),
+                            local_level=dict(choices=self.LEVELS),
+                            trap=dict(choices=self.LEVELS),
+                            trap_enabled=dict(choices=['enabled', 'disabled'], default='enabled'),
+                            cli_level=dict(choices=self.LEVELS),
+                            audit_level=dict(choices=self.LEVELS),
                             monitor=dict(type='list', options=monitor_spec),
                             local_override=dict(type='list', options=override_spec),
-                            format=dict(type='str', choices=['welf', 'standard']),
+                            format=dict(choices=['welf', 'standard']),
                             format_welf_host=dict(type='str'),
                             received=dict(type="bool"),
-                            seconds_enabled=dict(type="str", choices=['enabled', 'disabled']),
+                            seconds_enabled=dict(choices=['enabled', 'disabled']),
                             fractional_digits=dict(type='int', choices=[1, 2, 3, 6]),
-                            whole_digits=dict(type='str', choices=['1', '6', 'all']))
+                            whole_digits=dict(choices=['1', '6', 'all']))
         argument_spec = dict()
         argument_spec.update(element_spec)
         self._module = AnsibleModule(
@@ -300,7 +300,7 @@ class OnyxSyslogModule(BaseOnyxModule):
                             'override_priority': override_priority
                         }]
 
-        current_config['received'] = True if current_config.get('received') == 'yes' else False
+        current_config['received'] = (current_config.get('received') == 'yes')
         ''' extract 'format/fields' from running config line (if any ?) its single line - no'''
         if syslog_config and syslog_config[0].get('lines'):
             lines = syslog_config[0].get('lines')
@@ -308,10 +308,12 @@ class OnyxSyslogModule(BaseOnyxModule):
                 match = self.FORMAT_WELF_RGX.match(line)
                 if match:
                     current_config['format_welf_host'] = match.group(1)
+                    continue
 
                 match = self.WHOLE_RGX.match(line)
                 if match:
                     current_config['whole_digits'] = match.group(1)
+                    continue
 
                 match = self.FRACTINAL_RGX.match(line)
                 if match:
