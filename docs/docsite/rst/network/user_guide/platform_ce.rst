@@ -124,80 +124,80 @@ Note
 
 Modules work with connection C(network_cli)
 --------------------------------------------
-ce_acl_interface
-ce_command
-ce_config
-ce_evpn_bgp
-ce_evpn_bgp_rr
-ce_evpn_global
-ce_facts
-ce_mlag_interface
-ce_mtu
-ce_netstream_aging
-ce_netstream_export
-ce_netstream_global
-ce_netstream_template
-ce_ntp_auth
-ce_rollback
-ce_snmp_contact
-ce_snmp_location
-ce_snmp_traps
-ce_startup
-ce_stp
-ce_vxlan_arp
-ce_vxlan_gateway
-ce_vxlan_global
+.. ce_acl_interface
+   ce_command
+   ce_config
+   ce_evpn_bgp
+   ce_evpn_bgp_rr
+   ce_evpn_global
+   ce_facts
+   ce_mlag_interface
+   ce_mtu
+   ce_netstream_aging
+   ce_netstream_export
+   ce_netstream_global
+   ce_netstream_template
+   ce_ntp_auth
+   ce_rollback
+   ce_snmp_contact
+   ce_snmp_location
+   ce_snmp_traps
+   ce_startup
+   ce_stp
+   ce_vxlan_arp
+   ce_vxlan_gateway
+   ce_vxlan_global
 
 
 Modules work with connection C(netconf)
 --------------------------------------------
-ce_aaa_server
-ce_aaa_server_host
-ce_acl
-ce_acl_advance
-ce_bfd_global
-ce_bfd_session
-ce_bfd_view
-ce_bgp
-ce_bgp_af
-ce_bgp_neighbor
-ce_bgp_neighbor_af
-ce_dldp
-ce_dldp_interface
-ce_eth_trunk
-ce_evpn_bd_vni
-ce_file_copy
-ce_info_center_debug
-ce_info_center_global
-ce_info_center_log
-ce_info_center_trap
-ce_interface
-ce_interface_ospf
-ce_ip_interface
-ce_lacp
-ce_link_status
-ce_lldp
-ce_lldp_interface
-ce_mlag_config
-ce_netconf
-ce_ntp
-ce_ospf
-ce_ospf_vrf
-ce_reboot
-ce_sflow
-ce_snmp_community
-ce_snmp_target_host
-ce_snmp_user
-ce_static_route
-ce_static_route_bfd
-ce_switchport
-ce_vlan
-ce_vrf
-ce_vrf_af
-ce_vrf_interface
-ce_vrrp
-ce_vxlan_tunnel
-ce_vxlan_vap
+.. ce_aaa_server
+   ce_aaa_server_host
+   ce_acl
+   ce_acl_advance
+   ce_bfd_global
+   ce_bfd_session
+   ce_bfd_view
+   ce_bgp
+   ce_bgp_af
+   ce_bgp_neighbor
+   ce_bgp_neighbor_af
+   ce_dldp
+   ce_dldp_interface
+   ce_eth_trunk
+   ce_evpn_bd_vni
+   ce_file_copy
+   ce_info_center_debug
+   ce_info_center_global
+   ce_info_center_log
+   ce_info_center_trap
+   ce_interface
+   ce_interface_ospf
+   ce_ip_interface
+   ce_lacp
+   ce_link_status
+   ce_lldp
+   ce_lldp_interface
+   ce_mlag_config
+   ce_netconf
+   ce_ntp
+   ce_ospf
+   ce_ospf_vrf
+   ce_reboot
+   ce_sflow
+   ce_snmp_community
+   ce_snmp_target_host
+   ce_snmp_user
+   ce_static_route
+   ce_static_route_bfd
+   ce_switchport
+   ce_vlan
+   ce_vrf
+   ce_vrf_af
+   ce_vrf_interface
+   ce_vrrp
+   ce_vxlan_tunnel
+   ce_vxlan_vap
 
 
 .. include:: shared_snippets/SSH_warning.txt
