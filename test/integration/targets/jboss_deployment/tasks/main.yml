@@ -1,0 +1,185 @@
+---
+- name: Download hawt.io
+  get_url:
+    url: http://central.maven.org/maven2/io/hawt/hawtio-web/1.5.10/hawtio-web-1.5.10.war
+    dest: /opt/hawtio-web-1.5.10.war
+    mode: 0655
+    checksum: md5:27b9f95d78b50e124b6b4e4f72f196f0
+
+- name: Download hawt.io
+  get_url:
+    url: http://central.maven.org/maven2/io/hawt/hawtio-web/1.5.11/hawtio-web-1.5.11.war
+    dest: /opt/hawtio-web-1.5.11.war
+    mode: 0655
+    checksum: md5:309765745a2936361f1bad8ccc5134d0
+
+- name: Test deploy new module
+  jboss_deployment:
+    username: ansible
+    password: ansible
+    name: hawtio.war
+    state: present
+    src: /opt/hawtio-web-1.5.10.war
+  register: result
+- debug: var=result
+- name: Verify deploy new module
+  assert:
+    that:
+       - "result is success"
+       - "result.changed == true"
+       - "'Deployed hawtio.war' in result.msg"
+
+- name: Test deploy exists module
+  jboss_deployment:
+    username: ansible
+    password: ansible
+    name: hawtio.war
+    state: present
+    src: /opt/hawtio-web-1.5.10.war
+  register: result
+- debug: var=result
+- name: Verify deploy exists module
+  assert:
+    that:
+       - "result is success"
+       - "result.changed == false"
+       - "'Deployment hawtio.war exists' in result.msg"
+
+- name: Test deploy module with new checksum
+  jboss_deployment:
+    username: ansible
+    password: ansible
+    name: hawtio.war
+    state: present
+    src: /opt/hawtio-web-1.5.11.war
+  register: result
+- debug: var=result
+- name: Verify deploy module with new checksum
+  assert:
+    that:
+       - "result is success"
+       - "result.changed == true"
+       - "'Update deployment hawtio.war' in result.msg"
+       - "'Previous content checksum' in result.msg"
+
+- name: Test remove exists module
+  jboss_deployment:
+    username: ansible
+    password: ansible
+    name: hawtio.war
+    state: absent
+  register: result
+- debug: var=result
+- name: Verify remove exists module
+  assert:
+    that:
+       - "result is success"
+       - "result.changed == true"
+       - "'Undeployed hawtio.war' in result.msg"
+
+- name: Test invalid credentials
+  jboss_deployment:
+    username: ansible
+    password: wrong_password
+    name: hawtio.war
+    state: present
+    src: /opt/hawtio-web-1.5.11.war
+  register: result
+  ignore_errors: yes
+- debug: var=result
+- name: Verify invalid credentials
+  assert:
+    that:
+       - "result is failed"
+       - "result.changed == false"
+       - "'Invalid credentials' in result.msg"
+
+- name: Test operation timeout
+  jboss_deployment:
+    username: ansible
+    password: ansible
+    name: hawtio.war
+    state: present
+    src: /opt/hawtio-web-1.5.11.war
+    timeout: 1
+  register: result
+  ignore_errors: yes
+- debug: var=result
+- name: Verify operation timeout
+  assert:
+    that:
+       - "result is failed"
+       - "result.changed == false"
+       - "'Operation timeout' in result.msg"
+
+- name: Test other urlopen error
+  jboss_deployment:
+    port: 9100
+    username: ansible
+    password: ansible
+    name: hawtio.war
+    state: present
+    src: /opt/hawtio-web-1.5.11.war
+  register: result
+  ignore_errors: yes
+- debug: var=result
+- name: Verify other urlopen error
+  assert:
+    that:
+       - "result is failed"
+       - "result.changed == false"
+       - "'urlopen error' in result.msg"
+
+- name: Test src required if state present
+  jboss_deployment:
+    username: ansible
+    password: ansible
+    name: hawtio.war
+    state: present
+  register: result
+  ignore_errors: yes
+- debug: var=result
+- name: Verify src required if state present
+  assert:
+    that:
+       - "result is failed"
+       - "result.changed == false"
+       - "'missing: src' in result.msg"
+
+- name: Test environment variable JBOSS_MANAGEMENT_*
+  jboss_deployment:
+    name: hawtio.war
+    state: absent
+  environment:
+    JBOSS_MANAGEMENT_USER: ansible
+    JBOSS_MANAGEMENT_PASSWORD: ansible
+    JBOSS_MANAGEMENT_HOST: localhost
+    JBOSS_MANAGEMENT_PORT: 9990
+  register: result
+  ignore_errors: yes
+- debug: var=result
+- name: Verify environment variable JBOSS_MANAGEMENT_*
+  assert:
+    that:
+       - "result is success"
+
+- name: Test low priority environment variable JBOSS_MANAGEMENT_*
+  jboss_deployment:
+    host: localhost
+    port: 9990
+    username: ansible
+    password: ansible
+    name: hawtio.war
+    state: absent
+  environment:
+    JBOSS_MANAGEMENT_USER: wrong_user
+    JBOSS_MANAGEMENT_PASSWORD: wrong_password
+    JBOSS_MANAGEMENT_HOST: wrong_host
+    JBOSS_MANAGEMENT_PORT: 10000
+  register: result
+  ignore_errors: yes
+- debug: var=result
+- name: Verify low priority environment variable JBOSS_MANAGEMENT_*
+  assert:
+    that:
+       - "result is success"

@@ -1,0 +1,149 @@
+---
+- name: Download hawt.io
+  get_url:
+    url: http://central.maven.org/maven2/io/hawt/hawtio-web/1.5.10/hawtio-web-1.5.10.war
+    dest: /opt/hawtio-web-1.5.10.war
+    mode: 0655
+    checksum: md5:27b9f95d78b50e124b6b4e4f72f196f0
+
+- name: Test server-state running
+  jboss_command:
+    username: ansible
+    password: ansible
+    operation: read-attribute
+    parameters:
+      name: server-state
+  changed_when: False
+  register: result
+- debug: var=result
+- name: Verify server-state running
+  assert:
+    that:
+       - "result is success"
+       - "result.changed == false"
+       - "result.meta.result == 'running'"
+
+- name: Test deploy new module
+  jboss_deployment:
+    username: ansible
+    password: ansible
+    name: hawtio.war
+    state: present
+    src: /opt/hawtio-web-1.5.10.war
+  register: result
+- debug: var=result
+- name: Verify deploy new module
+  assert:
+    that:
+       - "result is success"
+       - "result.changed == true"
+       - "'Deployed hawtio.war' in result.msg"
+
+- name: Test deployment info
+  jboss_command:
+    username: ansible
+    password: ansible
+    path: "/deployment=*"
+    operation: query
+    parameters:
+      select: ["name", "runtime-name", "presistent", "enabled", "status"]
+  register: result
+- debug: var=result
+- name: Verify deployment info
+  assert:
+    that:
+       - "result is success"
+       - "result.changed == true"
+
+- name: Test read datasource
+  jboss_command:
+    username: ansible
+    password: ansible
+    operation: read-resource
+    path: "/subsystem=datasources/data-source=ExampleDS"
+  register: result
+- debug: var=result
+- name: Verify read datasource
+  assert:
+    that:
+       - "result.changed == true"
+       - "result.meta.outcome == 'success'"
+       - "result.meta.result['jndi-name'] == 'java:jboss/datasources/ExampleDS'"
+
+- name: Test invalid credentials
+  jboss_command:
+    username: ansible
+    password: wrong_password
+    operation: read-attribute
+    parameters:
+      name: server-state
+  changed_when: False
+  register: result
+  ignore_errors: yes
+- debug: var=result
+- name: Verify invalid credentials
+  assert:
+    that:
+       - "result is failed"
+       - "result.changed == false"
+       - "'Invalid credentials' in result.msg"
+
+- name: Test other urlopen error
+  jboss_command:
+    port: 9100
+    username: ansible
+    password: ansible
+    path: "/deployment=*"
+    operation: query
+    parameters:
+      select: ["name", "runtime-name", "presistent", "enabled", "status"]
+  register: result
+  ignore_errors: yes
+- debug: var=result
+- name: Verify other urlopen error
+  assert:
+    that:
+       - "result is failed"
+       - "result.changed == false"
+
+- name: Test environment variable JBOSS_MANAGEMENT_*
+  jboss_command:
+    path: "/deployment=*"
+    operation: query
+    parameters:
+      select: ["name", "runtime-name", "presistent", "enabled", "status"]
+  environment:
+    JBOSS_MANAGEMENT_USER: ansible
+    JBOSS_MANAGEMENT_PASSWORD: ansible
+    JBOSS_MANAGEMENT_HOST: localhost
+    JBOSS_MANAGEMENT_PORT: 9990
+  register: result
+  ignore_errors: yes
+- debug: var=result
+- name: Verify environment variable JBOSS_MANAGEMENT_*
+  assert:
+    that:
+       - "result is success"
+
+- name: Test low priority environment variable JBOSS_MANAGEMENT_*
+  jboss_command:
+    host: localhost
+    port: 9990
+    username: ansible
+    password: ansible
+    path: "/deployment=*"
+    operation: query
+    parameters:
+      select: ["name", "runtime-name", "presistent", "enabled", "status"]
+  environment:
+    JBOSS_MANAGEMENT_USER: wrong_user
+    JBOSS_MANAGEMENT_PASSWORD: wrong_password
+    JBOSS_MANAGEMENT_HOST: wrong_host
+    JBOSS_MANAGEMENT_PORT: 10000
+  register: result
+  ignore_errors: yes
+- debug: var=result
+- name: Verify low priority environment variable JBOSS_MANAGEMENT_*
+  assert:
+    that:
+       - "result is success"
