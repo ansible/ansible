@@ -79,9 +79,42 @@ try:
             # https://github.com/pyca/cryptography/commit/d1b5681f6db2bde7a14625538bd7907b08dfb486
             x509.RFC822Name.__hash__ = simple_hash
             x509.UniformResourceIdentifier.__hash__ = simple_hash
+
+    # Test whether we have support for X25519, X448, Ed25519 and/or Ed448
+    try:
+        import cryptography.hazmat.primitives.asymmetric.x25519
+        CRYPTOGRAPHY_HAS_X25519 = True
+        try:
+            cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.private_bytes
+            CRYPTOGRAPHY_HAS_X25519_FULL = True
+        except AttributeError:
+            CRYPTOGRAPHY_HAS_X25519_FULL = False
+    except ImportError:
+        CRYPTOGRAPHY_HAS_X25519 = False
+        CRYPTOGRAPHY_HAS_X25519_FULL = False
+    try:
+        import cryptography.hazmat.primitives.asymmetric.x448
+        CRYPTOGRAPHY_HAS_X448 = True
+    except ImportError:
+        CRYPTOGRAPHY_HAS_X448 = False
+    try:
+        import cryptography.hazmat.primitives.asymmetric.ed25519
+        CRYPTOGRAPHY_HAS_ED25519 = True
+    except ImportError:
+        CRYPTOGRAPHY_HAS_ED25519 = False
+    try:
+        import cryptography.hazmat.primitives.asymmetric.ed448
+        CRYPTOGRAPHY_HAS_ED448 = True
+    except ImportError:
+        CRYPTOGRAPHY_HAS_ED448 = False
+
 except ImportError:
     # Error handled in the calling module.
-    pass
+    CRYPTOGRAPHY_HAS_X25519 = False
+    CRYPTOGRAPHY_HAS_X25519_FULL = False
+    CRYPTOGRAPHY_HAS_X448 = False
+    CRYPTOGRAPHY_HAS_ED25519 = False
+    CRYPTOGRAPHY_HAS_ED448 = False
 
 
 import abc
