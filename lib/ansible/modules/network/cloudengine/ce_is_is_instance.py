@@ -39,7 +39,7 @@ options:
     type: int
   vpn_name:
     description:
-      - VPN Instance, Associate the VPN instance with the corresponding IS-IS process.
+      - VPN Instance, associate the VPN instance with the corresponding IS-IS process.
     type: str
   state:
     description:
