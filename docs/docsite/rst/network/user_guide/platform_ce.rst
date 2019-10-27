@@ -124,7 +124,10 @@ Note
 
 Modules work with connection C(network_cli)
 --------------------------------------------
-.. ce_acl_interface
+
+.. code-block:: yaml
+
+   ce_acl_interface
    ce_command
    ce_config
    ce_evpn_bgp
@@ -151,7 +154,10 @@ Modules work with connection C(network_cli)
 
 Modules work with connection C(netconf)
 --------------------------------------------
-.. ce_aaa_server
+
+.. code-block:: yaml
+
+  ce_aaa_server
    ce_aaa_server_host
    ce_acl
    ce_acl_advance
@@ -198,6 +204,5 @@ Modules work with connection C(netconf)
    ce_vrrp
    ce_vxlan_tunnel
    ce_vxlan_vap
-
 
 .. include:: shared_snippets/SSH_warning.txt
