@@ -142,7 +142,7 @@ updates:
         "undo igmp snooping version",
         "undo igmp snooping proxy"]
 changed:
-    description: check to see if a change was made on the device
+    description: check if a change was made on the device
     returned: always
     type: bool
     sample: true
@@ -318,12 +318,12 @@ class IgmpSnoop(object):
             # new or edit
             if state == 'present':
                 if not self.igmp_info_data["igmp_info"]:
-                    # self.igmp_info_data["igmp_info"] has not value
+                    # igmp_info_data has not igmp_info value.
                     change = True
             else:
                 # delete
                 if self.igmp_info_data["igmp_info"]:
-                    # self.igmp_info_data["igmp_info"] has value
+                    # igmp_info_data has not igmp_info value.
                     change = True
         self.changed = change
 
