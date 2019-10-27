@@ -175,3 +175,12 @@
       - everything_1 is changed
       - everything_2 is not changed
       - everything_3 is not changed
+
+- name: Verify Ed25519 and Ed448 tests (for cryptography >= 2.6)
+  assert:
+    that:
+      - generate_csr_ed25519_ed448.results[0] is changed
+      - generate_csr_ed25519_ed448.results[1] is changed
+      - generate_csr_ed25519_ed448_idempotent.results[0] is not changed
+      - generate_csr_ed25519_ed448_idempotent.results[1] is not changed
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.6', '>=')
