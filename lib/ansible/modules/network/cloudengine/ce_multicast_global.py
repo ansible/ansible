@@ -192,13 +192,13 @@ class MulticastGlobal(object):
         self.get_multicast_global()
         # new or edit
         if state == 'present':
-            if not self.multicast_global_info['multicast_global']:
+            if not self.multicast_global_info.get('multicast_global'):
                 # self.multicast_global_info['multicast_global'] has not value
                 change = True
         else:
             # delete
-            if self.multicast_global_info['multicast_global']:
-                # self.multicast_global_info['multicast_global'] has value
+            if self.multicast_global_info.get('multicast_global'):
+                # i.e. self.multicast_global_info['multicast_global'] has value
                 change = True
         self.changed = change
 
@@ -217,9 +217,9 @@ class MulticastGlobal(object):
         mcast_enable = root.findall(
             "mcastbase/mcastAfsEnables/mcastAfsEnable")
         if mcast_enable:
-            # mcast_enable = [{vrfName:11,addressFamily:'xx'},{vrfName:22,addressFamily:'xx'}...]
+            # i.e. mcast_enable = [{vrfName:11,addressFamily:'xx'},{vrfName:22,addressFamily:'xx'}...]
             for mcast_enable_key in mcast_enable:
-                # mcast_enable_key = {vrfName:11,addressFamily:'xx'}
+                # i.e. mcast_enable_key = {vrfName:11,addressFamily:'xx'}
                 mcast_info = dict()
                 for ele in mcast_enable_key:
                     if ele.tag in ["vrfName", "addressFamily"]:
