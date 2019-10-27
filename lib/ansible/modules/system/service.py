@@ -144,10 +144,11 @@ import time
 if platform.system() != 'SunOS':
     from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.service import fail_if_missing
 from ansible.module_utils.six import PY2, b
-from ansible.module_utils._text import to_bytes, to_text
 
 
 class Service(object):
@@ -168,7 +169,8 @@ class Service(object):
     distribution = None
 
     def __new__(cls, *args, **kwargs):
-        return load_platform_subclass(Service, args, kwargs)
+        new_cls = get_platform_subclass(Service)
+        return super(cls, new_cls).__new__(new_cls)
 
     def __init__(self, module):
         self.module = module
