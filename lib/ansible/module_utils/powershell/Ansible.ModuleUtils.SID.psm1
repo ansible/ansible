@@ -1,10 +1,77 @@
 # Copyright (c) 2017 Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-Function Convert-FromSID($sid) {
-    # Converts a SID to a Down-Level Logon name in the form of DOMAIN\UserName
-    # If the SID is for a local user or group then DOMAIN would be the server
-    # name.
+<#
+    .SYNOPSIS
+    Splited domain and username related to following formats,
+    DOMAIN\Username, Username@Domain, .\Username
+#>
+function Split-UsernameDomainname($account_name){
+
+    $result = New-Object -TypeName PSObject -Property @{ username = $null; domain = $null}
+    
+    if ($account_name -like "*\*") {
+        $account_name_split = $account_name -split "\\"
+        if ($account_name_split[0] -eq ".") {
+            $result.domain = $env:COMPUTERNAME
+        } else {
+            $result.domain = $account_name_split[0]
+        }
+        $result.username = $account_name_split[1]
+    } elseif ($account_name -like "*@*") {
+        $account_name_split = $account_name -split "@"
+        $result.domain = $account_name_split[1]
+        $result.username = $account_name_split[0]
+    } else {
+        $result.domain = $null
+        $result.username = $account_name
+    }
+   
+    return $result
+
+}
+
+function Get-ADSIObject($Username,$Domain) {
+
+    if ($domain -eq $env:COMPUTERNAME) 
+    {
+        $adsi = [ADSI]("WinNT://$env:COMPUTERNAME,computer")
+        $object = $adsi.psbase.children | Where-Object { $_.Name -eq $Username }
+    }
+
+    if($domain){ 
+        # searching for a local group with the servername prefixed will fail,
+        # need to check for this situation and only use NTAccount(String)
+        if ($object.schemaClassName -eq "Group") {
+            $account = New-Object System.Security.Principal.NTAccount($Username)
+        } 
+        else {
+            $account = New-Object System.Security.Principal.NTAccount($Domain, $Username)
+        }
+    }
+    # when in a domain NTAccount(String) will favour domain lookups check
+    # if username is a local user and explictly search on the localhost for
+    # that account
+    else {
+        if ($object.schemaClassName -eq "User") {
+            $account = New-Object System.Security.Principal.NTAccount($env:COMPUTERNAME, $Username)
+        } 
+        else {
+            $account = New-Object System.Security.Principal.NTAccount($Username)
+        }   
+    }
+
+    return $account
+
+}
+
+<#
+    .SYNOPSIS
+    Converts a SID to a Down-Level Logon name in the form of DOMAIN\UserName
+    If the SID is for a local user or group then DOMAIN would be the server
+    name.
+#>
+function Convert-FromSID($sid) {  
 
     $account_object = New-Object System.Security.Principal.SecurityIdentifier($sid)
     try {
@@ -14,70 +81,38 @@ Function Convert-FromSID($sid) {
     }
 
     return $nt_account.Value
+
 }
 
-Function Convert-ToSID {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingEmptyCatchBlock", "", Justification="We don't care if converting to a SID fails, just that it failed or not")]
-    param($account_name)
-    # Converts an account name to a SID, it can take in the following forms
-    # SID: Will just return the SID value that was passed in
-    # UPN:
-    #   principal@domain (Domain users only)
-    # Down-Level Login Name
-    #   DOMAIN\principal (Domain)
-    #   SERVERNAME\principal (Local)
-    #   .\principal (Local)
-    #   NT AUTHORITY\SYSTEM (Local Service Accounts)
-    # Login Name
-    #   principal (Local/Local Service Accounts)
-
+<#
+    .SYNOPSIS
+    converts an account name to a sid, it can take in the following forms
+    sid: will just return the sid value that was passed in
+    upn:
+       principal@domain (domain users only)
+    down-level login name
+      domain\principal (domain)
+      servername\principal (local)
+      .\principal (local)
+      nt authority\system (local service accounts)
+    login name
+      principal (local/local service accounts)
+#>
+function Convert-ToSID($account_name) {
     try {
         $sid = New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList $account_name
         return $sid.Value
-    } catch {}
-
-    if ($account_name -like "*\*") {
-        $account_name_split = $account_name -split "\\"
-        if ($account_name_split[0] -eq ".") {
-            $domain = $env:COMPUTERNAME
-        } else {
-            $domain = $account_name_split[0]
-        }
-        $username = $account_name_split[1]
-    } elseif ($account_name -like "*@*") {
-        $account_name_split = $account_name -split "@"
-        $domain = $account_name_split[1]
-        $username = $account_name_split[0]
-    } else {
-        $domain = $null
-        $username = $account_name
+    } catch {
+        return $null
     }
 
-    if ($domain) {
-        # searching for a local group with the servername prefixed will fail,
-        # need to check for this situation and only use NTAccount(String)
-        if ($domain -eq $env:COMPUTERNAME) {
-            $adsi = [ADSI]("WinNT://$env:COMPUTERNAME,computer")
-            $group = $adsi.psbase.children | Where-Object { $_.schemaClassName -eq "group" -and $_.Name -eq $username }
-        } else {
-            $group = $null
-        }
-        if ($group) {
-            $account = New-Object System.Security.Principal.NTAccount($username)
-        } else {
-            $account = New-Object System.Security.Principal.NTAccount($domain, $username)
-        }
-    } else {
-        # when in a domain NTAccount(String) will favour domain lookups check
-        # if username is a local user and explictly search on the localhost for
-        # that account
-        $adsi = [ADSI]("WinNT://$env:COMPUTERNAME,computer")
-        $user = $adsi.psbase.children | Where-Object { $_.schemaClassName -eq "user" -and $_.Name -eq $username }
-        if ($user) {
-            $account = New-Object System.Security.Principal.NTAccount($env:COMPUTERNAME, $username)
-        } else {
-            $account = New-Object System.Security.Principal.NTAccount($username)
-        }
+    $splitedValues = Split-UsernameDomainname -account_name $account_name
+
+    if ($splitedValues.domain) {
+        $account = Get-ADSIObject -Username $splitedValues.username -Domain $splitedValues.domain
+    } 
+    else {
+        $account = Get-ADSIObject -Username $splitedValues.username -Domain $splitedValues.domain
     }
 
     try {
