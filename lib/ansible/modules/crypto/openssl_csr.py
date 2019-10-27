@@ -816,19 +816,20 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             )
 
         digest = None
-        if self.digest == 'sha256':
-            digest = cryptography.hazmat.primitives.hashes.SHA256()
-        elif self.digest == 'sha384':
-            digest = cryptography.hazmat.primitives.hashes.SHA384()
-        elif self.digest == 'sha512':
-            digest = cryptography.hazmat.primitives.hashes.SHA512()
-        elif self.digest == 'sha1':
-            digest = cryptography.hazmat.primitives.hashes.SHA1()
-        elif self.digest == 'md5':
-            digest = cryptography.hazmat.primitives.hashes.MD5()
-        # FIXME
-        else:
-            raise CertificateSigningRequestError('Unsupported digest "{0}"'.format(self.digest))
+        if crypto_utils.cryptography_key_needs_digest_for_signing(self.privatekey):
+            if self.digest == 'sha256':
+                digest = cryptography.hazmat.primitives.hashes.SHA256()
+            elif self.digest == 'sha384':
+                digest = cryptography.hazmat.primitives.hashes.SHA384()
+            elif self.digest == 'sha512':
+                digest = cryptography.hazmat.primitives.hashes.SHA512()
+            elif self.digest == 'sha1':
+                digest = cryptography.hazmat.primitives.hashes.SHA1()
+            elif self.digest == 'md5':
+                digest = cryptography.hazmat.primitives.hashes.MD5()
+            # FIXME
+            else:
+                raise CertificateSigningRequestError('Unsupported digest "{0}"'.format(self.digest))
         self.request = csr.sign(self.privatekey, digest, self.cryptography_backend)
 
         return self.request.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM)

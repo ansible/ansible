@@ -1962,3 +1962,15 @@ def identify_private_key_format(content):
     except UnicodeDecodeError:
         pass
     return 'raw'
+
+
+def cryptography_key_needs_digest_for_signing(key):
+    '''Tests whether the given private key requires a digest algorithm for signing.
+
+    Ed25519 and Ed448 keys do not; they need None to be passed as the digest algorithm.
+    '''
+    if CRYPTOGRAPHY_HAS_ED25519 and isinstance(key, cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey):
+        return False
+    if CRYPTOGRAPHY_HAS_ED448 and isinstance(key, cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey):
+        return False
+    return True

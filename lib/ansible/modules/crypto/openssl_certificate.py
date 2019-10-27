@@ -1106,10 +1106,13 @@ class SelfSignedCertificateCryptography(Certificate):
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             module.fail_json(msg=to_native(exc))
 
-        if self.digest is None:
-            raise CertificateError(
-                'The digest %s is not supported with the cryptography backend' % module.params['selfsigned_digest']
-            )
+        if crypto_utils.cryptography_key_needs_digest_for_signing(self.privatekey):
+            if self.digest is None:
+                raise CertificateError(
+                    'The digest %s is not supported with the cryptography backend' % module.params['selfsigned_digest']
+                )
+        else:
+            self.digest = None
 
     def generate(self, module):
         if not os.path.exists(self.privatekey_path):
@@ -1317,6 +1320,14 @@ class OwnCACertificateCryptography(Certificate):
             )
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             module.fail_json(msg=str(exc))
+
+        if crypto_utils.cryptography_key_needs_digest_for_signing(self.privatekey):
+            if self.digest is None:
+                raise CertificateError(
+                    'The digest %s is not supported with the cryptography backend' % module.params['ownca_digest']
+                )
+        else:
+            self.digest = None
 
     def generate(self, module):
 
