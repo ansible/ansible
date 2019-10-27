@@ -145,7 +145,7 @@ class OnyxUsernameModule(BaseOnyxModule):
                              disabled=dict(choices=['none', 'login', 'password', 'all']),
                              capability=dict(choices=['monitor', 'unpriv', 'v_admin', 'admin']),
                              nopassword=dict(type='bool', default=False),
-                             password=dict(type='str'),
+                             password=dict(type='str', no_log=True),
                              encrypted_password=dict(type='bool', default=False),
                              reset_capability=dict(type="bool", default=False),
                              disconnected=dict(type='bool', default=False),
@@ -153,7 +153,8 @@ class OnyxUsernameModule(BaseOnyxModule):
         argument_spec.update(element_spec)
         self._module = AnsibleModule(
             argument_spec=argument_spec,
-            supports_check_mode=True)
+            supports_check_mode=True,
+            mutually_exclusive=[['password','nopassword']])
 
     def get_required_config(self):
         self._required_config = dict()
