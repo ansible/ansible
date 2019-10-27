@@ -122,7 +122,7 @@ command:
   description: The exact flatpak command that was executed
   returned: When a flatpak command has been executed
   type: str
-  sample: "/usr/bin/flatpak install --user -y flathub org.gnome.Calculator"
+  sample: "/usr/bin/flatpak install --user --noninteractive flathub org.gnome.Calculator"
 msg:
   description: Module error message
   returned: failure
@@ -157,9 +157,9 @@ def install_flat(module, binary, remote, name, method):
     """Add a new flatpak."""
     global result
     if name.startswith('http://') or name.startswith('https://'):
-        command = "{0} install --{1} -y {2}".format(binary, method, name)
+        command = "{0} install --{1} --noninteractive {2}".format(binary, method, name)
     else:
-        command = "{0} install --{1} -y {2} {3}".format(binary, method, remote, name)
+        command = "{0} install --{1} --noninteractive {2} {3}".format(binary, method, remote, name)
     _flatpak_command(module, module.check_mode, command)
     result['changed'] = True
 
@@ -168,7 +168,7 @@ def uninstall_flat(module, binary, name, method):
     """Remove an existing flatpak."""
     global result
     installed_flat_name = _match_installed_flat_name(module, binary, name, method)
-    command = "{0} uninstall -y --{1} {2}".format(binary, method, installed_flat_name)
+    command = "{0} uninstall --noninteractive --{1} {2}".format(binary, method, installed_flat_name)
     _flatpak_command(module, module.check_mode, command)
     result['changed'] = True
 
