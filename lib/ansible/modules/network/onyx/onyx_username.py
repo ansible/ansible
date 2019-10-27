@@ -154,7 +154,7 @@ class OnyxUsernameModule(BaseOnyxModule):
         self._module = AnsibleModule(
             argument_spec=argument_spec,
             supports_check_mode=True,
-            mutually_exclusive=[['password','nopassword']])
+            mutually_exclusive=[['password', 'nopassword']])
 
     def get_required_config(self):
         self._required_config = dict()
