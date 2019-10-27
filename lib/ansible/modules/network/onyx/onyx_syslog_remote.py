@@ -37,7 +37,7 @@ options:
     trap:
         description:
           - Minimum severity level for messages to this syslog server
-        choices: ['none', 'info', 'notice', 'alert', 'debug', 'warning', 'err', 'emerg', 'crit']
+        choices: ['none', 'debug', 'info', 'notice', 'alert', 'warning', 'err', 'emerg', 'crit']
         type: str
     trap_override:
         description:
@@ -53,7 +53,7 @@ options:
             override_priority:
                 description:
                   -Specify a priority whose log level to override
-                choices: ['none', 'info', 'notice', 'alert', 'debug', 'warning', 'err', 'emerg', 'crit']
+                choices: ['none', 'debug', 'info', 'notice', 'alert', 'warning', 'err', 'emerg', 'crit']
                 type: str
             override_enabled:
                 description:
@@ -138,7 +138,7 @@ from ansible.module_utils.network.onyx.onyx import BaseOnyxModule
 
 class OnyxSyslogRemoteModule(BaseOnyxModule):
     MAX_PORT = 65535
-    LEVELS = ['none', 'info', 'notice', 'alert', 'debug', 'warning', 'err', 'emerg', 'crit']
+    LEVELS = ['none', 'debug', 'info', 'notice', 'alert', 'warning', 'err', 'emerg', 'crit']
     CLASSES = ['mgmt-front', 'mgmt-back', 'mgmt-core', 'events', 'debug-module', 'sx-sdk', 'mlx-daemons', 'protocol-stack']
     FILTER = ['include', 'exclude']
 
@@ -151,16 +151,16 @@ class OnyxSyslogRemoteModule(BaseOnyxModule):
     def init_module(self):
         """" Ansible module initialization
         """
-        override_spec = dict(override_priority=dict(choices=self.LEVELS, type='str'),
-                             override_class=dict(choices=self.CLASSES, required=True, type='str'),
+        override_spec = dict(override_priority=dict(choices=self.LEVELS),
+                             override_class=dict(choices=self.CLASSES, required=True),
                              override_enabled=dict(default=True, type="bool"))
 
         element_spec = dict(enabled=dict(type="bool", default=True),
                             host=dict(type="str", required=True),
                             port=dict(type="int"),
-                            trap=dict(choices=self.LEVELS, type='str'),
+                            trap=dict(choices=self.LEVELS),
                             trap_override=dict(type="list", elements='dict', options=override_spec),
-                            filter=dict(choices=self.FILTER, type='str'),
+                            filter=dict(choices=self.FILTER),
                             filter_str=dict(type="str"))
 
         argument_spec = dict()
