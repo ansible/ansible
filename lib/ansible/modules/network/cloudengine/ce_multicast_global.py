@@ -193,7 +193,7 @@ class MulticastGlobal(object):
         # new or edit
         if state == 'present':
             if not self.multicast_global_info.get('multicast_global'):
-                # self.multicast_global_info['multicast_global'] has not value
+                #  i.e. self.multicast_global_info['multicast_global'] has not value
                 change = True
         else:
             # delete
