@@ -41,7 +41,7 @@ options:
     description:
       - Remove all other non default revisions, if this is used with C(make_default) it will result in all other versions of this policy being deleted.
     type: bool
-    default: False
+    default: false
   state:
     description:
       - Should this managed policy be present or absent. Set to absent to detach all entities from this policy and remove it if found.
@@ -50,7 +50,7 @@ options:
     type: str
   fail_on_delete:
     description:
-    - The fail_on_delete option does nothing and will be removed in Ansible 2.14
+    - The I(fail_on_delete) option does nothing and will be removed in Ansible 2.14.
     type: bool
 
 author: "Dan Kozlowski (@dkhenry)"
@@ -298,11 +298,6 @@ def main():
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required for this module')
-
-    if module.params.get('fail_on_delete'):
-        module.deprecate('The fail_on_delete option does nothing and'
-                         ' will be removed in Ansible 2.14',
-                         version='2.14')
 
     name = module.params.get('policy_name')
     description = module.params.get('policy_description')
