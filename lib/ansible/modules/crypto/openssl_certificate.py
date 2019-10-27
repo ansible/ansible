@@ -939,7 +939,7 @@ class Certificate(crypto_utils.OpenSSLObject):
             except OpenSSL.SSL.Error:
                 return False
         elif self.backend == 'cryptography':
-            return self.cert.public_key().public_numbers() == self.privatekey.public_key().public_numbers()
+            return crypto_utils.cryptography_compare_public_keys(self.cert.public_key(), self.privatekey.public_key())
 
     def _validate_csr(self):
         if self.backend == 'pyopenssl':
@@ -966,7 +966,7 @@ class Certificate(crypto_utils.OpenSSLObject):
             # Verify that CSR is signed by certificate's private key
             if not self.csr.is_signature_valid:
                 return False
-            if self.csr.public_key().public_numbers() != self.cert.public_key().public_numbers():
+            if not crypto_utils.cryptography_compare_public_keys(self.csr.public_key(), self.cert.public_key()):
                 return False
             # Check subject
             if self.csr.subject != self.cert.subject:
@@ -1867,12 +1867,12 @@ class AssertOnlyCertificateCryptography(AssertOnlyCertificateBase):
         super(AssertOnlyCertificateCryptography, self).__init__(module, 'cryptography')
 
     def _validate_privatekey(self):
-        return self.cert.public_key().public_numbers() == self.privatekey.public_key().public_numbers()
+        return crypto_utils.cryptography_compare_public_keys(self.cert.public_key(), self.privatekey.public_key())
 
     def _validate_csr_signature(self):
         if not self.csr.is_signature_valid:
             return False
-        return self.csr.public_key().public_numbers() == self.cert.public_key().public_numbers()
+        return crypto_utils.cryptography_compare_public_keys(self.csr.public_key(), self.cert.public_key())
 
     def _validate_csr_subject(self):
         return self.csr.subject == self.cert.subject

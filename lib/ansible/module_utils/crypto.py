@@ -47,6 +47,7 @@ try:
     from cryptography.hazmat.backends import default_backend as cryptography_backend
     from cryptography.hazmat.primitives.serialization import load_pem_private_key
     from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives import serialization
     import ipaddress
 
     # Older versions of cryptography (< 2.1) do not have __hash__ functions for
@@ -1974,3 +1975,29 @@ def cryptography_key_needs_digest_for_signing(key):
     if CRYPTOGRAPHY_HAS_ED448 and isinstance(key, cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey):
         return False
     return True
+
+
+def cryptography_compare_public_keys(key1, key2):
+    '''Tests whether two public keys are the same.
+
+    Needs special logic for Ed25519 and Ed448 keys, since they do not have public_numbers().
+    '''
+    if CRYPTOGRAPHY_HAS_ED25519:
+        a = isinstance(key1, cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey)
+        b = isinstance(key2, cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey)
+        if a or b:
+            if not a or not b:
+                return False
+            a = key1.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+            b = key2.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+            return a == b
+    if CRYPTOGRAPHY_HAS_ED448:
+        a = isinstance(key1, cryptography.hazmat.primitives.asymmetric.ed448.Ed448PublicKey)
+        b = isinstance(key2, cryptography.hazmat.primitives.asymmetric.ed448.Ed448PublicKey)
+        if a or b:
+            if not a or not b:
+                return False
+            a = key1.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+            b = key2.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+            return a == b
+    return key1.public_numbers() == key2.public_numbers()
