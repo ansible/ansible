@@ -458,6 +458,7 @@
       loop:
         - Ed25519
         - Ed448
+      ignore_errors: yes
 
     - name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate
       openssl_certificate:
@@ -472,6 +473,7 @@
         - Ed25519
         - Ed448
       register: ownca_certificate_ed25519_ed448
+      ignore_errors: yes
 
     - name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate (idempotent)
       openssl_certificate:
@@ -486,6 +488,7 @@
         - Ed25519
         - Ed448
       register: ownca_certificate_ed25519_ed448_idempotence
+      ignore_errors: yes
 
     - name: (OwnCA, {{select_crypto_backend}}) Generate CA privatekey
       openssl_privatekey:
@@ -507,6 +510,7 @@
       loop:
         - Ed25519
         - Ed448
+      ignore_errors: yes
 
     - name: (OwnCA, {{select_crypto_backend}}) Generate selfsigned CA certificate
       openssl_certificate:
@@ -518,6 +522,7 @@
       loop:
         - Ed25519
         - Ed448
+      ignore_errors: yes
 
     - name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate
       openssl_certificate:
@@ -532,6 +537,7 @@
         - Ed25519
         - Ed448
       register: ownca_certificate_ed25519_ed448_2
+      ignore_errors: yes
 
     - name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate (idempotent)
       openssl_certificate:
@@ -546,6 +552,7 @@
         - Ed25519
         - Ed448
       register: ownca_certificate_ed25519_ed448_2_idempotence
+      ignore_errors: yes
 
   when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.6', '>=')
 

@@ -738,6 +738,7 @@
         - Ed25519
         - Ed448
       register: generate_csr_ed25519_ed448
+      ignore_errors: yes
 
     - name: Generate CSR (idempotent)
       openssl_csr:
@@ -750,5 +751,6 @@
         - Ed25519
         - Ed448
       register: generate_csr_ed25519_ed448_idempotent
+      ignore_errors: yes
 
   when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.6', '>=')
