@@ -121,13 +121,7 @@ try:
     except ValueError:
         AVAILABLE_HASH_ALGORITHMS.pop('md5', None)
 except Exception:
-    import sha
-    AVAILABLE_HASH_ALGORITHMS = {'sha1': sha.sha}
-    try:
-        import md5
-        AVAILABLE_HASH_ALGORITHMS['md5'] = md5.md5
-    except Exception:
-        pass
+    pass
 
 from ansible.module_utils.common._collections_compat import (
     KeysView,

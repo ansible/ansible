@@ -10,10 +10,7 @@ HAS_MD5 = True
 try:
     from hashlib import md5
 except ImportError:
-    try:
-        from md5 import md5
-    except ImportError:
-        HAS_MD5 = False
+    HAS_MD5 = False
 
 
 def calculate_etag(module, filename, etag, s3, bucket, obj, version=None):

@@ -24,10 +24,7 @@ import sys
 
 from collections import defaultdict
 
-try:
-    from hashlib import sha1
-except ImportError:
-    from sha import sha as sha1
+from hashlib import sha1
 
 from jinja2.exceptions import UndefinedError
 
