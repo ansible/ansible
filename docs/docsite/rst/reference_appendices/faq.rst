@@ -377,7 +377,7 @@ via a role parameter or other input.  Variable names can be built by adding stri
 
 .. code-block:: jinja
 
-    {{ hostvars[inventory_hostname]['ansible_' + which_interface]['ipv4']['address'] }}
+    {{ hostvars[inventory_hostname]['ansible_' + which_interface | replace('_', '-') ]['ipv4']['address'] }}
 
 The trick about going through hostvars is necessary because it's a dictionary of the entire namespace of variables.  'inventory_hostname'
 is a magic variable that indicates the current host you are looping over in the host loop.
