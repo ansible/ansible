@@ -245,6 +245,7 @@
   become: yes
   postgresql_query:
     db: postgres
+    login_user: "{{ pg_user }}"
     query: >
       SELECT 1 FROM pg_catalog.pg_database
       WHERE datname = '{{ db_name }}'
@@ -269,6 +270,7 @@
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
+    login_user: "{{ pg_user }}"
     db: postgres
     query: >
       SELECT 1 FROM pg_catalog.pg_database
