@@ -14,11 +14,11 @@ Connections Available
 .. table::
     :class: documentation-table
 
-    ====================  ==========================================  =========================
+    ====================  ==========================================  ==========================================
     ..                    CLI                                         NETCONF
 
                                                                                                
-    ====================  ==========================================  =========================
+    ====================  ==========================================  ==========================================
     Protocol              SSH                                         XML over SSH
 
     Credentials           uses SSH keys / SSH-agent if present        uses SSH keys / SSH-agent if present
@@ -29,7 +29,7 @@ Connections Available
 
     Connection Settings   ``ansible_connection: network_cli``         ``ansible_connection: netconf``
 
-    |enable_mode|         not supported by ce OS                   not supported by ce OS
+    |enable_mode|         not supported by ce OS                      not supported by ce OS
 
     Returned Data Format  Refer to individual module documentation    Refer to individual module documentation
     ====================  ==========================================  ==========================================
