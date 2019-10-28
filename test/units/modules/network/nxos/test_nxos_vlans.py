@@ -70,7 +70,8 @@ class TestNxosVlansModule(TestNxosModule):
 
     def test_1(self):
         '''
-        vlan 1,3-5
+        **NOTE** This config is for reference only! See fixtures files for real data.
+        vlan 1,3-5,8
         vlan 3
           name test-vlan3
         !Note:vlan 4 is present with default settings
@@ -83,19 +84,22 @@ class TestNxosVlansModule(TestNxosModule):
         !Note:vlan 7 is not present
         vlan 8
           shutdown
+          name test-changeme-not
+          state suspend
         '''
         playbook = dict(config=[
             dict(vlan_id=4),
             dict(vlan_id=5, mapped_vni=555, mode='ce'),
             dict(vlan_id=7, mapped_vni=777, name='test-vlan7', enabled=False),
-            dict(vlan_id=8)
+            dict(vlan_id='8', state='active', name='test-changeme-not')
             # vlan 3 is not present in playbook.
         ])
 
         merged = [
             # Update existing device states with any differences in the playbook.
             'vlan 5', 'vn-segment 555', 'mode ce',
-            'vlan 7', 'vn-segment 777', 'name test-vlan7', 'shutdown'
+            'vlan 7', 'vn-segment 777', 'name test-vlan7', 'shutdown',
+            'vlan 8', 'state active'
         ]
         playbook['state'] = 'merged'
         set_module_args(playbook, ignore_provider_arg)
@@ -103,8 +107,9 @@ class TestNxosVlansModule(TestNxosModule):
 
         deleted = [
             # Reset existing device state to default values. Scope is limited to
-            # objects in the play.For vlans this means deleting each vlan listed
-            # in the playbook. Ignores any play attrs other than 'vlan_id'.
+            # objects in the play when the 'config' key is specified. For vlans
+            # this means deleting each vlan listed in the playbook and ignoring
+            # any play attrs other than 'vlan_id'.
             'no vlan 4',
             'no vlan 5',
             'no vlan 8'
@@ -119,7 +124,7 @@ class TestNxosVlansModule(TestNxosModule):
             # on objects not found in the play.
             'no vlan 3',
             'vlan 5', 'mode ce', 'vn-segment 555', 'no state', 'no shutdown', 'no name',
-            'vlan 8', 'no shutdown',
+            'vlan 8', 'no shutdown', 'state active',
             'vlan 7', 'name test-vlan7', 'shutdown', 'vn-segment 777'
         ]
         playbook['state'] = 'overridden'
@@ -129,10 +134,29 @@ class TestNxosVlansModule(TestNxosModule):
         replaced = [
             # Scope is limited to objects in the play.
             # replaced should ignore existing vlan 3.
-            'vlan 5', 'vn-segment 555', 'no name', 'no state', 'no shutdown', 'mode ce',
+            'vlan 5', 'mode ce', 'vn-segment 555', 'no state', 'no shutdown', 'no name',
             'vlan 7', 'shutdown', 'name test-vlan7', 'vn-segment 777',
-            'vlan 8', 'no shutdown'
+            'vlan 8', 'no shutdown', 'state active'
         ]
         playbook['state'] = 'replaced'
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=True, commands=replaced)
+
+    def test_2(self):
+        # vlan 1 in playbook should raise
+        playbook = dict(config=[ dict(vlan_id=1) ], state='merged')
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(failed=True)
+
+    def test_3(self):
+        # Test deleted when no 'config' key is used.
+        deleted = [
+            # Reset existing device state for all vlans found on device other than vlan 1.
+            'no vlan 3',
+            'no vlan 4',
+            'no vlan 5',
+            'no vlan 8'
+        ]
+        playbook = dict(state='deleted')
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=deleted)

@@ -49,7 +49,7 @@ class Vlans(ConfigBase):
             return []
 
         # Remove vlan 1 from facts list
-        vlans_facts = [i for i in vlans_facts if (i['vlan_id']) != 1]
+        vlans_facts = [i for i in vlans_facts if (int(i['vlan_id'])) != 1]
         return vlans_facts
 
     def edit_config(self, commands):
@@ -97,7 +97,7 @@ class Vlans(ConfigBase):
         want = []
         if config:
             for w in config:
-                if w.get('vlan_id') == '1':
+                if int(w['vlan_id']) == 1:
                     self._module.fail_json(msg="Vlan 1 is not allowed to be managed by this module")
                 want.append(remove_empties(w))
         have = existing_vlans_facts
@@ -143,35 +143,35 @@ class Vlans(ConfigBase):
                 obj.pop(k, None)
         return obj
 
-    def _state_replaced(self, w, have):
+    def _state_replaced(self, want, have):
         """ The command generator when state is replaced.
         Scope is limited to vlan objects defined in the playbook.
         :rtype: A list
         :returns: The minimum command set required to migrate the current
                   configuration to the desired configuration.
         """
-        obj_in_have = search_obj_in_list(w['vlan_id'], have, 'vlan_id')
+        obj_in_have = search_obj_in_list(want['vlan_id'], have, 'vlan_id')
         if obj_in_have:
             # ignore states that are already reset, then diff what's left
             obj_in_have = self.remove_default_states(obj_in_have)
-            diff = dict_diff(w, obj_in_have)
+            diff = dict_diff(want, obj_in_have)
             # Remove merge items from diff; what's left will be used to
             # remove states not specified in the playbook
-            for k in dict(set(w.items()) - set(obj_in_have.items())).keys():
+            for k in dict(set(want.items()) - set(obj_in_have.items())).keys():
                 diff.pop(k, None)
         else:
-            diff = w
+            diff = want
 
         # merged_cmds: 'want' cmds to update 'have' states that don't match
         # replaced_cmds: remaining 'have' cmds that need to be reset to default
-        merged_cmds = self.set_commands(w, have)
+        merged_cmds = self.set_commands(want, have)
         replaced_cmds = []
         if obj_in_have:
             # Remaining diff items are used to reset states to default
             replaced_cmds = self.del_attribs(diff)
         cmds = []
         if replaced_cmds or merged_cmds:
-            cmds += ['vlan %s' % str(w['vlan_id'])]
+            cmds += ['vlan %s' % str(want['vlan_id'])]
             cmds += merged_cmds + replaced_cmds
         return cmds
 

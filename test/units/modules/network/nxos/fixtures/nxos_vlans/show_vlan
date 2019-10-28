@@ -22,8 +22,8 @@
         "vlanshowbr-shutstate": "shutdown"
       },
       { "vlanshowbr-vlanid": "8", "vlanshowbr-vlanid-utf": "8",
-        "vlanshowbr-vlanname": "VLAN0008",
-        "vlanshowbr-vlanstate": "active",
+        "vlanshowbr-vlanname": "test-changeme-not",
+        "vlanshowbr-vlanstate": "suspend",
         "vlanshowbr-shutstate": "shutdown"
       }
     ]
