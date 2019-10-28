@@ -9,7 +9,7 @@
 function Split-UsernameDomainname($account_name){
 
     $result = New-Object -TypeName PSObject -Property @{ username = $null; domain = $null}
-    
+
     if ($account_name -like "*\*") {
         $account_name_split = $account_name -split "\\"
         if ($account_name_split[0] -eq ".") {
@@ -26,25 +26,25 @@ function Split-UsernameDomainname($account_name){
         $result.domain = $null
         $result.username = $account_name
     }
-   
+
     return $result
 
 }
 
 function Get-ADSIObject($Username,$Domain) {
 
-    if ($domain -eq $env:COMPUTERNAME) 
+    if ($domain -eq $env:COMPUTERNAME)
     {
         $adsi = [ADSI]("WinNT://$env:COMPUTERNAME,computer")
         $object = $adsi.psbase.children | Where-Object { $_.Name -eq $Username }
     }
 
-    if($domain){ 
+    if($domain){
         # searching for a local group with the servername prefixed will fail,
         # need to check for this situation and only use NTAccount(String)
         if ($object.schemaClassName -eq "Group") {
             $account = New-Object System.Security.Principal.NTAccount($Username)
-        } 
+        }
         else {
             $account = New-Object System.Security.Principal.NTAccount($Domain, $Username)
         }
@@ -55,10 +55,10 @@ function Get-ADSIObject($Username,$Domain) {
     else {
         if ($object.schemaClassName -eq "User") {
             $account = New-Object System.Security.Principal.NTAccount($env:COMPUTERNAME, $Username)
-        } 
+        }
         else {
             $account = New-Object System.Security.Principal.NTAccount($Username)
-        }   
+        }
     }
 
     return $account
@@ -71,7 +71,7 @@ function Get-ADSIObject($Username,$Domain) {
     If the SID is for a local user or group then DOMAIN would be the server
     name.
 #>
-function Convert-FromSID($sid) {  
+function Convert-FromSID($sid) {
 
     $account_object = New-Object System.Security.Principal.SecurityIdentifier($sid)
     try {
@@ -110,7 +110,7 @@ function Convert-ToSID($account_name) {
 
     if ($splitedValues.domain) {
         $account = Get-ADSIObject -Username $splitedValues.username -Domain $splitedValues.domain
-    } 
+    }
     else {
         $account = Get-ADSIObject -Username $splitedValues.username -Domain $splitedValues.domain
     }
