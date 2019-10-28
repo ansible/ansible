@@ -92,7 +92,8 @@ EXAMPLES = """
            notification_type: trap
            port: 66
            version: 2c
-- name: configures snmp host with version 3 and configures it with user: sara
+
+- name: configures snmp host with version 3 and configures it with user as sara
   onyx_snmp_hosts:
        hosts:
          - name: 2.3.2.4
