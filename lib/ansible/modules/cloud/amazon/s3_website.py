@@ -25,23 +25,21 @@ options:
     description:
       - "Name of the s3 bucket"
     required: true
+    type: str
   error_key:
     description:
       - "The object key name to use when a 4XX class error occurs. To remove an error key, set to None."
+    type: str
   redirect_all_requests:
     description:
       - "Describes the redirect behavior for every request to this s3 bucket website endpoint"
-  region:
-    description:
-     - >
-       AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked,
-       followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the
-       S3 Location: US Standard.
+    type: str
   state:
     description:
       - "Add or remove s3 website configuration"
-    default: present
     choices: [ 'present', 'absent' ]
+    required: true
+    type: str
   suffix:
     description:
       - >
@@ -49,6 +47,7 @@ options:
         samplebucket/images/ the data that is returned will be for the object with the key name images/index.html). The suffix must not include a slash
         character.
     default: index.html
+    type: str
 
 extends_documentation_fragment:
   - aws
@@ -109,30 +108,59 @@ redirect_all_requests_to:
             returned: when redirect all requests parameter set
             type: str
             sample: ansible.com
+        protocol:
+            description: protocol to use when redirecting requests.
+            returned: when redirect all requests parameter set
+            type: str
+            sample: https
 routing_rules:
     description: routing rules
-    type: complex
+    type: list
     returned: always
     contains:
-        routing_rule:
-            host_name:
-                description: name of the host where requests will be redirected.
-                returned: when host name set as part of redirect rule
-                type: str
-                sample: ansible.com
         condition:
-            key_prefix_equals:
-            description: object key name prefix when the redirect is applied. For example, to redirect requests for ExamplePage.html, the key prefix will be
-                     ExamplePage.html
-            returned: when routing rule present
-            type: str
-            sample: docs/
+            type: complex
+            description: A container for describing a condition that must be met for the specified redirect to apply.
+            contains:
+                http_error_code_returned_equals:
+                    description: The HTTP error code when the redirect is applied.
+                    returned: always
+                    type: str
+                key_prefix_equals:
+                    description: object key name prefix when the redirect is applied. For example, to redirect
+                                 requests for ExamplePage.html, the key prefix will be ExamplePage.html
+                    returned: when routing rule present
+                    type: str
+                    sample: docs/
         redirect:
-            replace_key_prefix_with:
-                description: object key prefix to use in the redirect request
-                returned: when routing rule present
-                type: str
-                sample: documents/
+            type: complex
+            description: Container for redirect information.
+            returned: always
+            contains:
+                host_name:
+                    description: name of the host where requests will be redirected.
+                    returned: when host name set as part of redirect rule
+                    type: str
+                    sample: ansible.com
+                http_redirect_code:
+                    description: The HTTP redirect code to use on the response.
+                    returned: when routing rule present
+                    type: str
+                protocol:
+                    description: Protocol to use when redirecting requests.
+                    returned: when routing rule present
+                    type: str
+                    sample: http
+                replace_key_prefix_with:
+                    description: object key prefix to use in the redirect request
+                    returned: when routing rule present
+                    type: str
+                    sample: documents/
+                replace_key_with:
+                    description: object key prefix to use in the redirect request
+                    returned: when routing rule present
+                    type: str
+                    sample: documents/
 '''
 
 import time
