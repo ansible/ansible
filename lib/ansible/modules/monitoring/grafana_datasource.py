@@ -298,6 +298,18 @@ EXAMPLES = '''
     aws_access_key: "speakFriendAndEnter"
     aws_secret_key: "mel10n"
     aws_custom_metrics_namespaces: "n1,n2"
+
+- name: grafana - add thruk datasource
+  grafana_datasource:
+    name: "datasource-thruk"
+    grafana_url: "https://grafana.company.com"
+    grafana_user: "admin"
+    grafana_password: "xxxxxx"
+    org_id: "1"
+    ds_type: "sni-thruk-datasource"
+    url: "https://thruk.company.com/sitename/thruk"
+    basic_auth_user: "thruk-user"
+    basic_auth_password: "******"
 '''
 
 RETURN = '''
