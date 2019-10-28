@@ -27,7 +27,7 @@
 #           ignored - these people should never be notified
 #           deprecated - this file is deprecated but probably not yet renamed
 #           keywords - used to identify this file based on the issue description
-#           migrated_to - Location on Galaxy,
+#           migrated_to - If this has been migrated to Galaxy, in the form collection.namespace
 #                         see https://docs.ansible.com/ansible/devel/dev_guide/developing_collections.html
 #           support - used for files without internal ANSIBLE_METADATA, see
 #                     https://github.com/ansible/ansible/labels?q=support for full list
