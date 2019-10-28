@@ -1,0 +1,2 @@
+bugfixes:
+- ce_sflow - update to fix some bugs - Optimize parameters for different configurations. (https://github.com/ansible/ansible/pull/64021)
