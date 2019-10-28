@@ -63,6 +63,7 @@ Settings by Platform
     Cisco IOS `[†]`_                 ``ios``                  ✓                              ✓
     Cisco IOS XR `[†]`_              ``iosxr``                ✓                              ✓
     Cisco NX-OS `[†]`_               ``nxos``                 ✓                     ✓        ✓
+    Cloudengine OS `[†]`_            ``ce``                   ✓            ✓                 ✓
     Dell OS6                         ``dellos6``              ✓                              ✓
     Dell OS9                         ``dellos9``              ✓                              ✓
     Dell OS10                        ``dellos10``             ✓                              ✓
