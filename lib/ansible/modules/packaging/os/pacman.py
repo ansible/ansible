@@ -35,6 +35,7 @@ options:
         description:
             - Name or list of names of groups to install, upgrade, or remove.
               Can't be used in combination with C(upgrade).
+        version_added: "2.10"
 
     state:
         description:
@@ -409,7 +410,7 @@ def expand_package_groups(module, pacman_path, groups):
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
-            module.fail_json(msg="could not find group '%s'"%group)
+            module.fail_json(msg="could not find group '%s'" % group)
 
         # A group was found matching the name, so expand it
         for name in stdout.strip().split('\n'):
