@@ -26,33 +26,40 @@ options:
     description:
       - The amount time for Elastic Load Balancing to wait before changing the state of a deregistering target from draining to unused.
         The range is 0-3600 seconds.
+    type: int
   health_check_protocol:
     description:
       - The protocol the load balancer uses when performing health checks on targets.
     required: false
-    choices: [ 'http', 'https', 'tcp' ]
+    choices: [ 'http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP' ]
+    type: str
   health_check_port:
     description:
       - The port the load balancer uses when performing health checks on targets.
         Can be set to 'traffic-port' to match target port.
+      - When not defined will default to the port on which each target receives traffic from the load balancer.
     required: false
-    default: "The port on which each target receives traffic from the load balancer."
+    type: str
   health_check_path:
     description:
       - The ping path that is the destination on the targets for health checks. The path must be defined in order to set a health check.
     required: false
+    type: str
   health_check_interval:
     description:
       - The approximate amount of time, in seconds, between health checks of an individual target.
     required: false
+    type: int
   health_check_timeout:
     description:
       - The amount of time, in seconds, during which no response from a target means a failed health check.
     required: false
+    type: int
   healthy_threshold_count:
     description:
       - The number of consecutive health checks successes required before considering an unhealthy target healthy.
     required: false
+    type: int
   modify_targets:
     description:
       - Whether or not to alter existing targets in the group to match what is passed with the module
@@ -63,16 +70,19 @@ options:
     description:
       - The name of the target group.
     required: true
+    type: str
   port:
     description:
       - The port on which the targets receive traffic. This port is used unless you specify a port override when registering the target. Required if
         I(state) is C(present).
     required: false
+    type: int
   protocol:
     description:
       - The protocol to use for routing traffic to the targets. Required when I(state) is C(present).
     required: false
-    choices: [ 'http', 'https', 'tcp' ]
+    choices: [ 'http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP']
+    type: str
   purge_tags:
     description:
       - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the tag parameter is not set then
@@ -85,6 +95,7 @@ options:
       - Create or destroy the target group.
     required: true
     choices: [ 'present', 'absent' ]
+    type: str
   stickiness_enabled:
     description:
       - Indicates whether sticky sessions are enabled.
@@ -93,20 +104,24 @@ options:
     description:
       - The time period, in seconds, during which requests from a client should be routed to the same target. After this time period expires, the load
         balancer-generated cookie is considered stale. The range is 1 second to 1 week (604800 seconds).
+    type: int
   stickiness_type:
     description:
       - The type of sticky sessions. The possible value is lb_cookie.
     default: lb_cookie
+    type: str
   successful_response_codes:
     description:
       - The HTTP codes to use when checking for a successful response from a target.
-      - Accepts multiple values (for example, "200,202") or a range of         values (for example, "200-299").
+      - Accepts multiple values (for example, "200,202") or a range of values (for example, "200-299").
       - Requires the I(health_check_protocol) parameter to be set.
     required: false
+    type: str
   tags:
     description:
       - A dictionary of one or more tags to assign to the target group.
     required: false
+    type: dict
   target_type:
     description:
       - The type of target that you must specify when registering targets with this target group. The possible values are
@@ -120,19 +135,23 @@ options:
     default: instance
     choices: ['instance', 'ip', 'lambda']
     version_added: 2.5
+    type: str
   targets:
     description:
       - A list of targets to assign to the target group. This parameter defaults to an empty list. Unless you set the 'modify_targets' parameter then
         all existing targets will be removed from the group. The list should be an Id and a Port parameter. See the Examples for detail.
     required: false
+    type: list
   unhealthy_threshold_count:
     description:
       - The number of consecutive health check failures required before considering a target unhealthy.
     required: false
+    type: int
   vpc_id:
     description:
       - The identifier of the virtual private cloud (VPC). Required when I(state) is C(present).
     required: false
+    type: str
   wait:
     description:
       - Whether or not to wait for the target group.
@@ -144,6 +163,7 @@ options:
       - The time to wait for the target group.
     default: 200
     version_added: "2.4"
+    type: int
 extends_documentation_fragment:
     - aws
     - ec2
