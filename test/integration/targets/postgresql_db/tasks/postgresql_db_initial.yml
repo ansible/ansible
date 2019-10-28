@@ -222,11 +222,14 @@
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_user:
-    name: "{{ db_user1 }}"
+    name: "{{ item }}"
     encrypted: 'yes'
     password: "md55c8ccfd9d6711fc69a7eae647fc54f51"
     login_user: "{{ pg_user }}"
     db: postgres
+  loop:
+  - "{{ db_user1 }}"
+  - "{{ db_user2 }}"
 
 - name: Create db with user ownership
   become_user: "{{ pg_user }}"
@@ -240,13 +243,44 @@
 - name: Check that the user owns the newly created DB
   become_user: "{{ pg_user }}"
   become: yes
-  shell: echo "select pg_catalog.pg_get_userbyid(datdba) from pg_catalog.pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: >
+      SELECT 1 FROM pg_catalog.pg_database
+      WHERE datname = '{{ db_name }}'
+      AND pg_catalog.pg_get_userbyid(datdba) = '{{ db_user1 }}'
   register: result
 
 - assert:
     that:
-      - "result.stdout_lines[-1] == '(1 row)'"
-      - "'{{ db_user1 }}' == '{{ result.stdout_lines[-2] | trim }}'"
+    - result.rowcount == 1
+
+- name: Change the owner on an existing db, username with dots
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    name: "{{ db_name }}"
+    state: "present"
+    owner: "{{ db_user2 }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: Check the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: >
+      SELECT 1 FROM pg_catalog.pg_database
+      WHERE datname = '{{ db_name }}'
+      AND pg_catalog.pg_get_userbyid(datdba) = '{{ db_user2 }}'
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
 
 - name: Change the owner on an existing db
   become_user: "{{ pg_user }}"
