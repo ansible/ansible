@@ -144,7 +144,7 @@ class TestNxosVlansModule(TestNxosModule):
 
     def test_2(self):
         # vlan 1 in playbook should raise
-        playbook = dict(config=[ dict(vlan_id=1) ], state='merged')
+        playbook = dict(config=[dict(vlan_id=1)], state='merged')
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(failed=True)
 

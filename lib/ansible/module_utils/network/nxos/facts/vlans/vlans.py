@@ -53,6 +53,13 @@ class VlansFacts(object):
         :returns: facts
         """
         objs = []
+        # **TBD**
+        # N7K EOL/legacy image 6.2 does not support show vlan | json output.
+        # If support is still required for this image then:
+        # - Wrapp the json calls below in a try/except
+        # - When excepted, use a helper method to parse the run_cfg_output,
+        #   using the run_cfg_output data to generate compatible json data that
+        #   can be read by normalize_table_data.
         if not data:
             # Use structured for most of the vlan parameter states.
             # This data is consistent across the supported nxos platforms.
