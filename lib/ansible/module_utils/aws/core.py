@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
 """This module adds shared support for generic Amazon AWS modules
 
 **This code is not yet ready for use in user modules.  As of 2017**
@@ -57,8 +56,10 @@ using the `aws_retry` argument. By default, no retries are used.
 
 The call will be retried the specified number of times, so the calling functions
 don't need to be wrapped in the backoff decorator.
-
 """
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import re
 import logging

@@ -29,6 +29,9 @@
 This module adds shared support for Batch modules.
 """
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, snake_dict_to_camel_dict
 
 try:

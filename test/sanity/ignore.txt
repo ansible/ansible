@@ -115,8 +115,6 @@ examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
 examples/scripts/uptime.py future-import-boilerplate
 examples/scripts/uptime.py metaclass-boilerplate
-hacking/aws_config/build_iam_policy_framework.py future-import-boilerplate
-hacking/aws_config/build_iam_policy_framework.py metaclass-boilerplate
 hacking/build-ansible.py shebang # only run by release engineers, Python 3.6+ required
 hacking/build_library/build_ansible/announce.py compile-2.6!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/announce.py compile-2.7!skip # release process only, 3.6+ required
@@ -164,30 +162,6 @@ lib/ansible/module_utils/ansible_tower.py future-import-boilerplate
 lib/ansible/module_utils/ansible_tower.py metaclass-boilerplate
 lib/ansible/module_utils/api.py future-import-boilerplate
 lib/ansible/module_utils/api.py metaclass-boilerplate
-lib/ansible/module_utils/aws/batch.py future-import-boilerplate
-lib/ansible/module_utils/aws/batch.py metaclass-boilerplate
-lib/ansible/module_utils/aws/cloudfront_facts.py future-import-boilerplate
-lib/ansible/module_utils/aws/cloudfront_facts.py metaclass-boilerplate
-lib/ansible/module_utils/aws/core.py future-import-boilerplate
-lib/ansible/module_utils/aws/core.py metaclass-boilerplate
-lib/ansible/module_utils/aws/direct_connect.py future-import-boilerplate
-lib/ansible/module_utils/aws/direct_connect.py metaclass-boilerplate
-lib/ansible/module_utils/aws/elb_utils.py future-import-boilerplate
-lib/ansible/module_utils/aws/elb_utils.py metaclass-boilerplate
-lib/ansible/module_utils/aws/elbv2.py future-import-boilerplate
-lib/ansible/module_utils/aws/elbv2.py metaclass-boilerplate
-lib/ansible/module_utils/aws/iam.py future-import-boilerplate
-lib/ansible/module_utils/aws/iam.py metaclass-boilerplate
-lib/ansible/module_utils/aws/rds.py future-import-boilerplate
-lib/ansible/module_utils/aws/rds.py metaclass-boilerplate
-lib/ansible/module_utils/aws/s3.py future-import-boilerplate
-lib/ansible/module_utils/aws/s3.py metaclass-boilerplate
-lib/ansible/module_utils/aws/urls.py future-import-boilerplate
-lib/ansible/module_utils/aws/urls.py metaclass-boilerplate
-lib/ansible/module_utils/aws/waf.py future-import-boilerplate
-lib/ansible/module_utils/aws/waf.py metaclass-boilerplate
-lib/ansible/module_utils/aws/waiters.py future-import-boilerplate
-lib/ansible/module_utils/aws/waiters.py metaclass-boilerplate
 lib/ansible/module_utils/azure_rm_common.py future-import-boilerplate
 lib/ansible/module_utils/azure_rm_common.py metaclass-boilerplate
 lib/ansible/module_utils/azure_rm_common_ext.py future-import-boilerplate
@@ -216,8 +190,6 @@ lib/ansible/module_utils/distro/_distro.py future-import-boilerplate # ignore bu
 lib/ansible/module_utils/distro/_distro.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
-lib/ansible/module_utils/ec2.py future-import-boilerplate
-lib/ansible/module_utils/ec2.py metaclass-boilerplate
 lib/ansible/module_utils/f5_utils.py future-import-boilerplate
 lib/ansible/module_utils/f5_utils.py metaclass-boilerplate
 lib/ansible/module_utils/facts/__init__.py empty-init # breaks namespacing, deprecate and eventually remove
@@ -6454,8 +6426,6 @@ test/units/plugins/inventory/test_group.py metaclass-boilerplate
 test/units/plugins/inventory/test_host.py future-import-boilerplate
 test/units/plugins/inventory/test_host.py metaclass-boilerplate
 test/units/plugins/loader_fixtures/import_fixture.py future-import-boilerplate
-test/units/plugins/lookup/test_aws_secret.py metaclass-boilerplate
-test/units/plugins/lookup/test_aws_ssm.py metaclass-boilerplate
 test/units/plugins/shell/test_cmd.py future-import-boilerplate
 test/units/plugins/shell/test_cmd.py metaclass-boilerplate
 test/units/plugins/shell/test_powershell.py future-import-boilerplate
