@@ -123,7 +123,14 @@ def install(module, tserver):
     chart = module.params['chart']
     namespace = module.params['namespace']
 
-    chartb = chartbuilder.ChartBuilder(chart)
+    try:
+        chartb = chartbuilder.ChartBuilder(chart)
+    except Exception as e:
+        module.fail_json(msg="Failed to build chart %s due to %s" % (name, str(e)))
+
+    if not chartb:
+        module.fail_json(msg="Failed to build chart %s" % name)
+
     r_matches = (x for x in tserver.list_releases()
                  if x.name == name and x.namespace == namespace)
     installed_release = next(r_matches, None)

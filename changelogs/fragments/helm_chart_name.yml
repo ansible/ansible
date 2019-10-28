@@ -1,0 +1,2 @@
+minor_changes:
+- Check chart name before proceeding installation in helm module (https://github.com/ansible/ansible/issues/64004).
