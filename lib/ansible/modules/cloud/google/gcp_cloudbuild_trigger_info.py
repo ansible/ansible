@@ -191,12 +191,14 @@ resources:
           description:
           - Name of the branch to build. Exactly one a of branch name, tag, or commit
             SHA must be provided.
+          - This field is a regular expression.
           returned: success
           type: str
         tagName:
           description:
           - Name of the tag to build. Exactly one of a branch name, tag, or commit
             SHA must be provided.
+          - This field is a regular expression.
           returned: success
           type: str
         commitSha:
