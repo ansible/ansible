@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_owner - allow to pass users names containing dots (https://github.com/ansible/ansible/issues/63204).
