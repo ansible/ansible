@@ -14,8 +14,8 @@
     name: "{{ item }}"
   ignore_errors: yes
   with_items:
-  - alice
-  - bob
+  - "{{ user1 }}"
+  - "{{ user2 }}"
 
 # Create test database:
 - name: postgresql_owner - create test database
@@ -40,7 +40,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: my_table
     obj_type: table
 
@@ -114,14 +114,14 @@
   ignore_errors: yes
 
 # Create test tablespace
-- name: postgresql_owner - create a new tablespace called acme and set bob as an its owner
+- name: postgresql_owner - create a new tablespace called acme and set user2 as an its owner
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_tablespace:
     db: acme
     login_user: "{{ pg_user }}"
     name: acme
-    owner: alice
+    owner: "{{ user1 }}"
     location: "{{ test_tablespace_path }}"
 
 ################
@@ -138,7 +138,7 @@
     login_user: "{{ pg_user }}"
     db: acme
     new_owner: non_existent
-    reassign_owned_by: bob
+    reassign_owned_by: "{{ user2 }}"
   register: result
   ignore_errors: yes
 
@@ -153,7 +153,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: alice
+    new_owner: "{{ user1 }}"
     reassign_owned_by: non_existent
     fail_on_role: no
   register: result
@@ -169,15 +169,15 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: alice
-    reassign_owned_by: bob
+    new_owner: "{{ user1 }}"
+    reassign_owned_by: "{{ user2 }}"
   check_mode: yes
   register: result
 
 - assert:
     that:
     - result is changed
-    - result.queries == ['REASSIGN OWNED BY "bob" TO "alice"']
+    - result.queries == ['REASSIGN OWNED BY "{{ user2 }}" TO "{{ user1 }}"']
 
 # Check, rowcount must be 0
 - name: postgresql_owner - check that nothing changed after the previous step
@@ -186,7 +186,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = 'alice'"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = '{{ user1 }}'"
   ignore_errors: yes
   register: result
  
@@ -201,14 +201,14 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: alice
-    reassign_owned_by: bob
+    new_owner: "{{ user1 }}"
+    reassign_owned_by: "{{ user2 }}"
   register: result
 
 - assert:
     that:
     - result is changed
-    - result.queries == ['REASSIGN OWNED BY "bob" TO "alice"']
+    - result.queries == ['REASSIGN OWNED BY "{{ user2 }}" TO "{{ user1 }}"']
 
 # Check, rowcount must be 1
 - name: postgresql_owner - check that ownership has been changed after the previous step
@@ -217,7 +217,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = 'alice'"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = '{{ user1 }}'"
   ignore_errors: yes
   register: result
  
@@ -237,7 +237,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: acme
     obj_type: database
   check_mode: yes
@@ -246,7 +246,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER DATABASE "acme" OWNER TO "bob"']
+    - result.queries == ['ALTER DATABASE "acme" OWNER TO "{{ user2 }}"']
 
 # Check, rowcount must be 0
 - name: postgresql_owner - check that nothing changed after the previous step
@@ -255,7 +255,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_database AS d JOIN pg_roles AS r ON d.datdba = r.oid WHERE d.datname = 'acme' AND r.rolname = 'bob'"
+    query: "SELECT 1 FROM pg_database AS d JOIN pg_roles AS r ON d.datdba = r.oid WHERE d.datname = 'acme' AND r.rolname = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -270,7 +270,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: acme
     obj_type: database
   register: result
@@ -278,7 +278,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER DATABASE "acme" OWNER TO "bob"']
+    - result.queries == ['ALTER DATABASE "acme" OWNER TO "{{ user2 }}"']
 
 # Check, rowcount must be 1
 - name: postgresql_owner - check that db owner has been changed after the previous step
@@ -287,7 +287,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_database AS d JOIN pg_roles AS r ON d.datdba = r.oid WHERE d.datname = 'acme' AND r.rolname = 'bob'"
+    query: "SELECT 1 FROM pg_database AS d JOIN pg_roles AS r ON d.datdba = r.oid WHERE d.datname = 'acme' AND r.rolname = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -302,7 +302,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: acme
     obj_type: database
   register: result
@@ -313,13 +313,13 @@
     - result.queries == []
 
 # Check, rowcount must be 1
-- name: postgresql_owner - check that db owner is bob
+- name: postgresql_owner - check that db owner is user2
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_database AS d JOIN pg_roles AS r ON d.datdba = r.oid WHERE d.datname = 'acme' AND r.rolname = 'bob'"
+    query: "SELECT 1 FROM pg_database AS d JOIN pg_roles AS r ON d.datdba = r.oid WHERE d.datname = 'acme' AND r.rolname = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -335,7 +335,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: my_table
     obj_type: table
   check_mode: yes
@@ -344,7 +344,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER TABLE "my_table" OWNER TO "bob"']
+    - result.queries == ['ALTER TABLE "my_table" OWNER TO "{{ user2 }}"']
 
 # Check, rowcount must be 0
 - name: postgresql_owner - check that nothing changed after the previous step
@@ -353,7 +353,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = 'bob'"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -368,7 +368,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: my_table
     obj_type: table
   register: result
@@ -376,7 +376,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER TABLE "my_table" OWNER TO "bob"']
+    - result.queries == ['ALTER TABLE "my_table" OWNER TO "{{ user2 }}"']
 
 # Check, rowcount must be 1
 - name: postgresql_owner - check that table owner has been changed after the previous step
@@ -385,7 +385,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = 'bob'"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -400,7 +400,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: my_table
     obj_type: table
   register: result
@@ -411,13 +411,13 @@
     - result.queries == []
 
 # Check, rowcount must be 1
-- name: postgresql_owner - check that table owner is bob
+- name: postgresql_owner - check that table owner is user2
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = 'bob'"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -433,7 +433,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: test_seq
     obj_type: sequence
   check_mode: yes
@@ -442,7 +442,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER SEQUENCE "test_seq" OWNER TO "bob"']
+    - result.queries == ['ALTER SEQUENCE "test_seq" OWNER TO "{{ user2 }}"']
 
 # Check, rowcount must be 0
 - name: postgresql_owner - check that nothing changed after the previous step
@@ -451,7 +451,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_class AS c JOIN pg_roles AS r ON c.relowner = r.oid WHERE c.relkind = 'S' AND c.relname = 'test_seq' AND r.rolname = 'bob'"
+    query: "SELECT 1 FROM pg_class AS c JOIN pg_roles AS r ON c.relowner = r.oid WHERE c.relkind = 'S' AND c.relname = 'test_seq' AND r.rolname = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -466,7 +466,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: test_seq
     obj_type: sequence
   register: result
@@ -474,7 +474,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER SEQUENCE "test_seq" OWNER TO "bob"']
+    - result.queries == ['ALTER SEQUENCE "test_seq" OWNER TO "{{ user2 }}"']
 
 # Check, rowcount must be 1
 - name: postgresql_owner - check that table owner has been changed after the previous step
@@ -483,7 +483,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_class AS c JOIN pg_roles AS r ON c.relowner = r.oid WHERE c.relkind = 'S' AND c.relname = 'test_seq' AND r.rolname = 'bob'"
+    query: "SELECT 1 FROM pg_class AS c JOIN pg_roles AS r ON c.relowner = r.oid WHERE c.relkind = 'S' AND c.relname = 'test_seq' AND r.rolname = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -498,7 +498,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: test_seq
     obj_type: sequence
   register: result
@@ -509,13 +509,13 @@
     - result.queries == []
 
 # Check, rowcount must be 1
-- name: postgresql_owner - check that sequence owner is bob
+- name: postgresql_owner - check that sequence owner is user2
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_class AS c JOIN pg_roles AS r ON c.relowner = r.oid WHERE c.relkind = 'S' AND c.relname = 'test_seq' AND r.rolname = 'bob'"
+    query: "SELECT 1 FROM pg_class AS c JOIN pg_roles AS r ON c.relowner = r.oid WHERE c.relkind = 'S' AND c.relname = 'test_seq' AND r.rolname = '{{ user2 }}'"
 
   ignore_errors: yes
   register: result
@@ -532,7 +532,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: increment
     obj_type: function
   check_mode: yes
@@ -542,7 +542,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER FUNCTION increment OWNER TO "bob"']
+    - result.queries == ['ALTER FUNCTION increment OWNER TO "{{ user2 }}"']
   when: postgres_version_resp.stdout is version('10', '>=')
 
 # Check, rowcount must be 0
@@ -552,7 +552,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_proc AS f JOIN pg_roles AS r ON f.proowner = r.oid WHERE f.proname = 'increment' AND r.rolname = 'bob'"
+    query: "SELECT 1 FROM pg_proc AS f JOIN pg_roles AS r ON f.proowner = r.oid WHERE f.proname = 'increment' AND r.rolname = '{{ user2 }}'"
   ignore_errors: yes
   register: result
   when: postgres_version_resp.stdout is version('10', '>=')
@@ -569,7 +569,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: increment
     obj_type: function
   register: result
@@ -578,7 +578,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER FUNCTION increment OWNER TO "bob"']
+    - result.queries == ['ALTER FUNCTION increment OWNER TO "{{ user2 }}"']
   when: postgres_version_resp.stdout is version('10', '>=')
 
 # Check, rowcount must be 1
@@ -588,7 +588,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_proc AS f JOIN pg_roles AS r ON f.proowner = r.oid WHERE f.proname = 'increment' AND r.rolname = 'bob'"
+    query: "SELECT 1 FROM pg_proc AS f JOIN pg_roles AS r ON f.proowner = r.oid WHERE f.proname = 'increment' AND r.rolname = '{{ user2 }}'"
   ignore_errors: yes
   register: result
   when: postgres_version_resp.stdout is version('10', '>=')
@@ -605,7 +605,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: increment
     obj_type: function
   register: result
@@ -618,13 +618,13 @@
   when: postgres_version_resp.stdout is version('10', '>=')
 
 # Check, rowcount must be 1
-- name: postgresql_owner - check that function owner is bob
+- name: postgresql_owner - check that function owner is user2
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_proc AS f JOIN pg_roles AS r ON f.proowner = r.oid WHERE f.proname = 'increment' AND r.rolname = 'bob'"
+    query: "SELECT 1 FROM pg_proc AS f JOIN pg_roles AS r ON f.proowner = r.oid WHERE f.proname = 'increment' AND r.rolname = '{{ user2 }}'"
   ignore_errors: yes
   register: result
   when: postgres_version_resp.stdout is version('10', '>=')
@@ -642,7 +642,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: test_schema
     obj_type: schema
   check_mode: yes
@@ -651,7 +651,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER SCHEMA "test_schema" OWNER TO "bob"']
+    - result.queries == ['ALTER SCHEMA "test_schema" OWNER TO "{{ user2 }}"']
 
 # Check, rowcount must be 0
 - name: postgresql_owner - check that nothing changed after the previous step
@@ -660,7 +660,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'test_schema' AND schema_owner = 'bob'"
+    query: "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'test_schema' AND schema_owner = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -675,7 +675,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: test_schema
     obj_type: schema
   register: result
@@ -683,7 +683,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER SCHEMA "test_schema" OWNER TO "bob"']
+    - result.queries == ['ALTER SCHEMA "test_schema" OWNER TO "{{ user2 }}"']
 
 # Check, rowcount must be 1
 - name: postgresql_owner - check that schema owner has been changed after the previous step
@@ -692,7 +692,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'test_schema' AND schema_owner = 'bob'"
+    query: "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'test_schema' AND schema_owner = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -707,7 +707,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: test_seq
     obj_type: sequence
   register: result
@@ -718,13 +718,13 @@
     - result.queries == []
 
 # Check, rowcount must be 1
-- name: postgresql_owner - check that schema owner is bob
+- name: postgresql_owner - check that schema owner is user2
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'test_schema' AND schema_owner = 'bob'"
+    query: "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'test_schema' AND schema_owner = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -740,7 +740,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: test_view
     obj_type: view
   check_mode: yes
@@ -749,7 +749,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER VIEW "test_view" OWNER TO "bob"']
+    - result.queries == ['ALTER VIEW "test_view" OWNER TO "{{ user2 }}"']
 
 # Check, rowcount must be 0
 - name: postgresql_owner - check that nothing changed after the previous step
@@ -758,7 +758,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_views WHERE viewname = 'test_view' AND viewowner = 'bob'"
+    query: "SELECT 1 FROM pg_views WHERE viewname = 'test_view' AND viewowner = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -773,7 +773,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: test_view
     obj_type: view
   register: result
@@ -781,7 +781,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER VIEW "test_view" OWNER TO "bob"']
+    - result.queries == ['ALTER VIEW "test_view" OWNER TO "{{ user2 }}"']
 
 # Check, rowcount must be 1
 - name: postgresql_owner - check that view owner has been changed after the previous step
@@ -790,7 +790,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_views WHERE viewname = 'test_view' AND viewowner = 'bob'"
+    query: "SELECT 1 FROM pg_views WHERE viewname = 'test_view' AND viewowner = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -805,7 +805,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: test_view
     obj_type: view
   register: result
@@ -816,13 +816,13 @@
     - result.queries == []
 
 # Check, rowcount must be 1
-- name: postgresql_owner - check that view owner is bob
+- name: postgresql_owner - check that view owner is user2
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_views WHERE viewname = 'test_view' AND viewowner = 'bob'"
+    query: "SELECT 1 FROM pg_views WHERE viewname = 'test_view' AND viewowner = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -838,7 +838,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: test_mat_view
     obj_type: matview
   check_mode: yes
@@ -848,7 +848,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER MATERIALIZED VIEW "test_mat_view" OWNER TO "bob"']
+    - result.queries == ['ALTER MATERIALIZED VIEW "test_mat_view" OWNER TO "{{ user2 }}"']
   when: postgres_version_resp.stdout is version('9.4', '>=')
 
 # Check, rowcount must be 0
@@ -858,7 +858,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_matviews WHERE matviewname = 'test_view' AND matviewowner = 'bob'"
+    query: "SELECT 1 FROM pg_matviews WHERE matviewname = 'test_view' AND matviewowner = '{{ user2 }}'"
   ignore_errors: yes
   register: result
   when: postgres_version_resp.stdout is version('9.4', '>=')
@@ -875,7 +875,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: test_mat_view
     obj_type: matview
   register: result
@@ -884,7 +884,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER MATERIALIZED VIEW "test_mat_view" OWNER TO "bob"']
+    - result.queries == ['ALTER MATERIALIZED VIEW "test_mat_view" OWNER TO "{{ user2 }}"']
   when: postgres_version_resp.stdout is version('9.4', '>=')
 
 # Check, rowcount must be 1
@@ -894,7 +894,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_matviews WHERE matviewname = 'test_mat_view' AND matviewowner = 'bob'"
+    query: "SELECT 1 FROM pg_matviews WHERE matviewname = 'test_mat_view' AND matviewowner = '{{ user2 }}'"
   ignore_errors: yes
   register: result
   when: postgres_version_resp.stdout is version('9.4', '>=')
@@ -911,7 +911,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: test_mat_view
     obj_type: matview
   register: result
@@ -924,13 +924,13 @@
   when: postgres_version_resp.stdout is version('9.4', '>=')
 
 # Check, rowcount must be 1
-- name: postgresql_owner - check that matview owner is bob
+- name: postgresql_owner - check that matview owner is user2
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_matviews WHERE matviewname = 'test_mat_view' AND matviewowner = 'bob'"
+    query: "SELECT 1 FROM pg_matviews WHERE matviewname = 'test_mat_view' AND matviewowner = '{{ user2 }}'"
   ignore_errors: yes
   register: result
   when: postgres_version_resp.stdout is version('9.4', '>=')
@@ -948,7 +948,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: acme
     obj_type: tablespace
   check_mode: yes
@@ -957,7 +957,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER TABLESPACE "acme" OWNER TO "bob"']
+    - result.queries == ['ALTER TABLESPACE "acme" OWNER TO "{{ user2 }}"']
 
 # Check, rowcount must be 0
 - name: postgresql_owner - check that nothing changed after the previous step
@@ -966,7 +966,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_tablespace AS t JOIN pg_roles AS r ON t.spcowner = r.oid WHERE t.spcname = 'acme' AND r.rolname = 'bob'"
+    query: "SELECT 1 FROM pg_tablespace AS t JOIN pg_roles AS r ON t.spcowner = r.oid WHERE t.spcname = 'acme' AND r.rolname = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -981,7 +981,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: acme
     obj_type: tablespace
   register: result
@@ -989,7 +989,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['ALTER TABLESPACE "acme" OWNER TO "bob"']
+    - result.queries == ['ALTER TABLESPACE "acme" OWNER TO "{{ user2 }}"']
 
 # Check, rowcount must be 1
 - name: postgresql_owner - check that tablespace owner has been changed after the previous step
@@ -998,7 +998,7 @@
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_tablespace AS t JOIN pg_roles AS r ON t.spcowner = r.oid WHERE t.spcname = 'acme' AND r.rolname = 'bob'"
+    query: "SELECT 1 FROM pg_tablespace AS t JOIN pg_roles AS r ON t.spcowner = r.oid WHERE t.spcname = 'acme' AND r.rolname = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 
@@ -1013,7 +1013,7 @@
   postgresql_owner:
     login_user: "{{ pg_user }}"
     db: acme
-    new_owner: bob
+    new_owner: "{{ user2 }}"
     obj_name: acme
     obj_type: tablespace
   register: result
@@ -1024,13 +1024,13 @@
     - result.queries == []
 
 # Check, rowcount must be 1
-- name: postgresql_owner - check that tablespace owner is bob
+- name: postgresql_owner - check that tablespace owner is user2
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
     db: acme
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_tablespace AS t JOIN pg_roles AS r ON t.spcowner = r.oid WHERE t.spcname = 'acme' AND r.rolname = 'bob'"
+    query: "SELECT 1 FROM pg_tablespace AS t JOIN pg_roles AS r ON t.spcowner = r.oid WHERE t.spcname = 'acme' AND r.rolname = '{{ user2 }}'"
   ignore_errors: yes
   register: result
 

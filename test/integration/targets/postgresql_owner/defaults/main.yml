@@ -1,1 +1,3 @@
 test_tablespace_path: "/ssd"
+user1: alice
+user2: user.with.dots
