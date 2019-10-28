@@ -76,15 +76,15 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__()
 
         self.start_time = datetime.utcnow()
-    
+
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
-        
+
         self.influxdb_addr = self.get_option('influxdb_addr')
         self.influxdb_db = self.get_option('influxdb_db')
         self.influxdb_tls = self.get_option('influxdb_tls')
         self.validate_certs = self.get_option('influxdb_validate_cert')
-        
+
         if self.influxdb_addr is None:
             self.disabled = True
             self._display.warning('InfluxDB address was not provided. The '
@@ -98,10 +98,10 @@ class CallbackModule(CallbackBase):
                                   'InfluxDB database name can be provided using '
                                   'the `INFLUXDB_DB` environment '
                                   'variable. Telemetry data not captured.')
-        
+
         if str(self.influxdb_tls).lower() == 'true':
             self.influx_constructed_url = 'https://%s/write?db=%s' % (self.influxdb_addr, self.influxdb_db)
-        
+
         elif str(self.influxdb_tls).lower() == 'false':
             self.influx_constructed_url = 'http://%s/write?db=%s' % (self.influxdb_addr, self.influxdb_db)
 
@@ -109,7 +109,7 @@ class CallbackModule(CallbackBase):
             self._display.warning(u'Environment variable INFLUXDB_TLS is not set or is '
                                   'invalid. Proceeding using TLS')
             self.influx_constructed_url = 'https://%s/write?db=%s' % (self.influxdb_addr, self.influxdb_db)
-        
+
         if str(self.validate_certs).lower() == 'true':
             self.validate_certs = True
 
@@ -120,7 +120,6 @@ class CallbackModule(CallbackBase):
             self._display.warning(u'Environment variable INFLUXDB_VALIDATE_CERT is not set or is '
                                   'invalid. Proceeding using TLS')
             self.validate_certs = True
-        
 
     def send_msg(self, role_name, duration):
         payload = 'role_duration,role=%s duration=%s' % (self.playbook_name, duration)
