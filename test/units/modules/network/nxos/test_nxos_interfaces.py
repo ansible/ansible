@@ -158,7 +158,8 @@ class TestNxosInterfacesModule(TestNxosModule):
 
     def test_2(self):
         # 'enabled'/shutdown behaviors are tricky:
-        # - different default states for different interface types
+        # - different default states for different interface types:
+        #    ethernet = shutdown, loopback = no shutdown
         # - virtual interfaces may not exist yet
         # - idempotence checks for interfaces with all default states
         existing = dedent('''\
