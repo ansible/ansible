@@ -34,13 +34,16 @@ options:
     type: str
   mode:
     description:
+    - C(global) assigns a value to a global system variable which will be changed at runtime
+      but won't persist across server restarts.
     - C(persist) persists a global system variable to
       the mysqld-auto.cnf option file in the data directory (the variable will survive service restarts).
     - C(persist_only) behaves like C(persist) but without setting the global variable runtime value.
-    - Supported from MySQL 8.0.
+    - Supported by MySQL 8.0 or later.
     - For more information see U(https://dev.mysql.com/doc/refman/8.0/en/set-variable.html).
     type: str
-    choices: ['persist', 'persist_only']
+    choices: ['global', 'persist', 'persist_only']
+    default: global
     version_added: '2.10'
 
 seealso:
@@ -84,6 +87,19 @@ from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver
 from ansible.module_utils._text import to_native
 
 executed_queries = []
+
+
+def check_mysqld_auto(cursor, mysqlvar):
+    """Check variable's value in mysqld-auto.cnf."""
+    query = ("SELECT VARIABLE_VALUE "
+             "FROM performance_schema.persisted_variables "
+             "WHERE VARIABLE_NAME = %s")
+    cursor.execute(query, (mysqlvar,))
+    res = cursor.fetchone()
+    if res:
+        return res[0]
+    else:
+        return None
 
 
 def typedvalue(value):
@@ -131,10 +147,11 @@ def setvariable(cursor, mysqlvar, value, mode=''):
     """
     if mode == 'persist':
         query = "SET PERSIST %s = " % mysql_quote_identifier(mysqlvar, 'vars')
+    elif mode == 'global':
+        query = "SET GLOBAL %s = " % mysql_quote_identifier(mysqlvar, 'vars')
     elif mode == 'persist_only':
         query = "SET PERSIST_ONLY %s = " % mysql_quote_identifier(mysqlvar, 'vars')
-    else:
-        query = "SET GLOBAL %s = " % mysql_quote_identifier(mysqlvar, 'vars')
+
     try:
         cursor.execute(query + "%s", (value,))
         executed_queries.append(query + "%s" % value)
@@ -142,6 +159,7 @@ def setvariable(cursor, mysqlvar, value, mode=''):
         result = True
     except Exception as e:
         result = to_native(e)
+
     return result
 
 
@@ -160,7 +178,7 @@ def main():
             ca_cert=dict(type='path', aliases=['ssl_ca']),
             connect_timeout=dict(type='int', default=30),
             config_file=dict(type='path', default='~/.my.cnf'),
-            mode=dict(type='str', choices=['persist', 'persist_only']),
+            mode=dict(type='str', choices=['global', 'persist', 'persist_only'], default='global'),
         ),
     )
     user = module.params["login_user"]
@@ -196,7 +214,14 @@ def main():
         else:
             module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, to_native(e)))
 
-    mysqlvar_val = getvariable(cursor, mysqlvar)
+    mysqlvar_val = None
+    if mode == 'global' or mode == 'persist':
+        mysqlvar_val = getvariable(cursor, mysqlvar)
+    elif mode == 'persist_only':
+        mysqlvar_val = check_mysqld_auto(cursor, mysqlvar)
+        if mysqlvar_val is None:
+            mysqlvar_val = getvariable(cursor, mysqlvar)
+
     if mysqlvar_val is None:
         module.fail_json(msg="Variable not available \"%s\"" % mysqlvar, changed=False)
     if value is None:
