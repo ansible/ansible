@@ -1,0 +1,73 @@
+---
+
+- name: get stats on a certificate that doesn't exist
+  win_cert_stat:
+    thumbprint: ABC
+  register: actual
+
+- name: ensure exists is false
+  assert:
+    that: actual.exists == false
+
+- name: get stats on root certificate
+  win_cert_stat:
+    thumbprint: '{{ root_thumbprint }}'
+    store_name: Root
+  register: root_stats
+
+- name: dump stats
+  debug:
+    var: root_stats
+
+- name: root certificate stats returned are expected values
+  assert:
+    that:
+      - root_stats.exists
+      - root_stats.archived == false
+      - root_stats.dns_names == [ 'root.ansible.com' ]
+      - root_stats.extensions|count == 3
+      - root_stats.has_private_key == false
+      - root_stats.issued_by == 'root.ansible.com'
+      - root_stats.issued_to == 'root.ansible.com'
+      - root_stats.issuer == 'C=US, CN=root.ansible.com'
+      - root_stats.path_length_constraint == 0
+#      - root_stats.public_key == (root_pub.stdout_lines|join())
+      - root_stats.raw == root_raw.stdout_lines|join()
+      - root_stats.serial_number == '00FD6F21D1A0309BFF'
+      - root_stats.signature_algorithm == 'sha256RSA'
+      - root_stats.ski == 'BA7D9382E63A7011E113ABAA16FE08575B936FA8'
+      - root_stats.subject == 'C=US, CN=root.ansible.com'
+      - root_stats.valid_from == 1513327172
+      - root_stats.valid_to == 3660799172
+      - root_stats.version == 3
+
+- name: get stats on subject certificate
+  win_cert_stat:
+    thumbprint: '{{ subj_thumbprint }}'
+  register: subj_stats
+
+- name: dump stats
+  debug:
+    var: subj_stats
+
+- name: subject certificate stats returned are expected values
+  assert:
+    that:
+      - subj_stats.exists
+      - subj_stats.archived == false
+      - subj_stats.dns_names == [ 'subject.ansible.com' ]
+      - subj_stats.extensions|count == 0
+      - subj_stats.has_private_key == false
+      - subj_stats.issued_by == 'root.ansible.com'
+      - subj_stats.issued_to == 'subject.ansible.com'
+      - subj_stats.issuer == 'C=US, CN=root.ansible.com'
+      - subj_stats.path_length_constraint is undefined
+#      - subj_stats.public_key == subj_pub.stdout_lines|join()
+      - subj_stats.raw == subj_raw.stdout_lines|join()
+      - subj_stats.serial_number == '00BF32D3816B5503A7'
+      - subj_stats.signature_algorithm == 'sha256RSA'
+      - subj_stats.ski is undefined
+      - subj_stats.subject == 'C=US, CN=subject.ansible.com'
+      - subj_stats.valid_from == 1513328190
+      - subj_stats.valid_to == 3660800190
+      - subj_stats.version == 1
