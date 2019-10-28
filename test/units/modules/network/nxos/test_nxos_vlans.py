@@ -86,7 +86,6 @@ class TestNxosVlansModule(TestNxosModule):
         elif device == '_vlan_1':
             self.get_device_data.side_effect = load_from_file_vlan_1
 
-
     def test_1(self):
         '''
         **NOTE** This config is for reference only! See fixtures files for real data.
