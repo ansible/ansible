@@ -9,7 +9,7 @@ import re
 import sys
 import yaml
 
-from voluptuous import Any, MultipleInvalid, Required, Schema
+from voluptuous import All, Any, Match, MultipleInvalid, Required, Schema
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import string_types
@@ -38,6 +38,10 @@ def main():
             'keywords': Any(list_string_types, *string_types),
             'labels': Any(list_string_types, *string_types),
             'maintainers': Any(list_string_types, *string_types),
+            'migrated_to': All(
+                Any(*string_types),
+                Match(r'^https://galaxy.ansible.com/'),
+            ),
             'notified': Any(list_string_types, *string_types),
             'supershipit': Any(list_string_types, *string_types),
             'support': Any("core", "network", "community"),
