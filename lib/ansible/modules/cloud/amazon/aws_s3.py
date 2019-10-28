@@ -22,14 +22,6 @@ notes:
    - In 2.4, this module has been renamed from C(s3) into M(aws_s3).
 version_added: "1.1"
 options:
-  aws_access_key:
-    description:
-      - AWS access key id. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    aliases: [ 'ec2_access_key', 'access_key' ]
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    aliases: ['ec2_secret_key', 'secret_key']
   bucket:
     description:
       - Bucket name.
@@ -125,12 +117,6 @@ options:
     aliases: ['force']
     version_added: "1.2"
     type: str
-  region:
-    description:
-     - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables
-       are checked, followed by the aws_region and ec2_region settings in the Boto config file. If none of those are set the
-       region defaults to the S3 Location: US Standard. Prior to ansible 1.8 this parameter could be specified but had no effect."
-    version_added: "1.8"
   retries:
     description:
      - On recoverable failure, how many times to retry before actually failing.

@@ -70,15 +70,13 @@ options:
     choices: ['never', 'changed', 'always']
     default: changed
     type: str
-  region:
-    description:
-      - region.
-    required: false
 author:
   - Nathan Webster (@nathanwebsterdotme)
   - Bill Wang (@ozbillwang) <ozbillwang@gmail.com>
   - Michael De La Rue (@mikedlr)
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 requirements: [ botocore, boto3 ]
 '''
 
@@ -243,7 +241,6 @@ def setup_module_object():
         decryption=dict(default=True, type='bool'),
         key_id=dict(default="alias/aws/ssm"),
         overwrite_value=dict(default='changed', choices=['never', 'changed', 'always']),
-        region=dict(required=False),
     )
 
     return AnsibleAWSModule(
