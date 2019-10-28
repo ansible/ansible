@@ -16,7 +16,7 @@ DOCUMENTATION = '''
       - Abhijeet Kasurde (@Akasurde)
     description:
         - Get virtual machines as inventory hosts from VMware environment.
-        - Uses any file which ends with vmware.yml or vmware.yaml as a YAML configuration file.
+        - Uses any file which ends with vmware.yml, vmware.yaml, vmware_vm_inventory.yml, or vmware_vm_inventory.yaml as a YAML configuration file.
         - The inventory_hostname is always the 'Name' and UUID of the virtual machine. UUID is added as VMware allows virtual machines with the same name.
     extends_documentation_fragment:
       - inventory_cache
@@ -31,14 +31,14 @@ DOCUMENTATION = '''
             description: Name of vCenter or ESXi server.
             required: True
             env:
-              - name: VMWARE_SERVER
               - name: VMWARE_HOST
+              - name: VMWARE_SERVER
         username:
             description: Name of vSphere admin user.
             required: True
             env:
-              - name: VMWARE_USERNAME
               - name: VMWARE_USER
+              - name: VMWARE_USERNAME
         password:
             description: Password of vSphere admin user.
             required: True
