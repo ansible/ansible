@@ -27,11 +27,13 @@ options:
     description:
     - The name of the AWS Config resource.
     required: true
+    type: str
   state:
     description:
     - Whether the Config rule should be present or absent.
     default: present
     choices: ['present', 'absent']
+    type: str
   account_sources:
     description:
     - Provides a list of source accounts and regions to be aggregated.
@@ -45,6 +47,7 @@ options:
       all_aws_regions:
         description:
         - If true, aggregate existing AWS Config regions and future regions.
+    type: list
   organization_source:
     description:
     - The region authorized to collect aggregated data.
@@ -58,6 +61,7 @@ options:
       all_aws_regions:
         description:
         - If true, aggregate existing AWS Config regions and future regions.
+    type: dict
 extends_documentation_fragment:
   - aws
   - ec2

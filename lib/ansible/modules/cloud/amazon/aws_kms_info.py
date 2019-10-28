@@ -26,6 +26,7 @@ options:
         The filters aren't natively supported by boto3, but are supported to provide similar
         functionality to other modules. Standard tag filters (C(tag-key), C(tag-value) and
         C(tag:tagName)) are available, as are C(key-id) and C(alias)
+    type: dict
   pending_deletion:
     description: Whether to get full details (tags, grants etc.) of keys pending deletion
     default: False

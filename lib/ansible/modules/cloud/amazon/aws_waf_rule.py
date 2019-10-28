@@ -28,18 +28,21 @@ options:
     name:
         description: Name of the Web Application Firewall rule
         required: yes
+        type: str
     metric_name:
         description:
         - A friendly name or description for the metrics for the rule
         - The name can contain only alphanumeric characters (A-Z, a-z, 0-9); the name can't contain whitespace.
         - You can't change metric_name after you create the rule
         - Defaults to the same as name with disallowed characters removed
+        type: str
     state:
         description: whether the rule should be present or absent
         choices:
         - present
         - absent
         default: present
+        type: str
     conditions:
         description: >
           list of conditions used in the rule. Each condition should
@@ -47,6 +50,7 @@ options:
           I(negated): whether the condition should be negated, and C(condition),
           the name of the existing condition. M(aws_waf_condition) can be used to
           create new conditions
+        type: list
     purge_conditions:
         description:
           - Whether or not to remove conditions that are not passed when updating `conditions`.

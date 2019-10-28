@@ -30,18 +30,20 @@ options:
     description:
       - name of repository.
     required: true
+    type: str
   description:
     description:
       - description or comment of repository.
     required: false
     aliases:
       - comment
+    type: str
   state:
     description:
       - Specifies the state of repository.
     required: true
     choices: [ 'present', 'absent' ]
-
+    type: str
 extends_documentation_fragment:
   - aws
   - ec2

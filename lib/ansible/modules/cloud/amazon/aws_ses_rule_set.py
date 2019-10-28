@@ -26,12 +26,14 @@ options:
     description:
       - The name of the receipt rule set.
     required: True
+    type: str
   state:
     description:
       - Whether to create (or update) or destroy the receipt rule set.
     required: False
     default: present
     choices: ["absent", "present"]
+    type: str
   active:
     description:
       - Whether or not this rule set should be the active rule set. Only has an impact if I(state) is C(present).

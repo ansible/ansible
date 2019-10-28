@@ -24,6 +24,7 @@ options:
       - The user-defined name that identifies the assessment target.  The name
         must be unique within the AWS account.
     required: true
+    type: str
   state:
     description:
       - The state of the assessment target.
@@ -31,10 +32,12 @@ options:
       - absent
       - present
     default: present
+    type: str
   tags:
     description:
       - Tags of the EC2 instances to be added to the assessment target.
       - Required if C(state=present).
+    type: dict
 extends_documentation_fragment:
   - aws
   - ec2

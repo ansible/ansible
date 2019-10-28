@@ -26,14 +26,17 @@ options:
     description:
       - name of the beanstalk application you wish to manage
     aliases: [ 'name' ]
+    type: str
   description:
     description:
       - the description of the application
+    type: str
   state:
     description:
       - whether to ensure the application is present or absent
     default: present
     choices: ['absent','present']
+    type: str
   terminate_by_force:
     description:
       - when set to true, running environments will be terminated before deleting the application

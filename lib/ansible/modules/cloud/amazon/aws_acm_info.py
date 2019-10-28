@@ -22,10 +22,12 @@ options:
       - The domain name of an ACM certificate to limit the search to
     aliases:
       - name
+    type: str
   statuses:
     description:
       - Status to filter the certificate results
     choices: ['PENDING_VALIDATION', 'ISSUED', 'INACTIVE', 'EXPIRED', 'VALIDATION_TIMED_OUT', 'REVOKED', 'FAILED']
+    type: list
 requirements:
   - boto3
 author:

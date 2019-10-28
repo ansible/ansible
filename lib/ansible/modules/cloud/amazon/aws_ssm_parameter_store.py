@@ -21,14 +21,17 @@ options:
     description:
       - parameter key name.
     required: true
+    type: str
   description:
     description:
       - parameter key description.
     required: false
+    type: str
   value:
     description:
       - Parameter value.
     required: false
+    type: str
   state:
     description:
       - Creates or modifies an existing parameter
@@ -36,23 +39,28 @@ options:
     required: false
     choices: ['present', 'absent']
     default: present
+    type: str
   string_type:
     description:
       - Parameter String type
     required: false
     choices: ['String', 'StringList', 'SecureString']
     default: String
+    type: str
   decryption:
     description:
       - Work with SecureString type to get plain text secrets
     type: bool
     required: false
-    default: True
+    default: true
   key_id:
     description:
       - aws KMS key to decrypt the secrets.
+      - the default key (C(alias/aws/ssm)) is automatically generated the first
+        time it's requested
     required: false
-    default: aws/ssm (this key is automatically generated at the first parameter created).
+    default: alias/aws/ssm
+    type: str
   overwrite_value:
     description:
       - Option to overwrite an existing value if it already exists.
@@ -61,6 +69,7 @@ options:
     version_added: "2.6"
     choices: ['never', 'changed', 'always']
     default: changed
+    type: str
   region:
     description:
       - region.

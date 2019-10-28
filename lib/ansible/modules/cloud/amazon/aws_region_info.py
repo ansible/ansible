@@ -27,6 +27,7 @@ options:
         possible filters. Filter names and values are case sensitive. You can also use underscores
         instead of dashes (-) in the filter keys, which will take precedence in case of conflict.
     default: {}
+    type: dict
 extends_documentation_fragment:
     - aws
     - ec2

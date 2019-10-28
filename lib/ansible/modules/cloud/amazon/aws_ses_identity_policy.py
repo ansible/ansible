@@ -28,15 +28,19 @@ options:
             The SES identity to attach or remove a policy from. This can be either the full ARN or just
             the verified email or domain.
         required: true
+        type: str
     policy_name:
         description: The name used to identify the policy within the scope of the identity it's attached to.
         required: true
+        type: str
     policy:
         description: A properly formatted JSON sending authorization policy. Required when I(state=present).
+        type: json
     state:
         description: Whether to create(or update) or delete the authorization policy on the identity.
         default: present
         choices: [ 'present', 'absent' ]
+        type: str
 requirements: [ 'botocore', 'boto3' ]
 extends_documentation_fragment:
     - aws

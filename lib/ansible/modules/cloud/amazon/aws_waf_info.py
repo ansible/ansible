@@ -21,12 +21,13 @@ options:
   name:
     description:
       - The name of a Web Application Firewall
+    type: str
   waf_regional:
-      description: Whether to use waf_regional module. Defaults to true
-      default: false
-      required: no
-      type: bool
-      version_added: "2.9"
+    description: Whether to use waf_regional module. Defaults to true
+    default: false
+    required: no
+    type: bool
+    version_added: "2.9"
 
 author:
   - Mike Mochan (@mmochan)

@@ -28,6 +28,7 @@ options:
     name:
         description: Name of the Web Application Firewall condition to manage.
         required: yes
+        type: str
     type:
         description: the type of matching to perform.
         choices:
@@ -38,6 +39,7 @@ options:
         - size
         - sql
         - xss
+        type: str
     filters:
         description:
         - A list of the filters against which to match.
@@ -55,6 +57,7 @@ options:
         - I(comparison) can be one of C(EQ), C(NE), C(LE), C(LT), C(GE), C(GT).
         - I(target_string) is a maximum of 50 bytes.
         - I(regex_pattern) is a dict with a C(name) key and C(regex_strings) list of strings to match.
+        type: list
     purge_filters:
         description:
         - Whether to remove existing filters from a condition if not passed in I(filters).
@@ -72,6 +75,7 @@ options:
         - present
         - absent
         default: present
+        type: str
 
 '''
 

@@ -33,22 +33,27 @@ options:
     required: false
     default: present
     choices: [ "present", "absent"]
+    type: str
   name:
     description:
         - name of the dxgw to be created or deleted
     required: false
+    type: str
   amazon_asn:
     description:
         - amazon side asn
     required: true
+    type: str
   direct_connect_gateway_id:
     description:
         - id of an existing direct connect gateway
     required: false
+    type: str
   virtual_gateway_id:
     description:
         - vpn gateway id of an existing virtual gateway
     required: false
+    type: str
 '''
 
 EXAMPLES = '''

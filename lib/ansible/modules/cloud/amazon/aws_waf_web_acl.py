@@ -27,6 +27,7 @@ options:
     name:
         description: Name of the Web Application Firewall ACL to manage
         required: yes
+        type: str
     default_action:
         description: The action that you want AWS WAF to take when a request doesn't
           match the criteria specified in any of the Rule objects that are associated with the WebACL
@@ -34,24 +35,28 @@ options:
         - block
         - allow
         - count
+        type: str
     state:
         description: whether the Web ACL should be present or absent
         choices:
         - present
         - absent
         default: present
+        type: str
     metric_name:
         description:
         - A friendly name or description for the metrics for this WebACL
         - The name can contain only alphanumeric characters (A-Z, a-z, 0-9); the name can't contain whitespace.
         - You can't change metric_name after you create the WebACL
         - Metric name will default to I(name) with disallowed characters stripped out
+        type: str
     rules:
         description:
         - A list of rules that the Web ACL will enforce.
         - Each rule must contain I(name), I(action), I(priority) keys.
         - Priorities must be unique, but not necessarily consecutive. Lower numbered priorities are evaluated first.
         - The I(type) key can be passed as C(rate_based), it defaults to C(regular)
+        type: list
     purge_rules:
         description:
         - Whether to remove rules that aren't passed with C(rules).

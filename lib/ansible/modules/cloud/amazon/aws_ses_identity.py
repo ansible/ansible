@@ -28,10 +28,12 @@ options:
             - This is the email address or domain to verify / delete.
             - If this contains an '@' then it will be considered an email. Otherwise it will be considered a domain.
         required: true
+        type: str
     state:
         description: Whether to create(or update) or delete the identity.
         default: present
         choices: [ 'present', 'absent' ]
+        type: str
     bounce_notifications:
         description:
             - Setup the SNS topic used to report bounce notifications.
@@ -48,6 +50,7 @@ options:
                     - If I(topic) is not specified this will have no impact, but the SES setting is updated even if there is no topic.
                 type: bool
                 default: No
+        type: dict
     complaint_notifications:
         description:
             - Setup the SNS topic used to report complaint notifications.
@@ -64,6 +67,7 @@ options:
                     - If I(topic) is not specified this will have no impact, but the SES setting is updated even if there is no topic.
                 type: bool
                 default: No
+        type: dict
     delivery_notifications:
         description:
             - Setup the SNS topic used to report delivery notifications.
@@ -79,6 +83,7 @@ options:
                     - If I(topic) is not specified this will have no impact, but the SES setting is updated even if there is no topic.
                 type: bool
                 default: No
+        type: dict
     feedback_forwarding:
         description:
             - Whether or not to enable feedback forwarding.

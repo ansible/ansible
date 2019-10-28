@@ -29,12 +29,14 @@ options:
     required: false
     aliases:
       - key_alias
+    type: str
   key_id:
     description:
     - Key ID or ARN of the key. One of C(alias) or C(key_id) are required.
     required: false
     aliases:
       - key_arn
+    type: str
   policy_mode:
     description:
     - (deprecated) Grant or deny access.
@@ -45,6 +47,7 @@ options:
     choices: [ grant, deny ]
     aliases:
     - mode
+    type: str
   policy_role_name:
     description:
     - (deprecated) Role to allow/deny access. One of C(policy_role_name) or C(policy_role_arn) are required.
@@ -54,12 +57,14 @@ options:
     required: false
     aliases:
     - role_name
+    type: str
   policy_role_arn:
     description:
     - (deprecated) ARN of role to allow/deny access. One of C(policy_role_name) or C(policy_role_arn) are required.
     - Used for modifying the Key Policy rather than modifying a grant and only
       works on the default policy created through the AWS Console.
     - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
+    type: str
     required: false
     aliases:
     - role_arn
@@ -72,6 +77,7 @@ options:
     required: false
     aliases:
     - grant_types
+    type: list
   policy_clean_invalid_entries:
     description:
     - (deprecated) If adding/removing a role and invalid grantees are found, remove them. These entries will cause an update to fail in all known cases.
@@ -93,6 +99,7 @@ options:
       - absent
     default: present
     version_added: 2.8
+    type: str
   enabled:
     description: Whether or not a key is enabled
     default: True
@@ -103,9 +110,11 @@ options:
       A description of the CMK. Use a description that helps you decide
       whether the CMK is appropriate for a task.
     version_added: 2.8
+    type: str
   tags:
     description: A dictionary of tags to apply to a key.
     version_added: 2.8
+    type: dict
   purge_tags:
     description: Whether the I(tags) argument should cause tags not in the list to
       be removed
@@ -131,10 +140,12 @@ options:
         See U(https://docs.aws.amazon.com/kms/latest/APIReference/API_GrantConstraints.html)
       - I(grantee_principal) and I(retiring_principal) must be ARNs
     version_added: 2.8
+    type: list
   policy:
     description:
       - policy to apply to the KMS key
       - See U(https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html)
+    type: str
     version_added: 2.8
 author:
   - Ted Timmons (@tedder)

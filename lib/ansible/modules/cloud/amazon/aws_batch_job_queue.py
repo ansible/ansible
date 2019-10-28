@@ -26,19 +26,19 @@ options:
     description:
       - The name for the job queue
     required: true
-
+    type: str
   state:
     description:
       - Describes the desired state.
     default: "present"
     choices: ["present", "absent"]
-
+    type: str
   job_queue_state:
     description:
       - The state of the job queue. If the job queue state is ENABLED , it is able to accept jobs.
     default: "ENABLED"
     choices: ["ENABLED", "DISABLED"]
-
+    type: str
   priority:
     description:
       - The priority of the job queue. Job queues with a higher priority (or a lower integer value for the priority
@@ -46,7 +46,7 @@ options:
         ascending order, for example, a job queue with a priority value of 1 is given scheduling preference over a job
         queue with a priority value of 10.
     required: true
-
+    type: int
   compute_environment_order:
     description:
       - The set of compute environments mapped to a job queue and their order relative to each other. The job
@@ -54,7 +54,7 @@ options:
         environments must be in the VALID state before you can associate them with a job queue. You can associate up to
         3 compute environments with a job queue.
     required: true
-
+    type: list
 requirements:
     - boto3
 extends_documentation_fragment:

@@ -28,6 +28,7 @@ options:
         instead of dashes (-) in the filter keys, which will take precedence in case of conflict.
     required: false
     default: {}
+    type: dict
 extends_documentation_fragment:
     - aws
     - ec2

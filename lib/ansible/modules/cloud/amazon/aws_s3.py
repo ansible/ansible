@@ -34,10 +34,12 @@ options:
     description:
       - Bucket name.
     required: true
+    type: str
   dest:
     description:
       - The destination file path when downloading an object/key with a GET operation.
     version_added: "1.3"
+    type: path
   encrypt:
     description:
       - When set for PUT mode, asks for server-side encryption.
@@ -52,27 +54,34 @@ options:
       - AES256
       - aws:kms
     version_added: "2.7"
-  expiration:
+    type: str
+  expiry:
     description:
       - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation.
     default: 600
+    aliases: ['expiration']
+    type: int
   headers:
     description:
       - Custom headers for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
     version_added: "2.0"
+    type: dict
   marker:
     description:
       - Specifies the key to start with when using list mode. Object keys are returned in alphabetical order, starting with key after the marker in order.
     version_added: "2.0"
+    type: str
   max_keys:
     description:
       - Max number of results to return in list mode, set this if you want to retrieve fewer than the default 1000 keys.
     default: 1000
     version_added: "2.0"
+    type: int
   metadata:
     description:
       - Metadata for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
     version_added: "1.6"
+    type: dict
   mode:
     description:
       - Switches the module behaviour between put (upload), get (download), geturl (return download url, Ansible 1.3+),
@@ -80,26 +89,31 @@ options:
         and delobj (delete object, Ansible 2.0+).
     required: true
     choices: ['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list']
+    type: str
   object:
     description:
       - Keyname of the object inside the bucket. Can be used to create "virtual directories", see examples.
+    type: str
   permission:
     description:
       - This option lets the user set the canned permissions on the object/bucket that are created.
         The permissions that can be set are 'private', 'public-read', 'public-read-write', 'authenticated-read' for a bucket or
         'private', 'public-read', 'public-read-write', 'aws-exec-read', 'authenticated-read', 'bucket-owner-read',
         'bucket-owner-full-control' for an object. Multiple permissions can be specified as a list.
-    default: private
+    default: ['private']
     version_added: "2.0"
+    type: list
   prefix:
     description:
       - Limits the response to keys that begin with the specified prefix for list mode
     default: ""
     version_added: "2.0"
+    type: str
   version:
     description:
       - Version ID of the object inside the bucket. Can be used to get a specific version of a file if versioning is enabled in the target bucket.
     version_added: "2.0"
+    type: str
   overwrite:
     description:
       - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
@@ -110,6 +124,7 @@ options:
     default: 'always'
     aliases: ['force']
     version_added: "1.2"
+    type: str
   region:
     description:
      - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables
@@ -121,10 +136,13 @@ options:
      - On recoverable failure, how many times to retry before actually failing.
     default: 0
     version_added: "2.0"
+    type: int
+    aliases: ['retry']
   s3_url:
     description:
       - S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc. Otherwise assumes AWS.
     aliases: [ S3_URL ]
+    type: str
   dualstack:
     description:
       - Enables Amazon S3 Dual-Stack Endpoints, allowing S3 communications using both IPv4 and IPv6.
@@ -142,6 +160,7 @@ options:
     description:
       - The source file path when performing a PUT operation.
     version_added: "1.3"
+    type: str
   ignore_nonexistent_bucket:
     description:
       - "Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the
@@ -153,7 +172,7 @@ options:
     description:
       - KMS key id to use when encrypting objects using C(aws:kms) encryption. Ignored if encryption is not C(aws:kms)
     version_added: "2.7"
-
+    type: str
 requirements: [ "boto3", "botocore" ]
 author:
     - "Lester Wade (@lwade)"

@@ -28,13 +28,16 @@ options:
     policy_name:
         description: The name of the scaling policy.
         required: yes
+        type: str
     service_namespace:
         description: The namespace of the AWS service.
         required: yes
         choices: ['ecs', 'elasticmapreduce', 'ec2', 'appstream', 'dynamodb']
+        type: str
     resource_id:
         description: The identifier of the resource associated with the scalable target.
         required: yes
+        type: str
     scalable_dimension:
         description: The scalable dimension associated with the scalable target.
         required: yes
@@ -46,26 +49,32 @@ options:
                    'dynamodb:table:WriteCapacityUnits',
                    'dynamodb:index:ReadCapacityUnits',
                    'dynamodb:index:WriteCapacityUnits']
+        type: str
     policy_type:
         description: The policy type.
         required: yes
         choices: ['StepScaling', 'TargetTrackingScaling']
+        type: str
     step_scaling_policy_configuration:
         description: A step scaling policy. This parameter is required if you are creating a policy and the policy type is StepScaling.
         required: no
+        type: dict
     target_tracking_scaling_policy_configuration:
         description: A target tracking policy. This parameter is required if you are creating a new policy and the policy type is TargetTrackingScaling.
         required: no
+        type: dict
     minimum_tasks:
         description: The minimum value to scale to in response to a scale in event.
             This parameter is required if you are creating a first new policy for the specified service.
         required: no
         version_added: "2.6"
+        type: int
     maximum_tasks:
         description: The maximum value to scale to in response to a scale out event.
             This parameter is required if you are creating a first new policy for the specified service.
         required: no
         version_added: "2.6"
+        type: int
     override_task_capacity:
         description: Whether or not to override values of minimum and/or maximum tasks if it's already set.
         required: no
