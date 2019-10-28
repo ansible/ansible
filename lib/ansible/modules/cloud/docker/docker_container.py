@@ -33,14 +33,17 @@ notes:
   - When I(restart) is set to C(true), the module will only restart the container if no config changes are detected.
     Please note that several options have default values; if the container to be restarted uses different values for
     these options, it will be recreated instead. The options with default values which can cause this are I(auto_remove),
-    I(detach), I(init), I(interactive), I(memory), I(paused), I(privileged), I(read_only) and I(tty).
+    I(detach), I(init), I(interactive), I(memory), I(paused), I(privileged), I(read_only) and I(tty). This behavior
+    can be changed by setting I(container_default_behavior) to C(no_defaults), which will be the default value from
+    Ansible 2.14 on.
 
 options:
   auto_remove:
     description:
       - Enable auto-removal of the container on daemon side when the container's process exits.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(no).
     type: bool
-    default: no
     version_added: "2.4"
   blkio_weight:
     description:
@@ -90,6 +93,22 @@ options:
       - See the examples for details.
     type: dict
     version_added: "2.8"
+  container_default_behavior:
+    description:
+      - Various module options used to have default values. This causes problems with
+        containers which use different values for these options.
+      - The default value is C(compatibility), which will ensure that the default values
+        are used when the values are not explicitly specified by the user.
+      - From Ansible 2.14 on, the default value will switch to C(no_defaults). To avoid
+        deprecation warnings, please set I(container_default_behavior) to an explicit
+        value.
+      - This affects the I(auto_remove), I(detach), I(init), I(interactive), I(memory),
+        I(paused), I(privileged), I(read_only) and I(tty) options.
+    type: str
+    choices:
+      - compatibility
+      - no_defaults
+    version_added: "2.10"
   cpu_period:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period.
@@ -114,8 +133,9 @@ options:
     description:
       - Enable detached mode to leave the container running in background.
       - If disabled, the task will reflect the status of the container run (failed if the command failed).
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(yes).
     type: bool
-    default: yes
   devices:
     description:
       - List of host device bindings to add to the container.
@@ -323,14 +343,16 @@ options:
     description:
       - Run an init inside the container that forwards signals and reaps processes.
       - This option requires Docker API >= 1.25.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(no).
     type: bool
-    default: no
     version_added: "2.6"
   interactive:
     description:
       - Keep stdin open after a container is launched, even if not attached.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(no).
     type: bool
-    default: no
   ipc_mode:
     description:
       - Set the IPC mode for the container.
@@ -385,8 +407,9 @@ options:
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C("0").
     type: str
-    default: '0'
   memory_reservation:
     description:
       - "Memory soft limit in format C(<number>[<unit>]). Number is a positive integer.
@@ -578,8 +601,9 @@ options:
   paused:
     description:
       - Use with the started state to pause running processes inside the container.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(no).
     type: bool
-    default: no
   pid_mode:
     description:
       - Set the PID namespace mode for the container.
@@ -595,8 +619,9 @@ options:
   privileged:
     description:
       - Give extended privileges to the container.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(no).
     type: bool
-    default: no
   published_ports:
     description:
       - List of ports to publish from the container to the host.
@@ -637,8 +662,9 @@ options:
   read_only:
     description:
       - Mount the container's root file system as read-only.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(no).
     type: bool
-    default: no
   recreate:
     description:
       - Use with present and started states to force the re-creation of an existing container.
@@ -735,8 +761,9 @@ options:
   tty:
     description:
       - Allocate a pseudo-TTY.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(no).
     type: bool
-    default: no
   ulimits:
     description:
       - "List of ulimit options. A ulimit is specified as C(nofile:262144:262144)."
@@ -2620,7 +2647,7 @@ class ContainerManager(DockerBaseClass):
                 self.container_stop(container.Id)
                 container = self._get_container(container.Id)
 
-            if state == 'started' and container.paused != self.parameters.paused:
+            if state == 'started' and container.paused is not None and container.paused != self.parameters.paused:
                 self.diff_tracker.add('paused', parameter=self.parameters.paused, active=was_paused)
                 if not self.check_mode:
                     try:
@@ -2805,7 +2832,7 @@ class ContainerManager(DockerBaseClass):
             except Exception as exc:
                 self.fail("Error starting container %s: %s" % (container_id, str(exc)))
 
-            if not self.parameters.detach:
+            if self.parameters.detach is False:
                 if self.client.docker_py_version >= LooseVersion('3.0'):
                     status = self.client.wait(container_id)['StatusCode']
                 else:
@@ -3149,22 +3176,46 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         self._get_additional_minimal_versions()
         self._parse_comparisons()
 
+        if self.module.params['container_default_behavior'] is None:
+            self.module.params['container_default_behavior'] = 'compatibility'
+            self.module.deprecate(
+                'The container_default_behavior option will change its default value from "compatibility" to '
+                '"no_defaults" in Ansible 2.14. To remove this warning, please specify an explicit value for it now',
+                version='2.14'
+            )
+        if self.module.params['container_default_behavior'] == 'compatibility':
+            old_default_values = dict(
+                auto_remove=False,
+                detach=True,
+                init=False,
+                interactive=False,
+                memory="0",
+                paused=False,
+                privileged=False,
+                read_only=False,
+                tty=False,
+            )
+            for param, value in old_default_values.items():
+                if self.module.params[param] is None:
+                    self.module.params[param] = value
+
 
 def main():
     argument_spec = dict(
-        auto_remove=dict(type='bool', default=False),
+        auto_remove=dict(type='bool'),
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list', elements='str'),
         cap_drop=dict(type='list', elements='str'),
         cleanup=dict(type='bool', default=False),
         command=dict(type='raw'),
         comparisons=dict(type='dict'),
+        container_default_behavior=dict(type='str', choices=['compatibility', 'no_defaults']),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
         cpuset_cpus=dict(type='str'),
         cpuset_mems=dict(type='str'),
         cpu_shares=dict(type='int'),
-        detach=dict(type='bool', default=True),
+        detach=dict(type='bool'),
         devices=dict(type='list', elements='str'),
         device_read_bps=dict(type='list', elements='dict', options=dict(
             path=dict(required=True, type='str'),
@@ -3203,8 +3254,8 @@ def main():
         hostname=dict(type='str'),
         ignore_image=dict(type='bool', default=False),
         image=dict(type='str'),
-        init=dict(type='bool', default=False),
-        interactive=dict(type='bool', default=False),
+        init=dict(type='bool'),
+        interactive=dict(type='bool'),
         ipc_mode=dict(type='str'),
         keep_volumes=dict(type='bool', default=True),
         kernel_memory=dict(type='str'),
@@ -3214,7 +3265,7 @@ def main():
         log_driver=dict(type='str'),
         log_options=dict(type='dict', aliases=['log_opt']),
         mac_address=dict(type='str'),
-        memory=dict(type='str', default='0'),
+        memory=dict(type='str'),
         memory_reservation=dict(type='str'),
         memory_swap=dict(type='str'),
         memory_swappiness=dict(type='int'),
@@ -3245,14 +3296,14 @@ def main():
         oom_killer=dict(type='bool'),
         oom_score_adj=dict(type='int'),
         output_logs=dict(type='bool', default=False),
-        paused=dict(type='bool', default=False),
+        paused=dict(type='bool'),
         pid_mode=dict(type='str'),
         pids_limit=dict(type='int'),
-        privileged=dict(type='bool', default=False),
+        privileged=dict(type='bool'),
         published_ports=dict(type='list', elements='str', aliases=['ports']),
         pull=dict(type='bool', default=False),
         purge_networks=dict(type='bool', default=False),
-        read_only=dict(type='bool', default=False),
+        read_only=dict(type='bool'),
         recreate=dict(type='bool', default=False),
         restart=dict(type='bool', default=False),
         restart_policy=dict(type='str', choices=['no', 'on-failure', 'always', 'unless-stopped']),
@@ -3266,7 +3317,7 @@ def main():
         sysctls=dict(type='dict'),
         tmpfs=dict(type='list', elements='str'),
         trust_image_content=dict(type='bool', default=False, removed_in_version='2.14'),
-        tty=dict(type='bool', default=False),
+        tty=dict(type='bool'),
         ulimits=dict(type='list', elements='str'),
         user=dict(type='str'),
         userns_mode=dict(type='str'),
