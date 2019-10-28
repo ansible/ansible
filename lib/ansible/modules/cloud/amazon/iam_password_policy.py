@@ -28,11 +28,13 @@ options:
       - Specifies the overall state of the password policy.
     required: true
     choices: ['present', 'absent']
+    type: str
   min_pw_length:
     description:
       - Minimum password length.
     default: 6
     aliases: [minimum_password_length]
+    type: int
   require_symbols:
     description:
       - Require symbols in password.
@@ -65,11 +67,13 @@ options:
         do not expire automatically.
     default: 0
     aliases: [password_max_age]
+    type: int
   pw_reuse_prevent:
     description:
       - Prevent re-use of passwords.
     default: 0
     aliases: [password_reuse_prevent, prevent_reuse]
+    type: int
   pw_expire:
     description:
       - Prevents users from change an expired password.

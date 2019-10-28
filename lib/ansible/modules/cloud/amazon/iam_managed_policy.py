@@ -22,27 +22,37 @@ options:
     description:
       - The name of the managed policy.
     required: True
+    type: str
   policy_description:
     description:
       - A helpful description of this policy, this value is immutable and only set when creating a new policy.
     default: ''
+    type: str
   policy:
     description:
       - A properly json formatted policy
+    type: json
   make_default:
     description:
       - Make this revision the default revision.
     default: True
+    type: bool
   only_version:
     description:
       - Remove all other non default revisions, if this is used with C(make_default) it will result in all other versions of this policy being deleted.
     type: bool
-    default: 'no'
+    default: false
   state:
     description:
       - Should this managed policy be present or absent. Set to absent to detach all entities from this policy and remove it if found.
     default: present
     choices: [ "present", "absent" ]
+    type: str
+  fail_on_delete:
+    description:
+    - The I(fail_on_delete) option does nothing and will be removed in Ansible 2.14.
+    type: bool
+
 author: "Dan Kozlowski (@dkhenry)"
 extends_documentation_fragment:
   - aws
@@ -277,7 +287,7 @@ def main():
         policy=dict(type='json'),
         make_default=dict(type='bool', default=True),
         only_version=dict(type='bool', default=False),
-        fail_on_delete=dict(type='bool', default=True),
+        fail_on_delete=dict(type='bool', removed_in_version='2.14'),
         state=dict(default='present', choices=['present', 'absent']),
     ))
 

@@ -1,0 +1,2 @@
+deprecated_features:
+- "iam_managed_policy - The ``fail_on_delete`` option had no effect and will be removed in Ansible 2.14"
