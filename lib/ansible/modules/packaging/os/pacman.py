@@ -31,6 +31,11 @@ options:
               Can't be used in combination with C(upgrade).
         aliases: [ package, pkg ]
 
+    group:
+        description:
+            - Name or list of names of groups to install, upgrade, or remove.
+              Can't be used in combination with C(upgrade).
+
     state:
         description:
             - Desired state of the package.
@@ -393,22 +398,22 @@ def check_packages(module, pacman_path, packages, state):
         module.exit_json(changed=False, msg="package(s) already %s" % state, diff=diff)
 
 
-def expand_package_groups(module, pacman_path, pkgs):
+def expand_package_groups(module, pacman_path, groups):
     expanded = []
 
-    for pkg in pkgs:
-        if pkg:  # avoid empty strings
-            cmd = "%s --sync --groups --quiet %s" % (pacman_path, pkg)
-            rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    for group in groups:
+        if not group:  # avoid empty strings
+            continue
 
-            if rc == 0:
-                # A group was found matching the name, so expand it
-                for name in stdout.split('\n'):
-                    name = name.strip()
-                    if name:
-                        expanded.append(name)
-            else:
-                expanded.append(pkg)
+        cmd = "%s --sync --groups --quiet %s" % (pacman_path, group)
+        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+
+        if rc != 0:
+            module.fail_json(msg="could not find group '%s'"%group)
+
+        # A group was found matching the name, so expand it
+        for name in stdout.strip().split('\n'):
+            expanded.append(name)
 
     return expanded
 
@@ -417,6 +422,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='list', aliases=['pkg', 'package']),
+            group=dict(type='list'),
             state=dict(type='str', default='present', choices=['present', 'installed', 'latest', 'absent', 'removed']),
             force=dict(type='bool', default=False),
             extra_args=dict(type='str', default=''),
@@ -425,8 +431,8 @@ def main():
             update_cache=dict(type='bool', default=False, aliases=['update-cache']),
             update_cache_extra_args=dict(type='str', default=''),
         ),
-        required_one_of=[['name', 'update_cache', 'upgrade']],
-        mutually_exclusive=[['name', 'upgrade']],
+        required_one_of=[['name', 'group', 'update_cache', 'upgrade']],
+        mutually_exclusive=[['name', 'upgrade'], ['group', 'upgrade']],
         supports_check_mode=True,
     )
 
@@ -442,18 +448,20 @@ def main():
 
     if p["update_cache"] and not module.check_mode:
         update_package_db(module, pacman_path)
-        if not (p['name'] or p['upgrade']):
+        if not (p['name'] or p['group'] or p['upgrade']):
             module.exit_json(changed=True, msg='Updated the package master lists')
 
-    if p['update_cache'] and module.check_mode and not (p['name'] or p['upgrade']):
+    if p['update_cache'] and module.check_mode and not (p['name'] or p['group'] or p['upgrade']):
         module.exit_json(changed=True, msg='Would have updated the package cache')
 
     if p['upgrade']:
         upgrade(module, pacman_path)
 
+    pkgs = []
     if p['name']:
-        pkgs = expand_package_groups(module, pacman_path, p['name'])
+        pkgs = p['name']
 
+        # expand elements of pkgs which are filenames
         pkg_files = []
         for i, pkg in enumerate(pkgs):
             if not pkg:  # avoid empty strings
@@ -466,15 +474,19 @@ def main():
             else:
                 pkg_files.append(None)
 
-        if module.check_mode:
-            check_packages(module, pacman_path, pkgs, p['state'])
+    if p['group']:
+        pkgs += expand_package_groups(module, pacman_path, p['group'])
 
-        if p['state'] in ['present', 'latest']:
-            install_packages(module, pacman_path, p['state'], pkgs, pkg_files)
-        elif p['state'] == 'absent':
-            remove_packages(module, pacman_path, pkgs)
-    else:
+    if not pkgs:
         module.exit_json(changed=False, msg="No package specified to work on.")
+
+    if module.check_mode:
+        check_packages(module, pacman_path, pkgs, p['state'])
+
+    if p['state'] in ['present', 'latest']:
+        install_packages(module, pacman_path, p['state'], pkgs, pkg_files)
+    elif p['state'] == 'absent':
+        remove_packages(module, pacman_path, pkgs)
 
 
 if __name__ == "__main__":
