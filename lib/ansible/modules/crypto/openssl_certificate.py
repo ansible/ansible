@@ -1326,7 +1326,7 @@ class OwnCACertificateCryptography(Certificate):
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             module.fail_json(msg=str(exc))
 
-        if crypto_utils.cryptography_key_needs_digest_for_signing(self.privatekey):
+        if crypto_utils.cryptography_key_needs_digest_for_signing(self.ca_private_key):
             if self.digest is None:
                 raise CertificateError(
                     'The digest %s is not supported with the cryptography backend' % module.params['ownca_digest']
