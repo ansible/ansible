@@ -156,7 +156,7 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
                 # replace x value by y's one as it has higher priority
                 x[key] = y_value
             elif list_merge == 'append':
-                x[key] += y_value
+                x[key] = x_value + y_value
             elif list_merge == 'prepend':
                 x[key] = y_value + x_value
             elif list_merge == 'append_rp':
