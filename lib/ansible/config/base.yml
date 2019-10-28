@@ -1324,6 +1324,22 @@ CONNECTION_FACTS_MODULES:
   ini:
     - {key: connection_facts_modules, section: defaults}
   type: dict
+FACTS_HASH_BEHAVIOUR:
+  name: Facts hashes merge behaviour
+  default: default
+  type: string
+  choices: ["replace", "merge", "default"]
+  description:
+    - This setting controls how facts are merged in Ansible.
+      It allows to enrich the `ansible_facts` by custom values collected with custom modules defined by FACTS_MODULES.
+    - By "default", it uses the DEFAULT_HASH_BEHAVIOR value.
+      Using "merge" allows to enrich `ansible_facts` facts with the facts coming from a custom module.
+      Using "replace" will drop the facts of the previous module by the current one (always overriding previous ones).
+  env: [{name: ANSIBLE_FACTS_HASH_BEHAVIOUR}]
+  ini:
+    - {key: facts_hash_behaviour, section: defaults}
+  vars:
+    - name: ansible_facts_hash_behaviour
 FACTS_MODULES:
   name: Gather Facts Modules
   default:

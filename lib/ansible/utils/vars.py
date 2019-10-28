@@ -77,12 +77,15 @@ def _validate_mutable_mappings(a, b):
         )
 
 
-def combine_vars(a, b):
+def combine_vars(a, b, behavior=None):
     """
     Return a copy of dictionaries of variables based on configured hash behavior
     """
 
-    if C.DEFAULT_HASH_BEHAVIOUR == "merge":
+    if behavior is None:
+        behavior = C.DEFAULT_HASH_BEHAVIOUR
+
+    if behavior == "merge":
         return merge_hash(a, b)
     else:
         # HASH_BEHAVIOUR == 'replace'

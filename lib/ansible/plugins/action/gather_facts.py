@@ -12,6 +12,8 @@ from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import combine_vars
 
+HASH_BEHAVIOUR = C.FACTS_HASH_BEHAVIOUR if C.FACTS_HASH_BEHAVIOUR != 'default' else C.DEFAULT_HASH_BEHAVIOUR
+
 
 class ActionModule(ActionBase):
 
@@ -73,7 +75,7 @@ class ActionModule(ActionBase):
                 elif res.get('skipped', False):
                     skipped[fact_module] = res
                 else:
-                    result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})})
+                    result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})}, behavior=HASH_BEHAVIOUR)
 
             self._remove_tmp_path(self._connection._shell.tmpdir)
         else:
@@ -95,7 +97,7 @@ class ActionModule(ActionBase):
                         elif res.get('skipped', False):
                             skipped[module] = res
                         else:
-                            result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})})
+                            result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})}, behavior=HASH_BEHAVIOUR)
                         del jobs[module]
                         break
                     else:

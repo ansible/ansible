@@ -642,6 +642,28 @@ systems, mainly, or if you are using Ansible on experimental platforms.   In any
     - hosts: whatever
       gather_facts: no
 
+.. _custom_facts:
+
+Custom facts modules
+--------------------
+
+.. versionadded:: 2.8
+
+You may also want to develop your own module to generate facts about a host.
+
+To do so, you will need to develop a :ref:`custom module <developing_modules>` (or :ref:`action plugin <developing_plugins>`), the only pre-requisite is to follow the various :ref:`Ansible conventions <module_conventions>` for facts modules and to customize ``FACTS_HASH_BEHAVIOUR`` configuration option to ``merge``.
+
+Your module's output must contains keys under ``ansible_facts`` key, example for the module ``custom_facts``::
+
+    {
+        "ansible_facts": {
+            "custom": {
+                "fact1": "foo",
+                "fact2": "bar"
+            }
+        }
+    }
+
 .. _local_facts:
 
 Local facts (facts.d)
