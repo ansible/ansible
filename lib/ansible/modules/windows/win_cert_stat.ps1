@@ -50,7 +50,7 @@ if (Test-Path -LiteralPath $cert_path)
     $module.Result.issued_by = $cert.GetNameInfo('SimpleName', $true)
     $module.Result.issued_to = $cert.GetNameInfo('SimpleName', $false)
     $module.Result.signature_algorithm = $cert.SignatureAlgorithm.FriendlyName
-    $module.Result.dns_names = $cert.DnsNameList -as [string[]]
+    $module.Result.dns_names = @($module.Result.issued_to)
     $module.Result.raw = [System.Convert]::ToBase64String($cert.GetRawCertData())
     $module.Result.public_key = [System.Convert]::ToBase64String($cert.GetPublicKey())
     $module.Result.extensions = @()
@@ -77,6 +77,18 @@ if (Test-Path -LiteralPath $cert_path)
         elseif ($extension -is [System.Security.Cryptography.X509Certificates.X509SubjectKeyIdentifierExtension])
         {
             $module.Result.ski = $extension.SubjectKeyIdentifier
+        }
+        elseif ($extension.Oid.value -eq '2.5.29.17')
+        {
+            $sans = $extension.Format($true).Split("`r`n", [System.StringSplitOptions]::RemoveEmptyEntries)
+            foreach($san in $sans)
+            {
+                $san_parts = $san.Split("=")
+                if ($san_parts.Length -ge 2 -and $san_parts[0].Trim() -eq 'DNS Name')
+                {
+                    $module.Result.dns_names += $san_parts[1].Trim()
+                }
+            }
         }
     }
 }

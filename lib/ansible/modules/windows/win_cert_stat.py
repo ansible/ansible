@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: win_cert_stat
-version_added: "2.9"
+version_added: "2.10"
 short_description: Get information from the Windows Certificate Store
 description:
 - Returns information about a certificate in the Windows Certificate Store.
@@ -33,6 +33,7 @@ options:
   store_location:
     description:
     - The store location to use when searching for a certificate.
+    type: str
     choices: [ CurrentUser, LocalMachine ]
     default: LocalMachine
 seealso:
