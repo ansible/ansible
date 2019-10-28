@@ -207,9 +207,9 @@ class NotSupportedError(Exception):
 
 
 def set_owner(cursor, db, owner):
-    query = "ALTER DATABASE %s OWNER TO %s" % (
+    query = 'ALTER DATABASE %s OWNER TO "%s"' % (
             pg_quote_identifier(db, 'database'),
-            pg_quote_identifier(owner, 'role'))
+            owner)
     cursor.execute(query)
     return True
 
@@ -263,7 +263,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_
     if not db_exists(cursor, db):
         query_fragments = ['CREATE DATABASE %s' % pg_quote_identifier(db, 'database')]
         if owner:
-            query_fragments.append('OWNER %s' % pg_quote_identifier(owner, 'role'))
+            query_fragments.append('OWNER "%s"' % owner)
         if template:
             query_fragments.append('TEMPLATE %s' % pg_quote_identifier(template, 'database'))
         if encoding:
@@ -567,7 +567,7 @@ def main():
 
         if session_role:
             try:
-                cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
+                cursor.execute('SET ROLE "%s"' % session_role)
             except Exception as e:
                 module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
 
