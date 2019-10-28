@@ -984,7 +984,7 @@ class Sflow(object):
                         msg="Error: sample_length is not ranges from 10 to 4294967295.")
 
         if self.rate_limit or self.rate_limit_slot or self.forward_enp_slot:
-            self.module.fail_json(msg="Error: The following parameters cannot be configured" 
+            self.module.fail_json(msg="Error: The following parameters cannot be configured"
                                       "because XML mode is not supported:rate_limit,rate_limit_slot,forward_enp_slot.")
 
     def get_proposed(self):
