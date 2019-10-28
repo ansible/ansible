@@ -14,11 +14,11 @@ Connections Available
 .. table::
     :class: documentation-table
 
-    ====================  ==========================================  ==========================================
+    ====================  ==========================================  =========================
     ..                    CLI                                         NETCONF
 
                                                                                                
-    ====================  ==========================================  ==========================================
+    ====================  ==========================================  =========================
     Protocol              SSH                                         XML over SSH
 
     Credentials           uses SSH keys / SSH-agent if present        uses SSH keys / SSH-agent if present
@@ -32,8 +32,9 @@ Connections Available
     |enable_mode|         not supported by ce OS                      not supported by ce OS
 
     Returned Data Format  Refer to individual module documentation    Refer to individual module documentation
-    ====================  ==========================================  ==========================================
+    ====================  ==========================================  =========================
 
+.. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
 
 For legacy playbooks, Ansible still supports ``ansible_connection=local`` on all CloudEngine modules. We recommend modernizing to use ``ansible_connection=netconf`` or ``ansible_connection=network_cli`` as soon as possible.
 
