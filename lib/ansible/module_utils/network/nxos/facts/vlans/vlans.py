@@ -135,18 +135,22 @@ class VlansFacts(object):
         # device output may be string, convert to list
         structured = ast.literal_eval(str(structured))
 
-        # SAMPLE: {"TABLE_vlanbriefid": {"ROW_vlanbriefid": {
-        #   "vlanshowbr-vlanid": "4", "vlanshowbr-vlanid-utf": "4",
-        #   "vlanshowbr-vlanname": "VLAN0004", "vlanshowbr-vlanstate": "active",
-        #   "vlanshowbr-shutstate": "noshutdown"}},
-        vlanbrief = structured['TABLE_vlanbrief']['ROW_vlanbrief']
+        vlanbrief = []
+        mtuinfo = []
+        if 'TABLE_vlanbrief' in structured:
+            # SAMPLE: {"TABLE_vlanbriefid": {"ROW_vlanbriefid": {
+            #   "vlanshowbr-vlanid": "4", "vlanshowbr-vlanid-utf": "4",
+            #   "vlanshowbr-vlanname": "VLAN0004", "vlanshowbr-vlanstate": "active",
+            #   "vlanshowbr-shutstate": "noshutdown"}},
+            vlanbrief = structured['TABLE_vlanbrief']['ROW_vlanbrief']
 
-        # SAMPLE: "TABLE_mtuinfoid": {"ROW_mtuinfoid": {
-        #   "vlanshowinfo-vlanid": "4", "vlanshowinfo-media-type": "enet",
-        #   "vlanshowinfo-vlanmode": "ce-vlan"}}
-        mtuinfo = structured['TABLE_mtuinfo']['ROW_mtuinfo']
+            # SAMPLE: "TABLE_mtuinfoid": {"ROW_mtuinfoid": {
+            #   "vlanshowinfo-vlanid": "4", "vlanshowinfo-media-type": "enet",
+            #   "vlanshowinfo-vlanmode": "ce-vlan"}}
+            mtuinfo = structured['TABLE_mtuinfo']['ROW_mtuinfo']
 
         if type(vlanbrief) is not list:
+            # vlanbrief is not a list when only one vlan is found.
             vlanbrief = [vlanbrief]
             mtuinfo = [mtuinfo]
 

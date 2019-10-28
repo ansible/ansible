@@ -66,7 +66,26 @@ class TestNxosVlansModule(TestNxosModule):
             cmd = args[1]
             filename = str(cmd).split(' | ')[0].replace(' ', '_')
             return load_fixture('nxos_vlans', filename)
-        self.get_device_data.side_effect = load_from_file
+
+        def load_from_file_no_facts(*args, **kwargs):
+            cmd = args[1]
+            filename = str(cmd).split(' | ')[0].replace(' ', '_')
+            filename += '_no_facts'
+            return load_fixture('nxos_vlans', filename)
+
+        def load_from_file_vlan_1(*args, **kwargs):
+            cmd = args[1]
+            filename = str(cmd).split(' | ')[0].replace(' ', '_')
+            filename += '_vlan_1'
+            return load_fixture('nxos_vlans', filename)
+
+        if device == '':
+            self.get_device_data.side_effect = load_from_file
+        elif device == '_no_facts':
+            self.get_device_data.side_effect = load_from_file_no_facts
+        elif device == '_vlan_1':
+            self.get_device_data.side_effect = load_from_file_vlan_1
+
 
     def test_1(self):
         '''
@@ -149,7 +168,7 @@ class TestNxosVlansModule(TestNxosModule):
         self.execute_module(failed=True)
 
     def test_3(self):
-        # Test deleted when no 'config' key is used.
+        # Test when no 'config' key is used in playbook.
         deleted = [
             # Reset existing device state for all vlans found on device other than vlan 1.
             'no vlan 3',
@@ -160,3 +179,33 @@ class TestNxosVlansModule(TestNxosModule):
         playbook = dict(state='deleted')
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=True, commands=deleted)
+
+        for test_state in ['merged', 'replaced', 'overridden']:
+            set_module_args(dict(state=test_state), ignore_provider_arg)
+            self.execute_module(failed=True)
+
+    def test_4(self):
+        # Test only vlan 1 found
+        playbook = dict(state='deleted')
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(device='_vlan_1', changed=False)
+
+    def test_5(self):
+        # Test no facts returned
+        playbook = dict(state='deleted')
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(device='_no_facts', changed=False)
+
+    def test_6(self):
+        # Misc tests to hit codepaths highlighted by code coverage tool as missed.
+        playbook = dict(config=[
+            dict(vlan_id=8, enabled=True)
+        ])
+        replaced = [
+            # Update existing device states with any differences in the playbook.
+            'vlan 8', 'no shutdown', 'no state', 'no name'
+        ]
+        playbook['state'] = 'replaced'
+        playbook['_ansible_check_mode'] = True
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=replaced)
