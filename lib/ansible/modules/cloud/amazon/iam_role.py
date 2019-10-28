@@ -30,7 +30,6 @@ options:
   boundary:
     description:
       - Add the ARN of an IAM managed policy to restrict the permissions this role can pass on to IAM roles/users that it creates.
-      - Boundaries cannot be set on Instance Profiles, so if this option is specified then C(create_instance_profile) must be false.
       - This is intended for roles/users that have permissions to create new IAM objects.
       - For more information on boundaries, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)
     aliases: [boundary_policy_arn]
@@ -507,8 +506,6 @@ def main():
                               supports_check_mode=True)
 
     if module.params.get('boundary'):
-        if module.params.get('create_instance_profile'):
-            module.fail_json(msg="When using a boundary policy, `create_instance_profile` must be set to `false`.")
         if not module.params.get('boundary').startswith('arn:aws:iam'):
             module.fail_json(msg="Boundary policy must be an ARN")
     if module.params.get('boundary') is not None and not module.botocore_at_least('1.10.57'):
