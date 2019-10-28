@@ -1,0 +1,2 @@
+bugfixes:
+- ce_acl_interface - update to fix some bugs - Modified the prompt statement when the switch device cannot be configured. (https://github.com/ansible/ansible/pull/64018)
