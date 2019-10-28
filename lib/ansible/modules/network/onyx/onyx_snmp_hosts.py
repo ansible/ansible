@@ -55,6 +55,7 @@ options:
       auth_type:
         description:
              - Configures SNMP v3 security parameters, specifying passwords in a nother parameter (auth_password) (passwords are always stored encrypted).
+        choices: ['md5', 'sha', 'sha224', 'sha256', 'sha384', 'sha512']
         type: str
       auth_password:
         description:
@@ -63,6 +64,7 @@ options:
       privacy_type:
         description:
              -  Specifys SNMP v3 privacy settings for this user.
+        choices: ['3des', 'aes-128', 'aes-192', 'aes-192-cfb', 'aes-256', 'aes-256-cfb', 'des']
         type: str
       privacy_password:
         description:
@@ -77,21 +79,21 @@ options:
 
 EXAMPLES = """
 - name: enables snmp host
-  onyx_snmp_hosts:
-    hosts:
+  - onyx_snmp_hosts:
+      hosts:
        - name: 1.1.1.1
          enabled: true
 
 - name: configures snmp host with version 2c
-  onyx_snmp_hosts:
-    hosts:
+  - onyx_snmp_hosts:
+      hosts:
          - name: 2.3.2.4
            enabled: true
            notification_type: trap
            port: 66
            version: 2c
 - name: configures snmp host with version 3 and configures it with user: sara
-    - onyx_snmp_hosts:
+   - onyx_snmp_hosts:
        hosts:
          - name: 2.3.2.4
            enabled: true
@@ -106,9 +108,9 @@ EXAMPLES = """
 
 - name: deletes the snmp host
     - onyx_snmp_hosts:
-       hosts:
-         - name: 2.3.2.4
-           state: absent
+        hosts:
+          - name: 2.3.2.4
+            state: absent
 """
 
 RETURN = """

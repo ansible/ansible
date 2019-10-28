@@ -77,7 +77,7 @@ class TestOnyxSNMPHostsModule(TestOnyxModule):
                                          port='5')]))
         commands = ['snmp-server host 2.2.2.2 traps port 5 version 1']
         self.execute_module(changed=True, commands=commands)
-        
+
     def test_snmp_host_port_no_change(self):
         set_module_args(dict(hosts=[dict(name='2.2.2.2',
                                          notification_type='trap',
