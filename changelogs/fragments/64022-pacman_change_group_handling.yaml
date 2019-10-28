@@ -1,0 +1,2 @@
+major_changes:
+  - pacman - Remove handling of packages groups in ``name`` option, use the ``group`` option instead
