@@ -1,0 +1,10 @@
+yum_repository_test_package: sl
+yum_repository_test_repo:
+  name: epel
+  description: EPEL yum repo
+  baseurl: http://download.fedoraproject.org/pub/epel/{{ ansible_facts.distribution_major_version }}/$basearch
+
+yum_repository_epel:
+  description: Extra Packages for Enterprise Linux {{ ansible_facts.distribution_major_version }} - $basearch
+  mirrorlist: https://mirrors.fedoraproject.org/metalink?repo=epel-{{ ansible_facts.distribution_major_version }}&arch=$basearch
+  gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-{{ ansible_facts.distribution_major_version }}
