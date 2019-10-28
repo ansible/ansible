@@ -109,7 +109,7 @@ options:
             - Specifies the rate of sFlow packets sent from a card to the control plane.
               The value is an integer that ranges from 100 to 1500, in pps.
         version_added: "2.10"
-        remove_version: "2.13"
+        removed_in_version: "2.13"
         type: str
     rate_limit_slot:
         description:
@@ -118,7 +118,7 @@ options:
               all cards to the control plane is limited.
               The value is an integer or a string of characters.
         version_added: "2.10"
-        remove_version: "2.13"
+        removed_in_version: "2.13"
         type: str
     forward_enp_slot:
         description:
@@ -129,7 +129,7 @@ options:
               the switch automatically restores it to 65535.
               The value is an integer or 'all'.
         version_added: "2.10"
-        remove_version: "2.13"
+        removed_in_version: "2.13"
         type: str
     state:
         description:
