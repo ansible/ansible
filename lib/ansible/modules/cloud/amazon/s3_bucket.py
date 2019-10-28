@@ -13,6 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
@@ -38,15 +41,18 @@ options:
     description:
       - Name of the s3 bucket
     required: true
+    type: str
   policy:
     description:
       - The JSON policy as a string.
+    type: json
   s3_url:
     description:
       - S3 URL endpoint for usage with DigitalOcean, Ceph, Eucalyptus and fakes3 etc.
       - Assumes AWS if not specified.
       - For Walrus, use FQDN of the endpoint without scheme nor path.
     aliases: [ S3_URL ]
+    type: str
   ceph:
     description:
       - Enable API compatibility with Ceph. It takes into account the S3 API subset working
@@ -65,9 +71,11 @@ options:
     required: false
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   tags:
     description:
       - tags dict to apply to bucket
+    type: dict
   purge_tags:
     description:
       - whether to remove tags that aren't present in the C(tags) parameter
@@ -84,10 +92,12 @@ options:
         In order to remove the server-side encryption, the encryption needs to be set to 'none' explicitly.
     choices: [ 'none', 'AES256', 'aws:kms' ]
     version_added: "2.9"
+    type: str
   encryption_key_id:
     description: KMS master key ID to use for the default encryption. This parameter is allowed if encryption is aws:kms. If
                  not specified then it will default to the AWS provided KMS key.
     version_added: "2.9"
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
