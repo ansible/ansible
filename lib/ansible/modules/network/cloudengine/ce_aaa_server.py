@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -38,7 +41,7 @@ options:
         description:
             - Specify desired state of the resource.
         type: str
-        choices: [ absent, present ]
+        choices: ['absent', 'present']
         default: present
     authen_scheme_name:
         description:
@@ -72,7 +75,7 @@ options:
             - Accounting Mode.
         type: str
         choices: ['invalid', 'hwtacacs', 'radius', 'none']
-        default: none
+        default: 'none'
     domain_name:
         description:
             - Name of a domain.
@@ -1684,13 +1687,13 @@ def main():
     """ Module main """
 
     argument_spec = dict(
-        state=dict(choices=['present', 'absent'], default='present'),
+        state=dict(choices=['present', 'absent'], type='str', default='present'),
         authen_scheme_name=dict(type='str'),
-        first_authen_mode=dict(default='local', choices=['invalid', 'local', 'hwtacacs', 'radius', 'none']),
+        first_authen_mode=dict(default='local', type='str', choices=['invalid', 'local', 'hwtacacs', 'radius', 'none']),
         author_scheme_name=dict(type='str'),
-        first_author_mode=dict(default='local', choices=['invalid', 'local', 'hwtacacs', 'if-authenticated', 'none']),
+        first_author_mode=dict(default='local', type='str', choices=['invalid', 'local', 'hwtacacs', 'if-authenticated', 'none']),
         acct_scheme_name=dict(type='str'),
-        accounting_mode=dict(default='none', choices=['invalid', 'hwtacacs', 'radius', 'none']),
+        accounting_mode=dict(default='none', type='str', choices=['invalid', 'hwtacacs', 'radius', 'none']),
         domain_name=dict(type='str'),
         radius_server_group=dict(type='str'),
         hwtacas_template=dict(type='str'),
