@@ -30,7 +30,7 @@ options:
         version_added: '2.10'
     name:
         description:
-            - The friendly name of the monitor
+            - The friendly name of the monitor.
         required: true
         version_added: '2.10'
     check_type:
