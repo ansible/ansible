@@ -3,6 +3,9 @@
 # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -11,110 +14,78 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-        server=dict(type='str', required=True),
-        username=dict(type='str', required=True),
-        password=dict(type='str', required=True, no_log=True),
-        name=dict(type='str', required=True),
-        requisition=dict(type='str', required=True),
-        building=dict(type='str', required=False),
-        ipaddr=dict(type='str', required=True),
-        state=dict(type='str', required=False, default="present"),
-        categories=dict(type='str', required=False),
-        assets=dict(type='list', required=False),
-        city=dict(type='str', required=False),
-        rescan=dict(type='bool', required=False, default=False)
-        
 module: opennms_node
-
 short_description: Manage nodes in OpenNMS
-
 version_added: "2.8"
-
 description:
-    - "An ansible module to manage nodes in OpenNMS"
+  - "An ansible module to manage nodes in OpenNMS"
+author:
+    - "Vincent Van Ouytsel (@vvanouytsel)"
 
 options:
-    server:
-        description:
-            - The path to the OpenNMS API endpoint
-        required: true
-        type: str
-        
-    username:
-        description:
-            - The username to authenticate the API calls
-        required: true
-        type: str
-
-    password:
-        description:
-            - The password to authenticate the API calls
-        required: true
-        type: str
-        
-    name:
-        description:
-            - The name of the node
-        required: true
-        type: str
- 
-   requisition:
-        description:
-            - The requisition to add the node to
-        required: true
-        type: str
-        
-    building:
-        description:
-            - The building where the node is located
-        required: false
-        type: str
-        
-    city:
-        description:
-            - The city where the node is located
-        required: false
-        type: str
-        
-    state:
-        description:
-          - The state of the node
-        required: false
-        type: str
-        default: present
-        choices: [ "present", "absent"]
-
-    rescan:
-        description:
-          - Rescan the requisition when a node is added
-        required: false
-        type: str
-        default: no
-        choices: [ "yes", "no"]
-        
-   ipaddr:
-        description:
-            - The ip address of the node, required when using 'state: present'
-        required: false
-        type: str
-
-    categories:
-        description:
-            - Comma seperated list of categories to add
-        required: false
-        type: str
-        
-    assets:
-        description:
-            - Assets to add to the node 
-        required: false
-        type: dict
-        
-extends_documentation_fragment:
-    - monitoring
-
-author:
-    - Vincent Van Ouytsel
+  server:
+    description:
+      - The path to the OpenNMS API endpoint
+    required: true
+    type: str
+  username:
+    description:
+      - The username to authenticate the API calls
+    required: true
+    type: str
+  password:
+    description:
+      - The password to authenticate the API calls
+    required: true
+    type: str
+  name:
+    description:
+        - The name of the node
+    required: true
+    type: str
+  requisition:
+    description:
+      - The requisition to add the node to
+    required: true
+    type: str
+  building:
+    description:
+      - The building where the node is located
+    required: false
+    type: str
+  city:
+    description:
+      - The city where the node is located
+    required: false
+    type: str
+  state:
+    description:
+      - The state of the node
+    required: false
+    type: str
+    default: present
+    choices: [ "present", "absent"]
+  rescan:
+    description:
+      - Rescan the requisition when a node is added
+    required: no
+    type: bool
+    default: no
+  ipaddr:
+    description:
+        - "The ip address of the node, required when using 'state: present'"
+    required: false
+    type: str
+  categories:
+    description:
+        - Comma seperated list of categories to add
+    required: false
+    type: str
+  assets:
+    description:
+        - Assets to add to the node
+    required: false
+    type: list
 '''
 
 EXAMPLES = '''
@@ -130,7 +101,7 @@ EXAMPLES = '''
     ipaddr: 192.168.0.1
     requisition: Generic
     rescan: yes
-         
+
 - name: Add a node to the 'Generic' requisition, providing some metadate and not rescanning the requisition
   opennms_node:
     server: http://my_opennms_server:8980/opennms/rest
@@ -161,9 +132,10 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import *
+from ansible.module_utils.urls import open_url
 import json
 import xml.etree.ElementTree as ET
+
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
@@ -175,7 +147,7 @@ def run_module():
         requisition=dict(type='str', required=True),
         building=dict(type='str', required=False),
         ipaddr=dict(type='str', required=False),
-        state=dict(type='str', required=False, default="present"),
+        state=dict(type='str', required=False, default='present', choices=["present", "absent"]),
         categories=dict(type='str', required=False),
         assets=dict(type='list', required=False),
         city=dict(type='str', required=False),
@@ -253,7 +225,6 @@ def run_module():
             if var is None:
                 module.fail_json(msg="The variable " + "'" + var + "' has to be defined when adding a node.", **result)
 
-
         # We need to add a node to OpenNMS
         # Generate the XML content to send to OpenNMS
         # Create the '<node>' element
@@ -287,7 +258,8 @@ def run_module():
         data = ET.tostring(node_element, method="html")
         headers = {'Content-Type': 'application/xml'}
         try:
-            response = open_url(server + "/requisitions/" + requisition + "/nodes", method="POST", url_username=username, url_password=password, headers=headers, data=data)
+            response = open_url(server + "/requisitions/" + requisition + "/nodes", method="POST",
+                                url_username=username, url_password=password, headers=headers, data=data)
         except Exception as e:
             module.fail_json(msg=e, **result)
 
@@ -295,9 +267,10 @@ def run_module():
         result['data'] = data
 
         # Check if the user wants to rescan/reload the requisition
-        if rescan == True:
+        if rescan:
             try:
-                response = open_url(server + "/requisitions/" + requisition + "/import?rescanExisting=false", method="PUT", url_username=username, url_password=password, headers=headers)
+                response = open_url(server + "/requisitions/" + requisition + "/import?rescanExisting=false",
+                                    method="PUT", url_username=username, url_password=password, headers=headers)
                 result['changed'] = True
             except Exception as e:
                 module.fail_json(msg=e, **result)
@@ -308,7 +281,9 @@ def run_module():
         # We need to delete a node from OpenNMS
         # Get all the nodes
         headers = {'Accept': 'application/json'}
-        response = open_url(server + "/nodes", method="GET", url_username=username, url_password=password, headers=headers)
+        # ?limit=0
+        response = open_url(server + "/nodes?limit=0", method="GET", url_username=username, url_password=password, headers=headers)
+
         response = response.read().decode('utf-8')
         nodes_object = json.loads(response)
 
@@ -335,8 +310,10 @@ def run_module():
     # in the event of a successful module execution
     module.exit_json(**result)
 
+
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()
