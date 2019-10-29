@@ -25,7 +25,7 @@ options:
         choices: [ "started", "paused", "created", "absent" ]
     url:
         description:
-            - Url to be checked
+            - URL to be checked.
         required: true
         version_added: '2.10'
     name:
