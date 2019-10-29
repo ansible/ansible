@@ -312,14 +312,6 @@
 #=========================================
 # Check mode 'persist' and 'persist_only':
 #
-- name: set mysql variable to a temp value
-  mysql_variables:
-    variable: '{{ set_name }}'
-    value: '200'
-    login_unix_socket: '{{ mysql_socket }}'
-    login_user: root
-    login_password: '{{ root_pass }}'
-
 - name: update mysql variable value (expect changed=true) in persist mode
   mysql_variables:
     variable: '{{ set_name }}'

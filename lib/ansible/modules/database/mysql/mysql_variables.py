@@ -92,13 +92,18 @@ from ansible.module_utils._text import to_native
 executed_queries = []
 
 
-def check_mysqld_auto(cursor, mysqlvar):
+def check_mysqld_auto(module, cursor, mysqlvar):
     """Check variable's value in mysqld-auto.cnf."""
     query = ("SELECT VARIABLE_VALUE "
              "FROM performance_schema.persisted_variables "
              "WHERE VARIABLE_NAME = %s")
-    cursor.execute(query, (mysqlvar,))
-    res = cursor.fetchone()
+    try:
+        cursor.execute(query, (mysqlvar,))
+        res = cursor.fetchone()
+    except Exception as e:
+        if "Table 'performance_schema.persisted_variables' doesn't exist" in str(e):
+            module.fail_json(msg='Server version must be 8.0 or greater.')
+
     if res:
         return res[0]
     else:
@@ -218,12 +223,18 @@ def main():
             module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, to_native(e)))
 
     mysqlvar_val = None
+    var_in_mysqld_auto_cnf = None
+
+    if mode in ('persist', 'persist_only'):
+        var_in_mysqld_auto_cnf = check_mysqld_auto(module, cursor, mysqlvar)
+
     if mode in ('global', 'persist'):
         mysqlvar_val = getvariable(cursor, mysqlvar)
     elif mode == 'persist_only':
-        mysqlvar_val = check_mysqld_auto(cursor, mysqlvar)
-        if mysqlvar_val is None:
+        if var_in_mysqld_auto_cnf is None:
             mysqlvar_val = False
+        else:
+            mysqlvar_val = var_in_mysqld_auto_cnf
 
     if mysqlvar_val is None:
         module.fail_json(msg="Variable not available \"%s\"" % mysqlvar, changed=False)
@@ -233,8 +244,28 @@ def main():
         # Type values before using them
         value_wanted = typedvalue(value)
         value_actual = typedvalue(mysqlvar_val)
+        value_in_auto_cnf = None
+        if var_in_mysqld_auto_cnf is not None:
+            value_in_auto_cnf = typedvalue(var_in_mysqld_auto_cnf)
+
         if value_wanted == value_actual:
-            module.exit_json(msg="Variable already set to requested value", changed=False)
+            if mode == 'persist':
+                if value_in_auto_cnf is None:
+                    module.warn("The current global variable '%s' has value '%s' "
+                                "which corresponds to desired state but there is no value "
+                                "in mysqld-auto.cnf and it will be added only to there "
+                                "respectively." % (mysqlvar, value_actual))
+                
+                elif value_in_auto_cnf is not None and value_wanted != value_in_auto_cnf:
+                    module.warn("The current global variable '%s' has value '%s' "
+                                "which corresponds to desired state but value in mysqld-auto.cnf "
+                                "is '%s' and will be changed only there "
+                                "respectively." % (mysqlvar, value_actual, value_in_auto_cnf))
+                else:
+                    module.exit_json(msg="Variable already set to requested value "
+                                         "and stored into mysqld-auto.cnf file", changed=False)
+            else:
+                module.exit_json(msg="Variable already set to requested value", changed=False)
         try:
             result = setvariable(cursor, mysqlvar, value_wanted, mode)
         except SQLParseError as e:
