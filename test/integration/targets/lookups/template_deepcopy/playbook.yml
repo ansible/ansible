@@ -1,0 +1,5 @@
+- hosts: h1
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "{{ lookup('template', 'template.in') }}"
