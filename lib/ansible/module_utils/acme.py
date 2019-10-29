@@ -431,8 +431,8 @@ def _assert_fetch_url_success(response, info, allow_redirect=False, allow_client
     if info['status'] < 0:
         raise ModuleFailException(msg="Failure downloading %s, %s" % (info['url'], info['msg']))
 
-    if (info['status'] >= 300 and info['status'] < 400 and not allow_redirect) or \
-       (info['status'] >= 400 and info['status'] < 500 and not allow_client_error) or \
+    if (300 <= info['status'] < 400 and not allow_redirect) or \
+       (400 <= info['status'] < 500 and not allow_client_error) or \
        (info['status'] >= 500 and not allow_server_error):
         raise ModuleFailException("ACME request failed: CODE: {0} MGS: {1} RESULT: {2}".format(info['status'], info['msg'], response))
 
