@@ -41,6 +41,7 @@ options:
     monitorid:
         description:
             - ID of the monitor to check.
+        required: false
     apikey:
         description:
             - Uptime Robot API key.
