@@ -426,6 +426,16 @@ def _sign_request_cryptography(module, payload64, protected64, key_data):
     }
 
 
+def _assert_fetch_url_success(response, info, allow_redirect=False, allow_client_error=True, allow_server_error=True):
+    if info['status'] < 0:
+        raise ModuleFailException(msg="Failure downloading %s, %s" % (info['url'], info['msg']))
+
+    if (300 <= info['status'] < 400 and not allow_redirect) or \
+       (400 <= info['status'] < 500 and not allow_client_error) or \
+       (info['status'] >= 500 and not allow_server_error):
+        raise ModuleFailException("ACME request failed: CODE: {0} MGS: {1} RESULT: {2}".format(info['status'], info['msg'], response))
+
+
 class ACMEDirectory(object):
     '''
     The ACME server directory. Gives access to the available resources,
@@ -567,6 +577,7 @@ class ACMEAccount(object):
                 'Content-Type': 'application/jose+json',
             }
             resp, info = fetch_url(self.module, url, data=data, headers=headers, method='POST')
+            _assert_fetch_url_success(resp, info)
             result = {}
             try:
                 content = resp.read()
@@ -614,6 +625,8 @@ class ACMEAccount(object):
             # Perform unauthenticated GET
             resp, info = fetch_url(self.module, uri, method='GET', headers=headers)
 
+            _assert_fetch_url_success(resp, info)
+
             try:
                 content = resp.read()
             except AttributeError:
@@ -633,7 +646,7 @@ class ACMEAccount(object):
         else:
             result = content
 
-        if fail_on_error and info['status'] >= 400:
+        if fail_on_error and (info['status'] < 200 or info['status'] >= 400):
             raise ModuleFailException("ACME request failed: CODE: {0} RESULT: {1}".format(info['status'], result))
         return result, info
 
