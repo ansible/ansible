@@ -4,6 +4,9 @@
 
 - import_role:
     name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
 
 - name: Create VM
   vmware_guest:
