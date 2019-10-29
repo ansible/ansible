@@ -25,7 +25,7 @@ Here is an example::
 
 .. note::
    ``environment:`` does not affect Ansible itself, ONLY the context of the specific task action and this does not include
-    Ansible's own configuration settings nor the execution of any other plugins, including lookups, filters, ... .
+    Ansible's own configuration settings nor the execution of any other plugins, including lookups, filters, and so on.
 
 The environment can also be stored in a variable, and accessed like so::
 
@@ -110,7 +110,7 @@ Some language-specific version managers (such as rbenv and nvm) require environm
 
 .. note::
    ``ansible_env:`` is normally populated by fact gathering (M(gather_facts)) and the value of the variables depends on the user
-   that did the gathering action, so if you change remote_user/become_user you might end up using the wrong values for those variables.
+   that did the gathering action. If you change remote_user/become_user you might end up using the wrong values for those variables.
 
 You might also want to simply specify the environment for a single task::
 
