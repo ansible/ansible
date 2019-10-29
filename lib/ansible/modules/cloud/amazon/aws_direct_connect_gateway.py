@@ -54,6 +54,11 @@ options:
         - vpn gateway id of an existing virtual gateway
     required: false
     type: str
+  wait_timeout:
+    description:
+        - How long to wait for the association to be deleted
+    type: int
+    default: 320
 '''
 
 EXAMPLES = '''

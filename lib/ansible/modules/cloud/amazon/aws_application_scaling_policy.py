@@ -25,6 +25,11 @@ author:
     - Chen Leibovich (@chenl87)
 requirements: [ json, botocore, boto3 ]
 options:
+    state:
+        description: Whether a policy should be present or absent
+        required: yes
+        choices: ['absent', 'present']
+        type: str
     policy_name:
         description: The name of the scaling policy.
         required: yes
@@ -60,9 +65,31 @@ options:
         required: no
         type: dict
     target_tracking_scaling_policy_configuration:
-        description: A target tracking policy. This parameter is required if you are creating a new policy and the policy type is TargetTrackingScaling.
+        description:
+            - A target tracking policy. This parameter is required if you are creating a new policy and the policy type is TargetTrackingScaling.
+            - 'Full documentation of the suboptions can be found in the boto3 documentation:'
+            - 'https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/autoscaling.html#AutoScaling.Client.put_scaling_policy'
         required: no
         type: dict
+        suboptions:
+            CustomizedMetricSpecification:
+                description: The metric to use if using a customized metric.
+                type: dict
+            DisableScaleIn:
+                description: Whether scaling-in should be disabled.
+                type: bool
+            PredefinedMetricSpecification:
+                description: The metric to use if using a predefined metric.
+                type: dict
+            ScaleInCooldown:
+                description: The time (in seconds) to wait after scaling-in before another scaling action can occur.
+                type: int
+            ScaleOutCooldown:
+                description: The time (in seconds) to wait after scaling-out before another scaling action can occur.
+                type: int
+            TargetValue:
+                description: The target value for the metric
+                type: float
     minimum_tasks:
         description: The minimum value to scale to in response to a scale in event.
             This parameter is required if you are creating a first new policy for the specified service.
