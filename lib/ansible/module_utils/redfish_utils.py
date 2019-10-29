@@ -1106,10 +1106,52 @@ class RedfishUtils(object):
     def get_multi_bios_attributes(self):
         return self.aggregate(self.get_bios_attributes)
 
-    def get_boot_order(self, systems_uri):
-        result = {}
+    def _get_boot_options_dict(self, boot):
         # Get these entries from BootOption, if present
         properties = ['DisplayName', 'BootOptionReference']
+
+        # Retrieve BootOptions if present
+        if 'BootOptions' in boot and '@odata.id' in boot['BootOptions']:
+            boot_options_uri = boot['BootOptions']["@odata.id"]
+            # Get BootOptions resource
+            response = self.get_request(self.root_uri + boot_options_uri)
+            if response['ret'] is False:
+                return {}
+            data = response['data']
+
+            # Retrieve Members array
+            if 'Members' not in data:
+                return {}
+            members = data['Members']
+        else:
+            members = []
+
+        # Build dict of BootOptions keyed by BootOptionReference
+        boot_options_dict = {}
+        for member in members:
+            if '@odata.id' not in member:
+                return {}
+            boot_option_uri = member['@odata.id']
+            response = self.get_request(self.root_uri + boot_option_uri)
+            if response['ret'] is False:
+                return {}
+            data = response['data']
+            if 'BootOptionReference' not in data:
+                return {}
+            boot_option_ref = data['BootOptionReference']
+
+            # fetch the props to display for this boot device
+            boot_props = {}
+            for prop in properties:
+                if prop in data:
+                    boot_props[prop] = data[prop]
+
+            boot_options_dict[boot_option_ref] = boot_props
+
+        return boot_options_dict
+
+    def get_boot_order(self, systems_uri):
+        result = {}
 
         # Retrieve System resource
         response = self.get_request(self.root_uri + systems_uri)
@@ -1124,45 +1166,7 @@ class RedfishUtils(object):
 
         boot = data['Boot']
         boot_order = boot['BootOrder']
-
-        # Retrieve BootOptions if present
-        if 'BootOptions' in boot and '@odata.id' in boot['BootOptions']:
-            boot_options_uri = boot['BootOptions']["@odata.id"]
-            # Get BootOptions resource
-            response = self.get_request(self.root_uri + boot_options_uri)
-            if response['ret'] is False:
-                return response
-            data = response['data']
-
-            # Retrieve Members array
-            if 'Members' not in data:
-                return {'ret': False,
-                        'msg': "Members not found in BootOptionsCollection"}
-            members = data['Members']
-        else:
-            members = []
-
-        # Build dict of BootOptions keyed by BootOptionReference
-        boot_options_dict = {}
-        for member in members:
-            if '@odata.id' not in member:
-                return {'ret': False, 'msg': "@odata.id not found in BootOptions"}
-            boot_option_uri = member['@odata.id']
-            response = self.get_request(self.root_uri + boot_option_uri)
-            if response['ret'] is False:
-                return response
-            data = response['data']
-            if 'BootOptionReference' not in data:
-                return {'ret': False, 'msg': "BootOptionReference not found in BootOption"}
-            boot_option_ref = data['BootOptionReference']
-
-            # fetch the props to display for this boot device
-            boot_props = {}
-            for prop in properties:
-                if prop in data:
-                    boot_props[prop] = data[prop]
-
-            boot_options_dict[boot_option_ref] = boot_props
+        boot_options_dict = self._get_boot_options_dict(boot)
 
         # Build boot device list
         boot_device_list = []
@@ -1356,6 +1360,74 @@ class RedfishUtils(object):
         if response['ret'] is False:
             return response
         return {'ret': True, 'changed': True, 'msg': "Modified BIOS attribute"}
+
+    def set_boot_order(self, boot_list):
+        if not boot_list:
+            return {'ret': False,
+                    'msg': "boot_order list required for SetBootOrder command"}
+
+        # TODO(billdodd): change to self.systems_uri after PR 62921 merged
+        systems_uri = self.systems_uris[0]
+        response = self.get_request(self.root_uri + systems_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+
+        # Confirm needed Boot properties are present
+        if 'Boot' not in data or 'BootOrder' not in data['Boot']:
+            return {'ret': False, 'msg': "Key BootOrder not found"}
+
+        boot = data['Boot']
+        boot_order = boot['BootOrder']
+        boot_options_dict = self._get_boot_options_dict(boot)
+
+        # validate boot_list against BootOptionReferences if available
+        if boot_options_dict:
+            boot_option_references = boot_options_dict.keys()
+            for ref in boot_list:
+                if ref not in boot_option_references:
+                    return {'ret': False,
+                            'msg': "BootOptionReference %s not found in BootOptions" % ref}
+
+        # If requested BootOrder is already set, nothing to do
+        if boot_order == boot_list:
+            return {'ret': True, 'changed': False,
+                    'msg': "BootOrder already set to %s" % boot_list}
+
+        payload = {
+            'Boot': {
+                'BootOrder': boot_list
+            }
+        }
+        response = self.patch_request(self.root_uri + systems_uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True, 'msg': "BootOrder set"}
+
+    def set_default_boot_order(self):
+        # TODO(billdodd): change to self.systems_uri after PR 62921 merged
+        systems_uri = self.systems_uris[0]
+        response = self.get_request(self.root_uri + systems_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+
+        # get the #ComputerSystem.SetDefaultBootOrder Action and target URI
+        action = '#ComputerSystem.SetDefaultBootOrder'
+        if 'Actions' not in data or action not in data['Actions']:
+            return {'ret': False, 'msg': 'Action %s not found' % action}
+        if 'target' not in data['Actions'][action]:
+            return {'ret': False,
+                    'msg': 'target URI missing from Action %s' % action}
+        action_uri = data['Actions'][action]['target']
+
+        # POST to Action URI
+        payload = {}
+        response = self.post_request(self.root_uri + action_uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True,
+                'msg': "BootOrder set to default"}
 
     def get_chassis_inventory(self):
         result = {}
