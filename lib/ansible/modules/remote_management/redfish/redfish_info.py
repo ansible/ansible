@@ -206,6 +206,22 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
+  - name: Get firmware inventory
+    redfish_info:
+      category: Update
+      command: GetFirmwareInventory
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Get software inventory
+    redfish_info:
+      category: Update
+      command: GetSoftwareInventory
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Get all information available in all categories
     redfish_info:
       category: all
@@ -234,7 +250,7 @@ CATEGORY_COMMANDS_ALL = {
     "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisPower", "GetChassisThermals", "GetChassisInventory"],
     "Accounts": ["ListUsers"],
     "Sessions": ["GetSessions"],
-    "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities"],
+    "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities", "GetSoftwareInventory"],
     "Manager": ["GetManagerNicInventory", "GetVirtualMedia", "GetLogs"],
 }
 
@@ -374,6 +390,8 @@ def main():
             for command in command_list:
                 if command == "GetFirmwareInventory":
                     result["firmware"] = rf_utils.get_firmware_inventory()
+                elif command == "GetSoftwareInventory":
+                    result["software"] = rf_utils.get_software_inventory()
                 elif command == "GetFirmwareUpdateCapabilities":
                     result["firmware_update_capabilities"] = rf_utils.get_firmware_update_capabilities()
 
