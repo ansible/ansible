@@ -177,6 +177,21 @@ EXAMPLES = '''
       - state: absent
         mac: "00:50:56:44:55:77"
   delegate_to: localhost
+
+- name: Enable DirectPath I/O on a Vmxnet3 adapter
+  vmware_guest_network:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    name: test-vm
+    gather_network_info: false
+    networks:
+      - state: present
+        mac: "aa:50:56:58:59:61"
+        directpath_io: True
+  delegate_to: localhost
 '''
 
 RETURN = """
@@ -303,6 +318,12 @@ class PyVmomiHelper(PyVmomi):
             nic.device.macAddress = device_info['manual_mac']
         else:
             nic.device.addressType = 'generated'
+        if 'directpath_io' in device_info:
+            if isinstance(nic.device, vim.vm.device.VirtualVmxnet3):
+                nic.device.uptCompatibilityEnabled = device_info['directpath_io']
+            else:
+                self.module.fail_json(msg='UPT is only compatible for Vmxnet3 adapter.'
+                                      + ' Clients can set this property enabled or disabled if ethernet virtual device is Vmxnet3.')
 
         return nic
 
@@ -321,7 +342,7 @@ class PyVmomiHelper(PyVmomi):
                 nic_type = 'VMXNET2'
             elif isinstance(nic, vim.vm.device.VirtualVmxnet3):
                 nic_type = 'VMXNET3'
-                directpath_io = True
+                directpath_io = nic.uptCompatibilityEnabled
             elif isinstance(nic, vim.vm.device.VirtualE1000):
                 nic_type = 'E1000'
             elif isinstance(nic, vim.vm.device.VirtualE1000e):

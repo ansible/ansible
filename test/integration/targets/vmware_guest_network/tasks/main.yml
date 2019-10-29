@@ -169,10 +169,10 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ virtual_machines[0].name }}"
+      name: "test_vm1"
       networks:
         - state: present
-          mac: "00:50:56:58:59:61"
+          mac: "aa:50:56:58:59:61"
           directpath_io: False
     register: disable_directpath_io
 
@@ -184,10 +184,10 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ virtual_machines[0].name }}"
+      name: "test_vm1"
       networks:
         - state: present
-          mac: "00:50:56:58:59:61"
+          mac: "aa:50:56:58:59:61"
           directpath_io: True
     register: enable_directpath_io
 
