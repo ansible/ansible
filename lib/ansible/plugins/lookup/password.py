@@ -73,10 +73,10 @@ EXAMPLES = """
     password: "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters') }}"
     priv: '{{ client }}_{{ tier }}_{{ role }}.*:ALL'
 
-- name: create a mysql user with a random password using only digits
+- name: create a mysql user with an 8 character random password using only digits
   mysql_user:
     name: "{{ client }}"
-    password: "{{ lookup('password', '/tmp/passwordfile chars=digits') }}"
+    password: "{{ lookup('password', '/tmp/passwordfile length=8 chars=digits') }}"
     priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 
 - name: create a mysql user with a random password using many different char sets
