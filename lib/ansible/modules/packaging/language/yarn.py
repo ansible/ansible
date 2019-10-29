@@ -353,6 +353,8 @@ def main():
         if not name:
             changed = True
             out, err = yarn.install()
+            if re.search('Already up-to-date', out):
+                changed = False
         else:
             installed, missing = yarn.list()
             if len(missing):
@@ -364,6 +366,8 @@ def main():
         if not name:
             changed = True
             out, err = yarn.install()
+            if re.search('Already up-to-date', out):
+                changed = False
         else:
             installed, missing = yarn.list()
             outdated = yarn.list_outdated()
