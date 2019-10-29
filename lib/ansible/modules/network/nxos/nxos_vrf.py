@@ -456,6 +456,7 @@ def check_declarative_intent_params(want, module, element_spec, result):
                 if interfaces is not None and i not in interfaces:
                     module.fail_json(msg="Interface %s not configured on vrf %s" % (i, w['name']))
 
+
 def vrf_error_check(module, commands, responses):
     """Checks for VRF config errors and executes a retry in some circumstances.
     """
@@ -466,6 +467,7 @@ def vrf_error_check(module, commands, responses):
         if re.search(pattern, str(responses)):
             module.fail_json(msg='VRF config (and retry) failure: %s ' % responses)
         module.warn('VRF config delayed by VRF deletion - passed on retry')
+
 
 def main():
     """ main entry point for module execution
