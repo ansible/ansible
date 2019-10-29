@@ -135,7 +135,7 @@
   # Test Managed Policy management
   #
   # Use a couple of benign policies for testing:
-  # - AWSOrganizationsReadOnlyAccess
+  # - AWSDenyAll
   # - ServiceQuotasReadOnlyAccess
   #
   - name: attach managed policy to user (check mode)
@@ -144,7 +144,7 @@
       name: '{{ test_user }}'
       state: present
       managed_policy:
-        - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSDenyAll
     register: iam_user
 
   - name: assert that the user is changed
@@ -157,7 +157,7 @@
       name: '{{ test_user }}'
       state: present
       managed_policy:
-        - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSDenyAll
     register: iam_user
 
   - name: assert that the user is changed
@@ -170,7 +170,7 @@
       name: '{{ test_user }}'
       state: present
       managed_policy:
-        - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSDenyAll
     register: iam_user
 
   - name: assert that the user hasn't changed
@@ -213,7 +213,7 @@
       state: present
       managed_policy:
         - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
-        - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSDenyAll
       purge_policy: no
     register: iam_user
 
@@ -227,7 +227,22 @@
       name: '{{ test_user }}'
       state: present
       managed_policy:
-        - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSDenyAll
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: no
+    register: iam_user
+
+  - name: assert that the user hasn't changed
+    assert:
+      that:
+        - iam_user is not changed
+
+  - name: Check that policy doesn't require full ARN path
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - AWSDenyAll
         - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
       purge_policy: no
     register: iam_user
@@ -410,7 +425,7 @@
         - iam_group
 
   - name: Test remove group again (idempotency)
-    iam_user:
+    iam_group:
       name: "{{ test_group }}"
       state: absent
     register: iam_group
