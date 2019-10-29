@@ -1528,8 +1528,7 @@ class RedfishUtils(object):
             return {'ret': False,
                     'msg': "boot_order list required for SetBootOrder command"}
 
-        # TODO(billdodd): change to self.systems_uri after PR 62921 merged
-        systems_uri = self.systems_uris[0]
+        systems_uri = self.systems_uri
         response = self.get_request(self.root_uri + systems_uri)
         if response['ret'] is False:
             return response
@@ -1567,8 +1566,7 @@ class RedfishUtils(object):
         return {'ret': True, 'changed': True, 'msg': "BootOrder set"}
 
     def set_default_boot_order(self):
-        # TODO(billdodd): change to self.systems_uri after PR 62921 merged
-        systems_uri = self.systems_uris[0]
+        systems_uri = self.systems_uri
         response = self.get_request(self.root_uri + systems_uri)
         if response['ret'] is False:
             return response
