@@ -39,6 +39,6 @@
 
   - import_tasks: ../tests/validate.yml
     vars:
-      select_crypto_backend: pyopenssl
+      select_crypto_backend: cryptography
 
   when: cryptography_version.stdout is version('1.3', '>=')
