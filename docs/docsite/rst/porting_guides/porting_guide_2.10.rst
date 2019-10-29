@@ -56,12 +56,11 @@ The following functionality will be removed in Ansible 2.14. Please update updat
 * :ref:`iam_managed_policy <iam_managed_policy_module>`: the ``fail_on_delete`` option wil be removed.  It has always been ignored by the module.
 * :ref:`s3_lifecycle <s3_lifecycle_module>`: the ``requester_pays`` option will be removed. It has always been ignored by the module.
 * :ref:`s3_sync <s3_sync_module>`: the ``retries`` option will be removed. It has always been ignored by the module.
-
+* :ref:`docker_stack <docker_stack_module>` has had return values `err` and `out` deprecated. Use new `stdout` and `stderr` instead.
 
 The following functionality will change in Ansible 2.14. Please update update your playbooks accordingly.
 
 * The :ref:`docker_container <docker_container_module>` module has a new option, ``container_default_behavior``, whose default value will change from ``compatibility`` to ``no_defaults``. Set to an explicit value to avoid deprecation warnings.
-
 
 Noteworthy module changes
 -------------------------
