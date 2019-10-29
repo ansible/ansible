@@ -81,7 +81,7 @@ options:
 requirements:
   - jsondiff
   - pyyaml
-  
+
 notes:
   - Return values C(out) and C(err) have been deprecated and will be removed. Use C(stdout) and C(stderr) instead.
 '''
