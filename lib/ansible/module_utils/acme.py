@@ -426,14 +426,15 @@ def _sign_request_cryptography(module, payload64, protected64, key_data):
         "signature": nopad_b64(signature),
     }
 
+
 def _assert_fetch_url_success(response, info, allow_redirect=False, allow_client_error=True, allow_server_error=True):
     if info['status'] < 0:
-        raise ModuleFailException(msg="Failure downloading %s, %s" % (url, to_native(e)))
+        raise ModuleFailException(msg="Failure downloading %s, %s" % (info['url'], info['msg']))
 
     if (info['status'] >= 300 and info['status'] < 400 and not allow_redirect) or \
        (info['status'] >= 400 and info['status'] < 500 and not allow_client_error) or \
        (info['status'] >= 500 and not allow_server_error):
-        raise ModuleFailException("ACME request failed: CODE: {0} RESULT: {1}".format(info['status'], result))
+        raise ModuleFailException("ACME request failed: CODE: {0} MGS: {1} RESULT: {2}".format(info['status'], info['msg'], response))
 
 
 class ACMEDirectory(object):
