@@ -1279,9 +1279,11 @@ As of version 2.6, you can define the type of encoding to use, the default is ``
 
 .. versionadded:: 2.6
 
-To create a UUID from a string (new in version 1.9)::
+To create a UUIDv5 from a string using the Ansible namespace '361E6D51-FAEC-444A-9079-341386DA8E2E'::
 
     {{ hostname | to_uuid }}
+
+.. versionadded:: 1.9
 
 To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
 doesn't know it is a boolean value::
