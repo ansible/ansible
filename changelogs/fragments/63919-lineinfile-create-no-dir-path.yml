@@ -1,0 +1,2 @@
+bugfixes:
+ - "lineinfile - don't attempt mkdirs when path doesn't contain directory path"
