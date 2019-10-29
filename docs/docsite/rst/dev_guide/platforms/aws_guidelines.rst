@@ -644,22 +644,23 @@ for every call, it's preferable to use :ref:`module_defaults <module_defaults>`.
 
 .. code-block:: yaml
 
-   - name: set connection information for all tasks
+   - name: set connection information for aws modules and run tasks
      module_defaults:
        group/aws:
          aws_access_key: "{{ aws_access_key }}"
          aws_secret_key: "{{ aws_secret_key }}"
          security_token: "{{ security_token }}"
          region: "{{ aws_region }}"
-     no_log: yes
 
-   - name: Do Something
-     ec2_instance:
-       ... params ...
+     block:
 
-   - name: Do Something Else
-     ec2_instance:
-       ... params ...
+     - name: Do Something
+       ec2_instance:
+         ... params ...
+
+     - name: Do Something Else
+       ec2_instance:
+         ... params ...
 
 AWS Permissions for Integration Tests
 -------------------------------------
