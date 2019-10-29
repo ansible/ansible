@@ -35,9 +35,11 @@ options:
   subnets:
     description: list of subnet IDs for the Kubernetes cluster
     type: list
+    elements: str
   security_groups:
     description: list of security group names or IDs
     type: list
+    elements: str
   state:
     description: desired state of the EKS cluster
     choices:

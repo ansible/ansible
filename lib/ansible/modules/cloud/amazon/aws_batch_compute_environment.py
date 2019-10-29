@@ -78,6 +78,7 @@ options:
       - The instance types that may be launched.
     required: true
     type: list
+    elements: str
   image_id:
     description:
       - The Amazon Machine Image (AMI) ID used for instances launched in the compute environment.
@@ -87,11 +88,13 @@ options:
       - The VPC subnets into which the compute resources are launched.
     required: true
     type: list
+    elements: str
   security_group_ids:
     description:
       - The EC2 security groups that are associated with instances launched in the compute environment.
     required: true
     type: list
+    elements: str
   ec2_key_pair:
     description:
       - The EC2 key pair that is used for instances launched in the compute environment.

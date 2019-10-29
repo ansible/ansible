@@ -47,6 +47,7 @@ options:
       - A list of UTF-8 strings that specify the criteria that you can use in selecting this connection.
     required: false
     type: list
+    elements: str
   name:
     description:
       - The name of the connection.
@@ -57,6 +58,7 @@ options:
       - A list of security groups to be used by the connection. Use either security group name or ID.
     required: false
     type: list
+    elements: str
   state:
     description:
       - Create or delete the AWS Glue connection.

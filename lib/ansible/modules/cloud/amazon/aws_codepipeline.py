@@ -60,7 +60,11 @@ options:
             actions:
                 description:
                     - List of action configurations for that stage.
+                    - 'See the boto3 documentation for full documentation of suboptions:'
+                    - 'U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/codepipeline.html#CodePipeline.Client.create_pipeline)'
                 type: list
+                elements: dict
+        elements: dict
         type: list
     version:
         description:

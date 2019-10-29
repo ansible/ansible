@@ -95,6 +95,7 @@ options:
     default: ['private']
     version_added: "2.0"
     type: list
+    elements: str
   prefix:
     description:
       - Limits the response to keys that begin with the specified prefix for list mode

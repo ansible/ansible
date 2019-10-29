@@ -161,6 +161,14 @@ options:
             - A set of tags for the build project.
         required: false
         type: list
+        elements: dict
+        suboptions:
+            key:
+                description: The name of the Tag.
+                type: str
+            value:
+                description: The value of the Tag.
+                type: str
     vpc_config:
         description:
             - The VPC config enables AWS CodeBuild to access resources in an Amazon VPC.

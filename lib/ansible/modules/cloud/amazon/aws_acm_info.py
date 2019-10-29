@@ -28,6 +28,7 @@ options:
       - Status to filter the certificate results
     choices: ['PENDING_VALIDATION', 'ISSUED', 'INACTIVE', 'EXPIRED', 'VALIDATION_TIMED_OUT', 'REVOKED', 'FAILED']
     type: list
+    elements: str
 requirements:
   - boto3
 author:

@@ -78,6 +78,7 @@ options:
     aliases:
     - grant_types
     type: list
+    elements: str
   policy_clean_invalid_entries:
     description:
     - (deprecated) If adding/removing a role and invalid grantees are found, remove them. These entries will cause an update to fail in all known cases.
@@ -132,17 +133,34 @@ options:
       - A list of grants to apply to the key. Each item must contain I(grantee_principal).
         Each item can optionally contain I(retiring_principal), I(operations), I(constraints),
         I(name).
-      - Valid operations are C(Decrypt), C(Encrypt), C(GenerateDataKey), C(GenerateDataKeyWithoutPlaintext),
-        C(ReEncryptFrom), C(ReEncryptTo), C(CreateGrant), C(RetireGrant), C(DescribeKey), C(Verify) and
-        C(Sign)
-      - Constraints is a dict containing C(encryption_context_subset) or C(encryption_context_equals),
-        either or both being a dict specifying an encryption context match.
-        See U(https://docs.aws.amazon.com/kms/latest/APIReference/API_GrantConstraints.html)
       - I(grantee_principal) and I(retiring_principal) must be ARNs
       - 'For full documentation of suboptions see the boto3 documentation:'
       - 'U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kms.html#KMS.Client.create_grant)'
     version_added: 2.8
     type: list
+    elements: dict
+    suboptions:
+        grantee_principal:
+            description: The full ARN of the principal being granted permissions.
+            required: true
+            type: str
+        retiring_principal:
+            description: The full ARN of the principal permitted to revoke/retire the grant.
+            type: str
+        operations:
+            type: list
+            elements: str
+            description:
+              - A list of operations that the grantee may perform using the CMK.
+            choices: ['Decrypt', 'Encrypt', 'GenerateDataKey', 'GenerateDataKeyWithoutPlaintext', 'ReEncryptFrom', 'ReEncryptTo',
+                      'CreateGrant', 'RetireGrant', 'DescribeKey', 'Verify', 'Sign']
+        constraints:
+            description:
+              - Constraints is a dict containing C(encryption_context_subset) or C(encryption_context_equals),
+                either or both being a dict specifying an encryption context match.
+                See U(https://docs.aws.amazon.com/kms/latest/APIReference/API_GrantConstraints.html) or
+                U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kms.html#KMS.Client.create_grant)
+            type: dict
   policy:
     description:
       - policy to apply to the KMS key

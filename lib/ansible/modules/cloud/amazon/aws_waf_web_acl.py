@@ -53,10 +53,27 @@ options:
     rules:
         description:
         - A list of rules that the Web ACL will enforce.
-        - Each rule must contain I(name), I(action), I(priority) keys.
-        - Priorities must be unique, but not necessarily consecutive. Lower numbered priorities are evaluated first.
-        - The I(type) key can be passed as C(rate_based), it defaults to C(regular)
         type: list
+        elements: dict
+        suboptions:
+            name:
+                description: Name of the rule.
+                type: str
+                required: true
+            action:
+                description: The action to perform
+                type: str
+                required: true
+            priority:
+                description: The priority of the action.  Priorities must be unique. Lower numbered priorities are evaluated first.
+                type: int
+                required: true
+            type:
+                description: The type of rule
+                choices:
+                - rate_based
+                - regular
+                type: str
     purge_rules:
         description:
         - Whether to remove rules that aren't passed with C(rules).

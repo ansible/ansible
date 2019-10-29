@@ -70,6 +70,7 @@ options:
     description:
       - A list of route filter prefix CIDRs with which to create the public virtual interface.
     type: list
+    elements: str
   virtual_gateway_id:
     description:
       - The virtual gateway ID required for creating a private virtual interface.

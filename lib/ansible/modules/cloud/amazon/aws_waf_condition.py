@@ -58,6 +58,7 @@ options:
         - I(target_string) is a maximum of 50 bytes.
         - I(regex_pattern) is a dict with a C(name) key and C(regex_strings) list of strings to match.
         type: list
+        elements: dict
     purge_filters:
         description:
         - Whether to remove existing filters from a condition if not passed in I(filters).

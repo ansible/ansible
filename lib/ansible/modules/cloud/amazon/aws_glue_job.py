@@ -42,6 +42,7 @@ options:
       - A list of Glue connections used for this job.
     required: false
     type: list
+    elements: str
   default_arguments:
     description:
       - A dict of default arguments for this job.  You can specify arguments here that your own job-execution

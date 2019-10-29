@@ -55,6 +55,14 @@ options:
         3 compute environments with a job queue.
     required: true
     type: list
+    elements: dict
+    suboptions:
+        order:
+            type: int
+            description: The relative priority of the environment.
+        compute_environment:
+            type: str
+            description: The name of the compute environment.
 requirements:
     - boto3
 extends_documentation_fragment:

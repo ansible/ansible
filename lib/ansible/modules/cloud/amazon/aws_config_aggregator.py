@@ -41,13 +41,19 @@ options:
       account_ids:
         description:
         - A list of 12-digit account IDs of accounts being aggregated.
+        type: list
+        elements: str
       aws_regions:
         description:
         - A list of source regions being aggregated.
+        type: list
+        elements: str
       all_aws_regions:
         description:
         - If true, aggregate existing AWS Config regions and future regions.
+        type: bool
     type: list
+    elements: dict
   organization_source:
     description:
     - The region authorized to collect aggregated data.
@@ -55,12 +61,16 @@ options:
       role_arn:
         description:
         - ARN of the IAM role used to retrieve AWS Organization details associated with the aggregator account.
+        type: str
       aws_regions:
         description:
         - The source regions being aggregated.
+        type: list
+        elements: str
       all_aws_regions:
         description:
         - If true, aggregate existing AWS Config regions and future regions.
+        type: bool
     type: dict
 extends_documentation_fragment:
   - aws

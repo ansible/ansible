@@ -45,12 +45,24 @@ options:
         type: str
     conditions:
         description: >
-          list of conditions used in the rule. Each condition should
-          contain I(type): which is one of [C(byte), C(geo), C(ip), C(size), C(sql) or C(xss)]
-          I(negated): whether the condition should be negated, and C(condition),
-          the name of the existing condition. M(aws_waf_condition) can be used to
+          list of conditions used in the rule.  M(aws_waf_condition) can be used to
           create new conditions
         type: list
+        elements: dict
+        suboptions:
+            type:
+                required: true
+                type: str
+                choices: ['byte','geo','ip','size','sql','xss']
+                description: The type of rule to match.
+            negated:
+                required: true
+                type: bool
+                description: Whether the condition should be negated.
+            condition:
+                required: true
+                type: str
+                description: The name of the condition.  The condition must already exist.
     purge_conditions:
         description:
           - Whether or not to remove conditions that are not passed when updating `conditions`.
