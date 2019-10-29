@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: opennms_node
 short_description: Manage nodes in OpenNMS
-version_added: "2.8"
+version_added: "2.10"
 description:
   - "An ansible module to manage nodes in OpenNMS"
 author:
@@ -129,6 +129,17 @@ EXAMPLES = '''
     name: my_node
     state: absent
     requisition: Generic
+'''
+
+RETURN = '''
+data:
+    description: The payload used to add a node
+    type: str
+    returned: when state is present
+response:
+    description: The response of the last request
+    type: str
+    returned: always
 '''
 
 from ansible.module_utils.basic import AnsibleModule
