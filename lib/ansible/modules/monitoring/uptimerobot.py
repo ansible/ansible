@@ -23,6 +23,7 @@ options:
             - Define whether or not the monitor should be running or paused.
         required: true
         choices: [ "started", "paused", "created", "absent" ]
+        version_added: '2.10'
     url:
         description:
             - URL to be checked.
