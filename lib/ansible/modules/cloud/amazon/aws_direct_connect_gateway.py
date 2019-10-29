@@ -88,14 +88,19 @@ result:
   contains:
     amazon_side_asn:
       description: ASN on the amazon side.
+      type: str
     direct_connect_gateway_id:
       description: The ID of the direct connect gateway.
+      type: str
     direct_connect_gateway_name:
       description: The name of the direct connect gateway.
+      type: str
     direct_connect_gateway_state:
       description: The state of the direct connect gateway.
+      type: str
     owner_account:
       description: The AWS account ID of the owner of the direct connect gateway.
+      type: str
 '''
 
 import time
