@@ -255,7 +255,7 @@ def main():
                                 "which corresponds to desired state but there is no value "
                                 "in mysqld-auto.cnf and it will be added only to there "
                                 "respectively." % (mysqlvar, value_actual))
-                
+
                 elif value_in_auto_cnf is not None and value_wanted != value_in_auto_cnf:
                     module.warn("The current global variable '%s' has value '%s' "
                                 "which corresponds to desired state but value in mysqld-auto.cnf "
