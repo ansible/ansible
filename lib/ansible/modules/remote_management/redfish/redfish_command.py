@@ -100,6 +100,19 @@ options:
       - BootNext target when bootdevice is "UefiBootNext"
     type: str
     version_added: "2.9"
+  update_username:
+    required: false
+    aliases: [ account_updatename ]
+    description:
+      - new update user name for account_username
+    type: str
+    version_added: "2.10"
+  account_properties:
+    required: false
+    description:
+      - properties of account service to update
+    type: dict
+    version_added: "2.10"
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -230,6 +243,37 @@ EXAMPLES = '''
       account_username: "{{ account_username }}"
       roleid: "{{ roleid }}"
 
+  - name: Update user name
+    redfish_command:
+      category: Accounts
+      command: UpdateUserName
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      account_username: "{{ account_username }}"
+      account_updatename: "{{ account_updatename }}"
+
+  - name: Update user name
+    redfish_command:
+      category: Accounts
+      command: UpdateUserName
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      account_username: "{{ account_username }}"
+      update_username: "{{ update_username }}"
+
+  - name: Update AccountService properties
+    redfish_command:
+      category: Accounts
+      command: UpdateAccountServiceProperties
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      account_properties:
+        AccountLockoutThreshold: 5
+        AccountLockoutDuration: 600
+
   - name: Clear Manager Logs with a timeout of 20 seconds
     redfish_command:
       category: Manager
@@ -259,7 +303,8 @@ CATEGORY_COMMANDS_ALL = {
                 "PowerGracefulShutdown", "PowerReboot", "SetOneTimeBoot"],
     "Chassis": ["IndicatorLedOn", "IndicatorLedOff", "IndicatorLedBlink"],
     "Accounts": ["AddUser", "EnableUser", "DeleteUser", "DisableUser",
-                 "UpdateUserRole", "UpdateUserPassword"],
+                 "UpdateUserRole", "UpdateUserPassword", "UpdateUserName",
+                 "UpdateAccountServiceProperties"],
     "Manager": ["GracefulRestart", "ClearLogs"],
 }
 
@@ -277,6 +322,8 @@ def main():
             new_username=dict(aliases=["account_username"]),
             new_password=dict(aliases=["account_password"], no_log=True),
             roleid=dict(aliases=["account_roleid"]),
+            update_username=dict(type='str', aliases=["account_updatename"]),
+            account_properties=dict(type='dict', default={}),
             bootdevice=dict(),
             timeout=dict(type='int', default=10),
             uefi_target=dict(),
@@ -296,7 +343,9 @@ def main():
     user = {'account_id': module.params['id'],
             'account_username': module.params['new_username'],
             'account_password': module.params['new_password'],
-            'account_roleid': module.params['roleid']}
+            'account_roleid': module.params['roleid'],
+            'account_updatename': module.params['update_username'],
+            'account_properties': module.params['account_properties']}
 
     # timeout
     timeout = module.params['timeout']
@@ -323,7 +372,9 @@ def main():
             "DeleteUser": rf_utils.delete_user,
             "DisableUser": rf_utils.disable_user,
             "UpdateUserRole": rf_utils.update_user_role,
-            "UpdateUserPassword": rf_utils.update_user_password
+            "UpdateUserPassword": rf_utils.update_user_password,
+            "UpdateUserName": rf_utils.update_user_name,
+            "UpdateAccountServiceProperties": rf_utils.update_accountservice_properties
         }
 
         # execute only if we find an Account service resource
