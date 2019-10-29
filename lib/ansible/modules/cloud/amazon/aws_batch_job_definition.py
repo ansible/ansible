@@ -72,7 +72,7 @@ options:
     description:
       - The command that is passed to the container. This parameter maps to Cmd in the Create a container section of
         the Docker Remote API and the COMMAND parameter to docker run. For more information,
-        see https://docs.docker.com/engine/reference/builder/#cmd.
+        see U(https://docs.docker.com/engine/reference/builder/#cmd)
     type: list
   job_role_arn:
     description:

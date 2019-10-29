@@ -106,8 +106,8 @@ EXAMPLES = '''
               PollForSourceChanges: 'true'
               Branch: master
               # Generate token like this:
-              # https://docs.aws.amazon.com/codepipeline/latest/userguide/GitHub-rotate-personal-token-CLI.html
-              # GH Link: https://github.com/settings/tokens
+              # U(https://docs.aws.amazon.com/codepipeline/latest/userguide/GitHub-rotate-personal-token-CLI.html)
+              # GH Link: U(https://github.com/settings/tokens)
               OAuthToken: 'abc123def456'
             runOrder: 1
       - name: Build

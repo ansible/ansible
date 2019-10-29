@@ -87,7 +87,7 @@ options:
                 description:
                     - Along with path and name, the pattern that AWS CodeBuild will use to determine the name and location to store the output artifacts
                     - Accepts BUILD_ID and NONE
-                    - "See docs here: http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project"
+                    - "See docs here: U(http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project)"
                 required: false
             name:
                 description:
@@ -270,7 +270,7 @@ project:
           description: Output location for build artifacts
           returned: when configured
           type: str
-        # and more... see http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project
+        # and more... see U(http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project)
     cache:
       description: Cache settings for the build project.
       returned: when configured

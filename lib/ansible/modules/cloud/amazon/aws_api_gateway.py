@@ -24,7 +24,7 @@ description:
        this is run.
      - Beware that there are very hard limits on the rate that
        you can call API Gateway's REST API.  You may need to patch
-       your boto.  See https://github.com/boto/boto3/issues/876
+       your boto.  See U(https://github.com/boto/boto3/issues/876)
        and discuss with your AWS rep.
      - swagger_file and swagger_text are passed directly on to AWS
        transparently whilst swagger_dict is an ansible dict which is

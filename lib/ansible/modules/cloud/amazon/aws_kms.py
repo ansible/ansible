@@ -139,6 +139,8 @@ options:
         either or both being a dict specifying an encryption context match.
         See U(https://docs.aws.amazon.com/kms/latest/APIReference/API_GrantConstraints.html)
       - I(grantee_principal) and I(retiring_principal) must be ARNs
+      - 'For full documentation of suboptions see the boto3 documentation:'
+      - 'U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kms.html#KMS.Client.create_grant)'
     version_added: 2.8
     type: list
   policy:
