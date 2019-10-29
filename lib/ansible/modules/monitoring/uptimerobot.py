@@ -22,8 +22,7 @@ options:
         description:
             - Define whether or not the monitor should be running or paused.
         required: true
-        choices: [ "started", "paused", "created", "absent" ]
-        version_added: '2.10'
+        choices: [ "started", "paused", "created", "absent", "present" ]
     url:
         description:
             - URL to be checked.
@@ -43,13 +42,13 @@ options:
         description:
             - ID of the monitor to check.
         required: false
-        version_added: '2.10'
     apikey:
         description:
             - Uptime Robot API key.
         required: true
 notes:
     - Support for further functionalities, which the api provides has not yet been implemented.
+    - created and absent are added in version 2.10
 '''
 
 EXAMPLES = '''
@@ -150,6 +149,7 @@ def main():
 
     api_methods = dict(
         started='editMonitor',
+        present='newMonitor',
         paused='editMonitor',
         absent='deleteMonitor',
         created='newMonitor'
@@ -160,7 +160,7 @@ def main():
             name=dict(required=True),
             url=dict(required=True),
             check_type=dict(required=False, choices=['http', 'dns']),
-            state=dict(required=True, choices=['started', 'paused', 'absent', 'created']),
+            state=dict(required=True, choices=['started', 'paused', 'absent', 'created', 'present']),
             apikey=dict(required=True, no_log=True),
             monitorid=dict(required=False)
         ),
