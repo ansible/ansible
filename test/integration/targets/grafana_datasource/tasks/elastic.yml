@@ -1,0 +1,77 @@
+---
+
+- name: Create elasticsearch datasource
+  grafana_datasource:
+    name: "datasource-elastic"
+    grafana_url: "http://127.0.0.1:3000"
+    grafana_user: "admin"
+    grafana_password: "admin"
+    org_id: "1"
+    ds_type: "elasticsearch"
+    ds_url: "https://elastic.company.com:9200"
+    database: "[logstash_]YYYY.MM.DD"
+    basic_auth_user: "grafana"
+    basic_auth_password: "******"
+    time_field: "@timestamp"
+    time_interval: "1m"
+    interval: "Daily"
+    es_version: 56
+    max_concurrent_shard_requests: 42
+    tls_ca_cert: "/etc/ssl/certs/ca.pem"
+  register: result
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.name == 'datasource-elastic'"
+      - "result.msg == 'Datasource datasource-elastic created : Datasource added'"
+
+- name: Check elasticsearch datasource creation idempotency
+  grafana_datasource:
+    name: "datasource-elastic"
+    grafana_url: "http://127.0.0.1:3000"
+    grafana_user: "admin"
+    grafana_password: "admin"
+    org_id: "1"
+    ds_type: "elasticsearch"
+    ds_url: "https://elastic.company.com:9200"
+    database: "[logstash_]YYYY.MM.DD"
+    basic_auth_user: "grafana"
+    basic_auth_password: "******"
+    time_field: "@timestamp"
+    time_interval: "1m"
+    interval: "Daily"
+    es_version: 56
+    max_concurrent_shard_requests: 42
+    tls_ca_cert: "/etc/ssl/certs/ca.pem"
+  register: result
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      # Idempotency is not working currently
+      # "result.changed == false"
+      - "result.name == 'datasource-elastic'"
+      - "result.after.basicAuth == true"
+      - "result.after.basicAuthUser == 'grafana'"
+      - "result.after.access == 'proxy'"
+      - "result.after.database == '[logstash_]YYYY.MM.DD'"
+      - "result.after.isDefault == false"
+      - "result.after.jsonData.esVersion == 56"
+      - "result.after.jsonData.interval == 'Daily'"
+      - "result.after.jsonData.maxConcurrentShardRequests == 42"
+      - "result.after.jsonData.timeField == '@timestamp'"
+      - "result.after.jsonData.tlsAuth == false"
+      - "result.after.jsonData.tlsAuthWithCACert == false"
+      - "result.after.name == 'datasource-elastic'"
+      - "result.after.orgId == 1"
+      - "result.after.password == ''"
+      - "result.after.type == 'elasticsearch'"
+      - "result.after.url == 'https://elastic.company.com:9200'"
+      - "result.after.user == ''"
+      - "result.after.withCredentials == false"

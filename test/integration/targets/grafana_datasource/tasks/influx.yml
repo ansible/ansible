@@ -1,0 +1,61 @@
+---
+
+- name: Create influxdb datasource
+  grafana_datasource:
+    name: "datasource-influxdb"
+    grafana_url: "http://127.0.0.1:3000"
+    grafana_user: "admin"
+    grafana_password: "admin"
+    org_id: "1"
+    ds_type: "influxdb"
+    ds_url: "https://influx.company.com:8086"
+    database: "telegraf"
+    time_interval: ">10s"
+    tls_ca_cert: "/etc/ssl/certs/ca.pem"
+  register: result
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.name == 'datasource-influxdb'"
+      - "result.msg == 'Datasource datasource-influxdb created : Datasource added'"
+
+- name: Check influxdb datasource creation idempotency
+  grafana_datasource:
+    name: "datasource-influxdb"
+    grafana_url: "http://127.0.0.1:3000"
+    grafana_user: "admin"
+    grafana_password: "admin"
+    org_id: "1"
+    ds_type: "influxdb"
+    ds_url: "https://influx.company.com:8086"
+    database: "telegraf"
+    time_interval: ">10s"
+    tls_ca_cert: "/etc/ssl/certs/ca.pem"
+  register: result
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      # Idempotency is not working currently
+      # "result.changed == false"
+      - "result.name == 'datasource-influxdb'"
+      - "result.after.basicAuth == false"
+      - "result.after.access == 'proxy'"
+      - "result.after.database == 'telegraf'"
+      - "result.after.isDefault == false"
+      - "result.after.jsonData.timeInterval == '>10s'"
+      - "result.after.jsonData.tlsAuth == false"
+      - "result.after.jsonData.tlsAuthWithCACert == false"
+      - "result.after.name == 'datasource-influxdb'"
+      - "result.after.orgId == 1"
+      - "result.after.password == ''"
+      - "result.after.type == 'influxdb'"
+      - "result.after.url == 'https://influx.company.com:8086'"
+      - "result.after.user == ''"
+      - "result.after.withCredentials == false"

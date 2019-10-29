@@ -1,0 +1,30 @@
+- name: Install deps
+  package:
+    name:
+      - apt-transport-https
+      - software-properties-common
+
+- name: Add the Grafana GPG key
+  apt_key:
+    url: https://packages.grafana.com/gpg.key
+    state: present
+
+- name: Add grafana apt repository
+  apt_repository:
+    repo: deb https://packages.grafana.com/oss/deb stable main
+    state: present
+
+- name: Install Grafana server
+  apt:
+    allow_unauthenticated: yes
+    name: grafana
+
+- name: start Grafana
+  service:
+    name: grafana-server
+    state: started
+
+- name: wait for grafana to be up
+  wait_for:
+    host: 127.0.0.1
+    port: 3000
