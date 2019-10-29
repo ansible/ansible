@@ -418,7 +418,6 @@ class RedfishUtils(object):
     def get_disk_inventory(self, systems_uri):
         result = {'entries': []}
         controller_list = []
-        disk_results = []
         # Get these entries, but does not fail if not found
         properties = ['BlockSizeBytes', 'CapableSpeedGbs', 'CapacityBytes',
                       'EncryptionAbility', 'EncryptionStatus',
@@ -455,19 +454,31 @@ class RedfishUtils(object):
                     if response['ret'] is False:
                         return response
                     data = response['data']
+                    controller_name = 'Controller 1'
+                    if 'StorageControllers' in data:
+                        sc = data['StorageControllers']
+                        if sc:
+                            if 'Name' in sc[0]:
+                                controller_name = sc[0]['Name']
+                            else:
+                                sc_id = sc[0].get('Id', '1')
+                                controller_name = 'Controller %s' % sc_id
+                    drive_results = []
                     if 'Drives' in data:
                         for device in data[u'Drives']:
                             disk_uri = self.root_uri + device[u'@odata.id']
                             response = self.get_request(disk_uri)
                             data = response['data']
 
-                            disk_result = {}
+                            drive_result = {}
                             for property in properties:
                                 if property in data:
                                     if data[property] is not None:
-                                        disk_result[property] = data[property]
-                            disk_results.append(disk_result)
-                result["entries"].append(disk_results)
+                                        drive_result[property] = data[property]
+                            drive_results.append(drive_result)
+                    drives = {'Controller': controller_name,
+                              'Drives': drive_results}
+                    result["entries"].append(drives)
 
         if 'SimpleStorage' in data:
             # Get a list of all storage controllers and build respective URIs
@@ -487,14 +498,21 @@ class RedfishUtils(object):
                 if response['ret'] is False:
                     return response
                 data = response['data']
-
+                if 'Name' in data:
+                    controller_name = data['Name']
+                else:
+                    sc_id = data.get('Id', '1')
+                    controller_name = 'Controller %s' % sc_id
+                drive_results = []
                 for device in data[u'Devices']:
-                    disk_result = {}
+                    drive_result = {}
                     for property in properties:
                         if property in device:
-                            disk_result[property] = device[property]
-                    disk_results.append(disk_result)
-            result["entries"].append(disk_results)
+                            drive_result[property] = device[property]
+                    drive_results.append(drive_result)
+                drives = {'Controller': controller_name,
+                          'Drives': drive_results}
+                result["entries"].append(drives)
 
         return result
 
@@ -505,7 +523,6 @@ class RedfishUtils(object):
         result = {'entries': []}
         controller_list = []
         volume_list = []
-        volume_results = []
         # Get these entries, but does not fail if not found
         properties = ['Id', 'Name', 'RAIDType', 'VolumeType', 'BlockSizeBytes',
                       'Capacity', 'CapacityBytes', 'CapacitySources',
@@ -541,7 +558,16 @@ class RedfishUtils(object):
                     if response['ret'] is False:
                         return response
                     data = response['data']
-
+                    controller_name = 'Controller 1'
+                    if 'StorageControllers' in data:
+                        sc = data['StorageControllers']
+                        if sc:
+                            if 'Name' in sc[0]:
+                                controller_name = sc[0]['Name']
+                            else:
+                                sc_id = sc[0].get('Id', '1')
+                                controller_name = 'Controller %s' % sc_id
+                    volume_results = []
                     if 'Volumes' in data:
                         # Get a list of all volumes and build respective URIs
                         volumes_uri = data[u'Volumes'][u'@odata.id']
@@ -573,9 +599,10 @@ class RedfishUtils(object):
                                             drive_id = drive_id_link.split("/")[-1]
                                             drive_id_list.append({'Id': drive_id})
                                         volume_result['Linked_drives'] = drive_id_list
-
                                 volume_results.append(volume_result)
-                result["entries"].append(volume_results)
+                    volumes = {'Controller': controller_name,
+                               'Volumes': volume_results}
+                    result["entries"].append(volumes)
         else:
             return {'ret': False, 'msg': "Storage resource not found"}
 
