@@ -117,7 +117,7 @@ class UptimeRobot:
         req = Request()
         state = req.post(url=self.uri, data=data, headers=self.headers)
         state = state.read()
-        state = json.loads(state)
+        state = json.loads(to_text(state.read(), errors='surrogate_or_strict'))
         return state
 
     def api_request(self):
