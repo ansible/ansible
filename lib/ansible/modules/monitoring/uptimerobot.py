@@ -77,6 +77,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import Request
+from ansible.module_utils._text import to_text
 
 API_BASE = "https://api.uptimerobot.com/v2/"
 
@@ -119,7 +120,6 @@ class UptimeRobot:
         self.uri = API_BASE + "getMonitors"
         req = Request()
         state = req.post(url=self.uri, data=data, headers=self.headers)
-        state = state.read()
         state = json.loads(to_text(state.read(), errors='surrogate_or_strict'))
         return state
 
@@ -127,8 +127,7 @@ class UptimeRobot:
         self.uri = API_BASE + self.api_method
         req = Request()
         state = req.post(url=self.uri, data=self.body, headers=self.headers)
-        state = state.read()
-        state = json.loads(state)
+        state = json.loads(to_text(state.read(), errors='surrogate_or_strict'))
         return state, self.api_method
 
     def check_dict(self, dictionary):
