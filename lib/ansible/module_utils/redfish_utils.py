@@ -1014,6 +1014,63 @@ class RedfishUtils(object):
             return response
         return {'ret': True}
 
+    def update_user_name(self, user):
+        if not user.get('account_updatename'):
+            return {'ret': False, 'msg':
+                    'Must provide account_updatename for UpdateUserName command'}
+
+        response = self._find_account_uri(username=user.get('account_username'),
+                                          acct_id=user.get('account_id'))
+        if not response['ret']:
+            return response
+        uri = response['uri']
+        payload = {'UserName': user['account_updatename']}
+        response = self.patch_request(self.root_uri + uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True}
+
+    def update_accountservice_properties(self, user):
+        if user.get('account_properties') is None:
+            return {'ret': False, 'msg':
+                    'Must provide account_properties for UpdateAccountServiceProperties command'}
+        account_properties = user.get('account_properties')
+
+        # Find AccountService
+        response = self.get_request(self.root_uri + self.service_root)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'AccountService' not in data:
+            return {'ret': False, 'msg': "AccountService resource not found"}
+        accountservice_uri = data["AccountService"]["@odata.id"]
+
+        # Check support or not
+        response = self.get_request(self.root_uri + accountservice_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        for property_name in account_properties.keys():
+            if property_name not in data:
+                return {'ret': False, 'msg':
+                        'property %s not supported' % property_name}
+
+        # if properties is already matched, nothing to do
+        need_change = False
+        for property_name in account_properties.keys():
+            if account_properties[property_name] != data[property_name]:
+                need_change = True
+                break
+
+        if not need_change:
+            return {'ret': True, 'changed': False, 'msg': "AccountService properties already set"}
+
+        payload = account_properties
+        response = self.patch_request(self.root_uri + accountservice_uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True, 'msg': "Modified AccountService properties"}
+
     def get_sessions(self):
         result = {}
         # listing all users has always been slower than other operations, why?
