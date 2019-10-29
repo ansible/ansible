@@ -29,6 +29,10 @@ description:
     - Manages AAA server global configuration on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@QijunPan)
+notes:
+  - This module requires the netconf system service be enabled on
+    the remote device being managed.
+  - This module works with connection C(netconf).
 options:
     state:
         description:
