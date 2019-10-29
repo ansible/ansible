@@ -3,13 +3,15 @@
 
 - include_vars: "{{playbook_dir }}/targets/nxos_netconf/tests/fixtures/config.yaml"
 
+- debug: msg=" {{ playbook_dir }}"
+
 - block:
   - name: Configure vlan
     netconf_config: &config_vlan
       datastore: running
       commit: false
       get_filter: <System xmlns="http://cisco.com/ns/yang/cisco-nx-os-device"><bd-items><bd-items><BD-list></BD-list></bd-items></bd-items></System>
-      content: "{{ lookup('file', '{{ vlan_config }}') }}"
+      content: "{{ vlan_config }}"
     register: result
 
   - assert: &true
