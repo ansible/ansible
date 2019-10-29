@@ -23,7 +23,7 @@ options:
       - The name of a Web Application Firewall
     type: str
   waf_regional:
-    description: Whether to use waf_regional module. Defaults to true
+    description: Whether to use waf_regional module.
     default: false
     required: no
     type: bool
