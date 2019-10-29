@@ -154,8 +154,8 @@ def test_find_connection_insufficient_filters(placeboify, maybe_sleep):
     params2 = make_params(cgw[1], vgw[1], tags={'Correct': 'Tag'})
     m, conn = setup_mod_conn(placeboify, params)
     m2, conn2 = setup_mod_conn(placeboify, params2)
-    _, vpn1 = ec2_vpc_vpn.ensure_present(conn, m.params)
-    _, vpn2 = ec2_vpc_vpn.ensure_present(conn2, m2.params)
+    vpn1 = ec2_vpc_vpn.ensure_present(conn, m.params)[1]
+    vpn2 = ec2_vpc_vpn.ensure_present(conn2, m2.params)[1]
 
     # reset the parameters so only filtering by tags will occur
     m.params = {'filters': {'tags': {'Correct': 'Tag'}}}
@@ -343,7 +343,7 @@ def setup_req(placeboify, number_of_results=1):
     for each in range(0, number_of_results):
         params = make_params(cgw[each], vgw[each])
         m, conn = setup_mod_conn(placeboify, params)
-        _, vpn = ec2_vpc_vpn.ensure_present(conn, params)
+        vpn = ec2_vpc_vpn.ensure_present(conn, params)[1]
 
         results.append({'module': m, 'connection': conn, 'vpn': vpn, 'params': params})
     if number_of_results == 1:

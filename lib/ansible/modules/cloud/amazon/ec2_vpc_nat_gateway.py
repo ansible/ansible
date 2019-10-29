@@ -447,7 +447,7 @@ def gateway_in_subnet_exists(client, subnet_id, allocation_id=None,
     allocation_id_exists = False
     gateways = []
     states = ['available', 'pending']
-    gws_retrieved, _, gws = (
+    gws_retrieved, err_msg, gws = (
         get_nat_gateways(
             client, subnet_id, states=states, check_mode=check_mode
         )
@@ -874,7 +874,7 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
     results = list()
     states = ['pending', 'available']
     try:
-        exist, _, gw = (
+        exist, err_msg, gw = (
             get_nat_gateways(
                 client, nat_gateway_id=nat_gateway_id,
                 states=states, check_mode=check_mode

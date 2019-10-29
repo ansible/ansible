@@ -90,7 +90,7 @@ class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
 
     def test_get_eip_allocation_id_by_address(self):
         client = boto3.client('ec2', region_name=aws_region)
-        allocation_id, _ = (
+        allocation_id, error_msg = (
             ng.get_eip_allocation_id_by_address(
                 client, '55.55.55.55', check_mode=True
             )
@@ -119,7 +119,7 @@ class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
 
     def test_release_address(self):
         client = boto3.client('ec2', region_name=aws_region)
-        success, _ = (
+        success, err_msg = (
             ng.release_address(
                 client, 'eipalloc-1234567', check_mode=True
             )
@@ -178,7 +178,7 @@ class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
 
     def test_delete(self):
         client = boto3.client('ec2', region_name=aws_region)
-        success, changed, err_msg, _ = (
+        success, changed, err_msg, results = (
             ng.remove(
                 client, 'nat-123456789', check_mode=True
             )
@@ -188,7 +188,7 @@ class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
 
     def test_delete_and_release_ip(self):
         client = boto3.client('ec2', region_name=aws_region)
-        success, changed, err_msg, _ = (
+        success, changed, err_msg, results = (
             ng.remove(
                 client, 'nat-123456789', release_eip=True, check_mode=True
             )
@@ -198,7 +198,7 @@ class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
 
     def test_delete_if_does_not_exist(self):
         client = boto3.client('ec2', region_name=aws_region)
-        success, changed, err_msg, _ = (
+        success, changed, err_msg, results = (
             ng.remove(
                 client, 'nat-12345', check_mode=True
             )

@@ -693,7 +693,7 @@ def ensure_present(connection, module_params, check_mode=False):
                                            max_attempts=max_attempts,
                                            delay=delay)
         changes = check_for_update(connection, module_params, vpn_connection['VpnConnectionId'])
-        _ = make_changes(connection, vpn_connection['VpnConnectionId'], changes)
+        make_changes(connection, vpn_connection['VpnConnectionId'], changes)
 
     # get latest version if a change has been made and make tags output nice before returning it
     if vpn_connection:
