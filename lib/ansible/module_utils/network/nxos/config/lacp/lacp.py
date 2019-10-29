@@ -133,6 +133,9 @@ class Lacp(ConfigBase):
         if merged_commands:
             commands.extend(deleted_commands)
             commands.extend(merged_commands)
+        else:
+            commands.extend(deleted_commands)
+
         return commands
 
     def _state_merged(self, want, have):
