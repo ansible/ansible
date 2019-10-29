@@ -39,11 +39,54 @@
     country_name: US
     organization_name: Ansible
     email_address: integration-tests@ansible.com
-    common_name: "localhost"
+    common_name: "{{ item }}.ansible.com"
+    extended_key_usage:
+      - clientAuth
+      - serverAuth
+    keyUsage:
+      - digitalSignature
+      - keyAgreement
+      - keyCertSign
+  with_items:
+    - mongo-client
+  when: mongo_ssl == True
+
+- name: Generate CSRs
+  openssl_csr:
+    path: "{{ remote_tmp_dir }}/{{item}}.csr"
+    privatekey_path: "{{ remote_tmp_dir }}/{{item}}-key.pem"
+    country_name: US
+    organization_name: Ansible
+    email_address: integration-tests@ansible.com
+    common_name: "{{ item }}.ansible.com"
+    extended_key_usage:
+      - clientAuth
+      - serverAuth
+    keyUsage:
+      - digitalSignature
+      - keyAgreement
+      - keyCertSign
   with_items:
     - ca
+  when: mongo_ssl == True
+
+- name: Generate CSRs
+  openssl_csr:
+    path: "{{ remote_tmp_dir }}/{{item}}.csr"
+    privatekey_path: "{{ remote_tmp_dir }}/{{item}}-key.pem"
+    country_name: US
+    organization_name: Ansible
+    email_address: integration-tests@ansible.com
+    common_name: "localhost"
+    extended_key_usage:
+      - clientAuth
+      - serverAuth
+    keyUsage:
+      - digitalSignature
+      - keyAgreement
+      - keyCertSign
+  with_items:
     - mongo
-    - mongo-client
   when: mongo_ssl == True
 
 - name: Generate a Self Signed OpenSSL CA certificate
@@ -91,14 +134,14 @@
   when: mongod_auth == True  and mongo_ssl == False
 
 - name: Spawn mongod process without auth and with SSL
-  command: mongod --sslMode requireSSL --sslAllowConnectionsWithoutCertificates --sslCAFile {{ remote_tmp_dir }}/ca.pem --sslPEMKeyFile  {{ remote_tmp_dir }}/mongo-chain.pem --sslAllowInvalidHostnames --shardsvr --smallfiles {{ mongod_storage_engine_opts }} --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork
+  command: mongod --sslMode requireSSL --sslAllowConnectionsWithoutCertificates --sslCAFile {{ remote_tmp_dir }}/ca-chain.pem --sslPEMKeyFile  {{ remote_tmp_dir }}/mongo-chain.pem --sslAllowInvalidHostnames --shardsvr --smallfiles {{ mongod_storage_engine_opts }} --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork
   args:
     chdir: "{{ remote_tmp_dir }}"
   with_items: "{{ mongodb_nodes | sort }}"
   when: mongod_auth == False and mongo_ssl == True
 
 - name: Spawn mongod process with auth and with SSL
-  command: mongod --sslMode requireSSL --sslAllowConnectionsWithoutCertificates --sslCAFile {{ remote_tmp_dir }}/ca.pem --sslPEMKeyFile  {{ remote_tmp_dir }}/mongo-chain.pem --sslAllowInvalidHostnames --shardsvr --smallfiles {{ mongod_storage_engine_opts }} --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork --auth --keyFile my.key
+  command: mongod --sslMode requireSSL --sslAllowConnectionsWithoutCertificates --sslCAFile {{ remote_tmp_dir }}/ca-chain.pem --sslPEMKeyFile  {{ remote_tmp_dir }}/mongo-chain.pem --sslAllowInvalidHostnames --shardsvr --smallfiles {{ mongod_storage_engine_opts }} --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork --auth --keyFile my.key
   args:
     chdir: "{{ remote_tmp_dir }}"
   with_items: "{{ mongodb_nodes | sort }}"
