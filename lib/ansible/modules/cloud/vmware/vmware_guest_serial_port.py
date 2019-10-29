@@ -110,7 +110,7 @@ EXAMPLES = '''
     - type: 'device'
       device_name: '/dev/char/serial/uart0'
     - type: 'file'
-      file_path: '[local-1]/file1'
+      file_path: '[datastore1]/file1'
       yield_on_poll:  True
     register: create_multiple_ports
 
