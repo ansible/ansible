@@ -81,7 +81,7 @@ options:
       - ' - C(pipe_name) (str): Required when I(backing_type=pipe).'
       - ' - C(device_name) (str): Required when I(backing_type=device).'
       - ' - C(file_path) (str): Required when I(backing_type=file).
-            File path for the host file used in this backing.'
+            File path for the host file used in this backing. Fully qualified path is required, like <datastore_name>/<file_name>'
 
 extends_documentation_fragment:
   - vmware.documentation
@@ -110,7 +110,7 @@ EXAMPLES = '''
     - type: 'device'
       device_name: '/dev/char/serial/uart0'
     - type: 'file'
-      file_path: 'newfile'
+      file_path: '[local-1]/file1'
       yield_on_poll:  True
     register: create_multiple_ports
 
