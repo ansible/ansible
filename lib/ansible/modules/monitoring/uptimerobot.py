@@ -11,7 +11,9 @@ module: uptimerobot
 short_description: Create, remove, pause and start monitors in Uptimerobot
 description:
     - This module lets you create, remove, pause and start monitors in Uptimerobot
-author: "Ninjiner (@Ninjiner)"
+author:
+- "Nate Kingsley (@nate-kingsley)"
+- "Ninjiner (@Ninjiner)"
 version_added: "1.9"
 requirements:
     - Valid Uptime Robot API Key
