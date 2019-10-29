@@ -42,6 +42,7 @@ options:
         description:
             - ID of the monitor to check.
         required: false
+        version_added: '2.10'
     apikey:
         description:
             - Uptime Robot API key.
