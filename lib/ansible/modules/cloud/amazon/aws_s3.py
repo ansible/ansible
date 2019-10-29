@@ -147,7 +147,7 @@ options:
     description:
       - The source file path when performing a PUT operation.
     version_added: "1.3"
-    type: str
+    type: path
   ignore_nonexistent_bucket:
     description:
       - "Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the

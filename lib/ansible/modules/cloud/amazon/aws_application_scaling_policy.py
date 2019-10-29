@@ -67,8 +67,8 @@ options:
     target_tracking_scaling_policy_configuration:
         description:
             - A target tracking policy. This parameter is required if you are creating a new policy and the policy type is TargetTrackingScaling.
-            - 'Full documentation of the suboptions can be found in the boto3 documentation:'
-            - 'U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/autoscaling.html#AutoScaling.Client.put_scaling_policy)'
+            - 'Full documentation of the suboptions can be found in the API documentation:'
+            - 'U(https://docs.aws.amazon.com/autoscaling/application/APIReference/API_TargetTrackingScalingPolicyConfiguration.html)'
         required: no
         type: dict
         suboptions:

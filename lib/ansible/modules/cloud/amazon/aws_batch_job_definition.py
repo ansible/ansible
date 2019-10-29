@@ -113,7 +113,7 @@ options:
         description:
           - The value of the key value pair. For environment variables, this is the value of the environment variable.
     type: list
-    elements: str
+    elements: dict
   mount_points:
     description:
       - The mount points for data volumes in your container. This parameter maps to Volumes in the Create a container
@@ -130,7 +130,7 @@ options:
         description:
           - The name of the volume to mount.
     type: list
-    elements: str
+    elements: dict
   readonly_root_filesystem:
     description:
       - When this parameter is true, the container is given read-only access to its root file system. This parameter
@@ -158,7 +158,7 @@ options:
         description:
           - The soft limit for the ulimit type.
     type: list
-    elements: str
+    elements: dict
   user:
     description:
       - The user name to use inside the container. This parameter maps to User in the Create a container section of
