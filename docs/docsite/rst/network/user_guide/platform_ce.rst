@@ -118,7 +118,7 @@ Example NETCONF Task
      when: ansible_network_os == 'ce'
 
 
-Note
+Notes
 ========================
 
 Modules work with connection C(network_cli)
