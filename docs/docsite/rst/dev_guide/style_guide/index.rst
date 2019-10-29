@@ -57,6 +57,7 @@ are easily understood by English speakers.
 They may be harder to understand for others and are also tricky for automated translation.
 
 Use the following English terms in place of Latin terms or abbreviations: 
+
 +-------------------------------+------------------------------+
 | Latin                         | English                      | 
 +===============================+==============================+
