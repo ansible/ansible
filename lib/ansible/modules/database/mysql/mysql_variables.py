@@ -34,11 +34,14 @@ options:
     type: str
   mode:
     description:
-    - C(global) assigns a value to a global system variable which will be changed at runtime
+    - C(global) assigns C(value) to a global system variable which will be changed at runtime
       but won't persist across server restarts.
-    - C(persist) persists a global system variable to
-      the mysqld-auto.cnf option file in the data directory (the variable will survive service restarts).
-    - C(persist_only) behaves like C(persist) but without setting the global variable runtime value.
+    - C(persist) assigns C(value) to a global system variable and persists it to
+      the mysqld-auto.cnf option file in the data directory
+      (the variable will survive service restarts).
+    - C(persist_only) persists C(value) to the mysqld-auto.cnf option file in the data directory
+      but without setting the global variable runtime value
+      (the value will be changed after the next service restart).
     - Supported by MySQL 8.0 or later.
     - For more information see U(https://dev.mysql.com/doc/refman/8.0/en/set-variable.html).
     type: str
@@ -137,7 +140,7 @@ def getvariable(cursor, mysqlvar):
         return None
 
 
-def setvariable(cursor, mysqlvar, value, mode=''):
+def setvariable(cursor, mysqlvar, value, mode='global'):
     """ Set a global mysql variable to a given value
 
     The DB driver will handle quoting of the given value based on its
@@ -215,12 +218,12 @@ def main():
             module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, to_native(e)))
 
     mysqlvar_val = None
-    if mode == 'global' or mode == 'persist':
+    if mode in ('global', 'persist'):
         mysqlvar_val = getvariable(cursor, mysqlvar)
     elif mode == 'persist_only':
         mysqlvar_val = check_mysqld_auto(cursor, mysqlvar)
         if mysqlvar_val is None:
-            mysqlvar_val = getvariable(cursor, mysqlvar)
+            mysqlvar_val = False
 
     if mysqlvar_val is None:
         module.fail_json(msg="Variable not available \"%s\"" % mysqlvar, changed=False)
