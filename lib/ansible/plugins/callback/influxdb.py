@@ -31,6 +31,22 @@ DOCUMENTATION = '''
         ini:
           - section: callback_influxdb
             key: influxdb_db
+      influxdb_username:
+        required: False
+        description: InfluxDB database username name
+        env:
+          - name: INFLUXDB_USERNAME
+        ini:
+          - section: callback_influxdb
+            key: influxdb_username
+      influxdb_password:
+        required: False
+        description: InfluxDB database password
+        env:
+          - name: INFLUXDB_PASSWORD
+        ini:
+          - section: callback_influxdb
+            key: influxdb_password
       influxdb_tls:
         required: False
         description: use TLS to connect to InfluxDB. (HTTPS)
@@ -82,6 +98,8 @@ class CallbackModule(CallbackBase):
 
         self.influxdb_addr = self.get_option('influxdb_addr')
         self.influxdb_db = self.get_option('influxdb_db')
+        self.influxdb_username = self.get_option('influxdb_username')
+        self.influxdb_password = self.get_option('influxdb_password')
         self.influxdb_tls = self.get_option('influxdb_tls')
         self.validate_certs = self.get_option('influxdb_validate_cert')
 
@@ -127,6 +145,11 @@ class CallbackModule(CallbackBase):
         self._display.debug(payload)
         self._display.debug(self.influx_constructed_url)
         try:
+            if self.influxdb_username is not None and self.influxdb_password is not None:
+                response = open_url(self.influx_constructed_url, data=payload, validate_certs=self.validate_certs,
+                                    url_username=self.influxdb_username, url_password=self.influxdb_password)
+                return response.read()
+
             response = open_url(self.influx_constructed_url, data=payload, validate_certs=self.validate_certs)
             return response.read()
         except Exception as e:
