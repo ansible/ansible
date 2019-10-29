@@ -431,8 +431,8 @@ class Table(object):
         return exec_sql(self, query, ddl=True)
 
     def set_owner(self, username):
-        query = "ALTER TABLE %s OWNER TO %s" % (pg_quote_identifier(self.name, 'table'),
-                                                pg_quote_identifier(username, 'role'))
+        query = 'ALTER TABLE %s OWNER TO "%s"' % (pg_quote_identifier(self.name, 'table'),
+                                                  username)
         return exec_sql(self, query, ddl=True)
 
     def drop(self, cascade=False):

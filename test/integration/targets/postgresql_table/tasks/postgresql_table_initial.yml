@@ -10,7 +10,7 @@
   postgresql_user:
     db: postgres
     login_user: "{{ pg_user }}"
-    name: alice
+    name: "{{ test_role1 }}"
 
 - name: postgresql_table - create test schema
   become_user: "{{ pg_user }}"
@@ -33,7 +33,7 @@
     login_port: 5432
     login_user: "{{ pg_user }}"
     name: test1
-    owner: alice
+    owner: "{{ test_role1 }}"
     columns: id int
   register: result
   ignore_errors: yes
@@ -43,7 +43,7 @@
     that:
       - result is changed
       - result.table == 'test1'
-      - result.queries == ['CREATE TABLE "test1" (id int)', 'ALTER TABLE "test1" OWNER TO "alice"']
+      - result.queries == ['CREATE TABLE "test1" (id int)', 'ALTER TABLE "test1" OWNER TO "{{ test_role1 }}"']
       - result.state == 'absent'
 
 # Check that the table doesn't exist after the previous step, rowcount must be 0
@@ -70,7 +70,7 @@
     login_port: 5432
     login_user: "{{ pg_user }}"
     name: test1
-    owner: alice
+    owner: "{{ test_role1 }}"
     columns: id int
   register: result
   ignore_errors: yes
@@ -79,11 +79,11 @@
     that:
       - result is changed
       - result.table == 'test1'
-      - result.queries == ['CREATE TABLE "test1" (id int)', 'ALTER TABLE "test1" OWNER TO "alice"']
+      - result.queries == ['CREATE TABLE "test1" (id int)', 'ALTER TABLE "test1" OWNER TO "{{ test_role1 }}"']
       - result.state == 'present'
       - result.storage_params == []
       - result.tablespace == ""
-      - result.owner == "alice"
+      - result.owner == "{{ test_role1 }}"
 
 # Check that the table exists after the previous step, rowcount must be 1
 - name: postgresql_table - check that table exists after the previous step
@@ -100,14 +100,14 @@
     that:
       - result.rowcount == 1
 
-# Check that the tableowner is alice
-- name: postgresql_table - check that table owner is alice
+# Check that the tableowner is test_role1
+- name: postgresql_table - check that table owner is test_role1
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
     db: postgres
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_tables WHERE tablename = 'test1' AND tableowner = 'alice'"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'test1' AND tableowner = '{{ test_role1 }}'"
   ignore_errors: yes
   register: result
  
@@ -337,44 +337,44 @@
 #
 
 # Create user to prepare for the next step:
-- name: postgresql_table - create the new user test_user
+- name: postgresql_table - create the new user test_role2
   become: yes
   become_user: "{{ pg_user }}"
   postgresql_user:
     login_user: "{{ pg_user }}"
     db: postgres
-    name: test_user
+    name: "{{ test_role2 }}"
     state: present
   ignore_errors: yes
 
-# Try to change owner to test_user in check_mode
-- name: postgresql_table - change table ownership to test_user in check_mode
+# Try to change owner to test_role2 in check_mode
+- name: postgresql_table - change table ownership to test_role2 in check_mode
   become: yes
   become_user: "{{ pg_user }}"
   postgresql_table:
     db: postgres
     login_user: "{{ pg_user }}"
     name: test1
-    owner: test_user
+    owner: "{{ test_role2 }}"
   register: result
   ignore_errors: yes
   check_mode: yes
 
 - assert:
     that:
-      - result.owner == 'alice'
-      - result.queries == ['ALTER TABLE "test1" OWNER TO "test_user"']
+      - result.owner == '{{ test_role1 }}'
+      - result.queries == ['ALTER TABLE "test1" OWNER TO "{{ test_role2 }}"']
       - result.state == 'present'
       - result is changed
 
-# Check that the tableowner was not changed to test_user
+# Check that the tableowner was not changed to test_role2
 - name: postgresql_table - check that table owner was not changed
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
     db: postgres
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_tables WHERE tablename = 'test1' AND tableowner = 'test_user'"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'test1' AND tableowner = '{{ test_role2 }}'"
   ignore_errors: yes
   register: result
  
@@ -382,33 +382,33 @@
     that:
       - result is not changed
 
-# Try to change owner to test_user
-- name: postgresql_table - change table ownership to test_user
+# Try to change owner to test_role2
+- name: postgresql_table - change table ownership to test_role2
   become: yes
   become_user: "{{ pg_user }}"
   postgresql_table:
     db: postgres
     login_user: "{{ pg_user }}"
     name: test1
-    owner: test_user
+    owner: "{{ test_role2 }}"
   register: result
   ignore_errors: yes
 
 - assert:
     that:
-      - result.owner == 'test_user'
-      - result.queries == ['ALTER TABLE "test1" OWNER TO "test_user"']
+      - result.owner == '{{ test_role2 }}'
+      - result.queries == ['ALTER TABLE "test1" OWNER TO "{{ test_role2 }}"']
       - result.state == 'present'
       - result is changed
 
-# Check that the tableowner was changed to test_user
+# Check that the tableowner was changed to test_role2
 - name: postgresql_table - check that table owner was changed
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
     db: postgres
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_tables WHERE tablename = 'test1' AND tableowner = 'test_user'"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'test1' AND tableowner = '{{ test_role2 }}'"
   ignore_errors: yes
   register: result
  
@@ -875,6 +875,6 @@
     name: "{{ item }}"
     state: absent
   loop:
-  - test_user
-  - alice
+  - "{{ test_role1 }}"
+  - "{{ test_role2 }}"
   ignore_errors: yes
