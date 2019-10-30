@@ -23,11 +23,13 @@ options:
     description:
       - The VPC ID for the VPC that this Egress Only Internet Gateway should be attached.
     required: true
+    type: str
   state:
     description:
-      - Create or delete the EIGW
+      - Create or delete the EIGW.
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2

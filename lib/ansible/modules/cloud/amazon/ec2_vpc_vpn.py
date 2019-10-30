@@ -30,23 +30,29 @@ options:
     choices: ['present', 'absent']
     default: present
     required: no
+    type: str
   customer_gateway_id:
     description:
       - The ID of the customer gateway.
+    type: str
   connection_type:
     description:
       - The type of VPN connection.
-    choices: ['ipsec.1']
+      - At this time only 'ipsec.1' is supported.
     default: ipsec.1
+    type: str
   vpn_gateway_id:
     description:
       - The ID of the virtual private gateway.
+    type: str
   vpn_connection_id:
     description:
       - The ID of the VPN connection. Required to modify or delete a connection if the filters option does not provide a unique match.
+    type: str
   tags:
     description:
       - Tags to attach to the VPN connection.
+    type: dict
   purge_tags:
     description:
       - Whether or not to delete VPN connections tags that are associated with the connection but not specified in the task.
@@ -65,6 +71,15 @@ options:
         the aforementioned keys.
     required: no
     version_added: "2.5"
+    type: list
+    elements: dict
+    suboptions:
+        TunnelInsideCidr:
+            type: str
+            description: The range of inside IP addresses for the tunnel.
+        PreSharedKey:
+            type: str
+            description: The pre-shared key (PSK) to establish initial authentication between the virtual private gateway and customer gateway.
   filters:
     description:
       - An alternative to using vpn_connection_id. If multiple matches are found, vpn_connection_id is required.
@@ -106,9 +121,12 @@ options:
       cgw:
         description:
           - The customer gateway id as a string or a list of those strings.
+    type: dict
   routes:
     description:
       - Routes to add to the connection.
+    type: list
+    elements: str
   purge_routes:
     description:
       - Whether or not to delete VPN connections routes that are not specified in the task.
