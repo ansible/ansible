@@ -179,8 +179,8 @@ from ansible.module_utils._text import to_native
 # More will be added as module features are expanded
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["SetBiosDefaultSettings", "SetBiosAttributes", "SetBootOrder",
-                "SetDefaultBootOrder"]
-    "Manager": ["SetNetworkProtocols"],
+                "SetDefaultBootOrder"],
+    "Manager": ["SetNetworkProtocols"]
 }
 
 
@@ -196,7 +196,7 @@ def main():
             bios_attribute_name=dict(default='null'),
             bios_attribute_value=dict(default='null'),
             timeout=dict(type='int', default=10),
-            boot_order=dict(type='list', elements='str', default=[])
+            boot_order=dict(type='list', elements='str', default=[]),
             network_protocols=dict(
                 type='dict',
                 default={}
