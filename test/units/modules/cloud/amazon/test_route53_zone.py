@@ -1,3 +1,7 @@
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import functools
 
 from ansible.modules.cloud.amazon import route53_zone
