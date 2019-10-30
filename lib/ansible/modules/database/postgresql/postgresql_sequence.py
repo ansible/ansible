@@ -441,7 +441,7 @@ class Sequence(object):
         """Implements ALTER SEQUENCE OWNER TO command behavior."""
         query = ['ALTER SEQUENCE']
         query.append(self.__add_schema())
-        query.append('OWNER TO %s' % pg_quote_identifier(self.module.params['owner'], 'role'))
+        query.append('OWNER TO "%s"' % self.module.params['owner'])
 
         return exec_sql(self, ' '.join(query), ddl=True)
 
