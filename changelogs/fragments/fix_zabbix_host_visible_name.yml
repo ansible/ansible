@@ -1,2 +1,2 @@
 bugfixes:
-    - was not possible to update a host where visible_name was not set in zabbix
+    - zabbix_host - was not possible to update a host where visible_name was not set in zabbix
