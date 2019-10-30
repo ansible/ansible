@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: vultr_ssh_key_info
-short_description: Get infos about the Vultr SSH keys available.
+short_description: Get information about the Vultr SSH keys available.
 description:
   - Get infos about SSH keys available.
 version_added: "2.9"
