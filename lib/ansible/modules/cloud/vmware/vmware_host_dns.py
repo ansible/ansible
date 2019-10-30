@@ -44,6 +44,7 @@ options:
     description:
     - The VMkernel network adapter to obtain DNS settings from.
     - The parameter is only required in case of C(type) is set to C(dhcp).
+    type: str
   host_name:
     description:
     - The hostname to be used for the ESXi host.
@@ -54,7 +55,6 @@ options:
     - The domain name to be used for the the ESXi host.
     type: str
     required: True
-    aliases: ['domain_name']
   dns_servers:
     description:
     - A list of DNS servers to be used.
@@ -179,8 +179,6 @@ class VmwareHostDNS(PyVmomi):
             host_name = self.params.get('host_name')
         network_type = self.params.get('type')
         vmkernel_device = self.params.get('device')
-        if network_type == 'dhcp' and not self.device:
-            self.module.fail_json(msg="device is a required parameter when type is set to 'dhcp'")
         domain = self.params.get('domain')
         dns_servers = self.params.get('dns_servers')
         search_domains = self.params.get('search_domains', None)
@@ -198,7 +196,6 @@ class VmwareHostDNS(PyVmomi):
                     netstack_spec.operation = 'edit'
                     netstack_spec.netStackInstance = vim.host.NetStackInstance()
                     netstack_spec.netStackInstance.key = 'defaultTcpipStack'
-                    # netstack_spec.netStackInstance.name = 'defaultTcpipStack'
                     dns_config = vim.host.DnsConfig()
                     results['result'][host.name]['dns_config'] = network_type
                     if network_type == 'static':
@@ -420,7 +417,7 @@ def main():
         type=dict(default='static', type='str', choices=['dhcp', 'static']),
         device=dict(type='str'),
         host_name=dict(required=False, type='str'),
-        domain=dict(required=False, type='str', aliases=['domain_name']),
+        domain=dict(required=False, type='str'),
         dns_servers=dict(required=False, type='list'),
         search_domains=dict(required=False, type='list'),
         esxi_hostname=dict(required=False, type='str'),
@@ -434,10 +431,16 @@ def main():
             ['cluster_name', 'esxi_hostname'],
         ],
         required_if=[
+            ['type', 'dhcp', ['device']],
             ['type', 'static', ['host_name', 'domain', 'dns_servers', 'search_domains']],
         ],
         mutually_exclusive=[
             ['cluster_name', 'host_name'],
+            ['static', 'device'],
+            ['dhcp', 'host_name'],
+            ['dhcp', 'domain'],
+            ['dhcp', 'dns_servers'],
+            ['dhcp', 'search_domains'],
         ],
         supports_check_mode=True
     )
