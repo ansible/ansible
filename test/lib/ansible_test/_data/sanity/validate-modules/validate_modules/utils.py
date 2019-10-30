@@ -115,6 +115,21 @@ class CaptureStd():
         return self.stdout.buffer.getvalue(), self.stderr.buffer.getvalue()
 
 
+def get_module_name_from_filename(filename, collection):
+    # Calculate the module's name so that relative imports work correctly
+    if collection:
+        # collection is a relative path, example: ansible_collections/my_namespace/my_collection
+        # filename is a relative path, example: plugins/modules/my_module.py
+        path = os.path.join(collection, filename)
+    else:
+        # filename is a relative path, example: lib/ansible/modules/system/ping.py
+        path = os.path.relpath(filename, 'lib')
+
+    name = os.path.splitext(path)[0].replace(os.path.sep, '.')
+
+    return name
+
+
 def parse_yaml(value, lineno, module, name, load_all=False):
     traces = []
     errors = []
