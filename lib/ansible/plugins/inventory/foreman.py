@@ -199,12 +199,12 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
             # Try json
             try:
                 value = json.loads(param['value'])
-            except json.JSONDecodeError:
+            except ValueError:
                 # Not JSON, try YAML
                 pass
             try:
                 value = yaml.load(param['value'])
-            except ValueError:
+            except yaml.YAMLError:
                 # Not YAML or JSON, return plain string
                 key = value
 
