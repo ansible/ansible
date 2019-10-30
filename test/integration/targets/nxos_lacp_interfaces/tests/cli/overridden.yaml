@@ -4,7 +4,8 @@
 
 - set_fact:
     mode: delay
-  when: platform is not search('N5K|N6K|N7K') and ((imagetag != 'I2'))
+  when: platform is not search('N3K|N5K|N6K|N7K') and imagetag is not search('A8|I2') and
+    image_version is not search ('9.2') and chassis_type is not search('C9508')
 
 - name: setup1
   cli_config: &cleanup
