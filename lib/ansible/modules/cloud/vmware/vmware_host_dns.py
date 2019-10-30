@@ -32,6 +32,47 @@ requirements:
 - python >= 2.6
 - PyVmomi
 options:
+  type:
+    description:
+    - Type of IP assignment. Either C(dhcp) or C(static).
+    - A VMkernel adapter needs to be set to DHCP if C(type) is set to C(dhcp).
+    type: str
+    default: 'static'
+    choices: [ 'dhcp', 'static' ]
+    required: False
+  device:
+    description:
+    - The VMkernel network adapter to obtain DNS settings from.
+    - The parameter is only required in case of C(type) is set to C(dhcp).
+  host_name:
+    description:
+    - The hostname to be used for the ESXi host.
+    type: str
+    required: True
+  domain:
+    description:
+    - The domain name to be used for the the ESXi host.
+    type: str
+    required: True
+    aliases: ['domain_name']
+  dns_servers:
+    description:
+    - A list of DNS servers to be used.
+    - The order of the DNS servers is important as they are used consecutively in order.
+    type: list
+    required: True
+  search_domains:
+    description:
+    - A list of domains to be searched through by the resolver.
+    type: list
+    required: False
+  verbose:
+    description:
+    - Verbose output of the DNS server configuration change.
+    - Explains if an DNS server was added, removed, or if the DNS server sequence was changed.
+    type: bool
+    required: false
+    default: false
   esxi_hostname:
     description:
     - Name of the host system to work with.
@@ -42,48 +83,6 @@ options:
     - Name of the cluster from which all host systems will be used.
     - This parameter is required if C(esxi_hostname) is not specified.
     type: str
-  host_name:
-    description:
-    - The hostname to be used for the ESXi host.
-    type: str
-    required: True
-  dhcp:
-    description:
-    - Use DHCP for DNS configuration.
-    suboptions:
-      device:
-        description:
-        - The VMkernel network adapter to obtain DNS settings from.
-        type: str
-    type: dict
-  static:
-    description:
-    - Use static DNS configuration.
-    suboptions:
-      domain:
-        description:
-        - The domain name to be used for the the ESXi host.
-        type: str
-        required: True
-      dns_servers:
-        description:
-        - A list of DNS servers to be used.
-        - The order of the DNS servers is important as they are used consecutively in order.
-        type: list
-        required: True
-      search_domains:
-        description:
-        - A list of domains to be searched through by the resolver.
-        type: list
-        required: False
-    type: dict
-  verbose:
-    description:
-    - Verbose output of the DNS server configuration change.
-    - Explains if an DNS server was added, removed, or if the DNS server sequence was changed.
-    type: bool
-    required: false
-    default: false
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -95,14 +94,13 @@ EXAMPLES = r'''
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
     host_name: esx01
-    static:
-      domain: example.local
-      dns_servers:
-        - 192.168.1.10
-        - 192.168.1.11
-      search_domains:
-        - subdomain.example.local
-        - example.local
+    domain: example.local
+    dns_servers:
+      - 192.168.1.10
+      - 192.168.1.11
+    search_domains:
+      - subdomain.example.local
+      - example.local
   delegate_to: localhost
 
 - name: Configure DNS for all ESXi hosts of a cluster
@@ -111,14 +109,13 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     cluster_name: '{{ cluster_name }}'
-    static:
-      domain: example.local
-      dns_servers:
-        - 192.168.1.10
-        - 192.168.1.11
-      search_domains:
-        - subdomain.example.local
-        - example.local
+    domain: example.local
+    dns_servers:
+      - 192.168.1.10
+      - 192.168.1.11
+    search_domains:
+      - subdomain.example.local
+      - example.local
   delegate_to: localhost
 
 - name: Configure DNS via DHCP for an ESXi host
@@ -127,8 +124,8 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
-    dhcp:
-      device: vmk0
+    type: dhcp
+    device: vmk0
   delegate_to: localhost
 '''
 
@@ -180,14 +177,13 @@ class VmwareHostDNS(PyVmomi):
         cluster_name = self.params.get('cluster_name', None)
         if not cluster_name:
             host_name = self.params.get('host_name')
-        if self.params.get('dhcp'):
-            network_type = 'dhcp'
-            vmkernel_device = self.params.get('dhcp').get('device')
-        else:
-            network_type = 'static'
-            domain = self.params.get('static').get('domain')
-            dns_servers = self.params.get('static').get('dns_servers')
-            search_domains = self.params.get('static').get('search_domains', None)
+        network_type = self.params.get('type')
+        vmkernel_device = self.params.get('device')
+        if network_type == 'dhcp' and not self.device:
+            self.module.fail_json(msg="device is a required parameter when type is set to 'dhcp'")
+        domain = self.params.get('domain')
+        dns_servers = self.params.get('dns_servers')
+        search_domains = self.params.get('search_domains', None)
         verbose = self.module.params.get('verbose', False)
         host_change_list = []
         for host in self.hosts:
@@ -421,17 +417,14 @@ def main():
     """Main"""
     argument_spec = vmware_argument_spec()
     argument_spec.update(
-        esxi_hostname=dict(required=False, type='str'),
+        type=dict(default='static', type='str', choices=['dhcp', 'static']),
+        device=dict(type='str'),
         host_name=dict(required=False, type='str'),
+        domain=dict(required=False, type='str', aliases=['domain_name']),
+        dns_servers=dict(required=False, type='list'),
+        search_domains=dict(required=False, type='list'),
+        esxi_hostname=dict(required=False, type='str'),
         cluster_name=dict(required=False, type='str'),
-        dhcp=dict(type='dict', options=dict(
-            device=dict(type='str', required=True),
-        )),
-        static=dict(type='dict', options=dict(
-            domain=dict(required=True, type='str'),
-            dns_servers=dict(required=True, type='list'),
-            search_domains=dict(required=True, type='list'),
-        )),
         verbose=dict(type='bool', default=False, required=False)
     )
 
@@ -439,10 +432,11 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-            ['dhcp', 'static'],
+        ],
+        required_if=[
+            ['type', 'static', ['host_name', 'domain', 'dns_servers', 'search_domains']],
         ],
         mutually_exclusive=[
-            ['cluster_name', 'esxi_host_name'],
             ['cluster_name', 'host_name'],
         ],
         supports_check_mode=True
