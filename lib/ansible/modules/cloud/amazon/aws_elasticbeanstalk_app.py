@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'
@@ -23,14 +26,17 @@ options:
     description:
       - name of the beanstalk application you wish to manage
     aliases: [ 'name' ]
+    type: str
   description:
     description:
       - the description of the application
+    type: str
   state:
     description:
       - whether to ensure the application is present or absent
     default: present
     choices: ['absent','present']
+    type: str
   terminate_by_force:
     description:
       - when set to true, running environments will be terminated before deleting the application

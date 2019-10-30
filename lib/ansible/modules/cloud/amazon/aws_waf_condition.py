@@ -3,6 +3,9 @@
 # Copyright (c) 2015 Mike Mochan
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -25,6 +28,7 @@ options:
     name:
         description: Name of the Web Application Firewall condition to manage.
         required: yes
+        type: str
     type:
         description: the type of matching to perform.
         choices:
@@ -35,6 +39,7 @@ options:
         - size
         - sql
         - xss
+        type: str
     filters:
         description:
         - A list of the filters against which to match.
@@ -52,6 +57,8 @@ options:
         - I(comparison) can be one of C(EQ), C(NE), C(LE), C(LT), C(GE), C(GT).
         - I(target_string) is a maximum of 50 bytes.
         - I(regex_pattern) is a dict with a C(name) key and C(regex_strings) list of strings to match.
+        type: list
+        elements: dict
     purge_filters:
         description:
         - Whether to remove existing filters from a condition if not passed in I(filters).
@@ -69,6 +76,7 @@ options:
         - present
         - absent
         default: present
+        type: str
 
 '''
 

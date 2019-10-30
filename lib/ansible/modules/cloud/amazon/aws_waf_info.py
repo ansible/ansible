@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -18,12 +21,13 @@ options:
   name:
     description:
       - The name of a Web Application Firewall
+    type: str
   waf_regional:
-      description: Whether to use waf_regional module. Defaults to true
-      default: false
-      required: no
-      type: bool
-      version_added: "2.9"
+    description: Whether to use waf_regional module.
+    default: false
+    required: no
+    type: bool
+    version_added: "2.9"
 
 author:
   - Mike Mochan (@mmochan)

@@ -2,6 +2,8 @@
 # Copyright (c) 2017, Ben Tomasik <ben@tomasik.io>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -24,12 +26,14 @@ options:
     description:
       - The name of the receipt rule set.
     required: True
+    type: str
   state:
     description:
       - Whether to create (or update) or destroy the receipt rule set.
     required: False
     default: present
     choices: ["absent", "present"]
+    type: str
   active:
     description:
       - Whether or not this rule set should be the active rule set. Only has an impact if I(state) is C(present).
