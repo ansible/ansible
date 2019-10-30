@@ -225,51 +225,49 @@ def main():
     mysqlvar_val = None
     var_in_mysqld_auto_cnf = None
 
+    mysqlvar_val = getvariable(cursor, mysqlvar)
+    if mysqlvar_val is None:
+        module.fail_json(msg="Variable not available \"%s\"" % mysqlvar, changed=False)
+
+    if value is None:
+        module.exit_json(msg=mysqlvar_val)
+
     if mode in ('persist', 'persist_only'):
         var_in_mysqld_auto_cnf = check_mysqld_auto(module, cursor, mysqlvar)
-
-    if mode in ('global', 'persist'):
-        mysqlvar_val = getvariable(cursor, mysqlvar)
-    elif mode == 'persist_only':
         if var_in_mysqld_auto_cnf is None:
             mysqlvar_val = False
         else:
             mysqlvar_val = var_in_mysqld_auto_cnf
 
-    if mysqlvar_val is None:
-        module.fail_json(msg="Variable not available \"%s\"" % mysqlvar, changed=False)
-    if value is None:
-        module.exit_json(msg=mysqlvar_val)
+    # Type values before using them
+    value_wanted = typedvalue(value)
+    value_actual = typedvalue(mysqlvar_val)
+    value_in_auto_cnf = None
+    if var_in_mysqld_auto_cnf is not None:
+        value_in_auto_cnf = typedvalue(var_in_mysqld_auto_cnf)
+
+    if value_wanted == value_actual and mode in ('global', 'persist'):
+        if mode == 'persist' and value_wanted == value_in_auto_cnf:
+            module.exit_json(msg="Variable is already set to requested value globally"
+                                 "and stored into mysqld-auto.cnf file.", changed=False)
+
+        elif mode == 'global':
+            module.exit_json(msg="Variable is already set to requested value.", changed=False)
+
+    if mode == 'persist_only' and value_wanted == value_in_auto_cnf:
+        module.exit_json(msg="Variable is already stored into mysqld-auto.cnf "
+                             "with requested value.", changed=False)
+
+    try:
+        result = setvariable(cursor, mysqlvar, value_wanted, mode)
+    except SQLParseError as e:
+        result = to_native(e)
+
+    if result is True:
+        module.exit_json(msg="Variable change succeeded prev_value=%s" % value_actual,
+                         changed=True, queries=executed_queries)
     else:
-        # Type values before using them
-        value_wanted = typedvalue(value)
-        value_actual = typedvalue(mysqlvar_val)
-        value_in_auto_cnf = None
-        if var_in_mysqld_auto_cnf is not None:
-            value_in_auto_cnf = typedvalue(var_in_mysqld_auto_cnf)
-
-        if value_wanted == value_actual and mode in ('global', 'persist'):
-            if mode == 'persist' and value_wanted == value_in_auto_cnf:
-                module.exit_json(msg="Variable is already set to requested value globally"
-                                     "and stored into mysqld-auto.cnf file.", changed=False)
-
-            elif mode == 'global':
-                module.exit_json(msg="Variable is already set to requested value.", changed=False)
-
-        if mode == 'persist_only' and value_wanted == value_in_auto_cnf:
-            module.exit_json(msg="Variable is already stored into mysqld-auto.cnf "
-                                 "with requested value.", changed=False)
-
-        try:
-            result = setvariable(cursor, mysqlvar, value_wanted, mode)
-        except SQLParseError as e:
-            result = to_native(e)
-
-        if result is True:
-            module.exit_json(msg="Variable change succeeded prev_value=%s" % value_actual,
-                             changed=True, queries=executed_queries)
-        else:
-            module.fail_json(msg=result, changed=False)
+        module.fail_json(msg=result, changed=False)
 
 
 if __name__ == '__main__':
