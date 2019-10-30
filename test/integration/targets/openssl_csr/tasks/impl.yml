@@ -716,3 +716,41 @@
       - "DNS:ca.example.org"
       - "IP:1.2.3.4"
   register: everything_3
+
+- name: Ed25519 and Ed448 tests (for cryptography >= 2.6)
+  block:
+    - name: Generate privatekeys
+      openssl_privatekey:
+        path: '{{ output_dir }}/privatekey_{{ item }}.pem'
+        type: '{{ item }}'
+      loop:
+        - Ed25519
+        - Ed448
+
+    - name: Generate CSR
+      openssl_csr:
+        path: '{{ output_dir }}/csr_{{ item }}.csr'
+        privatekey_path: '{{ output_dir }}/privatekey_{{ item }}.pem'
+        subject:
+          commonName: www.ansible.com
+        select_crypto_backend: '{{ select_crypto_backend }}'
+      loop:
+        - Ed25519
+        - Ed448
+      register: generate_csr_ed25519_ed448
+      ignore_errors: yes
+
+    - name: Generate CSR (idempotent)
+      openssl_csr:
+        path: '{{ output_dir }}/csr_{{ item }}.csr'
+        privatekey_path: '{{ output_dir }}/privatekey_{{ item }}.pem'
+        subject:
+          commonName: www.ansible.com
+        select_crypto_backend: '{{ select_crypto_backend }}'
+      loop:
+        - Ed25519
+        - Ed448
+      register: generate_csr_ed25519_ed448_idempotent
+      ignore_errors: yes
+
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.6', '>=')
