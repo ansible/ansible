@@ -26,11 +26,20 @@ options:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeDhcpOptions.html) for possible filters.
+    type: dict
   dhcp_options_ids:
     description:
-      - Get details of specific DHCP Option ID
-      - Provide this value as a list
+      - Get details of specific DHCP Option IDs.
     aliases: ['DhcpOptionIds']
+    type: list
+    elements: str
+  dry_run:
+    description:
+      - Checks whether you have the required permissions to view the DHCP
+        Options.
+    aliases: ['DryRun']
+    version_added: "2.4"
+    type: bool
 extends_documentation_fragment:
     - aws
     - ec2

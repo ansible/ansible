@@ -22,12 +22,15 @@ requirements: [ boto3 ]
 options:
   nat_gateway_ids:
     description:
-      - Get details of specific nat gateway IDs
+      - List of specific nat gateway IDs to fetch details for.
+    type: list
+    elements: str
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNatGateways.html)
         for possible filters.
+    type: dict
 author: Karen Cheng (@Etherdaemon)
 extends_documentation_fragment:
   - aws
