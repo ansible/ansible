@@ -462,6 +462,7 @@
   slurp:
     src: "{{ remote_tmp_dir }}/ssl_client_verify"
   register: result
+  when: has_httptester
 
 - name: Assert that the ssl_client_verify file contains the correct content
   assert:
