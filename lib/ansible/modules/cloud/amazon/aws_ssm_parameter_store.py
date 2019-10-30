@@ -55,16 +55,15 @@ options:
     default: true
   key_id:
     description:
-      - aws KMS key to decrypt the secrets.
-      - the default key (C(alias/aws/ssm)) is automatically generated the first
-        time it's requested
+      - AWS KMS key to decrypt the secrets.
+      - The default key (C(alias/aws/ssm)) is automatically generated the first
+        time it's requested.
     required: false
     default: alias/aws/ssm
     type: str
   overwrite_value:
     description:
       - Option to overwrite an existing value if it already exists.
-      - String
     required: false
     version_added: "2.6"
     choices: ['never', 'changed', 'always']

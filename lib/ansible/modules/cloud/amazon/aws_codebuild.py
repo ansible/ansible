@@ -278,7 +278,7 @@ project:
           description: Output location for build artifacts
           returned: when configured
           type: str
-        # and more... see U(http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project)
+        # and more... see http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project
     cache:
       description: Cache settings for the build project.
       returned: when configured
