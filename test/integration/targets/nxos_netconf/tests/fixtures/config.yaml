@@ -1,0 +1,14 @@
+---
+vlan_config: |
+          <config>
+          <System xmlns="http://cisco.com/ns/yang/cisco-nx-os-device">
+            <bd-items>
+              <bd-items>
+                <BD-list>
+                  <fabEncap>vlan-42</fabEncap>
+                  <name>vlan-42</name>
+                </BD-list>
+              </bd-items>
+            </bd-items>
+          </System>
+          </config>
