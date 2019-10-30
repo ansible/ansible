@@ -313,6 +313,16 @@ EXAMPLES = r'''
 
 RETURN = r'''
 # The return information includes all the HTTP headers in lower-case.
+content:
+  description: The content of the requested resource if return_content is true
+  returned: When return_content is TRUE. 
+  type: string
+  sample: <!DOCTYPE html>
+<html>
+<body>
+Hello world.
+</body>
+</html>
 elapsed:
   description: The number of seconds that elapsed while performing the download
   returned: on success
@@ -337,7 +347,7 @@ url:
   description: The actual URL used for the request
   returned: always
   type: str
-  sample: https://www.ansible.com/
+  sample: https://www.ansible.com/ 
 '''
 
 import cgi
