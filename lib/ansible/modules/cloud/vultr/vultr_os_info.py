@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: vultr_os_info
-short_description: Get infos about the Vultr OSes available.
+short_description: Get information about the Vultr OSes available.
 description:
   - Get infos about OSes available to boot servers.
 version_added: "2.9"
