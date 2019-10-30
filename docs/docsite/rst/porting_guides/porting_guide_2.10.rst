@@ -62,6 +62,7 @@ The following functionality will change in Ansible 2.14. Please update update yo
 
 * The :ref:`docker_container <docker_container_module>` module has a new option, ``container_default_behavior``, whose default value will change from ``compatibility`` to ``no_defaults``. Set to an explicit value to avoid deprecation warnings.
 
+
 Noteworthy module changes
 -------------------------
 
