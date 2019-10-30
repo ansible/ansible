@@ -566,11 +566,11 @@ def main():
     argument_spec.update(
         dict(
             az=dict(default=None, required=False),
-            cidr=dict(default=None, required=True),
+            cidr=dict(required=True),
             ipv6_cidr=dict(default='', required=False),
             state=dict(default='present', choices=['present', 'absent']),
             tags=dict(default={}, required=False, type='dict', aliases=['resource_tags']),
-            vpc_id=dict(default=None, required=True),
+            vpc_id=dict(required=True),
             map_public=dict(default=False, required=False, type='bool'),
             assign_instances_ipv6=dict(default=False, required=False, type='bool'),
             wait=dict(type='bool', default=True),
