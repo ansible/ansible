@@ -74,11 +74,22 @@ options:
   path:
     description:
       - The path to the json file containing the Grafana dashboard to import or export.
+      - A http URL is also accepted (since 2.10).
+    aliases: [ dashboard_url ]
   overwrite:
     description:
       - Override existing dashboard when state is present.
     type: bool
     default: 'no'
+  dashboard_id:
+    description:
+      - Public Grafana.com dashboard id to import
+    version_added: '2.10'
+  dashboard_revision:
+    description:
+      - Revision of the public grafana dashboard to import
+    default: 1
+    version_added: '2.10'
   message:
     description:
       - Set a commit message for the version history.
@@ -120,6 +131,21 @@ EXAMPLES = '''
         overwrite: yes
         path: /path/to/dashboards/foo.json
 
+    - name: Import Grafana dashboard Zabbix
+      grafana_dashboard:
+        grafana_url: http://grafana.company.com
+        grafana_api_key: "{{ grafana_api_key }}"
+        folder: zabbix
+        dashboard_id: 6098
+        dashbord_revision: 1
+
+    - name: Import Grafana dashboard zabbix
+      grafana_dashboard:
+        grafana_url: http://grafana.company.com
+        grafana_api_key: "{{ grafana_api_key }}"
+        folder: public
+        dashboard_url: https://grafana.com/api/dashboards/6098/revisions/1/download
+
     - name: Export dashboard
       grafana_dashboard:
         grafana_url: http://grafana.company.com
@@ -141,7 +167,7 @@ uid:
 '''
 
 import json
-
+import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 from ansible.module_utils.six.moves.urllib.parse import urlencode
@@ -298,11 +324,20 @@ def grafana_dashboard_changed(payload, dashboard):
 def grafana_create_dashboard(module, data):
 
     # define data payload for grafana API
-    try:
-        with open(data['path'], 'r') as json_file:
-            payload = json.load(json_file)
-    except Exception as e:
-        raise GrafanaAPIException("Can't load json file %s" % to_native(e))
+    payload = {}
+    if data.get('dashboard_id'):
+        data['path'] = "https://grafana.com/api/dashboards/%s/revisions/%s/download" % (data['dashboard_id'], data['dashboard_revision'])
+    if data['path'].startswith('http'):
+        r, info = fetch_url(module, data['path'])
+        if info['status'] != 200:
+            raise GrafanaAPIException('Unable to download grafana dashboard from url %s : %s' % (data['path'], info))
+        payload = json.loads(r.read())
+    else:
+        try:
+            with open(data['path'], 'r') as json_file:
+                payload = json.load(json_file)
+        except Exception as e:
+            raise GrafanaAPIException("Can't load json file %s" % to_native(e))
 
     # Check that the dashboard JSON is nested under the 'dashboard' key
     if 'dashboard' not in payload:
@@ -497,7 +532,9 @@ def main():
         folder=dict(type='str', default='General'),
         uid=dict(type='str'),
         slug=dict(type='str'),
-        path=dict(type='str'),
+        path=dict(aliases=['dashboard_url'], type='str'),
+        dashboard_id=dict(type='str'),
+        dashboard_revision=dict(type='str', default='1'),
         overwrite=dict(type='bool', default=False),
         message=dict(type='str'),
     )
@@ -505,7 +542,7 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=False,
         required_together=[['url_username', 'url_password', 'org_id']],
-        mutually_exclusive=[['grafana_user', 'grafana_api_key'], ['uid', 'slug']],
+        mutually_exclusive=[['grafana_user', 'grafana_api_key'], ['uid', 'slug'], ['path', 'dashboard_id']],
     )
 
     try:
