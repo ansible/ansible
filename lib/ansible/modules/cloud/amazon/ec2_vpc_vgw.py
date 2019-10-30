@@ -547,7 +547,6 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state=dict(default='present', choices=['present', 'absent']),
-        region=dict(required=True),
         name=dict(),
         vpn_gateway_id=dict(),
         vpc_id=dict(),
