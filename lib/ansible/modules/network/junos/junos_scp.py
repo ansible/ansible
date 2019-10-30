@@ -47,6 +47,20 @@ options:
         to the remote device.
     type: bool
     default: 'no'
+  ssh_private_key_file:
+    description:
+      - The C(ssh_private_key_file) argument is path to the SSH private key file.
+        This can be used if you need to provide a private key rather than loading
+        the key into the ssh-key-ring/environment
+    type: path
+    version_added: 2.10
+  ssh_config:
+    description:
+      - The C(ssh_config) argument is path to the SSH configuration file.
+        This can be used to load SSH information from a configuration file.
+        If this option is not given by default ~/.ssh/config is queried.
+    type: path
+    version_added: 2.10
 requirements:
   - junos-eznc
   - ncclient (>=v0.5.2)
@@ -73,6 +87,12 @@ EXAMPLES = """
   junos_scp:
     src: test.tgz
     remote_src: true
+
+- name: ssh config file path for jumphost config
+  junos_scp:
+    src: test.tgz
+    remote_src: true
+    ssh_config: /home/user/customsshconfig
 """
 
 RETURN = """
@@ -112,6 +132,8 @@ def main():
         dest=dict(type='path', required=False, default="."),
         recursive=dict(type='bool', default=False),
         remote_src=dict(type='bool', default=False),
+        ssh_private_key_file=dict(type='path'),
+        ssh_config=dict(type='path'),
         transport=dict(default='netconf', choices=['netconf'])
     )
 
