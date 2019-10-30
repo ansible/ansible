@@ -1,0 +1,2 @@
+bugfixes:
+- copy - recursive copy with ``remote_src=yes`` now recurses beyond first level. (Fixes https://github.com/ansible/ansible/issues/58284)
