@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Perform privilege escalation before setting terminal.
