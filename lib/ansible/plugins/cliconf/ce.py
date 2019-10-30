@@ -100,7 +100,6 @@ class Cliconf(CliconfBase):
         result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)
 
-    @property
     def set_cli_prompt_context(self):
         """
         Make sure we are in the operational cli mode
@@ -115,7 +114,7 @@ class Cliconf(CliconfBase):
 
             prompt = to_text(out, errors='surrogate_then_replace').strip()
             while prompt.endswith(']'):
-                self._connection.queue_message('vvvv', 'wrong context, sending exit to device')
+                self._connection.queue_message('vvvv', 'wrong context, sending return to device')
                 if prompt.startswith('[*'):
                     self._connection.exec_command('clear configuration candidate')
                 self._connection.exec_command('return')

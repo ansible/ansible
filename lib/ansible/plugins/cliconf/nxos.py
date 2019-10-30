@@ -258,7 +258,6 @@ class Cliconf(CliconfBase):
 
         return json.dumps(result)
 
-    @property
     def set_cli_prompt_context(self):
         """
         Make sure we are in the operational cli context
