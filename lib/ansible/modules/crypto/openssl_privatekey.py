@@ -240,32 +240,14 @@ except ImportError:
     CRYPTOGRAPHY_FOUND = False
 else:
     CRYPTOGRAPHY_FOUND = True
-    try:
-        import cryptography.hazmat.primitives.asymmetric.x25519
-        CRYPTOGRAPHY_HAS_X25519 = True
-        try:
-            cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.private_bytes
-            CRYPTOGRAPHY_HAS_X25519_FULL = True
-        except AttributeError:
-            CRYPTOGRAPHY_HAS_X25519_FULL = False
-    except ImportError:
-        CRYPTOGRAPHY_HAS_X25519 = False
-        CRYPTOGRAPHY_HAS_X25519_FULL = False
-    try:
-        import cryptography.hazmat.primitives.asymmetric.x448
-        CRYPTOGRAPHY_HAS_X448 = True
-    except ImportError:
-        CRYPTOGRAPHY_HAS_X448 = False
-    try:
-        import cryptography.hazmat.primitives.asymmetric.ed25519
-        CRYPTOGRAPHY_HAS_ED25519 = True
-    except ImportError:
-        CRYPTOGRAPHY_HAS_ED25519 = False
-    try:
-        import cryptography.hazmat.primitives.asymmetric.ed448
-        CRYPTOGRAPHY_HAS_ED448 = True
-    except ImportError:
-        CRYPTOGRAPHY_HAS_ED448 = False
+
+from ansible.module_utils.crypto import (
+    CRYPTOGRAPHY_HAS_X25519,
+    CRYPTOGRAPHY_HAS_X25519_FULL,
+    CRYPTOGRAPHY_HAS_X448,
+    CRYPTOGRAPHY_HAS_ED25519,
+    CRYPTOGRAPHY_HAS_ED448,
+)
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native, to_bytes
