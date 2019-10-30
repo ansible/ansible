@@ -462,7 +462,7 @@ def vrf_error_check(module, commands, responses):
     """
     pattern = 'ERROR: Deletion of VRF .* in progress'
     if re.search(pattern, str(responses)):
-        # Allow delay and retry for VRF changes
+        # Allow delay/retry for VRF changes
         time.sleep(15)
         responses = load_config(module, commands, opts={'catch_clierror': True})
         if re.search(pattern, str(responses)):
