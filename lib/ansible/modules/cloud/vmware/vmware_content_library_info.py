@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: vmware_content_library_info
-short_description: Gather information about VMWare Content Library
+short_description: Gather information about VMware Content Library
 description:
 - Module to list the content libraries.
 - Module to get information about specific content library.
