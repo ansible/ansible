@@ -21,7 +21,7 @@ requirements: [ boto3 ]
 options:
   peer_connection_ids:
     description:
-      - Get details of specific vpc peer IDs
+      - List of specific VPC peer IDs to get details for.
     type: list
     elements: str
   filters:

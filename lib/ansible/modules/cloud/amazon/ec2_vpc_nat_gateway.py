@@ -110,7 +110,7 @@ EXAMPLES = '''
     state: present
     subnet_id: subnet-12345678
     eip_address: 52.1.1.1
-    wait: yes
+    wait: true
     region: ap-southeast-2
   register: new_nat_gateway
 
@@ -118,7 +118,7 @@ EXAMPLES = '''
   ec2_vpc_nat_gateway:
     state: present
     subnet_id: subnet-12345678
-    wait: yes
+    wait: true
     region: ap-southeast-2
   register: new_nat_gateway
 
@@ -126,7 +126,7 @@ EXAMPLES = '''
   ec2_vpc_nat_gateway:
     state: present
     subnet_id: subnet-12345678
-    wait: yes
+    wait: true
     region: ap-southeast-2
     if_exist_do_not_create: true
   register: new_nat_gateway
@@ -135,9 +135,9 @@ EXAMPLES = '''
   ec2_vpc_nat_gateway:
     state: absent
     region: ap-southeast-2
-    wait: yes
+    wait: true
     nat_gateway_id: "{{ item.NatGatewayId }}"
-    release_eip: yes
+    release_eip: true
   register: delete_nat_gateway_result
   loop: "{{ gateways_to_remove.result }}"
 
@@ -145,7 +145,7 @@ EXAMPLES = '''
   ec2_vpc_nat_gateway:
     state: absent
     nat_gateway_id: nat-12345678
-    wait: yes
+    wait: true
     wait_timeout: 500
     region: ap-southeast-2
 
@@ -153,7 +153,7 @@ EXAMPLES = '''
   ec2_vpc_nat_gateway:
     state: absent
     nat_gateway_id: nat-12345678
-    release_eip: yes
+    release_eip: true
     wait: yes
     wait_timeout: 300
     region: ap-southeast-2

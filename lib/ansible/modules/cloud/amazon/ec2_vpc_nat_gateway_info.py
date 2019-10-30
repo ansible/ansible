@@ -22,7 +22,7 @@ requirements: [ boto3 ]
 options:
   nat_gateway_ids:
     description:
-      - Get details of specific nat gateway IDs
+      - List of specific nat gateway IDs to fetch details for.
     type: list
     elements: str
   filters:
