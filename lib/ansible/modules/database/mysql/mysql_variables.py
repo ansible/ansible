@@ -248,24 +248,18 @@ def main():
         if var_in_mysqld_auto_cnf is not None:
             value_in_auto_cnf = typedvalue(var_in_mysqld_auto_cnf)
 
-        if value_wanted == value_actual:
-            if mode == 'persist':
-                if value_in_auto_cnf is None:
-                    module.warn("The current global variable '%s' has value '%s' "
-                                "which corresponds to desired state but there is no value "
-                                "in mysqld-auto.cnf and it will be added only to there "
-                                "respectively." % (mysqlvar, value_actual))
+        if value_wanted == value_actual and mode in ('global', 'persist'):
+            if mode == 'persist' and value_wanted == value_in_auto_cnf:
+                module.exit_json(msg="Variable is already set to requested value globally"
+                                     "and stored into mysqld-auto.cnf file.", changed=False)
 
-                elif value_in_auto_cnf is not None and value_wanted != value_in_auto_cnf:
-                    module.warn("The current global variable '%s' has value '%s' "
-                                "which corresponds to desired state but value in mysqld-auto.cnf "
-                                "is '%s' and will be changed only there "
-                                "respectively." % (mysqlvar, value_actual, value_in_auto_cnf))
-                else:
-                    module.exit_json(msg="Variable already set to requested value "
-                                         "and stored into mysqld-auto.cnf file", changed=False)
-            else:
-                module.exit_json(msg="Variable already set to requested value", changed=False)
+            elif mode == 'global':
+                module.exit_json(msg="Variable is already set to requested value.", changed=False)
+
+        if mode == 'persist_only' and value_wanted == value_in_auto_cnf:
+            module.exit_json(msg="Variable is already stored into mysqld-auto.cnf "
+                                 "with requested value.", changed=False)
+
         try:
             result = setvariable(cursor, mysqlvar, value_wanted, mode)
         except SQLParseError as e:
