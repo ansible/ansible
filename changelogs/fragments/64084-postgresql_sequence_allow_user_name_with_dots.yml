@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_sequence - allow to pass user name which contains dots (https://github.com/ansible/ansible/issues/63204).
