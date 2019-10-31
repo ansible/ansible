@@ -126,14 +126,15 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
             self.session.verify = self.get_option('validate_certs')
         return self.session
 
-    def _get_all_hosts(self):
+    def _get_all_hosts(self, url):
 
         if self.use_cache:
             try:
-                inventory = self._cache[self.cache_key]
+                inventory = self._cache[self.cache_key][url]
             except KeyError:
                 # The cache key expired or does not exist yet
                 inventory = None
+                self._cache[self.cache_key]= {url: ''} 
 
             if inventory is not None:
                 return inventory
@@ -177,7 +178,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
                 params['page'] += 1
 
         if self.use_cache:
-            self._cache[self.cache_key] = results
+            self._cache[self.cache_key][url] = results
 
         return results
 
@@ -231,7 +232,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
         self.use_cache = cache and self.get_option('cache')
         self.cache_key = self.get_cache_key(path)
 
-        hosts = self._get_all_hosts()
+        hosts = self._get_all_hosts(self.foreman_url)
 
         for host in hosts:
             if host.get('name'):
