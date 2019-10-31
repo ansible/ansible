@@ -75,6 +75,12 @@ options:
     default: []
     type: list
     version_added: "2.10"
+  network_protocols:
+    required: false
+    description:
+      -  setting dict of manager services to update
+    type: dict
+    version_added: "2.10"
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -140,6 +146,21 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+
+  - name: Set Manager Network Protocols
+    redfish_config:
+      category: Manager
+      command: SetNetworkProtocols
+      network_protocols:
+        SNMP:
+          ProtocolEnabled: True
+          Port: 161
+        HTTP:
+          ProtocolEnabled: False
+          Port: 8080
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
 '''
 
 RETURN = '''
@@ -158,7 +179,8 @@ from ansible.module_utils._text import to_native
 # More will be added as module features are expanded
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["SetBiosDefaultSettings", "SetBiosAttributes", "SetBootOrder",
-                "SetDefaultBootOrder"]
+                "SetDefaultBootOrder"],
+    "Manager": ["SetNetworkProtocols"]
 }
 
 
@@ -174,7 +196,11 @@ def main():
             bios_attribute_name=dict(default='null'),
             bios_attribute_value=dict(default='null'),
             timeout=dict(type='int', default=10),
-            boot_order=dict(type='list', elements='str', default=[])
+            boot_order=dict(type='list', elements='str', default=[]),
+            network_protocols=dict(
+                type='dict',
+                default={}
+            )
         ),
         supports_check_mode=False
     )
@@ -226,6 +252,16 @@ def main():
                 result = rf_utils.set_boot_order(boot_order)
             elif command == "SetDefaultBootOrder":
                 result = rf_utils.set_default_boot_order()
+
+    elif category == "Manager":
+        # execute only if we find a Manager service resource
+        result = rf_utils._find_managers_resource()
+        if result['ret'] is False:
+            module.fail_json(msg=to_native(result['msg']))
+
+        for command in command_list:
+            if command == "SetNetworkProtocols":
+                result = rf_utils.set_network_protocols(module.params['network_protocols'])
 
     # Return data back or fail with proper message
     if result['ret'] is True:

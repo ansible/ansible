@@ -1979,3 +1979,99 @@ class RedfishUtils(object):
 
     def get_multi_system_inventory(self):
         return self.aggregate(self.get_system_inventory)
+
+    def get_network_protocols(self):
+        result = {}
+        service_result = {}
+        # Find NetworkProtocol
+        response = self.get_request(self.root_uri + self.manager_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'NetworkProtocol' not in data:
+            return {'ret': False, 'msg': "NetworkProtocol resource not found"}
+        networkprotocol_uri = data["NetworkProtocol"]["@odata.id"]
+
+        response = self.get_request(self.root_uri + networkprotocol_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        protocol_services = ['SNMP', 'VirtualMedia', 'Telnet', 'SSDP', 'IPMI', 'SSH',
+                             'KVMIP', 'NTP', 'HTTP', 'HTTPS', 'DHCP', 'DHCPv6', 'RDP',
+                             'RFB']
+        for protocol_service in protocol_services:
+            if protocol_service in data.keys():
+                service_result[protocol_service] = data[protocol_service]
+
+        result['ret'] = True
+        result["entries"] = service_result
+        return result
+
+    def set_network_protocols(self, manager_services):
+        # Check input data validity
+        protocol_services = ['SNMP', 'VirtualMedia', 'Telnet', 'SSDP', 'IPMI', 'SSH',
+                             'KVMIP', 'NTP', 'HTTP', 'HTTPS', 'DHCP', 'DHCPv6', 'RDP',
+                             'RFB']
+        protocol_state_onlist = ['true', 'True', True, 'on', 1]
+        protocol_state_offlist = ['false', 'False', False, 'off', 0]
+        payload = {}
+        for service_name in manager_services.keys():
+            if service_name not in protocol_services:
+                return {'ret': False, 'msg': "Service name %s is invalid" % service_name}
+            payload[service_name] = {}
+            for service_property in manager_services[service_name].keys():
+                value = manager_services[service_name][service_property]
+                if service_property in ['ProtocolEnabled', 'protocolenabled']:
+                    if value in protocol_state_onlist:
+                        payload[service_name]['ProtocolEnabled'] = True
+                    elif value in protocol_state_offlist:
+                        payload[service_name]['ProtocolEnabled'] = False
+                    else:
+                        return {'ret': False, 'msg': "Value of property %s is invalid" % service_property}
+                elif service_property in ['port', 'Port']:
+                    if isinstance(value, int):
+                        payload[service_name]['Port'] = value
+                    elif isinstance(value, str) and value.isdigit():
+                        payload[service_name]['Port'] = int(value)
+                    else:
+                        return {'ret': False, 'msg': "Value of property %s is invalid" % service_property}
+                else:
+                    payload[service_name][service_property] = value
+
+        # Find NetworkProtocol
+        response = self.get_request(self.root_uri + self.manager_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'NetworkProtocol' not in data:
+            return {'ret': False, 'msg': "NetworkProtocol resource not found"}
+        networkprotocol_uri = data["NetworkProtocol"]["@odata.id"]
+
+        # Check service property support or not
+        response = self.get_request(self.root_uri + networkprotocol_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        for service_name in payload.keys():
+            if service_name not in data:
+                return {'ret': False, 'msg': "%s service not supported" % service_name}
+            for service_property in payload[service_name].keys():
+                if service_property not in data[service_name]:
+                    return {'ret': False, 'msg': "%s property for %s service not supported" % (service_property, service_name)}
+
+        # if the protocol is already set, nothing to do
+        need_change = False
+        for service_name in payload.keys():
+            for service_property in payload[service_name].keys():
+                value = payload[service_name][service_property]
+                if value != data[service_name][service_property]:
+                    need_change = True
+                    break
+
+        if not need_change:
+            return {'ret': True, 'changed': False, 'msg': "Manager NetworkProtocol services already set"}
+
+        response = self.patch_request(self.root_uri + networkprotocol_uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True, 'msg': "Modified Manager NetworkProtocol services"}
