@@ -38,7 +38,8 @@ class ActionModule(ActionNetworkModule):
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        self._config_module = True if self._task.action == 'vyos_config' else False
+        module_name = self._task.action.split('.')[-1]
+        self._config_module = True if module_name == 'vyos_config' else False
         socket_path = None
 
         if self._play_context.connection == 'network_cli':
@@ -81,10 +82,9 @@ class ActionModule(ActionNetworkModule):
 
         conn = Connection(socket_path)
         out = conn.get_prompt()
-        while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
+        if to_text(out, errors='surrogate_then_replace').strip().endswith('#'):
             display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-            conn.send_command('abort')
-            out = conn.get_prompt()
+            conn.send_command('exit discard')
 
         result = super(ActionModule, self).run(task_vars=task_vars)
         return result

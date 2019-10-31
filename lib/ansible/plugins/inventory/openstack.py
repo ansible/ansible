@@ -88,7 +88,7 @@ DOCUMENTATION = '''
                 ansible inventory adds /etc/ansible/openstack.yaml and
                 /etc/ansible/openstack.yml to the regular locations documented
                 at https://docs.openstack.org/os-client-config/latest/user/configuration.html#config-files
-            type: string
+            type: list
             env:
                 - name: OS_CLIENT_CONFIG_FILE
         compose:
@@ -265,9 +265,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 self._config_data.get('keyed_groups'), hostvars[host], host)
 
         for group_name, group_hosts in groups.items():
-            self.inventory.add_group(group_name)
+            gname = self.inventory.add_group(group_name)
             for host in group_hosts:
-                self.inventory.add_child(group_name, host)
+                self.inventory.add_child(gname, host)
 
     def _get_groups_from_server(self, server_vars, namegroup=True):
         groups = []

@@ -23,6 +23,7 @@ options:
   name:
     description:
       - Specifies the name of the monitor.
+    type: str
     required: True
   parent:
     description:

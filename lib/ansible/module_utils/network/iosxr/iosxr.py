@@ -29,7 +29,6 @@
 import json
 import re
 from difflib import Differ
-from copy import deepcopy
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import env_fallback
@@ -90,16 +89,6 @@ command_spec = {
     'prompt': dict(default=None),
     'answer': dict(default=None)
 }
-
-iosxr_top_spec = {
-    'host': dict(removed_in_version=2.9),
-    'port': dict(removed_in_version=2.9, type='int'),
-    'username': dict(removed_in_version=2.9),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
-    'timeout': dict(removed_in_version=2.9, type='int'),
-}
-iosxr_argument_spec.update(iosxr_top_spec)
 
 CONFIG_MISPLACED_CHILDREN = [
     re.compile(r'^end-\s*(.+)$')
@@ -345,8 +334,12 @@ def get_config_diff(module, running=None, candidate=None):
         return response
     elif is_netconf(module):
         if running and candidate:
-            running_data = running.split("\n", 1)[1].rsplit("\n", 1)[0]
-            candidate_data = candidate.split("\n", 1)[1].rsplit("\n", 1)[0]
+            # ignore rpc-reply root node and diff from data element onwards
+            running_data_ele = etree.fromstring(to_bytes(running.strip())).getchildren()[0]
+            candidate_data_ele = etree.fromstring(to_bytes(candidate.strip())).getchildren()[0]
+
+            running_data = to_text(etree.tostring(running_data_ele)).strip()
+            candidate_data = to_text(etree.tostring(candidate_data_ele)).strip()
             if running_data != candidate_data:
                 d = Differ()
                 diff = list(d.compare(running_data.splitlines(), candidate_data.splitlines()))
@@ -429,7 +422,7 @@ def check_existing_commit_labels(conn, label):
 
 
 def load_config(module, command_filter, commit=False, replace=False,
-                comment=None, admin=False, running=None, nc_get_filter=None,
+                comment=None, admin=False, exclusive=False, running=None, nc_get_filter=None,
                 label=None):
 
     conn = get_connection(module)
@@ -468,19 +461,25 @@ def load_config(module, command_filter, commit=False, replace=False,
                         ' and rerun task' % label
                     )
 
-            response = conn.edit_config(candidate=command_filter, commit=commit, admin=admin, replace=replace, comment=comment, label=label)
+            response = conn.edit_config(candidate=command_filter, commit=commit, admin=admin,
+                                        exclusive=exclusive, replace=replace, comment=comment, label=label)
             if module._diff:
                 diff = response.get('diff')
+
+            # Overwrite the default diff by the IOS XR commit diff.
+            # See plugins/cliconf/iosxr.py for this key set: show_commit_config_diff
+            diff = response.get('show_commit_config_diff')
+
         except ConnectionError as exc:
             module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
     return diff
 
 
-def run_commands(module, commands, check_rc=True, return_timestamps=False):
+def run_commands(module, commands, check_rc=True):
     connection = get_connection(module)
     try:
-        return connection.run_commands(commands=commands, check_rc=check_rc, return_timestamps=return_timestamps)
+        return connection.run_commands(commands=commands, check_rc=check_rc)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))
 

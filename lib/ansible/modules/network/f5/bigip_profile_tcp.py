@@ -55,6 +55,59 @@ options:
         is provided by the parent profile.
     type: bool
     version_added: 2.7
+  nagle:
+    description:
+      - When C(enabled) the system applies Nagle's algorithm to reduce the number of short segments on the network.
+      - When C(auto), the use of Nagle's algorithm is decided based on network conditions.
+      - Note that for interactive protocols such as Telnet, rlogin, or SSH, F5 recommends disabling this setting on
+        high-latency networks, to improve application responsiveness.
+      - When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+    type: str
+    choices:
+      - auto
+      - enabled
+      - disabled
+    version_added: 2.9
+  early_retransmit:
+    description:
+      - When C(yes) the system uses early fast retransmits to reduce the recovery time for connections that are
+        receive-buffer or user-data limited.
+      - When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+    type: bool
+    version_added: 2.9
+  proxy_options:
+    description:
+      - When C(yes) the system advertises an option, such as a time-stamp to the server only if it was negotiated
+        with the client.
+      - When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+    type: bool
+    version_added: 2.9
+  initial_congestion_window_size:
+    description:
+      - Specifies the initial congestion window size for connections to this destination. The actual window size is
+        this value multiplied by the MSS for the same connection.
+      - When set to C(0) the system uses the values specified in RFC2414.
+      - The valid value range is 0 - 16 inclusive.
+      - When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+    type: int
+    version_added: 2.9
+  initial_receive_window_size:
+    description:
+      - Specifies the initial receive window size for connections to this destination. The actual window size is
+        this value multiplied by the MSS for the same connection.
+      - When set to C(0) the system uses the Slow Start value.
+      - The valid value range is 0 - 16 inclusive.
+      - When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+    type: int
+    version_added: 2.9
+  syn_rto_base:
+    description:
+      - Specifies the initial RTO C(Retransmission TimeOut) base multiplier for SYN retransmission, in C(milliseconds).
+      - This value is modified by the exponential backoff table to select the interval for subsequent retransmissions.
+      - The valid value range is 0 - 5000 inclusive.
+      - When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+    type: int
+    version_added: 2.9
   partition:
     description:
       - Device partition to manage resources on.
@@ -102,10 +155,40 @@ idle_timeout:
   type: int
   sample: 100
 time_wait_recycle:
-  description: Reuse connections in TIME-WAIT state
+  description: Reuse connections in TIME-WAIT state.
   returned: changed
   type: bool
   sample: yes
+nagle:
+  description: Specifies the use of Nagle's algorithm.
+  returned: changed
+  type: str
+  sample: auto
+early_retransmit:
+  description: Specifies the use of early fast retransmits.
+  returned: changed
+  type: bool
+  sample: yes
+proxy_options:
+  description: Specifies if that the system advertises negotiated options to the server.
+  returned: changed
+  type: bool
+  sample: no
+initial_congestion_window_size:
+  description: Specifies the initial congestion window size for connections to this destination.
+  returned: changed
+  type: int
+  sample: 5
+initial_receive_window_size:
+  description: Specifies the initial receive window size for connections to this destination.
+  returned: changed
+  type: int
+  sample: 10
+syn_rto_base:
+  description: Specifies the initial Retransmission TimeOut base multiplier for SYN retransmission.
+  returned: changed
+  type: int
+  sample: 2000
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -134,25 +217,47 @@ class Parameters(AnsibleF5Parameters):
         'idleTimeout': 'idle_timeout',
         'defaultsFrom': 'parent',
         'timeWaitRecycle': 'time_wait_recycle',
+        'earlyRetransmit': 'early_retransmit',
+        'proxyOptions': 'proxy_options',
+        'initCwnd': 'initial_congestion_window_size',
+        'initRwnd': 'initial_receive_window_size',
+        'synRtoBase': 'syn_rto_base'
     }
 
     api_attributes = [
         'idleTimeout',
         'defaultsFrom',
         'timeWaitRecycle',
+        'nagle',
+        'earlyRetransmit',
+        'proxyOptions',
+        'initCwnd',
+        'initRwnd',
+        'synRtoBase',
     ]
 
     returnables = [
         'idle_timeout',
         'parent',
         'time_wait_recycle',
-
+        'nagle',
+        'early_retransmit',
+        'proxy_options',
+        'initial_congestion_window_size',
+        'initial_receive_window_size',
+        'syn_rto_base',
     ]
 
     updatables = [
         'idle_timeout',
         'parent',
         'time_wait_recycle',
+        'nagle',
+        'early_retransmit',
+        'proxy_options',
+        'initial_congestion_window_size',
+        'initial_receive_window_size',
+        'syn_rto_base',
     ]
 
 
@@ -184,6 +289,54 @@ class ModuleParameters(Parameters):
         if result == 'yes':
             return 'enabled'
         return 'disabled'
+
+    @property
+    def early_retransmit(self):
+        result = flatten_boolean(self._values['early_retransmit'])
+        if result is None:
+            return None
+        if result == 'yes':
+            return 'enabled'
+        return 'disabled'
+
+    @property
+    def proxy_options(self):
+        result = flatten_boolean(self._values['proxy_options'])
+        if result is None:
+            return None
+        if result == 'yes':
+            return 'enabled'
+        return 'disabled'
+
+    @property
+    def initial_congestion_window_size(self):
+        if self._values['initial_congestion_window_size'] is None:
+            return None
+        if 0 <= self._values['initial_congestion_window_size'] <= 16:
+            return self._values['initial_congestion_window_size']
+        raise F5ModuleError(
+            "Valid 'initial_congestion_window_size' must be in range 0 - 16 MSS units."
+        )
+
+    @property
+    def initial_receive_window_size(self):
+        if self._values['initial_receive_window_size'] is None:
+            return None
+        if 0 <= self._values['initial_receive_window_size'] <= 16:
+            return self._values['initial_receive_window_size']
+        raise F5ModuleError(
+            "Valid 'initial_receive_window_size' must be in range 0 - 16 MSS units."
+        )
+
+    @property
+    def syn_rto_base(self):
+        if self._values['syn_rto_base'] is None:
+            return None
+        if 0 <= self._values['syn_rto_base'] <= 5000:
+            return self._values['syn_rto_base']
+        raise F5ModuleError(
+            "Valid 'syn_rto_base' must be in range 0 - 5000 milliseconds."
+        )
 
 
 class Changes(Parameters):
@@ -226,6 +379,16 @@ class ReportableChanges(Changes):
         elif self._values['time_wait_recycle'] == 'enabled':
             return 'yes'
         return 'no'
+
+    @property
+    def early_retransmit(self):
+        result = flatten_boolean(self._values['early_retransmit'])
+        return result
+
+    @property
+    def proxy_options(self):
+        result = flatten_boolean(self._values['proxy_options'])
+        return result
 
 
 class Difference(object):
@@ -450,6 +613,14 @@ class ArgumentSpec(object):
                 choices=['present', 'absent']
             ),
             time_wait_recycle=dict(type='bool'),
+            nagle=dict(
+                choices=['enabled', 'disabled', 'auto']
+            ),
+            early_retransmit=dict(type='bool'),
+            proxy_options=dict(type='bool'),
+            initial_congestion_window_size=dict(type='int'),
+            initial_receive_window_size=dict(type='int'),
+            syn_rto_base=dict(type='int'),
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])

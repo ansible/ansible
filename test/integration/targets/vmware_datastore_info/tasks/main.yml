@@ -1,0 +1,126 @@
+# Test code for the vmware_datastore_info module.
+# Copyright (c) 2017, Tim Rightnour <thegarbledone@gmail.com>
+# Copyright (c) 2018, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+
+- when: vcsim is not defined
+  block:
+    - name: get list of info about datastores from the ESXi
+      vmware_datastore_info:
+        validate_certs: False
+        hostname: '{{ item }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+      register: info_from_esxi
+      with_items: "{{ esxi_hosts }}"
+    - assert:
+        that:
+          - "info_from_esxi.results[0].datastores|selectattr('type', 'equalto', 'NFS')|list|length == 2"
+
+- name: get list of info about datastores
+  vmware_datastore_info:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    gather_nfs_mount_info: true
+  register: info_from_vcenter_with_dc_filter
+
+- when: vcsim is not defined
+  block:
+    - name: get list of info about datastores
+      vmware_datastore_info:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        gather_nfs_mount_info: true
+      register: info_from_vcenter_with_no_filter
+
+    - assert:
+        that:
+          - "info_from_vcenter_with_dc_filter.datastores|selectattr('type', 'equalto', 'NFS')|list|length == 2"
+          - "info_from_vcenter_with_no_filter.datastores|selectattr('type', 'equalto', 'NFS')|list|length == 2"
+          - "info_from_vcenter_with_no_filter.datastores[0]['capacity'] is defined"
+
+# Testcase 0002: Get a full list of datastores in a cluster
+- name: get list of info about datastores - no dc
+  vmware_datastore_info:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster: "{{ ccr1 }}"
+  register: datastore_info_0002
+
+- debug:
+    msg: "{{ datastore_info_0002 }}"
+
+- assert:
+    that:
+      - "datastore_info_0002['datastores'][0]['capacity'] is defined"
+
+# Testcase 0003: Find a specific datastore
+- name: get list of info about one datastore
+  vmware_datastore_info:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    name: "{{ ds1 }}"
+  register: datastore_info_0003
+
+- debug:
+    msg: "{{ datastore_info_0003 }}"
+
+- assert:
+    that:
+      - "datastore_info_0003['datastores'][0]['name'] == ds1"
+      - "datastore_info_0003['datastores'][0]['capacity'] is defined"
+
+- name: get list of extended info about one datastore
+  vmware_datastore_info:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    name: "{{ ds1 | basename }}"
+    gather_nfs_mount_info: True
+    gather_vmfs_mount_info: True
+  register: datastore_info_0004
+
+- debug:
+    msg: "{{ datastore_info_0004 }}"
+
+- assert:
+    that:
+      - "datastore_info_0004['datastores'][0]['name'] == ds1"
+      - "datastore_info_0004['datastores'][0]['capacity'] is defined"
+
+- name: get list of info about one datastore in check mode
+  vmware_datastore_info:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    name: "{{ ds1 | basename }}"
+  register: datastore_info_0005
+
+- debug:
+    msg: "{{ datastore_info_0005 }}"
+
+- assert:
+    that:
+      - "datastore_info_0005['datastores'][0]['name'] == ds1"
+      - "datastore_info_0005['datastores'][0]['capacity'] is defined"

@@ -18,6 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import shutil
 
 from errno import EEXIST
 from ansible.errors import AnsibleError
@@ -43,20 +44,22 @@ def unfrackpath(path, follow=True, basedir=None):
         '$HOME/../../var/mail' becomes '/var/spool/mail'
     '''
 
-    if basedir is None:
-        basedir = os.getcwd()
-    elif os.path.isfile(to_bytes(basedir, errors='surrogate_or_strict')):
-        basedir = os.path.dirname(basedir)
+    b_basedir = to_bytes(basedir, errors='surrogate_or_strict', nonstring='passthru')
 
-    final_path = os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))
+    if b_basedir is None:
+        b_basedir = to_bytes(os.getcwd(), errors='surrogate_or_strict')
+    elif os.path.isfile(b_basedir):
+        b_basedir = os.path.dirname(b_basedir)
 
-    if not os.path.isabs(final_path):
-        final_path = os.path.join(to_bytes(basedir, errors='surrogate_or_strict'), final_path)
+    b_final_path = os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))
+
+    if not os.path.isabs(b_final_path):
+        b_final_path = os.path.join(b_basedir, b_final_path)
 
     if follow:
-        final_path = os.path.realpath(final_path)
+        b_final_path = os.path.realpath(b_final_path)
 
-    return to_text(os.path.normpath(final_path), errors='surrogate_or_strict')
+    return to_text(os.path.normpath(b_final_path), errors='surrogate_or_strict')
 
 
 def makedirs_safe(path, mode=None):
@@ -103,3 +106,29 @@ def basedir(source):
         dname = os.path.abspath(dname)
 
     return to_text(dname, errors='surrogate_or_strict')
+
+
+def cleanup_tmp_file(path, warn=False):
+    """
+    Removes temporary file or directory. Optionally display a warning if unable
+    to remove the file or directory.
+
+    :arg path: Path to file or directory to be removed
+    :kwarg warn: Whether or not to display a warning when the file or directory
+        cannot be removed
+    """
+    try:
+        if os.path.exists(path):
+            try:
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                elif os.path.isfile(path):
+                    os.unlink(path)
+            except Exception as e:
+                if warn:
+                    # Importing here to avoid circular import
+                    from ansible.utils.display import Display
+                    display = Display()
+                    display.display(u'Unable to remove temporary file {0}'.format(to_text(e)))
+    except Exception:
+        pass

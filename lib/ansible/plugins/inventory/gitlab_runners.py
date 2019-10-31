@@ -13,34 +13,35 @@ DOCUMENTATION = '''
     version_added: '2.8'
     authors:
       - Stefan Heitmüller (stefan.heitmueller@gmx.com)
-    short_description: Ansible dynamic inventory plugin for Gitlab runners.
+    short_description: Ansible dynamic inventory plugin for GitLab runners.
     requirements:
         - python >= 2.7
         - python-gitlab > 1.8.0
     extends_documentation_fragment:
         - constructed
     description:
-        - Reads inventories from the Gitlab API.
+        - Reads inventories from the GitLab API.
         - Uses a YAML configuration file gitlab_runners.[yml|yaml].
     options:
         plugin:
             description: The name of this plugin, it should always be set to 'gitlab_runners' for this plugin to recognize it as it's own.
             type: str
             required: true
-            choices: gitlab_runners
+            choices:
+              - gitlab_runners
         server_url:
-            description: The URL of the Gitlab server, with protocol (i.e. http or https).
+            description: The URL of the GitLab server, with protocol (i.e. http or https).
             type: str
             required: true
             default: https://gitlab.com
         api_token:
-            description: Gitlab token for logging in.
+            description: GitLab token for logging in.
             type: str
             aliases:
               - private_token
               - access_token
         filter:
-            description: filter runners from Gitlab API
+            description: filter runners from GitLab API
             type: str
             choices: ['active', 'paused', 'online', 'specific', 'shared']
         verbose_output:
@@ -84,7 +85,7 @@ except ImportError:
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable):
-    ''' Host inventory parser for ansible using Gitlab API as source. '''
+    ''' Host inventory parser for ansible using GitLab API as source. '''
 
     NAME = 'gitlab_runners'
 
@@ -114,7 +115,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 # Create groups based on variable values and add the corresponding hosts to it
                 self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host_attrs, host, strict=strict)
         except Exception as e:
-            raise AnsibleParserError('Unable to fetch hosts from Gitlab API, this was the original exception: %s' % to_native(e))
+            raise AnsibleParserError('Unable to fetch hosts from GitLab API, this was the original exception: %s' % to_native(e))
 
     def verify_file(self, path):
         """Return the possibly of a file being consumable by this plugin."""
@@ -124,7 +125,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def parse(self, inventory, loader, path, cache=True):
         if not HAS_GITLAB:
-            raise AnsibleError('The Gitlab runners dynamic inventory plugin requires python-gitlab: https://python-gitlab.readthedocs.io/en/stable/')
+            raise AnsibleError('The GitLab runners dynamic inventory plugin requires python-gitlab: https://python-gitlab.readthedocs.io/en/stable/')
         super(InventoryModule, self).parse(inventory, loader, path, cache)
         self._read_config_data(path)
         self._populate()

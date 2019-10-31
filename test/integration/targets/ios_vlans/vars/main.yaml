@@ -1,0 +1,345 @@
+---
+merged:
+  before:
+    - mtu: 1500
+      name: default
+      shutdown: disabled
+      state: active
+      vlan_id: 1
+    - mtu: 1500
+      name: fddi-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1002
+    - mtu: 1500
+      name: token-ring-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1003
+    - mtu: 1500
+      name: fddinet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1004
+    - mtu: 1500
+      name: trnet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1005
+
+  commands:
+    - "vlan 10"
+    - "name Vlan_10"
+    - "state active"
+    - "remote-span"
+    - "no shutdown"
+    - "vlan 20"
+    - "name Vlan_20"
+    - "state active"
+    - "mtu 610"
+    - "shutdown"
+    - "vlan 30"
+    - "name Vlan_30"
+    - "state suspend"
+    - "shutdown"
+
+  after:
+    - mtu: 1500
+      name: default
+      shutdown: disabled
+      state: active
+      vlan_id: 1
+    - mtu: 1500
+      name: Vlan_10
+      remote_span: true
+      shutdown: disabled
+      state: active
+      vlan_id: 10
+    - mtu: 610
+      name: Vlan_20
+      shutdown: enabled
+      state: active
+      vlan_id: 20
+    - mtu: 1500
+      name: Vlan_30
+      shutdown: enabled
+      state: suspend
+      vlan_id: 30
+    - mtu: 1500
+      name: fddi-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1002
+    - mtu: 1500
+      name: token-ring-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1003
+    - mtu: 1500
+      name: fddinet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1004
+    - mtu: 1500
+      name: trnet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1005
+
+replaced:
+  before:
+    - mtu: 1500
+      name: default
+      shutdown: disabled
+      state: active
+      vlan_id: 1
+    - mtu: 1500
+      name: VLAN0010
+      shutdown: disabled
+      state: active
+      vlan_id: 10
+    - mtu: 1500
+      name: VLAN0020
+      shutdown: disabled
+      state: active
+      vlan_id: 20
+    - mtu: 1500
+      name: VLAN0030
+      shutdown: disabled
+      state: active
+      vlan_id: 30
+    - mtu: 1500
+      name: fddi-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1002
+    - mtu: 1500
+      name: token-ring-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1003
+    - mtu: 1500
+      name: fddinet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1004
+    - mtu: 1500
+      name: trnet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1005
+
+  commands:
+    - "vlan 20"
+    - "name Test_VLAN20"
+    - "mtu 700"
+    - "vlan 30"
+    - "name Test_VLAN30"
+    - "mtu 1000"
+
+  after:
+    - mtu: 1500
+      name: default
+      shutdown: disabled
+      state: active
+      vlan_id: 1
+    - mtu: 1500
+      name: VLAN0010
+      shutdown: disabled
+      state: active
+      vlan_id: 10
+    - mtu: 700
+      name: Test_VLAN20
+      shutdown: disabled
+      state: active
+      vlan_id: 20
+    - mtu: 1000
+      name: Test_VLAN30
+      shutdown: disabled
+      state: active
+      vlan_id: 30
+    - mtu: 1500
+      name: fddi-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1002
+    - mtu: 1500
+      name: token-ring-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1003
+    - mtu: 1500
+      name: fddinet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1004
+    - mtu: 1500
+      name: trnet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1005
+
+overridden:
+  before:
+    - mtu: 1500
+      name: default
+      shutdown: disabled
+      state: active
+      vlan_id: 1
+    - mtu: 1500
+      name: VLAN0010
+      shutdown: disabled
+      state: active
+      vlan_id: 10
+    - mtu: 1500
+      name: VLAN0020
+      shutdown: disabled
+      state: active
+      vlan_id: 20
+    - mtu: 1500
+      name: VLAN0030
+      shutdown: disabled
+      state: active
+      vlan_id: 30
+    - mtu: 1500
+      name: fddi-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1002
+    - mtu: 1500
+      name: token-ring-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1003
+    - mtu: 1500
+      name: fddinet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1004
+    - mtu: 1500
+      name: trnet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1005
+
+  commands:
+    - "vlan 10"
+    - "name VLAN_10"
+    - "mtu 1000"
+    - "no vlan 20"
+    - "no vlan 30"
+    - "vlan 40"
+    - "name VLAN_40"
+    - "mtu 850"
+
+  after:
+    - mtu: 1500
+      name: default
+      shutdown: disabled
+      state: active
+      vlan_id: 1
+    - mtu: 1000
+      name: VLAN_10
+      shutdown: disabled
+      state: active
+      vlan_id: 10
+    - mtu: 850
+      name: VLAN_40
+      shutdown: disabled
+      state: active
+      vlan_id: 40
+    - mtu: 1500
+      name: fddi-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1002
+    - mtu: 1500
+      name: token-ring-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1003
+    - mtu: 1500
+      name: fddinet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1004
+    - mtu: 1500
+      name: trnet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1005
+
+deleted:
+  before:
+    - mtu: 1500
+      name: default
+      shutdown: disabled
+      state: active
+      vlan_id: 1
+    - mtu: 1500
+      name: VLAN0010
+      shutdown: disabled
+      state: active
+      vlan_id: 10
+    - mtu: 1500
+      name: VLAN0020
+      shutdown: disabled
+      state: active
+      vlan_id: 20
+    - mtu: 1500
+      name: VLAN0030
+      shutdown: disabled
+      state: active
+      vlan_id: 30
+    - mtu: 1500
+      name: fddi-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1002
+    - mtu: 1500
+      name: token-ring-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1003
+    - mtu: 1500
+      name: fddinet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1004
+    - mtu: 1500
+      name: trnet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1005
+
+  commands:
+    - "no vlan 10"
+    - "no vlan 20"
+    - "no vlan 30"
+
+  after:
+    - mtu: 1500
+      name: default
+      shutdown: disabled
+      state: active
+      vlan_id: 1
+    - mtu: 1500
+      name: fddi-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1002
+    - mtu: 1500
+      name: token-ring-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1003
+    - mtu: 1500
+      name: fddinet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1004
+    - mtu: 1500
+      name: trnet-default
+      shutdown: enabled
+      state: active
+      vlan_id: 1005

@@ -42,7 +42,7 @@ options:
         aliases: ['tunnel_type']
     local_address:
         description:
-            - Literat IP address or hostname corresponding to the tunnel source.
+            - Literal IP address or hostname corresponding to the tunnel source.
         required: false
         aliases: [ "local" ]
     remote_address:

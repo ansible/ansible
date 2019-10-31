@@ -22,7 +22,7 @@ from ansible.utils import context_objects as co
 
 @pytest.fixture
 def parser():
-    parser = opt_help.create_base_parser()
+    parser = opt_help.create_base_parser('testparser')
 
     opt_help.add_runas_options(parser)
     opt_help.add_meta_options(parser)

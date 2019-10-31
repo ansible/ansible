@@ -253,7 +253,7 @@ class Hardware(FactsBase):
 
         data = self.responses[0]
         if data:
-            self.facts['filesystems'] = re.findall(r'^Directory of (.*)/', data)[0]
+            self.facts['filesystems'] = re.findall(r'Directory of (.*)/', data)[0]
             self.facts['flash_total'] = re.findall(r'(.*) total', data)[0].replace(",", "")
             self.facts['flash_free'] = re.findall(r'total \((.*) free\)', data)[0].replace(",", "")
 
@@ -324,7 +324,10 @@ class Interfaces(FactsBase):
             tmp_neighbors = neighbors[2:]
             for item in tmp_neighbors:
                 tmp_item = item.split()
-                neighbors_dict[tmp_item[0]] = tmp_item[3]
+                if len(tmp_item) > 3:
+                    neighbors_dict[tmp_item[0]] = tmp_item[3]
+                else:
+                    neighbors_dict[tmp_item[0]] = None
             self.facts['neighbors'] = neighbors_dict
 
 

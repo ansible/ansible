@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: postgresql_pg_hba
-short_description: Add, remove or modifie a rule in a pg_hba file
+short_description: Add, remove or modify a rule in a pg_hba file
 description:
    - The fundamental function of the module is to create, or delete lines in pg_hba files.
    - The lines in the file should be in a typical pg_hba form and lines should be unique per key (type, databases, users, source).
@@ -82,8 +82,10 @@ options:
   order:
     description:
       - The entries will be written out in a specific order.
-      - With this option you can control by which field they are ordered first, second and last.
-      - s=source, d=databases, u=users.
+        With this option you can control by which field they are ordered first, second and last.
+        s=source, d=databases, u=users.
+        This option is deprecated since 2.9 and will be removed in 2.11.
+        Sortorder is now hardcoded to sdu.
     default: sdu
     choices: [ sdu, sud, dsu, dus, usd, uds ]
   state:
@@ -100,15 +102,20 @@ notes:
    - The default authentication assumes that on the host, you are either logging in as or
      sudo'ing to an account with appropriate permissions to read and modify the file.
    - This module also returns the pg_hba info. You can use this module to only retrieve it by only specifying I(dest).
-     The info kan be found in the returned data under key pg_hba, being a list, containing a dict per rule.
+     The info can be found in the returned data under key pg_hba, being a list, containing a dict per rule.
    - This module will sort resulting C(pg_hba) files if a rule change is required.
      This could give unexpected results with manual created hba files, if it was improperly sorted.
      For example a rule was created for a net first and for a ip in that net range next.
      In that situation, the 'ip specific rule' will never hit, it is in the C(pg_hba) file obsolete.
-     After the C(pg_hba) file is rewritten by the M(pg_hba) module, the ip specific rule will be sorted above the range rule.
+     After the C(pg_hba) file is rewritten by the M(postgresql_pg_hba) module, the ip specific rule will be sorted above the range rule.
      And then it will hit, which will give unexpected results.
    - With the 'order' parameter you can control which field is used to sort first, next and last.
    - The module supports a check mode and a diff mode.
+
+seealso:
+- name: PostgreSQL pg_hba.conf file reference
+  description: Complete reference of the PostgreSQL pg_hba.conf file documentation.
+  link: https://www.postgresql.org/docs/current/auth-pg-hba-conf.html
 
 requirements:
     - ipaddress
@@ -257,8 +264,8 @@ class PgHba(object):
         self.databases = set(['postgres', 'template0', 'template1'])
 
         # self.databases will be update by add_rule and gives some idea of the number of users
-        # (at least that are handled by this pg_hba) since this migth also be groups with multiple
-        # users, this migth be totally off, but at least it is some info...
+        # (at least that are handled by this pg_hba) since this might also be groups with multiple
+        # users, this might be totally off, but at least it is some info...
         self.users = set(['postgres'])
 
         self.read()
@@ -301,6 +308,7 @@ class PgHba(object):
         if not self.changed():
             return False
 
+        contents = self.render()
         if self.pg_hba_file:
             if not (os.path.isfile(self.pg_hba_file) or self.create):
                 raise PgHbaError("pg_hba file '{0}' doesn't exist. "
@@ -316,7 +324,7 @@ class PgHba(object):
             filed, __path = tempfile.mkstemp(prefix='pg_hba')
             fileh = os.fdopen(filed, 'w')
 
-        fileh.write(self.render())
+        fileh.write(contents)
         self.unchanged()
         fileh.close()
         return True
@@ -364,11 +372,7 @@ class PgHba(object):
         '''
         This method returns all the rules of the PgHba object
         '''
-        rules = sorted(self.rules.values(),
-                       key=lambda rule: rule.weight(self.order,
-                                                    len(self.users) + 1,
-                                                    len(self.databases) + 1),
-                       reverse=True)
+        rules = sorted(self.rules.values())
         for rule in rules:
             ret = {}
             for key, value in rule.items():
@@ -417,7 +421,7 @@ class PgHbaRule(dict):
         super(PgHbaRule, self).__init__()
 
         if line:
-            # Read valies from line if parsed
+            # Read values from line if parsed
             self.fromline(line)
 
         # read rule cols from parsed items
@@ -482,20 +486,19 @@ class PgHbaRule(dict):
             msg = "Rule {0} has unknown type: {1}."
             raise PgHbaValueError(msg.format(line, cols[0]))
         if cols[0] == 'local':
-            if cols[3] not in PG_HBA_METHODS:
-                raise PgHbaValueError("Rule {0} of 'local' type has invalid auth-method {1}"
-                                      "on 4th column ".format(line, cols[3]))
-            cols.insert(3, None)
-            cols.insert(3, None)
+            cols.insert(3, None)  # No address
+            cols.insert(3, None)  # No IP-mask
+        if len(cols) < 6:
+            cols.insert(4, None)  # No IP-mask
+        elif cols[5] not in PG_HBA_METHODS:
+            cols.insert(4, None)  # No IP-mask
+        if cols[5] not in PG_HBA_METHODS:
+            raise PgHbaValueError("Rule {0} of '{1}' type has invalid auth-method '{2}'".format(line, cols[0], cols[5]))
+
+        if len(cols) < 7:
+            cols.insert(6, None)  # No auth-options
         else:
-            if len(cols) < 6:
-                cols.insert(4, None)
-            elif cols[5] not in PG_HBA_METHODS:
-                cols.insert(4, None)
-            if len(cols) < 7:
-                cols.insert(7, None)
-            if cols[5] not in PG_HBA_METHODS:
-                raise PgHbaValueError("Rule {0} has no valid method.".format(line))
+            cols[6] = " ".join(cols[6:])  # combine all auth-options
         rule = dict(zip(PG_HBA_HDR, cols[:7]))
         for key, value in rule.items():
             if value:
@@ -522,7 +525,7 @@ class PgHbaRule(dict):
                 raise PgHbaValueError('Mask was specified, but source "{0}" '
                                       'is no valid ip'.format(self['src']))
             # ipaddress module cannot work with ipv6 netmask, so lets convert it to prefixlen
-            # furthermore ipv4 with bad netmask throws 'Rule {} doesnt seem to be an ip, but has a
+            # furthermore ipv4 with bad netmask throws 'Rule {} doesn't seem to be an ip, but has a
             # mask error that doesn't seem to describe what is going on.
             try:
                 mask_as_ip = ipaddress.ip_address(u'{0}'.format(self['mask']))
@@ -544,8 +547,12 @@ class PgHbaRule(dict):
         except ValueError:
             return self['src']
 
-    def weight(self, order, numusers, numdbs):
-        '''
+    def __lt__(self, other):
+        """This function helps sorted to decide how to sort.
+
+        It just checks itself against the other and decides on some key values
+        if it should be sorted higher or lower in the list.
+        The way it works:
         For networks, every 1 in 'netmask in binary' makes the subnet more specific.
         Therefore I chose to use prefix as the weight.
         So a single IP (/32) should have twice the weight of a /16 network.
@@ -554,69 +561,103 @@ class PgHbaRule(dict):
         - for ipv4, we use a weight scale of 0 (all possible ipv4 addresses) to 128 (single ip)
         Therefore for ipv4, we use prefixlen (0-32) * 4 for weight,
         which corresponds to ipv6 (0-128).
-        '''
-        if order not in PG_HBA_ORDERS:
-            raise PgHbaRuleError('{0} is not a valid order'.format(order))
+        """
+        myweight = self.source_weight()
+        hisweight = other.source_weight()
+        if myweight != hisweight:
+            return myweight > hisweight
 
+        myweight = self.db_weight()
+        hisweight = other.db_weight()
+        if myweight != hisweight:
+            return myweight < hisweight
+
+        myweight = self.user_weight()
+        hisweight = other.user_weight()
+        if myweight != hisweight:
+            return myweight < hisweight
+        try:
+            return self['src'] < other['src']
+        except TypeError:
+            return self.source_type_weight() < other.source_type_weight()
+        except Exception:
+            # When all else fails, just compare the exact line.
+            return self.line() < other.line()
+
+    def source_weight(self):
+        """Report the weight of this source net.
+
+        Basically this is the netmask, where IPv4 is normalized to IPv6
+        (IPv4/32 has the same weight as IPv6/128).
+        """
         if self['type'] == 'local':
-            sourceobj = ''
-            # local is always 'this server' and therefore considered /32
-            srcweight = 130  # (Sort local on top of all)
-        else:
-            sourceobj = self.source()
-            if isinstance(sourceobj, ipaddress.IPv4Network):
-                srcweight = sourceobj.prefixlen * 4
-            elif isinstance(sourceobj, ipaddress.IPv6Network):
-                srcweight = sourceobj.prefixlen
-            elif isinstance(sourceobj, str):
-                # You can also write all to match any IP address,
-                # samehost to match any of the server's own IP addresses,
-                # or samenet to match any address in any subnet that the server is connected to.
-                if sourceobj == 'all':
-                    # (all is considered the full range of all ips, which has a weight of 0)
-                    srcweight = 0
-                elif sourceobj == 'samehost':
-                    # (sort samehost second after local)
-                    srcweight = 129
-                elif sourceobj == 'samenet':
-                    # Might write some fancy code to determine all prefix's
-                    # from all interfaces and find a sane value for this one.
-                    # For now, let's assume IPv4/24 or IPv6/96 (both have weight 96).
-                    srcweight = 96
-                elif sourceobj[0] == '.':
-                    # suffix matching (domain name), let's asume a very large scale
-                    # and therefore a very low weight IPv4/16 or IPv6/64 (both have weight 64).
-                    srcweight = 64
-                else:
-                    # hostname, let's asume only one host matches, which is
-                    # IPv4/32 or IPv6/128 (both have weight 128)
-                    srcweight = 128
+            return 130
 
+        sourceobj = self.source()
+        if isinstance(sourceobj, ipaddress.IPv4Network):
+            return sourceobj.prefixlen * 4
+        if isinstance(sourceobj, ipaddress.IPv6Network):
+            return sourceobj.prefixlen
+        if isinstance(sourceobj, str):
+            # You can also write all to match any IP address,
+            # samehost to match any of the server's own IP addresses,
+            # or samenet to match any address in any subnet that the server is connected to.
+            if sourceobj == 'all':
+                # (all is considered the full range of all ips, which has a weight of 0)
+                return 0
+            if sourceobj == 'samehost':
+                # (sort samehost second after local)
+                return 129
+            if sourceobj == 'samenet':
+                # Might write some fancy code to determine all prefix's
+                # from all interfaces and find a sane value for this one.
+                # For now, let's assume IPv4/24 or IPv6/96 (both have weight 96).
+                return 96
+            if sourceobj[0] == '.':
+                # suffix matching (domain name), let's assume a very large scale
+                # and therefore a very low weight IPv4/16 or IPv6/64 (both have weight 64).
+                return 64
+            # hostname, let's assume only one host matches, which is
+            # IPv4/32 or IPv6/128 (both have weight 128)
+            return 128
+        raise PgHbaValueError('Cannot deduct the source weight of this source {1}'.format(sourceobj))
+
+    def source_type_weight(self):
+        """Give a weight on the type of this source.
+
+        Basically make sure that IPv6Networks are sorted higher than IPv4Networks.
+        This is a 'when all else fails' solution in __lt__.
+        """
+        if self['type'] == 'local':
+            return 3
+
+        sourceobj = self.source()
+        if isinstance(sourceobj, ipaddress.IPv4Network):
+            return 2
+        if isinstance(sourceobj, ipaddress.IPv6Network):
+            return 1
+        if isinstance(sourceobj, str):
+            return 0
+        raise PgHbaValueError('This source {0} is of an unknown type...'.format(sourceobj))
+
+    def db_weight(self):
+        """Report the weight of the database.
+
+        Normally, just 1, but for replication this is 0, and for 'all', this is more than 2.
+        """
         if self['db'] == 'all':
-            dbweight = numdbs
-        elif self['db'] == 'replication':
-            dbweight = 0
-        elif self['db'] in ['samerole', 'samegroup']:
-            dbweight = 1
-        else:
-            dbweight = 1 + self['db'].count(',')
+            return 100000
+        if self['db'] == 'replication':
+            return 0
+        if self['db'] in ['samerole', 'samegroup']:
+            return 1
+        return 1 + self['db'].count(',')
 
+    def user_weight(self):
+        """Report weight when comparing users."""
         if self['usr'] == 'all':
-            uweight = numusers
-        else:
-            uweight = 1
-
-        ret = []
-        for character in order:
-            if character == 'u':
-                ret.append(uweight)
-            elif character == 's':
-                ret.append(srcweight)
-            elif character == 'd':
-                ret.append(dbweight)
-        ret.append(sourceobj)
-
-        return tuple(ret)
+            return 1000000
+        return 1
 
 
 def main():

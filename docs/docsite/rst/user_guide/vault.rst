@@ -279,6 +279,17 @@ Result::
 
 See also :ref:`single_encrypted_variable`
 
+After you added the encrypted value to a var file (vars.yml), you can see the original value using the debug module.
+
+.. code-block:: console
+
+   ansible localhost -m debug -a var="new_user_password" -e "@vars.yml" --ask-vault-pass
+   Vault password:
+
+   localhost | SUCCESS => {
+       "new_user_password": "hunter2"
+   }
+
 
 .. _providing_vault_passwords:
 
@@ -447,7 +458,7 @@ system keyring.
 Speeding Up Vault Operations
 ````````````````````````````
 
-By default, Ansible uses PyCrypto to encrypt and decrypt vault files. If you have many encrypted files, decrypting them at startup may cause a perceptible delay. To speed this up, install the cryptography package:
+If you have many encrypted files, decrypting them at startup may cause a perceptible delay. To speed this up, install the cryptography package:
 
 .. code-block:: bash
 

@@ -33,7 +33,7 @@ module: gcp_sql_database
 description:
 - Represents a SQL database inside the Cloud SQL instance, hosted in Google's cloud.
 short_description: Creates a GCP Database
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -47,29 +47,71 @@ options:
     - present
     - absent
     default: present
+    type: str
   charset:
     description:
-    - The MySQL charset value.
+    - The charset value. See MySQL's [Supported Character Sets and Collations](U(https://dev.mysql.com/doc/refman/5.7/en/charset-charsets.html))
+      and Postgres' [Character Set Support](U(https://www.postgresql.org/docs/9.6/static/multibyte.html))
+      for more details and supported values. Postgres databases only support a value
+      of `UTF8` at creation time.
     required: false
+    type: str
   collation:
     description:
-    - The MySQL collation value.
+    - The collation value. See MySQL's [Supported Character Sets and Collations](U(https://dev.mysql.com/doc/refman/5.7/en/charset-charsets.html))
+      and Postgres' [Collation Support](U(https://www.postgresql.org/docs/9.6/static/collation.html))
+      for more details and supported values. Postgres databases only support a value
+      of `en_US.UTF8` at creation time.
     required: false
+    type: str
   name:
     description:
     - The name of the database in the Cloud SQL instance.
     - This does not include the project ID or instance name.
-    required: false
+    required: true
+    type: str
   instance:
     description:
     - The name of the Cloud SQL instance. This does not include the project ID.
-    - 'This field represents a link to a Instance resource in GCP. It can be specified
-      in two ways. First, you can place a dictionary with key ''name'' and value of
-      your resource''s name Alternatively, you can add `register: name-of-resource`
-      to a gcp_sql_instance task and then set this instance field to "{{ name-of-resource
-      }}"'
     required: true
-extends_documentation_fragment: gcp
+    type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -93,7 +135,7 @@ EXAMPLES = '''
   gcp_sql_database:
     name: test_object
     charset: utf8
-    instance: "{{ instance }}"
+    instance: "{{ instance.name }}"
     project: test_project
     auth_kind: serviceaccount
     service_account_file: "/tmp/auth.pem"
@@ -103,12 +145,18 @@ EXAMPLES = '''
 RETURN = '''
 charset:
   description:
-  - The MySQL charset value.
+  - The charset value. See MySQL's [Supported Character Sets and Collations](U(https://dev.mysql.com/doc/refman/5.7/en/charset-charsets.html))
+    and Postgres' [Character Set Support](U(https://www.postgresql.org/docs/9.6/static/multibyte.html))
+    for more details and supported values. Postgres databases only support a value
+    of `UTF8` at creation time.
   returned: success
   type: str
 collation:
   description:
-  - The MySQL collation value.
+  - The collation value. See MySQL's [Supported Character Sets and Collations](U(https://dev.mysql.com/doc/refman/5.7/en/charset-charsets.html))
+    and Postgres' [Collation Support](U(https://www.postgresql.org/docs/9.6/static/collation.html))
+    for more details and supported values. Postgres databases only support a value
+    of `en_US.UTF8` at creation time.
   returned: success
   type: str
 name:
@@ -121,7 +169,7 @@ instance:
   description:
   - The name of the Cloud SQL instance. This does not include the project ID.
   returned: success
-  type: dict
+  type: str
 '''
 
 ################################################################################
@@ -145,8 +193,8 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             charset=dict(type='str'),
             collation=dict(type='str'),
-            name=dict(type='str'),
-            instance=dict(required=True, type='dict'),
+            name=dict(required=True, type='str'),
+            instance=dict(required=True, type='str'),
         )
     )
 
@@ -187,8 +235,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    auth = GcpSession(module, 'sql')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    module.fail_json(msg="SQL objects can't be updated to ensure data safety")
 
 
 def delete(module, link, kind):
@@ -199,6 +246,7 @@ def delete(module, link, kind):
 def resource_to_request(module):
     request = {
         u'kind': 'sql#database',
+        u'instance': module.params.get('instance'),
         u'charset': module.params.get('charset'),
         u'collation': module.params.get('collation'),
         u'name': module.params.get('name'),
@@ -217,13 +265,11 @@ def fetch_resource(module, link, kind, allow_not_found=True):
 
 
 def self_link(module):
-    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name'), 'name': module.params['name']}
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases/{name}".format(**res)
+    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases/{name}".format(**module.params)
 
 
 def collection(module):
-    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name')}
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases".format(**res)
+    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases".format(**module.params)
 
 
 def return_if_object(module, response, kind, allow_not_found=False):
@@ -271,7 +317,7 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {u'charset': response.get(u'charset'), u'collation': response.get(u'collation'), u'name': response.get(u'name')}
+    return {u'charset': response.get(u'charset'), u'collation': response.get(u'collation'), u'name': module.params.get('name')}
 
 
 def async_op_url(module, extra_data=None):

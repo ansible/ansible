@@ -22,7 +22,7 @@ __metaclass__ = type
 import yaml
 
 from ansible.module_utils.six import text_type
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes, to_text, to_native
 
 
 class AnsibleBaseYAMLObject(object):
@@ -128,7 +128,7 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
         return True
 
     def __str__(self):
-        return str(self.data)
+        return to_native(self.data, errors='surrogate_or_strict')
 
     def __unicode__(self):
         return to_text(self.data, errors='surrogate_or_strict')

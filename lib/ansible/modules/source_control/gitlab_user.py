@@ -15,9 +15,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: gitlab_user
-short_description: Creates/updates/deletes Gitlab Users
+short_description: Creates/updates/deletes GitLab Users
 description:
-  - When the user does not exist in Gitlab, it will be created.
+  - When the user does not exist in GitLab, it will be created.
   - When the user does exists and state=absent, the user will be deleted.
   - When changes are made to user, the user will be updated.
 version_added: "2.1"
@@ -27,29 +27,14 @@ author:
 requirements:
   - python >= 2.7
   - python-gitlab python module
-  - administrator rights on the Gitlab server
+  - administrator rights on the GitLab server
 extends_documentation_fragment:
     - auth_basic
 options:
-  server_url:
-    description:
-      - The URL of the Gitlab server, with protocol (i.e. http or https).
-    required: true
-    type: str
-  login_user:
-    description:
-      - Gitlab user name.
-    type: str
-  login_password:
-    description:
-      - Gitlab password for login_user
-    type: str
   api_token:
     description:
-      - Gitlab token for logging in.
+      - GitLab token for logging in.
     type: str
-    aliases:
-      - login_token
   name:
     description:
       - Name of the user you want to create
@@ -111,7 +96,7 @@ options:
     version_added: "2.4"
   isadmin:
     description:
-      - Grant admin privilieges to the user
+      - Grant admin privileges to the user
     type: bool
     default: no
     version_added: "2.8"
@@ -124,7 +109,7 @@ options:
 '''
 
 EXAMPLES = '''
-- name: "Delete Gitlab User"
+- name: "Delete GitLab User"
   gitlab_user:
     api_url: https://gitlab.example.com/
     api_token: "{{ access_token }}"
@@ -133,7 +118,7 @@ EXAMPLES = '''
     state: absent
   delegate_to: localhost
 
-- name: "Create Gitlab User"
+- name: "Create GitLab User"
   gitlab_user:
     api_url: https://gitlab.example.com/
     validate_certs: True
@@ -164,7 +149,7 @@ result:
   type: dict
 
 error:
-  description: the error message returned by the Gitlab API
+  description: the error message returned by the GitLab API
   returned: failed
   type: str
   sample: "400: path is already in use"
@@ -175,8 +160,6 @@ user:
   type: dict
 '''
 
-import os
-import re
 import traceback
 
 GITLAB_IMP_ERR = None
@@ -234,13 +217,15 @@ class GitLabUser(object):
 
         # Assign ssh keys
         if options['sshkey_name'] and options['sshkey_file']:
-            changed = changed or self.addSshKeyToUser(user, {
+            key_changed = self.addSshKeyToUser(user, {
                 'name': options['sshkey_name'],
                 'file': options['sshkey_file']})
+            changed = changed or key_changed
 
         # Assign group
         if options['group_path']:
-            changed = changed or self.assignUserToGroup(user, options['group_path'], options['access_level'])
+            group_changed = self.assignUserToGroup(user, options['group_path'], options['access_level'])
+            changed = changed or group_changed
 
         self.userObject = user
         if changed:
@@ -297,7 +282,7 @@ class GitLabUser(object):
     def findMember(self, group, user_id):
         try:
             member = group.members.get(user_id)
-        except gitlab.exceptions.GitlabGetError as e:
+        except gitlab.exceptions.GitlabGetError:
             return None
         return member
 
@@ -313,7 +298,7 @@ class GitLabUser(object):
     '''
     @param group Group object
     @param user_id Id of the user to check
-    @param access_level Gitlab access_level to check
+    @param access_level GitLab access_level to check
     '''
     def memberAsGoodAccessLevel(self, group, user_id, access_level):
         member = self.findMember(group, user_id)
@@ -323,7 +308,7 @@ class GitLabUser(object):
     '''
     @param user User object
     @param group_path Complete path of the Group including parent group path. <parent_path>/<group_path>
-    @param access_level Gitlab access_level to assign
+    @param access_level GitLab access_level to assign
     '''
     def assignUserToGroup(self, user, group_identifier, access_level):
         group = findGroup(self._gitlab, group_identifier)
@@ -408,19 +393,10 @@ class GitLabUser(object):
         return user.delete()
 
 
-def deprecation_warning(module):
-    deprecated_aliases = ['login_token']
-
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), "2.10")
-
-
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        server_url=dict(type='str', required=True, removed_in_version="2.10"),
-        login_user=dict(type='str', no_log=True, removed_in_version="2.10"),
-        login_password=dict(type='str', no_log=True, removed_in_version="2.10"),
-        api_token=dict(type='str', no_log=True, aliases=["login_token"]),
+        api_token=dict(type='str', no_log=True),
         name=dict(type='str', required=True),
         state=dict(type='str', default="present", choices=["absent", "present"]),
         username=dict(type='str', required=True),
@@ -438,40 +414,23 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[
-            ['api_url', 'server_url'],
-            ['api_username', 'login_user'],
-            ['api_password', 'login_password'],
             ['api_username', 'api_token'],
             ['api_password', 'api_token'],
-            ['login_user', 'login_token'],
-            ['login_password', 'login_token']
         ],
         required_together=[
             ['api_username', 'api_password'],
-            ['login_user', 'login_password'],
         ],
         required_one_of=[
-            ['api_username', 'api_token', 'login_user', 'login_token']
+            ['api_username', 'api_token']
         ],
         supports_check_mode=True,
     )
 
-    deprecation_warning(module)
-
-    server_url = module.params['server_url']
-    login_user = module.params['login_user']
-    login_password = module.params['login_password']
-
-    api_url = module.params['api_url']
+    gitlab_url = module.params['api_url']
     validate_certs = module.params['validate_certs']
-    api_user = module.params['api_username']
-    api_password = module.params['api_password']
-
-    gitlab_url = server_url if api_url is None else api_url
-    gitlab_user = login_user if api_user is None else api_user
-    gitlab_password = login_password if api_password is None else api_password
+    gitlab_user = module.params['api_username']
+    gitlab_password = module.params['api_password']
     gitlab_token = module.params['api_token']
-
     user_name = module.params['name']
     state = module.params['state']
     user_username = module.params['username'].lower()
@@ -493,10 +452,10 @@ def main():
                                         private_token=gitlab_token, api_version=4)
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
-            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s. \
+            GitLab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
 
     gitlab_user = GitLabUser(module, gitlab_instance)
     user_exists = gitlab_user.existsUser(user_username)

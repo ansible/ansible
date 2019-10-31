@@ -114,7 +114,7 @@
 
 - assert:
     that:
-      - "{{ result['output']['rpc-reply']['data']['aaa'] is defined}}"
+      - "{{ result['output']['data']['aaa'] is defined}}"
 
 - name: get configuration data in xml pretty format
   netconf_get:

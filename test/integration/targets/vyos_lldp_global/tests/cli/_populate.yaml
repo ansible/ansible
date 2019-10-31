@@ -1,0 +1,9 @@
+---
+- name: Setup
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      set service lldp
+      set service lldp legacy-protocols 'cdp'
+      set service lldp management-address '192.0.2.17'

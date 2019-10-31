@@ -45,6 +45,8 @@ Currently Ansible can be run from any machine with Python 2 (version 2.7) or Pyt
 
 This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
 
+When choosing a control node, bear in mind that any management system benefits from being run near the machines being managed. If you are running Ansible in a cloud, consider running it from a machine inside that cloud. In most cases this will work better than on the open Internet.
+
 .. note::
 
     macOS by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
@@ -82,8 +84,8 @@ later).
      modules to use. You will still need to set :ref:`ansible_python_interpreter<ansible_python_interpreter>` if the Python
      2 interpreter is not installed to :command:`/usr/bin/python`.
 
-   * Ansible's "raw" module (for executing commands in a quick and dirty way) and the script module
-     don't even need Python installed.  So technically, you can use Ansible to install a compatible
+   * Ansible's :ref:`raw module<raw_module>`, and the :ref:`script module<script_module>`, do not depend
+     on a client side install of Python to run.  Technically, you can use Ansible to install a compatible
      version of Python using the :ref:`raw module<raw_module>`, which then allows you to use everything else.
      For example, if you need to bootstrap Python 2 onto a RHEL-based system, you can install it
      via
@@ -113,13 +115,19 @@ On RHEL and CentOS:
 
     $ sudo yum install ansible
 
-RPMs for RHEL 7 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_.
+RPMs for RHEL 7  and RHEL 8 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_.
 
-To enable the Ansible Engine repository, run the following command:
+To enable the Ansible Engine repository for RHEL 8, run the following command:
 
 .. code-block:: bash
 
-    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.7-rpms
+    $ sudo subscription-manager repos --enable ansible-2.8-for-rhel-8-x86_64-rpms
+
+To enable the Ansible Engine repository for RHEL 7, run the following command:
+
+.. code-block:: bash
+
+    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.8-rpms
 
 RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
 
@@ -150,7 +158,7 @@ To configure the PPA on your machine and install ansible run these commands:
     $ sudo apt-add-repository --yes --update ppa:ansible/ansible
     $ sudo apt install ansible
 
-.. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties". You may want to use ``apt-get`` instead of ``apt`` in older versions.
+.. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties". You may want to use ``apt-get`` instead of ``apt`` in older versions. Also, be aware that only newer distributions (i.e. 18.04, 18.10, etc.) have a ``-u`` or ``--update`` flag, so adjust your script accordingly.
 
 Debian/Ubuntu packages can also be built from the source checkout, run:
 
@@ -314,7 +322,7 @@ In order to use the ``paramiko`` connection plugin or modules that require ``par
 
     $ pip install --user paramiko
 
-Ansble can also be installed inside a new or existing ``virtualenv``::
+Ansible can also be installed inside a new or existing ``virtualenv``::
 
     $ python -m virtualenv ansible  # Create a virtualenv if one does not already exist
     $ source ansible/bin/activate   # Activate the virtual environment
@@ -327,7 +335,7 @@ If you wish to install Ansible globally, run the following commands::
 
 .. note::
 
-    Running ``pip`` with ``sudo`` will make global changes to the system. Since ``pip`` does not coordinate with system package managers, it could make changes to you system that leave it in an inconsistent on non-functioning state. This is particularly true for macOS. Installing with ``--user`` is recommended unless you understand fully the implications of modifying global files on the system.
+    Running ``pip`` with ``sudo`` will make global changes to the system. Since ``pip`` does not coordinate with system package managers, it could make changes to your system that leaves it in an inconsistent or non-functioning state. This is particularly true for macOS. Installing with ``--user`` is recommended unless you understand fully the implications of modifying global files on the system.
 
 .. note::
 

@@ -1,0 +1,334 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: testVnet
+    address_prefixes: "10.0.0.0/16"
+
+- name: Add subnet
+  azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    name: testSubnet
+    address_prefix: "10.0.1.0/24"
+    virtual_network: testVnet
+
+- name: Create public IP address
+  azure_rm_publicipaddress:
+    resource_group: "{{ resource_group }}"
+    allocation_method: Static
+    name: testPublicIP
+
+- name: Create virtual network inteface cards for VM A and B
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "vmforimage{{ rpfx }}nic"
+    virtual_network: testVnet
+    subnet: testSubnet
+
+- name: Create VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "vmforimage{{ rpfx }}"
+    location: eastus
+    admin_username: testuser
+    admin_password: "Password1234!"
+    vm_size: Standard_B1ms
+    network_interfaces: "vmforimage{{ rpfx }}nic"
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+
+- name: Get VM facts
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    name:  "vmforimage{{ rpfx }}"
+  register: output
+
+- name: Create a snapshot by importing an unmanaged blob from the same subscription.
+  azure_rm_snapshot:
+    resource_group: "{{ resource_group }}"
+    name: mySnapshot
+    location: eastus
+    creation_data:
+      create_option: Import
+      source_uri: 'https://{{ output.vms[0].storage_account_name }}.blob.core.windows.net/{{ output.vms[0].storage_container_name }}/{{ output.vms[0].storage_blob_name }}'
+  register: output
+
+- assert:
+    that: 
+      - output.changed
+
+- name: Generalize VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "vmforimage{{ rpfx }}"
+    generalized: yes
+- name: Create custom image
+  azure_rm_image:
+    resource_group: "{{ resource_group }}"
+    name: testimagea
+    source: "vmforimage{{ rpfx }}"
+- name: Create or update a simple gallery.
+  azure_rm_gallery:
+    resource_group: "{{ resource_group }}"
+    name: myGallery{{ rpfx }}
+    location: eastus
+    description: This is the gallery description.
+  register: output
+
+- assert:
+    that: 
+      - output.changed
+
+- name: Create or update a simple gallery - idempotent
+  azure_rm_gallery:
+    resource_group: "{{ resource_group }}"
+    name: myGallery{{ rpfx }}
+    location: eastus
+    description: This is the gallery description.
+  register: output
+
+- assert:
+    that: 
+      - not output.changed
+
+- name: Create or update a simple gallery - change description
+  azure_rm_gallery:
+    resource_group: "{{ resource_group }}"
+    name: myGallery{{ rpfx }}
+    location: eastus
+    description: This is the gallery description - xxx.
+  register: output
+
+- assert:
+    that: 
+      - output.changed
+
+- name: Get a gallery info.
+  azure_rm_gallery_info:
+    resource_group: "{{ resource_group }}"
+    name: myGallery{{ rpfx }}
+  register: output
+
+- assert:
+    that: 
+      - not output.changed
+      - output.galleries['id'] != None
+      - output.galleries['name'] != None
+      - output.galleries['location'] != None
+      - output.galleries['description'] != None
+      - output.galleries['provisioning_state'] != None
+
+- name: Create or update gallery image
+  azure_rm_galleryimage:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    name: myImage
+    location: eastus
+    os_type: linux
+    os_state: generalized
+    identifier:
+      publisher: myPublisherName
+      offer: myOfferName
+      sku: mySkuName
+    description: Image Description
+  register: output
+
+- assert:
+    that: 
+      - output.changed
+
+- name: Create or update gallery image - idempotent
+  azure_rm_galleryimage:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    name: myImage
+    location: eastus
+    os_type: linux
+    os_state: generalized
+    identifier:
+      publisher: myPublisherName
+      offer: myOfferName
+      sku: mySkuName
+    description: Image Description
+  register: output
+
+- assert:
+    that: 
+      - not output.changed
+
+- name: Create or update gallery image - change description
+  azure_rm_galleryimage:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    name: myImage
+    location: eastus
+    os_type: linux
+    os_state: generalized
+    identifier:
+      publisher: myPublisherName
+      offer: myOfferName
+      sku: mySkuName
+    description: Image Description XXXs
+  register: output
+
+- assert:
+    that: 
+      - output.changed
+
+- name: Get a gallery image info.
+  azure_rm_galleryimage_info:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    name: myImage
+  register: output
+
+- assert:
+    that: 
+      - not output.changed
+      - output.images['id'] != None
+      - output.images['name'] != None
+      - output.images['location'] != None
+      - output.images['os_state'] != None
+      - output.images['os_type'] != None
+      - output.images['identifier'] != None
+
+- name: Create or update a simple gallery Image Version.
+  azure_rm_galleryimageversion:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    gallery_image_name: myImage
+    name: 10.1.3
+    location: eastus
+    publishing_profile:
+      end_of_life_date: "2020-10-01t00:00:00+00:00"
+      exclude_from_latest: yes
+      replica_count: 3
+      storage_account_type: Standard_LRS
+      target_regions:
+        - name: eastus
+          regional_replica_count: 1
+        - name: westus
+          regional_replica_count: 2
+          storage_account_type: Standard_ZRS
+      managed_image:
+        name: testimagea
+        resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: 
+      - output.changed
+
+- name: Create or update a simple gallery Image Version - idempotent
+  azure_rm_galleryimageversion:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    gallery_image_name: myImage
+    name: 10.1.3
+    location: eastus
+    publishing_profile:
+      end_of_life_date: "2020-10-01t00:00:00+00:00"
+      exclude_from_latest: yes
+      replica_count: 3
+      storage_account_type: Standard_LRS
+      target_regions:
+        - name: eastus
+          regional_replica_count: 1
+        - name: westus
+          regional_replica_count: 2
+          storage_account_type: Standard_ZRS
+      managed_image:
+        name: testimagea
+        resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: 
+      - not output.changed
+
+- name: Create or update a simple gallery Image Version - change end of life
+  azure_rm_galleryimageversion:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    gallery_image_name: myImage
+    name: 10.1.3
+    location: eastus
+    publishing_profile:
+      end_of_life_date: "2021-10-01t00:00:00+00:00"
+      exclude_from_latest: yes
+      replica_count: 3
+      storage_account_type: Standard_LRS
+      target_regions:
+        - name: eastus
+          regional_replica_count: 1
+        - name: westus
+          regional_replica_count: 2
+          storage_account_type: Standard_ZRS
+      managed_image:
+        name: testimagea
+        resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: 
+      - output.changed
+
+- name: Get a simple gallery Image Version info.
+  azure_rm_galleryimageversion_info:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    gallery_image_name: myImage
+    name: 10.1.3
+  register: output
+
+- assert:
+    that: 
+      - not output.changed
+      - output.versions['id'] != None
+      - output.versions['name'] != None
+      - output.versions['location'] != None
+      - output.versions['publishing_profile'] != None
+      - output.versions['provisioning_state'] != None
+
+- name: Delete gallery image Version.
+  azure_rm_galleryimageversion:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    gallery_image_name: myImage
+    name: 10.1.3
+    state: absent
+  register: output
+
+- assert:
+    that: 
+      - output.changed
+
+- name: Delete gallery image
+  azure_rm_galleryimage:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    name: myImage
+    state: absent
+  register: output
+
+- assert:
+    that: 
+      - output.changed
+
+- name: Delete gallery
+  azure_rm_gallery:
+    resource_group: "{{ resource_group }}"
+    name: myGallery{{ rpfx }}
+    state: absent
+  register: output
+
+- assert:
+    that: 
+      - output.changed

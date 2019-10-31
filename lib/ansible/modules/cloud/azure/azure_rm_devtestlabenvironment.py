@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabenvironment
 version_added: "2.8"
-short_description: Manage Azure DevTest Lab Environment instance.
+short_description: Manage Azure DevTest Lab Environment instance
 description:
     - Create, update and delete instance of Azure DevTest Lab Environment.
 
@@ -43,7 +43,7 @@ options:
             - The location of the resource.
     deployment_template:
         description:
-            - "The Azure Resource Manager template's identifier."
+            - The Azure Resource Manager template's identifier.
     deployment_parameters:
         description:
             - The parameters of the Azure Resource Manager template.
@@ -57,19 +57,19 @@ options:
                     - The value of the template parameter.
     state:
       description:
-        - Assert the state of the Environment.
-        - Use 'present' to create or update an Environment and 'absent' to delete it.
+          - Assert the state of the Environment.
+          - Use C((present) to create or update an Environment and C(absent) to delete it.
       default: present
       choices:
-        - absent
-        - present
+          - absent
+          - present
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -242,7 +242,7 @@ class AzureRMDtlEnvironment(AzureRMModuleBase):
                 return self.results
 
             self.delete_environment()
-            # This currently doesnt' work as there is a bug in SDK / Service
+            # This currently doesn't work as there is a bug in SDK / Service
             if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
         else:

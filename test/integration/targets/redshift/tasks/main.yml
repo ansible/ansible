@@ -195,7 +195,7 @@
       assert:
         that:
           - 'result.failed'
-          - 'result.msg == "Need to specifiy final_cluster_snapshot_identifier if skip_final_cluster_snapshot is False"'
+          - 'result.msg == "Need to specify final_cluster_snapshot_identifier if skip_final_cluster_snapshot is False"'
 
 
     # ============================================================

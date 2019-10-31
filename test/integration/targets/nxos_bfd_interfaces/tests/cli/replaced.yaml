@@ -1,0 +1,65 @@
+---
+- debug:
+    msg: "Start nxos_bfd_interfaces replaced integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact:
+    bfd_enable: enable
+    bfd_disable: disable
+  when: platform is not search('N5K|N6K')
+
+- name: setup1
+  cli_config: &setup_teardown
+    config: |
+      no feature bfd
+      default interface {{ test_int1 }}
+
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        feature bfd
+        interface {{ test_int1 }}
+          no switchport
+
+  - name: setup initial bfd state
+    nxos_bfd_interfaces:
+      config:
+        - name: "{{ test_int1 }}"
+          bfd: "{{ bfd_disable|default(omit)}}"
+          echo: enable
+      state: merged
+
+  - name: Replaced
+    nxos_bfd_interfaces: &replaced
+      config:
+        - name: "{{ test_int1 }}"
+          bfd: "{{ bfd_enable|default(omit)}}"
+          echo: disable
+      state: replaced
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'no bfd echo' in result.commands"
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
+
+  - assert:
+      that:
+        - "{{ 'bfd' in result.commands }}"
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
+    when: bfd_enable is defined
+
+  - name: Idempotence - Replaced
+    nxos_bfd_interfaces: *replaced
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *setup_teardown

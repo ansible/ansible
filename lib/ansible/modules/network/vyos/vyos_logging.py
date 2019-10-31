@@ -33,7 +33,8 @@ description:
   - This module provides declarative management of logging
     on Vyatta Vyos devices.
 notes:
-  - Tested against VYOS 1.1.7
+  - Tested against VyOS 1.1.8 (helium).
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 options:
   dest:
     description:

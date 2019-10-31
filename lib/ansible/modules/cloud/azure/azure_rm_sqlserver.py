@@ -19,7 +19,7 @@ module: azure_rm_sqlserver
 version_added: "2.5"
 short_description: Manage SQL Server instance
 description:
-    - Create, update and delete instance of SQL Server
+    - Create, update and delete instance of SQL Server.
 
 options:
     resource_group:
@@ -41,15 +41,14 @@ options:
             - The administrator login password (required for server creation).
     version:
         description:
-            - "The version of the server. For example '12.0'."
+            - The version of the server. For example C(12.0).
     identity:
         description:
-            - "The identity type. Set this to 'SystemAssigned' in order to automatically create and assign an Azure Active Directory principal for the resour
-               ce. Possible values include: 'SystemAssigned'"
+            - The identity type. Set this to C(SystemAssigned) in order to automatically create and assign an Azure Active Directory principal for the resource.
+            - Possible values include C(SystemAssigned).
     state:
         description:
-            - Assert the state of the SQL server. Use C(present) to create or update a server and
-              C(absent) to delete a server.
+            - State of the SQL server. Use C(present) to create or update a server and use C(absent) to delete a server.
         default: present
         choices:
             - absent
@@ -60,7 +59,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 

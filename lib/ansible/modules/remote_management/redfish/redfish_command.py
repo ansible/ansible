@@ -27,53 +27,92 @@ options:
     required: true
     description:
       - Category to execute on OOB controller
+    type: str
   command:
     required: true
     description:
       - List of commands to execute on OOB controller
+    type: list
   baseuri:
     required: true
     description:
       - Base URI of OOB controller
+    type: str
   username:
     required: true
     description:
-      - User for authentication with OOB controller
+      - Username for authentication with OOB controller
+    type: str
     version_added: "2.8"
   password:
     required: true
     description:
       - Password for authentication with OOB controller
+    type: str
   id:
     required: false
+    aliases: [ account_id ]
     description:
-      - ID of user to add/delete/modify
+      - ID of account to delete/modify
+    type: str
     version_added: "2.8"
   new_username:
     required: false
+    aliases: [ account_username ]
     description:
-      - name of user to add/delete/modify
+      - Username of account to add/delete/modify
+    type: str
     version_added: "2.8"
   new_password:
     required: false
+    aliases: [ account_password ]
     description:
-      - password of user to add/delete/modify
+      - New password of account to add/modify
+    type: str
     version_added: "2.8"
   roleid:
     required: false
+    aliases: [ account_roleid ]
     description:
-      - role of user to add/delete/modify
+      - Role of account to add/modify
+    type: str
     version_added: "2.8"
   bootdevice:
     required: false
     description:
       - bootdevice when setting boot configuration
+    type: str
   timeout:
     description:
       - Timeout in seconds for URL requests to OOB controller
     default: 10
     type: int
     version_added: '2.8'
+  uefi_target:
+    required: false
+    description:
+      - UEFI target when bootdevice is "UefiTarget"
+    type: str
+    version_added: "2.9"
+  boot_next:
+    required: false
+    description:
+      - BootNext target when bootdevice is "UefiBootNext"
+    type: str
+    version_added: "2.9"
+  update_username:
+    required: false
+    aliases: [ account_updatename ]
+    description:
+      - new update user name for account_username
+    type: str
+    version_added: "2.10"
+  account_properties:
+    required: false
+    description:
+      - properties of account service to update
+    type: dict
+    version_added: "2.10"
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -96,6 +135,26 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
+  - name: Set one-time boot device to UefiTarget of "/0x31/0x33/0x01/0x01"
+    redfish_command:
+      category: Systems
+      command: SetOneTimeBoot
+      bootdevice: "UefiTarget"
+      uefi_target: "/0x31/0x33/0x01/0x01"
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Set one-time boot device to BootNext target of "Boot0001"
+    redfish_command:
+      category: Systems
+      command: SetOneTimeBoot
+      bootdevice: "UefiBootNext"
+      boot_next: "Boot0001"
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Set chassis indicator LED to blink
     redfish_command:
       category: Chassis
@@ -104,6 +163,55 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
+  - name: Add user
+    redfish_command:
+      category: Accounts
+      command: AddUser
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      new_username: "{{ new_username }}"
+      new_password: "{{ new_password }}"
+      roleid: "{{ roleid }}"
+
+  - name: Add user using new option aliases
+    redfish_command:
+      category: Accounts
+      command: AddUser
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      account_username: "{{ account_username }}"
+      account_password: "{{ account_password }}"
+      account_roleid: "{{ account_roleid }}"
+
+  - name: Delete user
+    redfish_command:
+      category: Accounts
+      command: DeleteUser
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      account_username: "{{ account_username }}"
+
+  - name: Disable user
+    redfish_command:
+      category: Accounts
+      command: DisableUser
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      account_username: "{{ account_username }}"
+
+  - name: Enable user
+    redfish_command:
+      category: Accounts
+      command: EnableUser
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      account_username: "{{ account_username }}"
+
   - name: Add and enable user
     redfish_command:
       category: Accounts
@@ -111,19 +219,9 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      id: "{{ id }}"
       new_username: "{{ new_username }}"
       new_password: "{{ new_password }}"
       roleid: "{{ roleid }}"
-
-  - name: Disable and delete user
-    redfish_command:
-      category: Accounts
-      command: ["DisableUser", "DeleteUser"]
-      baseuri: "{{ baseuri }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      id: "{{ id }}"
 
   - name: Update user password
     redfish_command:
@@ -132,8 +230,49 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      id: "{{ id }}"
-      new_password: "{{ new_password }}"
+      account_username: "{{ account_username }}"
+      account_password: "{{ account_password }}"
+
+  - name: Update user role
+    redfish_command:
+      category: Accounts
+      command: UpdateUserRole
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      account_username: "{{ account_username }}"
+      roleid: "{{ roleid }}"
+
+  - name: Update user name
+    redfish_command:
+      category: Accounts
+      command: UpdateUserName
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      account_username: "{{ account_username }}"
+      account_updatename: "{{ account_updatename }}"
+
+  - name: Update user name
+    redfish_command:
+      category: Accounts
+      command: UpdateUserName
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      account_username: "{{ account_username }}"
+      update_username: "{{ update_username }}"
+
+  - name: Update AccountService properties
+    redfish_command:
+      category: Accounts
+      command: UpdateAccountServiceProperties
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      account_properties:
+        AccountLockoutThreshold: 5
+        AccountLockoutDuration: 600
 
   - name: Clear Manager Logs with a timeout of 20 seconds
     redfish_command:
@@ -160,11 +299,12 @@ from ansible.module_utils._text import to_native
 
 # More will be added as module features are expanded
 CATEGORY_COMMANDS_ALL = {
-    "Systems": ["PowerOn", "PowerForceOff", "PowerGracefulRestart",
+    "Systems": ["PowerOn", "PowerForceOff", "PowerForceRestart", "PowerGracefulRestart",
                 "PowerGracefulShutdown", "PowerReboot", "SetOneTimeBoot"],
     "Chassis": ["IndicatorLedOn", "IndicatorLedOff", "IndicatorLedBlink"],
     "Accounts": ["AddUser", "EnableUser", "DeleteUser", "DisableUser",
-                 "UpdateUserRole", "UpdateUserPassword"],
+                 "UpdateUserRole", "UpdateUserPassword", "UpdateUserName",
+                 "UpdateAccountServiceProperties"],
     "Manager": ["GracefulRestart", "ClearLogs"],
 }
 
@@ -178,12 +318,16 @@ def main():
             baseuri=dict(required=True),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
-            id=dict(),
-            new_username=dict(),
-            new_password=dict(no_log=True),
-            roleid=dict(),
+            id=dict(aliases=["account_id"]),
+            new_username=dict(aliases=["account_username"]),
+            new_password=dict(aliases=["account_password"], no_log=True),
+            roleid=dict(aliases=["account_roleid"]),
+            update_username=dict(type='str', aliases=["account_updatename"]),
+            account_properties=dict(type='dict', default={}),
             bootdevice=dict(),
-            timeout=dict(type='int', default=10)
+            timeout=dict(type='int', default=10),
+            uefi_target=dict(),
+            boot_next=dict()
         ),
         supports_check_mode=False
     )
@@ -196,18 +340,19 @@ def main():
              'pswd': module.params['password']}
 
     # user to add/modify/delete
-    user = {'userid': module.params['id'],
-            'username': module.params['new_username'],
-            'userpswd': module.params['new_password'],
-            'userrole': module.params['roleid']}
+    user = {'account_id': module.params['id'],
+            'account_username': module.params['new_username'],
+            'account_password': module.params['new_password'],
+            'account_roleid': module.params['roleid'],
+            'account_updatename': module.params['update_username'],
+            'account_properties': module.params['account_properties']}
 
     # timeout
     timeout = module.params['timeout']
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_uri = "/redfish/v1/"
-    rf_utils = RedfishUtils(creds, root_uri, timeout)
+    rf_utils = RedfishUtils(creds, root_uri, timeout, module)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
@@ -227,11 +372,13 @@ def main():
             "DeleteUser": rf_utils.delete_user,
             "DisableUser": rf_utils.disable_user,
             "UpdateUserRole": rf_utils.update_user_role,
-            "UpdateUserPassword": rf_utils.update_user_password
+            "UpdateUserPassword": rf_utils.update_user_password,
+            "UpdateUserName": rf_utils.update_user_name,
+            "UpdateAccountServiceProperties": rf_utils.update_accountservice_properties
         }
 
         # execute only if we find an Account service resource
-        result = rf_utils._find_accountservice_resource(rf_uri)
+        result = rf_utils._find_accountservice_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -240,7 +387,7 @@ def main():
 
     elif category == "Systems":
         # execute only if we find a System resource
-        result = rf_utils._find_systems_resource(rf_uri)
+        result = rf_utils._find_systems_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -248,10 +395,13 @@ def main():
             if "Power" in command:
                 result = rf_utils.manage_system_power(command)
             elif command == "SetOneTimeBoot":
-                result = rf_utils.set_one_time_boot_device(module.params['bootdevice'])
+                result = rf_utils.set_one_time_boot_device(
+                    module.params['bootdevice'],
+                    module.params['uefi_target'],
+                    module.params['boot_next'])
 
     elif category == "Chassis":
-        result = rf_utils._find_chassis_resource(rf_uri)
+        result = rf_utils._find_chassis_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -273,7 +423,7 @@ def main():
         }
 
         # execute only if we find a Manager service resource
-        result = rf_utils._find_managers_resource(rf_uri)
+        result = rf_utils._find_managers_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -283,7 +433,8 @@ def main():
     # Return data back or fail with proper message
     if result['ret'] is True:
         del result['ret']
-        module.exit_json(changed=True, msg='Action was successful')
+        changed = result.get('changed', True)
+        module.exit_json(changed=changed, msg='Action was successful')
     else:
         module.fail_json(msg=to_native(result['msg']))
 

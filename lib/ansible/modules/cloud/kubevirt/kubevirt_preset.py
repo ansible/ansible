@@ -129,8 +129,11 @@ class KubeVirtVMPreset(KubeVirtRawModule):
         # attributes there, remove when we do:
         definition['spec']['domain']['devices'] = dict()
 
+        # defaults for template
+        defaults = {'disks': [], 'volumes': [], 'interfaces': [], 'networks': []}
+
         # Execute the CURD of VM:
-        dummy, definition = self.construct_vm_definition(KIND, definition, definition)
+        dummy, definition = self.construct_vm_definition(KIND, definition, definition, defaults)
         result_crud = self.execute_crud(KIND, definition)
         changed = result_crud['changed']
         result = result_crud.pop('result')

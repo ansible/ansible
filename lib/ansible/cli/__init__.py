@@ -15,20 +15,22 @@ import sys
 
 from abc import ABCMeta, abstractmethod
 
+from ansible.cli.arguments import option_helpers as opt_help
 from ansible import constants as C
 from ansible import context
-from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import with_metaclass, string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.dataloader import DataLoader
-from ansible.release import __version__
-from ansible.utils.display import Display
-from ansible.utils.path import unfrackpath
-from ansible.vars.manager import VariableManager
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
 from ansible.plugins.loader import add_all_plugin_dirs
+from ansible.release import __version__
+from ansible.utils.collection_loader import AnsibleCollectionLoader, get_collection_name_from_path, set_collection_playbook_paths
+from ansible.utils.display import Display
+from ansible.utils.path import unfrackpath
+from ansible.utils.unsafe_proxy import to_unsafe_text
+from ansible.vars.manager import VariableManager
 
 try:
     import argcomplete
@@ -60,6 +62,9 @@ class CLI(with_metaclass(ABCMeta, object)):
         """
         Base init method for all command line programs
         """
+
+        if not args:
+            raise ValueError('A non-empty list for args is required')
 
         self.args = args
         self.parser = None
@@ -235,8 +240,6 @@ class CLI(with_metaclass(ABCMeta, object)):
             if op['ask_pass']:
                 sshpass = getpass.getpass(prompt="SSH password: ")
                 become_prompt = "%s password[defaults to SSH password]: " % become_prompt_method
-                if sshpass:
-                    sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
             else:
                 become_prompt = "%s password: " % become_prompt_method
 
@@ -244,10 +247,15 @@ class CLI(with_metaclass(ABCMeta, object)):
                 becomepass = getpass.getpass(prompt=become_prompt)
                 if op['ask_pass'] and becomepass == '':
                     becomepass = sshpass
-                if becomepass:
-                    becomepass = to_bytes(becomepass)
         except EOFError:
             pass
+
+        # we 'wrap' the passwords to prevent templating as
+        # they can contain special chars and trigger it incorrectly
+        if sshpass:
+            sshpass = to_unsafe_text(sshpass)
+        if becomepass:
+            becomepass = to_unsafe_text(becomepass)
 
         return (sshpass, becomepass)
 
@@ -275,7 +283,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 ansible.arguments.option_helpers.add_runas_options(self.parser)
                 self.parser.add_option('--my-option', dest='my_option', action='store')
         """
-        self.parser = opt_help.create_base_parser(usage=usage, desc=desc, epilog=epilog)
+        self.parser = opt_help.create_base_parser(os.path.basename(self.args[0]), usage=usage, desc=desc, epilog=epilog, )
 
     @abstractmethod
     def post_process_args(self, options):
@@ -328,6 +336,16 @@ class CLI(with_metaclass(ABCMeta, object)):
                 options.inventory = [unfrackpath(opt, follow=False) if ',' not in opt else opt for opt in options.inventory]
             else:
                 options.inventory = C.DEFAULT_HOST_LIST
+
+        # Dup args set on the root parser and sub parsers results in the root parser ignoring the args. e.g. doing
+        # 'ansible-galaxy -vvv init' has no verbosity set but 'ansible-galaxy init -vvv' sets a level of 3. To preserve
+        # back compat with pre-argparse changes we manually scan and set verbosity based on the argv values.
+        if self.parser.prog in ['ansible-galaxy', 'ansible-vault'] and not options.verbosity:
+            verbosity_arg = next(iter([arg for arg in self.args if arg.startswith('-v')]), None)
+            if verbosity_arg:
+                display.deprecated("Setting verbosity before the arg sub command is deprecated, set the verbosity "
+                                   "after the sub command", "2.13")
+                options.verbosity = verbosity_arg.count('v')
 
         return options
 
@@ -430,6 +448,11 @@ class CLI(with_metaclass(ABCMeta, object)):
         if basedir:
             loader.set_basedir(basedir)
             add_all_plugin_dirs(basedir)
+            set_collection_playbook_paths(basedir)
+            default_collection = get_collection_name_from_path(basedir)
+            if default_collection:
+                display.warning(u'running with default collection {0}'.format(default_collection))
+                AnsibleCollectionLoader().set_default_collection(default_collection)
 
         vault_ids = list(options['vault_ids'])
         default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST

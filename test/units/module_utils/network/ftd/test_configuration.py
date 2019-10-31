@@ -40,13 +40,22 @@ class TestBaseConfigurationResource(object):
 
         return connection_instance
 
+    @patch.object(BaseConfigurationResource, '_fetch_system_info')
     @patch.object(BaseConfigurationResource, '_send_request')
-    def test_get_objects_by_filter_with_multiple_filters(self, send_request_mock, connection_mock):
+    def test_get_objects_by_filter_with_multiple_filters(self, send_request_mock, fetch_system_info_mock,
+                                                         connection_mock):
         objects = [
             {'name': 'obj1', 'type': 1, 'foo': {'bar': 'buzz'}},
             {'name': 'obj2', 'type': 1, 'foo': {'bar': 'buz'}},
             {'name': 'obj3', 'type': 2, 'foo': {'bar': 'buzz'}}
         ]
+
+        fetch_system_info_mock.return_value = {
+            'databaseInfo': {
+                'buildVersion': '6.3.0'
+            }
+        }
+
         connection_mock.get_operation_spec.return_value = {
             'method': HTTPMethod.GET,
             'url': '/object/'
@@ -88,8 +97,10 @@ class TestBaseConfigurationResource(object):
             ]
         )
 
+    @patch.object(BaseConfigurationResource, '_fetch_system_info')
     @patch.object(BaseConfigurationResource, '_send_request')
-    def test_get_objects_by_filter_with_multiple_responses(self, send_request_mock, connection_mock):
+    def test_get_objects_by_filter_with_multiple_responses(self, send_request_mock, fetch_system_info_mock,
+                                                           connection_mock):
         send_request_mock.side_effect = [
             {'items': [
                 {'name': 'obj1', 'type': 'foo'},
@@ -100,6 +111,11 @@ class TestBaseConfigurationResource(object):
             ]},
             {'items': []}
         ]
+        fetch_system_info_mock.return_value = {
+            'databaseInfo': {
+                'buildVersion': '6.3.0'
+            }
+        }
         connection_mock.get_operation_spec.return_value = {
             'method': HTTPMethod.GET,
             'url': '/object/'
@@ -295,6 +311,27 @@ class TestBaseConfigurationResource(object):
             key_query_params: {
                 'invalid_type': [{'actually_value': 'test', 'expected_type': 'integer', 'path': 'f_integer'}],
                 'required': ['other_param']}}
+
+    @pytest.mark.parametrize("test_api_version, expected_result",
+                             [
+                                 ("6.2.3", "name:object_name"),
+                                 ("6.3.0", "name:object_name"),
+                                 ("6.4.0", "fts~object_name")
+                             ]
+                             )
+    def test_stringify_name_filter(self, test_api_version, expected_result, connection_mock):
+        filters = {"name": "object_name"}
+
+        with patch.object(BaseConfigurationResource, '_fetch_system_info') as fetch_system_info_mock:
+            fetch_system_info_mock.return_value = {
+                'databaseInfo': {
+                    'buildVersion': test_api_version
+                }
+            }
+            resource = BaseConfigurationResource(connection_mock, False)
+
+            assert resource._stringify_name_filter(filters) == expected_result, "Unexpected result for version %s" % (
+                test_api_version)
 
 
 class TestIterateOverPageableResource(object):

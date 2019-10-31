@@ -51,6 +51,7 @@ options:
   location:
     description:
     - Location of the site.
+    type: dict
     suboptions:
       latitude:
         description:

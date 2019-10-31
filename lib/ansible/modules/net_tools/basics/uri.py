@@ -154,6 +154,7 @@ options:
   force:
     description:
       - If C(yes) do not get a cached copy.
+      - Alias C(thirsty) has been deprecated and will be removed in 2.13.
     type: bool
     default: no
     aliases: [ thirsty ]
@@ -259,13 +260,62 @@ EXAMPLES = r'''
     method: POST
     src: /path/to/my/file.json
     remote_src: yes
+
+- name: Pause play until a URL is reachable from this host
+  uri:
+    url: "http://192.0.2.1/some/test"
+    follow_redirects: none
+    method: GET
+  register: _result
+  until: _result.status == 200
+  retries: 720 # 720 * 5 seconds = 1hour (60*60/5)
+  delay: 5 # Every 5 seconds
+
+# There are issues in a supporting Python library that is discussed in
+# https://github.com/ansible/ansible/issues/52705 where a proxy is defined
+# but you want to bypass proxy use on CIDR masks by using no_proxy
+- name: Work around a python issue that doesn't support no_proxy envvar
+  uri:
+    follow_redirects: none
+    validate_certs: false
+    timeout: 5
+    url: "http://{{ ip_address }}:{{ port | default(80) }}"
+  register: uri_data
+  failed_when: false
+  changed_when: false
+  vars:
+    ip_address: 192.0.2.1
+  environment: |
+      {
+        {% for no_proxy in (lookup('env', 'no_proxy') | regex_replace('\s*,\s*', ' ') ).split() %}
+          {% if no_proxy | regex_search('\/') and
+                no_proxy | ipaddr('net') != '' and
+                no_proxy | ipaddr('net') != false and
+                ip_address | ipaddr(no_proxy) is not none and
+                ip_address | ipaddr(no_proxy) != false %}
+            'no_proxy': '{{ ip_address }}'
+          {% elif no_proxy | regex_search(':') != '' and
+                  no_proxy | regex_search(':') != false and
+                  no_proxy == ip_address + ':' + (port | default(80)) %}
+            'no_proxy': '{{ ip_address }}:{{ port | default(80) }}'
+          {% elif no_proxy | ipaddr('host') != '' and
+                  no_proxy | ipaddr('host') != false and
+                  no_proxy == ip_address %}
+            'no_proxy': '{{ ip_address }}'
+          {% elif no_proxy | regex_search('^(\*|)\.') != '' and
+                  no_proxy | regex_search('^(\*|)\.') != false and
+                  no_proxy | regex_replace('\*', '') in ip_address %}
+            'no_proxy': '{{ ip_address }}'
+          {% endif %}
+        {% endfor %}
+      }
 '''
 
 RETURN = r'''
 # The return information includes all the HTTP headers in lower-case.
 elapsed:
   description: The number of seconds that elapsed while performing the download
-  returned: always
+  returned: on success
   type: int
   sample: 23
 msg:
@@ -275,7 +325,7 @@ msg:
   sample: OK (unknown bytes)
 redirected:
   description: Whether the request was redirected
-  returned: always
+  returned: on success
   type: bool
   sample: false
 status:
@@ -418,7 +468,7 @@ def form_urlencoded(body):
 
     if isinstance(body, (Mapping, Sequence)):
         result = []
-        # Turn a list of lists into a list of tupples that urlencode accepts
+        # Turn a list of lists into a list of tuples that urlencode accepts
         for key, values in kv_list(body):
             if isinstance(values, string_types) or not isinstance(values, (Mapping, Sequence)):
                 values = [values]
@@ -525,6 +575,9 @@ def main():
         mutually_exclusive=[['body', 'src']],
     )
 
+    if module.params.get('thirsty'):
+        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
+
     url = module.params['url']
     body = module.params['body']
     body_format = module.params['body_format'].lower()
@@ -605,9 +658,30 @@ def main():
     # Default content_encoding to try
     content_encoding = 'utf-8'
     if 'content_type' in uresp:
-        content_type, params = cgi.parse_header(uresp['content_type'])
-        if 'charset' in params:
-            content_encoding = params['charset']
+        # Handle multiple Content-Type headers
+        charsets = []
+        content_types = []
+        for value in uresp['content_type'].split(','):
+            ct, params = cgi.parse_header(value)
+            if ct not in content_types:
+                content_types.append(ct)
+            if 'charset' in params:
+                if params['charset'] not in charsets:
+                    charsets.append(params['charset'])
+
+        if content_types:
+            content_type = content_types[0]
+            if len(content_types) > 1:
+                module.warn(
+                    'Received multiple conflicting Content-Type values (%s), using %s' % (', '.join(content_types), content_type)
+                )
+        if charsets:
+            content_encoding = charsets[0]
+            if len(charsets) > 1:
+                module.warn(
+                    'Received multiple conflicting charset values (%s), using %s' % (', '.join(charsets), content_encoding)
+                )
+
         u_content = to_text(content, encoding=content_encoding)
         if any(candidate in content_type for candidate in JSON_CANDIDATES):
             try:

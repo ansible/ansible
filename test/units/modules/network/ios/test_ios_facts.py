@@ -30,10 +30,13 @@ class TestIosFactsModule(TestIosModule):
 
     def setUp(self):
         super(TestIosFactsModule, self).setUp()
-        self.mock_run_commands = patch('ansible.modules.network.ios.ios_facts.run_commands')
+        self.mock_run_commands = patch('ansible.module_utils.network.ios.facts.legacy.base.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
-        self.mock_get_capabilities = patch('ansible.modules.network.ios.ios_facts.get_capabilities')
+        self.mock_get_resource_connection = patch('ansible.module_utils.network.common.facts.facts.get_resource_connection')
+        self.get_resource_connection = self.mock_get_resource_connection.start()
+
+        self.mock_get_capabilities = patch('ansible.module_utils.network.ios.facts.legacy.base.get_capabilities')
         self.get_capabilities = self.mock_get_capabilities.start()
         self.get_capabilities.return_value = {
             'device_info': {

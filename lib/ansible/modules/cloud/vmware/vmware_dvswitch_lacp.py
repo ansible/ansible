@@ -35,6 +35,7 @@ options:
             - The name of the Distributed Switch to manage.
         required: True
         aliases: ['dvswitch']
+        type: str
     support_mode:
         description:
             - The LACP support mode.

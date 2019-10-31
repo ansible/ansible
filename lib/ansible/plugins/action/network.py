@@ -40,7 +40,10 @@ class ActionModule(_ActionModule):
     def run(self, task_vars=None):
         config_module = hasattr(self, '_config_module') and self._config_module
         if config_module and self._task.args.get('src'):
-            self._handle_src_option()
+            try:
+                self._handle_src_option()
+            except AnsibleError as e:
+                return {'failed': True, 'msg': e.message, 'changed': False}
 
         result = super(ActionModule, self).run(task_vars=task_vars)
 
@@ -100,7 +103,7 @@ class ActionModule(_ActionModule):
             result['msg'] = copy_result.get('msg')
             return
 
-        result['backup_path'] = copy_result['dest']
+        result['backup_path'] = dest
         if copy_result.get('changed', False):
             result['changed'] = copy_result['changed']
 
@@ -157,8 +160,8 @@ class ActionModule(_ActionModule):
                     for role in dep_chain:
                         searchpath.append(role._role_path)
         searchpath.append(os.path.dirname(source))
-        self._templar.environment.loader.searchpath = searchpath
-        self._task.args['src'] = self._templar.template(template_data, convert_data=convert_data)
+        with self._templar.set_temporary_context(searchpath=searchpath):
+            self._task.args['src'] = self._templar.template(template_data, convert_data=convert_data)
 
     def _get_network_os(self, task_vars):
         if 'network_os' in self._task.args and self._task.args['network_os']:

@@ -65,7 +65,7 @@ options:
     - The name of the flatpak to manage.
     - When used with I(state=present), I(name) can be specified as an C(http(s)) URL to a
       C(flatpakref) file or the unique reverse DNS name that identifies a flatpak.
-    - When suppying a reverse DNS name, you can use the I(remote) option to specify on what remote
+    - When supplying a reverse DNS name, you can use the I(remote) option to specify on what remote
       to look for the flatpak. An example for a reverse DNS name is C(org.gnome.gedit).
     - When used with I(state=absent), it is recommended to specify the name in the reverse DNS
       format.

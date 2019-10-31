@@ -75,9 +75,9 @@ options:
     default: no
   verbose_output:
     description:
-      - When set to C(yes) and I(nodes), I(services) or I(tasks) is set to C(yes)
-        then output will contain verbose information about objects matching the full output of API method.
-        For details see the documentation of your version of Docker API at U(https://docs.docker.com/engine/api/).
+      - When set to C(yes) and I(nodes), I(services) or I(tasks) is set to C(yes), then the module output will
+        contain verbose information about objects matching the full output of API method.
+      - For details see the documentation of your version of Docker API at U(https://docs.docker.com/engine/api/).
       - The verbose output in this module contains only subset of information returned by I(_info) module
         for each type of the objects.
     type: bool
@@ -175,6 +175,7 @@ nodes:
         See description for I(verbose_output).
     returned: When I(nodes) is C(yes)
     type: list
+    elements: dict
 services:
     description:
       - List of dict objects containing the basic information about each volume.
@@ -182,6 +183,7 @@ services:
         See description for I(verbose_output).
     returned: When I(services) is C(yes)
     type: list
+    elements: dict
 tasks:
     description:
       - List of dict objects containing the basic information about each volume.
@@ -189,11 +191,14 @@ tasks:
         See description for I(verbose_output).
     returned: When I(tasks) is C(yes)
     type: list
+    elements: dict
 
 '''
 
+import traceback
+
 try:
-    from docker.errors import APIError, NotFound
+    from docker.errors import DockerException, APIError
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker_common
     pass
@@ -201,7 +206,11 @@ except ImportError:
 from ansible.module_utils._text import to_native
 
 from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
-from ansible.module_utils.docker.common import DockerBaseClass, clean_dict_booleans_for_docker_api
+from ansible.module_utils.docker.common import (
+    DockerBaseClass,
+    clean_dict_booleans_for_docker_api,
+    RequestException,
+)
 
 
 class DockerSwarmManager(DockerBaseClass):
@@ -361,13 +370,18 @@ def main():
     client.fail_results['docker_swarm_active'] = client.check_if_swarm_node()
     client.fail_results['docker_swarm_manager'] = client.check_if_swarm_manager()
 
-    results = dict(
-        changed=False,
-    )
+    try:
+        results = dict(
+            changed=False,
+        )
 
-    DockerSwarmManager(client, results)
-    results.update(client.fail_results)
-    client.module.exit_json(**results)
+        DockerSwarmManager(client, results)
+        results.update(client.fail_results)
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

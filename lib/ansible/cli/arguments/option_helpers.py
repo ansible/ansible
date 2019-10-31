@@ -29,6 +29,22 @@ class SortingHelpFormatter(argparse.HelpFormatter):
         super(SortingHelpFormatter, self).add_arguments(actions)
 
 
+class AnsibleVersion(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        ansible_version = to_native(version(getattr(parser, 'prog')))
+        print(ansible_version)
+        parser.exit()
+
+
+class UnrecognizedArgument(argparse.Action):
+    def __init__(self, option_strings, dest, const=True, default=None, required=False, help=None, metavar=None, nargs=0):
+        super(UnrecognizedArgument, self).__init__(option_strings=option_strings, dest=dest, nargs=nargs, const=const,
+                                                   default=default, required=required, help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        parser.error('unrecognized arguments: %s' % option_string)
+
+
 class PrependListAction(argparse.Action):
     """A near clone of ``argparse._AppendAction``, but designed to prepend list values
     instead of appending.
@@ -171,12 +187,13 @@ def version(prog=None):
 # Functions to add pre-canned options to an OptionParser
 #
 
-def create_base_parser(usage="", desc=None, epilog=None):
+def create_base_parser(prog, usage="", desc=None, epilog=None):
     """
     Create an options parser for all ansible scripts
     """
     # base opts
     parser = argparse.ArgumentParser(
+        prog=prog,
         formatter_class=SortingHelpFormatter,
         epilog=epilog,
         description=desc,
@@ -184,7 +201,8 @@ def create_base_parser(usage="", desc=None, epilog=None):
     )
     version_help = "show program's version number, config file location, configured module search path," \
                    " module location, executable location and exit"
-    parser.add_argument('--version', action='version', version=to_native(version("%(prog)s")), help=version_help)
+
+    parser.add_argument('--version', action=AnsibleVersion, nargs=0, help=version_help)
     add_verbosity_options(parser)
     return parser
 
@@ -205,7 +223,7 @@ def add_async_options(parser):
 
 def add_basedir_options(parser):
     """Add options for commands which can set a playbook basedir"""
-    parser.add_argument('--playbook-dir', default=None, dest='basedir', action='store',
+    parser.add_argument('--playbook-dir', default=C.config.get_config_value('PLAYBOOK_DIR'), dest='basedir', action='store',
                         help="Since this tool does not use playbooks, use this as a substitute playbook directory."
                              "This sets the relative path for many features including roles/ group_vars/ etc.")
 
@@ -273,8 +291,9 @@ def add_meta_options(parser):
 
 def add_module_options(parser):
     """Add options for commands that load modules"""
+    module_path = C.config.get_configuration_definition('DEFAULT_MODULE_PATH').get('default', '')
     parser.add_argument('-M', '--module-path', dest='module_path', default=None,
-                        help="prepend colon-separated path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
+                        help="prepend colon-separated path(s) to module library (default=%s)" % module_path,
                         type=unfrack_path(pathsep=True), action=PrependListAction)
 
 

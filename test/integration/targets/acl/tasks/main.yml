@@ -32,5 +32,5 @@
   vars:
     test_user: ansible_user
     test_group: ansible_group
-    test_file: /tmp/ansible_file
-    test_dir: /tmp/ansible_dir
+    test_file: '{{ output_dir }}/ansible file'
+    test_dir: "{{ output_dir }}/ansible_dir/with some space"

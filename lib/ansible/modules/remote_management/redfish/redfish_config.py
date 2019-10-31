@@ -26,34 +26,41 @@ options:
     required: true
     description:
       - Category to execute on OOB controller
+    type: str
   command:
     required: true
     description:
       - List of commands to execute on OOB controller
+    type: list
   baseuri:
     required: true
     description:
       - Base URI of OOB controller
+    type: str
   username:
     required: true
     description:
       - User for authentication with OOB controller
+    type: str
     version_added: "2.8"
   password:
     required: true
     description:
       - Password for authentication with OOB controller
+    type: str
   bios_attribute_name:
     required: false
     description:
       - name of BIOS attribute to update
     default: 'null'
+    type: str
     version_added: "2.8"
   bios_attribute_value:
     required: false
     description:
       - value of BIOS attribute to update
     default: 'null'
+    type: str
     version_added: "2.8"
   timeout:
     description:
@@ -61,6 +68,13 @@ options:
     default: 10
     type: int
     version_added: "2.8"
+  boot_order:
+    required: false
+    description:
+      - list of BootOptionReference strings specifying the BootOrder
+    default: []
+    type: list
+    version_added: "2.10"
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -104,6 +118,28 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       timeout: 20
+
+  - name: Set boot order
+    redfish_config:
+      category: Systems
+      command: SetBootOrder
+      boot_order:
+        - Boot0002
+        - Boot0001
+        - Boot0000
+        - Boot0003
+        - Boot0004
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Set boot order to the default
+    redfish_config:
+      category: Systems
+      command: SetDefaultBootOrder
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
 '''
 
 RETURN = '''
@@ -121,7 +157,8 @@ from ansible.module_utils._text import to_native
 
 # More will be added as module features are expanded
 CATEGORY_COMMANDS_ALL = {
-    "Systems": ["SetBiosDefaultSettings", "SetBiosAttributes"]
+    "Systems": ["SetBiosDefaultSettings", "SetBiosAttributes", "SetBootOrder",
+                "SetDefaultBootOrder"]
 }
 
 
@@ -136,7 +173,8 @@ def main():
             password=dict(required=True, no_log=True),
             bios_attribute_name=dict(default='null'),
             bios_attribute_value=dict(default='null'),
-            timeout=dict(type='int', default=10)
+            timeout=dict(type='int', default=10),
+            boot_order=dict(type='list', elements='str', default=[])
         ),
         supports_check_mode=False
     )
@@ -155,10 +193,12 @@ def main():
     bios_attributes = {'bios_attr_name': module.params['bios_attribute_name'],
                        'bios_attr_value': module.params['bios_attribute_value']}
 
+    # boot order
+    boot_order = module.params['boot_order']
+
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_uri = "/redfish/v1/"
-    rf_utils = RedfishUtils(creds, root_uri, timeout)
+    rf_utils = RedfishUtils(creds, root_uri, timeout, module)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
@@ -173,7 +213,7 @@ def main():
     # Organize by Categories / Commands
     if category == "Systems":
         # execute only if we find a System resource
-        result = rf_utils._find_systems_resource(rf_uri)
+        result = rf_utils._find_systems_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -182,6 +222,10 @@ def main():
                 result = rf_utils.set_bios_default_settings()
             elif command == "SetBiosAttributes":
                 result = rf_utils.set_bios_attributes(bios_attributes)
+            elif command == "SetBootOrder":
+                result = rf_utils.set_boot_order(boot_order)
+            elif command == "SetDefaultBootOrder":
+                result = rf_utils.set_default_boot_order()
 
     # Return data back or fail with proper message
     if result['ret'] is True:

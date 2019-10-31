@@ -31,7 +31,7 @@ from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
-from ansible.utils.collection_loader import get_collection_role_path, is_collection_ref
+from ansible.utils.collection_loader import get_collection_role_path, AnsibleCollectionRef
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 
@@ -129,8 +129,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         if self._variable_manager:
             all_vars = self._variable_manager.get_vars(play=self._play)
             templar = Templar(loader=self._loader, variables=all_vars)
-            if templar._contains_vars(role_name):
-                role_name = templar.template(role_name)
+            role_name = templar.template(role_name)
 
         return role_name
 
@@ -155,7 +154,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         role_tuple = None
 
         # try to load as a collection-based role first
-        if self._collection_list or is_collection_ref(role_name):
+        if self._collection_list or AnsibleCollectionRef.is_valid_fqcr(role_name):
             role_tuple = get_collection_role_path(role_name, self._collection_list)
 
         if role_tuple:

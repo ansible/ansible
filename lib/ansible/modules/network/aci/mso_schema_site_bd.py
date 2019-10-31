@@ -73,8 +73,8 @@ EXAMPLES = r'''
     state: present
   delegate_to: localhost
 
-- name: Remove a site VRF
-  mso_schema_site_vrf:
+- name: Remove a site BD
+  mso_schema_site_bd:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -85,8 +85,8 @@ EXAMPLES = r'''
     state: absent
   delegate_to: localhost
 
-- name: Query a specific site VRF
-  mso_schema_site_vrf:
+- name: Query a specific site BD
+  mso_schema_site_bd:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -98,8 +98,8 @@ EXAMPLES = r'''
   delegate_to: localhost
   register: query_result
 
-- name: Query all site VRFs
-  mso_schema_site_vrf:
+- name: Query all site BDs
+  mso_schema_site_bd:
     host: mso_host
     username: admin
     password: SomeSecretPassword

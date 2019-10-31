@@ -27,6 +27,12 @@ if ($null -eq (Get-Module "WebAdministration" -ErrorAction SilentlyContinue)) {
 
 # Application info
 $application = Get-WebApplication -Site $site -Name $name
+$website = Get-Website -Name $site
+
+# Set ApplicationPool to current if not specified
+if (!$application_pool) {
+  $application_pool = $website.applicationPool
+}
 
 try {
   # Add application
