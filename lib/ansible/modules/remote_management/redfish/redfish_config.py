@@ -88,6 +88,12 @@ options:
       -  setting dict of manager services to update
     type: dict
     version_added: "2.10"
+  resource_id:
+    required: false
+    description:
+      - The ID of the System, Manager or Chassis to modify
+    type: str
+    version_added: "2.10"
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -97,6 +103,7 @@ EXAMPLES = '''
     redfish_config:
       category: Systems
       command: SetBiosAttributes
+      resource_id: 437XR1138R2
       bios_attributes:
         BootMode: "Uefi"
       baseuri: "{{ baseuri }}"
@@ -107,6 +114,7 @@ EXAMPLES = '''
     redfish_config:
       category: Systems
       command: SetBiosAttributes
+      resource_id: 437XR1138R2
       bios_attributes:
         BootMode: "Bios"
         OneTimeBootMode: "Enabled"
@@ -119,6 +127,7 @@ EXAMPLES = '''
     redfish_config:
       category: Systems
       command: SetBiosAttributes
+      resource_id: 437XR1138R2
       bios_attribute_name: PxeDev1EnDis
       bios_attribute_value: Enabled
       baseuri: "{{ baseuri }}"
@@ -129,6 +138,7 @@ EXAMPLES = '''
     redfish_config:
       category: Systems
       command: SetBiosDefaultSettings
+      resource_id: 437XR1138R2
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
@@ -210,7 +220,8 @@ def main():
             network_protocols=dict(
                 type='dict',
                 default={}
-            )
+            ),
+            resource_id=dict()
         ),
         supports_check_mode=False
     )
@@ -237,9 +248,13 @@ def main():
     # boot order
     boot_order = module.params['boot_order']
 
+    # System, Manager or Chassis ID to modify
+    resource_id = module.params['resource_id']
+
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_utils = RedfishUtils(creds, root_uri, timeout, module)
+    rf_utils = RedfishUtils(creds, root_uri, timeout, module,
+                            resource_id=resource_id, data_modification=True)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
