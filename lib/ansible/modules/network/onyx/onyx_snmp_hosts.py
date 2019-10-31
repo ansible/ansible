@@ -152,8 +152,8 @@ class OnyxSNMPHostsModule(BaseOnyxModule):
                          user_name=dict(type='str'),
                          auth_type=dict(type='str', choices=['md5', 'sha', 'sha224', 'sha256', 'sha384', 'sha512']),
                          privacy_type=dict(type='str', choices=['3des', 'aes-128', 'aes-192', 'aes-192-cfb', 'aes-256', 'aes-256-cfb', 'des']),
-                         privacy_password=dict(type='str'),
-                         auth_password=dict(type='str'),
+                         privacy_password=dict(type='str', no_log=True),
+                         auth_password=dict(type='str', no_log=True),
                          state=dict(type='str', choices=['present', 'absent'])
                          )
         element_spec = dict(
@@ -251,151 +251,168 @@ class OnyxSNMPHostsModule(BaseOnyxModule):
         if hosts_config[1]:
             self._set_host_config(hosts_config[1])
 
+    def generate_snmp_commands_with_current_config(self, host):
+        host_id = host.get('name')
+        host_notification_type = host.get('notification_type')
+        host_enabled = host.get("enabled")
+        host_port = host.get('port')
+        host_version = host.get('version')
+        host_username = host.get('user_name')
+        host_auth_type = host.get('auth_type')
+        host_auth_pass = host.get('auth_password')
+        host_priv_type = host.get('privacy_type')
+        host_priv_pass = host.get('privacy_password')
+        present_state = host.get('state')
+        current_hosts = self._current_config.get("current_hosts")
+        current_entry = current_hosts.get(host_id)
+        if present_state is not None:
+            if present_state == 'absent':
+                self._commands.append('no snmp-server host {0}' .format(host_id))
+                return
+        if host_enabled is not None:
+            if current_entry.get('enabled') != host_enabled:
+                if host_enabled is True:
+                    self._commands.append('no snmp-server host {0} disable' .format(host_id))
+                else:
+                    self._commands.append('snmp-server host {0} disable' .format(host_id))
+        if host_notification_type is not None:
+            current_port = current_entry.get('port')
+            current_version = current_entry.get('version')
+            current_priv_type = current_entry.get('privacy_type')
+            current_username = current_entry.get('user_name')
+            current_auth_type = current_entry.get('auth_type')
+            current_noti_type = current_entry.get('notification_type')
+            if host_port is not None:
+                if host_version is not None:
+                    if host_version == '3':
+                        if (host_priv_type is not None and host_priv_pass is not None):
+                            if((current_noti_type != host_notification_type) or
+                               ((current_port != host_port)) or
+                               (current_version != host_version) or
+                               (current_priv_type != host_priv_type) or
+                               (current_username != host_username) or
+                               (current_auth_type != host_auth_type)):
+                                self._commands.append('snmp-server host {0} {1}s port {2} version {3} user {4} auth {5} {6} priv {7} {8}'
+                                                      .format(host_id, host_notification_type, host_port,
+                                                              host_version, host_username, host_auth_type, host_auth_pass,
+                                                              host_priv_type, host_priv_pass))
+                        else:
+                            if((current_noti_type != host_notification_type) or
+                               ((current_port != host_port)) or
+                               (current_version != host_version) or
+                               (current_username != host_username) or
+                               (current_auth_type != host_auth_type)):
+                                self._commands.append('snmp-server host {0} {1}s port {2} version {3} user {4} auth {5} {6}'
+                                                      .format(host_id, host_notification_type,
+                                                              host_port, host_version, host_username,
+                                                              host_auth_type, host_auth_pass))
+                    else:
+                        if((current_noti_type != host_notification_type) or
+                           ((current_port != host_port)) or
+                           (current_version != host_version)):
+                            self._commands.append('snmp-server host {0} {1}s port {2} version {3}'
+                                                  .format(host_id, host_notification_type,
+                                                          host_port, host_version))
+                else:
+                    if ((current_noti_type != host_notification_type) or
+                       ((current_port != host_port))):
+                        self._commands.append('snmp-server host {0} {1}s port {2}'
+                                              .format(host_id, host_notification_type, host_port))
+            else:
+                if host_version is not None:
+                    if host_version == '3':
+                        if (host_priv_type is not None and host_priv_pass is not None):
+                            if ((current_noti_type != host_notification_type) or
+                               ((current_version != host_version)) or
+                               (current_username != host_username) or
+                               ((current_auth_type != host_auth_type)) or
+                               (current_priv_type != host_priv_type)):
+                                self._commands.append('snmp-server host {0} {1}s version {2} user {3} auth {4} {5} priv {6} {7}'
+                                                      .format(host_id, host_notification_type, host_version, host_username,
+                                                              host_auth_type, host_auth_pass, host_priv_type, host_priv_pass))
+
+                        else:
+                            if ((current_noti_type != host_notification_type) or
+                               ((current_version != host_version)) or
+                               (current_username != host_username) or
+                               ((current_auth_type != host_auth_type))):
+                                self._commands.append('snmp-server host {0} {1}s version {2} user {3} auth {4} {5}'
+                                                      .format(host_id, host_notification_type,
+                                                              host_version, host_username, host_auth_type, host_auth_pass))
+
+                    else:
+                        if ((current_noti_type != host_notification_type) or
+                           ((current_version != host_version))):
+                            self._commands.append('snmp-server host {0} {1}s version {2}' .format(host_id,
+                                                  host_notification_type, host_version))
+
+    def generate_snmp_commands_without_current_config(self, host):
+        host_id = host.get('name')
+        host_notification_type = host.get('notification_type')
+        host_enabled = host.get("enabled")
+        host_port = host.get('port')
+        host_version = host.get('version')
+        host_username = host.get('user_name')
+        host_auth_type = host.get('auth_type')
+        host_auth_pass = host.get('auth_password')
+        host_priv_type = host.get('privacy_type')
+        host_priv_pass = host.get('privacy_password')
+        present_state = host.get('state')
+        present_state = host.get('state')
+        if present_state is not None:
+            if present_state == 'absent':
+                return
+        if host_enabled is not None:
+            if host_enabled is True:
+                self._commands.append('no snmp-server host {0} disable' .format(host_id))
+            else:
+                self._commands.append('snmp-server host {0} disable' .format(host_id))
+
+        if host_notification_type is not None:
+            if host_port is not None:
+                if host_version is not None:
+                    if host_version == '3':
+                        if (host_priv_type is not None and host_priv_pass is not None):
+                            self._commands.append('snmp-server host {0} {1}s port {2} version {3} user {4} auth {5} {6} priv {7} {8}'
+                                                  .format(host_id, host_notification_type, host_port, host_version, host_username,
+                                                          host_auth_type, host_auth_pass, host_priv_type, host_priv_pass))
+                        else:
+                            self._commands.append('snmp-server host {0} {1}s port {2} version {3} user {4} auth {5} {6}'
+                                                  .format(host_id, host_notification_type, host_port, host_version, host_username,
+                                                          host_auth_type, host_auth_pass))
+                    else:
+                        self._commands.append('snmp-server host {0} {1}s port {2} version {3}' .format(host_id,
+                                              host_notification_type, host_port, host_version))
+                else:
+                    self._commands.append('snmp-server host {0} {1}s port {2}' .format(host_id,
+                                                                                       host_notification_type, host_port))
+            else:
+                if host_version is not None:
+                    if host_version == '3':
+                        if (host_priv_type is not None and host_priv_pass is not None):
+                            self._commands.append('snmp-server host {0} {1}s version {2} user {3} auth {4} {5} priv {6} {7}'
+                                                  .format(host_id, host_notification_type, host_version, host_username,
+                                                          host_auth_type, host_auth_pass, host_priv_type, host_priv_pass))
+                        else:
+                            self._commands.append('snmp-server host {0} {1}s version {2} user {3} auth {4} {5}' .format(host_id,
+                                                  host_notification_type, host_version, host_username,
+                                                  host_auth_type, host_auth_pass))
+                    else:
+                        self._commands.append('snmp-server host {0} {1}s version {2}' .format(host_id,
+                                              host_notification_type, host_version))
+
     def generate_commands(self):
         req_hosts = self._required_config.get("hosts")
-        current_hosts = self._current_config.get("current_hosts")
         host_names = self._current_config.get("host_names")
 
         if req_hosts:
             for host in req_hosts:
-                host_notification_type = host.get('notification_type')
                 host_id = host.get('name')
-                host_enabled = host.get("enabled")
-                host_port = host.get('port')
-                host_version = host.get('version')
-                host_username = host.get('user_name')
-                host_auth_type = host.get('auth_type')
-                host_auth_pass = host.get('auth_password')
-                host_priv_type = host.get('privacy_type')
-                host_priv_pass = host.get('privacy_password')
                 if host_id:
-                    current_entry = current_hosts.get(host_id)
                     if host_names and (host_id in host_names):
-                        present_state = host.get('state')
-                        if present_state is not None:
-                            if present_state == 'absent':
-                                self._commands.append('no snmp-server host {0}' .format(host_id))
-                                continue
-                        if host_enabled is not None:
-                            if current_entry.get('enabled') != host_enabled:
-                                if host_enabled is True:
-                                    self._commands.append('no snmp-server host {0} disable' .format(host_id))
-                                else:
-                                    self._commands.append('snmp-server host {0} disable' .format(host_id))
-                        if host_notification_type is not None:
-                            current_port = current_entry.get('port')
-                            current_version = current_entry.get('version')
-                            current_priv_type = current_entry.get('privacy_type')
-                            current_username = current_entry.get('user_name')
-                            current_auth_type = current_entry.get('auth_type')
-                            current_noti_type = current_entry.get('notification_type')
-                            if host_port is not None:
-                                if host_version is not None:
-                                    if host_version == '3':
-                                        if (host_priv_type is not None and host_priv_pass is not None):
-                                            if((current_noti_type != host_notification_type) or
-                                               ((current_port != host_port)) or
-                                               (current_version != host_version) or
-                                               (current_priv_type != host_priv_type) or
-                                               (current_username != host_username) or
-                                               (current_auth_type != host_auth_type)):
-                                                self._commands.append('snmp-server host {0} {1}s port {2} version {3} user {4} auth {5} {6} priv {7} {8}'
-                                                                      .format(host_id, host_notification_type, host_port,
-                                                                              host_version, host_username, host_auth_type, host_auth_pass,
-                                                                              host_priv_type, host_priv_pass))
-                                        else:
-                                            if((current_noti_type != host_notification_type) or
-                                               ((current_port != host_port)) or
-                                               (current_version != host_version) or
-                                               (current_username != host_username) or
-                                               (current_auth_type != host_auth_type)):
-                                                self._commands.append('snmp-server host {0} {1}s port {2} version {3} user {4} auth {5} {6}'
-                                                                      .format(host_id, host_notification_type,
-                                                                              host_port, host_version, host_username,
-                                                                              host_auth_type, host_auth_pass))
-                                    else:
-                                        if((current_noti_type != host_notification_type) or
-                                           ((current_port != host_port)) or
-                                           (current_version != host_version)):
-                                            self._commands.append('snmp-server host {0} {1}s port {2} version {3}'
-                                                                  .format(host_id, host_notification_type,
-                                                                          host_port, host_version))
-                                else:
-                                    if ((current_noti_type != host_notification_type) or
-                                       ((current_port != host_port))):
-                                        self._commands.append('snmp-server host {0} {1}s port {2}'
-                                                              .format(host_id, host_notification_type, host_port))
-                            else:
-                                if host_version is not None:
-                                    if host_version == '3':
-                                        if (host_priv_type is not None and host_priv_pass is not None):
-                                            if ((current_noti_type != host_notification_type) or
-                                               ((current_version != host_version)) or
-                                               (current_username != host_username) or
-                                               ((current_auth_type != host_auth_type)) or
-                                               (current_priv_type != host_priv_type)):
-                                                self._commands.append('snmp-server host {0} {1}s version {2} user {3} auth {4} {5} priv {6} {7}'
-                                                                      .format(host_id, host_notification_type, host_version, host_username,
-                                                                              host_auth_type, host_auth_pass, host_priv_type, host_priv_pass))
-
-                                        else:
-                                            if ((current_noti_type != host_notification_type) or
-                                               ((current_version != host_version)) or
-                                               (current_username != host_username) or
-                                               ((current_auth_type != host_auth_type))):
-                                                self._commands.append('snmp-server host {0} {1}s version {2} user {3} auth {4} {5}'
-                                                                      .format(host_id, host_notification_type,
-                                                                              host_version, host_username, host_auth_type, host_auth_pass))
-
-                                    else:
-                                        if ((current_noti_type != host_notification_type) or
-                                           ((current_version != host_version))):
-                                            self._commands.append('snmp-server host {0} {1}s version {2}' .format(host_id,
-                                                                  host_notification_type, host_version))
-
+                        self.generate_snmp_commands_with_current_config(host)
                     else:
-                        present_state = host.get('state')
-                        if present_state is not None:
-                            if present_state == 'absent':
-                                continue
-                        if host_enabled is not None:
-                            if host_enabled is True:
-                                self._commands.append('no snmp-server host {0} disable' .format(host_id))
-                            else:
-                                self._commands.append('snmp-server host {0} disable' .format(host_id))
-
-                        if host_notification_type is not None:
-                            if host_port is not None:
-                                if host_version is not None:
-                                    if host_version == '3':
-                                        if (host_priv_type is not None and host_priv_pass is not None):
-                                            self._commands.append('snmp-server host {0} {1}s port {2} version {3} user {4} auth {5} {6} priv {7} {8}'
-                                                                  .format(host_id, host_notification_type, host_port, host_version, host_username,
-                                                                          host_auth_type, host_auth_pass, host_priv_type, host_priv_pass))
-                                        else:
-                                            self._commands.append('snmp-server host {0} {1}s port {2} version {3} user {4} auth {5} {6}'
-                                                                  .format(host_id, host_notification_type, host_port, host_version, host_username,
-                                                                          host_auth_type, host_auth_pass))
-                                    else:
-                                        self._commands.append('snmp-server host {0} {1}s port {2} version {3}' .format(host_id,
-                                                              host_notification_type, host_port, host_version))
-                                else:
-                                    self._commands.append('snmp-server host {0} {1}s port {2}' .format(host_id,
-                                                                                                       host_notification_type, host_port))
-                            else:
-                                if host_version is not None:
-                                    if host_version == '3':
-                                        if (host_priv_type is not None and host_priv_pass is not None):
-                                            self._commands.append('snmp-server host {0} {1}s version {2} user {3} auth {4} {5} priv {6} {7}'
-                                                                  .format(host_id, host_notification_type, host_version, host_username,
-                                                                          host_auth_type, host_auth_pass, host_priv_type, host_priv_pass))
-                                        else:
-                                            self._commands.append('snmp-server host {0} {1}s version {2} user {3} auth {4} {5}' .format(host_id,
-                                                                  host_notification_type, host_version, host_username,
-                                                                  host_auth_type, host_auth_pass))
-                                    else:
-                                        self._commands.append('snmp-server host {0} {1}s version {2}' .format(host_id,
-                                                              host_notification_type, host_version))
+                        self.generate_snmp_commands_without_current_config(host)
 
 
 def main():
