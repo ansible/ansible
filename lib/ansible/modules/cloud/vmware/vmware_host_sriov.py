@@ -196,14 +196,14 @@ class VmwareAdapterConfigManager(PyVmomi):
                 self.module.fail_json(
                     msg="with sriov_on == true,  alowed value for num_virt_func > 0"
                 )
-            self.sriov_on = False  # fill value, if urser not provided
+            self.sriov_on = False  # fill value, if user not provided
 
         if self.num_virt_func > 0:
             if self.sriov_on is False:
                 self.module.fail_json(
                     msg="with sriov_on == false,  alowed value for num_virt_func is 0"
                 )
-            self.sriov_on = True  # fill value, if urser not provided
+            self.sriov_on = True  # fill value, if user not provided
 
     def check_compatibility(self, before, hostname):
         """
