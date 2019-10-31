@@ -234,10 +234,12 @@ def main():
 
     if mode in ('persist', 'persist_only'):
         var_in_mysqld_auto_cnf = check_mysqld_auto(module, cursor, mysqlvar)
-        if var_in_mysqld_auto_cnf is None:
-            mysqlvar_val = False
-        else:
-            mysqlvar_val = var_in_mysqld_auto_cnf
+
+        if mode == 'persist_only':
+            if var_in_mysqld_auto_cnf is None:
+                mysqlvar_val = False
+            else:
+                mysqlvar_val = var_in_mysqld_auto_cnf
 
     # Type values before using them
     value_wanted = typedvalue(value)
