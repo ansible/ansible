@@ -10,6 +10,7 @@
     repo: "{{ zabbix_apt_repository }}"
     filename: zabbix
     state: present
+  notify: remove zabbix repository
 
 - name: check if dpkg is set to exclude specific destinations
   stat:
@@ -29,11 +30,13 @@
     name: "{{ zabbix_packages }}"
     state: latest
     update_cache: yes
+  notify: remove zabbix packages
 
 - name: install zabbix-api python package
   pip:
     name: zabbix-api
     state: latest
+  notify: remove zabbix pip packages
 
 - name: create mysql user {{ db_user }}
   mysql_user:
