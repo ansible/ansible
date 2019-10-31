@@ -143,7 +143,6 @@
             {% endif %}
           {% endif %}
 
-          {% include "ansible_versions.html" %}
           {% include "searchbox.html" %}
 
           {% endblock %}
@@ -195,7 +194,7 @@
         <div class="rst-content">
         {% endif %}
           {% include "breadcrumbs.html" %}
-          {% include "ansible_banner.html" %}
+          {% include "ansible_eol_banner.html" %}
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
           {%- block document %}
            <div itemprop="articleBody">
