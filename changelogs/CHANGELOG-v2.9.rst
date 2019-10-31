@@ -5,59 +5,13 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
-v2.9.0rc5
-=========
+v2.9.0
+======
 
 Release Summary
 ---------------
 
-| Release Date: 2019-10-23
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Bugfixes
---------
-
-- Fix SSL protcol references in the ``mqtt`` module to prevent failures on Python 2.6.
-- The ansible-galaxy publish command was using an incorrect URL for v3 servers. The configuration for v3 servers includes part of the path fragment that was added in the new test.
-- ansible-test import sanity test now consistently reports errors against the file being tested.
-- ansible-test import sanity test now consistently reports warnings as errors.
-- ansible-test import sanity test now properly handles relative imports.
-- ansible-test import sanity test now properly invokes Ansible modules as scripts.
-
-v2.9.0rc4
-=========
-
-Release Summary
----------------
-
-| Release Date: 2019-10-17
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Minor Changes
--------------
-
-- update ansible-test default-test-container from version 1.9.3 to 1.10.1
-
-Bugfixes
---------
-
-- **security issue** - Convert CLI provided passwords to text initially, to prevent unsafe context being lost when converting from bytes->text during post processing of PlayContext. This prevents CLI provided passwords from being incorrectly templated (CVE-2019-14856)
-
-- **security issue** - properly hide parameters marked with ``no_log`` in suboptions when invalid parameters are passed to the module (CVE-2019-14858)
-- ansible-galaxy - Ensure we preserve the new URL when appending ``/api`` for the case where the GET succeeds on galaxy.ansible.com
-- ansible-galaxy - Handle the different task resource urls in API responses from publishing collection artifacts to galaxy servers using v2 and v3 APIs.
-- ansible-galaxy cli - fixed ``--version`` argument
-- firewalld - enable the firewalld module to function offline with firewalld version 0.7.0 and newer (https://github.com/ansible/ansible/issues/63254)
-
-v2.9.0rc3
-=========
-
-Release Summary
----------------
-
-| Release Date: 2019-10-10
+| Release Date: 2019-10-31
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -65,273 +19,8 @@ Minor Changes
 -------------
 
 - Add 'auth_url' field to galaxy server config stanzas in ansible.cfg The url should point to the token_endpoint of a Keycloak server.
-
-Bugfixes
---------
-
-- CLI - the `ANSIBLE_PLAYBOOK_DIR` envvar or `playbook_dir` config can now substitute for the --playbook-dir arg on CLIs that support it (https://github.com/ansible/ansible/issues/59464)
-- Fix https://github.com/ansible/galaxy-dev/issues/96 Add support for automation-hub authentication to ansible-galaxy
-- adhoc CLI - when playbook-dir is specified and inside a collection, use default collection logic to resolve modules/actions
-- ansible-galaxy -  Stop appendding '/api' to configured galaxy urls. Special case migrated configs.
-- ansible-test now creates its integration test temporary directory within the collection so ansible-playbook can properly detect the default collection
-- ansible-test now properly searches for ``pythonX.Y`` instead of ``python`` when looking for the real python that created a ``virtualenv``
-- ansible-test now properly sets ``ANSIBLE_PLAYBOOK_DIR`` for integration tests so unqualified collection references work for adhoc ``ansible`` usage
-- ansible-test now updates SSH keys it generates with newer versions of ssh-keygen to function with Paramiko
-- config - encoding failures on config values should be non-fatal (https://github.com/ansible/ansible/issues/63310)
-- cronvar - use correct binary name (https://github.com/ansible/ansible/issues/63274)
-- sts_assume_role - fix assertion text in integration test
-
-v2.9.0rc2
-=========
-
-Release Summary
----------------
-
-| Release Date: 2019-10-03
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Minor Changes
--------------
-
-- dnf - Properly handle idempotent transactions with package name wildcard globs (https://github.com/ansible/ansible/issues/62809)
-- vmware_cluster_ha - Remove a wrong parameter from an example in the documentation.
-
-Bugfixes
---------
-
-- Fix nxos_l3_interfaces module deleting mgmt IP (https://github.com/ansible/ansible/pull/62545).
-- ansible-galaxy - Default collection install path to first path in COLLECTIONS_PATHS (https://github.com/ansible/ansible/pull/62870)
-- ansible-test now correctly excludes the test results temporary directory when copying files from the remote test system to the local system
-- ansible-test now properly sets PYTHONPATH for tests when running from an Ansible installation
-- docker_login - correct broken fix for https://github.com/ansible/ansible/pull/60381 which crashes for Python 3.
-- find - clarify description of ``contains`` (https://github.com/ansible/ansible/issues/61983)
-- iosxr - Fix random idempotence issues with iosxr_lag_interfaces Resource Module (https://github.com/ansible/ansible/pull/62998).
-- kubevirt: apply wait_sleep fix from devel to not fail on missing param
-
-v2.9.0rc1
-=========
-
-Release Summary
----------------
-
-| Release Date: 2019-09-20
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Minor Changes
--------------
-
-- Revert apply as the default of kubernetes modules such as k8s.  This restores the 2.8 and previous behaviour as the default.  apply can still be explicitly enabled https://github.com/ansible/ansible/issues/62661
-- ansible-test - Bump version of ACME test container to 1.8.0. Fixes a typo in the API and adds a newer Pebble version.
-- ansible-test defaults to redacting sensitive values (disable with the ``--no-redact`` option)
-- meraki_organization - Removed the absent option for state due to the possibly catastrophic mistakes. Parameter will be added in 2.10 with safeguards.
-- update ansible-test default-test-container from version 1.9.1 to 1.9.2
-- update ansible-test default-test-container from version 1.9.2 to 1.9.3
-
-Bugfixes
---------
-
-- **security issue** - Redact cloud plugin secrets in ansible-test when running integration tests using cloud plugins. Only present in 2.9.0b1.
-
-- **security issue** - TaskExecutor - Ensure we don't erase unsafe context in TaskExecutor.run on bytes. Only present in 2.9.0beta1 (https://github.com/ansible/ansible/issues/62237)
-
-- Add nxos_telemetry replaced state (https://github.com/ansible/ansible/pull/62368).
-- AnsibleDumper - Add a representer for AnsibleUnsafeBytes (https://github.com/ansible/ansible/issues/62562).
-- Change enable to enabled for junos_interfaces and junos_lldp_interfaces module (https://github.com/ansible/ansible/issues/62319)
-- Check action plugin names for network (eos, ios, iosxr, junos, netconf, nxos) modules properly load with collections.
-- Ensure connection with remote host is created before invoking execute_command() from module side (https://github.com/ansible/ansible/issues/61596)
-- Fix delete to pass the right parameters(https://github.com/ansible/ansible/pull/62525)
-- Fix for junos cli_config replace option (https://github.com/ansible/ansible/pull/62131).
-- Fix ios_lldp_global enable to enabled(https://github.com/ansible/ansible/pull/62420)
-- Fix issue where the collection loader tracebacks if ``collections_paths = ./`` is set in the config
-- Fix loading network facts modules for smart gathering (https://github.com/ansible/ansible/pull/59856).
-- Fix negated all,min for network_facts and remove choices (https://github.com/ansible/ansible/pull/61362).
-- Fix nxos_bfd_global cmd order and tests (https://github.com/ansible/ansible/pull/61943).
-- Fix regular expression to support parsing more than 10 network interfaces in RouterOS output (https://github.com/ansible/ansible/pull/62346)
-- Fix support for Specialized images in Azure Shared Image Gallery
-- Fix the upstream rpm spec file.  The ansible-test package requirement on the main ansible package was formatted incorrectly.
-- Fix traceback error in IOS and IOSXR when ran with empty config (https://github.com/ansible/ansible/pull/62400)
-- Fix traceback session uid error(https://github.com/ansible/ansible/pull/62523)
-- Fix traceback with empty config error msg(https://github.com/ansible/ansible/pull/62538)
-- Fixed intermittent "JSON object must be str, bytes or bytearray, not list" error with EOS over httpapi
-- Make EOS / FRR / IOS / IOSXR bgp modules collection safe
-- Remove case sensitivity on interface names from eos_interfaces, eos_l2_interfaces, eos_l3_interfaces, eos_lacp_interfaces, eos_lag_interfaces, and eos_lldp_interfaces.
-- Remove unused import from iosxr l3_interfaces facts library.
-- Removed unused FactArgs imports from eos / ios / iosxr / junos / vyos facts modules
-- Return commands key instead of xml in result for junos resource module (https://github.com/ansible/ansible/issues/61773)
-- Stabilize nxos initiated copy for nxos_file_copy plugin (https://github.com/ansible/ansible/pull/62355).
-- To fix ios_l3_interfaces resource module round trip failure(https://github.com/ansible/ansible/pull/61642)
-- Unit tests for cp_cp_mgmt_discard
-- Unit tests for cp_mgmt_access_layer
-- Unit tests for cp_mgmt_access_layer_facts
-- Unit tests for cp_mgmt_access_role
-- Unit tests for cp_mgmt_access_role_facts
-- Unit tests for cp_mgmt_access_rule
-- Unit tests for cp_mgmt_access_rule_facts
-- Unit tests for cp_mgmt_address_range
-- Unit tests for cp_mgmt_address_range_facts(https://github.com/ansible/ansible/pull/62338)
-- Unit tests for cp_mgmt_administrator
-- Unit tests for cp_mgmt_administrator_facts
-- Unit tests for cp_mgmt_application_group
-- Unit tests for cp_mgmt_application_group_facts
-- Unit tests for cp_mgmt_application_site
-- Unit tests for cp_mgmt_application_site_catagory
-- Unit tests for cp_mgmt_application_site_catagory_facts
-- Unit tests for cp_mgmt_application_site_facts
-- Unit tests for cp_mgmt_assign_global_assignment
-- Unit tests for cp_mgmt_dns_domain
-- Unit tests for cp_mgmt_dns_domain_facts
-- Unit tests for cp_mgmt_dynamic_object
-- Unit tests for cp_mgmt_dynamic_object_facts
-- Unit tests for cp_mgmt_exception_group
-- Unit tests for cp_mgmt_exception_group_facts(https://github.com/ansible/ansible/pull/62216)
-- Unit tests for cp_mgmt_global_assignment
-- Unit tests for cp_mgmt_global_assignment
-- Unit tests for cp_mgmt_global_assignment_facts
-- Unit tests for cp_mgmt_global_assignment_facts
-- Unit tests for cp_mgmt_group
-- Unit tests for cp_mgmt_group
-- Unit tests for cp_mgmt_group_facts
-- Unit tests for cp_mgmt_group_facts
-- Unit tests for cp_mgmt_group_with_exclusion
-- Unit tests for cp_mgmt_group_with_exclusion
-- Unit tests for cp_mgmt_group_with_exclusion_facts
-- Unit tests for cp_mgmt_group_with_exclusion_facts
-- Unit tests for cp_mgmt_host
-- Unit tests for cp_mgmt_host
-- Unit tests for cp_mgmt_host_facts
-- Unit tests for cp_mgmt_host_facts
-- Unit tests for cp_mgmt_install_policy
-- Unit tests for cp_mgmt_multicast_address_range
-- Unit tests for cp_mgmt_multicast_address_range_facts
-- Unit tests for cp_mgmt_multicast_address_range_facts
-- Unit tests for cp_mgmt_network
-- Unit tests for cp_mgmt_package
-- Unit tests for cp_mgmt_package
-- Unit tests for cp_mgmt_package_facts
-- Unit tests for cp_mgmt_package_facts
-- Unit tests for cp_mgmt_publish
-- Unit tests for cp_mgmt_put_file
-- Unit tests for cp_mgmt_run_ips_update
-- Unit tests for cp_mgmt_run_script(https://github.com/ansible/ansible/pull/62322)
-- Unit tests for cp_mgmt_security_zone
-- Unit tests for cp_mgmt_security_zone
-- Unit tests for cp_mgmt_security_zone_facts
-- Unit tests for cp_mgmt_security_zone_facts
-- Unit tests for cp_mgmt_service_dce_rpc
-- Unit tests for cp_mgmt_service_dce_rpc
-- Unit tests for cp_mgmt_service_dce_rpc_facts
-- Unit tests for cp_mgmt_service_dce_rpc_facts
-- Unit tests for cp_mgmt_service_group
-- Unit tests for cp_mgmt_service_group
-- Unit tests for cp_mgmt_service_group_facts(https://github.com/ansible/ansible/pull/62213)
-- Unit tests for cp_mgmt_service_group_facts(https://github.com/ansible/ansible/pull/62214)
-- Unit tests for cp_mgmt_service_icmp
-- Unit tests for cp_mgmt_service_icmp6
-- Unit tests for cp_mgmt_service_icmp6_facts
-- Unit tests for cp_mgmt_service_icmp_facts
-- Unit tests for cp_mgmt_service_other
-- Unit tests for cp_mgmt_service_other_facts
-- Unit tests for cp_mgmt_service_rpc
-- Unit tests for cp_mgmt_service_rpc_facts
-- Unit tests for cp_mgmt_service_sctp
-- Unit tests for cp_mgmt_service_sctp_facts
-- Unit tests for cp_mgmt_service_tcp
-- Unit tests for cp_mgmt_service_tcp_facts
-- Unit tests for cp_mgmt_service_udp
-- Unit tests for cp_mgmt_service_udp_facts
-- Unit tests for cp_mgmt_simple_gateway
-- Unit tests for cp_mgmt_simple_gateway_facts
-- Unit tests for cp_mgmt_tag
-- Unit tests for cp_mgmt_tag_facts(https://github.com/ansible/ansible/pull/62215)
-- Unit tests for cp_mgmt_threat_exception
-- Unit tests for cp_mgmt_threat_exception_facts
-- Unit tests for cp_mgmt_threat_protection_override(https://github.com/ansible/ansible/pull/62328)
-- Unit tests for cp_mgmt_threat_rule
-- Unit tests for cp_mgmt_threat_rule_facts
-- Unit tests for cp_mgmt_verfiy_policy
-- Unit tests for the case with more than 10 network interfaces
-- _purefa_facts - Fix missing API version check when calling I(admins) or I(all) as the subset
-- allow external collections to be created in the 'ansible' collection namespace (https://github.com/ansible/ansible/issues/59988)
-- ansible-connection persists even after playbook run is completed (https://github.com/ansible/ansible/pull/61591)
-- ansible-doc now properly handles removed modules/plugins
-- ansible-inventory - Properly hide arguments that should not be shown (https://github.com/ansible/ansible/issues/61604)
-- ansible-inventory - Restore functionality to allow ``--graph`` to be limited by a host pattern
-- ansible-test coverage - Fix the ``--all`` argument when generating coverage reports - https://github.com/ansible/ansible/issues/62096
-- ansible-test now correctly installs the requirements specified by the collection's unit and integration tests instead of the requirements specified for Ansible's own unit and integration tests
-- ansible-test now loads the collection loader plugin early enough for ansible_collections imports to work in unit test conftest.py modules
-- ansible-test now properly activates the vcenter plugin for vcenter tests when docker is available
-- ansible-test now properly activates virtual environments created using the --venv option
-- ansible-test now properly creates a virtual environment using ``venv`` when running in a ``virtualenv`` created virtual environment
-- ansible-test now properly excludes the ``tests/output/`` directory from code coverage
-- ansible-test now properly handles creation of Python execv wrappers when the selected interpreter is a script
-- ansible-test now properly handles warnings for removed modules/plugins
-- ansible-test now properly ignores the ``tests/output//`` directory when not using git
-- ansible-test now properly installs requirements for multiple Python versions when running sanity tests
-- ansible-test now properly registers its own code in a virtual environment when running from an install
-- ansible-test now shows sanity test doc links when installed (previously the links were only visible when running from source)
-- azure - fix for specialized images in vmss
-- ce_ospf - update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61684)
-- ce_snmp_target_host - update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61842)
-- ce_snmp_traps - update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61843)
-- ce_static_route - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/62498)
-- ce_stp - update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61774)
-- ce_vxlan_arp - update to fix some bugs - Modifying regular expressions. (https://github.com/ansible/ansible/pull/61995)
-- ce_vxlan_vap - update to fix some bugs - Modify the Operator Difference between Python 2 and Python 3. (https://github.com/ansible/ansible/pull/61996)
-- cloudformation_info - Fix a KeyError returning information about the stack(s).
-- collection loader - ensure Jinja function cache is fully-populated before lookup
-- collection loader - fixed relative imports on Python 2.7, ensure pluginloader caches use full name to prevent names from being clobbered (https://github.com/ansible/ansible/pull/60317)
-- cron and cronvar - use get_bin_path utility to locate the default crontab executable instead of the hardcoded /usr/bin/crontab. (https://github.com/ansible/ansible/pull/59765)
-- cron cronvar - only run ``get_bin_path()`` once
-- display - remove leading space when displaying WARNING messages
-- docker_compose - fix issue where docker deprecation warning results in ansible erroneously reporting a failure
-- docker_container - improve error behavior when parsing port ranges fails.
-- ecs_certificate - Always specify header ``connection: keep-alive`` for ECS API connections.
-- ecs_certificate - Fix formatting of contents of ``full_chain_path``.
-- fix if equals error code command is not found(https://github.com/ansible/ansible/pull/62529)
-- get_url - Don't treat no checksum as a checksum match (https://github.com/ansible/ansible/issues/61978)
-- iosxr - support cases where a normal commit operation also throws a prompt (https://github.com/ansible/ansible/pull/62132)
-- iosxr_l3_interfaces - Fixes IOSXR L3 which was having idempotent issue raised in issue #61844, also adding a RTT for iosxr_l3_interfaces resource module
-- junos_config - Add commands alias to lines option to be in sync with other platforms (https://github.com/ansible/ansible/pull/62221)
-- junos_config - allow validate config before committing to running configuration (https://github.com/ansible/ansible/pull/61969)
-- junos_user - Add no_log=True to junos_user `encrypted_password` (https://github.com/ansible/ansible/pull/62184)
-- k8s - ensure that apply works with check mode. Bumps minimum openshift version for apply to 0.9.2.
-- mysql - Fix ``mysql_connect`` function's logic related to the ``cursor_class`` keyword argument (https://github.com/ansible/ansible/pull/61832).
-- network_cli - ensure connection is established before returning the current prompt
-- nxos_file_copy call get_capabilities to initiate device connection (https://github.com/ansible/ansible/pull/62103).
-- nxos_l2_interfaces fix for integration tests failing to setup layer2 (https://github.com/ansible/ansible/pull/61887).
-- nxos_lacp_interfaces fix integration test dependencies (https://github.com/ansible/ansible/pull/61947).
-- openssh_keypair - public key's file attributes (permissions, owner, group, etc.) are now set to the same values as the private key.
-- openssl_certificate - When provider is ``entrust``, use a ``connection: keep-alive`` header for ECS API connections.
-- psexec - Fix issue where the Kerberos package was not detected as being available.
-- psexec - Fix issue where the ``interactive`` option was not being passed down to the library.
-- purefa_info - Fix missing API version check when calling I(admins) or I(all) as the subset
-- rabbitmq lookup plugin - Fix for rabbitmq lookups failing when using pika v1.0.0 and newer.
-- rabbitmq_publish - Fix to ensure the module works correctly for pika v1.0.0 and later. (https://github.com/ansible/ansible/pull/61960)
-- this fix result in no more traceback on empty config when state is 'merged', 'replaced' or 'overridden'. (https://github.com/ansible/ansible/pull/62518).
-- tower inventory plugin - fix TypeError when giving inventory_id as integer (https://github.com/ansible/ansible/issues/61333)
-- user - update docs to reflect proper way to remove account from all groups
-- vmware - Ensure we can use the modules with Python < 2.7.9 or RHEL/CentOS < 7.4, this as soon as ``validate_certs`` is disabled.
-- vmware_vcenter_statistics - Fix some corner cases like increasing some interval and decreasing another at the same time.
-- win_become - Do not dispose of one of the logon tokens until after the process has run
-- win_exec_wrapper - Be more defensive when it comes to getting unhandled exceptions
-
-v2.9.0b1
-========
-
-Release Summary
----------------
-
-| Release Date: 2019-09-05
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Minor Changes
--------------
-
 - Add I(preferred_arrays) param to enable preferred arrays to be set in a host configuration. (https://github.com/ansible/ansible/pull/59735)
-- Add ability to force a protection group snapshot to immeadiatley replicate to a remote array (if configured)
+- Add ability to force a protection group snapshot to immediately replicate to a remote array (if configured)
 - Add date header to the email based on local time in mail module (https://github.com/ansible/ansible/issues/58808).
 - Add folder option in vmware_datastore_cluster to place datastore cluster in specific folder (https://github.com/ansible/ansible/issues/48010).
 - Add folder option in vmware_dvswitch to place distributed switch in a network specific folder (https://github.com/ansible/ansible/issues/54986).
@@ -346,7 +35,7 @@ Minor Changes
 - Added new `throttle` keyword, which can be used at the task, block, or play level to limit the number of workers (up to the specified forks or serial setting) allowed.
 - Added new parameters hostname and subdomain to kubevirt_vm module.
 - Adjusted PowerShell and C# collection util imports to use a Python package name that reflects the location of the util in the collection. This is a breaking change, for more information see :ref:`porting_2.9_guide` for more information.
-- All previouslly deprecated sudo/su and module locale global settings have been removed.
+- All previously deprecated sudo/su and module locale global settings have been removed.
 - Allow ansible-doc to return JSON as output.
 - Allow debugger to take a templated value (https://github.com/ansible/ansible/pull/53587)
 - Allow expanded options for user to control behaviour on duplicate YAML keys.
@@ -370,6 +59,7 @@ Minor Changes
 - Refactored ``ansible-galaxy collections`` API code to be more friendly for future bugfixes
 - Remove duplicate implementation of memory reservation parameter in vmware_guest (https://github.com/ansible/ansible/issues/54335).
 - Restrict vcenter_folder to vCenter only, since folder creation api is not supported on ESXi hostsystem (https://github.com/ansible/ansible/issues/49938).
+- Revert apply as the default of kubernetes modules such as k8s.  This restores the 2.8 and previous behaviour as the default.  apply can still be explicitly enabled https://github.com/ansible/ansible/issues/62661
 - Templar - Speed up ``is_template`` by lexing the string, instead of actually templating the string (https://github.com/ansible/ansible/pull/57489)
 - The ``ali_instance_facts`` module has been renamed to ``ali_instance_info``.
 - The ``aws_acm_facts`` module has been renamed to ``aws_acm_info``.
@@ -641,6 +331,8 @@ Minor Changes
 - ansible-galaxy - Added the ``collection init`` command to create a skeleton collection directory.
 - ansible-galaxy - Added the ``collection install`` command to install collections locally.
 - ansible-galaxy - Added the ``collection publish`` command to publish a collection tarball to a Galaxy server.
+- ansible-test - Bump version of ACME test container to 1.8.0. Fixes a typo in the API and adds a newer Pebble version.
+- ansible-test defaults to redacting sensitive values (disable with the ``--no-redact`` option)
 - apt - Remove deprecated ``installed`` and ``removed`` aliases (https://github.com/ansible/ansible/issues/55311)
 - aws_eks_cluster - Ansible may now wait until an EKS cluster is fully removed before moving on.
 - backports.ssl_match_hostname - Update bundled copy of backports.ssl_match_hostname from 3.4.0.2 to 3.7.0.1 (https://github.com/ansible/ansible/issues/51794)
@@ -649,6 +341,7 @@ Minor Changes
 - cosmetic change, simplify FC WWN facts gathering on Solaris
 - default collection - a playbook run inside a collection (eg, as part of a runme.sh integration test) will first search the containing collection for unqualified module/action references (https://github.com/ansible/ansible/pull/61415)
 - distro - Update bundled copy of distro from 1.3.0 to 1.4.0 (https://github.com/ansible/ansible/issues/55302)
+- dnf - Properly handle idempotent transactions with package name wildcard globs (https://github.com/ansible/ansible/issues/62809)
 - dnf - Provide a better error message including python version info when installing python-dnf fails
 - dnf - set lock_timeout to a sane default (30 seconds, as is the cli)
 - docker_container - add ``mounts`` option.
@@ -684,6 +377,7 @@ Minor Changes
 - meraki_mr_l3_firewall - Integration test now uses net_id in some tests for improved code coverage.
 - meraki_network - Add support for disabling remote status page on a network.
 - meraki_network - Add support for enabling or disabling VLANs on a network.
+- meraki_organization - Removed the absent option for state due to the possibly catastrophic mistakes. Parameter will be added in 2.10 with safeguards.
 - meraki_snmp - Add support for check mode.
 - meraki_ssid - Add examples to documentation.
 - meraki_vlan - Add support for check mode.
@@ -737,6 +431,9 @@ Minor Changes
 - setup - octal escape sequences are now evaluated for mount facts pulled from /etc/mtab
 - six - Update bundled copy of six from 1.11.0 to 1.12.0 (https://github.com/ansible/ansible/issues/55303)
 - syslog_json - Allow configuration of the syslog_json plugin via an Ansible configuration file.
+- update ansible-test default-test-container from version 1.9.1 to 1.9.2
+- update ansible-test default-test-container from version 1.9.2 to 1.9.3
+- update ansible-test default-test-container from version 1.9.3 to 1.10.1
 - uri - Remove deprecated ``HEADER_`` support (https://github.com/ansible/ansible/issues/55310)
 - vApp setting can be set while VM creation in vmware_guest (https://github.com/ansible/ansible/issues/50617).
 - validate-modules - change numeric error codes to descriptive strings (https://github.com/ansible/ansible/pull/60711)
@@ -746,6 +443,7 @@ Minor Changes
 - vmware - reduces the memory usage during the object lookup
 - vmware_cluster - Refactor into several modules (vmware_cluster, vmware_cluster_drs, vmware_cluster_ha and vmware_cluster_vsan)
 - vmware_cluster_facts now supports tag facts (https://github.com/ansible/ansible/issues/46458).
+- vmware_cluster_ha - Remove a wrong parameter from an example in the documentation.
 - vmware_datastore_facts - When no datastore was found, returns an empty list.
 - vmware_datastore_maintenancemode - Raise an error if the datastore does not exist.
 - vmware_guest_disk module supports use_instance_uuid parameter since Ansible 2.8 (https://github.com/ansible/ansible/issues/56021).
@@ -776,7 +474,7 @@ Minor Changes
 - zabbix_template - new parameter `dump_format` allows user to specify in which format (JSON or XML) should a template be exported from Zabbix
 - zabbix_template - new parameter `template_xml` adds support for importing templates from XML documents
 - zabbix_template - now allows import of multiple templates at once when using `template_json` or `template_xml` parameters
-- zabbix_template - parameter `template_groups` is now required when passing `template_name` and template is being created for the fisrt time. Not required when template is being updated.
+- zabbix_template - parameter `template_groups` is now required when passing `template_name` and template is being created for the first time. Not required when template is being updated.
 - zabbix_template - parameters `template_name`, `template_json` and `template_xml` are now mutually exclusive
 - zabbix_template - template can now be updated with just a `clear_templates` parameter without requiring any additional parameters to be passed (see examples of the module)
 - zfs - Remove deprecated key=value 'option' (https://github.com/ansible/ansible/issues/55318)
@@ -797,31 +495,61 @@ Removed Features (previously deprecated)
 Bugfixes
 --------
 
+- **security issue** - Convert CLI provided passwords to text initially, to prevent unsafe context being lost when converting from bytes->text during post processing of PlayContext. This prevents CLI provided passwords from being incorrectly templated (CVE-2019-14856)
+
+- **security issue** - Redact cloud plugin secrets in ansible-test when running integration tests using cloud plugins. Only present in 2.9.0b1.
+
+- **security issue** - TaskExecutor - Ensure we don't erase unsafe context in TaskExecutor.run on bytes. Only present in 2.9.0beta1 (https://github.com/ansible/ansible/issues/62237)
+
+- **security issue** - properly hide parameters marked with ``no_log`` in suboptions when invalid parameters are passed to the module (CVE-2019-14858)
 - Add missing directory provided via ``--playbook-dir`` to adjacent collection loading
 - Add no_log to credentials field to avoid disclosures, also switch type to jsonarg to avoid having users responsible for transformations.
+- Add nxos_telemetry replaced state (https://github.com/ansible/ansible/pull/62368).
 - Allow config options that are type boolean to default to None rather than only True or False.
 - AnsiballZ - Use ``importlib`` to load the module instead of ``imp`` on Python3+
 - Ansible.Basic - Fix issue when deserilizing a JSON string that is not a dictionary - https://github.com/ansible/ansible/pull/55691
+- AnsibleDumper - Add a representer for AnsibleUnsafeBytes (https://github.com/ansible/ansible/issues/62562).
 - Be sure to use the active state when checking for any_errors_fatal
+- CLI - the `ANSIBLE_PLAYBOOK_DIR` envvar or `playbook_dir` config can now substitute for the --playbook-dir arg on CLIs that support it (https://github.com/ansible/ansible/issues/59464)
+- Change enable to enabled for junos_interfaces and junos_lldp_interfaces module (https://github.com/ansible/ansible/issues/62319)
+- Check action plugin names for network (eos, ios, iosxr, junos, netconf, nxos) modules properly load with collections.
 - Clarify roles path target behaviour for ansible-galaxy
 - Correctly handle delegate_to hostnames in loops (https://github.com/ansible/ansible/issues/59650)
 - Do not re-use remote_user from previous loop iteration (https://github.com/ansible/ansible/issues/58876)
+- Ensure connection with remote host is created before invoking execute_command() from module side (https://github.com/ansible/ansible/issues/61596)
 - Fix --diff to produce output when creating a new file (https://github.com/ansible/ansible/issues/57618)
 - Fix PSLint errors regarding global vars (PSAvoidGlobalVars)
+- Fix SSL protocol references in the ``mqtt`` module to prevent failures on Python 2.6.
+- Fix delete to pass the right parameters(https://github.com/ansible/ansible/pull/62525)
 - Fix doc for proxy_username and proxy_password in yum_repository.py (https://github.com/ansible/ansible/pull/59068).
 - Fix firewalld source option handling to be exclusive (https://github.com/ansible/ansible/issues/55683)
+- Fix for junos cli_config replace option (https://github.com/ansible/ansible/pull/62131).
 - Fix foreman inventory plugin when inventory caching is disabled
+- Fix https://github.com/ansible/galaxy-dev/issues/96 Add support for automation-hub authentication to ansible-galaxy
+- Fix ios_lldp_global enable to enabled(https://github.com/ansible/ansible/pull/62420)
+- Fix issue where the collection loader tracebacks if ``collections_paths = ./`` is set in the config
+- Fix loading network facts modules for smart gathering (https://github.com/ansible/ansible/pull/59856).
 - Fix media type of RESTCONF requests.
+- Fix negated all,min for network_facts and remove choices (https://github.com/ansible/ansible/pull/61362).
+- Fix nxos_bfd_global cmd order and tests (https://github.com/ansible/ansible/pull/61943).
+- Fix nxos_l3_interfaces module deleting mgmt IP (https://github.com/ansible/ansible/pull/62545).
 - Fix privilege escalation support for the docker connection plugin when credentials need to be supplied (e.g. sudo with password).
 - Fix regression warning on jinja2 delimiters in when statements (https://github.com/ansible/ansible/issues/56830)
 - Fix regression when including a role with a custom filter (https://github.com/ansible/ansible/issues/57351)
+- Fix regular expression to support parsing more than 10 network interfaces in RouterOS output (https://github.com/ansible/ansible/pull/62346)
 - Fix strategy functions that update inventory and back 'add_host' and 'group_by' actions.
+- Fix support for Specialized images in Azure Shared Image Gallery
 - Fix the issue that disk is not activated after its creation (https://github.com/ansible/ansible/issues/57412)
+- Fix the upstream rpm spec file.  The ansible-test package requirement on the main ansible package was formatted incorrectly.
+- Fix traceback error in IOS and IOSXR when ran with empty config (https://github.com/ansible/ansible/pull/62400)
+- Fix traceback session uid error(https://github.com/ansible/ansible/pull/62523)
+- Fix traceback with empty config error msg(https://github.com/ansible/ansible/pull/62538)
 - Fixed a traceback in the ``git`` module when using an absolute path for the ``repo`` parameter.
 - Fixed ce_bgp,first the pattern to be searched is need to change, otherwise there is no data to be found.then after running a task with this module,it will not show 'changed' correctly.
-- Fixed ce_bgp_af,'changed' of module run restult is not showed, however the module run correctly,and update coommands of result is not correct.
+- Fixed ce_bgp_af,'changed' of module run result is not showed, however the module runs correctly,and updates commands if result is not correct.
 - Fixed ce_bgp_neighbor, find specify bgp as information, as number is necessary and so on.
 - Fixed ce_bgp_neighbor_af,update commands should be showed correctly, and xml for filter and edit are also re-factor as the software version upgrade and update.
+- Fixed intermittent "JSON object must be str, bytes or bytearray, not list" error with EOS over httpapi
 - Fixed loading namespaced documentation fragments from collections.
 - Fixed role's hash_params behavior to not union (https://github.com/ansible/ansible/issues/20596).
 - Fixed some PSlint warnings
@@ -830,30 +558,163 @@ Bugfixes
 - Handle IndexError while parsing empty limit file (https://github.com/ansible/ansible/issues/59695).
 - Handle improper variable substitution that was happening in safe_eval, it was always meant to just do 'type enforcement' and have Jinja2 deal with all variable interpolation. Also see CVE-2019-10156
 - Inventory sources now respect setting ``hash_behaviour``. Previously each new inventory source would overwrite existing vars, even when ``hash_behavior`` was set to ``merge``.
+- Make EOS / FRR / IOS / IOSXR bgp modules collection safe
 - Make max_connections parameter work again in vmware_guest module (https://github.com/ansible/ansible/pull/58061).
 - Module tracebacks are now recognized on stdout and stderr, intead of just on stderr.
 - Only warn for bare variables if they are not type boolean (https://github.com/ansible/ansible/issues/53428)
 - Pipelining now works with the buildah plugin.
 - Redfish - Instead of building the Power URI from assumptions about URI structure, assemble from @odata.id information in the Chassis resource (https://github.com/ansible/ansible/issues/56137).
-- Remove lingering ansible vault cipher (AES) after it beeing removed in
+- Remove case sensitivity on interface names from eos_interfaces, eos_l2_interfaces, eos_l3_interfaces, eos_lacp_interfaces, eos_lag_interfaces, and eos_lldp_interfaces.
+- Remove lingering ansible vault cipher (AES) after it was removed in
+- Remove unused import from iosxr l3_interfaces facts library.
+- Removed unused FactArgs imports from eos / ios / iosxr / junos / vyos facts modules
+- Return commands key instead of xml in result for junos resource module (https://github.com/ansible/ansible/issues/61773)
 - SECURITY Fixed the python interpreter detection, added in 2.8.0alpha1, to properly mark the returned data as untemplatable. This prevents a malicious managed machine from running code on the controller via templating.
+- Stabilize nxos initiated copy for nxos_file_copy plugin (https://github.com/ansible/ansible/pull/62355).
 - TaskExecutor - Create new instance of the action plugin on each iteration when using until (https://github.com/ansible/ansible/issues/57886)
 - TaskQueueManager - Ensure ``has_dead_workers`` can function, by using the correct reference, and only allow an exit code of 0. (https://github.com/ansible/ansible/issues/29124)
+- The ansible-galaxy publish command was using an incorrect URL for v3 servers. The configuration for v3 servers includes part of the path fragment that was added in the new test.
+- To fix ios_l3_interfaces resource module round trip failure(https://github.com/ansible/ansible/pull/61642)
 - To rename CheckPoint to Check_Point due to CP legal reasons. (https://github.com/ansible/ansible/pull/61172).
-- Use async poll default setting for play tasks also, previouslly in only affected adhoc ansible.
+- Unit tests for cp_cp_mgmt_discard
+- Unit tests for cp_mgmt_access_layer
+- Unit tests for cp_mgmt_access_layer_facts
+- Unit tests for cp_mgmt_access_role
+- Unit tests for cp_mgmt_access_role_facts
+- Unit tests for cp_mgmt_access_rule
+- Unit tests for cp_mgmt_access_rule_facts
+- Unit tests for cp_mgmt_address_range
+- Unit tests for cp_mgmt_address_range_facts(https://github.com/ansible/ansible/pull/62338)
+- Unit tests for cp_mgmt_administrator
+- Unit tests for cp_mgmt_administrator_facts
+- Unit tests for cp_mgmt_application_group
+- Unit tests for cp_mgmt_application_group_facts
+- Unit tests for cp_mgmt_application_site
+- Unit tests for cp_mgmt_application_site_category
+- Unit tests for cp_mgmt_application_site_category_facts
+- Unit tests for cp_mgmt_application_site_facts
+- Unit tests for cp_mgmt_assign_global_assignment
+- Unit tests for cp_mgmt_dns_domain
+- Unit tests for cp_mgmt_dns_domain_facts
+- Unit tests for cp_mgmt_dynamic_object
+- Unit tests for cp_mgmt_dynamic_object_facts
+- Unit tests for cp_mgmt_exception_group
+- Unit tests for cp_mgmt_exception_group_facts(https://github.com/ansible/ansible/pull/62216)
+- Unit tests for cp_mgmt_global_assignment
+- Unit tests for cp_mgmt_global_assignment
+- Unit tests for cp_mgmt_global_assignment_facts
+- Unit tests for cp_mgmt_global_assignment_facts
+- Unit tests for cp_mgmt_group
+- Unit tests for cp_mgmt_group
+- Unit tests for cp_mgmt_group_facts
+- Unit tests for cp_mgmt_group_facts
+- Unit tests for cp_mgmt_group_with_exclusion
+- Unit tests for cp_mgmt_group_with_exclusion
+- Unit tests for cp_mgmt_group_with_exclusion_facts
+- Unit tests for cp_mgmt_group_with_exclusion_facts
+- Unit tests for cp_mgmt_host
+- Unit tests for cp_mgmt_host
+- Unit tests for cp_mgmt_host_facts
+- Unit tests for cp_mgmt_host_facts
+- Unit tests for cp_mgmt_install_policy
+- Unit tests for cp_mgmt_multicast_address_range
+- Unit tests for cp_mgmt_multicast_address_range_facts
+- Unit tests for cp_mgmt_multicast_address_range_facts
+- Unit tests for cp_mgmt_network
+- Unit tests for cp_mgmt_package
+- Unit tests for cp_mgmt_package
+- Unit tests for cp_mgmt_package_facts
+- Unit tests for cp_mgmt_package_facts
+- Unit tests for cp_mgmt_publish
+- Unit tests for cp_mgmt_put_file
+- Unit tests for cp_mgmt_run_ips_update
+- Unit tests for cp_mgmt_run_script(https://github.com/ansible/ansible/pull/62322)
+- Unit tests for cp_mgmt_security_zone
+- Unit tests for cp_mgmt_security_zone
+- Unit tests for cp_mgmt_security_zone_facts
+- Unit tests for cp_mgmt_security_zone_facts
+- Unit tests for cp_mgmt_service_dce_rpc
+- Unit tests for cp_mgmt_service_dce_rpc
+- Unit tests for cp_mgmt_service_dce_rpc_facts
+- Unit tests for cp_mgmt_service_dce_rpc_facts
+- Unit tests for cp_mgmt_service_group
+- Unit tests for cp_mgmt_service_group
+- Unit tests for cp_mgmt_service_group_facts(https://github.com/ansible/ansible/pull/62213)
+- Unit tests for cp_mgmt_service_group_facts(https://github.com/ansible/ansible/pull/62214)
+- Unit tests for cp_mgmt_service_icmp
+- Unit tests for cp_mgmt_service_icmp6
+- Unit tests for cp_mgmt_service_icmp6_facts
+- Unit tests for cp_mgmt_service_icmp_facts
+- Unit tests for cp_mgmt_service_other
+- Unit tests for cp_mgmt_service_other_facts
+- Unit tests for cp_mgmt_service_rpc
+- Unit tests for cp_mgmt_service_rpc_facts
+- Unit tests for cp_mgmt_service_sctp
+- Unit tests for cp_mgmt_service_sctp_facts
+- Unit tests for cp_mgmt_service_tcp
+- Unit tests for cp_mgmt_service_tcp_facts
+- Unit tests for cp_mgmt_service_udp
+- Unit tests for cp_mgmt_service_udp_facts
+- Unit tests for cp_mgmt_simple_gateway
+- Unit tests for cp_mgmt_simple_gateway_facts
+- Unit tests for cp_mgmt_tag
+- Unit tests for cp_mgmt_tag_facts(https://github.com/ansible/ansible/pull/62215)
+- Unit tests for cp_mgmt_threat_exception
+- Unit tests for cp_mgmt_threat_exception_facts
+- Unit tests for cp_mgmt_threat_protection_override(https://github.com/ansible/ansible/pull/62328)
+- Unit tests for cp_mgmt_threat_rule
+- Unit tests for cp_mgmt_threat_rule_facts
+- Unit tests for cp_mgmt_verfiy_policy
+- Unit tests for the case with more than 10 network interfaces
+- Use async poll default setting for play tasks also, previously in only affected adhoc ansible.
 - Use templated loop_var/index_var when looping include_* (https://github.com/ansible/ansible/issues/58820)
+- _purefa_facts - Fix missing API version check when calling I(admins) or I(all) as the subset
 - acme_certificate - Only return challenges in ``challenge_data`` and ``challenge_data_dns`` which are not yet valid.
 - acme_certificate - improve compatibility when finalizing ACME v2 orders. Fixes problem with Buypass' ACME v2 testing endpoint.
 - acme_certificate - use ``ipaddress`` module bundled with Ansible for normalizations needed for OpenSSL backend.
 - add options type info for Redfish modules (https://github.com/ansible/ansible/issues/54688)
+- adhoc CLI - when playbook-dir is specified and inside a collection, use default collection logic to resolve modules/actions
+- allow external collections to be created in the 'ansible' collection namespace (https://github.com/ansible/ansible/issues/59988)
 - allow include_role to work with ansible command
 - allow loading inventory plugins adjacent to playbooks
 - allow python_requirements_facts to report on dependencies containing dashes
+- ansible-connection persists even after playbook run is completed (https://github.com/ansible/ansible/pull/61591)
+- ansible-doc now properly handles removed modules/plugins
+- ansible-galaxy -  Stop appendding '/api' to configured galaxy urls. Special case migrated configs.
+- ansible-galaxy - Default collection install path to first path in COLLECTIONS_PATHS (https://github.com/ansible/ansible/pull/62870)
+- ansible-galaxy - Ensure we preserve the new URL when appending ``/api`` for the case where the GET succeeds on galaxy.ansible.com
 - ansible-galaxy - Fix url building to not truncate the URL (https://github.com/ansible/ansible/issues/61624)
+- ansible-galaxy - Handle the different task resource urls in API responses from publishing collection artifacts to galaxy servers using v2 and v3 APIs.
+- ansible-galaxy cli - fixed ``--version`` argument
 - ansible-galaxy role - Fix issue where ``--server`` was not being used for certain ``ansible-galaxy role`` actions - https://github.com/ansible/ansible/issues/61609
+- ansible-inventory - Properly hide arguments that should not be shown (https://github.com/ansible/ansible/issues/61604)
+- ansible-inventory - Restore functionality to allow ``--graph`` to be limited by a host pattern
 - ansible-podman connection plugin - Fix case when mount of podman container fails and files can't be copied to/from container. Also add error handling in case of failed podman commands. (https://github.com/ansible/ansible/issues/57740)
+- ansible-test coverage - Fix the ``--all`` argument when generating coverage reports - https://github.com/ansible/ansible/issues/62096
+- ansible-test import sanity test now consistently reports errors against the file being tested.
+- ansible-test import sanity test now consistently reports warnings as errors.
+- ansible-test import sanity test now properly handles relative imports.
+- ansible-test import sanity test now properly invokes Ansible modules as scripts.
 - ansible-test now correctly enumerates submodules when a collection resides below the repository root
+- ansible-test now correctly excludes the test results temporary directory when copying files from the remote test system to the local system
+- ansible-test now correctly installs the requirements specified by the collection's unit and integration tests instead of the requirements specified for Ansible's own unit and integration tests
+- ansible-test now creates its integration test temporary directory within the collection so ansible-playbook can properly detect the default collection
 - ansible-test now creates output directories as needed for powershell coverage output before generating reports
+- ansible-test now loads the collection loader plugin early enough for ansible_collections imports to work in unit test conftest.py modules
+- ansible-test now properly activates the vcenter plugin for vcenter tests when docker is available
+- ansible-test now properly activates virtual environments created using the --venv option
+- ansible-test now properly creates a virtual environment using ``venv`` when running in a ``virtualenv`` created virtual environment
+- ansible-test now properly excludes the ``tests/output/`` directory from code coverage
+- ansible-test now properly handles creation of Python execv wrappers when the selected interpreter is a script
+- ansible-test now properly handles warnings for removed modules/plugins
+- ansible-test now properly ignores the ``tests/output//`` directory when not using git
+- ansible-test now properly installs requirements for multiple Python versions when running sanity tests
+- ansible-test now properly registers its own code in a virtual environment when running from an install
+- ansible-test now properly searches for ``pythonX.Y`` instead of ``python`` when looking for the real python that created a ``virtualenv``
+- ansible-test now properly sets PYTHONPATH for tests when running from an Ansible installation
+- ansible-test now properly sets ``ANSIBLE_PLAYBOOK_DIR`` for integration tests so unqualified collection references work for adhoc ``ansible`` usage
+- ansible-test now shows sanity test doc links when installed (previously the links were only visible when running from source)
+- ansible-test now updates SSH keys it generates with newer versions of ssh-keygen to function with Paramiko
 - ansible-vault - fix error when multiple vault password files are specified (https://github.com/ansible/ansible/issues/57172)
 - ansible.basics - fix core C# recursive call when logging fails (e.g. if insufficient permissions are held) (https://github.com/ansible/ansible/pull/59503)
 - apt - Fixed the issue the cache being updated while auto-installing its dependencies even when ``update_cache`` is set to false.
@@ -871,6 +732,7 @@ Bugfixes
 - aws_s3 - Improve usability when the execution host lacks MD5 support (e.g. due to FIPS-140-2).
 - aws_s3 - Try to wait for the bucket to exist before setting the access control list.
 - aws_ses_identity module works when region is provided using config or environment variables rather than the region parameter (https://github.com/ansible/ansible/issues/51531)
+- azure - fix for specialized images in vmss
 - azure_rm_dnsrecordset_info - no longer returns empty ``azure_dnsrecordset`` facts when called as ``_info`` module.
 - azure_rm_networkinterface_info - Fix up instances when ``ansible_facts`` is returned for the older ``_facts`` alias.
 - azure_rm_resourcegroup_info - no longer returns ``azure_resourcegroups`` facts when called as ``_info`` module.
@@ -881,31 +743,46 @@ Bugfixes
 - azure_rm_virtualnetwork_info - no longer returns empty ``azure_virtualnetworks`` facts when called as ``_info`` module.
 - become - Provide nice error when the shell plugin is incompatible with the configured become plugin (https://github.com/ansible/ansible/issues/57770)
 - ce_acl_interface - Strict regularity can't find anything.
-- ce_dldp - tag named data of a xpath is unnecessay for old sotfware version to find a element from xml tree, but element can not be found with 'data' tag for new version, so remove.
-- ce_dldp_interface - tag named data of a xpath is unnecessay for old sotfware version to find a element from xml tree, but element can not be found with 'data' tag for new version, so remove.
+- ce_dldp - tag named data of a xpath is unnecessary for old software version to find a element from xml tree, but element can not be found with 'data' tag for new version, so remove.
+- ce_dldp_interface - tag named data of a xpath is unnecessary for old software version to find a element from xml tree, but element can not be found with 'data' tag for new version, so remove.
 - ce_interface - It is not a good way to find data from a xml tree by regular. lin379 line405.
 - ce_interface - line 750,779 Some attributes of interfaces are missing, 'ifAdminStatus', 'ifDescr', 'isL2SwitchPort'.So add them when get interface status.
+- ce_ospf - update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61684)
 - ce_snmp_location - fixed an out of array index error.
 - ce_snmp_target_host - None has no 'lower()' attribute.
+- ce_snmp_target_host - update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61842)
+- ce_snmp_traps - update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61843)
+- ce_static_route - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/62498)
+- ce_stp - update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61774)
 - ce_vxlan_arp - override 'get_config' to show specific configuration.
+- ce_vxlan_arp - update to fix some bugs - Modifying regular expressions. (https://github.com/ansible/ansible/pull/61995)
 - ce_vxlan_gateway - override 'get_config' to show specific configuration.
-- ce_vxlan_global - Netwrok_cli and netconf should be not mixed together, otherwise something bad will happen. Function get_nc_config uses netconf and load_config uses network_cli.
+- ce_vxlan_global - Network_cli and netconf should be not mixed together, otherwise something bad will happen. Function get_nc_config uses netconf and load_config uses network_cli.
 - ce_vxlan_global - line 242 , bd_info is a string array,and it should be 'extend' operation.
 - ce_vxlan_global - line 423, 'if' and 'else' should set a different value. if 'exist', that value is 'enable'.
 - ce_vxlan_global - line 477. To get state of result, if it is changed or not.
-- ce_vxlan_tunnel - Netwrok_cli and netconf should be not mixed together, otherwise something bad will happen. Function get_nc_config uses netconf and load_config uses network_cli.
-- ce_vxlan_vap - tag named data of a xpath is unnecessay for old sotfware version to find a element from xml tree, but element can not be found with 'data' tag for new version, so remove.
+- ce_vxlan_tunnel - Network_cli and netconf should be not mixed together, otherwise something bad will happen. Function get_nc_config uses netconf and load_config uses network_cli.
+- ce_vxlan_vap - tag named data of a xpath is unnecessary for old software version to find a element from xml tree, but element can not be found with 'data' tag for new version, so remove.
+- ce_vxlan_vap - update to fix some bugs - Modify the Operator Difference between Python 2 and Python 3. (https://github.com/ansible/ansible/pull/61996)
 - cgroup_perf_recap - When not using file_per_task, make sure we don't prematurely close the perf files
 - clarify error messages for 'auto' and missing libs, add missing lib msg for rpm.
+- cloudformation_info - Fix a KeyError returning information about the stack(s).
+- collection loader - ensure Jinja function cache is fully-populated before lookup
+- collection loader - fixed relative imports on Python 2.7, ensure pluginloader caches use full name to prevent names from being clobbered (https://github.com/ansible/ansible/pull/60317)
 - combine filter - Validate that undefined variables aren't used (https://github.com/ansible/ansible/issues/55810).
+- config - encoding failures on config values should be non-fatal (https://github.com/ansible/ansible/issues/63310)
 - constructed - Add a warning for the change in behavior in the sanitization of the groups option.
 - consul_session - ``sessions`` returned value is a list even though no sessions were found
 - consul_session - don't ignore ``validate_certs`` parameter
 - consul_session: don't ignore ``scheme`` parameter
 - cowsay - Fix issue with an empty cow_whitelist (https://github.com/ansible/ansible/issues/45631)
+- cron and cronvar - use get_bin_path utility to locate the default crontab executable instead of the hardcoded /usr/bin/crontab. (https://github.com/ansible/ansible/pull/59765)
+- cron cronvar - only run ``get_bin_path()`` once
+- cronvar - use correct binary name (https://github.com/ansible/ansible/issues/63274)
 - crypto modules - improve error messages when required Python library is missing.
 - cyberarkpassword - fix result decoding issues with Python 3 (https://github.com/ansible/ansible/issues/52625)
 - digital_ocean_droplet - Fix creation of DigitalOcean droplets using digital_ocean_droplet module (https://github.com/ansible/ansible/pull/61655)
+- display - remove leading space when displaying WARNING messages
 - display underlying error when reporting an invalid ``tasks:`` block.
 - dnf - fix formatting of module name in error message (https://github.com/ansible/ansible/pull/58647)
 - dnf - fix wildcard matching for state: absent (https://github.com/ansible/ansible/issues/55938)
@@ -914,6 +791,7 @@ Bugfixes
 - docker_* modules - behave better when requests errors are not caught by docker-py.
 - docker_* modules - improve error message when docker-py is missing / has wrong version.
 - docker_* modules - improve robustness when not handled Docker errors occur.
+- docker_compose - fix issue where docker deprecation warning results in ansible erroneously reporting a failure
 - docker_container - Add support for image lookups by digest. Fixes the detection of digest changes.
 - docker_container - ``oom_killer`` and ``oom_score_adj`` options are available since docker-py 1.8.0, not 2.0.0 as assumed by the version check.
 - docker_container - add support for ``nocopy`` mode for volumes.
@@ -921,6 +799,7 @@ Bugfixes
 - docker_container - fix idempotency of ``log_options`` when non-string values are used. Also warn user that this is the case.
 - docker_container - fix network creation when ``networks_cli_compatible`` is enabled.
 - docker_container - fix port bindings with IPv6 addresses.
+- docker_container - improve error behavior when parsing port ranges fails.
 - docker_container - switch to ``Config`` data source for images (API>=1.21).
 - docker_container - use docker API's ``restart`` instead of ``stop``/``start`` to restart a container.
 - docker_host_info - ``network_filters`` needs docker-py 2.0.2, ``disk_usage`` needs docker-py 2.2.0.
@@ -930,6 +809,7 @@ Bugfixes
 - docker_image - module failed when ``source: build`` was set but ``build.path`` options not specified.
 - docker_image - validate ``tag`` option value.
 - docker_image_info - Add support for image lookups by digest. Fixes the detection of digest changes.
+- docker_login - correct broken fix for https://github.com/ansible/ansible/pull/60381 which crashes for Python 3.
 - docker_login - report change on successful logout (https://github.com/ansible/ansible/issues/59232)
 - docker_network module - fix idempotency when using ``aux_addresses`` in ``ipam_config``.
 - docker_swarm_service - Change the type of options ``gid`` and ``uid`` on ``secrets`` and ``configs`` to ``str``.
@@ -943,6 +823,8 @@ Bugfixes
 - ec2_instance - Ensures ``ebs.volume_size`` and ``ebs.iops`` are ``int`` to avoid issues with Jinja2 templating
 - ec2_instance - make Name tag idempotent (https://github.com/ansible/ansible/pull/55224)
 - ec2_launch_template - Only 'volume' and 'instance' are valid resource types for tag specifications.
+- ecs_certificate - Always specify header ``connection: keep-alive`` for ECS API connections.
+- ecs_certificate - Fix formatting of contents of ``full_chain_path``.
 - ensure all cases of a None remote/become user are covered.
 - ensure module results and facts are marked untrusted as templates for safer use within the same task
 - ensure run_command passes bytes to Popen, which is what it expects.
@@ -953,13 +835,17 @@ Bugfixes
 - file - Fix setting relative paths for hard links (https://github.com/ansible/ansible/issues/55971)
 - file - fix setting attributes for symlinked file (https://github.com/ansible/ansible/issues/56928)
 - file - return more useful error message for recursion error (https://github.com/ansible/ansible/issues/56397)
+- find - clarify description of ``contains`` (https://github.com/ansible/ansible/issues/61983)
+- firewalld - enable the firewalld module to function offline with firewalld version 0.7.0 and newer (https://github.com/ansible/ansible/issues/63254)
 - first_found - Un-deprecate ``skip``, as the alternative of ``errors`` does not work with ``with_first_found`` and only use of ``lookup`` (https://github.com/ansible/ansible/issues/58942)
+- fix if equals error code command is not found(https://github.com/ansible/ansible/pull/62529)
 - fix incorrect uses of to_native that should be to_text instead.
 - fixed collection-based plugin loading in ansible-connection (eg networking plugins)
 - gather_facts - Clean up tmp files upon completion (https://github.com/ansible/ansible/issues/57248)
 - gather_facts - Prevent gather_facts from being verbose, just like is done in the normal action plugin for setup (https://github.com/ansible/ansible/issues/58310)
 - gather_facts now correctly passes back the full output of modules on error and skipped, fixes
 - gcp_compute - Speed up dynamic invetory up to 30x.
+- get_url - Don't treat no checksum as a checksum match (https://github.com/ansible/ansible/issues/61978)
 - gitlab modules - Update version deprecations to use strings instead of integers so that ``2.10`` isn't converted to ``2.1``. (https://github.com/ansible/ansible/pull/55395)
 - gitlab_runner - Fix idempotency when creating runner (https://github.com/ansible/ansible/issues/57759)
 - group - The group module errored of if the gid exists with the same group name. This prevents reruns of the playbook. This fixes a regression introduced by 4898b0a.
@@ -976,13 +862,21 @@ Bugfixes
 - ibm_storage - Added a check for null fields in ibm_storage utils module.
 - include_tasks - whitelist ``listen`` as a valid keyword (https://github.com/ansible/ansible/issues/56580)
 - includes - Ensure to use the correct filename when AnsibleFileNotFound is encountered (https://github.com/ansible/ansible/issues/58436)
+- iosxr - Fix random idempotence issues with iosxr_lag_interfaces Resource Module (https://github.com/ansible/ansible/pull/62998).
+- iosxr - support cases where a normal commit operation also throws a prompt (https://github.com/ansible/ansible/pull/62132)
+- iosxr_l3_interfaces - Fixes IOSXR L3 which was having idempotent issue raised in issue #61844, also adding a RTT for iosxr_l3_interfaces resource module
 - ipaddr: prevent integer indices from being parsed as ip nets
 - java_keystore - Use SHA256 to check the fingerprints' certs. The module is compatible with java<=8 (SHA1 by default) and Java>=9 (SHA256 by default) now.
+- junos_config - Add commands alias to lines option to be in sync with other platforms (https://github.com/ansible/ansible/pull/62221)
+- junos_config - allow validate config before committing to running configuration (https://github.com/ansible/ansible/pull/61969)
+- junos_user - Add no_log=True to junos_user `encrypted_password` (https://github.com/ansible/ansible/pull/62184)
 - k8s - ensure k8s returns result of a resource update as it is at the end of the wait period
+- k8s - ensure that apply works with check mode. Bumps minimum openshift version for apply to 0.9.2.
 - k8s - ensure wait_condition works when Status is Unknown
 - k8s - resource updates applied with force work correctly now
 - k8s module - fix for case when resource definition yaml ended with 3 dashes
 - keep results subset also when not no_log.
+- kubevirt: apply wait_sleep fix from devel to not fail on missing param
 - lineinfile - fix a race / file descriptor leak when writing the file (https://github.com/ansible/ansible/issues/57327)
 - lvg - Fixed warning shown when using default value for pesize about conversion from int to str.
 - machinectl become plugin - correct bugs which induced errors on plugin usage
@@ -997,20 +891,27 @@ Bugfixes
 - meraki_vlan - Module would make unnecessary API calls to Meraki when net_id is specified in task.
 - module_defaults - Added aws_codebuild, aws_codecommit, aws_codepipeline, aws_secret, aws_ses_rule_set, cloudformation_stack_set, dms_endpoint, dms_replication_subnet_group, ec2_transit_gateway, ec2_transit_gateway_info, ecs_taskdefinition_facts, elb_target_info, iam_password_policy, redshift_cross_region_snapshots, s3_bucket_notification to the aws module_defaults group.
 - module_utils - remove unused objects from dict_transformations, removed, and sys_info modules (https://github.com/ansible/ansible/pull/59570)
+- mysql - Fix ``mysql_connect`` function's logic related to the ``cursor_class`` keyword argument (https://github.com/ansible/ansible/pull/61832).
 - mysql_user: fix regression introduced when fixing MariaDB/MySQL multiple versions handling
 - nagios - Removed redundant type check which caused crashes. Guardrails added elsewhere in earlier change.
 - nagios module - Fix nagios module to recognize if ``cmdfile`` exists and is fifo pipe.
 - netbox - Fix missing implementation of `groups` option (https://github.com/ansible/ansible/issues/57688)
 - netbox_ip_address - Fixed issue where it would create duplicate IP addresses when trying to serialize the IP address object which doesn't have the ``.serialize()`` method. This should also prevent future duplicate objects being created if they don't have the ``.serialize()`` method as well.
 
+- network_cli - ensure connection is established before returning the current prompt
 - new code assumed role_versions always were present event though rest of code does not.
 - nmcli - fixed regression caused by commit b7724fd, github issue
 - npm - Validate that all passed options have proper types.
+- nxos_file_copy call get_capabilities to initiate device connection (https://github.com/ansible/ansible/pull/62103).
+- nxos_l2_interfaces fix for integration tests failing to setup layer2 (https://github.com/ansible/ansible/pull/61887).
+- nxos_lacp_interfaces fix integration test dependencies (https://github.com/ansible/ansible/pull/61947).
 - onepassword - fix onepassword lookup plugin failing on fields without a name or t property (https://github.com/ansible/ansible/pull/58308)
 - onepassword_facts - fix onepassword_facts module failing on fields without a name or t property (https://github.com/ansible/ansible/pull/58308)
 - openssh_keypair - The fingerprint return value was incorrectly returning a list of ssh-keygen output; it now returns just the fingerprint value as a string
 - openssh_keypair - add public key and key comment validation on change
 - openssh_keypair - make regeneration of valid keypairs with the ``force`` option possible, add better handling for invalid files
+- openssh_keypair - public key's file attributes (permissions, owner, group, etc.) are now set to the same values as the private key.
+- openssl_certificate - When provider is ``entrust``, use a ``connection: keep-alive`` header for ECS API connections.
 - openssl_certificate - ``invalid_at`` check was broken.
 - openssl_certificate - ``key_usage`` check was broken for ``pyopenssl`` backend. Its error message was wrong for the ``cryptography`` backend.
 - openssl_certificate - fix Subject Alternate Name comparison, which was broken for IPv6 addresses with PyOpenSSL, or with older cryptography versions (before 2.1).
@@ -1045,10 +946,15 @@ Bugfixes
 - postgresql_table - fix schema handling (https://github.com/ansible/ansible/pull/57391)
 - preserve actual ssh error when we cannot connect.
 - proxmox_kvm - fixed issue when vm has not yet a name item (https://github.com/ansible/ansible/issues/58194)
+- psexec - Fix issue where the Kerberos package was not detected as being available.
+- psexec - Fix issue where the ``interactive`` option was not being passed down to the library.
 - psrp - Fix blank newlines appearing before ``stdout`` when using ``script`` or ``raw`` with the ``psrp`` connection plugin
 - psrp - Fix issues when fetching large files causing a memory leak - https://github.com/ansible/ansible/issues/55239
 - psrp - Fix issues with propagating errors back to Ansible with ``raw`` tasks
+- purefa_info - Fix missing API version check when calling I(admins) or I(all) as the subset
+- rabbitmq lookup plugin - Fix for rabbitmq lookups failing when using pika v1.0.0 and newer.
 - rabbitmq_policy - Add full check for rabbit policy changes (https://github.com/ansible/ansible/issues/29264)
+- rabbitmq_publish - Fix to ensure the module works correctly for pika v1.0.0 and later. (https://github.com/ansible/ansible/pull/61960)
 - rabbitmq_user - Handle non-zero rabbitmqctl exit codes (https://github.com/ansible/ansible/issues/56164)
 - rds_instance - Don't hardcode the license models because there are accepted values undocumented by AWS. Rely on the exception handling instead to provide a helpful error for invalid license models.
 - rds_instance no longer fails when passing neither storage_type nor iops
@@ -1071,12 +977,15 @@ Bugfixes
 - several minor fixes to ansible logging, allow deterministic log name, better level matching, leaner setup.
 - show host_vars in ansible-inventory's --graph option.
 - ssh connection plugin - Ensure that debug messages are properly encoded as text
+- sts_assume_role - fix assertion text in integration test
 - suppress "default will change" warnings for ``TRANSFORM_INVALID_GROUP_CHARS`` setting when non-default option value is chosen
-- sysctl - check system values, not just sysctl.conf file, when determing state (https://github.com/ansible/ansible/pull/56153#issuecomment-514384922)
+- sysctl - check system values, not just sysctl.conf file, when determining state (https://github.com/ansible/ansible/pull/56153#issuecomment-514384922)
 - sysctl - fix err referenced before assignment (https://github.com/ansible/ansible/issues/58158)
 - sysctl: the module now also checks the output of STDERR to report if values are correctly set (https://github.com/ansible/ansible/pull/55695)
 - systemd - wait for a service which is in deactivating state when using ``state=stopped`` (https://github.com/ansible/ansible/pull/59471)
 - template lookup - restore variables between calls (https://github.com/ansible/ansible/issues/55113)
+- this fix result in no more traceback on empty config when state is 'merged', 'replaced' or 'overridden'. (https://github.com/ansible/ansible/pull/62518).
+- tower inventory plugin - fix TypeError when giving inventory_id as integer (https://github.com/ansible/ansible/issues/61333)
 - tower_job_wait - Fixed wrong variable specification in examples
 - tower_user - Fix to create user as a system auditor when specifying the `auditor` option (https://github.com/ansible/ansible/issues/54446)
 - ufw - correctly check status when logging is off (https://github.com/ansible/ansible/issues/56674)
@@ -1085,26 +994,31 @@ Bugfixes
 - urls - Handle redirects properly for IPv6 address by not splitting on ``:`` and rely on already parsed hostname and port values (https://github.com/ansible/ansible/issues/56258)
 - use versioned link generator to link correct version for seealso
 - user - allow 13 asterisk characters in password field without warning
-- user - create parent directories when the specified home path has parent directiries that do not exist (https://github.com/ansible/ansible/issues/41393)
+- user - create parent directories when the specified home path has parent directories that do not exist (https://github.com/ansible/ansible/issues/41393)
 - user - do not warn when using ``local: yes`` if user already exists (https://github.com/ansible/ansible/issues/58063)
 - user - omit incompatible options when operating in local mode (https://github.com/ansible/ansible/issues/48722)
 - user - properly parse the shadow file on AIX (https://github.com/ansible/ansible/issues/54461)
+- user - update docs to reflect proper way to remove account from all groups
 - vault - Fix traceback using Python2 if a vault contains non-ascii characters (https://github.com/ansible/ansible/issues/58351).
 - vfat - changed default value of selinux_special_filesystems to include vfat, the filesystem of ``/boot/efi`` on UEFI systems
+- vmware - Ensure we can use the modules with Python < 2.7.9 or RHEL/CentOS < 7.4, this as soon as ``validate_certs`` is disabled.
 - vmware - The VMware modules now enable the SSL certificate check unless ``validate_certs`` is ``false``.
 - vmware_guest accepts 0 MB of memory reservation, fix regression introduced via 193f69064fb40a83e3e7d2112ef24868b45233b3 (https://github.com/ansible/ansible/issues/59190).
+- vmware_vcenter_statistics - Fix some corner cases like increasing some interval and decreasing another at the same time.
 - vultr_server - Fix idempotency for options ``ipv6_enabled`` and ``private_network_enabled``.
 - warn user when attempting to use service with globs in systemd module.
 - we don't really need to template vars on definition as we do this on demand in templating.
-- win_acl - Change special id ref recognitionto avoid language diff (https://github.com/ansible/ansible/issues/56757)
+- win_acl - Change special id ref recognition to avoid language diff (https://github.com/ansible/ansible/issues/56757)
 - win_acl - Fix qualifier parser when using UNC paths - https://github.com/ansible/ansible/issues/55875
+- win_become - Do not dispose of one of the logon tokens until after the process has run
 - win_chocolatey - Better support detecting multiple packages installed at different versions on newer Chocolatey releases
 - win_chocolatey - Install the specific Chocolatey version if the ``version`` option is set.
 - win_domain - Fix checking for a domain introduced in a recent patch
 - win_domain_controller - Do not fail the play without the user being able to catch dcpromo failing because of a pending reboot within a playbook using ignore_error or retry logic.
-- win_domain_group_membership - Fix missing @extra_vars on Get-ADObject to support dirrent domain and credentials for retrival (https://github.com/ansible/ansible/issues/57404)
+- win_domain_group_membership - Fix missing @extra_vars on Get-ADObject to support different domain and credentials for retrieval (https://github.com/ansible/ansible/issues/57404)
 - win_domain_user - Do not hide error and stacktrace on failures
-- win_dsc - Be more leniant around the accepted DateTime values for backwards compatibility - https://github.com/ansible/ansible/issues/59667
+- win_dsc - Be more lenient around the accepted DateTime values for backwards compatibility - https://github.com/ansible/ansible/issues/59667
+- win_exec_wrapper - Be more defensive when it comes to getting unhandled exceptions
 - win_firewall_rule - Fix program var not expanding %SystemRoot% type vars (https://github.com/ansible/ansible/issues/44450)
 - win_get_url - Fix handling of restricted headers as per (https://github.com/ansible/ansible/issues/57880)
 - win_get_url - Fix proxy_url not used correctly (https://github.com/ansible/ansible/issues/58691)
@@ -1347,7 +1261,7 @@ vmware
 - vmware_cluster_ha - Manage High Availability (HA) on VMware vSphere clusters
 - vmware_cluster_vsan - Manages virtual storage area network (vSAN) configuration on VMware vSphere clusters
 - vmware_content_deploy_template - Deploy Virtual Machine from template stored in content library.
-- vmware_content_library_info - Gather information about VMWare Content Library
+- vmware_content_library_info - Gather information about VMware Content Library
 - vmware_content_library_manager - Create, update and delete VMware content library
 - vmware_drs_group_info - Gathers info about DRS VM/Host groups on the given cluster
 - vmware_drs_rule_info - Gathers info about DRS rule on the given cluster
@@ -1385,18 +1299,18 @@ vmware
 vultr
 ^^^^^
 
-- vultr_account_info - Get infos about the Vultr account.
-- vultr_block_storage_info - Get infos about the Vultr block storage volumes available.
+- vultr_account_info - Get information about the Vultr account.
+- vultr_block_storage_info - Get information about the Vultr block storage volumes available.
 - vultr_dns_domain_info - Gather information about the Vultr DNS domains available.
 - vultr_firewall_group_info - Gather information about the Vultr firewall groups available.
 - vultr_network_info - Gather information about the Vultr networks available.
-- vultr_os_info - Get infos about the Vultr OSes available.
+- vultr_os_info - Get information about the Vultr OSes available.
 - vultr_plan_info - Gather information about the Vultr plans available.
 - vultr_region_info - Gather information about the Vultr regions available.
 - vultr_server_info - Gather information about the Vultr servers available.
-- vultr_ssh_key_info - Get infos about the Vultr SSH keys available.
+- vultr_ssh_key_info - Get information about the Vultr SSH keys available.
 - vultr_startup_script_info - Gather information about the Vultr startup scripts available.
-- vultr_user_info - Get infos about the Vultr user available.
+- vultr_user_info - Get information about the Vultr user available.
 
 Crypto
 ~~~~~~

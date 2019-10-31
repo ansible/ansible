@@ -1,4 +1,9 @@
 releases:
+  2.9.0:
+    codename: Immigrant Song
+    fragments:
+    - v2.9.0_summary.yaml
+    release_date: '2019-10-31'
   2.9.0b1:
     codename: Immigrant Song
     fragments:
