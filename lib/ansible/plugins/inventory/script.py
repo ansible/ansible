@@ -9,21 +9,7 @@ DOCUMENTATION = '''
     inventory: script
     version_added: "2.4"
     short_description: Executes an inventory script that returns JSON
-    extends_documentation_fragment:
-      - inventory_cache
     options:
-      cache:
-        description: Toggle the usage of the configured Cache plugin.
-        default: False
-        type: boolean
-        ini:
-           - section: inventory
-             key: cache
-           - section: inventory_plugin_script
-             key: cache
-        env:
-           - name: ANSIBLE_INVENTORY_CACHE
-           - name: ANSIBLE_INVENTORY_PLUGIN_SCRIPT_CACHE
       always_show_stderr:
         description: Toggle display of stderr even when script was successful
         version_added: "2.5.1"
@@ -41,6 +27,7 @@ DOCUMENTATION = '''
           This is a performance optimization as the script would be called per host otherwise.
     notes:
         - Whitelisted in configuration by default.
+        - Caching does not occur within the plugin so it is up to the individual scripts to implement it.
 '''
 
 import os
@@ -90,64 +77,43 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         super(InventoryModule, self).parse(inventory, loader, path)
         self.set_options()
-        self.load_cache_plugin()
-
-        if cache is None:
-            cache = self.get_option('cache')
 
         # Support inventory scripts that are not prefixed with some
         # path information but happen to be in the current working
         # directory when '.' is not in PATH.
         cmd = [path, "--list"]
 
-        cache_key = self._get_cache_prefix(path)
-        user_cache_setting = self.get_option('cache')
-        attempt_to_read_cache = user_cache_setting and cache
-        cache_needs_update = user_cache_setting and not cache
-        if attempt_to_read_cache:
-            try:
-                processed = self._cache[cache_key]
-            except KeyError:
-                cache_needs_update = True
-        if not attempt_to_read_cache or cache_needs_update:
-            try:
-                try:
-                    sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                except OSError as e:
-                    raise AnsibleParserError("problem running %s (%s)" % (' '.join(cmd), to_native(e)))
-                (stdout, stderr) = sp.communicate()
-
-                path = to_native(path)
-                err = to_native(stderr or "")
-
-                if err and not err.endswith('\n'):
-                    err += '\n'
-
-                if sp.returncode != 0:
-                    raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
-
-                # make sure script output is unicode so that json loader will output unicode strings itself
-                try:
-                    data = to_text(stdout, errors="strict")
-                except Exception as e:
-                    raise AnsibleError("Inventory {0} contained characters that cannot be interpreted as UTF-8: {1}".format(path, to_native(e)))
-
-                try:
-                    processed = self.loader.load(data)
-                except Exception as e:
-                    raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
-
-                # if no other errors happened and you want to force displaying stderr, do so now
-                if stderr and self.get_option('always_show_stderr'):
-                    self.display.error(msg=to_text(err))
-
-                if cache_needs_update:
-                    self._cache[cache_key] = processed
-
-            except Exception as e:
-                raise AnsibleParserError(to_native(e))
-
         try:
+            try:
+                sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except OSError as e:
+                raise AnsibleParserError("problem running %s (%s)" % (' '.join(cmd), to_native(e)))
+            (stdout, stderr) = sp.communicate()
+
+            path = to_native(path)
+            err = to_native(stderr or "")
+
+            if err and not err.endswith('\n'):
+                err += '\n'
+
+            if sp.returncode != 0:
+                raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
+
+            # make sure script output is unicode so that json loader will output unicode strings itself
+            try:
+                data = to_text(stdout, errors="strict")
+            except Exception as e:
+                raise AnsibleError("Inventory {0} contained characters that cannot be interpreted as UTF-8: {1}".format(path, to_native(e)))
+
+            try:
+                processed = self.loader.load(data)
+            except Exception as e:
+                raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
+
+            # if no other errors happened and you want to force displaying stderr, do so now
+            if stderr and self.get_option('always_show_stderr'):
+                self.display.error(msg=to_text(err))
+
             if not isinstance(processed, Mapping):
                 raise AnsibleError("failed to parse executable inventory script results from {0}: needs to be a json dict\n{1}".format(path, err))
 
