@@ -28,42 +28,21 @@
     or (ansible_distribution == 'CentOS' and ansible_distribution_version == '7')
 
 # Ubuntu
-- name: Import MongoDB public GPG Key xenial
+- name: Import MongoDB public GPG Key
   apt_key:
-    keyserver: "{{ apt_xenial.keyserver }}"
-    id: "{{ apt_xenial.keyserver_id }}"
+    keyserver: "{{ apt.keyserver }}"
+    id: "{{ apt.keyserver_id }}"
   when:
-    - ansible_distribution_version == "16.04"
+    - ansible_distribution_version in ["16.04", "18.04"]
     - ansible_distribution == 'Ubuntu'
 
-- name: Add MongoDB repository into sources list xenial
+- name: Add MongoDB repository into sources list
   apt_repository:
-    repo: "{{ apt_xenial.repo }}"
+    repo: "{{ apt.repo }}"
     state: present
+    update_cache: yes
   when:
-    - ansible_distribution_version == "16.04"
-    - ansible_distribution == 'Ubuntu'
-
-- name: Import MongoDB public GPG Key bionic
-  apt_key:
-    keyserver: "{{ apt_bionic.keyserver }}"
-    id: "{{ apt_bionic.keyserver_id }}"
-  when:
-    - ansible_distribution_version == "18.04"
-    - ansible_distribution == 'Ubuntu'
-
-- name: Add MongoDB repository into sources list bionic
-  apt_repository:
-    repo: "{{ apt_bionic.repo }}"
-    state: present
-  when:
-    - ansible_distribution_version == "18.04"
-    - ansible_distribution == 'Ubuntu'
-
-- name: Update apt keys
-  shell: apt-key update && apt-get update
-  when:
-    - mongodb_version != "4.0"
+    - ansible_distribution_version in ["16.04", "18.04"]
     - ansible_distribution == 'Ubuntu'
 
 # Need to handle various platforms here. Package name will not always be the same

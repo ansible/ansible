@@ -108,12 +108,12 @@
       - passphrase_error_3 is failed
       - "'assphrase' in passphrase_error_3.msg or 'assword' in passphrase_error_3.msg or 'serializ' in passphrase_error_3.msg"
 
-- name: Verify that broken certificate will be regenerated
+- name: (Selfsigned validation, {{select_crypto_backend}}) Verify that broken certificate will be regenerated
   assert:
     that:
       - selfsigned_broken is changed
 
-- name: Check backup
+- name: (Selfsigned validation, {{select_crypto_backend}}) Check backup
   assert:
     that:
       - selfsigned_backup_1 is changed
@@ -127,7 +127,7 @@
       - selfsigned_backup_5 is not changed
       - selfsigned_backup_5.backup_file is undefined
 
-- name: Check create subject key identifier
+- name: (Selfsigned validation, {{select_crypto_backend}}) Check create subject key identifier
   assert:
     that:
       - selfsigned_subject_key_identifier_1 is changed
@@ -136,3 +136,23 @@
       - selfsigned_subject_key_identifier_4 is not changed
       - selfsigned_subject_key_identifier_5 is changed
   when: select_crypto_backend != 'pyopenssl'
+
+- name: (Selfsigned validation, {{select_crypto_backend}}) Verify Ed25519 and Ed448 tests (for cryptography >= 2.6, < 2.8)
+  assert:
+    that:
+      - selfsigned_certificate_ed25519_ed448.results[0] is failed
+      - selfsigned_certificate_ed25519_ed448.results[1] is failed
+      - selfsigned_certificate_ed25519_ed448_idempotence.results[0] is failed
+      - selfsigned_certificate_ed25519_ed448_idempotence.results[1] is failed
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.6', '>=') and cryptography_version.stdout is version('2.8', '<')
+
+- name: (Selfsigned validation, {{select_crypto_backend}}) Verify Ed25519 and Ed448 tests (for cryptography >= 2.8)
+  assert:
+    that:
+      - selfsigned_certificate_ed25519_ed448 is succeeded
+      - selfsigned_certificate_ed25519_ed448.results[0] is changed
+      - selfsigned_certificate_ed25519_ed448.results[1] is changed
+      - selfsigned_certificate_ed25519_ed448_idempotence is succeeded
+      - selfsigned_certificate_ed25519_ed448_idempotence.results[0] is not changed
+      - selfsigned_certificate_ed25519_ed448_idempotence.results[1] is not changed
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.8', '>=')
