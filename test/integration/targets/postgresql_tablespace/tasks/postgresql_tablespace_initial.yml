@@ -30,7 +30,7 @@
   postgresql_user:
     db: postgres
     login_user: "{{ pg_user }}"
-    name: bob
+    name: "{{ test_role2 }}"
     state: present
   ignore_errors: yes
 
@@ -40,7 +40,7 @@
   postgresql_user:
     db: postgres
     login_user: "{{ pg_user }}"
-    name: alice
+    name: "{{ test_role1 }}"
     state: present
   ignore_errors: yes
 
@@ -49,14 +49,14 @@
 #
 
 # Create tablespace and set owner:
-- name: postgresql_tablespace - create a new tablespace called acme and set bob as an its owner
+- name: postgresql_tablespace - create a new tablespace called acme and set test_role2 as an its owner
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_tablespace:
     db: postgres
     login_user: "{{ pg_user }}"
     name: acme
-    owner: bob
+    owner: "{{ test_role2 }}"
     location: /ssd
   register: result
   ignore_errors: yes
@@ -64,8 +64,8 @@
 - assert:
     that:
     - result is changed
-    - result.owner == 'bob'
-    - result.queries == ["CREATE TABLESPACE \"acme\" LOCATION '/ssd'", "ALTER TABLESPACE \"acme\" OWNER TO bob"]
+    - result.owner == '{{ test_role2 }}'
+    - result.queries == ["CREATE TABLESPACE \"acme\" LOCATION '/ssd'", "ALTER TABLESPACE \"acme\" OWNER TO \"{{ test_role2 }}\""]
     - result.state == 'present'
     - result.tablespace == 'acme'
     - result.options == {}
@@ -89,42 +89,44 @@
     - result.msg == "Tablespace 'acme' exists with different location '/ssd'"
 
 # Change tablespace owner
-- name: postgresql_tablespace - change tablespace owner to alice
+- name: postgresql_tablespace - change tablespace owner to test_role
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_tablespace:
     db: postgres
     login_user: "{{ pg_user }}"
     name: acme
-    owner: alice
+    owner: "{{ test_role1 }}"
   register: result
   ignore_errors: yes
 
 - assert:
     that:
     - result is changed
-    - result.owner == 'alice'
-    - result.queries == ["ALTER TABLESPACE \"acme\" OWNER TO alice"]
+    - result.owner == '{{ test_role1 }}'
+    - result.queries == ["ALTER TABLESPACE \"acme\" OWNER TO \"{{ test_role1 }}\""]
     - result.state == 'present'
     - result.tablespace == 'acme'
     - result.options == {}
 
-# Try to change tablespace owner to alice again:
-- name: postgresql_tablespace - try to change tablespace owner to alice again to be sure that nothing changes
+# Try to change tablespace owner to test_role1 again:
+- name: >
+    postgresql_tablespace - try to change tablespace owner to test_role
+    again to be sure that nothing changes
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_tablespace:
     db: postgres
     login_user: "{{ pg_user }}"
     name: acme
-    owner: alice
+    owner: "{{ test_role1 }}"
   register: result
   ignore_errors: yes
 
 - assert:
     that:
     - result is not changed
-    - result.owner == 'alice'
+    - result.owner == '{{ test_role1 }}'
     - result.queries == []
     - result.state == 'present'
     - result.tablespace == 'acme'
@@ -146,7 +148,7 @@
 - assert:
     that:
     - result is changed
-    - result.owner == 'alice'
+    - result.owner == '{{ test_role1 }}'
     - result.queries == ["ALTER TABLESPACE \"acme\" SET (seq_page_cost = '4')"]
     - result.state == 'present'
     - result.tablespace == 'acme'

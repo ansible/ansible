@@ -306,7 +306,7 @@ class PgTablespace(object):
         if new_owner == self.owner:
             return False
 
-        query = "ALTER TABLESPACE %s OWNER TO %s" % (pg_quote_identifier(self.name, 'database'), new_owner)
+        query = 'ALTER TABLESPACE %s OWNER TO "%s"' % (pg_quote_identifier(self.name, 'database'), new_owner)
         return exec_sql(self, query, ddl=True)
 
     def rename(self, newname):
