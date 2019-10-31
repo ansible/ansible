@@ -47,8 +47,6 @@ class TestEosVlansModule(TestEosModule):
 
     def load_fixtures(self, commands=None, transport='cli'):
         file_cmd = load_fixture('eos_vlan_config.cfg').split()
-        #       comprehension failing in zuul with syntax error
-        #       file_cmd_dict = {file_cmd[i]: file_cmd[i + 1] for i in range(0, len(file_cmd), 2)}
         file_cmd_dict = {}
         for i in range(0, len(file_cmd), 2):
             if file_cmd[i] == 'vlan_id':
@@ -56,7 +54,6 @@ class TestEosVlansModule(TestEosModule):
             else:
                 y = file_cmd[i + 1]
             file_cmd_dict.update({file_cmd[i]: y})
-        #        self.execute_show_command.return_value = [{x: int(y) if x == 'vlan_id' else y   for x, y in file_cmd_dict.items()}]
         self.execute_show_command.return_value = [file_cmd_dict]
 
     def test_eos_vlan_default(self):
