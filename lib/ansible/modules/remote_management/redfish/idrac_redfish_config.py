@@ -63,6 +63,12 @@ options:
       - Timeout in seconds for URL requests to iDRAC controller
     default: 10
     type: int
+  resource_id:
+    required: false
+    description:
+      - The ID of the System, Manager or Chassis to modify
+    type: str
+    version_added: '2.10'
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -72,6 +78,7 @@ EXAMPLES = '''
     idrac_redfish_config:
       category: Manager
       command: SetManagerAttributes
+      resource_id: iDRAC.Embedded.1
       manager_attribute_name: NTPConfigGroup.1.NTPEnable
       manager_attribute_value: Enabled
       baseuri: "{{ baseuri }}"
@@ -81,6 +88,7 @@ EXAMPLES = '''
     idrac_redfish_config:
       category: Manager
       command: SetManagerAttributes
+      resource_id: iDRAC.Embedded.1
       manager_attribute_name: NTPConfigGroup.1.NTP1
       manager_attribute_value: "{{ ntpserver1 }}"
       baseuri: "{{ baseuri }}"
@@ -90,6 +98,7 @@ EXAMPLES = '''
     idrac_redfish_config:
       category: Manager
       command: SetManagerAttributes
+      resource_id: iDRAC.Embedded.1
       manager_attribute_name: Time.1.Timezone
       manager_attribute_value: "{{ timezone }}"
       baseuri: "{{ baseuri }}"
@@ -168,7 +177,8 @@ def main():
             password=dict(required=True, no_log=True),
             manager_attribute_name=dict(default='null'),
             manager_attribute_value=dict(default='null'),
-            timeout=dict(type='int', default=10)
+            timeout=dict(type='int', default=10),
+            resource_id=dict()
         ),
         supports_check_mode=False
     )
@@ -187,9 +197,13 @@ def main():
     mgr_attributes = {'mgr_attr_name': module.params['manager_attribute_name'],
                       'mgr_attr_value': module.params['manager_attribute_value']}
 
+    # System, Manager or Chassis ID to modify
+    resource_id = module.params['resource_id']
+
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_utils = IdracRedfishUtils(creds, root_uri, timeout, module)
+    rf_utils = IdracRedfishUtils(creds, root_uri, timeout, module,
+                                 resource_id=resource_id, data_modification=True)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:

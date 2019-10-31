@@ -113,6 +113,12 @@ options:
       - properties of account service to update
     type: dict
     version_added: "2.10"
+  resource_id:
+    required: false
+    description:
+      - The ID of the System, Manager or Chassis to modify
+    type: str
+    version_added: "2.10"
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -122,6 +128,7 @@ EXAMPLES = '''
     redfish_command:
       category: Systems
       command: PowerGracefulRestart
+      resource_id: 437XR1138R2
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
@@ -130,6 +137,7 @@ EXAMPLES = '''
     redfish_command:
       category: Systems
       command: SetOneTimeBoot
+      resource_id: 437XR1138R2
       bootdevice: "{{ bootdevice }}"
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
@@ -139,6 +147,7 @@ EXAMPLES = '''
     redfish_command:
       category: Systems
       command: SetOneTimeBoot
+      resource_id: 437XR1138R2
       bootdevice: "UefiTarget"
       uefi_target: "/0x31/0x33/0x01/0x01"
       baseuri: "{{ baseuri }}"
@@ -149,6 +158,7 @@ EXAMPLES = '''
     redfish_command:
       category: Systems
       command: SetOneTimeBoot
+      resource_id: 437XR1138R2
       bootdevice: "UefiBootNext"
       boot_next: "Boot0001"
       baseuri: "{{ baseuri }}"
@@ -159,6 +169,7 @@ EXAMPLES = '''
     redfish_command:
       category: Chassis
       command: IndicatorLedBlink
+      resource_id: 1U
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
@@ -278,6 +289,7 @@ EXAMPLES = '''
     redfish_command:
       category: Manager
       command: ClearLogs
+      resource_id: BMC
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
@@ -327,7 +339,8 @@ def main():
             bootdevice=dict(),
             timeout=dict(type='int', default=10),
             uefi_target=dict(),
-            boot_next=dict()
+            boot_next=dict(),
+            resource_id=dict()
         ),
         supports_check_mode=False
     )
@@ -350,9 +363,13 @@ def main():
     # timeout
     timeout = module.params['timeout']
 
+    # System, Manager or Chassis ID to modify
+    resource_id = module.params['resource_id']
+
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_utils = RedfishUtils(creds, root_uri, timeout, module)
+    rf_utils = RedfishUtils(creds, root_uri, timeout, module,
+                            resource_id=resource_id, data_modification=True)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
