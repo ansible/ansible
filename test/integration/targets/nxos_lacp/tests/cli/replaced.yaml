@@ -8,15 +8,23 @@
     feature: lacp
 
 - set_fact:
-    mac:
+    mac1: "lacp system-mac 00c1.4c00.bd20 role primary"
+  when: platform is search('N9K') and imagetag is not search('I2|I4|I5|I6')
+
+- set_fact:
+    mac2:
       address: 00c1.4c00.bd15
-      role: primary
-  when: platform is search('N9K')
+      role: secondary
+  when: platform is search('N9K') and imagetag is not search('I2|I4|I5|I6')
 
 - block:
-  - name: Setup
+  - name: Setup1
     cli_config:
       config: lacp system-priority 11
+
+  - name: Setup2
+    cli_config:
+      config: "{{ mac1|default(omit) }}"
 
   - name: Gather lacp facts
     nxos_facts: &facts
@@ -29,7 +37,8 @@
     nxos_lacp: &replaced
       config:
         system:
-          mac: "{{ mac|default(omit) }}"
+          priority: 12
+          mac: "{{ mac2|default(omit) }}"
       state: replaced
     register: result
 
@@ -37,8 +46,9 @@
       that:
         - "ansible_facts.network_resources.lacp == result.before"
         - "result.changed == true"
-        - "result.commands|length == 1"
+        - "result.commands|length == 2"
         - "'no lacp system-priority' in result.commands"
+        - "'lacp system-priority 12' in result.commands"
     when: platform is not search('N9K')
 
   - assert:
@@ -46,9 +56,11 @@
         - "ansible_facts.network_resources.lacp == result.before"
         - "result.changed == true"
         - "'no lacp system-priority' in result.commands"
-        - "'lacp system-mac 00c1.4c00.bd15 role primary' in result.commands"
-        - "result.commands|length == 2"
-    when: platform is search('N9K')
+        - "'no lacp system-mac' in result.commands"
+        - "'lacp system-priority 12' in result.commands"
+        - "'lacp system-mac 00c1.4c00.bd15 role secondary' in result.commands"
+        - "result.commands|length == 4"
+    when: platform is search('N9K') and imagetag is not search('I2|I4|I5|I6')
 
   - name: Gather lacp interfaces post facts
     nxos_facts: *facts
@@ -56,7 +68,7 @@
   - assert:
       that:
         - "ansible_facts.network_resources.lacp == result.after"
-    when: platform is match('N9K')
+    when: platform is search('N9K') and imagetag is not search('I2|I4|I5|I6')
 
   - name: Idempotence - Replaced
     nxos_lacp: *replaced
@@ -66,6 +78,24 @@
       that:
         - "result.changed == false"
         - "result.commands|length == 0"
+
+  - name: Setup3
+    cli_config:
+      config: "{{ mac1|default(omit) }}"
+
+  - name: Replaced
+    nxos_lacp:
+      state: replaced
+    register: result
+    when: platform is search('N9K') and imagetag is not search('I2|I4|I5|I6')
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "result.commands|length == 2"
+        - "'no lacp system-mac' in result.commands"
+        - "'no lacp system-priority' in result.commands"
+    when: platform is search('N9K') and imagetag is not search('I2|I4|I5|I6')
 
   always:
   - name: teardown

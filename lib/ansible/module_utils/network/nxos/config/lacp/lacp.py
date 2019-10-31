@@ -130,11 +130,10 @@ class Lacp(ConfigBase):
                 del diff[k]
         deleted_commands = self.del_all(diff)
         merged_commands = self._state_merged(want, have)
+
+        commands.extend(deleted_commands)
         if merged_commands:
-            commands.extend(deleted_commands)
             commands.extend(merged_commands)
-        else:
-            commands.extend(deleted_commands)
 
         return commands
 

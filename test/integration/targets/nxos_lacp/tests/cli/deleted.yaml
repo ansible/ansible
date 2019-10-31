@@ -8,7 +8,7 @@
 
 - set_fact:
     mac: "lacp system-mac 00c1.4c00.bd15 role primary"
-  when: platform is search('N9K')
+  when: platform is search('N9K') and imagetag is not search('I2|I4|I5|I6')
 
 - block:
   - name: Setup
@@ -31,9 +31,6 @@
       state: deleted
     register: result
 
-  - debug:
-      msg: "{{ result }}"
-
   - assert:
       that:
         - "ansible_facts.network_resources.lacp == result.before"
@@ -49,7 +46,7 @@
         - "'no lacp system-mac' in result.commands"
         - "result.changed == true"
         - "result.commands|length == 2"
-    when: platform is search('N9K')
+    when: platform is search('N9K') and imagetag is not search('I2|I4|I5|I6')
 
   - name: Gather lacp post facts
     nxos_facts: *facts

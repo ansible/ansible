@@ -260,7 +260,7 @@ def dict_diff(base, comparable):
     if not isinstance(base, dict):
         raise AssertionError("`base` must be of type <dict>")
     if not isinstance(comparable, dict):
-        if not comparable:
+        if comparable is None:
             comparable = dict()
         else:
             raise AssertionError("`comparable` must be of type <dict>")
