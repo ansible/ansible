@@ -51,17 +51,24 @@ options:
   bios_attribute_name:
     required: false
     description:
-      - name of BIOS attribute to update
+      - name of BIOS attr to update (deprecated - use bios_attributes instead)
     default: 'null'
     type: str
     version_added: "2.8"
   bios_attribute_value:
     required: false
     description:
-      - value of BIOS attribute to update
+      - value of BIOS attr to update (deprecated - use bios_attributes instead)
     default: 'null'
     type: str
     version_added: "2.8"
+  bios_attributes:
+    required: false
+    description:
+      - dictionary of BIOS attributes to update
+    default: {}
+    type: dict
+    version_added: "2.10"
   timeout:
     description:
       - Timeout in seconds for URL requests to OOB controller
@@ -90,23 +97,25 @@ EXAMPLES = '''
     redfish_config:
       category: Systems
       command: SetBiosAttributes
-      bios_attribute_name: BootMode
-      bios_attribute_value: Uefi
+      bios_attributes:
+        BootMode: "Uefi"
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
 
-  - name: Set BootMode to Legacy BIOS
+  - name: Set multiple BootMode attributes
     redfish_config:
       category: Systems
       command: SetBiosAttributes
-      bios_attribute_name: BootMode
-      bios_attribute_value: Bios
+      bios_attributes:
+        BootMode: "Bios"
+        OneTimeBootMode: "Enabled"
+        BootSeqRetry: "Enabled"
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
 
-  - name: Enable PXE Boot for NIC1
+  - name: Enable PXE Boot for NIC1 using deprecated options
     redfish_config:
       category: Systems
       command: SetBiosAttributes
@@ -195,6 +204,7 @@ def main():
             password=dict(required=True, no_log=True),
             bios_attribute_name=dict(default='null'),
             bios_attribute_value=dict(default='null'),
+            bios_attributes=dict(type='dict', default={}),
             timeout=dict(type='int', default=10),
             boot_order=dict(type='list', elements='str', default=[]),
             network_protocols=dict(
@@ -216,8 +226,13 @@ def main():
     timeout = module.params['timeout']
 
     # BIOS attributes to update
-    bios_attributes = {'bios_attr_name': module.params['bios_attribute_name'],
-                       'bios_attr_value': module.params['bios_attribute_value']}
+    bios_attributes = module.params['bios_attributes']
+    if module.params['bios_attribute_name'] != 'null':
+        bios_attributes[module.params['bios_attribute_name']] = module.params[
+            'bios_attribute_value']
+        module.deprecate(msg='The bios_attribute_name/bios_attribute_value '
+                         'options are deprecated. Use bios_attributes instead',
+                         version='2.10')
 
     # boot order
     boot_order = module.params['boot_order']
