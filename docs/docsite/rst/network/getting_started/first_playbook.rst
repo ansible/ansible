@@ -65,6 +65,10 @@ The flags in this command set seven values:
 
 NOTE: If you use ``ssh-agent`` with ssh keys, Ansible loads them automatically. You can omit ``-k`` flag.
 
+.. note::
+
+   If you are running Ansible in a virtual environment, you will also need to add the variable ``ansible_python_interpreter=/path/to/venv/bin/python``
+
 
 Create and Run Your First Network Ansible Playbook
 ==================================================
