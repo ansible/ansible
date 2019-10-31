@@ -140,9 +140,9 @@ html_context = {
     'github_version': 'devel/docs/docsite/rst/',
     'github_module_version': 'devel/lib/ansible/modules/',
     'current_version': version,
-    'latest_version': '2.8',
+    'latest_version': '2.9',
     # list specifically out of order to make latest work
-    'available_versions': ('latest', '2.7', '2.6', 'devel')
+    'available_versions': ('latest',)
 }
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
