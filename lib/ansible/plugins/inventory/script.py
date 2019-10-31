@@ -27,7 +27,7 @@ DOCUMENTATION = '''
           This is a performance optimization as the script would be called per host otherwise.
     notes:
         - Whitelisted in configuration by default.
-        - Caching does not occur within the plugin so it is up to the individual scripts to implement it.
+        - The plugin does not cache results because external inventory scripts are responsible for their own caching.
 '''
 
 import os
