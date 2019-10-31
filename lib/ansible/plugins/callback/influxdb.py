@@ -11,7 +11,7 @@ DOCUMENTATION = '''
     requirements:
       - whitelist in configuration
     short_description: Adds play duration to InfluxDB
-    version_added: "2.8"
+    version_added: "2.10"
     description:
         - This callback captures the total play duration and submits it to InfluxDB.
     options:
@@ -108,7 +108,7 @@ class CallbackModule(CallbackBase):
             self._display.warning('InfluxDB address was not provided. The '
                                   'InfluxDB address can be provided using '
                                   'the `INFLUXDB_ADDR` environment '
-                                  'variable. Telemetry data not capture')
+                                  'variable. Telemetry data not captured.')
 
         if self.influxdb_db is None:
             self.disabled = True
