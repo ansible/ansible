@@ -55,11 +55,10 @@ class TestEosL2InterfacesModule(TestEosModule):
             config=[dict(
                 name="Ethernet1",
                 trunk=dict(native_vlan=10)
-            ),
-                dict(
+            ), dict(
                 name="Ethernet2",
                 access=dict(vlan=30),
-              )], state="merged"
+            )], state="merged"
         ))
         commands = ['interface Ethernet1', 'switchport trunk native vlan 10',
                     'interface Ethernet2', 'switchport access vlan 30']
@@ -70,13 +69,10 @@ class TestEosL2InterfacesModule(TestEosModule):
             config=[dict(
                 name="Ethernet2",
                 trunk=dict(native_vlan=20)
-                ),
-                dict(
+            ), dict(
                 name="Ethernet1",
-                access=dict(
-                  vlan=20
-                ),
-              )], state="merged"
+                access=dict(vlan=20),
+            )], state="merged"
         ))
         self.execute_module(changed=False, commands=[])
 
@@ -84,16 +80,11 @@ class TestEosL2InterfacesModule(TestEosModule):
         set_module_args(dict(
             config=[dict(
                 name="Ethernet2",
-                trunk=dict(
-                  native_vlan=50
-                  )
-                ),
-                dict(
+                trunk=dict(native_vlan=50)
+            ), dict(
                 name="Ethernet3",
-                access=dict(
-                  vlan=30
-                ),
-              )], state="replaced"
+                access=dict(vlan=30),
+            )], state="replaced"
         ))
         commands = ['interface Ethernet2', 'switchport trunk native vlan 50',
                     'interface Ethernet3', 'switchport access vlan 30']
@@ -103,16 +94,11 @@ class TestEosL2InterfacesModule(TestEosModule):
         set_module_args(dict(
             config=[dict(
                 name="Ethernet2",
-                trunk=dict(
-                  native_vlan=20
-                  )
-                ),
-                dict(
+                trunk=dict(native_vlan=20),
+            ), dict(
                 name="Ethernet1",
-                access=dict(
-                  vlan=20
-                ),
-              )], state="replaced"
+                access=dict(vlan=20),
+            )], state="replaced"
         ))
         self.execute_module(changed=False, commands=[])
 
@@ -120,10 +106,8 @@ class TestEosL2InterfacesModule(TestEosModule):
         set_module_args(dict(
             config=[dict(
                 name="Ethernet2",
-                trunk=dict(
-                  native_vlan=50
-                  )
-              )], state="overridden"
+                trunk=dict(native_vlan=50)
+            )], state="overridden"
         ))
         commands = ['interface Ethernet1', 'no switchport access vlan',
                     'interface Ethernet2', 'switchport trunk native vlan 50']
@@ -133,16 +117,11 @@ class TestEosL2InterfacesModule(TestEosModule):
         set_module_args(dict(
             config=[dict(
                 name="Ethernet2",
-                trunk=dict(
-                  native_vlan=20
-                  )
-                ),
-                dict(
+                trunk=dict(native_vlan=20)
+            ), dict(
                 name="Ethernet1",
-                access=dict(
-                  vlan=20
-                ),
-              )], state="overridden"
+                access=dict(vlan=20),
+            )], state="overridden"
         ))
         self.execute_module(changed=False, commands=[])
 
@@ -150,16 +129,11 @@ class TestEosL2InterfacesModule(TestEosModule):
         set_module_args(dict(
             config=[dict(
                 name="Ethernet2",
-                trunk=dict(
-                  native_vlan=20
-                  )
-                ),
-                dict(
+                trunk=dict(native_vlan=20)
+            ), dict(
                 name="Ethernet1",
-                access=dict(
-                  vlan=20
-                ),
-              )], state="deleted"
+                access=dict(vlan=20),
+            )], state="deleted"
         ))
         commands = ['interface Ethernet1', 'no switchport access vlan',
                     'interface Ethernet2', 'no switchport trunk native vlan']
