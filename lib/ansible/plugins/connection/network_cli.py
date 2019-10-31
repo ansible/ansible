@@ -329,7 +329,7 @@ class Connection(NetworkConnectionBase):
 
             self.cliconf = cliconf_loader.get(self._network_os, self)
             if self.cliconf:
-                self._sub_plugin = {'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf}
+                self._sub_plugin = {'type': 'cliconf', 'name': self.cliconf._load_name, 'obj': self.cliconf}
                 self.queue_message('vvvv', 'loaded cliconf plugin %s from path %s for network_os %s' %
                                    (self.cliconf._load_name, self.cliconf._original_path, self._network_os))
             else:
