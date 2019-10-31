@@ -25,6 +25,14 @@
     state: enabled
   ignore_errors: yes
 
+- name: "Setup: Enable nv overlay evpn"
+  nxos_config:
+    commands:
+      - nv overlay evpn
+    provider: "{{ connection }}"
+  ignore_errors: yes
+  when: platform is match("N5K|N6K")
+
 - block:
   - name: Ensure ntc VRF exists on switch
     nxos_vrf: &configure
@@ -91,6 +99,14 @@
   - assert: *false
 
   always:
+  - name: "Setup: Disable nv overlay evpn"
+    nxos_config:
+      commands:
+        - no nv overlay evpn
+      provider: "{{ connection }}"
+    ignore_errors: yes
+    when: platform is match("N5K|N6K")
+
   - name: "Disable feature BGP"
     nxos_feature:
       feature: bgp

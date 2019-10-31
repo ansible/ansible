@@ -178,7 +178,11 @@ def handle_response(response):
     if response['ins_api'].get('outputs'):
         for output in to_list(response['ins_api']['outputs']['output']):
             if output['code'] != '200':
-                raise ConnectionError('%s: %s' % (output['input'], output['msg']), code=output['code'])
+                # Best effort messages: some API output keys may not exist on some platforms
+                input_data = output.get('input', '')
+                msg = output.get('msg', '')
+                clierror = output.get('clierror', '')
+                raise ConnectionError('%s: %s: %s' % (input_data, msg, clierror), code=output['code'])
             elif 'body' in output:
                 result = output['body']
                 if isinstance(result, dict):
