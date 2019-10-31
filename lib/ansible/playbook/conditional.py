@@ -134,7 +134,7 @@ class Conditional:
             conditional = templar.template(conditional, disable_lookups=disable_lookups)
             if bare_vars_warning and not isinstance(conditional, bool):
                 display.deprecated('evaluating %s as a bare variable, this behaviour will go away and you might need to add |bool'
-                                   ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle.' % conditional, "2.12")
+                                   ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle' % conditional, "2.12")
             if not isinstance(conditional, text_type) or conditional == "":
                 return conditional
 
