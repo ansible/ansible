@@ -229,7 +229,8 @@ import sys
 import time
 import traceback
 
-from ansible.module_utils.basic import AnsibleModule, load_platform_subclass, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils._text import to_native
 
 
@@ -268,7 +269,8 @@ class TCPConnectionInfo(object):
     }
 
     def __new__(cls, *args, **kwargs):
-        return load_platform_subclass(TCPConnectionInfo, args, kwargs)
+        new_cls = get_platform_subclass(TCPConnectionInfo)
+        return super(cls, new_cls).__new__(new_cls)
 
     def __init__(self, module):
         self.module = module
