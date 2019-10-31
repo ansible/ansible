@@ -276,7 +276,6 @@
     - result.storage_params == []
     - result.schema == 'public'
     - result.stat != {}
-    - result.stat.indexrelname == 'test1_idx'
 
 # Get idx stat
 - name: postgresql_idx - test state stat
@@ -300,7 +299,6 @@
     - result.storage_params == []
     - result.schema == 'public'
     - result.stat != {}
-    - result.stat.indexrelname == 'test1_idx'
 
 # Drop index from specific schema with cascade in check_mode
 - name: postgresql_idx - drop index from specific schema cascade in check_mode
