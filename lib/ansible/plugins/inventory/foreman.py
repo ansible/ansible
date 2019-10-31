@@ -134,7 +134,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
             except KeyError:
                 # The cache key expired or does not exist yet
                 inventory = None
-                self._cache[self.cache_key]= {url: ''} 
+                self._cache[self.cache_key] = {url: ''}
 
             if inventory is not None:
                 return inventory
