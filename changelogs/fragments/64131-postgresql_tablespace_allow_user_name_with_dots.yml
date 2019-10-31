@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_tablespace - allow to pass user name which contains dots to ``owner`` parameter (https://github.com/ansible/ansible/issues/63204).
