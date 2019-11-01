@@ -156,8 +156,8 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            role_arn=dict(required=True, default=None),
-            role_session_name=dict(required=True, default=None),
+            role_arn=dict(required=True),
+            role_session_name=dict(required=True),
             duration_seconds=dict(required=False, default=None, type='int'),
             external_id=dict(required=False, default=None),
             policy=dict(required=False, default=None),

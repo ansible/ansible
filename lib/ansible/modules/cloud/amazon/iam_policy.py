@@ -260,12 +260,10 @@ def group_action(module, iam, name, policy_name, skip, pdoc, state):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        iam_type=dict(
-            default=None, required=True, choices=['user', 'group', 'role']),
-        state=dict(
-            default=None, required=True, choices=['present', 'absent']),
+        iam_type=dict(required=True, choices=['user', 'group', 'role']),
+        state=dict(default='present', choices=['present', 'absent']),
         iam_name=dict(default=None, required=False),
-        policy_name=dict(default=None, required=True),
+        policy_name=dict(required=True),
         policy_document=dict(default=None, required=False),
         policy_json=dict(type='json', default=None, required=False),
         skip_duplicates=dict(type='bool', default=True, required=False)

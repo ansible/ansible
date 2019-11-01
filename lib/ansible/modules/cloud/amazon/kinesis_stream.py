@@ -1323,7 +1323,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name=dict(default=None, required=True),
+            name=dict(required=True),
             shards=dict(default=None, required=False, type='int'),
             retention_period=dict(default=None, required=False, type='int'),
             tags=dict(default=None, required=False, type='dict', aliases=['resource_tags']),

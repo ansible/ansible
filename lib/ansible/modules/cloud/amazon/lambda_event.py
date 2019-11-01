@@ -399,9 +399,9 @@ def main():
     argument_spec.update(
         dict(
             state=dict(required=False, default='present', choices=['present', 'absent']),
-            lambda_function_arn=dict(required=True, default=None, aliases=['function_name', 'function_arn']),
+            lambda_function_arn=dict(required=True, aliases=['function_name', 'function_arn']),
             event_source=dict(required=False, default="stream", choices=source_choices),
-            source_params=dict(type='dict', required=True, default=None),
+            source_params=dict(type='dict', required=True),
             alias=dict(required=False, default=None),
             version=dict(type='int', required=False, default=0),
         )

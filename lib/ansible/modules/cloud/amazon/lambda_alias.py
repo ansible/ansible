@@ -356,8 +356,8 @@ def main():
     argument_spec.update(
         dict(
             state=dict(required=False, default='present', choices=['present', 'absent']),
-            function_name=dict(required=True, default=None),
-            name=dict(required=True, default=None, aliases=['alias_name']),
+            function_name=dict(required=True),
+            name=dict(required=True, aliases=['alias_name']),
             function_version=dict(type='int', required=False, default=0, aliases=['version']),
             description=dict(required=False, default=None),
         )
