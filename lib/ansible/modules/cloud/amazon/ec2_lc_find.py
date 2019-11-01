@@ -26,11 +26,6 @@ description:
 version_added: "2.2"
 author: "Jose Armesto (@fiunchinho)"
 options:
-  region:
-    description:
-      - The AWS region to use.
-    required: true
-    aliases: ['aws_region', 'ec2_region']
   name_regex:
     description:
       - A Launch Configuration to match
@@ -49,6 +44,7 @@ requirements:
   - "python >= 2.6"
   - boto3
 extends_documentation_fragment:
+    - ec2
     - aws
 """
 
@@ -198,7 +194,6 @@ def find_launch_configs(client, module):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        region=dict(required=True, aliases=['aws_region', 'ec2_region']),
         name_regex=dict(required=True),
         sort_order=dict(required=False, default='ascending', choices=['ascending', 'descending']),
         limit=dict(required=False, type='int'),
