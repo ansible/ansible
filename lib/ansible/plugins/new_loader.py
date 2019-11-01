@@ -237,6 +237,15 @@ class PluginFinder:
                 msg = '%s (searched paths: %s)' % (msg, ", ".join(searched_paths))
             display.debug(msg)
 
+connection_loader = PluginFinder(
+    'Connection',
+    'ansible.plugins.connection',
+    C.DEFAULT_CONNECTION_PLUGIN_PATH,
+    'connection_plugins',
+    aliases={'paramiko': 'paramiko_ssh'},
+    required_base_class='ConnectionBase',
+)
+
 vars_loader = PluginFinder(
     'VarsModule',
     'ansible.plugins.vars',
