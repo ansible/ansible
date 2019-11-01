@@ -134,4 +134,5 @@ class HostVarsVars(Mapping):
         return len(self._vars.keys())
 
     def __repr__(self):
-        return repr(self._vars)
+        templar = Templar(variables=self._vars, loader=self._loader)
+        return repr(templar.template(self._vars, fail_on_undefined=False, static_vars=STATIC_VARS))
