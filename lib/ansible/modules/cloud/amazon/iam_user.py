@@ -23,23 +23,25 @@ options:
       - The name of the user to create.
     required: true
     type: str
-  managed_policy:
+  managed_policies:
     description:
       - A list of managed policy ARNs or friendly names to attach to the user. To embed an inline policy, use M(iam_policy).
     required: false
     type: list
+    aliases: ['managed_policy']
   state:
     description:
       - Create or remove the IAM user
     required: true
     choices: [ 'present', 'absent' ]
     type: str
-  purge_policy:
+  purge_policies:
     description:
-      - Detach policies which are not included in managed_policy list
+      - Detach policies which are not included in managed_policies list
     required: false
     default: false
     type: bool
+    aliases: ['purge_policy', 'purge_managed_policies']
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
   - aws
@@ -60,7 +62,7 @@ EXAMPLES = '''
 # Create a user and attach a managed policy using its ARN
 - iam_user:
     name: testuser1
-    managed_policy:
+    managed_policies:
       - arn:aws:iam::aws:policy/AmazonSNSFullAccess
     state: present
 
@@ -68,7 +70,7 @@ EXAMPLES = '''
 - iam_user:
     name: testuser1
     state: present
-    purge_policy: true
+    purge_policies: true
 
 # Delete the user
 - iam_user:
@@ -157,8 +159,8 @@ def create_or_update_user(connection, module):
 
     params = dict()
     params['UserName'] = module.params.get('name')
-    managed_policies = module.params.get('managed_policy')
-    purge_policy = module.params.get('purge_policy')
+    managed_policies = module.params.get('managed_policies')
+    purge_policies = module.params.get('purge_policies')
     changed = False
     if managed_policies:
         managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
@@ -189,7 +191,7 @@ def create_or_update_user(connection, module):
             current_attached_policies_arn_list.append(policy['PolicyArn'])
 
         # If managed_policies has a single empty element we want to remove all attached policies
-        if purge_policy:
+        if purge_policies:
             # Detach policies not present
             for policy_arn in list(set(current_attached_policies_arn_list) - set(managed_policies)):
                 changed = True
@@ -342,14 +344,11 @@ def delete_user_login_profile(connection, module, user_name):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True, type='str'),
-            managed_policy=dict(default=[], type='list'),
-            state=dict(choices=['present', 'absent'], required=True),
-            purge_policy=dict(default=False, type='bool')
-        )
+    argument_spec = dict(
+        name=dict(required=True, type='str'),
+        managed_policies=dict(default=[], type='list', aliases=['managed_policy']),
+        state=dict(choices=['present', 'absent'], required=True),
+        purge_policies=dict(default=False, type='bool', aliases=['purge_policy', 'purge_managed_policies'])
     )
 
     module = AnsibleAWSModule(

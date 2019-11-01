@@ -37,11 +37,12 @@ options:
       - The name of the group to create.
     required: true
     type: str
-  managed_policy:
+  managed_policies:
     description:
       - A list of managed policy ARNs or friendly names to attach to the role. To embed an inline policy, use M(iam_policy).
     required: false
     type: list
+    aliases: ['managed_policy']
   users:
     description:
       - A list of existing users to add as members of the group.
@@ -53,12 +54,13 @@ options:
     required: true
     choices: [ 'present', 'absent' ]
     type: str
-  purge_policy:
+  purge_policies:
     description:
       - Detach policy which not included in managed_policy list
     required: false
     default: false
     type: bool
+    aliases: ['purge_policy', 'purge_managed_policies']
   purge_users:
     description:
       - Detach users which not included in users list
@@ -82,14 +84,14 @@ EXAMPLES = '''
 # Create a group and attach a managed policy using its ARN
 - iam_group:
     name: testgroup1
-    managed_policy:
+    managed_policies:
       - arn:aws:iam::aws:policy/AmazonSNSFullAccess
     state: present
 
 # Create a group with users as members and attach a managed policy using its ARN
 - iam_group:
     name: testgroup1
-    managed_policy:
+    managed_policies:
       - arn:aws:iam::aws:policy/AmazonSNSFullAccess
     users:
       - test_user1
@@ -100,12 +102,12 @@ EXAMPLES = '''
 - iam_group:
     name: testgroup1
     state: present
-    purge_policy: true
+    purge_policies: true
 
 # Remove all group members from an existing group
 - iam_group:
     name: testgroup1
-    managed_policy:
+    managed_policies:
       - arn:aws:iam::aws:policy/AmazonSNSFullAccess
     purge_users: true
     state: present
@@ -233,10 +235,10 @@ def create_or_update_group(connection, module):
 
     params = dict()
     params['GroupName'] = module.params.get('name')
-    managed_policies = module.params.get('managed_policy')
+    managed_policies = module.params.get('managed_policies')
     users = module.params.get('users')
     purge_users = module.params.get('purge_users')
-    purge_policy = module.params.get('purge_policy')
+    purge_policies = module.params.get('purge_policies')
     changed = False
     if managed_policies:
         managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
@@ -267,7 +269,7 @@ def create_or_update_group(connection, module):
             current_attached_policies_arn_list.append(policy['PolicyArn'])
 
         # If managed_policies has a single empty element we want to remove all attached policies
-        if purge_policy:
+        if purge_policies:
             # Detach policies not present
             for policy_arn in list(set(current_attached_policies_arn_list) - set(managed_policies)):
                 changed = True
@@ -408,11 +410,11 @@ def main():
 
     argument_spec = dict(
         name=dict(required=True),
-        managed_policy=dict(default=[], type='list'),
+        managed_policies=dict(default=[], type='list', aliases=['managed_policy']),
         users=dict(default=[], type='list'),
         state=dict(choices=['present', 'absent'], required=True),
         purge_users=dict(default=False, type='bool'),
-        purge_policy=dict(default=False, type='bool')
+        purge_policies=dict(default=False, type='bool', aliases=['purge_policy', 'purge_managed_policies'])
     )
 
     module = AnsibleAWSModule(
