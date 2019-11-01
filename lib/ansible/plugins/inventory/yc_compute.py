@@ -163,7 +163,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''Choose hostname for given instance'''
         hostnames = self.get_option('hostnames')
         if not hostnames:
-            raise AnsibleError('hostnames option shold not be empty')
+            raise AnsibleError('hostnames option should not be empty')
         for expr in hostnames:
             if expr == 'public_ip':
                 name = self.public_ip(instance)
