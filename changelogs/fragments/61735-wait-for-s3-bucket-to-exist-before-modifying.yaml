@@ -1,2 +1,0 @@
-bugfixes:
-  - aws_s3 - Try to wait for the bucket to exist before setting the access control list.
