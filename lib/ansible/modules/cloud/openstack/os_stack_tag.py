@@ -20,73 +20,79 @@ extends_documentation_fragment: openstack
 version_added: "2.10"
 author: "Mario Santos (@ruizink)"
 description:
-    - Add or delete tags in a Heat Stack.
+  - Add or delete tags in a Heat Stack.
 options:
-    stack:
-        description:
-            - Name or ID of the heat stack to update the tags
-        required: true
-        aliases: ['name']
-    state:
-        description:
-            - Should the resource be present or absent
-        choices: [present, absent]
-        default: present
-    tags:
-        description:
-            - A list of tags that should be applied to the heat stack
-        required: true
-        type: list
-    purge:
-        description:
-            - Whether or not to delete all tags present in the stack but not in
-              the list provided in 'tags' (only used when state is present)
-        type: bool
-        default: false
+  stack:
+    description:
+      - Name or ID of the heat stack to update the tags
+    required: true
+    aliases: ['name']
+    type: str
+  state:
+    description:
+      - Should the resource be present or absent
+    choices: [present, absent]
+    default: present
+    type: str
+  tags:
+    description:
+      - A list of tags that should be applied to the heat stack
+    required: true
+    type: list
+  purge:
+    description:
+      - Whether or not to delete all tags present in the stack but not in
+        the list provided in 'tags' (only used when state is present)
+    type: bool
+    default: false
+  availability_zone:
+    description:
+      - Ignored. Present for backwards compatibility
+    type: str
 requirements:
-    - "python >= 2.7"
-    - "openstacksdk >= 0.18.0"
+  - "python >= 2.7"
+  - "openstacksdk >= 0.18.0"
 '''
+
 EXAMPLES = '''
----
 - name: add heat stack tags
-    os_stack_tag:
-        stack: stack1
-        state: present
-        tags:
-            - tag1
-            - tag2
+  os_stack_tag:
+    stack: stack1
+    state: present
+    tags:
+      - tag1
+      - tag2
 
 - name: replace heat stack tags with the ones on the list
-    os_stack_tag:
-        stack: stack1
-        state: present
-        purge: yes
-        tags:
-            - tag1
-            - tag2
+  os_stack_tag:
+    stack: stack1
+    state: present
+    purge: yes
+    tags:
+      - tag1
+      - tag2
 
 - name: delete heat stack tags
-    os_stack_tag:
-        stack: stack1
-        state: absent
-        tags:
-            - tag1
-            - tag2
+  os_stack_tag:
+    stack: stack1
+    state: absent
+    tags:
+      - tag1
+      - tag2
 '''
 
 RETURN = '''
 stack:
-    description: UUID of the stack.
-    returned: success
-    type: str
-    sample: 2f66c03e-a9ab-414c-925a-03eb14871456
+  description: Name of the stack.
+  returned: success
+  type: str
+  sample: stack1
 
 tags:
-    description: tags.
-    returned: success
-    type: list
-    sample: ["key1.value1","key2.value2"]
+  description: The tags set in the stack.
+  returned: success
+  type: list
+  sample: ["tag1","tag2"]
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -142,7 +148,7 @@ def main():
     try:
         stack = cloud.orchestration.get_stack(stack_name)
         if not stack:
-            module.fail_json(msg="Stack not found: {}".format(stack))
+            module.fail_json(msg="Stack not found: {0}".format(stack))
 
         if state == 'present':
             new_tags = _add_stack_tags(stack_tags=stack.tags,
