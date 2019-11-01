@@ -62,8 +62,8 @@ options:
     type: int
   purge_policies:
     description:
-      - Detaches any managed policies not listed in the I(managed_policy) option. Set to false if you want to attach policies elsewhere.
-    default: true
+      - When I(purge_policies=true) any managed policies not listed in I(managed_policies) will be detatched.
+      - By default I(purge_policies=true).  In Ansible 2.14 this will be changed to I(purge_policies=false).
     version_added: "2.5"
     type: bool
   state:
@@ -80,8 +80,8 @@ options:
     type: bool
   delete_instance_profile:
     description:
-      - When deleting a role will also delete the instance profile created with
-        the same name as the role.
+      - When I(delete_instance_profile=true) and I(state=absent) deleting a role will also delete the instance
+        profile created with the same I(name) as the role.
       - Only applies when I(state=absent).
     default: false
     version_added: "2.10"
@@ -277,6 +277,9 @@ def create_or_update_role(connection, module):
     if module.params.get('boundary') is not None:
         params['PermissionsBoundary'] = module.params.get('boundary')
     managed_policies = module.params.get('managed_policy')
+    purge_policies = module.params.get('purge_policies')
+    if purge_policies is None:
+        purge_policies = True
     create_instance_profile = module.params.get('create_instance_profile')
     if managed_policies:
         managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
@@ -320,7 +323,7 @@ def create_or_update_role(connection, module):
         current_attached_policies_arn_list = [policy['PolicyArn'] for policy in current_attached_policies]
 
         # If a single empty list item then all managed policies to be removed
-        if len(managed_policies) == 1 and not managed_policies[0] and module.params.get('purge_policies'):
+        if len(managed_policies) == 1 and not managed_policies[0] and purge_policies:
 
             # Detach policies not present
             if remove_policies(connection, module, set(current_attached_policies_arn_list) - set(managed_policies), params):
@@ -329,7 +332,7 @@ def create_or_update_role(connection, module):
             # Make a list of the ARNs from the attached policies
 
             # Detach roles not defined in task
-            if module.params.get('purge_policies'):
+            if purge_policies:
                 if remove_policies(connection, module, set(current_attached_policies_arn_list) - set(managed_policies), params):
                     changed = True
 
@@ -572,13 +575,17 @@ def main():
         boundary=dict(type='str', aliases=['boundary_policy_arn']),
         create_instance_profile=dict(type='bool', default=True),
         delete_instance_profile=dict(type='bool', default=False),
-        purge_policies=dict(type='bool', default=True),
+        purge_policies=dict(type='bool', aliases=['purge_policy']),
         tags=dict(type='dict'),
         purge_tags=dict(type='bool', default=True),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               required_if=[('state', 'present', ['assume_role_policy_document'])],
                               supports_check_mode=True)
+
+    if module.params.get('purge_policies') is None:
+        module.deprecate('In Ansible 2.14 the default value of purge_policies will change from true to false.'
+                         '  To maintain the existing behaviour explicity set purge_policies=true')
 
     if module.params.get('boundary'):
         if module.params.get('create_instance_profile'):
