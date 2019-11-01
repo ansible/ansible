@@ -95,11 +95,11 @@ releases of Ansible, there can sometimes be exceptions for critical issues.
 Changelogs
 ~~~~~~~~~~
 
-Older versions logged changes in ``stable-<version>`` branches at ``stable-<version>/CHANGELOG.md``. For example, here is the changelog for 2.8_ on GitHub.
-
-We now generate changelogs based on fragments. Here is the generated changelog for 2.9_ as an example. When creating new features or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
+Since Ansible 2.5, we have generated changelogs based on fragments. Here is the generated changelog for 2.9_ as an example. When creating new features or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
 
 We've got :ref:`examples and instructions on creating changelog fragments <changelogs_how_to>` in the Community Guide.
+
+Older versions logged changes in ``stable-<version>`` branches at ``stable-<version>/CHANGELOG.md``. For example, here is the changelog for `2.4 <https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md>`_ on GitHub.
 
 
 Release candidates
