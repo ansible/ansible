@@ -351,13 +351,13 @@ class WapiModule(WapiBase):
                     res = self.update_object(ref, proposed_object)
                 if (ib_obj_type in (NIOS_A_RECORD, NIOS_AAAA_RECORD, NIOS_PTR_RECORD, NIOS_SRV_RECORD)):
                     # popping 'view' key as update of 'view' is not supported with respect to a:record/aaaa:record/srv:record/ptr:record
-                        if 'add' in proposed_object['ipv4addrs'][0]:
-                            run_update, proposed_object = self.check_if_add_remove_ip_arg_exists(proposed_object)
-                            if run_update:
-                                res = self.update_object(ref, proposed_object)
-                                result['changed'] = True
-                            else:
-                                res = ref
+                    if 'add' in proposed_object['ipv4addrs'][0]:
+                        run_update, proposed_object = self.check_if_add_remove_ip_arg_exists(proposed_object)
+                        if run_update:
+                            res = self.update_object(ref, proposed_object)
+                            result['changed'] = True
+                        else:
+                            res = ref
                 if (ib_obj_type in (NIOS_A_RECORD, NIOS_AAAA_RECORD)):
                     # popping 'view' key as update of 'view' is not supported with respect to a:record/aaaa:record
                     proposed_object = self.on_update(proposed_object, ib_spec)
