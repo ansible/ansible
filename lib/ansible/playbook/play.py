@@ -275,12 +275,12 @@ class Play(Base, Taggable, CollectionSearch):
         block_list = []
 
         block_list.extend(self.pre_tasks)
-        block_list.append(flush_block)
+        #block_list.append(flush_block)
         block_list.extend(self._compile_roles())
         block_list.extend(self.tasks)
-        block_list.append(flush_block)
+        #block_list.append(flush_block)
         block_list.extend(self.post_tasks)
-        block_list.append(flush_block)
+        #block_list.append(flush_block)
 
         return block_list
 
@@ -321,7 +321,6 @@ class Play(Base, Taggable, CollectionSearch):
         return data
 
     def deserialize(self, data):
-        super(Play, self).deserialize(data)
 
         self._included_path = data.get('included_path', None)
         if 'roles' in data:
@@ -334,6 +333,8 @@ class Play(Base, Taggable, CollectionSearch):
 
             setattr(self, 'roles', roles)
             del data['roles']
+
+        return super(Play, self).deserialize(data)
 
     def copy(self):
         new_me = super(Play, self).copy()

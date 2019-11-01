@@ -436,7 +436,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             self._role = r
             del data['role']
 
-        super(Task, self).deserialize(data)
+        return super(Task, self).deserialize(data)
 
     def set_loader(self, loader):
         '''

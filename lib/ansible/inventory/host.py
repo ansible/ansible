@@ -83,6 +83,8 @@ class Host:
             g.deserialize(group_data)
             self.groups.append(g)
 
+        return self
+
     def __init__(self, name=None, port=None, gen_uuid=True):
 
         self.vars = {}

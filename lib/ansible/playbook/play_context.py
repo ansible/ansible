@@ -132,21 +132,21 @@ def set_task_and_variable_override(play_context, task, variables, templar):
     # loop through a subset of attributes on the task object and set
     # connection fields based on their values
     for attr in TASK_ATTRIBUTE_OVERRIDES:
-        if attr in task:
-            attr_val = task[attr]
+        if hasattr(task, attr):
+            attr_val = getattr(task, attr)
             if attr_val is not None:
-                new_info[attr] = attr_val
+                setattr(new_info, attr, attr_val)
 
     # next, use the MAGIC_VARIABLE_MAPPING dictionary to update this
     # connection info object with 'magic' variables from the variable list.
     # If the value 'ansible_delegated_vars' is in the variables, it means
     # we have a delegated-to host, so we check there first before looking
     # at the variables in general
-    if task['delegate_to'] is not None:
+    if task.delegate_to is not None:
         # In the case of a loop, the delegated_to host may have been
         # templated based on the loop variable, so we try and locate
         # the host name in the delegated variable dictionary here
-        delegated_host_name = templar.template(task['delegate_to'])
+        delegated_host_name = templar.template(task.delegate_to)
         delegated_vars = variables.get('ansible_delegated_vars', dict()).get(delegated_host_name, dict())
 
         delegated_transport = C.DEFAULT_TRANSPORT
@@ -182,7 +182,7 @@ def set_task_and_variable_override(play_context, task, variables, templar):
             if user_var in delegated_vars and delegated_vars[user_var]:
                 break
         else:
-            delegated_vars['ansible_user'] = task['remote_user'] or play_context['remote_user']
+            delegated_vars['ansible_user'] = task.remote_user or play_context.remote_user
     else:
         delegated_vars = dict()
 
@@ -197,12 +197,12 @@ def set_task_and_variable_override(play_context, task, variables, templar):
             if attr in attrs_considered:
                 continue
             # if delegation task ONLY use delegated host vars, avoid delegated FOR host vars
-            if task['delegate_to'] is not None:
+            if task.delegate_to is not None:
                 if isinstance(delegated_vars, dict) and variable_name in delegated_vars:
-                    new_info[attr] = delegated_vars[variable_name]
+                    setattr(new_info, attr, delegated_vars[variable_name])
                     attrs_considered.append(attr)
             elif variable_name in variables:
-                new_info[attr] = variables[variable_name]
+                setattr(new_info, attr, variables[variable_name])
                 attrs_considered.append(attr)
             # no else, as no other vars should be considered
 
@@ -213,8 +213,8 @@ def set_task_and_variable_override(play_context, task, variables, templar):
             break
 
     # make sure we get port defaults if needed
-    if new_info['port'] is None and C.DEFAULT_REMOTE_PORT is not None:
-        new_info['port'] = int(C.DEFAULT_REMOTE_PORT)
+    if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
+        new_info.port = int(C.DEFAULT_REMOTE_PORT)
 
     # special overrides for the connection setting
     if len(delegated_vars) > 0:
@@ -225,32 +225,32 @@ def set_task_and_variable_override(play_context, task, variables, templar):
             if connection_type in delegated_vars:
                 break
         else:
-            remote_addr_local = new_info['remote_addr'] in C.LOCALHOST
+            remote_addr_local = new_info.remote_addr in C.LOCALHOST
             inv_hostname_local = delegated_vars.get('inventory_hostname') in C.LOCALHOST
             if remote_addr_local and inv_hostname_local:
-                new_info['connection'] = 'local'
+                new_info.connection = 'local'
             elif getattr(new_info, 'connection', None) == 'local' and (not remote_addr_local or not inv_hostname_local):
-                new_info['connection'] = C.DEFAULT_TRANSPORT
+                new_info.connection = C.DEFAULT_TRANSPORT
 
     # if the final connection type is local, reset the remote_user value to that of the currently logged in user
     # this ensures any become settings are obeyed correctly
     # we store original in 'connection_user' for use of network/other modules that fallback to it as login user
     # connection_user to be deprecated once connection=local is removed for
     # network modules
-    if new_info['connection'] == 'local':
-        if not new_info['connection_user']:
-            new_info['connection_user'] = new_info['remote_user']
-        new_info['remote_user'] = pwd.getpwuid(os.getuid()).pw_name
+    if new_info.connection == 'local':
+        if not new_info.connection_user:
+            new_info.connection_user = new_info.remote_user
+        new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
 
     # set no_log to default if it was not previously set
-    if new_info['no_log'] is None:
-        new_info['no_log'] = C.DEFAULT_NO_LOG
+    if new_info.no_log is None:
+        new_info.no_log = C.DEFAULT_NO_LOG
 
-    if task['check_mode'] is not None:
-        new_info['check_mode'] = task['check_mode']
+    if task.check_mode is not None:
+        new_info.check_mode = task.check_mode
 
-    if task['diff'] is not None:
-        new_info['diff'] = task['diff']
+    if task.diff is not None:
+        new_info.diff = task.diff
 
     return new_info
 

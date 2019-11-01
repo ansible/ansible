@@ -141,6 +141,8 @@ class PluginLoader:
 
         self._searched_paths = set()
 
+        self._dirty = True
+
     def _clear_caches(self):
 
         if C.OLD_PLUGIN_CACHE_CLEARING:
@@ -156,6 +158,8 @@ class PluginLoader:
             self._paths = PATH_CACHE[self.class_name]
             self._plugin_path_cache = PLUGIN_PATH_CACHE[self.class_name]
             self._searched_paths = set()
+
+        self._dirty = True
 
     def __setstate__(self, data):
         '''
@@ -640,8 +644,11 @@ class PluginLoader:
         all_matches = []
         found_in_cache = True
 
-        for i in self._get_paths():
-            all_matches.extend(glob.glob(os.path.join(i, "*.py")))
+        if not self._dirty:
+            all_matches = self._
+        else:
+            for i in self._get_paths():
+                all_matches.extend(glob.glob(os.path.join(i, "*.py")))
 
         loaded_modules = set()
         for path in sorted(all_matches, key=os.path.basename):

@@ -39,6 +39,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping, Sequence
 from ansible.module_utils.six import iteritems, text_type, string_types
 from ansible.plugins.loader import lookup_loader
+from ansible.plugins.new_loader import vars_loader
 from ansible.vars.fact_cache import FactCache
 from ansible.template import Templar
 from ansible.utils.display import Display
@@ -47,6 +48,8 @@ from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
+
+from ansible.devel.cprofile_decorator import cprofile_func
 
 display = Display()
 
@@ -106,6 +109,10 @@ class VariableManager:
             # fallback to a dict as in memory cache
             display.warning(to_text(e))
             self._fact_cache = {}
+
+        # load vars plugins and note the last modified time
+        self._all_vars_plugins = [x() for x in vars_loader.all()]
+        self._all_vars_loaded = vars_loader.last_modified
 
     def __getstate__(self):
         data = dict(
@@ -210,6 +217,11 @@ class VariableManager:
             # THE 'all' group and the rest of groups for a host, used below
             all_group = self._inventory.groups.get('all')
             host_groups = sort_groups([g for g in host.get_groups() if g.name not in ['all']])
+
+            if vars_loader.last_modified > self._all_vars_loaded:
+                print("reloading vars plugins...")
+                self._all_vars_plugins = [x() for x in vars_loader.all()]
+                self._all_vars_loaded = vars_loader.last_modified
 
             def _get_plugin_vars(plugin, path, entities):
                 data = {}

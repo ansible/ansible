@@ -601,6 +601,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         self._finalized = data.get('finalized', False)
         self._squashed = data.get('squashed', False)
 
+        return self
+
 
 class Base(FieldAttributeBase):
 
