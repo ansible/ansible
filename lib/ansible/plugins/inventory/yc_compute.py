@@ -27,7 +27,6 @@ DOCUMENTATION = r'''
       oauth_token:
         description: OAUTH token string. See U(https://cloud.yandex.com/docs/iam/concepts/authorization/oauth-token).
         type: string
-        no_log: True
         env:
           - name: YC_ANSIBLE_OAUTH_TOKEN
       service_account_file:
@@ -43,7 +42,6 @@ DOCUMENTATION = r'''
         type: string
         env:
           - name: YC_ANSIBLE_SERVICE_ACCOUNT_CONTENTS
-        no_log: True
       hostnames:
         description:
           - The list of methods for determining the hostname.
