@@ -227,8 +227,9 @@ class Connection(NetworkConnectionBase):
 
         netconf = netconf_loader.get(self._network_os, self)
         if netconf:
-            self._sub_plugin = {'type': 'netconf', 'name': self._network_os, 'obj': netconf}
-            self.queue_message('log', 'loaded netconf plugin for network_os %s' % self._network_os)
+            self._sub_plugin = {'type': 'netconf', 'name': netconf._load_name, 'obj': netconf}
+            self.queue_message('vvvv', 'loaded netconf plugin %s from path %s for network_os %s' %
+                               (netconf._load_name, netconf._original_path, self._network_os))
         else:
             netconf = netconf_loader.get("default", self)
             self._sub_plugin = {'type': 'netconf', 'name': 'default', 'obj': netconf}
