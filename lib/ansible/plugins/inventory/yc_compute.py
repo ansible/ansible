@@ -87,7 +87,7 @@ auth_kind: serviceaccountfile
 service_account_file: /path/to/your/service/account/file.json
 hostnames:
   - fqdn  # Use FQDN for inventory hostnames.
-# You can also format hostnames with jinja2 epressions like this
+# You can also format hostnames with jinja2 expressions like this
 # - "{{id}}_{{name}}"
 
 compose:
