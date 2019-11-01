@@ -14,7 +14,7 @@ DOCUMENTATION = '''
 module: iam_user
 short_description: Manage AWS IAM users
 description:
-  - Manage AWS IAM users
+  - Manage AWS IAM users.
 version_added: "2.5"
 author: Josh Souza (@joshsouza)
 options:
@@ -25,19 +25,20 @@ options:
     type: str
   managed_policies:
     description:
-      - A list of managed policy ARNs or friendly names to attach to the user. To embed an inline policy, use M(iam_policy).
+      - A list of managed policy ARNs or friendly names to attach to the user.
+      - To embed an inline policy, use M(iam_policy).
     required: false
     type: list
     aliases: ['managed_policy']
   state:
     description:
-      - Create or remove the IAM user
+      - Create or remove the IAM user.
     required: true
     choices: [ 'present', 'absent' ]
     type: str
   purge_policies:
     description:
-      - Detach policies which are not included in managed_policies list
+      - When I(purge_policies=true) any managed policies not listed in I(managed_policies) will be detatched.
     required: false
     default: false
     type: bool

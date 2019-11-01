@@ -14,7 +14,7 @@ DOCUMENTATION = '''
 module: iam_role
 short_description: Manage AWS IAM roles
 description:
-  - Manage AWS IAM roles
+  - Manage AWS IAM roles.
 version_added: "2.3"
 author: "Rob White (@wimnat)"
 options:
@@ -30,15 +30,15 @@ options:
     type: str
   description:
     description:
-      - Provide a description of the new role.
+      - Provides a description of the role.
     version_added: "2.5"
     type: str
   boundary:
     description:
       - The ARN of an IAM managed policy to use to restrict the permissions this role can pass on to IAM roles/users that it creates.
-      - Boundaries cannot be set on Instance Profiles, so if this option is specified then I(create_instance_profile) must be false.
+      - Boundaries cannot be set on Instance Profiles, as such if this option is specified then I(create_instance_profile) must be C(false).
       - This is intended for roles/users that have permissions to create new IAM objects.
-      - For more information on boundaries, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)
+      - For more information on boundaries, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html).
       - Requires botocore 1.10.57 or above.
     aliases: [boundary_policy_arn]
     version_added: "2.7"
@@ -46,12 +46,13 @@ options:
   assume_role_policy_document:
     description:
       - The trust relationship policy document that grants an entity permission to assume the role.
-      - "This parameter is required when I(state=present)."
+      - This parameter is required when I(state=present).
     type: json
   managed_policies:
     description:
       - A list of managed policy ARNs or, since Ansible 2.4, a list of either managed policy ARNs or friendly names.
-        To embed an inline policy, use M(iam_policy). To remove existing policies, use an empty list item.
+      - To remove all policies set I(purge_polices=true) and I(managed_policies=[None]).
+      - To embed an inline policy, use M(iam_policy).
     aliases: ['managed_policy']
     type: list
   max_session_duration:

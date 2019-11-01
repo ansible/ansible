@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: iam_group
 short_description: Manage AWS IAM groups
 description:
-  - Manage AWS IAM groups
+  - Manage AWS IAM groups.
 version_added: "2.4"
 author:
 - Nick Aslanidis (@naslanidis)
@@ -39,31 +39,34 @@ options:
     type: str
   managed_policies:
     description:
-      - A list of managed policy ARNs or friendly names to attach to the role. To embed an inline policy, use M(iam_policy).
+      - A list of managed policy ARNs or friendly names to attach to the role.
+      - To embed an inline policy, use M(iam_policy).
     required: false
     type: list
+    elements: str
     aliases: ['managed_policy']
   users:
     description:
       - A list of existing users to add as members of the group.
     required: false
     type: list
+    elements: str
   state:
     description:
-      - Create or remove the IAM group
+      - Create or remove the IAM group.
     required: true
     choices: [ 'present', 'absent' ]
     type: str
   purge_policies:
     description:
-      - Detach policy which not included in managed_policy list
+      - When I(purge_policies=true) any managed policies not listed in I(managed_policies) will be detatched.
     required: false
     default: false
     type: bool
     aliases: ['purge_policy', 'purge_managed_policies']
   purge_users:
     description:
-      - Detach users which not included in users list
+      - When I(purge_users=true) users which are not included in I(users) will be detached.
     required: false
     default: false
     type: bool
