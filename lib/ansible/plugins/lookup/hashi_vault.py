@@ -197,6 +197,18 @@ class HashiVault:
     def get(self):
         data = self.client.read(self.secret)
 
+        # Check response for KV v2 fields and flatten nested secret data.
+        #
+        # https://vaultproject.io/api/secret/kv/kv-v2.html#sample-response-1
+        try:
+            # sentinel field checks
+            _ = data['data']['data']
+            _ = data['data']['metadata']
+            # unwrap nested data
+            data = data['data']
+        except KeyError:
+            pass
+
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % self.secret)
 
